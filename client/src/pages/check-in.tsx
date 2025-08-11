@@ -586,23 +586,7 @@ export default function CheckIn() {
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="age" className="text-sm font-medium text-hostel-text">
-                    Age
-                  </Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    min="16"
-                    max="120"
-                    placeholder="Age"
-                    className="mt-1"
-                    {...form.register("age")}
-                  />
-                  {form.formState.errors.age && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.age.message}</p>
-                  )}
-                </div>
+                        {/* Age is automatically calculated from IC number */}
 
                 <div>
                   <Label htmlFor="nationality" className="text-sm font-medium text-hostel-text">

@@ -252,9 +252,7 @@ export const insertGuestSchema = createInsertSchema(guests).omit({
     .transform(val => val?.replace(/\s/g, ""))
     .refine(val => !val || /^[+]?[\d\s\-\(\)]{7,20}$/.test(val), "Please enter a valid emergency phone number (7-20 digits, may include +, spaces, dashes, parentheses)")
     .optional(),
-  age: z.string()
-    .refine(val => !val || (/^\d{1,3}$/.test(val) && parseInt(val) >= 16 && parseInt(val) <= 120), "Age must be a number between 16 and 120")
-    .optional(),
+  age: z.string().optional(), // Age is automatically calculated from IC number
   profilePhotoUrl: z.string()
     .url("Profile photo must be a valid URL")
     .optional(),
@@ -845,13 +843,13 @@ export const passportNumberSchema = z.string()
   .regex(/^[A-Z0-9]+$/, "Passport number can only contain uppercase letters and numbers")
   .transform(val => val.toUpperCase());
 
-// Age validation
+// Age validation (automatically calculated from IC number)
 export const ageSchema = z.string()
   .regex(/^\d{1,3}$/, "Age must be a number")
   .refine(val => {
     const age = parseInt(val);
-    return age >= 16 && age <= 120;
-  }, "Age must be between 16 and 120");
+    return age >= 0 && age <= 120;
+  }, "Age must be between 0 and 120");
 
 // Date validation for checkout dates
 export const checkoutDateSchema = z.string()

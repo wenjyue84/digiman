@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { storage } from "./storage";
 import { insertGuestSchema, checkoutGuestSchema, loginSchema, createCapsuleProblemSchema, resolveProblemSchema, googleAuthSchema, insertUserSchema, guestSelfCheckinSchema, createTokenSchema, updateSettingsSchema, updateGuestSchema, markCapsuleCleanedSchema, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
+import { calculateAgeFromIC } from "@shared/utils";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { OAuth2Client } from "google-auth-library";
@@ -1038,6 +1039,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Capsule is not available" });
       }
 
+      // Calculate age from IC number if provided
+      if (validatedData.idNumber && validatedData.idNumber.length === 12) {
+        const age = calculateAgeFromIC(validatedData.idNumber);
+        if (age !== null) {
+          validatedData.age = age.toString();
+        }
+      }
+
       const guest = await storage.createGuest(validatedData);
       res.status(201).json(guest);
     } catch (error) {
@@ -1577,6 +1586,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No capsule assigned for this token" });
       }
 
+      // Calculate age from IC number if provided
+      let calculatedAge: string | undefined;
+      if (validatedGuestData.icNumber) {
+        const age = calculateAgeFromIC(validatedGuestData.icNumber);
+        if (age !== null) {
+          calculatedAge = age.toString();
+        }
+      }
+
       // Create guest with assigned capsule and self-check-in data
       const guest = await storage.createGuest({
         name: validatedGuestData.nameAsInDocument,
@@ -1592,6 +1610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentCollector: "Self Check-in",
         isPaid: false,
         selfCheckinToken: token, // Store the token for edit access
+        age: calculatedAge, // Automatically calculated age from IC
         notes: `IC: ${validatedGuestData.icNumber || 'N/A'}, Passport: ${validatedGuestData.passportNumber || 'N/A'}${validatedGuestData.icDocumentUrl ? `, IC Doc: ${validatedGuestData.icDocumentUrl}` : ''}${validatedGuestData.passportDocumentUrl ? `, Passport Doc: ${validatedGuestData.passportDocumentUrl}` : ''}${validatedGuestData.guestPaymentDescription ? `, Payment: ${validatedGuestData.guestPaymentDescription}` : ''}`,
       });
 
@@ -1690,12 +1709,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedGuestData = guestSelfCheckinSchema.parse(req.body);
 
+      // Calculate age from IC number if provided
+      let calculatedAge: string | undefined;
+      if (validatedGuestData.icNumber) {
+        const age = calculateAgeFromIC(validatedGuestData.icNumber);
+        if (age !== null) {
+          calculatedAge = age.toString();
+        }
+      }
+
       // Update guest information
       const updatedGuest = await storage.updateGuest(guest.id, {
         name: validatedGuestData.nameAsInDocument,
         gender: validatedGuestData.gender,
         nationality: validatedGuestData.nationality,
         idNumber: validatedGuestData.icNumber || validatedGuestData.passportNumber || undefined,
+        age: calculatedAge, // Update age if IC number changed
         paymentMethod: validatedGuestData.paymentMethod,
         notes: `IC: ${validatedGuestData.icNumber || 'N/A'}, Passport: ${validatedGuestData.passportNumber || 'N/A'}${validatedGuestData.icDocumentUrl ? `, IC Doc: ${validatedGuestData.icDocumentUrl}` : ''}${validatedGuestData.passportDocumentUrl ? `, Passport Doc: ${validatedGuestData.passportDocumentUrl}` : ''}`,
       });

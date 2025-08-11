@@ -222,19 +222,12 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
               </div>
               <div>
                 <Label>Age</Label>
-                {isEditing ? (
-                  <Input
-                    type="number"
-                    min="16"
-                    max="120"
-                    value={editData.age || ""}
-                    onChange={(e) => setEditData({ ...editData, age: e.target.value })}
-                    className="mt-1"
-                    placeholder="Age"
-                  />
-                ) : (
-                  <div className="mt-1 text-sm">{guest.age || "Not specified"}</div>
-                )}
+                <div className="mt-1 text-sm">
+                  {guest.age ? `${guest.age} years old` : "Not specified"}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Age is automatically calculated from IC number
+                </p>
               </div>
               <div>
                 <Label>Nationality</Label>
