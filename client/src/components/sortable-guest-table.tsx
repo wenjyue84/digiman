@@ -761,18 +761,39 @@ export default function SortableGuestTable() {
                           {getFirstInitial(guest.name)}
                         </div>
                         <div>
-                                                <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">{guest.capsuleNumber}</Badge>
-                        <button onClick={() => handleGuestClick(guest)} className="font-medium hover:underline focus:outline-none">
-                          {guest.name}
-                        </button>
-                      </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">{guest.capsuleNumber}</Badge>
+                            <button onClick={() => handleGuestClick(guest)} className="font-medium hover:underline focus:outline-none">
+                              {guest.name}
+                            </button>
+                          </div>
                           <div className="text-xs text-gray-600 mt-1">
                             In: {formatShortDateTime(guest.checkinTime.toString())}
                             {guest.expectedCheckoutDate && (
                               <span className="ml-2">Out: {formatShortDate(guest.expectedCheckoutDate)}</span>
                             )}
                           </div>
+                          {!isCondensedView && (
+                            <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700">
+                              <div>
+                                <span className="font-medium text-gray-800">Nationality:</span> {guest.nationality || '—'}
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-800">Phone:</span> {guest.phoneNumber || '—'}
+                              </div>
+                              <div className="col-span-2 flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-gray-800">Payment:</span>
+                                <span>RM {guest.paymentAmount}</span>
+                                {guest.paymentMethod && <span>• {guest.paymentMethod.toUpperCase()}</span>}
+                                <Badge variant={guest.isPaid ? 'default' : 'destructive'}>{guest.isPaid ? 'Paid' : 'Outstanding'}</Badge>
+                              </div>
+                              {guest.paymentCollector && (
+                                <div className="col-span-2">
+                                  <span className="font-medium text-gray-800">Collected by:</span> {guest.paymentCollector}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -815,6 +836,18 @@ export default function SortableGuestTable() {
                             In: {formatShortDateTime(pendingData.createdAt)}
                             <span className="ml-2">Expires: {formatShortDate(pendingData.expiresAt)}</span>
                           </div>
+                          {!isCondensedView && (
+                            <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-orange-700">
+                              <div className="col-span-2">
+                                <span className="font-medium">Status:</span> Awaiting self check-in
+                              </div>
+                              {pendingData.phoneNumber && (
+                                <div className="col-span-2">
+                                  <span className="font-medium">Phone:</span> {pendingData.phoneNumber}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
