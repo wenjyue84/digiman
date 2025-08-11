@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth";
 import GuestDetailsModal from "./guest-details-modal";
 import { CheckoutConfirmationDialog } from "./confirmation-dialog";
 import type { Guest, GuestToken, PaginatedResponse } from "@shared/schema";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
 type SortOrder = 'asc' | 'desc';
@@ -488,12 +489,32 @@ export default function SortableGuestTable() {
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-600">Condensed</span>
+            {/* Mobile: icons with tooltips */}
+            <div className="md:hidden">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleLeft className="h-4 w-4 text-gray-600" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Condensed</TooltipContent>
+              </Tooltip>
+            </div>
+            {/* Desktop: text label */}
+            <span className="hidden md:inline text-xs text-gray-600">Condensed</span>
             <Switch 
               checked={!isCondensedView}
               onCheckedChange={(checked) => setIsCondensedView(!checked)}
             />
-            <span className="text-xs text-gray-600">Detailed</span>
+            {/* Desktop: text label */}
+            <span className="hidden md:inline text-xs text-gray-600">Detailed</span>
+            {/* Mobile: icons with tooltips */}
+            <div className="md:hidden">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleRight className="h-4 w-4 text-gray-600" />
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Detailed</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </CardHeader>
