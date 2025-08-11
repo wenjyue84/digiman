@@ -740,10 +740,12 @@ export default function SortableGuestTable() {
                           {getFirstInitial(guest.name)}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">{guest.capsuleNumber}</Badge>
-                            <span className="font-medium">{guest.name}</span>
-                          </div>
+                                                <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">{guest.capsuleNumber}</Badge>
+                        <button onClick={() => handleGuestClick(guest)} className="font-medium hover:underline focus:outline-none">
+                          {guest.name}
+                        </button>
+                      </div>
                           <div className="text-xs text-gray-600 mt-1">
                             In: {formatShortDateTime(guest.checkinTime.toString())}
                             {guest.expectedCheckoutDate && (
@@ -756,7 +758,7 @@ export default function SortableGuestTable() {
                         <Button 
                           variant="ghost" 
                           className="h-11 w-11 rounded-full"
-                          onClick={() => setSelectedGuest(guest)}
+                          onClick={() => handleGuestClick(guest)}
                           title="Details"
                         >
                           i
