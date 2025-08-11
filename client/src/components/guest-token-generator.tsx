@@ -177,7 +177,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="flex items-center gap-2">
             <Link2 className="h-4 w-4" />
-            Create Guest Link
+            Create Link
           </Button>
         </DialogTrigger>
       <DialogContent className="w-full max-w-sm sm:max-w-md mx-4">
