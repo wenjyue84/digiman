@@ -4,12 +4,12 @@ import { Home, UserPlus, UserX, ListChecks, History, Settings } from "lucide-rea
 import { AuthContext } from "@/lib/auth";
 
 const navigationItems = [
-  { path: "/", label: "Dashboard", icon: Home },
-  { path: "/check-in", label: "Check In", icon: UserPlus, requireAuth: true },
-  { path: "/check-out", label: "Check Out", icon: UserX, requireAuth: true },
-  { path: "/cleaning", label: "Cleaning", icon: ListChecks, requireAuth: true },
-  { path: "/history", label: "History", icon: History },
-  { path: "/settings", label: "Settings", icon: Settings, requireAuth: true },
+  { path: "/", label: "Dashboard", icon: Home, color: "text-indigo-600 bg-indigo-50" },
+  { path: "/check-in", label: "Check In", icon: UserPlus, requireAuth: true, color: "text-green-600 bg-green-50" },
+  { path: "/check-out", label: "Check Out", icon: UserX, requireAuth: true, color: "text-red-600 bg-red-50" },
+  { path: "/cleaning", label: "Clean", icon: ListChecks, requireAuth: true, color: "text-emerald-600 bg-emerald-50" },
+  { path: "/history", label: "History", icon: History, color: "text-orange-600 bg-orange-50" },
+  { path: "/settings", label: "Settings", icon: Settings, requireAuth: true, color: "text-blue-600 bg-blue-50" },
 ];
 
 export default function MobileBottomNav() {
@@ -41,7 +41,9 @@ export default function MobileBottomNav() {
                 } ${!canAccess ? "opacity-50" : ""}`}
                 aria-disabled={!canAccess}
               >
-                <Icon className={`h-6 w-6 ${isActive ? "text-white" : "text-gray-700"}`} />
+                <div className={`flex items-center justify-center h-7 w-7 rounded-full ${isActive ? "bg-white/20" : item.color?.replace("text-", "bg-")}` }>
+                  <Icon className={`h-5 w-5 ${isActive ? "text-white" : item.color}` } />
+                </div>
                 <span className="mt-1 text-[11px] font-medium leading-none">{item.label}</span>
               </Link>
             </li>

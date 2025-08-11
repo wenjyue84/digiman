@@ -9,7 +9,7 @@ const navigationItems = [
   { path: "/", label: "Dashboard", icon: LayoutGrid, color: "text-indigo-600 bg-indigo-50" },
   { path: "/check-in", label: "Check In", icon: UserPlus, color: "text-green-600 bg-green-50", requireAuth: true },
   { path: "/check-out", label: "Check Out", icon: UserX, color: "text-red-600 bg-red-50", requireAuth: true },
-  { path: "/cleaning", label: "Cleaning", icon: ListChecks, color: "text-emerald-600 bg-emerald-50", requireAuth: true },
+  { path: "/cleaning", label: "Clean", icon: ListChecks, color: "text-emerald-600 bg-emerald-50", requireAuth: true },
   { path: "/history", label: "History", icon: ListChecks, color: "text-orange-600 bg-orange-50" },
   { path: "/settings", label: "Settings", icon: Settings, color: "text-blue-600 bg-blue-50", requireAuth: true },
 ];
