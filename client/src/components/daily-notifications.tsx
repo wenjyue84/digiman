@@ -4,7 +4,7 @@ import { useVisibilityQuery } from "@/hooks/useVisibilityQuery";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Calendar, Clock, User, UserMinus, CheckCheck } from "lucide-react";
+import { Bell, Calendar, Clock, User, UserMinus, CheckCheck, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/components/auth-provider";
 import { apiRequest } from "@/lib/queryClient";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckoutConfirmationDialog } from "./confirmation-dialog";
 import type { Guest, PaginatedResponse } from "@shared/schema";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function DailyNotifications() {
   const labels = useAccommodationLabels();
@@ -122,7 +123,7 @@ export default function DailyNotifications() {
   }
 
   return (
-    <Card className="mb-6 border-orange-200 bg-orange-50">
+    <Card className="mb-6 border-orange-200 bg-white overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold text-orange-800 flex items-center">
           <Bell className="mr-2 h-5 w-5" />
@@ -139,94 +140,148 @@ export default function DailyNotifications() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Today's Expected Checkouts */}
           {checkingOutToday.length > 0 && (
-            <div className="bg-white rounded-lg p-4 border border-orange-200 flex flex-col">
-              <h4 className="font-medium text-orange-800 mb-3 flex items-center justify-between">
-                <Calendar className="mr-2 h-4 w-4" />
-                Expected Checkouts Today ({checkingOutToday.length})
-              </h4>
-              <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
-                {checkingOutToday.map((guest) => (
-                  <div key={guest.id} className="flex items-center justify-between p-3 bg-orange-50 rounded border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-orange-600" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{guest.name}</div>
-                        <div className="text-sm text-gray-600">{labels.singular} {guest.capsuleNumber}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
-                        Due Today
-                      </Badge>
-                      <Button
-                        size="sm"
-                        onClick={() => handleCheckout(guest)}
-                        disabled={checkoutMutation.isPending}
-                        isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
-                        className="bg-orange-600 hover:bg-orange-700 text-white"
-                      >
-                        <UserMinus className="h-4 w-4 mr-1" />
-                        {checkoutMutation.isPending && checkoutMutation.variables === guest.id ? "Checking out..." : "Check Out"}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            <div className="rounded-lg border border-orange-200">
+              <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+                <h4 className="font-medium text-orange-800 flex items-center">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Expected Checkouts Today ({checkingOutToday.length})
+                </h4>
               </div>
+              <Accordion type="multiple">
+                {checkingOutToday.map((guest) => (
+                  <AccordionItem key={guest.id} value={guest.id}>
+                    <AccordionTrigger className="px-4 py-3">
+                      <div className="flex w-full items-center gap-3 text-left">
+                        <div className="w-9 h-9 bg-orange-100 rounded-full flex items-center justify-center shrink-0">
+                          <User className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{guest.name}</div>
+                          <div className="text-xs text-gray-600 truncate">{labels.singular} {guest.capsuleNumber}</div>
+                        </div>
+                        <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-200 shrink-0">Due Today</Badge>
+                        <ChevronRight className="ml-1 h-4 w-4 text-gray-400 shrink-0" />
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4">
+                      <div className="flex flex-col gap-2 text-sm text-gray-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Expected Checkout</span>
+                          <span className="font-medium">Today</span>
+                        </div>
+                        {guest.phoneNumber && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Phone</span>
+                            <span className="font-medium">{guest.phoneNumber}</span>
+                          </div>
+                        )}
+                        {guest.paymentAmount && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Payment</span>
+                            <span className="font-medium">{guest.paymentAmount} {guest.isPaid ? "(Paid)" : "(Unpaid)"}</span>
+                          </div>
+                        )}
+                        {guest.notes && (
+                          <div className="pt-1">
+                            <div className="text-gray-600 mb-1">Notes</div>
+                            <div className="text-gray-800">{guest.notes}</div>
+                          </div>
+                        )}
+                        <div className="pt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => handleCheckout(guest)}
+                            disabled={checkoutMutation.isPending}
+                            isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
+                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                          >
+                            <UserMinus className="h-4 w-4 mr-1" />
+                            {checkoutMutation.isPending && checkoutMutation.variables === guest.id ? "Checking out..." : "Check Out"}
+                          </Button>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           )}
 
           {/* Overdue Checkouts */}
           {overdueCheckouts.length > 0 && (
-            <div className="bg-white rounded-lg p-4 border border-red-200 flex flex-col">
-              <h4 className="font-medium text-red-800 mb-3 flex items-center justify-between">
-                <Bell className="mr-2 h-4 w-4" />
-                <span>Overdue Checkouts ({overdueCheckouts.length})</span>
+            <div className="rounded-lg border border-red-200">
+              <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+                <h4 className="font-medium text-red-800 flex items-center">
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span>Overdue Checkouts ({overdueCheckouts.length})</span>
+                </h4>
                 <Button
                   size="sm"
                   variant="destructive"
                   onClick={() => bulkCheckoutMutation.mutate()}
                   disabled={bulkCheckoutMutation.isPending || overdueCheckouts.length === 0}
-                  className="ml-auto"
                 >
                   <CheckCheck className="h-4 w-4 mr-1" />
                   {bulkCheckoutMutation.isPending ? "Checking Out..." : "Check Out All"}
                 </Button>
-              </h4>
-              <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+              </div>
+              <Accordion type="multiple">
                 {overdueCheckouts.map((guest) => (
-                  <div key={guest.id} className="flex items-center justify-between p-3 bg-red-50 rounded border border-red-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-red-600" />
+                  <AccordionItem key={guest.id} value={guest.id}>
+                    <AccordionTrigger className="px-4 py-3">
+                      <div className="flex w-full items-center gap-3 text-left">
+                        <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                          <User className="h-4 w-4 text-red-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{guest.name}</div>
+                          <div className="text-xs text-gray-600 truncate">{labels.singular} {guest.capsuleNumber}</div>
+                        </div>
+                        <Badge className="bg-red-600 text-white shrink-0">Overdue</Badge>
+                        <ChevronRight className="ml-1 h-4 w-4 text-gray-400 shrink-0" />
                       </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{guest.name}</div>
-                        <div className="text-sm text-gray-600">{labels.singular} {guest.capsuleNumber}</div>
-                        <div className="text-xs text-red-600">
-                          Expected: {new Date(guest.expectedCheckoutDate!).toLocaleDateString()}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4">
+                      <div className="flex flex-col gap-2 text-sm text-gray-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Expected Checkout</span>
+                          <span className="font-medium">{guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate).toLocaleDateString() : "—"}</span>
+                        </div>
+                        {guest.phoneNumber && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Phone</span>
+                            <span className="font-medium">{guest.phoneNumber}</span>
+                          </div>
+                        )}
+                        {guest.paymentAmount && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Payment</span>
+                            <span className="font-medium">{guest.paymentAmount} {guest.isPaid ? "(Paid)" : "(Unpaid)"}</span>
+                          </div>
+                        )}
+                        {guest.notes && (
+                          <div className="pt-1">
+                            <div className="text-gray-600 mb-1">Notes</div>
+                            <div className="text-gray-800">{guest.notes}</div>
+                          </div>
+                        )}
+                        <div className="pt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => handleCheckout(guest)}
+                            disabled={checkoutMutation.isPending}
+                            isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
+                            variant="destructive"
+                          >
+                            <UserMinus className="h-4 w-4 mr-1" />
+                            {checkoutMutation.isPending && checkoutMutation.variables === guest.id ? "Checking out..." : "Check Out"}
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-red-600 text-white">
-                        Overdue
-                      </Badge>
-                      <Button
-                        size="sm"
-                        onClick={() => handleCheckout(guest)}
-                        disabled={checkoutMutation.isPending}
-                        isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
-                        variant="destructive"
-                      >
-                        <UserMinus className="h-4 w-4 mr-1" />
-                        {checkoutMutation.isPending && checkoutMutation.variables === guest.id ? "Checking out..." : "Check Out"}
-                      </Button>
-                    </div>
-                  </div>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-              </div>
+              </Accordion>
             </div>
           )}
         </div>
