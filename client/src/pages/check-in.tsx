@@ -786,7 +786,8 @@ export default function CheckIn() {
                 className="flex-1 bg-hostel-secondary hover:bg-green-600 text-white font-medium"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
-                Complete Check-In
+                <span className="hidden sm:inline">Complete Check-In</span>
+                <span className="sm:hidden">Complete</span>
               </Button>
               <Button 
                 type="button"
