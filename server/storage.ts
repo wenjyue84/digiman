@@ -1388,5 +1388,717 @@ class DatabaseStorage implements IStorage {
   }
 }
 
-// Use MemStorage for development, DatabaseStorage for production
-export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
+// Replit Storage Implementation using SQLite
+class ReplitStorage implements IStorage {
+  private db: any;
+  private sqlite: any;
+
+  constructor() {
+    // For Replit, we'll use a simple SQLite implementation
+    // This will be initialized when the first database operation is called
+    this.db = null;
+    this.sqlite = null;
+  }
+
+  private async initDB() {
+    if (this.db) return;
+    
+    try {
+      // Use better-sqlite3 or sqlite3 depending on what's available
+      const sqlite3 = await import('better-sqlite3');
+      const dbPath = process.env.REPLIT_DB_PATH || '/tmp/replit.db';
+      this.sqlite = new sqlite3.default(dbPath);
+      this.db = this.sqlite;
+      
+      // Initialize tables if they don't exist
+      await this.createTables();
+    } catch (error) {
+      console.error('Failed to initialize SQLite database:', error);
+      // Fallback to in-memory storage if SQLite fails
+      throw new Error('SQLite initialization failed, falling back to in-memory storage');
+    }
+  }
+
+  private async createTables() {
+    // Create tables if they don't exist
+    const createUsersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE,
+        username TEXT UNIQUE,
+        password TEXT,
+        googleId TEXT,
+        firstName TEXT,
+        lastName TEXT,
+        profileImage TEXT,
+        role TEXT,
+        createdAt TEXT,
+        updatedAt TEXT
+      )
+    `;
+    
+    const createGuestsTable = `
+      CREATE TABLE IF NOT EXISTS guests (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        capsuleNumber TEXT,
+        checkinTime TEXT,
+        checkoutTime TEXT,
+        expectedCheckoutDate TEXT,
+        isCheckedIn INTEGER,
+        paymentAmount TEXT,
+        paymentMethod TEXT,
+        paymentCollector TEXT,
+        isPaid INTEGER,
+        notes TEXT,
+        gender TEXT,
+        nationality TEXT,
+        phoneNumber TEXT,
+        email TEXT,
+        idNumber TEXT,
+        emergencyContact TEXT,
+        emergencyPhone TEXT,
+        age INTEGER,
+        profilePhotoUrl TEXT,
+        selfCheckinToken TEXT
+      )
+    `;
+    
+    const createCapsulesTable = `
+      CREATE TABLE IF NOT EXISTS capsules (
+        id TEXT PRIMARY KEY,
+        number TEXT UNIQUE,
+        isAvailable INTEGER,
+        cleaningStatus TEXT,
+        lastCleanedAt TEXT,
+        lastCleanedBy TEXT
+      )
+    `;
+    
+    const createSessionsTable = `
+      CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        userId TEXT,
+        token TEXT UNIQUE,
+        expiresAt TEXT
+      )
+    `;
+    
+    const createGuestTokensTable = `
+      CREATE TABLE IF NOT EXISTS guestTokens (
+        id TEXT PRIMARY KEY,
+        token TEXT UNIQUE,
+        capsuleNumber TEXT,
+        expiresAt TEXT,
+        isUsed INTEGER,
+        usedAt TEXT,
+        createdAt TEXT
+      )
+    `;
+    
+    const createCapsuleProblemsTable = `
+      CREATE TABLE IF NOT EXISTS capsuleProblems (
+        id TEXT PRIMARY KEY,
+        capsuleNumber TEXT,
+        problemType TEXT,
+        description TEXT,
+        reportedAt TEXT,
+        isResolved INTEGER,
+        resolvedBy TEXT,
+        resolvedAt TEXT,
+        notes TEXT
+      )
+    `;
+    
+    const createAdminNotificationsTable = `
+      CREATE TABLE IF NOT EXISTS adminNotifications (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        message TEXT,
+        type TEXT,
+        isRead INTEGER,
+        createdAt TEXT
+      )
+    `;
+    
+    const createAppSettingsTable = `
+      CREATE TABLE IF NOT EXISTS appSettings (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        description TEXT,
+        updatedBy TEXT,
+        updatedAt TEXT
+      )
+    `;
+
+    this.sqlite.exec(createUsersTable);
+    this.sqlite.exec(createGuestsTable);
+    this.sqlite.exec(createCapsulesTable);
+    this.sqlite.exec(createSessionsTable);
+    this.sqlite.exec(createGuestTokensTable);
+    this.sqlite.exec(createCapsuleProblemsTable);
+    this.sqlite.exec(createAdminNotificationsTable);
+    this.sqlite.exec(createAppSettingsTable);
+    
+    // Initialize default data
+    await this.initializeDefaultData();
+  }
+
+  private async initializeDefaultData() {
+    // Check if we already have data
+    const userCount = this.sqlite.prepare('SELECT COUNT(*) as count FROM users').get();
+    if (userCount.count > 0) return;
+
+    // Initialize default admin user
+    const adminUser = {
+      id: randomUUID(),
+      email: "admin@pelangi.com",
+      username: "admin",
+      password: "admin123",
+      googleId: null,
+      firstName: "Admin",
+      lastName: "User",
+      profileImage: null,
+      role: "staff",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const insertUser = this.sqlite.prepare(`
+      INSERT INTO users (id, email, username, password, googleId, firstName, lastName, profileImage, role, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    insertUser.run(
+      adminUser.id, adminUser.email, adminUser.username, adminUser.password,
+      adminUser.googleId, adminUser.firstName, adminUser.lastName, adminUser.profileImage,
+      adminUser.role, adminUser.createdAt, adminUser.updatedAt
+    );
+
+    // Initialize capsules
+    const insertCapsule = this.sqlite.prepare(`
+      INSERT INTO capsules (id, number, isAvailable, cleaningStatus)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    // Back section: C1-C6
+    for (let i = 1; i <= 6; i++) {
+      insertCapsule.run(randomUUID(), `C${i}`, 1, 'cleaned');
+    }
+    
+    // Front section: C25-C26
+    for (let i = 25; i <= 26; i++) {
+      insertCapsule.run(randomUUID(), `C${i}`, 1, 'cleaned');
+    }
+    
+    // Middle section: C11-C24
+    for (let i = 11; i <= 24; i++) {
+      insertCapsule.run(randomUUID(), `C${i}`, 1, 'cleaned');
+    }
+
+    // Initialize default settings
+    const insertSetting = this.sqlite.prepare(`
+      INSERT INTO appSettings (key, value, description, updatedAt)
+      VALUES (?, ?, ?, ?)
+    `);
+    
+    insertSetting.run('guestTokenExpirationHours', '24', 'Guest token expiration in hours', new Date().toISOString());
+    insertSetting.run('sessionExpirationHours', '24', 'Session expiration in hours', new Date().toISOString());
+    
+    console.log('Initialized Replit database with default data');
+  }
+
+  // Helper function for pagination
+  private paginate<T>(items: T[], pagination?: PaginationParams): PaginatedResponse<T> {
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 20;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    
+    const paginatedItems = items.slice(startIndex, endIndex);
+    const total = items.length;
+    const totalPages = Math.ceil(total / limit);
+    const hasMore = page < totalPages;
+    
+    return {
+      data: paginatedItems,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasMore,
+      },
+    };
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await this.db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await this.db.select().from(users);
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const result = await this.db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await this.db.delete(users).where(eq(users.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Session management methods
+  async createSession(userId: string, token: string, expiresAt: Date): Promise<Session> {
+    const result = await this.db.insert(sessions).values({
+      userId,
+      token,
+      expiresAt,
+    }).returning();
+    return result[0];
+  }
+
+  async getSessionByToken(token: string): Promise<Session | undefined> {
+    const result = await this.db.select().from(sessions).where(eq(sessions.token, token)).limit(1);
+    return result[0];
+  }
+
+  async deleteSession(token: string): Promise<boolean> {
+    const result = await this.db.delete(sessions).where(eq(sessions.token, token)).returning();
+    return result.length > 0;
+  }
+
+  async cleanExpiredSessions(): Promise<void> {
+    await this.db.delete(sessions).where(lte(sessions.expiresAt, new Date()));
+  }
+
+  async createGuest(insertGuest: InsertGuest): Promise<Guest> {
+    // Prepare the data to insert
+    const { checkInDate, ...insertData } = insertGuest;
+    
+    // If custom check-in date is provided, override the default
+    if (checkInDate) {
+      const [year, month, day] = checkInDate.split('-').map(Number);
+      const now = new Date();
+      (insertData as any).checkinTime = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+    }
+    
+    const result = await this.db.insert(guests).values(insertData).returning();
+    return result[0];
+  }
+
+  async getGuest(id: string): Promise<Guest | undefined> {
+    const result = await this.db.select().from(guests).where(eq(guests.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getAllGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
+    const allGuests = await this.db.select().from(guests);
+    return this.paginate(allGuests, pagination);
+  }
+
+  async getCheckedInGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
+    const checkedInGuests = await this.db.select().from(guests).where(eq(guests.isCheckedIn, true));
+    return this.paginate(checkedInGuests, pagination);
+  }
+
+  async getGuestHistory(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
+    const guestHistory = await this.db.select().from(guests).where(eq(guests.isCheckedIn, false));
+    return this.paginate(guestHistory, pagination);
+  }
+
+  async checkoutGuest(id: string): Promise<Guest | undefined> {
+    const result = await this.db
+      .update(guests)
+      .set({ 
+        checkoutTime: new Date(),
+        isCheckedIn: false 
+      })
+      .where(eq(guests.id, id))
+      .returning();
+    
+    // Update capsule cleaning status to 'to_be_cleaned' after checkout
+    if (result[0]?.capsuleNumber) {
+      await this.db
+        .update(capsules)
+        .set({ 
+          cleaningStatus: 'to_be_cleaned',
+          isAvailable: true 
+        })
+        .where(eq(capsules.number, result[0].capsuleNumber));
+    }
+    
+    return result[0];
+  }
+
+  async updateGuest(id: string, updates: Partial<Guest>): Promise<Guest | undefined> {
+    const result = await this.db
+      .update(guests)
+      .set(updates)
+      .where(eq(guests.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async getGuestsWithCheckoutToday(): Promise<Guest[]> {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    return await this.db
+      .select()
+      .from(guests)
+      .where(and(
+        eq(guests.isCheckedIn, true),
+        eq(guests.expectedCheckoutDate, today)
+      ));
+  }
+
+  async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
+    const checkedInGuestsResponse = await this.getCheckedInGuests();
+    const occupied = checkedInGuestsResponse.pagination.total;
+    const totalCapsules = 22; // C1-C6 (6) + C25-C26 (2) + C11-C24 (14) = 22 total
+    const available = totalCapsules - occupied;
+    const occupancyRate = Math.round((occupied / totalCapsules) * 100);
+
+    return {
+      total: totalCapsules,
+      occupied,
+      available,
+      occupancyRate,
+    };
+  }
+
+  async getAvailableCapsules(): Promise<Capsule[]> {
+    const checkedInGuests = await this.getCheckedInGuests();
+    const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
+    
+    const availableCapsules = await this.db
+      .select()
+      .from(capsules)
+      .where(eq(capsules.isAvailable, true));
+    
+    return availableCapsules.filter(capsule => !occupiedCapsules.has(capsule.number));
+  }
+
+  async getAllCapsules(): Promise<Capsule[]> {
+    return await this.db.select().from(capsules);
+  }
+
+  async getCapsule(number: string): Promise<Capsule | undefined> {
+    const result = await this.db.select().from(capsules).where(eq(capsules.number, number)).limit(1);
+    return result[0];
+  }
+
+  async getCapsuleById(id: string): Promise<Capsule | undefined> {
+    const result = await this.db.select().from(capsules).where(eq(capsules.id, id)).limit(1);
+    return result[0];
+  }
+
+  async updateCapsule(number: string, updates: Partial<Capsule>): Promise<Capsule | undefined> {
+    const result = await this.db
+      .update(capsules)
+      .set(updates)
+      .where(eq(capsules.number, number))
+      .returning();
+    
+    return result[0];
+  }
+
+  // Capsule cleaning operations
+  async markCapsuleCleaned(capsuleNumber: string, cleanedBy: string): Promise<Capsule | undefined> {
+    const result = await this.db
+      .update(capsules)
+      .set({
+        cleaningStatus: 'cleaned',
+        lastCleanedAt: new Date(),
+        lastCleanedBy: cleanedBy
+      })
+      .where(eq(capsules.number, capsuleNumber))
+      .returning();
+    
+    return result[0];
+  }
+
+  async getCapsulesByCleaningStatus(status: 'cleaned' | 'to_be_cleaned'): Promise<Capsule[]> {
+    return await this.db
+      .select()
+      .from(capsules)
+      .where(eq(capsules.cleaningStatus, status));
+  }
+
+  async createCapsule(capsule: InsertCapsule): Promise<Capsule> {
+    const result = await this.db.insert(capsules).values(capsule).returning();
+    return result[0];
+  }
+
+  async deleteCapsule(number: string): Promise<boolean> {
+    try {
+      // First delete associated problems
+      await this.db
+        .delete(capsuleProblems)
+        .where(eq(capsuleProblems.capsuleNumber, number));
+
+      // Then delete the capsule
+      const result = await this.db
+        .delete(capsules)
+        .where(eq(capsules.number, number))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting capsule:", error);
+      return false;
+    }
+  }
+
+  async getGuestsByCapsule(capsuleNumber: string): Promise<Guest[]> {
+    return await this.db
+      .select()
+      .from(guests)
+      .where(and(
+        eq(guests.capsuleNumber, capsuleNumber),
+        eq(guests.isCheckedIn, true)
+      ));
+  }
+
+  // Capsule problem methods for ReplitStorage
+  async createCapsuleProblem(problem: InsertCapsuleProblem): Promise<CapsuleProblem> {
+    const result = await this.db.insert(capsuleProblems).values(problem).returning();
+    return result[0];
+  }
+
+  async getCapsuleProblems(capsuleNumber: string): Promise<CapsuleProblem[]> {
+    return await this.db
+      .select()
+      .from(capsuleProblems)
+      .where(eq(capsuleProblems.capsuleNumber, capsuleNumber))
+      .orderBy(capsuleProblems.reportedAt);
+  }
+
+  async getActiveProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>> {
+    const activeProblems = await this.db
+      .select()
+      .from(capsuleProblems)
+      .where(eq(capsuleProblems.isResolved, false))
+      .orderBy(capsuleProblems.reportedAt);
+    return this.paginate(activeProblems, pagination);
+  }
+
+  async getAllProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>> {
+    const allProblems = await this.db
+      .select()
+      .from(capsuleProblems)
+      .orderBy(capsuleProblems.reportedAt);
+    return this.paginate(allProblems, pagination);
+  }
+
+  async resolveProblem(problemId: string, resolvedBy: string, notes?: string): Promise<CapsuleProblem | undefined> {
+    const result = await this.db
+      .update(capsuleProblems)
+      .set({ 
+        isResolved: true, 
+        resolvedBy, 
+        resolvedAt: new Date(), 
+        notes: notes || null 
+      })
+      .where(eq(capsuleProblems.id, problemId))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteProblem(problemId: string): Promise<boolean> {
+    try {
+      const result = await this.db
+        .delete(capsuleProblems)
+        .where(eq(capsuleProblems.id, problemId))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting problem:", error);
+      return false;
+    }
+  }
+
+  // Guest token methods for ReplitStorage
+  async createGuestToken(token: InsertGuestToken): Promise<GuestToken> {
+    const result = await this.db.insert(guestTokens).values(token).returning();
+    return result[0];
+  }
+
+  async getGuestToken(token: string): Promise<GuestToken | undefined> {
+    const result = await this.db.select().from(guestTokens).where(eq(guestTokens.token, token)).limit(1);
+    return result[0];
+  }
+
+  async markTokenAsUsed(token: string): Promise<GuestToken | undefined> {
+    const result = await this.db
+      .update(guestTokens)
+      .set({ isUsed: true, usedAt: new Date() })
+      .where(eq(guestTokens.token, token))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteGuestToken(id: string): Promise<boolean> {
+    try {
+      const result = await this.db
+        .delete(guestTokens)
+        .where(eq(guestTokens.id, id))
+        .returning();
+      
+      // Check if any rows were actually deleted
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting guest token:', error);
+      return false;
+    }
+  }
+
+  async getActiveGuestTokens(pagination?: PaginationParams): Promise<PaginatedResponse<GuestToken>> {
+    const now = new Date();
+    const activeTokens = await this.db
+      .select()
+      .from(guestTokens)
+      .where(and(
+        eq(guestTokens.isUsed, false),
+        isNotNull(guestTokens.expiresAt)
+      ))
+      .orderBy(guestTokens.createdAt);
+    // Filter out expired tokens
+    const nonExpiredTokens = activeTokens.filter(token => token.expiresAt && token.expiresAt > now);
+    return this.paginate(nonExpiredTokens, pagination);
+  }
+
+  async cleanExpiredTokens(): Promise<void> {
+    const now = new Date();
+    await this.db.delete(guestTokens).where(lte(guestTokens.expiresAt, now));
+  }
+
+  // Admin notification methods for ReplitStorage
+  async createAdminNotification(notification: InsertAdminNotification): Promise<AdminNotification> {
+    const result = await this.db.insert(adminNotifications).values(notification).returning();
+    return result[0];
+  }
+
+  async getAdminNotifications(pagination?: PaginationParams): Promise<PaginatedResponse<AdminNotification>> {
+    const allNotifications = await this.db
+      .select()
+      .from(adminNotifications)
+      .orderBy(adminNotifications.createdAt);
+    return this.paginate(allNotifications, pagination);
+  }
+
+  async getUnreadAdminNotifications(pagination?: PaginationParams): Promise<PaginatedResponse<AdminNotification>> {
+    const unreadNotifications = await this.db
+      .select()
+      .from(adminNotifications)
+      .where(eq(adminNotifications.isRead, false))
+      .orderBy(adminNotifications.createdAt);
+    return this.paginate(unreadNotifications, pagination);
+  }
+
+  async markNotificationAsRead(id: string): Promise<AdminNotification | undefined> {
+    const result = await this.db
+      .update(adminNotifications)
+      .set({ isRead: true })
+      .where(eq(adminNotifications.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async markAllNotificationsAsRead(): Promise<void> {
+    await this.db
+      .update(adminNotifications)
+      .set({ isRead: true })
+      .where(eq(adminNotifications.isRead, false));
+  }
+
+  // App settings methods for ReplitStorage
+  async getSetting(key: string): Promise<AppSetting | undefined> {
+    const result = await this.db.select().from(appSettings).where(eq(appSettings.key, key)).limit(1);
+    return result[0];
+  }
+
+  async setSetting(key: string, value: string, description?: string, updatedBy?: string): Promise<AppSetting> {
+    // First try to update existing setting
+    const existing = await this.getSetting(key);
+    if (existing) {
+      const result = await this.db
+        .update(appSettings)
+        .set({ value, description: description || existing.description, updatedBy, updatedAt: new Date() })
+        .where(eq(appSettings.key, key))
+        .returning();
+      return result[0];
+    } else {
+      // Create new setting
+      const result = await this.db
+        .insert(appSettings)
+        .values({ key, value, description: description || null, updatedBy: updatedBy || null })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async getAllSettings(): Promise<AppSetting[]> {
+    return await this.db.select().from(appSettings);
+  }
+
+  async getGuestTokenExpirationHours(): Promise<number> {
+    const setting = await this.getSetting('guestTokenExpirationHours');
+    return setting ? parseInt(setting.value) : 24; // Default to 24 hours
+  }
+
+  // New app settings methods
+  async getAppSetting(key: string): Promise<AppSetting | undefined> {
+    return this.getSetting(key);
+  }
+
+  async upsertAppSetting(setting: InsertAppSetting): Promise<AppSetting> {
+    return this.setSetting(setting.key, setting.value, setting.description, setting.updatedBy);
+  }
+
+  async getAllAppSettings(): Promise<AppSetting[]> {
+    return this.getAllSettings();
+  }
+
+  async deleteAppSetting(key: string): Promise<boolean> {
+    const result = await this.db
+      .delete(appSettings)
+      .where(eq(appSettings.key, key))
+      .returning();
+    return result.length > 0;
+  }
+}
+
+// Use MemStorage for development, DatabaseStorage for production, ReplitStorage for Replit
+export const storage = process.env.REPLIT_DB_PATH 
+  ? new ReplitStorage() 
+  : process.env.DATABASE_URL 
+    ? new DatabaseStorage() 
+    : new MemStorage();
