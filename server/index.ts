@@ -57,6 +57,21 @@ app.use((req, res, next) => {
         } as any);
       }
     };
+    // Add admin user first
+    const ensureAdminUser = async (username: string, password: string) => {
+      const found = existing.find(u => u.username === username || u.email === username);
+      if (!found) {
+        await storage.createUser({
+          email: username, // Use username as email for admin
+          username,
+          password,
+          role: "admin",
+        } as any);
+        console.log(`✅ Created admin user: ${username}`);
+      }
+    };
+    
+    await ensureAdminUser("admin", "admin123");
     await ensureUser("Jay", "Jay123");
     await ensureUser("Le", "Le123");
     await ensureUser("Alston", "Alston123");
