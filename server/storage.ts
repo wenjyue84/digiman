@@ -36,6 +36,7 @@ export interface IStorage {
   // Capsule management methods
   getAllCapsules(): Promise<Capsule[]>;
   getCapsule(number: string): Promise<Capsule | undefined>;
+  getCapsuleById(id: string): Promise<Capsule | undefined>;
   updateCapsule(number: string, updates: Partial<Capsule>): Promise<Capsule | undefined>;
   createCapsule(capsule: InsertCapsule): Promise<Capsule>;
   deleteCapsule(number: string): Promise<boolean>;
@@ -452,6 +453,15 @@ export class MemStorage implements IStorage {
 
   async getCapsule(number: string): Promise<Capsule | undefined> {
     return this.capsules.get(number);
+  }
+
+  async getCapsuleById(id: string): Promise<Capsule | undefined> {
+    for (const capsule of this.capsules.values()) {
+      if (capsule.id === id) {
+        return capsule;
+      }
+    }
+    return undefined;
   }
 
   async updateCapsule(number: string, updates: Partial<Capsule>): Promise<Capsule | undefined> {
@@ -1065,6 +1075,11 @@ class DatabaseStorage implements IStorage {
 
   async getCapsule(number: string): Promise<Capsule | undefined> {
     const result = await this.db.select().from(capsules).where(eq(capsules.number, number)).limit(1);
+    return result[0];
+  }
+
+  async getCapsuleById(id: string): Promise<Capsule | undefined> {
+    const result = await this.db.select().from(capsules).where(eq(capsules.id, id)).limit(1);
     return result[0];
   }
 

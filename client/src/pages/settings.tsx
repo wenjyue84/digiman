@@ -28,6 +28,22 @@ const selfCheckinMessageSchema = z.object({
 
 type SelfCheckinMessageData = z.infer<typeof selfCheckinMessageSchema>;
 
+// Schema for capsule form validation
+const capsuleFormSchema = z.object({
+  number: z.string()
+    .min(1, "Capsule number is required")
+    .regex(/^C\d+$/, "Capsule number must be in format like C1, C2, C24"),
+  section: z.enum(["back", "middle", "front"], {
+    required_error: "Section must be 'back', 'middle', or 'front'",
+  }),
+  color: z.string().max(50, "Color must not exceed 50 characters").optional(),
+  purchaseDate: z.string().optional(),
+  position: z.enum(["top", "bottom"]).optional(),
+  remark: z.string().max(500, "Remark must not exceed 500 characters").optional(),
+});
+
+type CapsuleFormData = z.infer<typeof capsuleFormSchema>;
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1340,42 +1356,535 @@ function TestsTab() {
   );
 }
 
-// Capsules Tab Component (minimal version)
+// Capsules Tab Component with detailed management
 function CapsulesTab({ capsules, queryClient, toast, labels }: any) {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCapsule, setSelectedCapsule] = useState<any>(null);
+  const [problemsByCapsule, setProblemsByCapsule] = useState<Record<string, any[]>>({});
+
   const items = Array.isArray(capsules) ? capsules : [];
+
+  // Fetch problems for capsules
+  const { data: problemsResponse } = useQuery<PaginatedResponse<CapsuleProblem>>({
+    queryKey: ["/api/problems"],
+    enabled: true,
+  });
+
+  useEffect(() => {
+    if (problemsResponse?.data) {
+      const problemsMap: Record<string, any[]> = {};
+      problemsResponse.data.forEach(problem => {
+        if (!problemsMap[problem.capsuleNumber]) {
+          problemsMap[problem.capsuleNumber] = [];
+        }
+        problemsMap[problem.capsuleNumber].push(problem);
+      });
+      setProblemsByCapsule(problemsMap);
+    }
+  }, [problemsResponse]);
+
+  const createCapsuleForm = useForm<CapsuleFormData>({
+    resolver: zodResolver(capsuleFormSchema),
+    defaultValues: {
+      number: "",
+      section: "middle",
+      color: "",
+      purchaseDate: "",
+      position: "",
+      remark: "",
+    },
+  });
+
+  const editCapsuleForm = useForm<CapsuleFormData>({
+    resolver: zodResolver(capsuleFormSchema),
+    defaultValues: {
+      number: "",
+      section: "middle",
+      color: "",
+      purchaseDate: "",
+      position: "",
+      remark: "",
+    },
+  });
+
+  const createCapsuleMutation = useMutation({
+    mutationFn: async (data: CapsuleFormData) => {
+      const response = await apiRequest("POST", "/api/capsules", {
+        ...data,
+        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      setCreateDialogOpen(false);
+      createCapsuleForm.reset();
+      toast({
+        title: "Capsule Added",
+        description: "The capsule has been added successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add capsule",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCapsuleMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: CapsuleFormData }) => {
+      const response = await apiRequest("PATCH", `/api/capsules/${id}`, {
+        ...data,
+        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      setEditDialogOpen(false);
+      setSelectedCapsule(null);
+      editCapsuleForm.reset();
+      toast({
+        title: "Capsule Updated",
+        description: "The capsule has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update capsule",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCapsuleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/capsules/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      setDeleteDialogOpen(false);
+      setSelectedCapsule(null);
+      toast({
+        title: "Capsule Deleted",
+        description: "The capsule has been deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete capsule",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateCapsule = (data: CapsuleFormData) => {
+    createCapsuleMutation.mutate(data);
+  };
+
+  const handleEditCapsule = (capsule: any) => {
+    setSelectedCapsule(capsule);
+    editCapsuleForm.reset({
+      number: capsule.number,
+      section: capsule.section,
+      color: capsule.color || "",
+      purchaseDate: capsule.purchaseDate ? new Date(capsule.purchaseDate).toISOString().split('T')[0] : "",
+      position: capsule.position || "",
+      remark: capsule.remark || "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateCapsule = (data: CapsuleFormData) => {
+    if (selectedCapsule) {
+      updateCapsuleMutation.mutate({ id: selectedCapsule.id, data });
+    }
+  };
+
+  const handleDeleteCapsule = (capsule: any) => {
+    setSelectedCapsule(capsule);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedCapsule) {
+      deleteCapsuleMutation.mutate(selectedCapsule.id);
+    }
+  };
+
+  const getProblemsForCapsule = (capsuleNumber: string) => {
+    return problemsByCapsule[capsuleNumber] || [];
+  };
+
+  const getActiveProblemsCount = (capsuleNumber: string) => {
+    const problems = getProblemsForCapsule(capsuleNumber);
+    return problems.filter(p => !p.isResolved).length;
+  };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5 text-blue-600" />
-            {labels.plural} ({items.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5 text-blue-600" />
+              {labels.plural} ({items.length})
+            </CardTitle>
+            <Button onClick={() => setCreateDialogOpen(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add {labels.singular}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Building className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>No {labels.lowerPlural} found. You can add {labels.lowerPlural} here in the next step.</p>
+              <p>No {labels.lowerPlural} found. Add your first {labels.lowerSingular} to get started.</p>
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {items.map((c: any) => (
-                <Card key={c.number} className="p-4 flex items-center justify-between">
-                  <div>
-                    <div className="text-lg font-semibold">{c.number}</div>
-                    <div className="text-xs text-gray-500">Section: {c.section}</div>
+                <Card key={c.number} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="text-lg font-semibold">{c.number}</div>
+                        <div className="text-sm text-gray-600">Section: {c.section}</div>
+                        {c.position && (
+                          <div className="text-xs text-gray-500">Position: {c.position}</div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Badge variant={c.isAvailable ? "default" : "destructive"}>
+                          {c.isAvailable ? "Available" : "Unavailable"}
+                        </Badge>
+                        {getActiveProblemsCount(c.number) > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            {getActiveProblemsCount(c.number)} Problem{getActiveProblemsCount(c.number) > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {c.color && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: c.color }}></div>
+                        <span className="text-sm text-gray-600">{c.color}</span>
+                      </div>
+                    )}
+                    
+                    {c.purchaseDate && (
+                      <div className="text-xs text-gray-500">
+                        Purchased: {new Date(c.purchaseDate).toLocaleDateString()}
+                      </div>
+                    )}
+                    
+                    {c.remark && (
+                      <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                        {c.remark}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditCapsule(c)}
+                        className="flex-1"
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteCapsule(c)}
+                        className="flex-1"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                  <Badge variant={c.isAvailable ? "default" : "destructive"}>
-                    {c.isAvailable ? "Available" : "Unavailable"}
-                  </Badge>
                 </Card>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Create Capsule Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New {labels.singular}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={createCapsuleForm.handleSubmit(handleCreateCapsule)} className="space-y-4">
+            <FormField
+              control={createCapsuleForm.control}
+              name="number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Capsule Number *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="C1, C2, C24..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={createCapsuleForm.control}
+              name="section"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Section *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select section" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="back">Back</SelectItem>
+                      <SelectItem value="middle">Middle</SelectItem>
+                      <SelectItem value="front">Front</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={createCapsuleForm.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Color</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Blue, Red, Green..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={createCapsuleForm.control}
+              name="purchaseDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Purchase Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={createCapsuleForm.control}
+              name="position"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Position</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="top">Top</SelectItem>
+                      <SelectItem value="bottom">Bottom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={createCapsuleForm.control}
+              name="remark"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Remark</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Additional notes about the capsule..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createCapsuleMutation.isPending}>
+                {createCapsuleMutation.isPending ? "Adding..." : "Add Capsule"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Capsule Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit {labels.singular}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={editCapsuleForm.handleSubmit(handleUpdateCapsule)} className="space-y-4">
+            <FormField
+              control={editCapsuleForm.control}
+              name="number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Capsule Number *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="C1, C2, C24..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={editCapsuleForm.control}
+              name="section"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Section *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select section" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="back">Back</SelectItem>
+                      <SelectItem value="middle">Middle</SelectItem>
+                      <SelectItem value="front">Front</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={editCapsuleForm.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Color</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Blue, Red, Green..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={editCapsuleForm.control}
+              name="purchaseDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Purchase Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={editCapsuleForm.control}
+              name="position"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Position</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="top">Top</SelectItem>
+                      <SelectItem value="bottom">Bottom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={editCapsuleForm.control}
+              name="remark"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Remark</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Additional notes about the capsule..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateCapsuleMutation.isPending}>
+                {updateCapsuleMutation.isPending ? "Updating..." : "Update Capsule"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {labels.singular}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Are you sure you want to delete capsule <strong>{selectedCapsule?.number}</strong>?</p>
+            <p className="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={deleteCapsuleMutation.isPending}
+            >
+              {deleteCapsuleMutation.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
