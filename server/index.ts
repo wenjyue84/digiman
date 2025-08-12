@@ -64,6 +64,48 @@ app.use((req, res, next) => {
     console.warn("Warning: could not seed default users:", e);
   }
 
+  // Initialize capsules if none exist
+  try {
+    const capsules = await storage.getAllCapsules();
+    if (capsules.length === 0) {
+      console.log("Initializing capsules...");
+      
+      // Back section: C1-C6
+      for (let i = 1; i <= 6; i++) {
+        await storage.createCapsule({
+          number: `C${i}`,
+          section: 'back',
+          isAvailable: true,
+          cleaningStatus: 'cleaned',
+        } as any);
+      }
+      
+      // Middle section: C25, C26
+      for (const num of [25, 26]) {
+        await storage.createCapsule({
+          number: `C${num}`,
+          section: 'middle',
+          isAvailable: true,
+          cleaningStatus: 'cleaned',
+        } as any);
+      }
+      
+      // Front section: C11-C24
+      for (let i = 11; i <= 24; i++) {
+        await storage.createCapsule({
+          number: `C${i}`,
+          section: 'front',
+          isAvailable: true,
+          cleaningStatus: 'cleaned',
+        } as any);
+      }
+      
+      console.log("✅ Initialized 22 capsules");
+    }
+  } catch (e) {
+    console.warn("Warning: could not initialize capsules:", e);
+  }
+
   // Seed a few active capsule problems if none exist
   try {
     const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1 });

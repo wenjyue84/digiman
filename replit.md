@@ -2,7 +2,26 @@
 
 This is a capsule hostel management system called "Pelangi Capsule Hostel" built as a full-stack web application. The system manages guest check-ins, check-outs, and provides a dashboard for monitoring occupancy across 24 capsules (A-01 to A-08, B-01 to B-08, C-01 to C-08). The application features a modern React frontend with TypeScript and a Node.js/Express backend, designed for real-time hostel operations management.
 
-## Recent Updates (August 8, 2025)
+## Recent Updates (August 12, 2025)
+
+### **Database Migration to PostgreSQL - Production Ready**
+- **CRITICAL ARCHITECTURE CHANGE**: Migrated from in-memory storage to PostgreSQL database for production persistence
+- **Database Setup**: Successfully provisioned PostgreSQL database with Replit's managed service
+- **Schema Migration**: Applied all Drizzle schemas to PostgreSQL using `npm run db:push`
+- **Storage Layer Update**: Switched from `MemStorage` to `DatabaseStorage` implementation
+- **Data Persistence**: All guest check-ins, capsules, and settings now persist across deployments
+- **Automatic Initialization**: 
+  - 22 capsules automatically initialized on first startup (C1-C6, C11-C24, C25-C26)
+  - Default users and configuration settings seeded in database
+  - Sample capsule problems generated for testing
+- **Production Ready**: Application can now handle real guest data without data loss on redeploy
+- **Environment Variables**: DATABASE_URL, PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE configured
+- **Files Modified**:
+  - `server/storage.ts`: Fixed TypeScript errors and ensured database compatibility
+  - `server/index.ts`: Added capsule initialization logic for fresh database
+  - Database tables: users, guests, capsules, sessions, guestTokens, capsuleProblems, adminNotifications, appSettings
+
+## Previous Updates (August 8, 2025)
 
 ### Global Error Boundary Implementation
 - **Comprehensive Error Handling**: Implemented a global error boundary system to standardize error handling across the React application
@@ -132,11 +151,11 @@ The server-side uses Node.js with Express in a RESTful API pattern:
 - **Error Handling**: Centralized error handling middleware with detailed validation error responses
 
 ## Data Storage Solutions
-The application uses a flexible storage abstraction pattern:
+The application uses PostgreSQL database with a flexible storage abstraction pattern:
 
-- **Current Implementation**: In-memory storage for development/demonstration
-- **Database Schema**: Designed for PostgreSQL using Drizzle ORM with defined tables for users and guests
-- **Migration Ready**: Drizzle configuration is set up for PostgreSQL migration when database is provisioned
+- **Current Implementation**: PostgreSQL database with Drizzle ORM for production persistence
+- **Database Schema**: Fully implemented PostgreSQL schema with tables for users, guests, capsules, sessions, guest tokens, capsule problems, admin notifications, and app settings
+- **Production Ready**: Database configured and running with automatic data initialization
 - **Type Safety**: Full TypeScript integration with comprehensive Zod schemas including:
   - Runtime validation with detailed error messages
   - Input sanitization and formatting

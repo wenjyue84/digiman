@@ -204,6 +204,10 @@ export class MemStorage implements IStorage {
         cleaningStatus: 'cleaned',
         lastCleanedAt: null,
         lastCleanedBy: null,
+        color: null,
+        purchaseDate: null,
+        position: null,
+        remark: null,
       };
       this.capsules.set(capsule.number, capsule);
     }
@@ -218,6 +222,10 @@ export class MemStorage implements IStorage {
         cleaningStatus: 'cleaned',
         lastCleanedAt: null,
         lastCleanedBy: null,
+        color: null,
+        purchaseDate: null,
+        position: null,
+        remark: null,
       };
       this.capsules.set(capsule.number, capsule);
     }
@@ -232,6 +240,10 @@ export class MemStorage implements IStorage {
         cleaningStatus: 'cleaned',
         lastCleanedAt: null,
         lastCleanedBy: null,
+        color: null,
+        purchaseDate: null,
+        position: null,
+        remark: null,
       };
       this.capsules.set(capsule.number, capsule);
     }
@@ -470,7 +482,7 @@ export class MemStorage implements IStorage {
   }
 
   async getCapsuleById(id: string): Promise<Capsule | undefined> {
-    for (const capsule of this.capsules.values()) {
+    for (const capsule of Array.from(this.capsules.values())) {
       if (capsule.id === id) {
         return capsule;
       }
@@ -510,6 +522,10 @@ export class MemStorage implements IStorage {
       id,
       lastCleanedAt: insertCapsule.lastCleanedAt || null,
       lastCleanedBy: insertCapsule.lastCleanedBy || null,
+      color: insertCapsule.color || null,
+      purchaseDate: insertCapsule.purchaseDate || null,
+      position: insertCapsule.position || null,
+      remark: insertCapsule.remark || null,
     };
     this.capsules.set(capsule.number, capsule);
     return capsule;
@@ -1388,5 +1404,5 @@ class DatabaseStorage implements IStorage {
   }
 }
 
-// Use MemStorage for development, DatabaseStorage for production
-export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
+// Use DatabaseStorage since we now have a database setup
+export const storage = new DatabaseStorage();
