@@ -40,7 +40,7 @@ function MarkCleanedDialog({ capsule, onSuccess }: MarkCleanedDialogProps) {
     onSuccess: () => {
       toast({
         title: "Success",
-        description: `Capsule ${capsule.number} marked as cleaned successfully`,
+        description: `${labels.singular} ${capsule.number} marked as cleaned successfully`,
       });
       setOpen(false);
       onSuccess();
@@ -72,7 +72,7 @@ function MarkCleanedDialog({ capsule, onSuccess }: MarkCleanedDialogProps) {
         <DialogHeader>
           <DialogTitle>Mark {labels.singular} {capsule.number} as Cleaned</DialogTitle>
           <DialogDescription>
-            Are you sure you want to mark this capsule as cleaned?
+            Are you sure you want to mark this {labels.lowerSingular} as cleaned?
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -234,7 +234,7 @@ export default function CapsuleCleaningStatus() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
-          Capsule Cleaning Status
+          {labels.singular} Cleaning Status
         </CardTitle>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <p className="text-sm text-muted-foreground">
@@ -307,7 +307,7 @@ export default function CapsuleCleaningStatus() {
           
           {cleanedCapsules.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
-              <p>No recently cleaned capsules</p>
+              <p>No recently cleaned {labels.lowerPlural}</p>
             </div>
           ) : (
             <div className={concise ? "grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3 md:grid-cols-2 lg:grid-cols-3"}>

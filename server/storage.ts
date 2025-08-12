@@ -801,6 +801,7 @@ export class MemStorage implements IStorage {
   private initializeDefaultSettings(): void {
     // Initialize default settings
     this.setSetting('guestTokenExpirationHours', '24', 'Hours before guest check-in tokens expire');
+    this.setSetting('accommodationType', 'capsule', 'Type of accommodation (capsule, room, or house)');
     // Guest Guide defaults (can be edited in Settings > Guest Guide)
     this.setSetting(
       'guideIntro',

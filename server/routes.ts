@@ -895,7 +895,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/settings", authenticateToken, async (req, res) => {
     try {
       const guestTokenExpirationHours = await storage.getGuestTokenExpirationHours();
-      const accommodationType = await storage.getSetting('accommodationType') || 'capsule';
+      const accommodationTypeSetting = await storage.getSetting('accommodationType');
+      const accommodationType = accommodationTypeSetting?.value || 'capsule';
       // Load guide fields (fallback empty strings)
       const getVal = async (k: string) => (await storage.getSetting(k))?.value || "";
       res.json({

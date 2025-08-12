@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link2, Copy, Clock, MapPin, Users } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import type { Capsule } from "@shared/schema";
 
 interface TokenGeneratorProps {
@@ -17,6 +18,7 @@ interface TokenGeneratorProps {
 }
 
 export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorProps) {
+  const labels = useAccommodationLabels();
   const [selectedCapsule, setSelectedCapsule] = useState("auto-assign");
   const [guestName, setGuestName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -89,7 +91,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
         await navigator.clipboard.writeText(data.link);
         toast({
           title: "Instant Link Created & Copied!",
-          description: `Auto-assign link copied to clipboard. Capsule: ${data.capsuleNumber}`,
+          description: `Auto-assign link copied to clipboard. ${labels.singular}: ${data.capsuleNumber}`,
         });
       } catch (error) {
         toast({
@@ -113,7 +115,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
     if (!selectedCapsule) {
       toast({
         title: "Validation Error",
-        description: "Please select a capsule assignment option",
+        description: `Please select a ${labels.lowerSingular} assignment option`,
         variant: "destructive",
       });
       return;
@@ -243,17 +245,17 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
             <div>
               <Label htmlFor="capsule" className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Select Capsule
+                Select {labels.singular}
               </Label>
               <Select value={selectedCapsule} onValueChange={setSelectedCapsule}>
                 <SelectTrigger className="w-full mt-1">
-                  <SelectValue placeholder="Choose capsule assignment" />
+                  <SelectValue placeholder={`Choose ${labels.lowerSingular} assignment`} />
                 </SelectTrigger>
                 <SelectContent>
                   {capsulesLoading ? (
-                    <SelectItem value="loading" disabled>Loading capsules...</SelectItem>
+                    <SelectItem value="loading" disabled>Loading {labels.lowerPlural}...</SelectItem>
                   ) : availableCapsules.length === 0 ? (
-                    <SelectItem value="no-capsules" disabled>No capsules available</SelectItem>
+                    <SelectItem value="no-capsules" disabled>No {labels.lowerPlural} available</SelectItem>
                   ) : (
                     <>
                       <SelectItem value="auto-assign">
@@ -379,7 +381,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
               </div>
               {!generatedToken.capsuleNumber && (
                 <div className="text-xs text-blue-600 mt-1 font-medium">
-                  Capsule will be auto-assigned based on guest's gender
+                  {labels.singular} will be auto-assigned based on guest's gender
                 </div>
               )}
             </div>

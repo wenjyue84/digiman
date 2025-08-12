@@ -14,6 +14,7 @@ import GuestDetailsModal from "./guest-details-modal";
 import { CheckoutConfirmationDialog } from "./confirmation-dialog";
 import type { Guest, GuestToken, PaginatedResponse } from "@shared/schema";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 
 type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
 type SortOrder = 'asc' | 'desc';
@@ -233,6 +234,7 @@ function SwipeableGuestRow({ guest, onCheckout, onGuestClick, isCondensedView, c
 
 export default function SortableGuestTable() {
   const queryClient = useQueryClient();
+  const labels = useAccommodationLabels();
   const [isCondensedView, setIsCondensedView] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -530,7 +532,7 @@ export default function SortableGuestTable() {
                 <tr>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
                     <div className="flex items-center gap-1">
-                      Capsule
+                      {labels.singular}
                       <SortButton field="capsuleNumber" currentSort={sortConfig} onSort={handleSort} />
                     </div>
                   </th>
@@ -574,7 +576,7 @@ export default function SortableGuestTable() {
                         isCondensedView={isCondensedView}
                         isCheckingOut={isGuestCheckingOut}
                       >
-                        {/* Capsule column - sticky first column */}
+                        {/* Accommodation column - sticky first column */}
                         <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
                           <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">
                             {guest.capsuleNumber}
@@ -669,7 +671,7 @@ export default function SortableGuestTable() {
                     const pendingData = item.data;
                     return (
                       <tr key={`pending-${pendingData.id}`} className="bg-orange-50">
-                        {/* Capsule column - sticky first column */}
+                        {/* Accommodation column - sticky first column */}
                         <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-orange-50 z-10">
                           <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">
                             {pendingData.capsuleNumber}

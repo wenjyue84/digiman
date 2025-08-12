@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserMinus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import type { Guest, PaginatedResponse } from "@shared/schema";
 
 function formatDuration(checkinTime: string): string {
@@ -43,6 +44,7 @@ function getInitials(name: string): string {
 export default function CheckOut() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const labels = useAccommodationLabels();
   
   const { data: guestsResponse, isLoading } = useQuery<PaginatedResponse<Guest>>({
     queryKey: ["/api/guests/checked-in"],
@@ -117,7 +119,7 @@ export default function CheckOut() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capsule</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{labels.singular}</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-in Time</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
