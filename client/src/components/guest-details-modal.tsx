@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { User, Calendar, MapPin, Phone, Mail, CreditCard, Edit, Save, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import type { Guest } from "@shared/schema";
 
 interface GuestDetailsModalProps {
@@ -24,6 +25,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
   const [editData, setEditData] = useState<Partial<Guest>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const labels = useAccommodationLabels();
 
   const updateGuestMutation = useMutation({
     mutationFn: async (updates: Partial<Guest>) => {
@@ -333,7 +335,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Capsule</Label>
+                <Label>{labels.singular}</Label>
                 <div className="mt-1">
                   <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
                     <MapPin className="h-3 w-3 mr-1" />
