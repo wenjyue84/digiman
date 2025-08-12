@@ -18,6 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { useToast } from "@/hooks/use-toast";
 import { AuthContext } from "@/lib/auth";
+import { useTheme } from "@/lib/theme";
 import { updateSettingsSchema, type UpdateSettings, type CapsuleProblem, type User, type InsertUser, insertUserSchema, type PaginatedResponse, type Capsule, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -149,8 +150,8 @@ export default function SettingsPage() {
             <Settings className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-            <p className="text-gray-600 mt-1">Configure system settings and preferences</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Configure system settings and preferences</p>
           </div>
         </div>
       </div>
@@ -158,44 +159,44 @@ export default function SettingsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="general" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100">
-              <Cog className="h-3 w-3 text-blue-600" />
+            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900">
+              <Cog className="h-3 w-3 text-blue-600 dark:text-blue-400" />
             </div>
             General
           </TabsTrigger>
           <TabsTrigger value="capsules" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
-              <Building className="h-3 w-3 text-purple-600" />
+            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100 dark:bg-purple-900">
+              <Building className="h-3 w-3 text-purple-600 dark:text-purple-400" />
             </div>
             {labels.plural}
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-100">
-              <Wrench className="h-3 w-3 text-orange-600" />
+            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-100 dark:bg-orange-900">
+              <Wrench className="h-3 w-3 text-orange-600 dark:text-orange-400" />
             </div>
             Maintenance
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100">
-              <UserCheck className="h-3 w-3 text-green-600" />
+            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100 dark:bg-green-900">
+              <UserCheck className="h-3 w-3 text-green-600 dark:text-green-400" />
             </div>
             Users
           </TabsTrigger>
           <TabsTrigger value="messages" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-cyan-100">
-              <Mail className="h-3 w-3 text-cyan-600" />
+            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-cyan-100 dark:bg-cyan-900">
+              <Mail className="h-3 w-3 text-cyan-600 dark:text-cyan-400" />
             </div>
             Messages
           </TabsTrigger>
           <TabsTrigger value="guide" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100">
-              <BookOpen className="h-3 w-3 text-indigo-600" />
+            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100 dark:bg-indigo-900">
+              <BookOpen className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
             </div>
             Guest Guide
           </TabsTrigger>
           <TabsTrigger value="tests" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100">
-              <TestTube className="h-3 w-3 text-pink-600" />
+            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100 dark:bg-pink-900">
+              <TestTube className="h-3 w-3 text-pink-600 dark:text-pink-400" />
             </div>
             Tests
           </TabsTrigger>
@@ -263,21 +264,274 @@ export default function SettingsPage() {
 
 // General Settings Tab Component
 function GeneralSettingsTab({ settings, isLoading, form, onSubmit, resetToDefault, updateSettingsMutation }: any) {
+  const { theme, setTheme } = useTheme();
+  const [language, setLanguage] = useState<'en' | 'zh' | 'ms'>('en');
+
+  const handleLanguageChange = (newLanguage: 'en' | 'zh' | 'ms') => {
+    setLanguage(newLanguage);
+    // Here you would typically update the app's language context
+    // For now, we'll just update the local state
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6">
+      {/* System Preferences */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-blue-600" />
-            Guest Check-In Settings
+            <Cog className="h-5 w-5 text-blue-600" />
+            System Preferences
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Theme Selection */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Theme</Label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant={theme === 'light' ? 'default' : 'outline'}
+                  onClick={() => setTheme('light')}
+                  className="flex items-center gap-2"
+                >
+                  <div className="w-4 h-4 rounded-full bg-yellow-400"></div>
+                  Light Mode
+                </Button>
+                <Button
+                  variant={theme === 'dark' ? 'default' : 'outline'}
+                  onClick={() => setTheme('dark')}
+                  className="flex items-center gap-2"
+                >
+                  <div className="w-4 h-4 rounded-full bg-gray-800"></div>
+                  Dark Mode
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Choose your preferred visual theme for the system interface.
+              </p>
+            </div>
+
+            {/* Language Selection */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Language</Label>
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger className="max-w-xs">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="zh">中文 (Chinese)</SelectItem>
+                  <SelectItem value="ms">Bahasa Melayu (Malay)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-gray-600">
+                Select your preferred language for the system interface.
+              </p>
+            </div>
+          </div>
+
+          {/* Additional System Settings */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Additional Settings</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Date Format */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Date Format</Label>
+                <Select defaultValue="dd/mm/yyyy">
+                  <SelectTrigger className="max-w-xs">
+                    <SelectValue placeholder="Select date format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                    <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                    <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Choose how dates are displayed throughout the system.
+                </p>
+              </div>
+
+              {/* Time Format */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Time Format</Label>
+                <Select defaultValue="24h">
+                  <SelectTrigger className="max-w-xs">
+                    <SelectValue placeholder="Select time format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24h">24-hour (14:30)</SelectItem>
+                    <SelectItem value="12h">12-hour (2:30 PM)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Choose between 12-hour and 24-hour time display.
+                </p>
+              </div>
+            </div>
+
+            {/* Hostel-Specific Settings */}
+            <div className="space-y-4">
+              <h5 className="text-md font-semibold text-gray-800 dark:text-gray-200">Hostel Preferences</h5>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Currency */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Currency</Label>
+                  <Select defaultValue="MYR">
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MYR">Malaysian Ringgit (MYR)</SelectItem>
+                      <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                      <SelectItem value="SGD">Singapore Dollar (SGD)</SelectItem>
+                      <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Currency used for pricing and payments.
+                  </p>
+                </div>
+
+                {/* Timezone */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Timezone</Label>
+                  <Select defaultValue="Asia/Kuala_Lumpur">
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur (UTC+8)</SelectItem>
+                      <SelectItem value="Asia/Singapore">Asia/Singapore (UTC+8)</SelectItem>
+                      <SelectItem value="Asia/Manila">Asia/Manila (UTC+8)</SelectItem>
+                      <SelectItem value="Asia/Bangkok">Asia/Bangkok (UTC+7)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Local timezone for the hostel.
+                  </p>
+                </div>
+              </div>
+
+              {/* Check-in/out Times */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Default Check-in Time</Label>
+                  <Select defaultValue="15:00">
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="12:00">12:00 PM</SelectItem>
+                      <SelectItem value="14:00">2:00 PM</SelectItem>
+                      <SelectItem value="15:00">3:00 PM</SelectItem>
+                      <SelectItem value="16:00">4:00 PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Default check-in time for new bookings.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Default Check-out Time</Label>
+                  <Select defaultValue="12:00">
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10:00">10:00 AM</SelectItem>
+                      <SelectItem value="11:00">11:00 AM</SelectItem>
+                      <SelectItem value="12:00">12:00 PM</SelectItem>
+                      <SelectItem value="13:00">1:00 PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Default check-out time for guests.
+                  </p>
+                </div>
+              </div>
+
+              {/* Notification Preferences */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Notification Preferences</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="email-notifications" defaultChecked />
+                    <Label htmlFor="email-notifications">Email Notifications</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="sms-notifications" />
+                    <Label htmlFor="sms-notifications">SMS Notifications</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="push-notifications" defaultChecked />
+                    <Label htmlFor="push-notifications">Push Notifications</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="guest-arrival-alerts" defaultChecked />
+                    <Label htmlFor="guest-arrival-alerts">Guest Arrival Alerts</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="maintenance-alerts" defaultChecked />
+                    <Label htmlFor="maintenance-alerts">Maintenance Alerts</Label>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Configure how you receive system notifications and alerts.
+                </p>
+              </div>
+
+              {/* Privacy Settings */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Privacy & Security</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="auto-logout" defaultChecked />
+                    <Label htmlFor="auto-logout">Auto-logout after inactivity</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="session-timeout" defaultChecked />
+                    <Label htmlFor="session-timeout">Session timeout warnings</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="audit-log" defaultChecked />
+                    <Label htmlFor="audit-log">Audit logging</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="data-encryption" defaultChecked />
+                    <Label htmlFor="data-encryption">Data encryption</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="backup-automation" defaultChecked />
+                    <Label htmlFor="backup-automation">Automated backups</Label>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Configure security and privacy settings for your account.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Accommodation Term Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            Accommodation Term Settings
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="space-y-4">
-              <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-10 bg-gray-200 rounded animate-pulse w-32"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-32"></div>
             </div>
           ) : (
             <Form {...form}>
@@ -298,46 +552,15 @@ function GeneralSettingsTab({ settings, isLoading, form, onSubmit, resetToDefaul
                           <SelectItem value="house">House (Homestay)</SelectItem>
                         </SelectContent>
                       </Select>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         This term will be used across the system (e.g., Check-in forms, Maintenance, Dashboard).
                       </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="guestTokenExpirationHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Token Expiration Time</FormLabel>
-                      <div className="flex items-center gap-2">
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="168"
-                            placeholder="24"
-                            className="max-w-xs"
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <span className="text-sm text-gray-500">hours</span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        How long guest check-in tokens remain valid after creation.
-                        <br />
-                        <span className="text-xs text-gray-500">
-                          Range: 1-168 hours (1 hour to 7 days)
-                        </span>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
-                <div className="flex items-center gap-3 pt-4 border-t">
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     type="submit"
                     disabled={updateSettingsMutation.isPending}
@@ -354,7 +577,7 @@ function GeneralSettingsTab({ settings, isLoading, form, onSubmit, resetToDefaul
                     className="flex items-center gap-2"
                   >
                     <RotateCcw className="h-4 w-4" />
-                    Reset to Default (24h)
+                    Reset to Default
                   </Button>
                 </div>
               </form>
@@ -370,29 +593,29 @@ function GeneralSettingsTab({ settings, isLoading, form, onSubmit, resetToDefaul
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div>
-                <p className="text-sm font-medium text-gray-900">Token Validity</p>
-                <p className="text-xs text-gray-500">Time before tokens expire</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Accommodation Term</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Term used across system</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-semibold text-blue-600">
-                  {settings?.guestTokenExpirationHours || 24}h
+                <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">
+                  {(settings as any)?.accommodationType || "capsule"}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {settings?.guestTokenExpirationHours === 24 ? "Default" : "Custom"}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(settings as any)?.accommodationType === "capsule" ? "Default" : "Custom"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div>
-                <p className="text-sm font-medium text-gray-900">Edit Window</p>
-                <p className="text-xs text-gray-500">After guest completes check-in</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Current Theme</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Visual interface theme</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-semibold text-green-600">1h</p>
-                <p className="text-xs text-gray-500">Fixed</p>
+                <p className="text-lg font-semibold text-blue-600 dark:text-blue-400 capitalize">{theme}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Active</p>
               </div>
             </div>
           </div>
@@ -482,12 +705,118 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
 
   return (
     <div className="space-y-6">
+      {/* Guest Check-in Settings Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            Guest Check-in Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>💡 Note:</strong> These settings control how the guest check-in system works. 
+                They are closely related to the guest guide experience and are grouped here for better organization.
+              </p>
+            </div>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit((data: any) => updateSettingsMutation.mutate(data))} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="guestTokenExpirationHours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Token Expiration Time</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="168"
+                            placeholder="24"
+                            className="max-w-xs"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">hours</span>
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        How long guest check-in tokens remain valid after creation.
+                        <br />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Range: 1-168 hours (1 hour to 7 days)
+                        </span>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button
+                    type="submit"
+                    disabled={updateSettingsMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    {updateSettingsMutation.isPending ? "Saving..." : "Save Check-in Settings"}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => form.setValue("guestTokenExpirationHours", 24)}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Reset to Default (24h)
+                  </Button>
+                </div>
+              </form>
+            </Form>
+
+            {/* Current Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Token Validity</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Time before tokens expire</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    {settings?.guestTokenExpirationHours || 24}h
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {settings?.guestTokenExpirationHours === 24 ? "Default" : "Custom"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Edit Window</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">After guest completes check-in</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-semibold text-green-600 dark:text-green-400">1h</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Fixed</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Editor Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-600" />
+              <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               Guest Guide Content Editor
             </CardTitle>
             <div className="flex items-center gap-2">
@@ -517,21 +846,21 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
         </CardHeader>
         <CardContent>
         {/* Templates Loader */}
-        <div className="p-3 mb-4 rounded border bg-gray-50">
+        <div className="p-3 mb-4 rounded border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium text-gray-700">Quick Templates:</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Quick Templates:</span>
             {guideTemplates.map((t) => (
               <Button key={t.id} type="button" variant="outline" size="sm" onClick={() => applyTemplate(t.id)}>
                 {t.name}
               </Button>
             ))}
-            <span className="text-xs text-gray-500">Click a template to populate Introduction, How to Check‑in, Other Guidance, and FAQ.</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Click a template to populate Introduction, How to Check‑in, Other Guidance, and FAQ.</span>
           </div>
         </div>
 
         {/* Helper Text */}
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-700">
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
             <strong>💡 Tip:</strong> Edit the content below to customize what guests see after successful check-in. 
             Use the "Show Preview" button above to see a real-time preview of your changes. 
             Toggle visibility switches to show/hide specific sections.
@@ -539,14 +868,14 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data: any) => updateSettingsMutation.mutate(data))} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded border">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
               <div className="space-y-2">
                 <FormField name={"guideShowIntro" as any} control={form.control} render={({ field }) => (
                   <FormItem className="flex items-center gap-2">
                     <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Introduction</Label>
+                          <Label className="text-sm cursor-help select-none dark:text-gray-200" tabIndex={0}>Show Introduction</Label>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="start">
                           When enabled, the Introduction text will be shown to guests right after they submit their check-in information.
@@ -561,7 +890,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                     <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Address</Label>
+                          <Label className="text-sm cursor-help select-none dark:text-gray-200" tabIndex={0}>Show Address</Label>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="start">
                           Enable to include your address and contact info in the post check-in guide so guests can find you easily.
@@ -578,7 +907,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                     <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Label className="text-sm cursor-help select-none" tabIndex={0}>Show WiFi</Label>
+                          <Label className="text-sm cursor-help select-none dark:text-gray-200" tabIndex={0}>Show WiFi</Label>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="start">
                           Display WiFi name and password to guests after check-in.
@@ -593,7 +922,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                     <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Label className="text-sm cursor-help select-none" tabIndex={0}>Show How to Check In</Label>
+                          <Label className="text-sm cursor-help select-none dark:text-gray-200" tabIndex={0}>Show How to Check In</Label>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="start">
                           Provide step-by-step instructions (front desk, token usage, ID) shown right after guest submits their details.
@@ -610,7 +939,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                     <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Other Guidance</Label>
+                          <Label className="text-sm cursor-help select-none dark:text-gray-200" tabIndex={0}>Show Other Guidance</Label>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="start">
                           House rules, amenities overview, and helpful tips will be included in the guest-facing guide.
@@ -625,7 +954,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                     <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Label className="text-sm cursor-help select-none" tabIndex={0}>Show FAQ</Label>
+                          <Label className="text-sm cursor-help select-none dark:text-gray-200" tabIndex={0}>Show FAQ</Label>
                         </TooltipTrigger>
                         <TooltipContent side="top" align="start">
                           Common questions like parking, towels, luggage storage, and quiet hours shown after check-in.
@@ -689,11 +1018,11 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
 
             {/* Quick Links Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Globe className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Quick Links Configuration
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Configure the links that appear in the "Quick Links" section of the guest success page.
               </p>
               
@@ -735,11 +1064,11 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
 
             {/* Time and Access Settings */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Time and Access Settings
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Configure the check-in/check-out times and door password that appear in the guest success page.
               </p>
               
@@ -815,7 +1144,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
 
     {/* Preview Section */}
     {showPreview && (
-      <Card className="border-2 border-blue-200">
+      <Card className="border-2 border-blue-200 dark:border-blue-800">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -826,29 +1155,29 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
           </div>
         </CardHeader>
         <CardContent>
-                        <div className={`preview-content ${previewMode === 'mobile' ? 'max-w-sm' : 'max-w-2xl'} mx-auto border rounded-lg overflow-hidden bg-gradient-to-br from-orange-50 to-pink-50 shadow-xl`}>
+                        <div className={`preview-content ${previewMode === 'mobile' ? 'max-w-sm' : 'max-w-2xl'} mx-auto border rounded-lg overflow-hidden bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-900/20 dark:to-pink-900/20 shadow-xl`}>
             <div className="p-6">
               {/* Success Header */}
               <div className="text-center mb-6">
                 <div className={`${previewMode === 'mobile' ? 'text-3xl mb-3' : 'text-4xl mb-4'}`}>🎉</div>
-                <h1 className={`${previewMode === 'mobile' ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 mb-2`}>Good Day, Our Honorable Guest!</h1>
+                <h1 className={`${previewMode === 'mobile' ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 dark:text-gray-100 mb-2`}>Good Day, Our Honorable Guest!</h1>
                 <div className={`${previewMode === 'mobile' ? 'text-xl mb-3' : 'text-2xl mb-4'}`}>🎉</div>
               </div>
 
               {/* Welcome Section */}
               {watchedValues.showIntro && watchedValues.intro && (
-                <div className={`bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl ${previewMode === 'mobile' ? 'p-4' : 'p-6'} mb-6 text-center`}>
-                  <h2 className={`${previewMode === 'mobile' ? 'text-lg' : 'text-xl'} font-bold text-gray-800 mb-2 flex items-center justify-center gap-2`}>
+                <div className={`bg-gradient-to-r from-orange-100 to-pink-100 dark:from-orange-900/30 dark:to-pink-900/30 rounded-xl ${previewMode === 'mobile' ? 'p-4' : 'p-6'} mb-6 text-center`}>
+                  <h2 className={`${previewMode === 'mobile' ? 'text-lg' : 'text-xl'} font-bold text-gray-800 dark:text-gray-200 mb-2 flex items-center justify-center gap-2`}>
                     Welcome to Pelangi Capsule Hostel <span className={`${previewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>🌈</span>
                   </h2>
-                  <div className={`text-gray-700 whitespace-pre-wrap ${previewMode === 'mobile' ? 'text-sm' : ''}`}>{watchedValues.intro}</div>
+                  <div className={`text-gray-700 dark:text-gray-300 whitespace-pre-wrap ${previewMode === 'mobile' ? 'text-sm' : ''}`}>{watchedValues.intro}</div>
                 </div>
               )}
 
               {/* Address Section */}
               {watchedValues.showAddress && watchedValues.address && (
                 <div className="mb-6 text-center">
-                  <div className="flex items-center justify-center gap-2 text-gray-700">
+                  <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300">
                     <MapPin className="h-4 w-4" />
                     <div className="whitespace-pre-wrap">{watchedValues.address}</div>
                   </div>
@@ -883,19 +1212,19 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                     className="flex items-center gap-2 h-auto py-3 px-4"
                     onClick={() => window.open(watchedValues.checkinVideoUrl, '_blank')}
                   >
-                    <Video className="h-4 w-4" />
+                    <Camera className="h-4 w-4" />
                     <span className="text-sm">Check-in Video</span>
                   </Button>
                 )}
                 {!watchedValues.hostelPhotosUrl && !watchedValues.googleMapsUrl && !watchedValues.checkinVideoUrl && (
-                  <div className="col-span-3 text-center text-gray-500 text-sm py-4">
+                  <div className="col-span-3 text-center text-gray-500 dark:text-gray-400 text-sm py-4">
                     No quick links configured. Add URLs in the Quick Links Configuration section above.
                   </div>
                 )}
               </div>
 
               {/* Check-in/out Times */}
-              <div className="border-t border-gray-200 py-6 space-y-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 py-6 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <span>🕒</span>
@@ -910,16 +1239,16 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                 </div>
 
                 {/* Important Info */}
-                <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <span>🔐</span>
                     <span className="font-medium">Door Password:</span>
-                    <span className="font-mono text-lg font-bold text-blue-600">{watchedValues.doorPassword || '1270#'}</span>
+                    <span className="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">{watchedValues.doorPassword || '1270#'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span>🛌</span>
                     <span className="font-medium">Your Capsule No.:</span>
-                    <span className="font-bold text-lg text-orange-600">Assigned based on availability</span>
+                    <span className="font-bold text-lg text-orange-600 dark:text-orange-400">Assigned based on availability</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span>🃏</span>
@@ -930,9 +1259,9 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
 
                 {/* WiFi Info */}
                 {watchedValues.showWifi && (watchedValues.wifiName || watchedValues.wifiPassword) && (
-                  <div className="bg-green-50 rounded-lg p-4">
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Wifi className="h-4 w-4 text-green-600" />
+                      <Wifi className="h-4 w-4 text-green-600 dark:text-green-400" />
                       <span className="font-medium">WiFi Information</span>
                     </div>
                     {watchedValues.wifiName && (
@@ -947,46 +1276,46 @@ function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
                 {/* Check-in Instructions */}
                 {watchedValues.showCheckin && watchedValues.checkin && (
                   <div className="space-y-2">
-                    <h3 className="font-bold text-gray-800">How to Check In:</h3>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{watchedValues.checkin}</div>
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200">How to Check In:</h3>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{watchedValues.checkin}</div>
                   </div>
                 )}
 
                 {/* Other Guidance */}
                 {watchedValues.showOther && watchedValues.other && (
                   <div className="space-y-2">
-                    <h3 className="font-bold text-gray-800">Additional Information:</h3>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{watchedValues.other}</div>
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200">Additional Information:</h3>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{watchedValues.other}</div>
                   </div>
                 )}
 
                 {/* FAQ */}
                 {watchedValues.showFaq && watchedValues.faq && (
                   <div className="space-y-2">
-                    <h3 className="font-bold text-gray-800">Frequently Asked Questions:</h3>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{watchedValues.faq}</div>
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200">Frequently Asked Questions:</h3>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{watchedValues.faq}</div>
                   </div>
                 )}
 
                 {/* Important Reminders */}
                 {watchedValues.importantReminders && (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                    <h3 className="font-bold text-red-800 mb-2 flex items-center gap-2">
+                  <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-600 p-4">
+                    <h3 className="font-bold text-red-800 dark:text-red-200 mb-2 flex items-center gap-2">
                       <span>⚠</span> Important Reminders:
                     </h3>
-                    <div className="text-sm text-red-700 whitespace-pre-wrap">
+                    <div className="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap">
                       {watchedValues.importantReminders}
                     </div>
                   </div>
                 )}
 
-                <div className="text-center text-gray-600 text-sm">
+                <div className="text-center text-gray-600 dark:text-gray-400 text-sm">
                   For any assistance, please contact reception.<br />
                   Enjoy your stay at Pelangi Capsule Hostel! 💼🌟
                 </div>
 
                 {/* Print and Email buttons for testing */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 pt-4 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     variant="outline"
                     onClick={() => {
