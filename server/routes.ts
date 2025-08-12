@@ -234,6 +234,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk checkout all currently checked-in guests
+  app.post("/api/guests/checkout-all", authenticateToken, async (_req: any, res) => {
+    try {
+      // Get all currently checked-in guests
+      const checkedInResponse = await storage.getCheckedInGuests({ page: 1, limit: 10000 });
+      const checkedIn = checkedInResponse.data || [];
+
+      if (checkedIn.length === 0) {
+        return res.json({ count: 0, checkedOutIds: [], message: "No guests currently checked in" });
+      }
+
+      const checkedOutIds: string[] = [];
+      for (const guest of checkedIn) {
+        const updated = await storage.checkoutGuest(guest.id);
+        if (updated) checkedOutIds.push(updated.id);
+      }
+
+      return res.json({ 
+        count: checkedOutIds.length, 
+        checkedOutIds,
+        message: `Successfully checked out ${checkedOutIds.length} guests`
+      });
+    } catch (error) {
+      console.error("Bulk checkout all failed:", error);
+      return res.status(500).json({ message: "Failed to bulk checkout all guests" });
+    }
+  });
+
   // Logout endpoint
   app.post("/api/auth/logout", authenticateToken, async (req: any, res) => {
     try {
