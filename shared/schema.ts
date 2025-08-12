@@ -461,6 +461,15 @@ export const guestSelfCheckinSchema = z.object({
   message: "Please provide either IC number or passport number",
   path: ["icNumber"],
 }).refine((data) => {
+  // At least one document upload is required for all users
+  if (!data.icDocumentUrl && !data.passportDocumentUrl) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please upload a photo of your IC or passport. This is mandatory for all guests.",
+  path: ["icDocumentUrl"],
+}).refine((data) => {
   // If IC number is provided, IC document is required
   if (data.icNumber && !data.icDocumentUrl) {
     return false;
