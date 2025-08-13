@@ -50,3 +50,39 @@ export function getHolidayLabel(dateStr?: string): string | null {
   const others = matches.filter((h) => h !== primary).map((h) => h.name);
   return `${primary.name}${others.length ? ` (+${others.length} more)` : ""}`;
 }
+
+export type MonthHolidays = {
+  date: string;
+  holidays: Holiday[];
+};
+
+const monthHolidayCache = new Map<string, MonthHolidays[]>();
+
+export async function getMonthHolidays(
+  year: number,
+  month: number,
+): Promise<MonthHolidays[]> {
+  const key = `${year}-${month}`;
+  if (monthHolidayCache.has(key)) {
+    return monthHolidayCache.get(key)!;
+  }
+
+  const grouped: Record<string, Holiday[]> = {};
+  for (const holiday of HOLIDAYS_2025) {
+    const date = new Date(holiday.date);
+    if (date.getFullYear() === year && date.getMonth() === month) {
+      if (!grouped[holiday.date]) {
+        grouped[holiday.date] = [];
+      }
+      grouped[holiday.date].push(holiday);
+    }
+  }
+
+  const result = Object.entries(grouped).map(([date, holidays]) => ({
+    date,
+    holidays,
+  }));
+
+  monthHolidayCache.set(key, result);
+  return result;
+}

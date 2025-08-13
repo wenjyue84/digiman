@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,11 +25,36 @@ interface CalendarData {
 export default function OccupancyCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const calendarRef = useRef<HTMLDivElement | null>(null);
+  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
+
+  useEffect(() => {
+    const node = calendarRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setIsCalendarVisible(true);
+        observer.disconnect();
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   // Fetch calendar data for the current month
-  const { data: calendarData = {}, isLoading } = useVisibilityQuery<CalendarData>({
+  const { data: calendarData = {}, isLoading: isCalendarLoading } = useVisibilityQuery<CalendarData>({
     queryKey: ["/api/calendar/occupancy", currentMonth.getFullYear(), currentMonth.getMonth()],
+    enabled: isCalendarVisible,
     // Uses smart config: nearRealtime (30s stale, 60s refetch) for calendar data
+  });
+
+  const { data: monthHolidays = [], isLoading: isMonthHolidaysLoading } = useVisibilityQuery({
+    queryKey: ["/api/holidays", currentMonth.getFullYear(), currentMonth.getMonth()],
+    enabled: isCalendarVisible,
+    queryFn: async () => {
+      const { getMonthHolidays } = await import("@/lib/holidays");
+      return getMonthHolidays(currentMonth.getFullYear(), currentMonth.getMonth());
+    },
   });
 
   const selectedDateData = useMemo(() => {
@@ -86,29 +111,9 @@ export default function OccupancyCalendar() {
     setCurrentMonth(newMonth);
   };
 
-  // Get holidays for the current month
-  const monthHolidays = useMemo(() => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const holidays = [];
-    
-    for (let day = 1; day <= 32; day++) {
-      const date = new Date(year, month, day);
-      if (date.getMonth() !== month) break; // Stop when we move to next month
-      
-      const dateStr = date.toISOString().split('T')[0];
-      const dayHolidays = getHolidaysForDate(dateStr);
-      if (dayHolidays.length > 0) {
-        holidays.push({ date: dateStr, holidays: dayHolidays });
-      }
-    }
-    
-    return holidays;
-  }, [currentMonth]);
-
-  if (isLoading) {
+  if (!isCalendarVisible || isCalendarLoading) {
     return (
-      <Card>
+      <Card ref={calendarRef}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5" />
@@ -131,7 +136,7 @@ export default function OccupancyCalendar() {
   }
 
   return (
-    <Card>
+    <Card ref={calendarRef}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5" />
@@ -181,7 +186,12 @@ export default function OccupancyCalendar() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             {/* Holiday Alerts */}
-            {monthHolidays.length > 0 && (
+            {isMonthHolidaysLoading ? (
+              <div className="mb-4 space-y-2">
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : monthHolidays.length > 0 && (
               <div className="mb-4 space-y-2">
                 <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-orange-500" />
@@ -192,23 +202,23 @@ export default function OccupancyCalendar() {
                     const dateObj = new Date(date);
                     const isPublicHoliday = holidays.some(h => h.isPublicHoliday);
                     const primaryHoliday = holidays.find(h => h.isPublicHoliday) || holidays[0];
-                    
+
                     return (
-                      <div 
+                      <div
                         key={date}
                         className={`${
-                          isPublicHoliday 
-                            ? "text-green-700 bg-green-50 border-green-200" 
+                          isPublicHoliday
+                            ? "text-green-700 bg-green-50 border-green-200"
                             : "text-blue-700 bg-blue-50 border-blue-200"
                         } text-sm rounded border p-3 flex items-start gap-2`}
                       >
                         <span>{isPublicHoliday ? "🎉" : "🗓️"}</span>
                         <div className="flex-1">
                           <div className="font-medium">
-                            {dateObj.toLocaleDateString('en-US', { 
-                              weekday: 'short', 
-                              month: 'short', 
-                              day: 'numeric' 
+                            {dateObj.toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric'
                             })}
                           </div>
                           <div>
