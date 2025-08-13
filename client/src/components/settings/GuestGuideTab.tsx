@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TimeSelect } from "@/components/ui/time-select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  BookOpen, MessageSquare, FileText, Camera, Globe, Video, Clock, CheckCircle, Wifi, MapPin, Smartphone, Monitor, Printer, Send, Save 
+  BookOpen, MessageSquare, FileText, Camera, Globe, Video, Clock, CheckCircle, Wifi, MapPin, Smartphone, Monitor, Printer, Send, Save, Key, ClipboardList, HelpCircle, AlertTriangle
 } from "lucide-react";
 
 export default function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('mobile');
   const [activeSubTab, setActiveSubTab] = useState<'content' | 'preview'>('content');
   const [isQuickTemplatesExpanded, setIsQuickTemplatesExpanded] = useState(true);
+
+  // Ensure key sections are shown to guests by default if unset
+  useEffect(() => {
+    const keysToDefaultTrue = [
+      'guideShowAddress',
+      'guideShowWifi',
+      'guideShowCheckin',
+      'guideShowOther',
+      // Quick links visibility
+      'guideShowHostelPhotos',
+      'guideShowGoogleMaps',
+      'guideShowCheckinVideo',
+    ];
+    keysToDefaultTrue.forEach((k) => {
+      const current = form.getValues(k as any);
+      if (current === undefined || current === null) {
+        form.setValue(k as any, true, { shouldDirty: false, shouldTouch: false });
+      }
+    });
+  }, [form]);
 
   const guideTemplates: Array<{ id: string; name: string; intro: string; checkin: string; other: string; faq: string; }>
     = [
@@ -212,6 +232,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                   <FormField name={"guideIntro" as any} control={form.control} render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-indigo-600" />
                         Introduction
                         <FormField name={"guideShowIntro" as any} control={form.control} render={({ field: visibilityField }) => (
                           <FormItem className="flex items-center gap-2">
@@ -232,6 +253,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                   <FormField name={"guideAddress" as any} control={form.control} render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-orange-600" />
                         Address
                         <FormField name={"guideShowAddress" as any} control={form.control} render={({ field: visibilityField }) => (
                           <FormItem className="flex items-center gap-2">
@@ -255,6 +277,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                   <FormField name={"guideWifiName" as any} control={form.control} render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
+                        <Wifi className="h-4 w-4 text-blue-600" />
                         WiFi Name (SSID)
                         <FormField name={"guideShowWifi" as any} control={form.control} render={({ field: visibilityField }) => (
                           <FormItem className="flex items-center gap-2">
@@ -275,6 +298,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                   <FormField name={"guideWifiPassword" as any} control={form.control} render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2">
+                        <Key className="h-4 w-4 text-amber-600" />
                         WiFi Password
                         <FormField name={"guideShowWifi" as any} control={form.control} render={({ field: visibilityField }) => (
                           <FormItem className="flex items-center gap-2">
@@ -297,6 +321,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                 <FormField name={"guideCheckin" as any} control={form.control} render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
+                      <ClipboardList className="h-4 w-4 text-emerald-600" />
                       How to Check In
                       <FormField name={"guideShowCheckin" as any} control={form.control} render={({ field: visibilityField }) => (
                         <FormItem className="flex items-center gap-2">
@@ -318,6 +343,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                 <FormField name={"guideOther" as any} control={form.control} render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-purple-600" />
                       Other Guidance
                       <FormField name={"guideShowOther" as any} control={form.control} render={({ field: visibilityField }) => (
                         <FormItem className="flex items-center gap-2">
@@ -484,6 +510,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                 <FormField name={"guideFaq" as any} control={form.control} render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
+                      <HelpCircle className="h-4 w-4 text-violet-600" />
                       FAQ
                       <FormField name={"guideShowFaq" as any} control={form.control} render={({ field: visibilityField }) => (
                         <FormItem className="flex items-center gap-2">
@@ -505,7 +532,7 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                 <FormField name={"guideImportantReminders" as any} control={form.control} render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <span>⚠️</span>
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
                       Important Reminders
                     </FormLabel>
                     <Textarea 
