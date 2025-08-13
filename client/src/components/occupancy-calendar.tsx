@@ -3,10 +3,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Users, Bed, ArrowLeft, ArrowRight } from "lucide-react";
+import { CalendarDays, Users, Bed, ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react";
 import { useVisibilityQuery } from "@/hooks/useVisibilityQuery";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Guest } from "@shared/schema";
+import { getHolidayLabel, hasPublicHoliday, getHolidaysForDate } from "@/lib/holidays";
 
 interface DayData {
   date: string;
@@ -40,6 +41,9 @@ export default function OccupancyCalendar() {
   const getDayContent = (date: Date) => {
     const dateString = date.toISOString().split('T')[0];
     const dayData = calendarData[dateString];
+    const dayHolidays = getHolidaysForDate(dateString);
+    const hasHoliday = dayHolidays.length > 0;
+    const isPublicHoliday = hasHoliday && dayHolidays.some(h => h.isPublicHoliday);
     
     if (!dayData) return null;
 
@@ -48,6 +52,14 @@ export default function OccupancyCalendar() {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center relative">
         <span className="text-sm">{date.getDate()}</span>
+        
+        {/* Holiday indicator */}
+        {hasHoliday && (
+          <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full ${
+            isPublicHoliday ? 'bg-green-500' : 'bg-blue-500'
+          }`}></div>
+        )}
+        
         {dayData.checkins.length > 0 && (
           <div className="w-1.5 h-1.5 bg-green-500 rounded-full absolute top-0 right-0"></div>
         )}
@@ -73,6 +85,26 @@ export default function OccupancyCalendar() {
     }
     setCurrentMonth(newMonth);
   };
+
+  // Get holidays for the current month
+  const monthHolidays = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const holidays = [];
+    
+    for (let day = 1; day <= 32; day++) {
+      const date = new Date(year, month, day);
+      if (date.getMonth() !== month) break; // Stop when we move to next month
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const dayHolidays = getHolidaysForDate(dateStr);
+      if (dayHolidays.length > 0) {
+        holidays.push({ date: dateStr, holidays: dayHolidays });
+      }
+    }
+    
+    return holidays;
+  }, [currentMonth]);
 
   if (isLoading) {
     return (
@@ -123,6 +155,14 @@ export default function OccupancyCalendar() {
               <div className="w-6 h-2 bg-red-500 rounded"></div>
               <span>Full</span>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>Public Holiday</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span>Festival</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
@@ -140,6 +180,54 @@ export default function OccupancyCalendar() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
+            {/* Holiday Alerts */}
+            {monthHolidays.length > 0 && (
+              <div className="mb-4 space-y-2">
+                <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                  Public Holidays & Festivals This Month
+                </h4>
+                <div className="space-y-2">
+                  {monthHolidays.map(({ date, holidays }) => {
+                    const dateObj = new Date(date);
+                    const isPublicHoliday = holidays.some(h => h.isPublicHoliday);
+                    const primaryHoliday = holidays.find(h => h.isPublicHoliday) || holidays[0];
+                    
+                    return (
+                      <div 
+                        key={date}
+                        className={`${
+                          isPublicHoliday 
+                            ? "text-green-700 bg-green-50 border-green-200" 
+                            : "text-blue-700 bg-blue-50 border-blue-200"
+                        } text-sm rounded border p-3 flex items-start gap-2`}
+                      >
+                        <span>{isPublicHoliday ? "🎉" : "🗓️"}</span>
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {dateObj.toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </div>
+                          <div>
+                            {isPublicHoliday ? "Public Holiday" : "Festival"}: {primaryHoliday.name}
+                            {holidays.length > 1 && ` (+${holidays.length - 1} more)`}
+                          </div>
+                          {isPublicHoliday && (
+                            <div className="text-xs text-green-600 mt-1 font-medium">
+                              💡 Consider adjusting pricing for higher demand
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -166,6 +254,35 @@ export default function OccupancyCalendar() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    {/* Holiday Alert for Selected Date */}
+                    {(() => {
+                      if (!selectedDate) return null;
+                      const dateStr = selectedDate.toISOString().split('T')[0];
+                      const label = getHolidayLabel(dateStr);
+                      if (!label) return null;
+                      const isPH = hasPublicHoliday(dateStr);
+                      return (
+                        <div className={`${
+                          isPH 
+                            ? "text-green-700 bg-green-50 border-green-200" 
+                            : "text-blue-700 bg-blue-50 border-blue-200"
+                        } text-sm rounded border p-3 flex items-start gap-2`}
+                        >
+                          <span>{isPH ? "🎉" : "🗓️"}</span>
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {isPH ? "Public Holiday" : "Festival"}: {label}
+                            </div>
+                            {isPH && (
+                              <div className="text-xs text-green-600 mt-1 font-medium">
+                                💡 Consider adjusting pricing for higher demand
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Bed className="h-4 w-4" />
