@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import type { Guest, PaginatedResponse } from "@shared/schema";
 
@@ -59,9 +60,14 @@ function getGenderIcon(gender?: string) {
 export default function CheckOut() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isCondensedView, setIsCondensedView] = useState(true);
+  const isMobile = useIsMobile();
+  const [isCondensedView, setIsCondensedView] = useState(() => isMobile);
   const [showBulkCheckoutConfirmation, setShowBulkCheckoutConfirmation] = useState(false);
 
+  // Auto-switch view mode based on device type
+  useEffect(() => {
+    setIsCondensedView(isMobile);
+  }, [isMobile]);
   
   const { data: guestsResponse, isLoading } = useQuery<PaginatedResponse<Guest>>({
     queryKey: ["/api/guests/checked-in"],

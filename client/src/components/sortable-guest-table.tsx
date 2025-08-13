@@ -15,6 +15,7 @@ import { CheckoutConfirmationDialog } from "./confirmation-dialog";
 import type { Guest, GuestToken, PaginatedResponse } from "@shared/schema";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
 type SortOrder = 'asc' | 'desc';
@@ -235,12 +236,18 @@ function SwipeableGuestRow({ guest, onCheckout, onGuestClick, isCondensedView, c
 export default function SortableGuestTable() {
   const queryClient = useQueryClient();
   const labels = useAccommodationLabels();
-  const [isCondensedView, setIsCondensedView] = useState(false);
+  const isMobile = useIsMobile();
+  const [isCondensedView, setIsCondensedView] = useState(() => isMobile);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [checkoutGuest, setCheckoutGuest] = useState<Guest | null>(null);
   const [showCheckoutConfirmation, setShowCheckoutConfirmation] = useState(false);
   const { toast } = useToast();
+
+  // Auto-switch view mode based on device type
+  useEffect(() => {
+    setIsCondensedView(isMobile);
+  }, [isMobile]);
   const { isAuthenticated } = useAuth();
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
     field: 'capsuleNumber',
@@ -660,7 +667,14 @@ export default function SortableGuestTable() {
                             <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
                               {guest.paymentAmount ? (
                                 <div>
-                                  <div className="font-medium">RM {guest.paymentAmount}</div>
+                                  <div className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                                    RM {guest.paymentAmount}
+                                    {!guest.isPaid && guest.notes && (
+                                      <span className="text-red-600 text-xs font-medium ml-1">
+                                        (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="text-xs text-gray-500">{guest.paymentCollector || 'N/A'}</div>
                                 </div>
                               ) : (
@@ -822,9 +836,14 @@ export default function SortableGuestTable() {
                               </div>
                               <div className="col-span-2 flex flex-wrap items-center gap-2">
                                 <span className="font-medium text-gray-800">Payment:</span>
-                                <span>RM {guest.paymentAmount}</span>
+                                <span className={guest.isPaid ? '' : 'text-red-600 font-semibold'}>RM {guest.paymentAmount}</span>
                                 {guest.paymentMethod && <span>• {guest.paymentMethod.toUpperCase()}</span>}
                                 <Badge variant={guest.isPaid ? 'default' : 'destructive'}>{guest.isPaid ? 'Paid' : 'Outstanding'}</Badge>
+                                {!guest.isPaid && guest.notes && (
+                                  <span className="text-red-600 text-xs font-medium">
+                                    Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'}
+                                  </span>
+                                )}
                               </div>
                               {guest.paymentCollector && (
                                 <div className="col-span-2">

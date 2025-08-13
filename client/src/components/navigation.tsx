@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Home, UserPlus, UserX, History, Settings, Clock, LayoutGrid, LogOut, ChevronRightCircle, CalendarDays, ListChecks } from "lucide-react";
+import { Home, UserPlus, UserX, History, Settings, Clock, LayoutGrid, LogOut, ChevronRightCircle, CalendarDays, ListChecks, Database, HardDrive } from "lucide-react";
 import { AuthContext } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 
@@ -23,6 +23,10 @@ export default function Navigation() {
 
   const { data: occupancy } = useQuery<{total: number; available: number}>({
     queryKey: ["/api/occupancy"],
+  });
+
+  const { data: storageInfo } = useQuery<{type: string; isDatabase: boolean; label: string}>({
+    queryKey: ["/api/storage/info"],
   });
 
   // Update current time every second
@@ -110,17 +114,36 @@ export default function Navigation() {
               Logout
             </Button>
           </>
-        ) : (
-          <Link href="/login">
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="text-xs px-2 py-1"
-            >
-              Login
-            </Button>
-          </Link>
-        )}
+                 ) : (
+           <div className="flex items-center gap-2">
+             <Link href="/login">
+               <Button 
+                 variant="outline" 
+                 size="sm"
+                 className="text-xs px-2 py-1"
+               >
+                 Login
+               </Button>
+             </Link>
+             
+             {/* Storage Type Indicator */}
+             {storageInfo && (
+               <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600 border border-gray-200">
+                 {storageInfo.isDatabase ? (
+                   <Database className="h-3 w-3 text-blue-600" />
+                 ) : (
+                   <HardDrive className="h-3 w-3 text-orange-600" />
+                 )}
+                 <span className="font-medium hidden sm:inline">
+                   {storageInfo.label}
+                 </span>
+                 <span className="font-medium sm:hidden">
+                   {storageInfo.label === 'Database' ? 'DB' : 'Mem'}
+                 </span>
+               </div>
+             )}
+           </div>
+         )}
       </div>
     </nav>
   );

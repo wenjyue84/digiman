@@ -123,7 +123,7 @@ export default function DailyNotifications() {
   }
 
   return (
-    <Card className="mb-6 border-orange-200 bg-white overflow-hidden">
+    <Card className="mb-6 border-orange-200 bg-white overflow-hidden w-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold text-orange-800 flex items-center">
           <Bell className="mr-2 h-5 w-5" />
@@ -136,12 +136,12 @@ export default function DailyNotifications() {
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <CardContent className="space-y-3">
+        <div className="w-full">
           {/* Today's Expected Checkouts */}
           {checkingOutToday.length > 0 && (
-            <div className="rounded-lg border border-orange-200">
-              <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+            <div className="rounded-lg border border-orange-200 w-full mb-3">
+              <div className="px-3 pt-2 pb-2 flex items-center justify-between">
                 <h4 className="font-medium text-orange-800 flex items-center">
                   <Calendar className="mr-2 h-4 w-4" />
                   Expected Checkouts Today ({checkingOutToday.length})
@@ -150,7 +150,7 @@ export default function DailyNotifications() {
               <Accordion type="multiple">
                 {checkingOutToday.map((guest) => (
                   <AccordionItem key={guest.id} value={guest.id}>
-                    <AccordionTrigger className="px-4 py-3">
+                    <AccordionTrigger className="px-3 py-2">
                       <div className="flex w-full items-center gap-3 text-left">
                         <div className="w-9 h-9 bg-orange-100 rounded-full flex items-center justify-center shrink-0">
                           <User className="h-4 w-4 text-orange-600" />
@@ -178,7 +178,14 @@ export default function DailyNotifications() {
                         {guest.paymentAmount && (
                           <div className="flex items-center justify-between">
                             <span className="text-gray-600">Payment</span>
-                            <span className="font-medium">{guest.paymentAmount} {guest.isPaid ? "(Paid)" : "(Unpaid)"}</span>
+                            <span className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                              RM {guest.paymentAmount}
+                              {!guest.isPaid && guest.notes && (
+                                <span className="text-red-600 text-xs font-medium ml-1">
+                                  (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                                </span>
+                              )}
+                            </span>
                           </div>
                         )}
                         {guest.notes && (
@@ -209,8 +216,8 @@ export default function DailyNotifications() {
 
           {/* Overdue Checkouts */}
           {overdueCheckouts.length > 0 && (
-            <div className="rounded-lg border border-red-200">
-              <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+            <div className="rounded-lg border border-red-200 w-full">
+              <div className="px-3 pt-2 pb-2 flex items-center justify-between">
                 <h4 className="font-medium text-red-800 flex items-center">
                   <Bell className="mr-2 h-4 w-4" />
                   <span>Overdue Checkouts ({overdueCheckouts.length})</span>
@@ -228,7 +235,7 @@ export default function DailyNotifications() {
               <Accordion type="multiple">
                 {overdueCheckouts.map((guest) => (
                   <AccordionItem key={guest.id} value={guest.id}>
-                    <AccordionTrigger className="px-4 py-3">
+                    <AccordionTrigger className="px-3 py-2">
                       <div className="flex w-full items-center gap-3 text-left">
                         <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center shrink-0">
                           <User className="h-4 w-4 text-red-600" />
@@ -256,7 +263,14 @@ export default function DailyNotifications() {
                         {guest.paymentAmount && (
                           <div className="flex items-center justify-between">
                             <span className="text-gray-600">Payment</span>
-                            <span className="font-medium">{guest.paymentAmount} {guest.isPaid ? "(Paid)" : "(Unpaid)"}</span>
+                            <span className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                              RM {guest.paymentAmount}
+                              {!guest.isPaid && guest.notes && (
+                                <span className="text-red-600 text-xs font-medium ml-1">
+                                  (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                                </span>
+                              )}
+                            </span>
                           </div>
                         )}
                         {guest.notes && (

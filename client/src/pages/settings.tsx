@@ -1498,6 +1498,7 @@ function CapsulesTab({ capsules, queryClient, toast, labels }: any) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCapsule, setSelectedCapsule] = useState<any>(null);
   const [problemsByCapsule, setProblemsByCapsule] = useState<Record<string, any[]>>({});
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('grid');
 
   const items = Array.isArray(capsules) ? capsules : [];
 
@@ -1671,10 +1672,61 @@ function CapsulesTab({ capsules, queryClient, toast, labels }: any) {
               <Building className="h-5 w-5 text-blue-600" />
               {labels.plural} ({items.length})
             </CardTitle>
-            <Button onClick={() => setCreateDialogOpen(true)} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Add {labels.singular}
-            </Button>
+            <div className="flex items-center gap-3">
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                <Button
+                  type="button"
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="h-8 px-3"
+                >
+                  <div className="grid grid-cols-2 gap-1 w-4 h-4">
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                    <div className="w-1.5 h-1.5 bg-current rounded-sm"></div>
+                  </div>
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="h-8 px-3"
+                >
+                  <div className="flex flex-col gap-1 w-4 h-4">
+                    <div className="w-full h-1 bg-current rounded-sm"></div>
+                    <div className="w-full h-1 bg-current rounded-sm"></div>
+                    <div className="w-full h-1 bg-current rounded-sm"></div>
+                  </div>
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className="h-8 px-3"
+                >
+                  <div className="grid grid-cols-3 gap-0.5 w-4 h-4">
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                    <div className="w-1 h-1 bg-current rounded-sm"></div>
+                  </div>
+                </Button>
+              </div>
+              <Button onClick={() => setCreateDialogOpen(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add {labels.singular}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -1684,73 +1736,248 @@ function CapsulesTab({ capsules, queryClient, toast, labels }: any) {
               <p>No {labels.lowerPlural} found. Add your first {labels.lowerSingular} to get started.</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {items.map((c: any) => (
-                <Card key={c.number} className="p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="text-lg font-semibold">{c.number}</div>
-                        <div className="text-sm text-gray-600">Section: {c.section}</div>
-                        {c.position && (
-                          <div className="text-xs text-gray-500">Position: {c.position}</div>
+            <>
+              {/* Grid View */}
+              {viewMode === 'grid' && (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {items.map((c: any) => (
+                    <Card key={c.number} className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="text-lg font-semibold">{c.number}</div>
+                            <div className="text-sm text-gray-600">Section: {c.section}</div>
+                            {c.position && (
+                              <div className="text-xs text-gray-500">Position: {c.position}</div>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={c.isAvailable ? "default" : "destructive"}>
+                              {c.isAvailable ? "Available" : "Unavailable"}
+                            </Badge>
+                            {getActiveProblemsCount(c.number) > 0 && (
+                              <Badge variant="destructive" className="text-xs">
+                                {getActiveProblemsCount(c.number)} Problem{getActiveProblemsCount(c.number) > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {c.color && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: c.color }}></div>
+                            <span className="text-sm text-gray-600">{c.color}</span>
+                          </div>
                         )}
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <Badge variant={c.isAvailable ? "default" : "destructive"}>
-                          {c.isAvailable ? "Available" : "Unavailable"}
-                        </Badge>
-                        {getActiveProblemsCount(c.number) > 0 && (
-                          <Badge variant="destructive" className="text-xs">
-                            {getActiveProblemsCount(c.number)} Problem{getActiveProblemsCount(c.number) > 1 ? 's' : ''}
-                          </Badge>
+                        
+                        {c.purchaseDate && (
+                          <div className="text-xs text-gray-500">
+                            Purchased: {new Date(c.purchaseDate).toLocaleDateString()}
+                          </div>
                         )}
+                        
+                        {c.remark && (
+                          <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                            {c.remark}
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-2 pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCapsule(c)}
+                            className="flex-1"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteCapsule(c)}
+                            className="flex-1"
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    
-                    {c.color && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: c.color }}></div>
-                        <span className="text-sm text-gray-600">{c.color}</span>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* List View */}
+              {viewMode === 'list' && (
+                <div className="space-y-3">
+                  {items.map((c: any) => (
+                    <Card key={c.number} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <span className="text-lg font-bold text-blue-600">{c.number}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <span className="font-semibold text-gray-900">{c.number}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {c.section}
+                              </Badge>
+                              {c.position && (
+                                <Badge variant="outline" className="text-xs">
+                                  {c.position}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                              {c.color && (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full border" style={{ backgroundColor: c.color }}></div>
+                                  <span>{c.color}</span>
+                                </div>
+                              )}
+                              {c.purchaseDate && (
+                                <span>Purchased: {new Date(c.purchaseDate).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                            {c.remark && (
+                              <div className="text-sm text-gray-500 mt-1">{c.remark}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge variant={c.isAvailable ? "default" : "destructive"}>
+                              {c.isAvailable ? "Available" : "Unavailable"}
+                            </Badge>
+                            {getActiveProblemsCount(c.number) > 0 && (
+                              <Badge variant="destructive" className="text-xs">
+                                {getActiveProblemsCount(c.number)} Problem{getActiveProblemsCount(c.number) > 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditCapsule(c)}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteCapsule(c)}
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    
-                    {c.purchaseDate && (
-                      <div className="text-xs text-gray-500">
-                        Purchased: {new Date(c.purchaseDate).toLocaleDateString()}
-                      </div>
-                    )}
-                    
-                    {c.remark && (
-                      <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        {c.remark}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditCapsule(c)}
-                        className="flex-1"
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteCapsule(c)}
-                        className="flex-1"
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* Table View */}
+              {viewMode === 'table' && (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Number</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Section</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Position</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Problems</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Color</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Purchase Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((c: any) => (
+                        <tr key={c.number} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <span className="font-semibold text-gray-900">{c.number}</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="outline" className="capitalize">
+                              {c.section}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            {c.position ? (
+                              <Badge variant="outline" className="capitalize">
+                                {c.position}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant={c.isAvailable ? "default" : "destructive"}>
+                              {c.isAvailable ? "Available" : "Unavailable"}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4">
+                            {getActiveProblemsCount(c.number) > 0 ? (
+                              <Badge variant="destructive" className="text-xs">
+                                {getActiveProblemsCount(c.number)} Problem{getActiveProblemsCount(c.number) > 1 ? 's' : ''}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400">None</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            {c.color ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: c.color }}></div>
+                                <span className="text-sm">{c.color}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            {c.purchaseDate ? (
+                              <span className="text-sm text-gray-600">
+                                {new Date(c.purchaseDate).toLocaleDateString()}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditCapsule(c)}
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteCapsule(c)}
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

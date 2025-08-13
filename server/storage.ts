@@ -138,23 +138,30 @@ export class MemStorage implements IStorage {
     const fmtDate = (d: Date) => d.toISOString().split('T')[0];
 
     const sampleGuests = isDev ? [
-      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1 },
-      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1 },
-      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1 },
-      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2 },
-      { name: "Wei Ming", capsule: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2 },
-      { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1 },
-      { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1 },
-      { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2 },
+      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "Male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "Male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "Male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "Male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Wei Ming", capsule: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "Male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
+      { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "Male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
+      { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "Male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
+      { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "Male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
+      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ] : [
       // Fallback static dataset (production)
-      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1 },
-      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1 },
-      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1 },
-      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: "2025-08-06T15:00:00", checkout: "2025-08-08", nights: 2 },
+      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: "2025-08-06T15:00:00", checkout: "2025-08-08", nights: 2, nationality: "Malaysian", gender: "Male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: "2025-08-05T15:00:00", checkout: "2025-08-06", nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ];
 
     sampleGuests.forEach(guest => {
+      const standardRate = 45; // RM45 per night
+      const totalAmount = guest.nights * standardRate;
+      const isOutstanding = guest.paymentStatus === "outstanding";
+      const paidAmount = isOutstanding ? Math.floor(totalAmount * 0.8) : totalAmount; // 80% paid for outstanding
+      
       const guestRecord: Guest = {
         id: randomUUID(),
         name: guest.name,
@@ -163,19 +170,19 @@ export class MemStorage implements IStorage {
         checkoutTime: null,
         expectedCheckoutDate: guest.checkout,
         isCheckedIn: true,
-        paymentAmount: `${guest.nights * 35}`, // RM35 per night
+        paymentAmount: paidAmount.toString(),
         paymentMethod: "cash",
-        paymentCollector: "Admin",
-        isPaid: true,
-        notes: null,
-        gender: null,
-        nationality: null,
+        paymentCollector: isOutstanding ? null : "Admin",
+        isPaid: !isOutstanding,
+        notes: isOutstanding ? `Outstanding balance: RM${totalAmount - paidAmount}` : null,
+        gender: guest.gender as "Male" | "Female" | null,
+        nationality: guest.nationality,
         phoneNumber: guest.phone,
-        email: null,
+        email: guest.email,
         idNumber: null,
         emergencyContact: null,
         emergencyPhone: null,
-        age: null,
+        age: guest.age,
         profilePhotoUrl: null,
         selfCheckinToken: null,
       };
@@ -1404,5 +1411,21 @@ class DatabaseStorage implements IStorage {
   }
 }
 
-// Use DatabaseStorage since we now have a database setup
-export const storage = new DatabaseStorage();
+// Automatically choose storage based on environment
+let storage: MemStorage | DatabaseStorage;
+
+try {
+  if (process.env.DATABASE_URL) {
+    storage = new DatabaseStorage();
+    console.log("✅ Using database storage");
+  } else {
+    storage = new MemStorage();
+    console.log("✅ Using in-memory storage (no DATABASE_URL set)");
+  }
+} catch (error) {
+  console.warn("⚠️ Database connection failed, falling back to in-memory storage:", error);
+  storage = new MemStorage();
+  console.log("✅ Using in-memory storage as fallback");
+}
+
+export { storage };

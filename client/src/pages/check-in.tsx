@@ -20,6 +20,9 @@ import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { NATIONALITIES } from "@/lib/nationalities";
 import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { SmartPhotoUploader } from "@/components/SmartPhotoUploader";
+import { Camera, Upload } from "lucide-react";
 
 export default function CheckIn() {
   const labels = useAccommodationLabels();
@@ -31,6 +34,7 @@ export default function CheckIn() {
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [completed, setCompleted] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string>("");
   
   const { data: availableCapsules = [], isLoading: capsulesLoading } = useVisibilityQuery<Capsule[]>({
     queryKey: ["/api/capsules/available"],
@@ -122,7 +126,7 @@ export default function CheckIn() {
     defaultValues: {
       name: "",
       capsuleNumber: "",
-      paymentAmount: "45", // Default to RM45
+              paymentAmount: "45", // Default to RM45 per night
       paymentMethod: "cash" as const,
       paymentCollector: "",
       gender: undefined,
@@ -224,7 +228,7 @@ export default function CheckIn() {
     form.reset({
       name: getNextGuestNumber(),
       capsuleNumber: "",
-      paymentAmount: "45", // Reset to default RM45
+              paymentAmount: "45", // Reset to default RM45 per night
       paymentMethod: "cash" as const,
       paymentCollector: getDefaultCollector(),
       gender: undefined,
@@ -237,6 +241,7 @@ export default function CheckIn() {
       age: "",
       expectedCheckoutDate: getNextDayDate(),
     });
+    setProfilePhotoUrl(""); // Clear profile photo
     setShowClearConfirmation(false);
     toast({
       title: "Form Cleared",
@@ -586,6 +591,55 @@ export default function CheckIn() {
                   {form.formState.errors.idNumber && (
                     <p className="text-hostel-error text-sm mt-1">{form.formState.errors.idNumber.message}</p>
                   )}
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-hostel-text">
+                    <Camera className="mr-2 h-4 w-4 inline" />
+                    {form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"} 
+                    <span className="text-gray-500 text-xs ml-2">(Optional for admin)</span>
+                  </Label>
+                  <div className="mt-2 space-y-2">
+                    {profilePhotoUrl ? (
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={profilePhotoUrl} 
+                          alt="Profile" 
+                          className="w-16 h-20 object-cover rounded border border-gray-300"
+                        />
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setProfilePhotoUrl("")}
+                            className="text-xs"
+                          >
+                            Remove Photo
+                          </Button>
+                          <span className="text-xs text-gray-500">
+                            Photo uploaded successfully
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <SmartPhotoUploader
+                        onPhotoSelected={(photoUrl, photoData) => {
+                          setProfilePhotoUrl(photoUrl);
+                          // Store additional metadata if needed
+                          if (photoData) {
+                            console.log('Photo metadata:', {
+                              name: photoData.name,
+                              size: photoData.size,
+                              type: photoData.type
+                            });
+                          }
+                        }}
+                        buttonText={`Upload ${form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"}`}
+                        className="w-full"
+                      />
+                    )}
+                  </div>
                 </div>
 
                         {/* Age is automatically calculated from IC number */}

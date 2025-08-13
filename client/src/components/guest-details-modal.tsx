@@ -155,6 +155,11 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
                 <span><span className="font-medium">Expected Checkout:</span> {guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate.toString()).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) : '—'}</span>
                 <span><span className="font-medium">Payment:</span> RM {guest.paymentAmount} • {guest.paymentMethod?.toUpperCase()}</span>
                 <span><span className="font-medium">Status:</span> {guest.isPaid ? 'Paid' : 'Outstanding'}</span>
+                {!guest.isPaid && guest.notes && (
+                  <span className="text-red-600 font-medium">
+                    Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -380,7 +385,14 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Amount</Label>
-                <div className="mt-1 text-sm font-medium">RM {guest.paymentAmount}</div>
+                <div className={`mt-1 text-sm font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                  RM {guest.paymentAmount}
+                  {!guest.isPaid && guest.notes && (
+                    <span className="text-red-600 text-xs font-medium ml-1">
+                      (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                    </span>
+                  )}
+                </div>
               </div>
               <div>
                 <Label>Method</Label>

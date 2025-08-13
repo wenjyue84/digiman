@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Clock, CheckCircle, User, CheckCheck } from "lucide-react";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { apiRequest } from "@/lib/queryClient";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Capsule } from "@shared/schema";
 import {
   Dialog,
@@ -168,7 +169,13 @@ function CapsuleCleaningCard({ capsule, onRefresh }: CapsuleCleaningCardProps) {
 export default function CapsuleCleaningStatus() {
   const queryClient = useQueryClient();
   const labels = useAccommodationLabels();
-  const [concise, setConcise] = useState<boolean>(false);
+  const isMobile = useIsMobile();
+  const [concise, setConcise] = useState<boolean>(() => isMobile);
+
+  // Auto-switch view mode based on device type
+  useEffect(() => {
+    setConcise(isMobile);
+  }, [isMobile]);
   
   const { data: capsulesToClean = [], isLoading: loadingToClean, refetch: refetchToClean } = useQuery<Capsule[]>({
     queryKey: ["/api/capsules/cleaning-status/to_be_cleaned"],

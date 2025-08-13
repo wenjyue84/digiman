@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import fs from "fs";
 import path from "path";
@@ -12,6 +13,7 @@ import { validateData, securityValidationMiddleware, sanitizers, validators } fr
 import { getConfig, getConfigForAPI, validateConfigUpdate, AppConfig } from "./configManager";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import sgMail from "@sendgrid/mail";
+import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -28,6 +30,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GOOGLE_REDIRECT_URI
   );
+
+  // Multer configuration for photo uploads
+  const upload = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadDir = path.join(process.cwd(), "uploads", "photos");
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+      }
+    }),
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed!'), false);
+      }
+    }
+  });
   
   // Configuration management endpoints
   app.get("/api/admin/config", securityValidationMiddleware, async (req, res) => {
@@ -356,6 +385,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(occupancy);
     } catch (error) {
       res.status(500).json({ message: "Failed to get occupancy data" });
+    }
+  });
+
+  // Get storage type info
+  app.get("/api/storage/info", async (_req, res) => {
+    try {
+      const storageType = storage.constructor.name;
+      const isDatabase = storageType === 'DatabaseStorage';
+      res.json({ 
+        type: storageType,
+        isDatabase,
+        label: isDatabase ? 'Database' : 'Memory'
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get storage info" });
     }
   });
 
@@ -2021,6 +2065,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).send("Server error");
     }
   });
+
+  // Smart photo upload endpoints
+  // Check if we're on Replit
+  app.get('/api/storage/check-replit', (req, res) => {
+    const isReplit = process.env.REPL_ID || process.env.REPL_OWNER || process.env.REPL_SLUG;
+    if (isReplit) {
+      res.json({ available: true, type: 'replit' });
+    } else {
+      res.json({ available: false, type: 'local' });
+    }
+  });
+
+  // Photo upload endpoint for Replit storage
+  app.post('/api/upload-photo', upload.single('photo'), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    try {
+      const photoUrl = `/uploads/photos/${req.file.filename}`;
+      
+      res.json({ 
+        url: photoUrl,
+        filename: req.file.filename,
+        size: req.file.size,
+        message: 'Photo uploaded successfully' 
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      res.status(500).json({ error: 'Upload failed' });
+    }
+  });
+
+  // Serve uploaded photos
+  app.use('/uploads', (req, res, next) => {
+    // Add basic security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  });
+  
+  // Static file serving for uploads
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   const httpServer = createServer(app);
   return httpServer;
