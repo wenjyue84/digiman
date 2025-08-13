@@ -36,6 +36,7 @@ interface ObjectUploaderProps {
  *   - File preview
  *   - Upload progress tracking
  *   - Upload status display
+ * - Files are automatically uploaded once selected (no manual upload button needed)
  * 
  * The component uses Uppy under the hood to handle all file upload functionality.
  * All file management features are automatically handled by the Uppy dashboard modal.
@@ -75,7 +76,7 @@ export function ObjectUploader({
         maxFileSize,
         allowedFileTypes,
       },
-      autoProceed: false,
+      autoProceed: true,
     })
       .use(AwsS3, {
         shouldUseMultipart: false,

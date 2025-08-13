@@ -20,7 +20,7 @@ import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { NATIONALITIES } from "@/lib/nationalities";
 import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
-import { ObjectUploader } from "@/components/ObjectUploader";
+
 import { SmartPhotoUploader } from "@/components/SmartPhotoUploader";
 import { Camera, Upload } from "lucide-react";
 
