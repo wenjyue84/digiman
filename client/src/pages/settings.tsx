@@ -491,6 +491,11 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
     showOther: form.watch('guideShowOther'),
     showFaq: form.watch('guideShowFaq'),
     showCapsuleIssues: form.watch('guideShowCapsuleIssues'),
+    showSelfCheckinMessage: form.watch('guideShowSelfCheckinMessage'),
+    showHostelPhotos: form.watch('guideShowHostelPhotos'),
+    showGoogleMaps: form.watch('guideShowGoogleMaps'),
+    showCheckinVideo: form.watch('guideShowCheckinVideo'),
+    showTimeAccess: form.watch('guideShowTimeAccess'),
   };
 
   // Sub-tabs configuration
@@ -612,14 +617,40 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField name={"guideIntro" as any} control={form.control} render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Introduction</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        Introduction
+                        <FormField name={"guideShowIntro" as any} control={form.control} render={({ field: visibilityField }) => (
+                          <FormItem className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              checked={!!visibilityField.value} 
+                              onChange={(e) => visibilityField.onChange(e.target.checked)}
+                              className="h-4 w-4"
+                            />
+                            <span className="text-xs text-gray-500">Show to guests</span>
+                          </FormItem>
+                        )} />
+                      </FormLabel>
                       <Textarea rows={6} placeholder="Intro to your place..." {...field} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField name={"guideAddress" as any} control={form.control} render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        Address
+                        <FormField name={"guideShowAddress" as any} control={form.control} render={({ field: visibilityField }) => (
+                          <FormItem className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              checked={!!visibilityField.value} 
+                              onChange={(e) => visibilityField.onChange(e.target.checked)}
+                              className="h-4 w-4"
+                            />
+                            <span className="text-xs text-gray-500">Show to guests</span>
+                          </FormItem>
+                        )} />
+                      </FormLabel>
                       <Textarea rows={4} placeholder="Address details..." {...field} />
                       <FormMessage />
                     </FormItem>
@@ -629,14 +660,40 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField name={"guideWifiName" as any} control={form.control} render={({ field }) => (
                     <FormItem>
-                      <FormLabel>WiFi Name (SSID)</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        WiFi Name (SSID)
+                        <FormField name={"guideShowWifi" as any} control={form.control} render={({ field: visibilityField }) => (
+                          <FormItem className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              checked={!!visibilityField.value} 
+                              onChange={(e) => visibilityField.onChange(e.target.checked)}
+                              className="h-4 w-4"
+                            />
+                            <span className="text-xs text-gray-500">Show to guests</span>
+                          </FormItem>
+                        )} />
+                      </FormLabel>
                       <Input placeholder="e.g., PelangiHostel" {...field} />
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField name={"guideWifiPassword" as any} control={form.control} render={({ field }) => (
                     <FormItem>
-                      <FormLabel>WiFi Password</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        WiFi Password
+                        <FormField name={"guideShowWifi" as any} control={form.control} render={({ field: visibilityField }) => (
+                          <FormItem className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              checked={!!visibilityField.value} 
+                              onChange={(e) => visibilityField.onChange(e.target.checked)}
+                              className="h-4 w-4"
+                            />
+                            <span className="text-xs text-gray-500">Show to guests</span>
+                          </FormItem>
+                        )} />
+                      </FormLabel>
                       <Input placeholder="WiFi password" {...field} />
                       <FormMessage />
                     </FormItem>
@@ -645,7 +702,20 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
 
                 <FormField name={"guideCheckin" as any} control={form.control} render={({ field }) => (
                   <FormItem>
-                    <FormLabel>How to Check In</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      How to Check In
+                      <FormField name={"guideShowCheckin" as any} control={form.control} render={({ field: visibilityField }) => (
+                        <FormItem className="flex items-center gap-2">
+                          <input 
+                            type="checkbox" 
+                            checked={!!visibilityField.value} 
+                            onChange={(e) => visibilityField.onChange(e.target.checked)}
+                            className="h-4 w-4"
+                          />
+                          <span className="text-xs text-gray-500">Show to guests</span>
+                        </FormItem>
+                      )} />
+                    </FormLabel>
                     <Textarea rows={6} placeholder="Step-by-step check-in guidance..." {...field} />
                     <FormMessage />
                   </FormItem>
@@ -653,7 +723,20 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
 
                 <FormField name={"guideOther" as any} control={form.control} render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Other Guidance</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      Other Guidance
+                      <FormField name={"guideShowOther" as any} control={form.control} render={({ field: visibilityField }) => (
+                        <FormItem className="flex items-center gap-2">
+                          <input 
+                            type="checkbox" 
+                            checked={!!visibilityField.value} 
+                            onChange={(e) => visibilityField.onChange(e.target.checked)}
+                            className="h-4 w-4"
+                          />
+                          <span className="text-xs text-gray-500">Show to guests</span>
+                        </FormItem>
+                      )} />
+                    </FormLabel>
                     <Textarea rows={6} placeholder="House rules, notes, etc..." {...field} />
                     <FormMessage />
                   </FormItem>
@@ -675,6 +758,17 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                         <FormLabel className="flex items-center gap-2">
                           <Camera className="h-4 w-4" />
                           Hostel Photos URL
+                          <FormField name={"guideShowHostelPhotos" as any} control={form.control} render={({ field: visibilityField }) => (
+                            <FormItem className="flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                checked={!!visibilityField.value} 
+                                onChange={(e) => visibilityField.onChange(e.target.checked)}
+                                className="h-4 w-4"
+                              />
+                              <span className="text-xs text-gray-500">Show to guests</span>
+                            </FormItem>
+                          )} />
                         </FormLabel>
                         <Input placeholder="https://example.com/photos" {...field} />
                         <FormMessage />
@@ -686,6 +780,17 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                         <FormLabel className="flex items-center gap-2">
                           <Globe className="h-4 w-4" />
                           Google Maps URL
+                          <FormField name={"guideShowGoogleMaps" as any} control={form.control} render={({ field: visibilityField }) => (
+                            <FormItem className="flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                checked={!!visibilityField.value} 
+                                onChange={(e) => visibilityField.onChange(e.target.checked)}
+                                className="h-4 w-4"
+                              />
+                              <span className="text-xs text-gray-500">Show to guests</span>
+                            </FormItem>
+                          )} />
                         </FormLabel>
                         <Input placeholder="https://maps.google.com/..." {...field} />
                         <FormMessage />
@@ -698,6 +803,17 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                       <FormLabel className="flex items-center gap-2">
                         <Video className="h-4 w-4" />
                         Check-in Video URL
+                        <FormField name={"guideShowCheckinVideo" as any} control={form.control} render={({ field: visibilityField }) => (
+                          <FormItem className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              checked={!!visibilityField.value} 
+                              onChange={(e) => visibilityField.onChange(e.target.checked)}
+                              className="h-4 w-4"
+                            />
+                            <span className="text-xs text-gray-500">Show to guests</span>
+                          </FormItem>
+                        )} />
                       </FormLabel>
                       <Input placeholder="https://youtube.com/watch?v=..." {...field} />
                       <FormMessage />
@@ -707,10 +823,23 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
 
                 {/* Time and Access Settings */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                    Time and Access Settings
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                      Time and Access Settings
+                    </h3>
+                    <FormField name={"guideShowTimeAccess" as any} control={form.control} render={({ field }) => (
+                      <FormItem className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          checked={!!field.value} 
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-xs text-gray-500">Show to guests</span>
+                      </FormItem>
+                    )} />
+                  </div>
                   <p className="text-sm text-gray-600 mb-4">
                     Configure the check-in/check-out times and door password that appear in the guest success page.
                   </p>
@@ -761,7 +890,20 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
 
                 <FormField name={"guideFaq" as any} control={form.control} render={({ field }) => (
                   <FormItem>
-                    <FormLabel>FAQ</FormLabel>
+                    <FormLabel className="flex items-center gap-2">
+                      FAQ
+                      <FormField name={"guideShowFaq" as any} control={form.control} render={({ field: visibilityField }) => (
+                        <FormItem className="flex items-center gap-2">
+                          <input 
+                            type="checkbox" 
+                            checked={!!visibilityField.value} 
+                            onChange={(e) => visibilityField.onChange(e.target.checked)}
+                            className="h-4 w-4"
+                          />
+                          <span className="text-xs text-gray-500">Show to guests</span>
+                        </FormItem>
+                      )} />
+                    </FormLabel>
                     <Textarea rows={8} placeholder="Frequently asked questions..." {...field} />
                     <FormMessage />
                   </FormItem>
@@ -782,137 +924,31 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                   </FormItem>
                 )} />
 
-                {/* Visibility Settings Section */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-gray-600" />
-                    Visibility Settings
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Toggle visibility switches to show/hide specific sections in the guest guide.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded border">
-                    <div className="space-y-2">
-                      <FormField name={"guideShowIntro" as any} control={form.control} render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Introduction</Label>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                When enabled, the Introduction text will be shown to guests right after they submit their check-in information.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                        </FormItem>
-                      )} />
-                      <FormField name={"guideShowAddress" as any} control={form.control} render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Address</Label>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                Enable to include your address and contact info in the post check-in guide so guests can find you easily.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                        </FormItem>
-                      )} />
-                    </div>
-                    <div className="space-y-2">
-                      <FormField name={"guideShowWifi" as any} control={form.control} render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show WiFi</Label>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                Display WiFi name and password to guests after check-in.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                        </FormItem>
-                      )} />
-                      <FormField name={"guideShowCheckin" as any} control={form.control} render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show How to Check In</Label>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                Provide step-by-step instructions (front desk, token usage, ID) shown right after guest submits their details.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                        </FormItem>
-                      )} />
-                    </div>
-                    <div className="space-y-2">
-                      <FormField name={"guideShowOther" as any} control={form.control} render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Other Guidance</Label>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                House rules, amenities overview, and helpful tips will be included in the guest-facing guide.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                        </FormItem>
-                      )} />
-                      <FormField name={"guideShowFaq" as any} control={form.control} render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show FAQ</Label>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                Common questions like parking, towels, luggage storage, and quiet hours shown after check-in.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                        </FormItem>
-                      )} />
-                      <FormField name={"guideShowCapsuleIssues" as any} control={form.control} render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
-                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Capsule Issues</Label>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="start">
-                                When enabled, guests will see any reported issues with their assigned capsule so they can make an informed decision.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
-                        </FormItem>
-                      )} />
-                    </div>
-                  </div>
-                </div>
+
+
+
+
+
 
                 {/* Messages Section */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-green-600" />
-                    Self Check-In Messages
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-green-600" />
+                      Self Check-In Messages
+                    </h3>
+                    <FormField name={"guideShowSelfCheckinMessage" as any} control={form.control} render={({ field }) => (
+                      <FormItem className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          checked={!!field.value} 
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-xs text-gray-500">Show to guests</span>
+                      </FormItem>
+                    )} />
+                  </div>
                   <p className="text-sm text-gray-600 mb-4">
                     Customize the message that guests see after successfully completing the self check-in process.
                   </p>
@@ -1051,7 +1087,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
 
                 {/* Quick Links */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  {watchedValues.hostelPhotosUrl && (
+                  {watchedValues.showHostelPhotos && watchedValues.hostelPhotosUrl && (
                     <Button 
                       variant="outline" 
                       className="flex items-center gap-2 h-auto py-3 px-4"
@@ -1061,7 +1097,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                       <span className="text-sm">Hostel Photos</span>
                     </Button>
                   )}
-                  {watchedValues.googleMapsUrl && (
+                  {watchedValues.showGoogleMaps && watchedValues.googleMapsUrl && (
                     <Button 
                       variant="outline" 
                       className="flex items-center gap-2 h-auto py-3 px-4"
@@ -1071,7 +1107,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                       <span className="text-sm">Google Maps</span>
                     </Button>
                   )}
-                  {watchedValues.checkinVideoUrl && (
+                  {watchedValues.showCheckinVideo && watchedValues.checkinVideoUrl && (
                     <Button 
                       variant="outline" 
                       className="flex items-center gap-2 h-auto py-3 px-4"
@@ -1081,85 +1117,90 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                       <span className="text-sm">Check-in Video</span>
                     </Button>
                   )}
-                  {!watchedValues.hostelPhotosUrl && !watchedValues.googleMapsUrl && !watchedValues.checkinVideoUrl && (
+                  {(!watchedValues.showHostelPhotos || !watchedValues.hostelPhotosUrl) && 
+                   (!watchedValues.showGoogleMaps || !watchedValues.googleMapsUrl) && 
+                   (!watchedValues.showCheckinVideo || !watchedValues.checkinVideoUrl) && (
                     <div className="col-span-3 text-center text-gray-500 text-sm py-4">
-                      No quick links configured. Add URLs in the Quick Links Configuration section above.
+                      No quick links configured or visible. Add URLs in the Quick Links Configuration section above.
                     </div>
                   )}
                 </div>
 
                 {/* Time and Access Information */}
-                <div className="border-t border-gray-200 py-6 space-y-4">
-                  {/* Time Information */}
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-blue-600" />
-                      Check-in & Check-out Times
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-blue-600">🕒</span>
-                        <span className="font-medium">Check-in:</span>
-                        <span className="font-semibold">{watchedValues.checkinTime || '2:00 PM'}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-blue-600">🕛</span>
-                        <span className="font-medium">Check-out:</span>
-                        <span className="font-semibold">{watchedValues.checkoutTime || '12:00 PM'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Access Information */}
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
-                    <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      Access & Room Information
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600">🔐</span>
-                        <span className="font-medium">Door Password:</span>
-                        <span className="font-mono text-lg font-bold text-green-600 bg-white px-2 py-1 rounded border">
-                          {watchedValues.doorPassword || '1270#'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600">🛌</span>
-                        <span className="font-medium">Capsule:</span>
-                        <span className="font-bold text-lg text-orange-600 bg-white px-2 py-1 rounded border">
-                          Assigned based on availability
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-600">🃏</span>
-                      <span className="font-medium">Access Card:</span>
-                      <span className="text-sm text-gray-600">Collect from reception upon arrival</span>
-                    </div>
-                    
-                    {/* Capsule Issues Preview */}
-                    {watchedValues.showCapsuleIssues && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-yellow-600">⚠️</span>
-                          <span className="font-medium text-yellow-800">Capsule Issues</span>
+                {watchedValues.showTimeAccess && (
+                  <div className="border-t border-gray-200 py-6 space-y-4">
+                    {/* Time Information */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        Check-in & Check-out Times
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600">🕒</span>
+                          <span className="font-medium">Check-in:</span>
+                          <span className="font-semibold">{watchedValues.checkinTime || '2:00 PM'}</span>
                         </div>
-                        <div className="space-y-2">
-                          <div className="text-sm text-yellow-700 bg-white/60 p-2 rounded border">
-                            <div className="font-medium">Air conditioning not working properly</div>
-                            <div className="text-xs text-yellow-600 mt-1">
-                              Reported: {new Date().toLocaleDateString()}
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600">🕛</span>
+                          <span className="font-medium">Check-out:</span>
+                          <span className="font-semibold">{watchedValues.checkoutTime || '12:00 PM'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Access Information */}
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
+                      <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        Access & Room Information
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600">🔐</span>
+                          <span className="font-medium">Door Password:</span>
+                          <span className="font-mono text-lg font-bold text-green-600 bg-white px-2 py-1 rounded border">
+                            {watchedValues.doorPassword || '1270#'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600">🛌</span>
+                          <span className="font-medium">Capsule:</span>
+                          <span className="font-bold text-lg text-orange-600 bg-white px-2 py-1 rounded border">
+                            Assigned based on availability
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-600">🃏</span>
+                        <span className="font-medium">Access Card:</span>
+                        <span className="text-sm text-gray-600">Collect from reception upon arrival</span>
+                      </div>
+                      
+                      {/* Capsule Issues Preview */}
+                      {watchedValues.showCapsuleIssues && (
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-yellow-600">⚠️</span>
+                            <span className="font-medium text-yellow-800">Capsule Issues</span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="text-sm text-yellow-700 bg-white/60 p-2 rounded border">
+                              <div className="font-medium">Air conditioning not working properly</div>
+                              <div className="text-xs text-yellow-600 mt-1">
+                                Reported: {new Date().toLocaleDateString()}
+                              </div>
                             </div>
                           </div>
+                          <div className="mt-3 text-xs text-yellow-700">
+                            <strong>Note:</strong> These issues have been reported and are being addressed. 
+                            You may choose to accept this capsule or contact reception for alternatives.
+                          </div>
                         </div>
-                        <div className="mt-3 text-xs text-yellow-700">
-                          <strong>Note:</strong> These issues have been reported and are being addressed. 
-                          You may choose to accept this capsule or contact reception for alternatives.
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
+                )}
 
                 {/* Check-in Instructions */}
                   {watchedValues.showCheckin && watchedValues.checkin && (

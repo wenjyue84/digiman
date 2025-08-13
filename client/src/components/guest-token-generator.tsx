@@ -33,6 +33,11 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
   const [guideShowCheckin, setGuideShowCheckin] = useState<boolean | undefined>(undefined);
   const [guideShowOther, setGuideShowOther] = useState<boolean | undefined>(undefined);
   const [guideShowFaq, setGuideShowFaq] = useState<boolean | undefined>(undefined);
+  const [guideShowSelfCheckinMessage, setGuideShowSelfCheckinMessage] = useState<boolean | undefined>(undefined);
+  const [guideShowHostelPhotos, setGuideShowHostelPhotos] = useState<boolean | undefined>(undefined);
+  const [guideShowGoogleMaps, setGuideShowGoogleMaps] = useState<boolean | undefined>(undefined);
+  const [guideShowCheckinVideo, setGuideShowCheckinVideo] = useState<boolean | undefined>(undefined);
+  const [guideShowTimeAccess, setGuideShowTimeAccess] = useState<boolean | undefined>(undefined);
   const [generatedToken, setGeneratedToken] = useState<{
     token: string;
     link: string;
@@ -139,6 +144,11 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
       guideShowCheckin: overrideGuide ? guideShowCheckin : undefined,
       guideShowOther: overrideGuide ? guideShowOther : undefined,
       guideShowFaq: overrideGuide ? guideShowFaq : undefined,
+      guideShowSelfCheckinMessage: overrideGuide ? guideShowSelfCheckinMessage : undefined,
+      guideShowHostelPhotos: overrideGuide ? guideShowHostelPhotos : undefined,
+      guideShowGoogleMaps: overrideGuide ? guideShowGoogleMaps : undefined,
+      guideShowCheckinVideo: overrideGuide ? guideShowCheckinVideo : undefined,
+      guideShowTimeAccess: overrideGuide ? guideShowTimeAccess : undefined,
     });
   };
 
@@ -349,6 +359,11 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
                       <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowCheckin} onChange={(e)=> setGuideShowCheckin(e.target.checked)} /> Show How to Check In</label>
                       <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowOther} onChange={(e)=> setGuideShowOther(e.target.checked)} /> Show Other Guidance</label>
                       <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowFaq} onChange={(e)=> setGuideShowFaq(e.target.checked)} /> Show FAQ</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowSelfCheckinMessage} onChange={(e)=> setGuideShowSelfCheckinMessage(e.target.checked)} /> Show Self-Check-in Message</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowHostelPhotos} onChange={(e)=> setGuideShowHostelPhotos(e.target.checked)} /> Show Hostel Photos</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowGoogleMaps} onChange={(e)=> setGuideShowGoogleMaps(e.target.checked)} /> Show Google Maps</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowCheckinVideo} onChange={(e)=> setGuideShowCheckinVideo(e.target.checked)} /> Show Check-in Video</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={!!guideShowTimeAccess} onChange={(e)=> setGuideShowTimeAccess(e.target.checked)} /> Show Time & Access</label>
                       <p className="sm:col-span-3 text-xs text-gray-500">If none selected, default Guest Guide settings will be used.</p>
                     </div>
                   )}
