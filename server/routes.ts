@@ -1816,12 +1816,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isRead: false,
       });
 
+      // Get any active capsule issues for the assigned capsule
+      const capsuleIssues = await storage.getCapsuleProblems(assignedCapsuleNumber);
+      const activeIssues = capsuleIssues.filter(issue => !issue.isResolved);
+
       res.json({
         message: "Check-in successful",
         guest: guest,
         capsuleNumber: assignedCapsuleNumber,
         editToken: token, // Provide token for editing within 1 hour
         editExpiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+        capsuleIssues: activeIssues, // Include any active capsule issues
       });
     } catch (error: any) {
       console.error("Error processing guest check-in:", error);

@@ -489,6 +489,7 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
     showCheckin: form.watch('guideShowCheckin'),
     showOther: form.watch('guideShowOther'),
     showFaq: form.watch('guideShowFaq'),
+    showCapsuleIssues: form.watch('guideShowCapsuleIssues'),
   };
 
   // Sub-tabs configuration
@@ -878,6 +879,21 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                           <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
                         </FormItem>
                       )} />
+                      <FormField name={"guideShowCapsuleIssues" as any} control={form.control} render={({ field }) => (
+                        <FormItem className="flex items-center gap-2">
+                          <TooltipProvider delayDuration={100} skipDelayDuration={0} disableHoverableContent={false}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Label className="text-sm cursor-help select-none" tabIndex={0}>Show Capsule Issues</Label>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" align="start">
+                                When enabled, guests will see any reported issues with their assigned capsule so they can make an informed decision.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <input type="checkbox" checked={!!field.value} onChange={(e) => field.onChange(e.target.checked)} />
+                        </FormItem>
+                      )} />
                     </div>
                   </div>
                 </div>
@@ -1112,8 +1128,29 @@ function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, to
                       <span className="font-medium">Access Card:</span>
                       <span className="text-sm text-gray-600">Collect from reception upon arrival</span>
                     </div>
+                    
+                    {/* Capsule Issues Preview */}
+                    {watchedValues.showCapsuleIssues && (
+                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-yellow-600">⚠️</span>
+                          <span className="font-medium text-yellow-800">Capsule Issues</span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm text-yellow-700 bg-white/60 p-2 rounded border">
+                            <div className="font-medium">Air conditioning not working properly</div>
+                            <div className="text-xs text-yellow-600 mt-1">
+                              Reported: {new Date().toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 text-xs text-yellow-700">
+                          <strong>Note:</strong> These issues have been reported and are being addressed. 
+                          You may choose to accept this capsule or contact reception for alternatives.
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
 
                 {/* Check-in Instructions */}
                   {watchedValues.showCheckin && watchedValues.checkin && (

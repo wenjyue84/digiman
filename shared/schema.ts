@@ -745,6 +745,7 @@ export const updateSettingsSchema = z.object({
   guideShowCheckin: z.boolean().default(true),
   guideShowOther: z.boolean().default(true),
   guideShowFaq: z.boolean().default(true),
+  guideShowCapsuleIssues: z.boolean().default(true),
   
   // Payment Settings
   defaultPaymentMethod: z.enum(["cash", "tng", "bank", "platform"], {
