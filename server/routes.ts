@@ -1100,12 +1100,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         guideCheckinTime: await getVal('guideCheckinTime'),
         guideCheckoutTime: await getVal('guideCheckoutTime'),
         guideDoorPassword: await getVal('guideDoorPassword'),
+        selfCheckinSuccessMessage: await getVal('selfCheckinSuccessMessage'),
         guideShowIntro: (await storage.getSetting('guideShowIntro'))?.value === 'true',
         guideShowAddress: (await storage.getSetting('guideShowAddress'))?.value === 'true',
         guideShowWifi: (await storage.getSetting('guideShowWifi'))?.value === 'true',
         guideShowCheckin: (await storage.getSetting('guideShowCheckin'))?.value === 'true',
         guideShowOther: (await storage.getSetting('guideShowOther'))?.value === 'true',
         guideShowFaq: (await storage.getSetting('guideShowFaq'))?.value === 'true',
+        guideShowCapsuleIssues: (await storage.getSetting('guideShowCapsuleIssues'))?.value === 'true',
+        guideShowSelfCheckinMessage: (await storage.getSetting('guideShowSelfCheckinMessage'))?.value === 'true',
+        guideShowHostelPhotos: (await storage.getSetting('guideShowHostelPhotos'))?.value === 'true',
+        guideShowGoogleMaps: (await storage.getSetting('guideShowGoogleMaps'))?.value === 'true',
+        guideShowCheckinVideo: (await storage.getSetting('guideShowCheckinVideo'))?.value === 'true',
+        guideShowTimeAccess: (await storage.getSetting('guideShowTimeAccess'))?.value === 'true',
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch settings" });
@@ -1165,6 +1172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await maybeSet('guideCheckoutTime', 'Check-out time');
       await maybeSet('guideDoorPassword', 'Door password');
       await maybeSet('guideCustomStyles', 'Custom CSS styles');
+      await maybeSet('selfCheckinSuccessMessage', 'Self check-in success message');
       // Visibility toggles
       const setBool = async (key: string, val: any, desc: string) => {
         if (typeof val === 'boolean') {
@@ -1177,6 +1185,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await setBool('guideShowCheckin', (validatedData as any).guideShowCheckin, 'Show check-in guidance');
       await setBool('guideShowOther', (validatedData as any).guideShowOther, 'Show other guidance');
       await setBool('guideShowFaq', (validatedData as any).guideShowFaq, 'Show FAQ');
+      await setBool('guideShowCapsuleIssues', (validatedData as any).guideShowCapsuleIssues, 'Show capsule issues to guests');
+      await setBool('guideShowSelfCheckinMessage', (validatedData as any).guideShowSelfCheckinMessage, 'Show self-check-in message to guests');
+      await setBool('guideShowHostelPhotos', (validatedData as any).guideShowHostelPhotos, 'Show hostel photos to guests');
+      await setBool('guideShowGoogleMaps', (validatedData as any).guideShowGoogleMaps, 'Show Google Maps to guests');
+      await setBool('guideShowCheckinVideo', (validatedData as any).guideShowCheckinVideo, 'Show check-in video to guests');
+      await setBool('guideShowTimeAccess', (validatedData as any).guideShowTimeAccess, 'Show time and access info to guests');
 
       res.json({
         message: "Settings updated successfully",
@@ -1197,12 +1211,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         guideCheckoutTime: (validatedData as any).guideCheckoutTime,
         guideDoorPassword: (validatedData as any).guideDoorPassword,
         guideCustomStyles: (validatedData as any).guideCustomStyles,
+        selfCheckinSuccessMessage: (validatedData as any).selfCheckinSuccessMessage,
         guideShowIntro: (validatedData as any).guideShowIntro,
         guideShowAddress: (validatedData as any).guideShowAddress,
         guideShowWifi: (validatedData as any).guideShowWifi,
         guideShowCheckin: (validatedData as any).guideShowCheckin,
         guideShowOther: (validatedData as any).guideShowOther,
         guideShowFaq: (validatedData as any).guideShowFaq,
+        guideShowCapsuleIssues: (validatedData as any).guideShowCapsuleIssues,
+        guideShowSelfCheckinMessage: (validatedData as any).guideShowSelfCheckinMessage,
+        guideShowHostelPhotos: (validatedData as any).guideShowHostelPhotos,
+        guideShowGoogleMaps: (validatedData as any).guideShowGoogleMaps,
+        guideShowCheckinVideo: (validatedData as any).guideShowCheckinVideo,
+        guideShowTimeAccess: (validatedData as any).guideShowTimeAccess,
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
