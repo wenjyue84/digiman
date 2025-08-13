@@ -263,6 +263,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk checkout guests expected to check out today
+  app.post("/api/guests/checkout-today", authenticateToken, async (_req: any, res) => {
+    try {
+      // Compute today's date boundary (YYYY-MM-DD)
+      const todayStr = new Date().toISOString().split('T')[0];
+      const today = new Date(todayStr + 'T00:00:00');
+
+      // Get all currently checked-in guests (high limit to cover dev data)
+      const checkedInResponse = await storage.getCheckedInGuests({ page: 1, limit: 10000 });
+      const checkedIn = checkedInResponse.data || [];
+
+      // Filter guests expected to check out today
+      const todayCheckouts = checkedIn.filter(g => {
+        if (!g.expectedCheckoutDate) return false;
+        try {
+          const d = new Date(g.expectedCheckoutDate + 'T00:00:00');
+          return d.getTime() === today.getTime();
+        } catch {
+          return false;
+        }
+      });
+
+      if (todayCheckouts.length === 0) {
+        return res.json({ count: 0, checkedOutIds: [], message: "No guests expected to check out today" });
+      }
+
+      const checkedOutIds: string[] = [];
+      for (const guest of todayCheckouts) {
+        const updated = await storage.checkoutGuest(guest.id);
+        if (updated) checkedOutIds.push(updated.id);
+      }
+
+      return res.json({ 
+        count: checkedOutIds.length, 
+        checkedOutIds,
+        message: `Successfully checked out ${checkedOutIds.length} guests expected to check out today`
+      });
+    } catch (error) {
+      console.error("Bulk checkout today failed:", error);
+      return res.status(500).json({ message: "Failed to bulk checkout guests expected to check out today" });
+    }
+  });
+
   // Bulk checkout all currently checked-in guests
   app.post("/api/guests/checkout-all", authenticateToken, async (_req: any, res) => {
     try {

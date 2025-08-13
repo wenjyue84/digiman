@@ -575,7 +575,16 @@ export default function SortableGuestTable() {
                   </th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <div className="flex items-center gap-1">
-                      {isCondensedView ? 'Out' : 'Expected Checkout'}
+                      {isCondensedView ? 'Out' : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help">Checkout</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Expected checkout date/time</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       <SortButton field="expectedCheckoutDate" currentSort={sortConfig} onSort={handleSort} />
                     </div>
                   </th>

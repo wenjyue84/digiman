@@ -1417,6 +1417,7 @@ class DatabaseStorage implements IStorage {
   }
 }
 
+
 // Automatically choose storage based on environment
 let storage: MemStorage | DatabaseStorage;
 
@@ -1435,3 +1436,4 @@ try {
 }
 
 export { storage };
+

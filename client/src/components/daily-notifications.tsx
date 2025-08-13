@@ -58,7 +58,7 @@ export default function DailyNotifications() {
     },
   });
 
-  const bulkCheckoutMutation = useMutation({
+  const bulkCheckoutOverdueMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/guests/checkout-overdue", {});
       return response.json();
@@ -72,6 +72,23 @@ export default function DailyNotifications() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to bulk checkout overdue guests", variant: "destructive" });
+    },
+  });
+
+  const bulkCheckoutTodayMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/guests/checkout-today", {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      toast({ title: "Success", description: "All guests expected to check out today have been checked out." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to bulk checkout guests expected to check out today", variant: "destructive" });
     },
   });
 
@@ -123,30 +140,42 @@ export default function DailyNotifications() {
   }
 
   return (
-    <Card className="mb-6 border-orange-200 bg-white overflow-hidden w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-orange-800 flex items-center">
-          <Bell className="mr-2 h-5 w-5" />
+
+    <Card className="mb-6 border-orange-200 bg-gradient-to-br from-orange-50/50 to-white overflow-hidden shadow-sm">
+      <CardHeader className="pb-3 bg-gradient-to-r from-orange-100/50 to-orange-50/30 border-b border-orange-200">
+        <CardTitle className="text-xl font-semibold text-orange-800 flex items-center">
+          <Bell className="mr-3 h-6 w-6" />
+
           Daily Checkout Notifications
           {isNoonTime && (
-            <Badge className="ml-2 bg-orange-600 text-white">
+            <Badge className="ml-3 bg-orange-600 text-white">
               <Clock className="mr-1 h-3 w-3" />
               12:00 PM Alert
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="w-full">
-          {/* Today's Expected Checkouts */}
-          {checkingOutToday.length > 0 && (
-            <div className="rounded-lg border border-orange-200 w-full mb-3">
-              <div className="px-3 pt-2 pb-2 flex items-center justify-between">
-                <h4 className="font-medium text-orange-800 flex items-center">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Expected Checkouts Today ({checkingOutToday.length})
-                </h4>
-              </div>
+
+      <CardContent className="space-y-6 p-6">
+        {/* Today's Expected Checkouts */}
+        {checkingOutToday.length > 0 && (
+          <div className="rounded-lg border border-orange-200 bg-orange-50/30 shadow-sm">
+            <div className="px-5 py-4 flex items-center justify-between bg-orange-100/50 border-b border-orange-200 rounded-t-lg">
+              <h4 className="font-semibold text-orange-800 flex items-center text-base">
+                <Calendar className="mr-3 h-5 w-5" />
+                Expected Checkouts Today ({checkingOutToday.length})
+              </h4>
+              <Button
+                size="sm"
+                onClick={() => bulkCheckoutTodayMutation.mutate()}
+                disabled={bulkCheckoutTodayMutation.isPending || checkingOutToday.length === 0}
+                className="bg-orange-600 hover:bg-orange-700 text-white shadow-sm"
+              >
+                <CheckCheck className="h-4 w-4 mr-2" />
+                {bulkCheckoutTodayMutation.isPending ? "Checking Out..." : "Check Out All"}
+              </Button>
+            </div>
+
               <Accordion type="multiple">
                 {checkingOutToday.map((guest) => (
                   <AccordionItem key={guest.id} value={guest.id}>
@@ -214,24 +243,27 @@ export default function DailyNotifications() {
             </div>
           )}
 
-          {/* Overdue Checkouts */}
-          {overdueCheckouts.length > 0 && (
-            <div className="rounded-lg border border-red-200 w-full">
-              <div className="px-3 pt-2 pb-2 flex items-center justify-between">
-                <h4 className="font-medium text-red-800 flex items-center">
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Overdue Checkouts ({overdueCheckouts.length})</span>
-                </h4>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => bulkCheckoutMutation.mutate()}
-                  disabled={bulkCheckoutMutation.isPending || overdueCheckouts.length === 0}
-                >
-                  <CheckCheck className="h-4 w-4 mr-1" />
-                  {bulkCheckoutMutation.isPending ? "Checking Out..." : "Check Out All"}
-                </Button>
-              </div>
+
+        {/* Overdue Checkouts */}
+        {overdueCheckouts.length > 0 && (
+          <div className="rounded-lg border border-red-200 bg-red-50/30 shadow-sm">
+            <div className="px-5 py-4 flex items-center justify-between bg-red-100/50 border-b border-red-200 rounded-t-lg">
+              <h4 className="font-semibold text-red-800 flex items-center text-base">
+                <Bell className="mr-3 h-5 w-5" />
+                <span>Overdue Checkouts ({overdueCheckouts.length})</span>
+              </h4>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => bulkCheckoutOverdueMutation.mutate()}
+                disabled={bulkCheckoutOverdueMutation.isPending || overdueCheckouts.length === 0}
+                className="shadow-sm"
+              >
+                <CheckCheck className="h-4 w-4 mr-2" />
+                {bulkCheckoutOverdueMutation.isPending ? "Checking Out..." : "Check Out All"}
+              </Button>
+            </div>
+
               <Accordion type="multiple">
                 {overdueCheckouts.map((guest) => (
                   <AccordionItem key={guest.id} value={guest.id}>
@@ -298,11 +330,13 @@ export default function DailyNotifications() {
               </Accordion>
             </div>
           )}
-        </div>
 
         {isNoonTime && (
-          <div className="text-center text-sm text-orange-700 font-medium">
-            ⏰ Daily 12:00 PM checkout reminder - Please follow up with guests
+          <div className="text-center py-3 px-4 bg-orange-100/50 border border-orange-200 rounded-lg">
+            <div className="text-sm text-orange-800 font-medium flex items-center justify-center">
+              <Clock className="mr-2 h-4 w-4" />
+              ⏰ Daily 12:00 PM checkout reminder - Please follow up with guests
+            </div>
           </div>
         )}
       </CardContent>
