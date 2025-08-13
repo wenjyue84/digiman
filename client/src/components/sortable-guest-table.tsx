@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useVisibilityQuery } from "@/hooks/useVisibilityQuery";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
 type SortOrder = 'asc' | 'desc';
+
+const ROW_HEIGHT = 56;
 
 function getInitials(name: string): string {
   return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
@@ -598,212 +601,78 @@ export default function SortableGuestTable() {
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedData.map((item) => {
-                  if (item.type === 'guest') {
-                    const guest = item.data;
-                    const genderIcon = getGenderIcon(guest.gender || undefined);
-                    const isGuestCheckingOut = checkoutMutation.isPending && checkoutMutation.variables === guest.id;
-                    return (
-                      <SwipeableGuestRow
-                        key={guest.id}
-                        guest={guest}
-                        onCheckout={handleCheckout}
-                        onGuestClick={handleGuestClick}
-                        isCondensedView={isCondensedView}
-                        isCheckingOut={isGuestCheckingOut}
-                      >
-                        {/* Accommodation column - sticky first column */}
-                        <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
-                          <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">
-                            {guest.capsuleNumber}
-                          </Badge>
-                        </td>
-                        {/* Guest column */}
-                        <td className="px-2 py-3 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className={`w-6 h-6 ${genderIcon.bgColor} rounded-full flex items-center justify-center mr-2`}>
-                              {isCondensedView ? (
-                                <span className={`${genderIcon.textColor} font-bold text-xs`}>
-                                  {getFirstInitial(guest.name)}
-                                </span>
-                              ) : genderIcon.icon ? (
-                                <span className={`${genderIcon.textColor} font-bold text-sm`}>{genderIcon.icon}</span>
-                              ) : (
-                                <span className={`${genderIcon.textColor} font-medium text-xs`}>{getInitials(guest.name)}</span>
-                              )}
-                            </div>
-                            {!isCondensedView && (
-                              <button 
-                                onClick={() => handleGuestClick(guest)}
-                                className="text-sm font-medium text-hostel-text hover:text-orange-700 hover:underline cursor-pointer transition-colors"
-                              >
-                                {truncateName(guest.name)}
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                        {/* Nationality column - only in detailed view */}
-                        {!isCondensedView && (
-                          <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
-                            {guest.nationality ? (
-                              <span className="font-medium">{guest.nationality}</span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </td>
-                        )}
-                        {/* Check-in column */}
-                        <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
-                          {isCondensedView 
-                            ? formatShortDate(guest.checkinTime.toString())
-                            : formatShortDateTime(guest.checkinTime.toString())
-                          }
-                        </td>
-                        {/* Checkout column */}
-                        <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
-                          {guest.expectedCheckoutDate ? (
-                            <span className="font-medium">
-                              {formatShortDate(guest.expectedCheckoutDate)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                        {/* Payment and Status columns - only in detailed view */}
-                        {!isCondensedView && (
-                          <>
-                            <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
-                              {guest.paymentAmount ? (
-                                <div>
-                                  <div className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
-                                    RM {guest.paymentAmount}
-                                    {!guest.isPaid && guest.notes && (
-                                      <span className="text-red-600 text-xs font-medium ml-1">
-                                        (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="text-xs text-gray-500">{guest.paymentCollector || 'N/A'}</div>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400">No payment</span>
-                              )}
-                            </td>
-                            <td className="px-2 py-3 whitespace-nowrap">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            </td>
-                          </>
-                        )}
-                        {/* Copy Link column - show dash for checked-in guests */}
-                        <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-400">
-                          —
-                        </td>
-                        {/* Actions column */}
-                        <td className="px-2 py-3 whitespace-nowrap">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleCheckout(guest.id)}
-                            disabled={checkoutMutation.isPending}
-                            isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
-                            className="text-hostel-error hover:text-red-700 font-medium p-1"
-                          >
-                            <UserMinus className="h-3 w-3" />
-                          </Button>
-                        </td>
-                      </SwipeableGuestRow>
-                    );
-                  } else {
-                    // Pending check-in row
-                    const pendingData = item.data;
-                    return (
-                      <tr key={`pending-${pendingData.id}`} className="bg-orange-50">
-                        {/* Accommodation column - sticky first column */}
-                        <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-orange-50 z-10">
-                          <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">
-                            {pendingData.capsuleNumber}
-                          </Badge>
-                        </td>
-                        {/* Guest column */}
-                        <td className="px-2 py-3 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center mr-2">
-                              <span className="text-orange-600 font-bold text-sm">P</span>
-                            </div>
-                            {!isCondensedView && (
-                              <span className="text-sm font-medium text-orange-700">
-                                {pendingData.name}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        {/* Nationality column - only in detailed view */}
-                        {!isCondensedView && (
-                          <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">
-                            Pending
-                          </td>
-                        )}
-                        {/* Check-in column - show creation time */}
-                        <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">
-                          {isCondensedView 
-                            ? formatShortDate(pendingData.createdAt)
-                            : formatShortDateTime(pendingData.createdAt)
-                          }
-                        </td>
-                        {/* Checkout column - show expiration */}
-                        <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">
-                          <span className="font-medium">
-                            Expires {formatShortDate(pendingData.expiresAt)}
-                          </span>
-                        </td>
-                        {/* Payment and Status columns - only in detailed view */}
-                        {!isCondensedView && (
-                          <>
-                            <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">
-                              Awaiting self check-in
-                            </td>
-                            <td className="px-2 py-3 whitespace-nowrap">
-                              <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
-                                <span className="text-orange-600 font-bold text-xs">P</span>
-                              </div>
-                            </td>
-                          </>
-                        )}
-                        {/* Copy Link column - show copy button for pending check-ins */}
-                        <td className="px-2 py-3 whitespace-nowrap">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyToClipboard(getCheckinLink(activeTokens.find(t => t.id === pendingData.id)?.token || ''))}
-                            className="text-blue-600 hover:text-blue-800 font-medium p-1 text-xs"
-                            title="Copy check-in link"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </td>
-                        {/* Actions column */}
-                        <td className="px-2 py-3 whitespace-nowrap">
-                          {isAuthenticated ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleCancelToken(pendingData.id)}
-                              disabled={cancelTokenMutation.isPending}
-                              className="text-orange-600 hover:text-orange-800 font-medium p-1 text-xs"
-                            >
-                              {cancelTokenMutation.isPending ? 'Cancelling...' : 'Cancel'}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-orange-600">Pending</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  }
-                })}
-              </tbody>
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-20">
+                    <div className="flex items-center">
+                      Accommodation
+                      <SortButton field="capsuleNumber" currentSort={sortConfig} onSort={handleSort} />
+                    </div>
+                  </th>
+                  <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      Guest
+                      <SortButton field="name" currentSort={sortConfig} onSort={handleSort} />
+                    </div>
+                  </th>
+                  {!isCondensedView && (
+                    <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center">Nationality</div>
+                    </th>
+                  )}
+                  <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      Check-in
+                      <SortButton field="checkinTime" currentSort={sortConfig} onSort={handleSort} />
+                    </div>
+                  </th>
+                  <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="flex items-center">
+                      Checkout
+                      <SortButton field="expectedCheckoutDate" currentSort={sortConfig} onSort={handleSort} />
+                    </div>
+                  </th>
+                  {!isCondensedView && (
+                    <>
+                      <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <div className="flex items-center">Payment</div>
+                      </th>
+                      <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <div className="flex items-center">Status</div>
+                      </th>
+                    </>
+                  )}
+                  <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Copy Link
+                  </th>
+                  <th scope="col" className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
             </table>
+            <FixedSizeList
+              height={Math.min(sortedData.length, 10) * ROW_HEIGHT}
+              itemCount={sortedData.length}
+              itemSize={ROW_HEIGHT}
+              width={"100%"}
+              itemData={{
+                items: sortedData,
+                isCondensedView,
+                onCheckout: handleCheckout,
+                onGuestClick: handleGuestClick,
+                onCancelToken: handleCancelToken,
+                copyToClipboard,
+                getCheckinLink,
+                isAuthenticated,
+                checkoutMutation,
+                cancelTokenMutation,
+                activeTokens,
+              }}
+            >
+              {DesktopRow}
+            </FixedSizeList>
+
           </div>
         )}
 
@@ -969,5 +838,202 @@ export default function SortableGuestTable() {
         />
       )}
     </Card>
+  );
+}
+interface RowData {
+  items: Array<{ type: 'guest'; data: Guest } | { type: 'pending'; data: any }>;
+  isCondensedView: boolean;
+  onCheckout: (id: string) => void;
+  onGuestClick: (guest: Guest) => void;
+  onCancelToken: (id: string) => void;
+  copyToClipboard: (text: string) => void;
+  getCheckinLink: (token: string) => string;
+  isAuthenticated: boolean;
+  checkoutMutation: any;
+  cancelTokenMutation: any;
+  activeTokens: GuestToken[];
+}
+
+function DesktopRow({ index, style, data }: ListChildComponentProps<RowData>) {
+  const item = data.items[index];
+  if (item.type === 'guest') {
+    const guest = item.data as Guest;
+    const genderIcon = getGenderIcon(guest.gender || undefined);
+    const isGuestCheckingOut = data.checkoutMutation.isPending && data.checkoutMutation.variables === guest.id;
+    return (
+      <div style={style} className="min-w-full">
+        <table className="min-w-full divide-y divide-gray-200">
+          <tbody className="bg-white">
+            <SwipeableGuestRow
+              guest={guest}
+              onCheckout={data.onCheckout}
+              onGuestClick={data.onGuestClick}
+              isCondensedView={data.isCondensedView}
+              isCheckingOut={isGuestCheckingOut}
+            >
+              <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
+                <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">
+                  {guest.capsuleNumber}
+                </Badge>
+              </td>
+              <td className="px-2 py-3 whitespace-nowrap">
+                <div className="flex items-center">
+                  <div className={`w-6 h-6 ${genderIcon.bgColor} rounded-full flex items-center justify-center mr-2`}>
+                    {data.isCondensedView ? (
+                      <span className={`${genderIcon.textColor} font-bold text-xs`}>
+                        {getFirstInitial(guest.name)}
+                      </span>
+                    ) : genderIcon.icon ? (
+                      <span className={`${genderIcon.textColor} font-bold text-sm`}>{genderIcon.icon}</span>
+                    ) : (
+                      <span className={`${genderIcon.textColor} font-medium text-xs`}>{getInitials(guest.name)}</span>
+                    )}
+                  </div>
+                  {!data.isCondensedView && (
+                    <button
+                      onClick={() => data.onGuestClick(guest)}
+                      className="text-sm font-medium text-hostel-text hover:text-orange-700 hover:underline cursor-pointer transition-colors"
+                    >
+                      {truncateName(guest.name)}
+                    </button>
+                  )}
+                </div>
+              </td>
+              {!data.isCondensedView && (
+                <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
+                  {guest.nationality ? (
+                    <span className="font-medium">{guest.nationality}</span>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
+              )}
+              <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
+                {data.isCondensedView
+                  ? formatShortDate(guest.checkinTime.toString())
+                  : formatShortDateTime(guest.checkinTime.toString())}
+              </td>
+              <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
+                {guest.expectedCheckoutDate ? (
+                  <span className="font-medium">{formatShortDate(guest.expectedCheckoutDate)}</span>
+                ) : (
+                  <span className="text-gray-400">-</span>
+                )}
+              </td>
+              {!data.isCondensedView && (
+                <>
+                  <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
+                    {guest.paymentAmount ? (
+                      <div>
+                        <div className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                          RM {guest.paymentAmount}
+                          {!guest.isPaid && guest.notes && (
+                            <span className="text-red-600 text-xs font-medium ml-1">
+                              (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">{guest.paymentCollector || 'N/A'}</div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">No payment</span>
+                    )}
+                  </td>
+                  <td className="px-2 py-3 whitespace-nowrap">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  </td>
+                </>
+              )}
+              <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-400">—</td>
+              <td className="px-2 py-3 whitespace-nowrap">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => data.onCheckout(guest.id)}
+                  disabled={data.checkoutMutation.isPending}
+                  isLoading={data.checkoutMutation.isPending && data.checkoutMutation.variables === guest.id}
+                  className="text-hostel-error hover:text-red-700 font-medium p-1"
+                >
+                  <UserMinus className="h-3 w-3" />
+                </Button>
+              </td>
+            </SwipeableGuestRow>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+  const pendingData = item.data;
+  return (
+    <div style={style} className="min-w-full">
+      <table className="min-w-full divide-y divide-gray-200">
+        <tbody className="bg-white">
+          <tr className="bg-orange-50">
+            <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-orange-50 z-10">
+              <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">
+                {pendingData.capsuleNumber}
+              </Badge>
+            </td>
+            <td className="px-2 py-3 whitespace-nowrap">
+              <div className="flex items-center">
+                <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center mr-2">
+                  <span className="text-orange-600 font-bold text-sm">P</span>
+                </div>
+                {!data.isCondensedView && (
+                  <span className="text-sm font-medium text-orange-700">{pendingData.name}</span>
+                )}
+              </div>
+            </td>
+            {!data.isCondensedView && (
+              <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">Pending</td>
+            )}
+            <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">
+              {data.isCondensedView
+                ? formatShortDate(pendingData.createdAt)
+                : formatShortDateTime(pendingData.createdAt)}
+            </td>
+            <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">
+              <span className="font-medium">Expires {formatShortDate(pendingData.expiresAt)}</span>
+            </td>
+            {!data.isCondensedView && (
+              <>
+                <td className="px-2 py-3 whitespace-nowrap text-xs text-orange-600">Awaiting self check-in</td>
+                <td className="px-2 py-3 whitespace-nowrap">
+                  <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span className="text-orange-600 font-bold text-xs">P</span>
+                  </div>
+                </td>
+              </>
+            )}
+            <td className="px-2 py-3 whitespace-nowrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => data.copyToClipboard(data.getCheckinLink(data.activeTokens.find(t => t.id === pendingData.id)?.token || ''))}
+                className="text-blue-600 hover:text-blue-800 font-medium p-1 text-xs"
+                title="Copy check-in link"
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </td>
+            <td className="px-2 py-3 whitespace-nowrap">
+              {data.isAuthenticated ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => data.onCancelToken(pendingData.id)}
+                  disabled={data.cancelTokenMutation.isPending}
+                  className="text-orange-600 hover:text-orange-800 font-medium p-1 text-xs"
+                >
+                  {data.cancelTokenMutation.isPending ? 'Cancelling...' : 'Cancel'}
+                </Button>
+              ) : (
+                <span className="text-xs text-orange-600">Pending</span>
+              )}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
