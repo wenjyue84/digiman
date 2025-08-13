@@ -1,8 +1,8 @@
 # System Requirements Specification (SRS)
 # PelangiManager - Capsule Hostel Management System
 
-**Document Version:** 1.0  
-**Date:** August 9, 2025  
+**Document Version:** 2.0  
+**Date:** December 2024  
 **Project:** Pelangi Capsule Hostel Management System  
 
 ---
@@ -17,7 +17,8 @@
 6. [Non-Functional Requirements](#6-non-functional-requirements)
 7. [Technical Requirements](#7-technical-requirements)
 8. [Constraints](#8-constraints)
-9. [Assumptions and Dependencies](#9-assumptions-and-dependencies)
+9. [Testing Requirements](#9-testing-requirements)
+10. [Assumptions and Dependencies](#10-assumptions-and-dependencies)
 
 ---
 
@@ -37,7 +38,7 @@ PelangiManager is a full-stack web application that provides:
 - Comprehensive error handling and validation
 
 ### 1.3 Product Overview
-The system manages 24 capsules organized in three sections:
+The system manages 26 capsules organized in three sections:
 - **Back Section:** C1-C6 (6 capsules)
 - **Front Section:** C11-C24 (14 capsules)
 - **Middle Section:** C25-C26 (2 capsules)
@@ -61,8 +62,14 @@ The system manages 24 capsules organized in three sections:
 - User account management with role-based access
 - Guest token generation for self check-in
 - Administrative notifications system
-- Configuration management
+- Configuration management with hot-reload
 - Data export and reporting capabilities
+- Google OAuth authentication integration
+- File upload and management system
+- Real-time WebSocket updates
+- Mobile-responsive design
+- Multi-language support (i18n ready)
+- Photo management for guests and capsules
 
 ### 2.2 User Classes and Characteristics
 1. **Staff Users:**
@@ -83,10 +90,12 @@ The system manages 24 capsules organized in three sections:
 
 ### 2.3 Operating Environment
 - **Client:** Web browsers (Chrome, Firefox, Safari, Edge)
-- **Server:** Node.js runtime environment
-- **Database:** PostgreSQL (production) / In-memory storage (development)
+- **Server:** Node.js runtime environment with Express.js
+- **Database:** PostgreSQL (Neon serverless) / In-memory storage (development)
 - **Platform:** Cross-platform web application
-- **Deployment:** Cloud-based hosting with Docker support
+- **Deployment:** Cloud-based hosting (Replit, Vercel, etc.)
+- **File Storage:** Google Cloud Storage (production) / Local file system (development)
+- **Build Tool:** Vite for frontend, ESBuild for backend
 
 ### 2.4 Design and Implementation Constraints
 - Must support real-time updates for occupancy status
@@ -100,6 +109,20 @@ The system manages 24 capsules organized in three sections:
 ## 3. System Features
 
 ### 3.1 Core Features
+- **Guest Management**: Complete guest lifecycle management
+- **Capsule Management**: Real-time occupancy and cleaning status
+- **Maintenance System**: Problem reporting and resolution workflow
+- **User Authentication**: Multi-method authentication system
+- **Configuration Management**: Dynamic system configuration
+
+### 3.2 Advanced Features
+- **Google OAuth Integration**: Modern social login authentication
+- **File Management**: Photo uploads and document storage
+- **Real-time Updates**: WebSocket-based live updates
+- **Mobile Responsiveness**: Optimized for mobile devices
+- **Multi-language Support**: Internationalization framework
+- **Photo Management**: Guest and capsule photo handling
+- **Token-based Self Check-in**: Guest self-service capabilities
 1. **Guest Management System**
 2. **Capsule Occupancy Tracking**
 3. **Maintenance Management**
@@ -264,7 +287,35 @@ Self-service check-in system for guests using generated tokens.
 
 ## 7. Technical Requirements
 
-### 7.1 Frontend Technology Stack
+### 7.1 Frontend Requirements
+- **React 18+**: Modern React with hooks and functional components
+- **TypeScript**: Type-safe development environment
+- **Vite**: Fast build tool and development server
+- **Tailwind CSS**: Utility-first CSS framework
+- **shadcn/ui**: High-quality component library
+- **React Query**: Server state management
+- **Responsive Design**: Mobile-first approach
+
+### 7.2 Backend Requirements
+- **Node.js 18+**: JavaScript runtime environment
+- **Express.js**: Web application framework
+- **TypeScript**: Type-safe backend development
+- **Passport.js**: Authentication middleware
+- **Drizzle ORM**: Type-safe database operations
+- **WebSocket Support**: Real-time communication
+- **File Upload Handling**: Multer middleware
+
+### 7.3 Database Requirements
+- **PostgreSQL**: Primary database (Neon serverless)
+- **In-Memory Storage**: Development and testing storage
+- **Automatic Fallback**: Graceful degradation to in-memory storage
+- **Data Migration**: Drizzle-based schema management
+
+### 7.4 Storage Requirements
+- **Google Cloud Storage**: Production file storage
+- **Local File System**: Development file storage
+- **Automatic Selection**: Environment-based storage method selection
+- **File Validation**: Type and size validation
 - **Framework:** React 18 with TypeScript
 - **UI Library:** shadcn/ui components built on Radix UI
 - **Styling:** TailwindCSS with custom CSS variables
@@ -318,7 +369,27 @@ Self-service check-in system for guests using generated tokens.
 
 ---
 
-## 9. Assumptions and Dependencies
+## 9. Testing Requirements
+
+### 9.1 Testing Framework
+- **Jest**: Primary testing framework
+- **React Testing Library**: Component testing utilities
+- **TypeScript**: Type checking and validation
+- **Mocking**: Storage and API mocking capabilities
+
+### 9.2 Test Coverage
+- **Unit Tests**: Individual component and function testing
+- **Integration Tests**: Component interaction testing
+- **API Tests**: Backend endpoint testing
+- **Storage Tests**: Data persistence testing
+- **Error Handling**: Error scenarios and recovery testing
+
+### 9.3 Testing Environment
+- **Development**: In-memory storage for fast testing
+- **CI/CD**: Automated testing in deployment pipeline
+- **Coverage Reports**: Test coverage metrics and reporting
+
+## 10. Assumptions and Dependencies
 
 ### 9.1 Assumptions
 - **Network Connectivity:** Stable internet connection available

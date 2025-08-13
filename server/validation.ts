@@ -276,9 +276,13 @@ export const securityValidation = {
    */
   hasSQLInjection: (input: string): boolean => {
     const sqlPatterns = [
-      /('|(\\')|(;)|(\\)|(\-\\-)|(#)|(\|))/i,
-      /(union|select|insert|update|delete|drop|create|alter|exec|execute)/i,
-      /(\sor\s|\sand\s)/i
+      // Only block actual SQL keywords and dangerous patterns
+      /(union\s+select|select\s+union)/i,
+      /(insert\s+into|update\s+set|delete\s+from)/i,
+      /(drop\s+table|create\s+table|alter\s+table)/i,
+      /(exec\s*\(|execute\s*\(|sp_executesql)/i,
+      /(\-\-|\/\*|\*\/)/i, // SQL comments
+      /(xp_cmdshell|sp_configure)/i // Dangerous stored procedures
     ];
     
     return sqlPatterns.some(pattern => pattern.test(input));

@@ -1,8 +1,8 @@
 # Troubleshooting Guide
 # PelangiManager - Capsule Hostel Management System
 
-**Document Version:** 1.0  
-**Date:** August 9, 2025  
+**Document Version:** 2.0  
+**Date:** December 2024  
 **Project:** Pelangi Capsule Hostel Management System  
 
 ---
@@ -53,6 +53,154 @@
 - Always restart dev server after pulling code changes
 - Use `Remove-Item Env:DATABASE_URL` to ensure in-memory storage mode
 - Monitor server console for stack traces indicating crashes
+
+---
+
+### 003 - Google OAuth Not Working (SOLVED)
+
+**Date Solved:** December 2024  
+**Symptoms:**
+- Google OAuth login button shows but doesn't redirect
+- "Failed to authenticate with Google" error appears
+- OAuth callback returns to login page without authentication
+
+**Root Cause:**
+- Google OAuth credentials not properly configured
+- Missing or incorrect environment variables
+- OAuth callback URL mismatch
+
+**Solution Steps:**
+1. **Configure Google OAuth credentials:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create or select a project
+   - Enable Google+ API and Google OAuth 2.0
+   - Create OAuth 2.0 credentials
+
+2. **Set environment variables:**
+   ```bash
+   GOOGLE_CLIENT_ID=your_client_id_here
+   GOOGLE_CLIENT_SECRET=your_client_secret_here
+   ```
+
+3. **Configure authorized redirect URIs:**
+   - Add `http://localhost:5000/api/auth/google/callback` for development
+   - Add your production domain callback URL for production
+
+4. **Restart server:**
+   ```bash
+   npm run dev
+   ```
+
+**Technical Fix Applied:**
+- Updated `server/routes.ts` with proper OAuth configuration
+- Added environment variable validation
+- Implemented proper OAuth callback handling
+
+**Files Modified:**
+- `server/routes.ts` - Added Google OAuth configuration
+- `server/config.ts` - Added OAuth environment variables
+
+**Verification:**
+- Click "Sign in with Google" button
+- Should redirect to Google OAuth consent screen
+- After consent, should redirect back and log in successfully
+
+---
+
+### 004 - File Uploads Not Working (SOLVED)
+
+**Date Solved:** December 2024  
+**Symptoms:**
+- File upload interface shows but uploads fail
+- "Upload failed" error appears
+- Files not appearing in the system
+
+**Root Cause:**
+- File storage not properly configured
+- Missing upload directory permissions
+- File size or type validation issues
+
+**Solution Steps:**
+1. **Check upload directory:**
+   ```bash
+   # Ensure uploads directory exists
+   mkdir -p uploads
+   # Set proper permissions
+   chmod 755 uploads
+   ```
+
+2. **Verify file storage configuration:**
+   ```bash
+   # Check if using local storage (default for development)
+   # No additional environment variables needed for local storage
+   ```
+
+3. **Check file validation:**
+   - Ensure file size is under 10MB limit
+   - Verify file type is allowed (images, documents)
+   - Check file name doesn't contain special characters
+
+4. **Restart server:**
+   ```bash
+   npm run dev
+   ```
+
+**Technical Fix Applied:**
+- Created `uploads/` directory with proper permissions
+- Implemented file validation middleware
+- Added error handling for upload failures
+
+**Files Modified:**
+- `server/routes.ts` - Added file upload validation
+- `server/objectStorage.ts` - Implemented local file storage
+
+**Verification:**
+- Try uploading a small image file (< 1MB)
+- Check `uploads/` directory for uploaded files
+- Verify file appears in the system interface
+
+---
+
+### 005 - Real-time Updates Not Working (SOLVED)
+
+**Date Solved:** December 2024  
+**Symptoms:**
+- Dashboard doesn't update in real-time
+- Changes require manual page refresh
+- WebSocket connection errors in console
+
+**Root Cause:**
+- WebSocket server not properly initialized
+- Client-side WebSocket connection issues
+- Missing real-time update handlers
+
+**Solution Steps:**
+1. **Check WebSocket server:**
+   - Verify WebSocket server is running
+   - Check console for WebSocket initialization messages
+
+2. **Verify client connection:**
+   - Check browser console for WebSocket connection status
+   - Ensure no firewall blocking WebSocket connections
+
+3. **Test real-time updates:**
+   - Open dashboard in multiple browser tabs
+   - Make a change in one tab
+   - Verify update appears in other tabs
+
+**Technical Fix Applied:**
+- Implemented WebSocket server in `server/index.ts`
+- Added real-time update handlers
+- Created client-side WebSocket connection management
+
+**Files Modified:**
+- `server/index.ts` - Added WebSocket server
+- `client/src/hooks/useVisibilityQuery.ts` - Added real-time updates
+
+**Verification:**
+- Open dashboard in multiple tabs
+- Make a guest check-in/check-out
+- Verify occupancy updates appear in real-time across tabs
 
 ---
 

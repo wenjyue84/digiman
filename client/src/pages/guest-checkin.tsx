@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { UserPlus, User, Phone, Mail, Calendar, MapPin, CheckCircle, Upload, Camera, Globe, Video, CreditCard, Users, Banknote, DollarSign, HelpCircle, Info, Clock, Printer, Send } from "lucide-react";
+import { UserPlus, User, Phone, Mail, Calendar, MapPin, CheckCircle, Upload, Camera, Globe, Video, CreditCard, Users, Banknote, DollarSign, HelpCircle, Info, Clock, Printer, Send, Wifi, Download } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { guestSelfCheckinSchema, type GuestSelfCheckin } from "@shared/schema";
@@ -61,6 +61,9 @@ export default function GuestCheckin() {
     guideCheckoutTime?: string;
     guideDoorPassword?: string;
     guideImportantReminders?: string;
+    guideAddress?: string;
+    guideWifiName?: string;
+    guideWifiPassword?: string;
   }>({
     queryKey: ["/api/settings"],
     enabled: true,
@@ -529,6 +532,127 @@ export default function GuestCheckin() {
     window.print();
   };
 
+  // Save as PDF function
+  const handleSaveAsPdf = () => {
+    // Create a new window with the content to be saved as PDF
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        title: "Error",
+        description: "Please allow popups to save as PDF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get guest guide settings
+    const getCheckinTimes = () => {
+      return {
+        checkinTime: settings?.guideCheckinTime || "From 3:00 PM",
+        checkoutTime: settings?.guideCheckoutTime || "Before 12:00 PM",
+        doorPassword: settings?.guideDoorPassword || "1270#",
+        importantReminders: settings?.guideImportantReminders || "• Do not leave your card inside the capsule and close the door\n• No Smoking in hostel area\n• CCTV monitored – Violation (e.g., smoking) may result in RM300 penalty"
+      };
+    };
+
+    const { checkinTime, checkoutTime, doorPassword, importantReminders } = getCheckinTimes();
+
+    // Create PDF content
+    const pdfContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Check-in Slip - Pelangi Capsule Hostel</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .logo { font-size: 24px; color: #f97316; margin-bottom: 10px; }
+          .section { margin-bottom: 20px; }
+          .section-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #374151; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+          .info-item { padding: 10px; background: #f9fafb; border-radius: 8px; }
+          .label { font-weight: bold; color: #374151; }
+          .value { color: #6b7280; }
+          .important { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">🌈 PELANGI CAPSULE HOSTEL</div>
+          <h1>Check-in Slip</h1>
+          <p>Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Guest Information</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="label">Name:</div>
+              <div class="value">${form.getValues("nameAsInDocument") || guestInfo?.guestName || 'Guest'}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Capsule:</div>
+              <div class="value">${guestInfo?.capsuleNumber || 'Assigned based on availability'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Access Information</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="label">Check-in Time:</div>
+              <div class="value">${checkinTime}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Check-out Time:</div>
+              <div class="value">${checkoutTime}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Door Password:</div>
+              <div class="value">${doorPassword}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Access Card:</div>
+              <div class="value">Placed on your pillow</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Address</div>
+          <p>26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia</p>
+        </div>
+
+        <div class="important">
+          <div class="section-title">Important Reminders</div>
+          <p>${importantReminders}</p>
+        </div>
+
+        <div class="footer">
+          <p>For assistance, please contact reception</p>
+          <p>Enjoy your stay at Pelangi Capsule Hostel! 💼🌟</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(pdfContent);
+    printWindow.document.close();
+
+    // Wait for content to load then trigger print
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+
+    toast({
+      title: "PDF Ready",
+      description: "Your check-in slip is ready to save as PDF",
+    });
+  };
+
   // Email function - using browser mailto (no API key required)
   const handleSendEmail = () => {
     if (!emailForSlip || !emailForSlip.includes('@')) {
@@ -612,15 +736,38 @@ This email was generated by Pelangi Capsule Hostel Management System
                 <div className="text-2xl mb-4">🎉</div>
               </div>
 
-              <div className="bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl p-6 mb-6 text-center">
-                <h2 className="text-xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-2">
+              <div className="bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl p-6 mb-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-2">
                   {t.welcomeHostel} <span className="text-2xl">🌈</span>
                 </h2>
-                <div className="space-y-2 text-gray-700">
-                  <div className="flex items-center justify-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span className="font-medium">{t.address}</span>
-                    <span>26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru</span>
+                
+                {/* Essential Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  {/* Address Section */}
+                  <div className="bg-white/60 rounded-lg p-3">
+                    <div className="flex items-start gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-orange-600 mt-0.5" />
+                      <div>
+                        <div className="font-semibold text-gray-800 mb-1">Address</div>
+                        <div className="text-gray-700 whitespace-pre-line text-xs">
+                          {settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* WiFi Section */}
+                  <div className="bg-white/60 rounded-lg p-3">
+                    <div className="flex items-start gap-2 mb-2">
+                      <Wifi className="h-4 w-4 text-blue-600 mt-0.5" />
+                      <div>
+                        <div className="font-semibold text-gray-800 mb-1">WiFi Access</div>
+                        <div className="text-gray-700 text-xs">
+                          <div><span className="font-medium">Network:</span> {settings?.guideWifiName || 'Pelangi_Guest'}</div>
+                          <div><span className="font-medium">Password:</span> {settings?.guideWifiPassword || 'Pelangi2024!'}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -652,50 +799,69 @@ This email was generated by Pelangi Capsule Hostel Management System
               </div>
 
               <div className="border-t border-gray-200 py-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span>🕒</span>
-                    <span className="font-medium">Check-in:</span>
-                    <span>{settings?.guideCheckinTime || t.checkInTime}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>🕛</span>
-                    <span className="font-medium">Check-out:</span>
-                    <span>{settings?.guideCheckoutTime || t.checkOutTime}</span>
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 rounded-lg p-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span>🔐</span>
-                    <span className="font-medium">{t.doorPassword}</span>
-                    <span className="font-mono text-lg font-bold text-blue-600">{settings?.guideDoorPassword || '1270#'}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>🛌</span>
-                    <span className="font-medium">{t.capsuleNumber}</span>
-                    {guestInfo?.autoAssign ? (
-                      <span className="font-bold text-lg text-blue-600">Assigned based on availability</span>
-                    ) : (
-                      <span className="font-bold text-lg text-orange-600">{guestInfo?.capsuleNumber} ({guestInfo?.position})</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>🃏</span>
-                    <span className="font-medium">{t.accessCard}</span>
-                  </div>
-                </div>
-
-                {settings?.guideImportantReminders && (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                    <h3 className="font-bold text-red-800 mb-2 flex items-center gap-2">
-                      <span>⚠</span> {t.importantReminders}
-                    </h3>
-                    <div className="text-sm text-red-700 whitespace-pre-wrap">
-                      {settings.guideImportantReminders}
+                {/* Time Information */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    Check-in & Check-out Times
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">🕒</span>
+                      <span className="font-medium">Check-in:</span>
+                      <span className="font-semibold">{settings?.guideCheckinTime || '2:00 PM'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">🕛</span>
+                      <span className="font-medium">Check-out:</span>
+                      <span className="font-semibold">{settings?.guideCheckoutTime || '12:00 PM'}</span>
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* Access Information */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    Access & Room Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-600">🔐</span>
+                      <span className="font-medium">Door Password:</span>
+                      <span className="font-mono text-lg font-bold text-green-600 bg-white px-2 py-1 rounded border">
+                        {settings?.guideDoorPassword || '1270#'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-600">🛌</span>
+                      <span className="font-medium">Capsule:</span>
+                      {guestInfo?.autoAssign ? (
+                        <span className="font-bold text-lg text-green-600">Assigned based on availability</span>
+                      ) : (
+                        <span className="font-bold text-lg text-orange-600 bg-white px-2 py-1 rounded border">
+                          {guestInfo?.capsuleNumber} ({guestInfo?.position})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">🃏</span>
+                    <span className="font-medium">Access Card:</span>
+                    <span className="text-sm text-gray-600">Collect from reception upon arrival</span>
+                  </div>
+                </div>
+
+                {/* Important Reminders */}
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+                  <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
+                    <span className="text-red-600">⚠️</span> 
+                    Important Reminders
+                  </h3>
+                  <div className="text-sm text-red-700 whitespace-pre-wrap leading-relaxed">
+                    {settings?.guideImportantReminders || 'Please keep your room key safe. Quiet hours are from 10:00 PM to 7:00 AM. No smoking inside the building. Keep shared spaces clean.'}
+                  </div>
+                </div>
 
                 {canEdit && editExpiresAt && new Date() < editExpiresAt && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -720,7 +886,7 @@ This email was generated by Pelangi Capsule Hostel Management System
                   </div>
                 )}
 
-                {/* Print and Email buttons */}
+                {/* Print, Email, and Save buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
                   <Button
                     variant="outline"
@@ -739,7 +905,15 @@ This email was generated by Pelangi Capsule Hostel Management System
                     className="flex items-center gap-2"
                   >
                     <Send className="h-4 w-4" />
-                    Send via Email Client
+                    Email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveAsPdf}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    {t.saveAsPdf}
                   </Button>
                 </div>
 
@@ -756,9 +930,9 @@ This email was generated by Pelangi Capsule Hostel Management System
         <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Send Check-in Slip via Email</DialogTitle>
+              <DialogTitle>{t.sendCheckInSlipEmail}</DialogTitle>
               <DialogDescription>
-                Enter the email address where you'd like to send your check-in slip. This will open your default email client with the slip ready to send.
+                {t.enterEmailForSlip}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 mt-4">
@@ -785,7 +959,7 @@ This email was generated by Pelangi Capsule Hostel Management System
                   className="flex items-center gap-2"
                 >
                   <Send className="h-4 w-4" />
-                  Open Email Client
+                  Email
                 </Button>
               </div>
             </div>

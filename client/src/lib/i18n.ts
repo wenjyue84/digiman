@@ -101,6 +101,7 @@ export interface Translations {
   
   // Print and Email
   printCheckInSlip: string;
+  saveAsPdf: string;
   sendToEmail: string;
   sendCheckInSlipEmail: string;
   enterEmailForSlip: string;
@@ -242,8 +243,13 @@ const enTranslations: Translations = {
   selectLanguage: "Select Language",
   currentLanguage: "English",
   
-  printCheckInSlip: "Print Check-in Slip",
+      printCheckInSlip: "Print",
+    saveAsPdf: "Save",
   sendToEmail: "Send to Email",
+  emailAddress: "Email Address",
+  invalidEmail: "Invalid Email",
+  pleaseEnterValidEmail: "Please enter a valid email address",
+  cancel: "Cancel",
   sendCheckInSlipEmail: "Send Check-in Slip to Email",
   enterEmailForSlip: "Enter the email address where you'd like to receive your check-in slip.",
   emailAddress: "Email Address",
@@ -380,8 +386,13 @@ const msTranslations: Translations = {
   selectLanguage: "Pilih Bahasa",
   currentLanguage: "Bahasa Malaysia",
   
-  printCheckInSlip: "Cetak Slip Daftar Masuk",
+      printCheckInSlip: "Cetak",
+    saveAsPdf: "Simpan",
   sendToEmail: "Hantar ke E-mel",
+  emailAddress: "Alamat E-mel",
+  invalidEmail: "E-mel Tidak Sah",
+  pleaseEnterValidEmail: "Sila masukkan alamat e-mel yang sah",
+  cancel: "Batal",
   sendCheckInSlipEmail: "Hantar Slip Daftar Masuk ke E-mel",
   enterEmailForSlip: "Masukkan alamat e-mel di mana anda ingin menerima slip daftar masuk anda.",
   emailAddress: "Alamat E-mel",
@@ -563,6 +574,18 @@ const zhTranslations: Translations = {
   commonNoteBottomCapsule: "如可，优先安排下铺",
   commonNoteQuietArea: "如可，优先安排安静区域",
   commonNoteExtraBedding: "需要额外毛毯",
+  
+  // Print and Email
+  printCheckInSlip: "打印",
+  saveAsPdf: "保存",
+  sendToEmail: "发送到邮箱",
+  sendCheckInSlipEmail: "发送入住单到邮箱",
+  
+  // Email and validation
+  emailAddress: "邮箱地址",
+  invalidEmail: "无效邮箱",
+  pleaseEnterValidEmail: "请输入有效的邮箱地址",
+  cancel: "取消",
 };
 
 // Spanish translations

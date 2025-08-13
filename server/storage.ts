@@ -857,14 +857,14 @@ export class MemStorage implements IStorage {
     );
     this.setSetting(
       'guideAddress',
-      'Address: [Insert actual address here]\nPhone: [Insert contact number here]\nEmail: [Insert email address here]\nWebsite: [Insert website if available]',
+      '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\nPhone: +60 12-345 6789\nEmail: info@pelangicapsule.com\nWebsite: www.pelangicapsule.com',
       'Hostel address and contacts'
     );
-    this.setSetting('guideWifiName', '[Insert WiFi SSID]', 'WiFi SSID');
-    this.setSetting('guideWifiPassword', '[Insert WiFi Password]', 'WiFi password');
+    this.setSetting('guideWifiName', 'Pelangi_Guest', 'WiFi SSID');
+    this.setSetting('guideWifiPassword', 'Pelangi2024!', 'WiFi password');
     this.setSetting(
       'guideCheckin',
-      'Check-In Time: [e.g., 2:00 PM]\nCheck-Out Time: [e.g., 12:00 PM]\n\nHow to check in:\n1) Present a valid ID/passport at the front desk.\n2) If you have a self-check-in token, show it to staff.\n3) Early check-in / late check-out may be available upon request (subject to availability and charges).',
+      'Check-In Time: 2:00 PM\nCheck-Out Time: 12:00 PM\n\nHow to check in:\n1) Present a valid ID/passport at the front desk.\n2) If you have a self-check-in token, show it to staff.\n3) Early check-in / late check-out may be available upon request (subject to availability and charges).',
       'Check-in and check-out guidance'
     );
     this.setSetting(
@@ -884,6 +884,12 @@ export class MemStorage implements IStorage {
     this.setSetting('guideShowCheckin', 'true', 'Show check-in guidance');
     this.setSetting('guideShowOther', 'true', 'Show other guidance');
     this.setSetting('guideShowFaq', 'true', 'Show FAQ');
+    
+    // Default time and access settings
+    this.setSetting('guideCheckinTime', '2:00 PM', 'Check-in time');
+    this.setSetting('guideCheckoutTime', '12:00 PM', 'Check-out time');
+    this.setSetting('guideDoorPassword', '1270#', 'Door access password');
+    this.setSetting('guideImportantReminders', 'Please keep your room key safe. Quiet hours are from 10:00 PM to 7:00 AM. No smoking inside the building. Keep shared spaces clean.', 'Important reminders for guests');
   }
 
   // Helper function for pagination

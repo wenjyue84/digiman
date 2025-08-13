@@ -76,6 +76,81 @@ Built with multi-language support ready for:
 - Easy addition of new languages
 - RTL language support capability
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+### 📖 **System Documentation**
+- **[System Architecture Document](./docs/System_Architecture_Document.md)** - Complete system architecture and design
+- **[System Requirements Specification](./docs/System_Requirements_Specification.md)** - Detailed requirements and specifications
+- **[API Documentation](./docs/API_Documentation.md)** - Complete API reference and examples
+
+### 🛠️ **Development Resources**
+- **[Development Guide](./docs/Development_Guide.md)** - Setup, workflow, and best practices
+- **[Storage System Guide](./docs/Storage_System_Guide.md)** - Storage architecture and configuration
+- **[Troubleshooting Guide](./docs/Troubleshooting_Guide.md)** - Common issues and solutions
+
+### 📧 **Integration Guides**
+- **[Email Setup Guide](./docs/Email_Setup_Guide.md)** - SendGrid configuration and email features
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ and npm 8+
+- Git for version control
+- PostgreSQL (optional for development)
+
+### Installation
+```bash
+# Clone the repository
+git clone <repository-url>
+cd PelangiManager
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Open browser
+open http://localhost:5000
+```
+
+### Default Credentials
+- **Admin**: `admin` / `admin123`
+- **Staff**: `Jay` / `Jay123`, `Le` / `Le123`, `Alston` / `Alston123`
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Type checking
+npm run check
+```
+
+## 📦 Build & Deploy
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
 ---
 
 **Experience the future of capsule hotel management with PelangiManager!** 🏨✨
+
+## 🤝 Contributing
+
+We welcome contributions! Please read our development guide and follow the established coding standards. For major changes, please open an issue first to discuss what you would like to change.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

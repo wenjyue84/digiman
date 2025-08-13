@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Pelangi Manager uses a dual-storage architecture that automatically selects between in-memory storage (for development) and database storage (for production) based on environment variables.
+The Pelangi Manager uses a dual-storage architecture that automatically selects between in-memory storage (for development) and database storage (for production) based on environment variables. The system provides seamless fallback mechanisms and supports both data storage and file storage operations.
 
 ## Architecture
 
@@ -25,12 +25,14 @@ export interface IStorage {
 - **Data Persistence**: None (resets on server restart)
 - **Performance**: Fast, no network latency
 - **Use Case**: Development, testing, demos
+- **Features**: Automatic data seeding, sample data generation
 
 #### 2. DatabaseStorage (PostgreSQL)
 - **Purpose**: Production deployment
-- **Data Persistence**: Full (Neon database)
+- **Data Persistence**: Full (Neon serverless database)
 - **Performance**: Network-dependent, scalable
 - **Use Case**: Production, staging, team collaboration
+- **Features**: Full ACID compliance, automatic backups, scaling
 
 ## Automatic Selection Logic
 
@@ -70,6 +72,69 @@ npm run dev
 ```bash
 # Set in Replit Secrets
 DATABASE_URL=postgresql://username:password@host:port/database
+```
+
+### File Storage Configuration
+
+#### Local Development (Local Files)
+```bash
+# No additional environment variables needed
+# System automatically uses local file storage
+npm run dev
+```
+
+#### Production (Google Cloud Storage)
+```bash
+# Set in environment variables
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_KEY_FILE=path/to/service-account-key.json
+```
+
+## File Storage System
+
+### File Storage Architecture
+The system supports dual file storage strategies:
+
+#### 1. Local File Storage (Development)
+- **Purpose**: Local development and testing
+- **Storage Location**: `uploads/` directory in project root
+- **Features**: Fast access, no external dependencies
+- **Use Case**: Development, testing, offline development
+
+#### 2. Google Cloud Storage (Production)
+- **Purpose**: Production file storage
+- **Storage Location**: Google Cloud Storage buckets
+- **Features**: Global distribution, automatic scaling, backup
+- **Use Case**: Production, staging, team collaboration
+
+### File Storage Interface
+```typescript
+export interface IFileStorage {
+  uploadFile(file: Express.Multer.File): Promise<string>;
+  getFile(fileId: string): Promise<Buffer>;
+  deleteFile(fileId: string): Promise<boolean>;
+  getFileUrl(fileId: string): Promise<string>;
+}
+```
+
+### Automatic File Storage Selection
+```typescript
+// server/objectStorage.ts
+let fileStorage: LocalFileStorage | GoogleCloudStorage;
+
+try {
+  if (process.env.GOOGLE_CLOUD_PROJECT && process.env.GOOGLE_CLOUD_KEY_FILE) {
+    fileStorage = new GoogleCloudStorage();
+    console.log("✅ Using Google Cloud Storage");
+  } else {
+    fileStorage = new LocalFileStorage();
+    console.log("✅ Using local file storage");
+  }
+} catch (error) {
+  console.warn("⚠️ Google Cloud Storage failed, falling back to local storage:", error);
+  fileStorage = new LocalFileStorage();
+  console.log("✅ Using local file storage as fallback");
+}
 ```
 
 ## Data Initialization
