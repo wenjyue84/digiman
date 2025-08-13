@@ -1968,7 +1968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Calendar API - Get occupancy data for calendar visualization
-  app.get("/api/calendar/occupancy/:year/:month", async (req, res) => {
+  app.get("/api/calendar/occupancy/:year/:month", authenticateToken, async (req: any, res) => {
     try {
       const { year, month } = req.params;
       const yearInt = parseInt(year);

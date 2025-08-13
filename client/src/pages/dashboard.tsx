@@ -2,8 +2,11 @@ import SortableGuestTable from "@/components/sortable-guest-table";
 import DailyNotifications from "@/components/daily-notifications";
 import AdminNotifications from "@/components/admin-notifications";
 import OccupancyCalendar from "@/components/occupancy-calendar";
+import { useAuth } from "@/components/auth-provider";
 
 export default function Dashboard() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="space-y-6">
       <SortableGuestTable />
@@ -11,7 +14,7 @@ export default function Dashboard() {
         <DailyNotifications />
         <AdminNotifications />
       </div>
-      <OccupancyCalendar />
+      {isAuthenticated && <OccupancyCalendar />}
     </div>
   );
 }
