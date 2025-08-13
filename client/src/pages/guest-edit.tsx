@@ -27,6 +27,8 @@ export default function GuestEdit() {
       nameAsInDocument: "",
       gender: undefined,
       nationality: "",
+      checkInDate: new Date().toISOString().split('T')[0],
+      checkOutDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       icNumber: "",
       passportNumber: "",
       paymentMethod: undefined,
@@ -65,6 +67,15 @@ export default function GuestEdit() {
         form.setValue("gender", data.guest.gender || undefined);
         form.setValue("nationality", data.guest.nationality || "");
         form.setValue("paymentMethod", data.guest.paymentMethod || undefined);
+        
+        // Set check-in and check-out dates
+        if (data.guest.checkinTime) {
+          const checkinDate = new Date(data.guest.checkinTime).toISOString().split('T')[0];
+          form.setValue("checkInDate", checkinDate);
+        }
+        if (data.guest.expectedCheckoutDate) {
+          form.setValue("checkOutDate", data.guest.expectedCheckoutDate);
+        }
         
         // Parse IC/Passport from notes if available
         const notes = data.guest.notes || "";
@@ -271,6 +282,52 @@ export default function GuestEdit() {
                     />
                     {form.formState.errors.nationality && (
                       <p className="text-red-500 text-sm mt-1">{form.formState.errors.nationality.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Check-in & Check-out Dates */}
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Check-in & Check-out Dates
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="checkInDate" className="text-sm font-medium text-hostel-text">
+                      Check-in Date <span className="text-gray-500 text-xs">(Editable)</span>
+                    </Label>
+                    <Input
+                      id="checkInDate"
+                      type="date"
+                      className="w-full mt-1"
+                      {...form.register("checkInDate")}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      You can change this if you plan to arrive on a different date.
+                    </p>
+                    {form.formState.errors.checkInDate && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.checkInDate.message}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="checkOutDate" className="text-sm font-medium text-hostel-text">
+                      Check-out Date <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="checkOutDate"
+                      type="date"
+                      className="w-full mt-1"
+                      required
+                      {...form.register("checkOutDate", { required: "Check-out date is required" })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please select your planned check-out date.
+                    </p>
+                    {form.formState.errors.checkOutDate && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.checkOutDate.message}</p>
                     )}
                   </div>
                 </div>

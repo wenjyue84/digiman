@@ -403,6 +403,31 @@ export const guestSelfCheckinSchema = z.object({
     .max(50, "Nationality must not exceed 50 characters")
     .regex(/^[a-zA-Z\s-]+$/, "Nationality can only contain letters, spaces, and hyphens")
     .transform(val => val.trim()),
+  checkInDate: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Check-in date must be in YYYY-MM-DD format")
+    .refine(val => {
+      if (!val) return true; // Optional field
+      const date = new Date(val);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+      const maxDate = new Date();
+      maxDate.setFullYear(today.getFullYear() + 1); // Max 1 year from now
+      maxDate.setHours(0, 0, 0, 0);
+      return date >= today && date <= maxDate;
+    }, "Check-in date must be between today and 1 year from now"),
+  checkOutDate: z.string()
+    .min(1, "Check-out date is required")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Check-out date must be in YYYY-MM-DD format")
+    .refine(val => {
+      if (!val) return false; // Required field
+      const date = new Date(val);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+      const maxDate = new Date();
+      maxDate.setFullYear(today.getFullYear() + 1); // Max 1 year from now
+      maxDate.setHours(0, 0, 0, 0);
+      return date >= today && date <= maxDate;
+    }, "Check-out date must be between today and 1 year from now"),
   icNumber: z.string()
     .regex(/^\d{12}$/, "IC number must be 12 digits (e.g., 840816015291)")
     .refine(val => {
@@ -519,6 +544,17 @@ export const guestSelfCheckinSchema = z.object({
 }, {
   message: "Please describe whom you gave the payment to",
   path: ["guestPaymentDescription"],
+}).refine((data) => {
+  // Check-out date must be after check-in date
+  if (data.checkInDate && data.checkOutDate) {
+    const checkInDate = new Date(data.checkInDate);
+    const checkOutDate = new Date(data.checkOutDate);
+    return checkOutDate > checkInDate;
+  }
+  return true;
+}, {
+  message: "Check-out date must be after check-in date",
+  path: ["checkOutDate"],
 });
 
 // Token creation schema with comprehensive validation

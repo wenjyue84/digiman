@@ -1792,8 +1792,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: guestToken.email || undefined,
         gender: validatedGuestData.gender,
         nationality: validatedGuestData.nationality,
+        checkInDate: validatedGuestData.checkInDate, // Use the date from the form
         idNumber: validatedGuestData.icNumber || validatedGuestData.passportNumber || undefined,
-        expectedCheckoutDate: guestToken.expectedCheckoutDate || undefined,
+        expectedCheckoutDate: validatedGuestData.checkOutDate || guestToken.expectedCheckoutDate || undefined,
         paymentAmount: "0", // Will be updated at front desk
         paymentMethod: validatedGuestData.paymentMethod === "online_platform" ? "platform" : validatedGuestData.paymentMethod as "cash" | "bank" | "tng" | "platform",
         paymentCollector: "Self Check-in",
@@ -1920,8 +1921,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         idNumber: validatedGuestData.icNumber || validatedGuestData.passportNumber || undefined,
         age: calculatedAge, // Update age if IC number changed
         paymentMethod: validatedGuestData.paymentMethod,
+        expectedCheckoutDate: validatedGuestData.checkOutDate || undefined,
         notes: `IC: ${validatedGuestData.icNumber || 'N/A'}, Passport: ${validatedGuestData.passportNumber || 'N/A'}${validatedGuestData.icDocumentUrl ? `, IC Doc: ${validatedGuestData.icDocumentUrl}` : ''}${validatedGuestData.passportDocumentUrl ? `, Passport Doc: ${validatedGuestData.passportDocumentUrl}` : ''}`,
       });
+
+      // Update check-in time if it changed
+      if (validatedGuestData.checkInDate) {
+        const [year, month, day] = validatedGuestData.checkInDate.split('-').map(Number);
+        const now = new Date();
+        const newCheckinTime = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+        
+        await storage.updateGuest(guest.id, {
+          checkinTime: newCheckinTime,
+        });
+      }
 
       res.json({
         message: "Information updated successfully",
