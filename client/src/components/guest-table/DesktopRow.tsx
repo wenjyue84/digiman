@@ -4,14 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import type { Guest, GuestToken } from "@shared/schema";
 import { SwipeableGuestRow } from "./SwipeableGuestRow";
-import { 
-  getInitials, 
-  truncateName, 
-  getFirstInitial, 
-  getGenderIcon, 
-  formatShortDateTime, 
-  formatShortDate 
+import {
+  getInitials,
+  truncateName,
+  getFirstInitial,
+  getGenderIcon,
+  formatShortDateTime,
+  formatShortDate
 } from "./utils";
+import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 
 interface RowData {
   items: Array<{ type: 'guest' | 'pending'; data: any }>;
@@ -99,11 +100,11 @@ export function DesktopRow({ index, style, data }: ListChildComponentProps<RowDa
                   <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
                     {guest.paymentAmount ? (
                       <div>
-                        <div className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                        <div className={`font-medium ${isGuestPaid(guest) ? '' : 'text-red-600'}`}>
                           RM {guest.paymentAmount}
-                          {!guest.isPaid && guest.notes && (
+                          {!isGuestPaid(guest) && getGuestBalance(guest) > 0 && (
                             <span className="text-red-600 text-xs font-medium ml-1">
-                              (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                              (Balance: RM{getGuestBalance(guest)})
                             </span>
                           )}
                         </div>

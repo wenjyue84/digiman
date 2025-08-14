@@ -17,18 +17,19 @@ import type { Guest, GuestToken, PaginatedResponse } from "@shared/schema";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { 
-  getInitials, 
-  truncateName, 
-  getFirstInitial, 
-  getGenderIcon, 
-  formatShortDateTime, 
-  formatShortDate, 
-  ROW_HEIGHT 
+import {
+  getInitials,
+  truncateName,
+  getFirstInitial,
+  getGenderIcon,
+  formatShortDateTime,
+  formatShortDate,
+  ROW_HEIGHT
 } from "@/components/guest-table/utils";
 import { SortButton } from "@/components/guest-table/SortButton";
 import { SwipeableGuestRow } from "@/components/guest-table/SwipeableGuestRow";
 import { DesktopRow } from "@/components/guest-table/DesktopRow";
+import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 
 type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
 type SortOrder = 'asc' | 'desc';
@@ -478,11 +479,11 @@ export default function SortableGuestTable() {
                             <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-600">
                               {guest.paymentAmount ? (
                                 <div>
-                                  <div className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                                  <div className={`font-medium ${isGuestPaid(guest) ? '' : 'text-red-600'}`}>
                                     RM {guest.paymentAmount}
-                                    {!guest.isPaid && guest.notes && (
+                                    {!isGuestPaid(guest) && getGuestBalance(guest) > 0 && (
                                       <span className="text-red-600 text-xs font-medium ml-1">
-                                        (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                                        (Balance: RM{getGuestBalance(guest)})
                                       </span>
                                     )}
                                   </div>
@@ -670,12 +671,12 @@ export default function SortableGuestTable() {
                               </div>
                               <div className="col-span-2 flex flex-wrap items-center gap-2">
                                 <span className="font-medium text-gray-800">Payment:</span>
-                                <span className={guest.isPaid ? '' : 'text-red-600 font-semibold'}>RM {guest.paymentAmount}</span>
+                                <span className={isGuestPaid(guest) ? '' : 'text-red-600 font-semibold'}>RM {guest.paymentAmount}</span>
                                 {guest.paymentMethod && <span>• {guest.paymentMethod.toUpperCase()}</span>}
-                                <Badge variant={guest.isPaid ? 'default' : 'destructive'}>{guest.isPaid ? 'Paid' : 'Outstanding'}</Badge>
-                                {!guest.isPaid && guest.notes && (
+                                <Badge variant={isGuestPaid(guest) ? 'default' : 'destructive'}>{isGuestPaid(guest) ? 'Paid' : 'Outstanding'}</Badge>
+                                {!isGuestPaid(guest) && getGuestBalance(guest) > 0 && (
                                   <span className="text-red-600 text-xs font-medium">
-                                    Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'}
+                                    Balance: RM{getGuestBalance(guest)}
                                   </span>
                                 )}
                               </div>

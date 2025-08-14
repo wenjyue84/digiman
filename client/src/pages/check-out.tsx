@@ -15,6 +15,7 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import type { Guest, PaginatedResponse } from "@shared/schema";
+import { isGuestPaid } from "@/lib/guest";
 
 function formatDuration(checkinTime: string): string {
   const checkin = new Date(checkinTime);
@@ -321,8 +322,8 @@ export default function CheckOut() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center gap-2">
-                                  <div className={`w-2 h-2 ${guest.isPaid ? 'bg-green-500' : 'bg-red-500'} rounded-full`}></div>
-                                  <span className="text-xs text-gray-600">{guest.isPaid ? 'Paid' : 'Unpaid'}</span>
+                                  <div className={`w-2 h-2 ${isGuestPaid(guest) ? 'bg-green-500' : 'bg-red-500'} rounded-full`}></div>
+                                  <span className="text-xs text-gray-600">{isGuestPaid(guest) ? 'Paid' : 'Unpaid'}</span>
                                 </div>
                               </td>
                             </>

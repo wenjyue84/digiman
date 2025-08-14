@@ -13,6 +13,7 @@ import { CheckoutConfirmationDialog } from "./confirmation-dialog";
 import type { Guest, PaginatedResponse } from "@shared/schema";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 
 export default function DailyNotifications() {
   const labels = useAccommodationLabels();
@@ -207,11 +208,11 @@ export default function DailyNotifications() {
                         {guest.paymentAmount && (
                           <div className="flex items-center justify-between">
                             <span className="text-gray-600">Payment</span>
-                            <span className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                            <span className={`font-medium ${isGuestPaid(guest) ? '' : 'text-red-600'}`}>
                               RM {guest.paymentAmount}
-                              {!guest.isPaid && guest.notes && (
+                              {!isGuestPaid(guest) && getGuestBalance(guest) > 0 && (
                                 <span className="text-red-600 text-xs font-medium ml-1">
-                                  (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                                  (Balance: RM{getGuestBalance(guest)})
                                 </span>
                               )}
                             </span>
@@ -295,11 +296,11 @@ export default function DailyNotifications() {
                         {guest.paymentAmount && (
                           <div className="flex items-center justify-between">
                             <span className="text-gray-600">Payment</span>
-                            <span className={`font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                            <span className={`font-medium ${isGuestPaid(guest) ? '' : 'text-red-600'}`}>
                               RM {guest.paymentAmount}
-                              {!guest.isPaid && guest.notes && (
+                              {!isGuestPaid(guest) && getGuestBalance(guest) > 0 && (
                                 <span className="text-red-600 text-xs font-medium ml-1">
-                                  (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                                  (Balance: RM{getGuestBalance(guest)})
                                 </span>
                               )}
                             </span>

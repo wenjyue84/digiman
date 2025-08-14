@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Calendar, MapPin, Phone, Mail, CreditCard, Edit, Save, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 import { useToast } from "@/hooks/use-toast";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import type { Guest } from "@shared/schema";
@@ -104,6 +105,8 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
   };
 
   if (!guest) return null;
+  const balance = getGuestBalance(guest);
+  const paid = isGuestPaid(guest);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -154,10 +157,10 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
                 <span><span className="font-medium">Check‑in:</span> {formatDate(guest.checkinTime)}</span>
                 <span><span className="font-medium">Expected Checkout:</span> {guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate.toString()).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) : '—'}</span>
                 <span><span className="font-medium">Payment:</span> RM {guest.paymentAmount} • {guest.paymentMethod?.toUpperCase()}</span>
-                <span><span className="font-medium">Status:</span> {guest.isPaid ? 'Paid' : 'Outstanding'}</span>
-                {!guest.isPaid && guest.notes && (
+                <span><span className="font-medium">Status:</span> {paid ? 'Paid' : 'Outstanding'}</span>
+                {balance > 0 && (
                   <span className="text-red-600 font-medium">
-                    Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'}
+                    Balance: RM{balance}
                   </span>
                 )}
               </div>
@@ -385,11 +388,11 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Amount</Label>
-                <div className={`mt-1 text-sm font-medium ${guest.isPaid ? '' : 'text-red-600'}`}>
+                <div className={`mt-1 text-sm font-medium ${paid ? '' : 'text-red-600'}`}>
                   RM {guest.paymentAmount}
-                  {!guest.isPaid && guest.notes && (
+                  {balance > 0 && (
                     <span className="text-red-600 text-xs font-medium ml-1">
-                      (Balance: RM{guest.notes.match(/RM(\d+)/)?.[1] || '0'})
+                      (Balance: RM{balance})
                     </span>
                   )}
                 </div>
@@ -418,8 +421,8 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
               <div>
                 <Label>Status</Label>
                 <div className="mt-1">
-                  <Badge variant={guest.isPaid ? "default" : "destructive"}>
-                    {guest.isPaid ? "Paid" : "Outstanding"}
+                  <Badge variant={paid ? "default" : "destructive"}>
+                    {paid ? "Paid" : "Outstanding"}
                   </Badge>
                 </div>
               </div>
