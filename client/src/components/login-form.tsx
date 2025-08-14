@@ -17,11 +17,27 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [, setLocation] = useLocation();
-  const { login, loginWithGoogle } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { login, loginWithGoogle, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
+    // If already authenticated, bounce to redirect target immediately
+    if (isAuthenticated) {
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      const params = new URLSearchParams(search);
+      const rawRedirect = params.get("redirect") || "/dashboard";
+      let redirect = "/dashboard";
+      try {
+        const decoded = decodeURIComponent(rawRedirect);
+        redirect = decoded.startsWith('/') ? decoded : '/dashboard';
+      } catch {
+        redirect = '/dashboard';
+      }
+      setLocation(redirect);
+      return;
+    }
+
     // Load Google Sign-In script
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
@@ -68,14 +84,24 @@ export function LoginForm() {
     if (success) {
       toast({
         title: "🎉 Login Successful!",
-        description: "Welcome back! Redirecting to dashboard...",
+        description: "Welcome back! Redirecting...",
         duration: 3000,
         className: "border-green-500 bg-green-50 text-green-800 shadow-lg text-base font-semibold"
       });
-      // Redirect to dashboard after successful login
+      // Redirect back to intended page if present
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      const params = new URLSearchParams(search);
+      const rawRedirect = params.get("redirect") || "/dashboard";
+      let redirect = "/dashboard";
+      try {
+        const decoded = decodeURIComponent(rawRedirect);
+        redirect = decoded.startsWith('/') ? decoded : '/dashboard';
+      } catch {
+        redirect = '/dashboard';
+      }
       setTimeout(() => {
-        setLocation("/dashboard");
-      }, 1500);
+        setLocation(redirect);
+      }, 800);
     } else {
       // Differentiate between network/connection error vs invalid credentials
       try {
@@ -116,14 +142,23 @@ export function LoginForm() {
     if (success) {
       toast({
         title: "🎉 Google Login Successful!",
-        description: "Welcome! Redirecting to dashboard...",
+        description: "Welcome! Redirecting...",
         duration: 3000,
         className: "border-green-500 bg-green-50 text-green-800 shadow-lg text-base font-semibold"
       });
-      // Redirect to dashboard after successful Google login
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      const params = new URLSearchParams(search);
+      const rawRedirect = params.get("redirect") || "/dashboard";
+      let redirect = "/dashboard";
+      try {
+        const decoded = decodeURIComponent(rawRedirect);
+        redirect = decoded.startsWith('/') ? decoded : '/dashboard';
+      } catch {
+        redirect = '/dashboard';
+      }
       setTimeout(() => {
-        setLocation("/dashboard");
-      }, 1500);
+        setLocation(redirect);
+      }, 800);
     } else {
       toast({
         title: "Google Login Failed",

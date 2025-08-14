@@ -505,17 +505,24 @@ export const guestSelfCheckinSchema = z.object({
   notes: z.string()
     .max(500, "Notes must not exceed 500 characters")
     .optional(),
-}).refine((data) => data.icNumber || data.passportNumber, {
-  message: "Please provide either IC number or passport number",
+}).refine((data) => {
+  // Malaysians must provide IC number and IC photo
+  if (data.nationality === 'Malaysian') {
+    return !!data.icNumber && !!data.icDocumentUrl;
+  }
+  // Non-Malaysians must provide passport number and passport photo
+  return !!data.passportNumber && !!data.passportDocumentUrl;
+}, {
+  message: "Please provide the required document number and upload the photo.",
   path: ["icNumber"],
 }).refine((data) => {
-  // At least one document upload is required for all users
-  if (!data.icDocumentUrl && !data.passportDocumentUrl) {
-    return false;
+  // Specific messaging for Malaysians
+  if (data.nationality === 'Malaysian') {
+    return !!data.icDocumentUrl;
   }
-  return true;
+  return !!data.passportDocumentUrl;
 }, {
-  message: "Please upload a photo of your IC or passport. This is mandatory for all guests.",
+  message: "Please upload the required document photo.",
   path: ["icDocumentUrl"],
 }).refine((data) => {
   // If IC number is provided, IC document is required
@@ -535,6 +542,15 @@ export const guestSelfCheckinSchema = z.object({
 }, {
   message: "Please upload a photo of your passport if you provided passport number",
   path: ["passportDocumentUrl"],
+}).refine((data) => {
+  // Malaysians should not provide passport details; enforce clearing
+  if (data.nationality === 'Malaysian') {
+    return !data.passportNumber && !data.passportDocumentUrl;
+  }
+  return true;
+}, {
+  message: "Malaysian guests should provide IC only, not passport",
+  path: ["passportNumber"],
 }).refine((data) => {
   // If cash payment method is selected, description is required
   if (data.paymentMethod === "cash" && !data.guestPaymentDescription?.trim()) {

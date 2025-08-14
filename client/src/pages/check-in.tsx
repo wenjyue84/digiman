@@ -18,6 +18,7 @@ import { useAuth } from "@/components/auth-provider";
 import GuestTokenGenerator from "@/components/guest-token-generator";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
+import CheckinConfirmation from "@/components/guest-checkin/CheckinConfirmation";
 import { NATIONALITIES } from "@/lib/nationalities";
 import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
 import {
@@ -27,6 +28,11 @@ import {
   getDefaultCollector,
   getRecommendedCapsule
 } from "@/components/check-in/utils";
+import PaymentInformationSection from "@/components/check-in/PaymentInformationSection";
+import ContactInformationSection from "@/components/check-in/ContactInformationSection";
+import IdentificationPersonalSection from "@/components/check-in/IdentificationPersonalSection";
+import EmergencyContactSection from "@/components/check-in/EmergencyContactSection";
+import AdditionalNotesSection from "@/components/check-in/AdditionalNotesSection";
 
 import { SmartPhotoUploader } from "@/components/SmartPhotoUploader";
 import { Camera, Upload } from "lucide-react";
@@ -143,7 +149,12 @@ export default function CheckIn() {
   const confirmCheckin = () => {
     if (formDataToSubmit) {
       setCurrentStep(3);
-      checkinMutation.mutate(formDataToSubmit);
+      const payload: InsertGuest = {
+        ...formDataToSubmit,
+        // Persist uploaded photo if available
+        ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
+      } as InsertGuest;
+      checkinMutation.mutate(payload);
       setShowCheckinConfirmation(false);
       setFormDataToSubmit(null);
     }
@@ -288,7 +299,7 @@ export default function CheckIn() {
                 <Skeleton className="w-full h-10" />
               ) : (
                 <Select
-                  value={form.watch("capsuleNumber")}
+                  value={form.watch("capsuleNumber") || undefined}
                   onValueChange={(value) => form.setValue("capsuleNumber", value)}
                 >
                   <SelectTrigger className="w-full">
@@ -298,48 +309,133 @@ export default function CheckIn() {
                      {availableCapsules.length === 0 ? (
                        <SelectItem value="no-capsules" disabled>No {labels.lowerPlural} available</SelectItem>
                     ) : (
-                      // Sort capsules: bottom (even numbers) first, then top (odd numbers)
-                      availableCapsules
-                        .sort((a, b) => {
-                          const aNum = parseInt(a.number.replace('C', ''));
-                          const bNum = parseInt(b.number.replace('C', ''));
-                          const aIsBottom = aNum % 2 === 0;
-                          const bIsBottom = bNum % 2 === 0;
-                          
-                          // Bottom capsules first
-                          if (aIsBottom && !bIsBottom) return -1;
-                          if (!aIsBottom && bIsBottom) return 1;
-                          
-                          // Within same position, sort by number
-                          return aNum - bNum;
-                        })
-                        .map((capsule) => {
-                          const capsuleNum = parseInt(capsule.number.replace('C', ''));
-                          const isBottom = capsuleNum % 2 === 0;
-                          const position = isBottom ? "Bottom" : "Top";
-                          const preference = isBottom ? "⭐ Preferred" : "";
-                          const genderMatch = form.watch("gender");
-                          let suitability = "";
-                          
-                          if (genderMatch === "female" && capsule.section === "back") {
-                            suitability = " 🎯 Recommended";
-                          } else if (genderMatch !== "female" && genderMatch && capsule.section === "front" && isBottom) {
-                            suitability = " 🎯 Recommended";
-                          }
-                          
+                      (() => {
+                        try {
+                          // Validate and filter capsules with comprehensive error handling
+                          const validCapsules = availableCapsules.filter(capsule => {
+                            try {
+                              if (!capsule || typeof capsule !== 'object') {
+                                console.warn('Invalid capsule object (not an object):', capsule);
+                                return false;
+                              }
+                              
+                              if (!capsule.number || typeof capsule.number !== 'string') {
+                                console.warn('Invalid capsule number:', capsule);
+                                return false;
+                              }
+                              
+                              const match = capsule.number.match(/^C(\d+)$/);
+                              if (!match) {
+                                console.warn('Capsule number does not match pattern:', capsule.number);
+                                return false;
+                              }
+                              
+                              const num = parseInt(match[1]);
+                              if (isNaN(num)) {
+                                console.warn('Capsule number is not a valid integer:', capsule.number);
+                                return false;
+                              }
+                              
+                              return true;
+                            } catch (error) {
+                              console.warn('Error validating capsule:', capsule, error);
+                              return false;
+                            }
+                          });
+
+                          // Sort capsules safely
+                          const sortedCapsules = validCapsules.sort((a, b) => {
+                            try {
+                              const aMatch = a.number.match(/^C(\d+)$/);
+                              const bMatch = b.number.match(/^C(\d+)$/);
+                              
+                              if (!aMatch || !bMatch) return 0;
+                              
+                              const aNum = parseInt(aMatch[1]);
+                              const bNum = parseInt(bMatch[1]);
+                              
+                              const aIsBottom = aNum % 2 === 0;
+                              const bIsBottom = bNum % 2 === 0;
+                              
+                              // Bottom capsules first
+                              if (aIsBottom && !bIsBottom) return -1;
+                              if (!aIsBottom && bIsBottom) return 1;
+                              
+                              // Within same position, sort by number
+                              return aNum - bNum;
+                            } catch (error) {
+                              console.warn('Error sorting capsules:', a?.number, b?.number, error);
+                              return 0;
+                            }
+                          });
+
+                          // Map to SelectItems safely
+                          return sortedCapsules.map((capsule) => {
+                            try {
+                              const match = capsule.number.match(/^C(\d+)$/);
+                              if (!match) {
+                                // Fallback for non-standard capsule numbers
+                                return (
+                                  <SelectItem key={capsule.number} value={capsule.number}>
+                                    <div className="flex items-center justify-between w-full">
+                                      <span>{capsule.number}</span>
+                                      <span className="text-xs text-gray-500 capitalize">
+                                        {capsule.section || 'unknown'}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              }
+                              
+                              const capsuleNum = parseInt(match[1]);
+                              const isBottom = capsuleNum % 2 === 0;
+                              const position = isBottom ? "Bottom" : "Top";
+                              const preference = isBottom ? "⭐ Preferred" : "";
+                              const genderMatch = form.watch("gender");
+                              
+                              let suitability = "";
+                              if (genderMatch === "female" && capsule.section === "back") {
+                                suitability = " 🎯 Recommended";
+                              } else if (genderMatch && genderMatch !== "female" && capsule.section === "front" && isBottom) {
+                                suitability = " 🎯 Recommended";
+                              }
+                              
+                              const labelText = `${capsule.number} - ${position} ${preference}${suitability}`.trim();
+                              return (
+                                <SelectItem key={capsule.number} value={capsule.number} textValue={labelText}>
+                                  <div className="flex items-center justify-between w-full">
+                                    <span>
+                                      {capsule.number} - {position} {preference}{suitability}
+                                    </span>
+                                    <span className="text-xs text-gray-500 capitalize">
+                                      {capsule.section || 'unknown'}
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              );
+                            } catch (error) {
+                              console.warn('Error rendering capsule:', capsule?.number, error);
+                              // Return a safe fallback
+                              return (
+                                <SelectItem key={`fallback-${Math.random()}`} value={capsule?.number || ''} textValue={capsule?.number || 'Unknown'}>
+                                  <div className="flex items-center justify-between w-full">
+                                    <span>{capsule?.number || 'Unknown'}</span>
+                                    <span className="text-xs text-gray-500">Error loading details</span>
+                                  </div>
+                                </SelectItem>
+                              );
+                            }
+                          });
+                        } catch (error) {
+                          console.error('Critical error in capsule selection:', error);
+                          // Return a safe fallback for the entire selection
                           return (
-                            <SelectItem key={capsule.number} value={capsule.number}>
-                              <div className="flex items-center justify-between w-full">
-                                <span>
-                                  {capsule.number} - {position} {preference}{suitability}
-                                </span>
-                                <span className="text-xs text-gray-500 capitalize">
-                                  {capsule.section}
-                                </span>
-                              </div>
+                            <SelectItem value="error" disabled>
+                              Error loading capsules. Please refresh the page.
                             </SelectItem>
                           );
-                        })
+                        }
+                      })()
                     )}
                   </SelectContent>
                 </Select>
@@ -349,379 +445,19 @@ export default function CheckIn() {
               )}
             </div>
 
-            {/* Payment Information */}
-            <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
-              <h3 className="text-sm font-medium text-hostel-text mb-3">Payment Information</h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                <div>
-                  <Label htmlFor="paymentAmount" className="text-sm font-medium text-hostel-text">
-                    Amount (RM)
-                  </Label>
-                  <Select
-                    value={["45", "48", "650"].includes(form.watch("paymentAmount") || "45") ? form.watch("paymentAmount") || "45" : "custom"}
-                    onValueChange={(value) => {
-                      if (value === "custom") {
-                        // Clear the field and let user type custom amount
-                        form.setValue("paymentAmount", "");
-                        return;
-                      }
-                      form.setValue("paymentAmount", value);
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select amount" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="45">RM45 (Standard)</SelectItem>
-                      <SelectItem value="48">RM48 (Premium)</SelectItem>
-                      <SelectItem value="650">RM650 (Monthly Package)</SelectItem>
-                      <SelectItem value="custom">Custom Amount...</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {!["45", "48", "650"].includes(form.watch("paymentAmount") || "") && (
-                    <Input
-                      id="customPaymentAmount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="Enter custom amount (e.g., 35.50)"
-                      className="w-full mt-2"
-                      value={form.watch("paymentAmount") || ""}
-                      onChange={(e) => form.setValue("paymentAmount", e.target.value)}
-                      autoFocus
-                    />
-                  )}
-                  {form.formState.errors.paymentAmount && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.paymentAmount.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="paymentMethod" className="text-sm font-medium text-hostel-text">
-                    Payment Method
-                  </Label>
-                  <Select
-                    value={form.watch("paymentMethod")}
-                    onValueChange={(value) => form.setValue("paymentMethod", value as "cash" | "tng" | "bank" | "platform")}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="tng">Touch 'n Go</SelectItem>
-                      <SelectItem value="bank">Bank Transfer</SelectItem>
-                      <SelectItem value="platform">Online Platform</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.paymentMethod && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.paymentMethod.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="paymentCollector" className="text-sm font-medium text-hostel-text">
-                    Payment Collector
-                  </Label>
-                  <Select
-                    value={form.watch("paymentCollector")}
-                    onValueChange={(value) => form.setValue("paymentCollector", value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select payment collector" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={defaultCollector}>{defaultCollector} (Current User)</SelectItem>
-                      <SelectItem value="Alston">Alston</SelectItem>
-                      <SelectItem value="Jay">Jay</SelectItem>
-                      <SelectItem value="Le">Le</SelectItem>
-                      <SelectItem value="Kakar">Kakar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.paymentCollector && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.paymentCollector.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <PaymentInformationSection form={form} defaultCollector={defaultCollector} />
 
-            {/* Contact Information */}
-            <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
-              <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
-                <Phone className="mr-2 h-4 w-4" />
-                Contact Information <span className="text-gray-500 text-xs ml-2">(Optional for admin)</span>
-              </h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-                <div>
-                  <Label htmlFor="phoneNumber" className="text-sm font-medium text-hostel-text">
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phoneNumber"
-                    type="tel"
-                    placeholder="e.g., +60123456789"
-                    className="mt-1"
-                    {...form.register("phoneNumber")}
-                  />
-                  {form.formState.errors.phoneNumber && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.phoneNumber.message}</p>
-                  )}
-                </div>
+            <ContactInformationSection form={form} />
 
-                <div>
-                  <Label htmlFor="email" className="text-sm font-medium text-hostel-text">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="guest@example.com"
-                    className="mt-1"
-                    {...form.register("email")}
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.email.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <IdentificationPersonalSection 
+              form={form} 
+              profilePhotoUrl={profilePhotoUrl} 
+              setProfilePhotoUrl={setProfilePhotoUrl} 
+            />
 
-            {/* Identification & Personal Details */}
-            <div className="bg-orange-50 rounded-lg p-3 sm:p-4 border border-orange-200">
-              <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Identification & Personal Details <span className="text-gray-500 text-xs ml-2">(Optional for admin)</span>
-              </h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                <div>
-                  <Label htmlFor="idNumber" className="text-sm font-medium text-hostel-text">
-                    ID/Passport Number
-                  </Label>
-                  <Input
-                    id="idNumber"
-                    type="text"
-                    placeholder="IC or Passport No."
-                    className="mt-1"
-                    {...form.register("idNumber")}
-                  />
-                  {form.formState.errors.idNumber && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.idNumber.message}</p>
-                  )}
-                </div>
+            <EmergencyContactSection form={form} />
 
-                <div>
-                  <Label className="text-sm font-medium text-hostel-text">
-                    <Camera className="mr-2 h-4 w-4 inline" />
-                    {form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"} 
-                    <span className="text-gray-500 text-xs ml-2">(Optional for admin)</span>
-                  </Label>
-                  <div className="mt-2 space-y-2">
-                    {profilePhotoUrl ? (
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={profilePhotoUrl} 
-                          alt="Profile" 
-                          className="w-16 h-20 object-cover rounded border border-gray-300"
-                        />
-                        <div className="flex flex-col gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setProfilePhotoUrl("")}
-                            className="text-xs"
-                          >
-                            Remove Photo
-                          </Button>
-                          <span className="text-xs text-gray-500">
-                            Photo uploaded successfully
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <SmartPhotoUploader
-                        onPhotoSelected={(photoUrl, photoData) => {
-                          setProfilePhotoUrl(photoUrl);
-                          // Store additional metadata if needed
-                          if (photoData) {
-                            console.log('Photo metadata:', {
-                              name: photoData.name,
-                              size: photoData.size,
-                              type: photoData.type
-                            });
-                          }
-                        }}
-                        buttonText={`Upload ${form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"}`}
-                        className="w-full"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                        {/* Age is automatically calculated from IC number */}
-
-                <div>
-                  <Label htmlFor="nationality" className="text-sm font-medium text-hostel-text">
-                    Nationality
-                  </Label>
-                  <Select
-                    value={form.watch("nationality") || "Malaysian"}
-                    onValueChange={(value) => form.setValue("nationality", value)}
-                  >
-                    <SelectTrigger className="w-full mt-1">
-                      <SelectValue placeholder="Select nationality" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {NATIONALITIES.map((n) => (
-                        <SelectItem key={n.value} value={n.value}>
-                          {n.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.nationality && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.nationality.message}</p>
-                  )}
-                </div>
-
-
-                <div className="sm:col-span-2">
-                  <Label htmlFor="expectedCheckoutDate" className="text-sm font-medium text-hostel-text flex items-center">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Expected Checkout Date
-                  </Label>
-                  <Input
-                    id="expectedCheckoutDate"
-                    type="date"
-                    className="mt-1"
-                    {...form.register("expectedCheckoutDate")}
-                  />
-                  {(() => {
-                    const dateStr = form.watch("expectedCheckoutDate");
-                    const label = getHolidayLabel(dateStr);
-                    if (!label) return null;
-                    const isPH = hasPublicHoliday(dateStr);
-                    return (
-                      <div className={`${isPH ? "text-green-700 bg-green-50 border-green-200" : "text-blue-700 bg-blue-50 border-blue-200"} mt-2 text-sm rounded border p-2 flex items-start gap-2`}
-                      >
-                        <span>{isPH ? "🎉" : "🗓️"}</span>
-                        <span>
-                          {isPH ? "Public holiday" : "Festival"}: {label}. Consider extending stay to enjoy the celebrations.
-                        </span>
-                      </div>
-                    );
-                  })()}
-                  {form.formState.errors.expectedCheckoutDate && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.expectedCheckoutDate.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Emergency Contact */}
-            <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-              <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
-                <Users className="mr-2 h-4 w-4" />
-                Emergency Contact (Optional)
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="emergencyContact" className="text-sm font-medium text-hostel-text">
-                    Emergency Contact Name
-                  </Label>
-                  <Input
-                    id="emergencyContact"
-                    type="text"
-                    placeholder="Full name of emergency contact"
-                    className="mt-1"
-                    {...form.register("emergencyContact")}
-                  />
-                  {form.formState.errors.emergencyContact && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.emergencyContact.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="emergencyPhone" className="text-sm font-medium text-hostel-text">
-                    Emergency Contact Phone
-                  </Label>
-                  <Input
-                    id="emergencyPhone"
-                    type="tel"
-                    placeholder="Emergency contact phone number"
-                    className="mt-1"
-                    {...form.register("emergencyPhone")}
-                  />
-                  {form.formState.errors.emergencyPhone && (
-                    <p className="text-hostel-error text-sm mt-1">{form.formState.errors.emergencyPhone.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Notes */}
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <h3 className="text-sm font-medium text-hostel-text mb-3">Additional Notes (Optional)</h3>
-              
-              {/* Early/Late Check-in Options */}
-              <div className="mb-3 flex gap-4">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="mr-2 rounded border-gray-300"
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        const currentNotes = form.getValues("notes") || "";
-                        form.setValue("notes", currentNotes + (currentNotes ? "\n" : "") + "Early check-in requested at: ");
-                      } else {
-                        const currentNotes = form.getValues("notes") || "";
-                        form.setValue("notes", currentNotes.replace(/\nEarly check-in requested at:.*/, "").replace(/^Early check-in requested at:.*/, ""));
-                      }
-                    }}
-                  />
-                  <span className="text-sm">Early Check-in</span>
-                </label>
-                
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="mr-2 rounded border-gray-300"
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        const currentNotes = form.getValues("notes") || "";
-                        form.setValue("notes", currentNotes + (currentNotes ? "\n" : "") + "Late check-in requested at: ");
-                      } else {
-                        const currentNotes = form.getValues("notes") || "";
-                        form.setValue("notes", currentNotes.replace(/\nLate check-in requested at:.*/, "").replace(/^Late check-in requested at:.*/, ""));
-                      }
-                    }}
-                  />
-                  <span className="text-sm">Late Check-in</span>
-                </label>
-              </div>
-              
-              <div>
-                <Label htmlFor="notes" className="text-sm font-medium text-hostel-text">
-                  Special Requirements or Notes
-                </Label>
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <textarea
-                          id="notes"
-                          rows={3}
-                          placeholder="Any special requirements, allergies, accessibility needs, or additional notes..."
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-hostel-primary focus:ring-hostel-primary sm:text-sm"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+            <AdditionalNotesSection form={form} />
 
             <div className="bg-gray-50 rounded-lg p-4 border">
               <h3 className="text-sm font-medium text-hostel-text mb-3">Check-in Details</h3>
@@ -797,7 +533,7 @@ export default function CheckIn() {
           open={showCheckinConfirmation}
           onOpenChange={setShowCheckinConfirmation}
           title="Confirm Guest Check-In"
-          description={`Please confirm the check-in details for ${formDataToSubmit.name} in capsule ${formDataToSubmit.capsuleNumber}. Payment: RM ${formDataToSubmit.paymentAmount} via ${formDataToSubmit.paymentMethod}.`}
+          description={ <CheckinConfirmation guest={formDataToSubmit} /> }
           confirmText="Confirm Check-In"
           cancelText="Review Details"
           onConfirm={confirmCheckin}

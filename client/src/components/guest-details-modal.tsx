@@ -145,6 +145,18 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Profile / Document Photo */}
+          {guest.profilePhotoUrl && (
+            <div className="flex items-center gap-3">
+              <img
+                src={guest.profilePhotoUrl}
+                alt="Guest document"
+                className="w-24 h-32 object-cover rounded border border-gray-300"
+              />
+              <div className="text-xs text-gray-500">Uploaded by guest during self check-in</div>
+            </div>
+          )}
+
           {/* Summary strip for speed reading */}
           <div className="p-3 rounded-lg border bg-gray-50">
             <div className="flex flex-col gap-2 text-sm">

@@ -37,7 +37,7 @@ export default function MobileBottomNav() {
             const isActive = location === item.path;
             const canAccess = !item.requireAuth || isAuthenticated;
             const Icon = item.icon;
-            const href = canAccess ? item.path : "/login";
+            const href = canAccess ? item.path : `/login?redirect=${encodeURIComponent(item.path)}`;
             return (
               <li key={item.path} className="flex items-center justify-center">
                 <Link
@@ -88,7 +88,7 @@ export default function MobileBottomNav() {
                 const isActive = location === item.path;
                 const canAccess = !item.requireAuth || isAuthenticated;
                 const Icon = item.icon;
-                const href = canAccess ? item.path : "/login";
+                const href = canAccess ? item.path : `/login?redirect=${encodeURIComponent(item.path)}`;
                 return (
                   <Link
                     key={item.path}

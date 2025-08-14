@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { FixedSizeList, ListChildComponentProps } from "react-window";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useVisibilityQuery } from "@/hooks/useVisibilityQuery";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,12 +22,11 @@ import {
   getFirstInitial, 
   getGenderIcon, 
   formatShortDateTime, 
-  formatShortDate, 
-  ROW_HEIGHT 
+  formatShortDate
 } from "@/components/guest-table/utils";
 import { SortButton } from "@/components/guest-table/SortButton";
 import { SwipeableGuestRow } from "@/components/guest-table/SwipeableGuestRow";
-import { DesktopRow } from "@/components/guest-table/DesktopRow";
+// Removed virtualization-based DesktopRow to maintain consistent column alignment
 
 type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
 type SortOrder = 'asc' | 'desc';
@@ -607,28 +605,6 @@ export default function SortableGuestTable() {
               </tbody>
 
             </table>
-            <FixedSizeList
-              height={Math.min(sortedData.length, 10) * ROW_HEIGHT}
-              itemCount={sortedData.length}
-              itemSize={ROW_HEIGHT}
-              width={"100%"}
-              itemData={{
-                items: sortedData,
-                isCondensedView,
-                onCheckout: handleCheckout,
-                onGuestClick: handleGuestClick,
-                onCancelToken: handleCancelToken,
-                copyToClipboard,
-                getCheckinLink,
-                isAuthenticated,
-                checkoutMutation,
-                cancelTokenMutation,
-                activeTokens,
-              }}
-            >
-              {DesktopRow}
-            </FixedSizeList>
-
           </div>
         )}
 

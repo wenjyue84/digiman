@@ -215,7 +215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create session
       const token = randomUUID();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      const sessionTtlMs = await AppConfig.getSessionExpirationMs();
+      const expiresAt = new Date(Date.now() + sessionTtlMs);
       const session = await storage.createSession(user.id, token, expiresAt);
 
       res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
@@ -393,7 +394,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create session
       const sessionToken = randomUUID();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      const sessionTtlMs = await AppConfig.getSessionExpirationMs();
+      const expiresAt = new Date(Date.now() + sessionTtlMs);
       await storage.createSession(user.id, sessionToken, expiresAt);
 
       res.json({ 
@@ -1249,6 +1251,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Capsule is not available" });
       }
 
+      // PREVENT DUPLICATES: Check if guest already exists in this capsule
+      const existingGuest = await storage.getGuestByCapsuleAndName(
+        validatedData.capsuleNumber, 
+        validatedData.name
+      );
+      
+      if (existingGuest) {
+        return res.status(400).json({ 
+          message: "Guest already checked in to this capsule",
+          existingGuest: {
+            id: existingGuest.id,
+            name: existingGuest.name,
+            capsuleNumber: existingGuest.capsuleNumber,
+            checkinTime: existingGuest.checkinTime
+          }
+        });
+      }
+
       // Calculate age from IC number if provided
       if (validatedData.idNumber && validatedData.idNumber.length === 12) {
         const age = calculateAgeFromIC(validatedData.idNumber);
@@ -1822,6 +1842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPaid: false,
         selfCheckinToken: token, // Store the token for edit access
         age: calculatedAge, // Automatically calculated age from IC
+        profilePhotoUrl: validatedGuestData.icDocumentUrl || validatedGuestData.passportDocumentUrl,
         notes: `IC: ${validatedGuestData.icNumber || 'N/A'}, Passport: ${validatedGuestData.passportNumber || 'N/A'}${validatedGuestData.icDocumentUrl ? `, IC Doc: ${validatedGuestData.icDocumentUrl}` : ''}${validatedGuestData.passportDocumentUrl ? `, Passport Doc: ${validatedGuestData.passportDocumentUrl}` : ''}${validatedGuestData.guestPaymentDescription ? `, Payment: ${validatedGuestData.guestPaymentDescription}` : ''}`,
       });
 

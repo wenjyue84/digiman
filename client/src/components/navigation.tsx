@@ -59,8 +59,9 @@ export default function Navigation() {
         
         // Always show all navigation items but handle auth differently
         
+        const href = canAccess ? item.path : `/login?redirect=${encodeURIComponent(item.path)}`;
         return (
-          <Link key={item.path} href={canAccess ? item.path : "/login"}>
+          <Link key={item.path} href={href}>
             <Button
               variant={isActive ? "default" : "ghost"}
               size="default"

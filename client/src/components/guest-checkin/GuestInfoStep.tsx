@@ -5,26 +5,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UseFormReturn } from "react-hook-form";
 import { GuestSelfCheckin } from "@shared/schema";
 import { ValidationHelpers } from "./shared/ValidationHelpers";
-import { NATIONALITIES } from "@/lib/nationalities";
 
 interface GuestInfoStepProps {
   form: UseFormReturn<GuestSelfCheckin>;
   errors: Record<string, any>;
   t: any;
-  nationalityFilter: string;
-  setNationalityFilter: (filter: string) => void;
 }
 
 export function GuestInfoStep({ 
   form, 
   errors, 
-  t, 
-  nationalityFilter, 
-  setNationalityFilter 
+  t
 }: GuestInfoStepProps) {
-  const filteredNationalities = NATIONALITIES.filter(nationality =>
-    nationality.label.toLowerCase().includes(nationalityFilter.toLowerCase())
-  );
 
   return (
     <div className="space-y-6">
@@ -100,39 +92,6 @@ export function GuestInfoStep({
             />
           </div>
           
-          <div>
-            <Label htmlFor="nationality" className="text-sm font-medium text-hostel-text">
-              {t.nationalityLabel}
-            </Label>
-            <div className="space-y-2">
-              <Input
-                placeholder="Search nationality..."
-                value={nationalityFilter}
-                onChange={(e) => setNationalityFilter(e.target.value)}
-                className="w-full"
-              />
-              <Select
-                defaultValue="Malaysian"
-                onValueChange={(value) => form.setValue("nationality", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select nationality" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredNationalities.map((nationality) => (
-                    <SelectItem key={nationality.value} value={nationality.value}>
-                      {nationality.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <ValidationHelpers 
-              errors={errors} 
-              fieldName="nationality" 
-              hint={t.nationalityHint} 
-            />
-          </div>
         </div>
       </div>
 
@@ -181,6 +140,61 @@ export function GuestInfoStep({
               fieldName="checkOutDate" 
             />
           </div>
+        </div>
+      </div>
+
+      {/* Nationality - Isolated Section */}
+      <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+        <h3 className="text-sm font-medium text-hostel-text mb-3">
+          Nationality Information
+        </h3>
+        <div>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+            Nationality
+          </label>
+          <select
+            defaultValue="Malaysian"
+            onChange={(e) => {
+              // Direct form update with error handling
+              try {
+                if (form && form.setValue) {
+                  form.setValue("nationality", e.target.value);
+                }
+              } catch (error) {
+                console.log('Nationality update error:', error);
+              }
+            }}
+            style={{
+              width: '100%',
+              height: '40px',
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: 'white',
+              fontSize: '14px'
+            }}
+          >
+            <option value="Malaysian">Malaysian</option>
+            <option value="Singaporean">Singaporean</option>
+            <option value="American">American</option>
+            <option value="Australian">Australian</option>
+            <option value="British">British</option>
+            <option value="Canadian">Canadian</option>
+            <option value="Chinese">Chinese</option>
+            <option value="Filipino">Filipino</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+            <option value="Indonesian">Indonesian</option>
+            <option value="Indian">Indian</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Korean">Korean</option>
+            <option value="Thai">Thai</option>
+            <option value="Vietnamese">Vietnamese</option>
+            <option value="Other">Other</option>
+          </select>
+          <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+            Select your nationality from the dropdown
+          </p>
         </div>
       </div>
     </div>

@@ -24,38 +24,67 @@ import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
 import SuccessScreen from "@/components/guest-checkin/SuccessScreen";
 import LoadingScreen from "@/components/guest-checkin/LoadingScreen";
 import { GuestInfoStep } from "@/components/guest-checkin/GuestInfoStep";
+import { EmergencyContactSection } from "@/components/guest-checkin/EmergencyContactSection";
+import { HelpFAQSection } from "@/components/guest-checkin/HelpFAQSection";
+import { AdditionalNotesSection } from "@/components/guest-checkin/AdditionalNotesSection";
+import { PaymentInformationSection } from "@/components/guest-checkin/PaymentInformationSection";
+import { DocumentUploadSection } from "@/components/guest-checkin/DocumentUploadSection";
+import { useTokenValidation } from "@/hooks/guest-checkin/useTokenValidation";
+import { useAutoSave } from "@/hooks/guest-checkin/useAutoSave";
+import CountdownTimer from "@/components/guest-checkin/CountdownTimer";
 
 
 export default function GuestCheckin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useI18n();
-  const [token, setToken] = useState<string>("");
-  const [guestInfo, setGuestInfo] = useState<{
-    capsuleNumber?: string;
-    autoAssign?: boolean;
-    guestName: string;
-    phoneNumber: string;
-    email?: string;
-    expectedCheckoutDate?: string;
-    position: string;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Add error handling for useI18n
+  let t: any;
+  try {
+    const i18nResult = useI18n();
+    t = i18nResult.t;
+  } catch (error) {
+    console.error('i18n error:', error);
+    // Fallback object
+    t = {
+      invalidLink: "Invalid Link",
+      invalidLinkDesc: "This link is invalid or expired",
+      expiredLink: "Expired Link", 
+      expiredLinkDesc: "This link has expired",
+      error: "Error",
+      validationError: "Validation failed",
+      checkInSuccess: "Check-in Successful",
+      checkInSuccessDesc: "Successfully checked in to",
+      checkInFailed: "Check-in Failed",
+      personalInfo: "Personal Information",
+      fullNameLabel: "Full Name",
+      fullNamePlaceholder: "Enter your full name",
+      nameHint: "Enter name as shown on ID",
+      contactNumberLabel: "Contact Number", 
+      contactNumberPlaceholder: "Enter phone number",
+      phoneHint: "Include country code",
+      genderLabel: "Gender",
+      genderPlaceholder: "Select gender",
+      genderHint: "Select your gender",
+      male: "Male",
+      female: "Female",
+      nationalityLabel: "Nationality",
+      nationalityHint: "Select your nationality"
+    };
+  }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [editToken, setEditToken] = useState<string>("");
-  const [editExpiresAt, setEditExpiresAt] = useState<Date | null>(null);
-  const [canEdit, setCanEdit] = useState(false);
   const [capsuleIssues, setCapsuleIssues] = useState<any[]>([]);
-  const [assignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
   const [icDocumentUrl, setIcDocumentUrl] = useState<string>("");
   const [passportDocumentUrl, setPassportDocumentUrl] = useState<string>("");
-  const [nationalityFilter, setNationalityFilter] = useState("");
-  const saveTimerRef = useRef<number | null>(null);
-  const [tokenExpiresAt, setTokenExpiresAt] = useState<Date | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailForSlip, setEmailForSlip] = useState("");
+  
+  // Local state for submission results
+  const [localEditToken, setEditToken] = useState<string>("");
+  const [localEditExpiresAt, setEditExpiresAt] = useState<Date | null>(null);
+  const [localCanEdit, setCanEdit] = useState(false);
+  const [localAssignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
 
   // Fetch settings for quick links and time/access info
   const { data: settings } = useQuery<{
@@ -97,10 +126,12 @@ export default function GuestCheckin() {
   });
 
   const watchedPaymentMethod = form.watch("paymentMethod");
+  const watchedNationality = form.watch("nationality");
   const watchedIcNumber = form.watch("icNumber");
   const watchedPassportNumber = form.watch("passportNumber");
   const watchedCheckInDate = form.watch("checkInDate");
   const watchedCheckOutDate = form.watch("checkOutDate");
+  const isMalaysian = watchedNationality === "Malaysian";
   
   // Determine which fields should be disabled based on mutual exclusivity
   const isIcFieldDisabled = !!(watchedPassportNumber && watchedPassportNumber.trim().length > 0);
@@ -109,6 +140,21 @@ export default function GuestCheckin() {
   // Validate check-out date is after check-in date
   const isCheckOutDateValid = !watchedCheckInDate || !watchedCheckOutDate || 
     new Date(watchedCheckOutDate) > new Date(watchedCheckInDate);
+
+  // Use custom hooks for token validation and auto-save
+  const { 
+    token, 
+    guestInfo, 
+    isLoading, 
+    editToken, 
+    editExpiresAt, 
+    canEdit, 
+    assignedCapsuleNumber, 
+    tokenExpiresAt, 
+    timeRemaining 
+  } = useTokenValidation({ t, form });
+  
+  useAutoSave({ form, token });
 
   // Clear the disabled field when the other field is filled
   useEffect(() => {
@@ -137,161 +183,20 @@ export default function GuestCheckin() {
     }
   }, [watchedPassportNumber]);
 
-  // Filter nationalities based on search input
-  const filteredNationalities = NATIONALITIES.filter(nationality =>
-    nationality.label.toLowerCase().includes(nationalityFilter.toLowerCase())
-  );
-
+  // When nationality is Malaysian, ensure passport fields are cleared and not used
   useEffect(() => {
-    // Get token from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get('token');
-    
-    if (!urlToken) {
-      toast({
-        title: t.invalidLink,
-        description: t.invalidLinkDesc,
-        variant: "destructive",
-      });
-      setLocation('/');
-      return;
+    if (isMalaysian) {
+      if (watchedPassportNumber) {
+        form.setValue("passportNumber", "");
+      }
+      if (passportDocumentUrl) {
+        form.setValue("passportDocumentUrl", "");
+        setPassportDocumentUrl("");
+      }
     }
+  }, [isMalaysian]);
 
-    setToken(urlToken);
-    validateToken(urlToken);
-  }, [toast, setLocation]);
 
-  // Restore draft values per token
-  useEffect(() => {
-    if (!token) return;
-    try {
-      const draftRaw = localStorage.getItem(`guest-checkin-draft:${token}`);
-      if (draftRaw) {
-        const draft = JSON.parse(draftRaw);
-        Object.entries(draft).forEach(([k, v]) => {
-          if (v !== undefined) {
-            // @ts-ignore
-            form.setValue(k as any, v as any, { shouldDirty: true });
-          }
-        });
-      }
-    } catch {}
-  }, [token]);
-
-  // Autosave draft on change (debounced)
-  useEffect(() => {
-    const subscription = form.watch((values) => {
-      if (!token) return;
-      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = window.setTimeout(() => {
-        try {
-          const toSave: any = {
-            nameAsInDocument: values.nameAsInDocument,
-            phoneNumber: values.phoneNumber,
-            gender: values.gender,
-            nationality: values.nationality,
-            checkInDate: values.checkInDate,
-            checkOutDate: values.checkOutDate,
-            icNumber: values.icNumber,
-            passportNumber: values.passportNumber,
-            paymentMethod: values.paymentMethod,
-            emergencyContact: values.emergencyContact,
-            emergencyPhone: values.emergencyPhone,
-            notes: values.notes,
-          };
-          localStorage.setItem(`guest-checkin-draft:${token}`, JSON.stringify(toSave));
-        } catch {}
-      }, 500);
-    });
-    return () => subscription.unsubscribe();
-  }, [form.watch, token]);
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (!tokenExpiresAt) return;
-    
-    const updateCountdown = () => {
-      const now = new Date();
-      const diff = tokenExpiresAt.getTime() - now.getTime();
-      
-      if (diff <= 0) {
-        setTimeRemaining(t.linkExpired || "Link has expired");
-        return;
-      }
-      
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      
-      if (hours > 0) {
-        setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
-      } else if (minutes > 0) {
-        setTimeRemaining(`${minutes}m ${seconds}s`);
-      } else {
-        setTimeRemaining(`${seconds}s`);
-      }
-    };
-    
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    
-    return () => clearInterval(interval);
-  }, [tokenExpiresAt, t.linkExpired]);
-
-  const validateToken = async (tokenValue: string) => {
-    try {
-      const response = await fetch(`/api/guest-tokens/${tokenValue}`);
-      if (response.ok) {
-        const data = await response.json();
-        let position = 'Available capsule will be assigned';
-        
-        if (data.capsuleNumber) {
-          const capsuleNum = parseInt(data.capsuleNumber.replace('C', ''));
-          position = capsuleNum % 2 === 0 ? 'Bottom (Preferred)' : 'Top';
-        }
-        
-        setGuestInfo({
-          capsuleNumber: data.capsuleNumber,
-          autoAssign: data.autoAssign,
-          guestName: data.guestName,
-          phoneNumber: data.phoneNumber,
-          email: data.email,
-          expectedCheckoutDate: data.expectedCheckoutDate,
-          position: position
-        });
-        
-        // Set token expiration
-        if (data.expiresAt) {
-          setTokenExpiresAt(new Date(data.expiresAt));
-        }
-
-        // Pre-fill form with existing information if available
-        if (data.guestName) {
-          form.setValue("nameAsInDocument", data.guestName);
-        }
-        if (data.phoneNumber) {
-          form.setValue("phoneNumber", data.phoneNumber);
-        }
-      } else {
-        toast({
-          title: t.expiredLink,
-          description: t.expiredLinkDesc,
-          variant: "destructive",
-        });
-        setLocation('/');
-        return;
-      }
-    } catch (error) {
-      toast({
-        title: t.error,
-        description: t.validationError,
-        variant: "destructive",
-      });
-      setLocation('/');
-      return;
-    }
-    setIsLoading(false);
-  };
 
   const onSubmit = async (data: GuestSelfCheckin) => {
     setIsSubmitting(true);
@@ -764,16 +669,13 @@ This email was generated by Pelangi Capsule Hostel Management System
               <div className="mt-4">
                 <LanguageSwitcher variant="compact" className="mx-auto" />
               </div>
-              {timeRemaining && (
-                <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-lg">
-                  <div className="flex items-center justify-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-orange-600" />
-                    <span className="font-medium text-orange-700">
-                      {t.linkExpiresIn || "Link expires in"}: <span className="font-mono">{timeRemaining}</span>
-                    </span>
-                  </div>
-                </div>
-              )}
+              <div className="mt-3 flex justify-center">
+                <CountdownTimer 
+                  timeRemaining={timeRemaining} 
+                  tokenExpiresAt={tokenExpiresAt} 
+                  t={t}
+                />
+              </div>
               {guestInfo && (
                 <div className="mt-4 space-y-2">
                   {!guestInfo.autoAssign && (
@@ -834,14 +736,26 @@ This email was generated by Pelangi Capsule Hostel Management System
                 form.setValue("passportDocumentUrl", passportDocumentUrl);
               }
               
-              // Validate that at least one document is uploaded
-              if (!icDocumentUrl && !passportDocumentUrl) {
-                toast({
-                  title: "Document Upload Required",
-                  description: "Please upload a photo of your IC or passport. This is mandatory for check-in.",
-                  variant: "destructive",
-                });
-                return;
+              // Validate required document uploads based on nationality
+              const nat = form.getValues("nationality");
+              if (nat === 'Malaysian') {
+                if (!icDocumentUrl) {
+                  toast({
+                    title: "IC Upload Required",
+                    description: "Please upload a photo of your IC to continue.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+              } else {
+                if (!icDocumentUrl && !passportDocumentUrl) {
+                  toast({
+                    title: "Document Upload Required",
+                    description: "Please upload a photo of your IC or passport. This is mandatory for check-in.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
               }
               
               form.handleSubmit(onSubmit, onInvalid)(e);
@@ -851,449 +765,56 @@ This email was generated by Pelangi Capsule Hostel Management System
                 form={form}
                 errors={form.formState.errors}
                 t={t}
-                nationalityFilter={nationalityFilter}
-                setNationalityFilter={setNationalityFilter}
               />
 
               {/* Identity Documents */}
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {t.identityDocs}
-                </h3>
-                <div className="mb-3 p-2 bg-green-100 border border-green-300 rounded text-xs text-green-700">
-                  <p className="font-medium">📱 Mobile Check-in:</p>
-                  <p>All guests must upload a document photo. Use your phone's camera for best results.</p>
-                </div>
-                <div className="space-y-4">
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800 font-medium mb-1">📋 Document Selection Rule</p>
-                    <p className="text-sm text-gray-600">Provide either IC number OR passport number (only one required). When you enter one, the other field will be automatically disabled. <strong>Document photo upload is mandatory for all guests.</strong></p>
-                    <div className="mt-2 p-2 bg-blue-100 border border-blue-200 rounded text-xs text-blue-700">
-                      <p className="font-medium">📱 Mobile Note:</p>
-                      <p>You can enter the document number first, then upload the photo, or upload the photo directly without entering the number.</p>
-                      <div className="mt-1 p-1 bg-green-50 border border-green-200 rounded text-xs text-green-600">
-                        <p className="font-medium">🚀 Pro Tip:</p>
-                        <p>For fastest check-in, just upload the photo directly - no need to type document numbers!</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-white border border-gray-200 rounded-lg">
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <Info className="h-4 w-4 mt-0.5 text-gray-600" />
-                      <div>
-                        <div className="font-medium mb-1">{t.photoTipsTitle}</div>
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>{t.photoTipLighting}</li>
-                          <li>{t.photoTipGlare}</li>
-                          <li>{t.photoTipSize}</li>
-                        </ul>
-                        <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
-                          <p className="font-medium">📱 Mobile Tips:</p>
-                          <p>Hold your phone steady, ensure good lighting, and avoid shadows on the document.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="icNumber" className="text-sm font-medium text-hostel-text">
-                        IC Number (e.g., 881014015523) <span className="text-gray-500 text-xs">(Optional if photo uploaded)</span>
-                        {isIcFieldDisabled && <span className="text-gray-500 text-xs ml-2">(Disabled - passport entered)</span>}
-                      </Label>
-                      <Input
-                        id="icNumber"
-                        type="text"
-                        placeholder={isIcFieldDisabled ? "Disabled - clear passport to enable" : "881014015523"}
-                        className={`w-full mt-1 ${isIcFieldDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        disabled={isIcFieldDisabled}
-                        inputMode="numeric"
-                        autoComplete="off"
-                        {...form.register("icNumber")}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">{t.icHint}</p>
-                      {form.formState.errors.icNumber && (
-                        <p className="text-red-500 text-sm mt-1">{form.formState.errors.icNumber.message}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="passportNumber" className="text-sm font-medium text-hostel-text">
-                        {t.passportNumberLabel} <span className="text-gray-500 text-xs">(Optional if photo uploaded)</span>
-                        {isPassportFieldDisabled && <span className="text-gray-500 text-xs ml-2">(Disabled - IC entered)</span>}
-                      </Label>
-                      <Input
-                        id="passportNumber"
-                        type="text"
-                        placeholder={isPassportFieldDisabled ? "Disabled - clear IC to enable" : t.passportNumberPlaceholder}
-                        className={`w-full mt-1 ${isPassportFieldDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                        disabled={isPassportFieldDisabled}
-                        autoComplete="off"
-                        {...form.register("passportNumber")}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">{t.passportHint}</p>
-                      {form.formState.errors.passportNumber && (
-                        <p className="text-red-500 text-sm mt-1">{form.formState.errors.passportNumber.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Document Upload Section - Required for All Users */}
-                  <div>
-                    <Label className="text-sm font-medium text-hostel-text flex items-center gap-2">
-                      <Upload className="h-4 w-4" />
-                      Upload IC/Passport Photo <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-3">
-                      <p className="text-sm text-amber-800 font-medium mb-1">📸 Photo Requirement</p>
-                      <p className="text-sm text-gray-700">All guests must upload a clear photo of their IC or passport. This is mandatory for check-in.</p>
-                      <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-                        <p className="font-medium mb-1">📱 Mobile Users:</p>
-                        <p>Use your phone's camera to take a clear photo. Ensure good lighting and avoid glare on the document.</p>
-                      </div>
-                    </div>
-                    
-                    {(icDocumentUrl || passportDocumentUrl) ? (
-                      <div className="mt-2 p-3 bg-green-100 border border-green-300 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-5 w-5 text-green-600" />
-                            <span className="text-2xl">✅</span>
-                          </div>
-                          <span className="text-sm text-green-700">
-                            {icDocumentUrl && "IC document uploaded successfully"}
-                            {passportDocumentUrl && "Passport document uploaded successfully"}
-                          </span>
-                        </div>
-                        <div className="mt-2 text-xs text-green-600">
-                          {icDocumentUrl && "✅ IC photo uploaded"}
-                          {passportDocumentUrl && "✅ Passport photo uploaded"}
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1">
-                          <span className="hidden sm:inline">Use the buttons below to change your uploaded document photo if needed.</span>
-                          <span className="sm:hidden">Tap below to change photo if needed.</span>
-                        </p>
-                        <div className="mt-2 flex flex-col sm:flex-row gap-2">
-                          <ObjectUploader
-                            maxNumberOfFiles={1}
-                            maxFileSize={10485760} // 10MB
-                            onGetUploadParameters={handleGetUploadParameters}
-                            onComplete={(result) => handleDocumentUpload(result, 'ic')}
-                            buttonClassName="flex-1 h-12 text-sm"
-                          >
-                            <Camera className="h-4 w-4 mr-2" />
-                            <span className="hidden sm:inline">Change IC Photo</span>
-                            <span className="sm:hidden">Change IC</span>
-                          </ObjectUploader>
-                          <ObjectUploader
-                            maxNumberOfFiles={1}
-                            maxFileSize={10485760} // 10MB
-                            onGetUploadParameters={handleGetUploadParameters}
-                            onComplete={(result) => handleDocumentUpload(result, 'passport')}
-                            buttonClassName="flex-1 h-12 text-sm"
-                          >
-                            <Camera className="h-4 w-4 mr-2" />
-                            <span className="hidden sm:inline">Change Passport Photo</span>
-                            <span className="sm:hidden">Change Passport</span>
-                          </ObjectUploader>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <Camera className="h-8 w-8 text-gray-400" />
-                          <span className="text-2xl">📸</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-2">
-                          Upload a clear photo of your IC or passport
-                        </p>
-                        <p className="text-xs text-gray-500 mb-3">{t.photoHint}</p>
-                        <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
-                          <p className="font-medium mb-1">💡 Tip:</p>
-                          <p><span className="hidden sm:inline">Tap either button below to select your document photo. It will upload automatically once selected.</span>
-                          <span className="sm:hidden">Tap either button to select photo. It uploads automatically.</span></p>
-                          <div className="mt-1 p-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-600">
-                            <p className="font-medium">📱 Quick Upload:</p>
-                            <p>Photos upload automatically once selected. No need to click upload button.</p>
-                          </div>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <ObjectUploader
-                            maxNumberOfFiles={1}
-                            maxFileSize={10485760} // 10MB
-                            onGetUploadParameters={handleGetUploadParameters}
-                            onComplete={(result) => handleDocumentUpload(result, 'ic')}
-                            buttonClassName="flex-1 h-12 text-sm"
-                          >
-                            <Camera className="h-4 w-4 mr-2" />
-                            <span className="hidden sm:inline">Select IC Photo</span>
-                            <span className="sm:hidden">IC Photo</span>
-                          </ObjectUploader>
-                          <ObjectUploader
-                            maxNumberOfFiles={1}
-                            maxFileSize={10485760} // 10MB
-                            onGetUploadParameters={handleGetUploadParameters}
-                            onComplete={(result) => handleDocumentUpload(result, 'passport')}
-                            buttonClassName="flex-1 h-12 text-sm"
-                          >
-                            <Camera className="h-4 w-4 mr-2" />
-                            <span className="hidden sm:inline">Select Passport Photo</span>
-                            <span className="sm:hidden">Passport Photo</span>
-                          </ObjectUploader>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          <span className="hidden sm:inline">You can upload either IC or passport photo. Both are not required.</span>
-                          <span className="sm:hidden">Choose one document type to upload. Both not needed.</span>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <DocumentUploadSection 
+                form={form}
+                errors={form.formState.errors}
+                t={t}
+                isMalaysian={isMalaysian}
+                icDocumentUrl={icDocumentUrl}
+                passportDocumentUrl={passportDocumentUrl}
+                handleGetUploadParameters={handleGetUploadParameters}
+                handleDocumentUpload={handleDocumentUpload}
+              />
 
               {/* Emergency Contact */}
-              <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
-                  <Users className="mr-2 h-4 w-4" />
-                  Emergency Contact
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="emergencyContact" className="text-sm font-medium text-hostel-text">
-                      Emergency Contact Name
-                    </Label>
-                    <Input
-                      id="emergencyContact"
-                      type="text"
-                      placeholder="Full name of emergency contact"
-                      className="mt-1"
-                      {...form.register("emergencyContact")}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">{t.emergencyContactHint}</p>
-                    {form.formState.errors.emergencyContact && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.emergencyContact.message}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="emergencyPhone" className="text-sm font-medium text-hostel-text">
-                      Emergency Contact Phone
-                    </Label>
-                    <Input
-                      id="emergencyPhone"
-                      type="tel"
-                      placeholder="Emergency contact phone number"
-                      className="mt-1"
-                      autoComplete="tel"
-                      inputMode="tel"
-                      {...form.register("emergencyPhone")}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">{t.emergencyPhoneHint}</p>
-                    {form.formState.errors.emergencyPhone && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.emergencyPhone.message}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <EmergencyContactSection 
+                form={form}
+                errors={form.formState.errors}
+                t={t}
+              />
 
               {/* Additional Notes */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <h3 className="text-sm font-medium text-hostel-text mb-3">Additional Notes</h3>
-                <div>
-                  <Label htmlFor="notes" className="text-sm font-medium text-hostel-text">
-                    Special Requirements or Notes
-                  </Label>
-                  {/* Quick-select common notes */}
-                  <div className="mt-2 mb-2">
-                    <div className="text-xs text-gray-700 mb-1 font-medium">{t.commonNotesTitle}</div>
-                    <div className="flex flex-wrap gap-2">
-                      <button type="button" className="px-2 py-1 text-xs border rounded-md hover:bg-white" onClick={() => {
-                        const cur = form.getValues("notes") || "";
-                        const v = t.commonNoteLateArrival;
-                        form.setValue("notes", cur ? `${cur}\n${v}` : v);
-                      }}>{t.commonNoteLateArrival}</button>
-                      <button type="button" className="px-2 py-1 text-xs border rounded-md hover:bg-white" onClick={() => {
-                        const cur = form.getValues("notes") || "";
-                        const v = t.commonNoteBottomCapsule;
-                        form.setValue("notes", cur ? `${cur}\n${v}` : v);
-                      }}>{t.commonNoteBottomCapsule}</button>
-                      <button type="button" className="px-2 py-1 text-xs border rounded-md hover:bg-white" onClick={() => {
-                        const cur = form.getValues("notes") || "";
-                        const v = t.commonNoteArriveEarly;
-                        form.setValue("notes", cur ? `${cur}\n${v}` : v);
-                      }}>{t.commonNoteArriveEarly}</button>
-                      <button type="button" className="px-2 py-1 text-xs border rounded-md hover:bg-white" onClick={() => {
-                        const cur = form.getValues("notes") || "";
-                        const v = t.commonNoteQuietArea;
-                        form.setValue("notes", cur ? `${cur}\n${v}` : v);
-                      }}>{t.commonNoteQuietArea}</button>
-                      <button type="button" className="px-2 py-1 text-xs border rounded-md hover:bg-white" onClick={() => {
-                        const cur = form.getValues("notes") || "";
-                        const v = t.commonNoteExtraBedding;
-                        form.setValue("notes", cur ? `${cur}\n${v}` : v);
-                      }}>{t.commonNoteExtraBedding}</button>
-                    </div>
-                  </div>
-                  <Textarea
-                    id="notes"
-                    rows={3}
-                    placeholder="Any special requirements, allergies, accessibility needs, or additional notes..."
-                    className="mt-1"
-                    {...form.register("notes")}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">{t.notesHint}</p>
-                  {form.formState.errors.notes && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.notes.message}</p>
-                  )}
-                </div>
-              </div>
+              <AdditionalNotesSection 
+                form={form}
+                errors={form.formState.errors}
+                t={t}
+              />
 
               {/* Payment Information */}
-              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Payment Information
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="paymentMethod" className="text-sm font-medium text-hostel-text">
-                      Payment Method
-                    </Label>
-                    <Select
-                      value={form.watch("paymentMethod") || ""}
-                      onValueChange={(value) => form.setValue("paymentMethod", value as "cash" | "bank" | "online_platform")}
-                    >
-                      <SelectTrigger className="w-full mt-1">
-                        <SelectValue placeholder="Select payment method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">
-                          <div className="flex items-center gap-2">
-                            <Banknote className="h-4 w-4" />
-                            <span>Cash (Paid to Guest/Person)</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="bank">
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4" />
-                            <span>Bank Transfer</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="online_platform">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4" />
-                            <span>Online Platform (Booking.com, Agoda, etc.)</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">{t.paymentMethodHint}</p>
-                    {form.formState.errors.paymentMethod && (
-                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.paymentMethod.message}</p>
-                    )}
-                  </div>
-
-                  {/* Cash Payment Description */}
-                  {watchedPaymentMethod === "cash" && (
-                    <div>
-                      <Label htmlFor="guestPaymentDescription" className="text-sm font-medium text-hostel-text">
-                        Describe whom you gave the payment to
-                      </Label>
-                      <Textarea
-                        id="guestPaymentDescription"
-                        placeholder="e.g., Paid RM50 to Ahmad at the front desk"
-                        className="w-full mt-1"
-                        {...form.register("guestPaymentDescription")}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">{t.cashDescriptionHint}</p>
-                      {form.formState.errors.guestPaymentDescription && (
-                        <p className="text-red-500 text-sm mt-1">{form.formState.errors.guestPaymentDescription.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Bank Transfer Details */}
-                  {watchedPaymentMethod === "bank" && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="font-medium text-blue-800 mb-3">Bank Account Details</h4>
-                      <div className="space-y-2 text-sm">
-                        <div><strong>Account Name:</strong> Pelangi Capsule Hostel</div>
-                        <div><strong>Account Number:</strong> 551128652007</div>
-                        <div><strong>Bank:</strong> Maybank</div>
-                      </div>
-                      <div className="mt-4 text-center">
-                        <p className="text-sm text-blue-700 mb-2">QR Code for Payment</p>
-                        <img 
-                          src={qrCodeImage} 
-                          alt="Payment QR Code" 
-                          className="w-32 h-auto mx-auto border border-gray-200 rounded"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <PaymentInformationSection 
+                form={form}
+                errors={form.formState.errors}
+                t={t}
+                watchedPaymentMethod={watchedPaymentMethod}
+              />
 
               {/* Help & FAQ */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <h3 className="text-sm font-medium text-hostel-text mb-2 flex items-center">
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  {t.faqNeedHelp}
-                </h3>
-                <p className="text-xs text-gray-600 mb-3">{t.faqIntro}</p>
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="ic-vs-passport">
-                    <AccordionTrigger className="text-sm">{t.faqIcVsPassportQ}</AccordionTrigger>
-                    <AccordionContent className="text-sm text-gray-700">
-                      {t.faqIcVsPassportA}
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="photo-upload">
-                    <AccordionTrigger className="text-sm">{t.faqPhotoUploadQ}</AccordionTrigger>
-                    <AccordionContent className="text-sm text-gray-700">
-                      {t.faqPhotoUploadA}
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="phone-format">
-                    <AccordionTrigger className="text-sm">{t.faqPhoneFormatQ}</AccordionTrigger>
-                    <AccordionContent className="text-sm text-gray-700">
-                      {t.faqPhoneFormatA}
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="gender-why">
-                    <AccordionTrigger className="text-sm">{t.faqGenderWhyQ}</AccordionTrigger>
-                    <AccordionContent className="text-sm text-gray-700">
-                      {t.faqGenderWhyA}
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="privacy">
-                    <AccordionTrigger className="text-sm">{t.faqPrivacyQ}</AccordionTrigger>
-                    <AccordionContent className="text-sm text-gray-700">
-                      {t.faqPrivacyA}
-                    </AccordionContent>
-                  </AccordionItem>
-                  <AccordionItem value="edit-after">
-                    <AccordionTrigger className="text-sm">{t.faqEditAfterQ}</AccordionTrigger>
-                    <AccordionContent className="text-sm text-gray-700">
-                      {t.faqEditAfterA}
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
+              <HelpFAQSection t={t} />
 
               <div className="sticky bottom-0 left-0 right-0 z-10 -mx-6 px-6 py-3 bg-gradient-to-t from-background via-background/95 to-transparent">
                 {/* Document upload reminder */}
-                {!icDocumentUrl && !passportDocumentUrl && (
+                {((isMalaysian && !icDocumentUrl) || (!isMalaysian && !passportDocumentUrl)) && (
                   <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center gap-2 text-red-700">
                       <Upload className="h-4 w-4" />
-                      <span className="text-sm font-medium">Document Upload Required</span>
+                      <span className="text-sm font-medium">{isMalaysian ? 'IC Upload Required' : 'Document Upload Required'}</span>
                     </div>
                     <p className="text-xs text-red-600 mt-1">
-                      <span className="hidden sm:inline">Please upload a photo of your IC or passport before completing check-in.</span>
-                      <span className="sm:hidden">Please upload your IC or passport photo to continue.</span>
+                      <span className="hidden sm:inline">{isMalaysian ? 'Please upload a photo of your IC before completing check-in.' : 'Please upload a photo of your passport before completing check-in.'}</span>
+                      <span className="sm:hidden">{isMalaysian ? 'Please upload your IC photo to continue.' : 'Please upload your passport photo to continue.'}</span>
                     </p>
                   </div>
                 )}
@@ -1314,7 +835,7 @@ This email was generated by Pelangi Capsule Hostel Management System
                 <Button 
                   type="submit" 
                   className="w-full h-12 text-base bg-orange-600 hover:bg-orange-700"
-                  disabled={isSubmitting || (!icDocumentUrl && !passportDocumentUrl) || !isCheckOutDateValid}
+                  disabled={isSubmitting || (isMalaysian ? !icDocumentUrl : !passportDocumentUrl) || !isCheckOutDateValid}
                   isLoading={isSubmitting}
                 >
                   <span className="hidden sm:inline">Complete Check-in</span>

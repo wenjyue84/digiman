@@ -32,6 +32,7 @@ export interface IStorage {
   getGuestsWithCheckoutToday(): Promise<Guest[]>;
   getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }>;
   getAvailableCapsules(): Promise<Capsule[]>;
+  getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined>;
   
   // Capsule management methods
   getAllCapsules(): Promise<Capsule[]>;
@@ -560,6 +561,15 @@ export class MemStorage implements IStorage {
   async getGuestsByCapsule(capsuleNumber: string): Promise<Guest[]> {
     return Array.from(this.guests.values())
       .filter(guest => guest.capsuleNumber === capsuleNumber && guest.isCheckedIn);
+  }
+
+  async getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined> {
+    return Array.from(this.guests.values())
+      .find(guest => 
+        guest.capsuleNumber === capsuleNumber && 
+        guest.name === name && 
+        guest.isCheckedIn === true
+      );
   }
 
   // Cleaning management methods
@@ -1202,6 +1212,20 @@ class DatabaseStorage implements IStorage {
         eq(guests.capsuleNumber, capsuleNumber),
         eq(guests.isCheckedIn, true)
       ));
+  }
+
+  async getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined> {
+    const result = await this.db
+      .select()
+      .from(guests)
+      .where(and(
+        eq(guests.capsuleNumber, capsuleNumber),
+        eq(guests.name, name),
+        eq(guests.isCheckedIn, true)
+      ))
+      .limit(1);
+    
+    return result[0];
   }
 
   // Capsule problem methods for DatabaseStorage

@@ -424,18 +424,45 @@ export default function CheckOut() {
               {/* Summary Information */}
               <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">{guests.length}</div>
-                    <div className="text-sm text-gray-600">Total Checked In</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-orange-600">{checkingOutToday.length}</div>
-                    <div className="text-sm text-gray-600">Expected Today</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-red-600">{overdueCheckouts.length}</div>
-                    <div className="text-sm text-gray-600">Overdue</div>
-                  </div>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <div className="text-2xl font-bold text-blue-600">{guests.length}</div>
+                        <div className="text-sm text-gray-600">Total Checked In</div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>The total number of guests currently checked in.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <div className="text-2xl font-bold text-orange-600">{checkingOutToday.length}</div>
+                        <div className="text-sm text-gray-600">Expected Today</div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Guests whose expected check-out date is today.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <div className="text-2xl font-bold text-red-600">{overdueCheckouts.length}</div>
+                        <div className="text-sm text-gray-600">Overdue</div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Guests who have passed their expected check-out date.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
                 </div>
               </div>
             </>

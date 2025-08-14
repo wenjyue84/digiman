@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { List, Table as TableIcon, CreditCard } from 'lucide-react';
 
 interface MarkCleanedDialogProps {
   capsule: Capsule;
@@ -170,11 +173,12 @@ export default function CapsuleCleaningStatus() {
   const queryClient = useQueryClient();
   const labels = useAccommodationLabels();
   const isMobile = useIsMobile();
-  const [concise, setConcise] = useState<boolean>(() => isMobile);
+  const [viewMode, setViewMode] = useState<'card' | 'list' | 'table'>('card');
 
-  // Auto-switch view mode based on device type
   useEffect(() => {
-    setConcise(isMobile);
+    if (isMobile) {
+      setViewMode('list');
+    }
   }, [isMobile]);
   
   const { data: capsulesToClean = [], isLoading: loadingToClean, refetch: refetchToClean } = useQuery<Capsule[]>({
@@ -236,6 +240,139 @@ export default function CapsuleCleaningStatus() {
     );
   }
 
+  const renderNeedsCleaning = () => {
+    switch (viewMode) {
+      case 'table':
+        return (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Capsule</TableHead>
+                <TableHead>Section</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {capsulesToClean.map((capsule) => (
+                <TableRow key={capsule.id}>
+                  <TableCell>{capsule.number}</TableCell>
+                  <TableCell>{capsule.section}</TableCell>
+                  <TableCell>
+                    <Badge className="bg-orange-500 text-white">Needs Cleaning</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <MarkCleanedDialog capsule={capsule} onSuccess={handleRefresh} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        );
+      case 'list':
+        return (
+          <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {capsulesToClean.map((capsule) => (
+              <div key={capsule.id} className="flex items-center justify-between rounded-md border border-orange-200 bg-orange-50 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{capsule.number}</span>
+                  <Badge className="bg-orange-500 text-white">Needs Cleaning</Badge>
+                  <span className="text-xs text-muted-foreground capitalize">{capsule.section}</span>
+                </div>
+                <MarkCleanedDialog capsule={capsule} onSuccess={handleRefresh} />
+              </div>
+            ))}
+          </div>
+        );
+      case 'card':
+        return (
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {capsulesToClean.map((capsule) => (
+              <CapsuleCleaningCard
+                key={capsule.id}
+                capsule={capsule}
+                onRefresh={handleRefresh}
+              />
+            ))}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderRecentlyCleaned = () => {
+    switch (viewMode) {
+      case 'table':
+        return (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Capsule</TableHead>
+                <TableHead>Section</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Cleaned At</TableHead>
+                <TableHead>Cleaned By</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cleanedCapsules.map((capsule) => (
+                <TableRow key={capsule.id}>
+                  <TableCell>{capsule.number}</TableCell>
+                  <TableCell>{capsule.section}</TableCell>
+                  <TableCell>
+                    <Badge className="bg-green-600 text-white">Clean</Badge>
+                  </TableCell>
+                  <TableCell>{new Date(capsule.lastCleanedAt).toLocaleString()}</TableCell>
+                  <TableCell>{capsule.lastCleanedBy}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        );
+      case 'list':
+        return (
+          <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {cleanedCapsules
+              .sort((a, b) => {
+                if (!a.lastCleanedAt || !b.lastCleanedAt) return 0;
+                return new Date(b.lastCleanedAt).getTime() - new Date(a.lastCleanedAt).getTime();
+              })
+              .slice(0, 6) // Show only recent 6 cleaned capsules
+              .map((capsule) => (
+                <div key={capsule.id} className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{capsule.number}</span>
+                    <Badge className="bg-green-600 text-white">Clean</Badge>
+                    <span className="text-xs text-muted-foreground capitalize">{capsule.section}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        );
+      case 'card':
+        return (
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {cleanedCapsules
+              .sort((a, b) => {
+                if (!a.lastCleanedAt || !b.lastCleanedAt) return 0;
+                return new Date(b.lastCleanedAt).getTime() - new Date(a.lastCleanedAt).getTime();
+              })
+              .slice(0, 6) // Show only recent 6 cleaned capsules
+              .map((capsule) => (
+                <CapsuleCleaningCard
+                  key={capsule.id}
+                  capsule={capsule}
+                  onRefresh={handleRefresh}
+                />
+              ))}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -247,14 +384,25 @@ export default function CapsuleCleaningStatus() {
           <p className="text-sm text-muted-foreground">
             Track and manage {labels.lowerSingular} cleaning after guest checkout
           </p>
+          
           <div className="flex items-center gap-2">
-            <Button variant={concise ? "default" : "outline"} size="sm" onClick={() => setConcise(!concise)}>
-              {concise ? "Detailed View" : "Concise View"}
+            <Button variant={viewMode === 'card' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('card')}>
+              <CreditCard className="h-4 w-4 mr-1" />
+              Card
+            </Button>
+            <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>
+              <List className="h-4 w-4 mr-1" />
+              List
+            </Button>
+            <Button variant={viewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('table')}>
+              <TableIcon className="h-4 w-4 mr-1" />
+              Table
             </Button>
             <Button variant="outline" size="sm" onClick={handleRefresh}>
               Refresh
             </Button>
           </div>
+
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -280,26 +428,7 @@ export default function CapsuleCleaningStatus() {
               <p>All {labels.lowerPlural} are clean! Great work!</p>
             </div>
           ) : (
-            <div className={concise ? "grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3 md:grid-cols-2 lg:grid-cols-3"}>
-              {capsulesToClean.map((capsule) => (
-                concise ? (
-                  <div key={capsule.id} className="flex items-center justify-between rounded-md border border-orange-200 bg-orange-50 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{capsule.number}</span>
-                      <Badge className="bg-orange-500 text-white">Needs Cleaning</Badge>
-                      <span className="text-xs text-muted-foreground capitalize">{capsule.section}</span>
-                    </div>
-                    <MarkCleanedDialog capsule={capsule} onSuccess={handleRefresh} />
-                  </div>
-                ) : (
-                  <CapsuleCleaningCard
-                    key={capsule.id}
-                    capsule={capsule}
-                    onRefresh={handleRefresh}
-                  />
-                )
-              ))}
-            </div>
+            renderNeedsCleaning()
           )}
         </div>
 
@@ -317,31 +446,7 @@ export default function CapsuleCleaningStatus() {
               <p>No recently cleaned {labels.lowerPlural}</p>
             </div>
           ) : (
-            <div className={concise ? "grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-3 md:grid-cols-2 lg:grid-cols-3"}>
-              {cleanedCapsules
-                .sort((a, b) => {
-                  if (!a.lastCleanedAt || !b.lastCleanedAt) return 0;
-                  return new Date(b.lastCleanedAt).getTime() - new Date(a.lastCleanedAt).getTime();
-                })
-                .slice(0, 6) // Show only recent 6 cleaned capsules
-                .map((capsule) => (
-                  concise ? (
-                    <div key={capsule.id} className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{capsule.number}</span>
-                        <Badge className="bg-green-600 text-white">Clean</Badge>
-                        <span className="text-xs text-muted-foreground capitalize">{capsule.section}</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <CapsuleCleaningCard
-                      key={capsule.id}
-                      capsule={capsule}
-                      onRefresh={handleRefresh}
-                    />
-                  )
-                ))}
-            </div>
+            renderRecentlyCleaned()
           )}
         </div>
       </CardContent>
