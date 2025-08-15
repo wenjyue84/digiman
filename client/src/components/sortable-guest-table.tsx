@@ -834,19 +834,8 @@ export default function SortableGuestTable() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="h-11 w-11 rounded-full flex items-center justify-center text-gray-400 text-xs">
-                          —
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          className="h-11 w-11 rounded-full"
-                          onClick={() => handleGuestClick(guest)}
-                          title="Details"
-                        >
-                          i
-                        </Button>
-                        <Button 
-                          variant="destructive" 
+                        <Button
+                          variant="destructive"
                           className="h-11 w-11 rounded-full"
                           onClick={() => handleCheckout(guest.id)}
                           disabled={isGuestCheckingOut}
