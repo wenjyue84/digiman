@@ -4,7 +4,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Camera, Calendar } from "lucide-react";
-import { SmartPhotoUploader } from "@/components/SmartPhotoUploader";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
+import { useToast } from "@/hooks/use-toast";
 import { NATIONALITIES } from "@/lib/nationalities";
 import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
 import type { InsertGuest } from "@shared/schema";
@@ -15,11 +17,80 @@ interface IdentificationPersonalSectionProps {
   setProfilePhotoUrl: (url: string) => void;
 }
 
-export default function IdentificationPersonalSection({ 
-  form, 
-  profilePhotoUrl, 
-  setProfilePhotoUrl 
+export default function IdentificationPersonalSection({
+  form,
+  profilePhotoUrl,
+  setProfilePhotoUrl
 }: IdentificationPersonalSectionProps) {
+  const { toast } = useToast();
+
+  const handleGetUploadParameters = async () => {
+    const response = await fetch('/api/objects/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Upload URL request failed:', errorData);
+      throw new Error('Failed to get upload URL');
+    }
+
+    const data = await response.json();
+    if (!data.uploadURL) {
+      throw new Error('No upload URL returned from server');
+    }
+
+    (window as any).__lastProfileUploadUrl = data.uploadURL;
+
+    return {
+      method: 'PUT' as const,
+      url: data.uploadURL,
+    };
+  };
+
+  const handlePhotoUpload = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      const uploadURL = uploadedFile.uploadURL || (window as any).__lastProfileUploadUrl;
+
+      try {
+        let objectId: string | undefined;
+
+        if (uploadURL.includes('/api/objects/dev-upload/')) {
+          const parts = uploadURL.split('/api/objects/dev-upload/');
+          objectId = parts[parts.length - 1];
+        } else if (uploadURL.startsWith('http://') || uploadURL.startsWith('https://')) {
+          const url = new URL(uploadURL);
+          objectId = url.pathname.split('/').pop();
+        } else if (uploadURL.startsWith('/')) {
+          objectId = uploadURL.split('/').pop();
+        }
+
+        if (!objectId) {
+          throw new Error('Could not extract object ID from upload URL');
+        }
+
+        const baseUrl = window.location.origin;
+        const photoUrl = `${baseUrl}/objects/uploads/${objectId}`;
+        setProfilePhotoUrl(photoUrl);
+        toast({
+          title: 'Photo uploaded',
+          description: 'Document photo uploaded successfully',
+        });
+      } catch (error) {
+        console.error('Error processing upload URL:', error);
+        toast({
+          title: 'Upload Error',
+          description: error instanceof Error ? error.message : 'Failed to process uploaded file',
+          variant: 'destructive',
+        });
+      } finally {
+        (window as any).__lastProfileUploadUrl = null;
+      }
+    }
+  };
+
   return (
     <div className="bg-orange-50 rounded-lg p-3 sm:p-4 border border-orange-200">
       <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
@@ -76,9 +147,9 @@ export default function IdentificationPersonalSection({
           <div className="mt-2 space-y-2">
             {profilePhotoUrl ? (
               <div className="flex items-center gap-3">
-                <img 
-                  src={profilePhotoUrl} 
-                  alt="Profile" 
+                <img
+                  src={profilePhotoUrl}
+                  alt="Profile"
                   className="w-16 h-20 object-cover rounded border border-gray-300"
                 />
                 <div className="flex flex-col gap-2">
@@ -97,21 +168,16 @@ export default function IdentificationPersonalSection({
                 </div>
               </div>
             ) : (
-              <SmartPhotoUploader
-                onPhotoSelected={(photoUrl, photoData) => {
-                  setProfilePhotoUrl(photoUrl);
-                  // Store additional metadata if needed
-                  if (photoData) {
-                    console.log('Photo metadata:', {
-                      name: photoData.name,
-                      size: photoData.size,
-                      type: photoData.type
-                    });
-                  }
-                }}
-                buttonText={`Upload ${form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"}`}
-                className="w-full"
-              />
+              <ObjectUploader
+                maxNumberOfFiles={1}
+                maxFileSize={5 * 1024 * 1024}
+                onGetUploadParameters={handleGetUploadParameters}
+                onComplete={handlePhotoUpload}
+                buttonClassName="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                {`Upload ${form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"}`}
+              </ObjectUploader>
             )}
           </div>
         </div>

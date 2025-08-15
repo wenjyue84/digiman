@@ -38,8 +38,7 @@ import CheckInDetailsSection from "@/components/check-in/CheckInDetailsSection";
 import SmartFeaturesSection from "@/components/check-in/SmartFeaturesSection";
 import StepProgressIndicator from "@/components/check-in/StepProgressIndicator";
 
-import { SmartPhotoUploader } from "@/components/SmartPhotoUploader";
-import { Camera, Upload } from "lucide-react";
+// Removed SmartPhotoUploader in favor of ObjectUploader in IdentificationPersonalSection
 
 export default function CheckIn() {
   const labels = useAccommodationLabels();
