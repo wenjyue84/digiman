@@ -236,7 +236,7 @@
 }
 
   /* Print styles for check-in slip */
-  @media print {
+@media print {
     /* Hide everything except the check-in slip */
     body * {
       visibility: hidden;
@@ -298,5 +298,16 @@
     /* Remove edit section in print */
     .bg-yellow-50 {
       display: none !important;
-    }
   }
+}
+
+@layer components {
+  /* Center Uppy dashboard modal on screen */
+  .uppy-Dashboard--modal .uppy-Dashboard-inner {
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}

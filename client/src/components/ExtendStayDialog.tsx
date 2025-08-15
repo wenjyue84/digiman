@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest } from "@/lib/queryClient";
-import type { Guest } from "@shared/schema";
+import type { Guest, User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { getDefaultCollector } from "@/components/check-in/utils";
 import { getGuestBalance } from "@/lib/guest";
+import { Calendar, CalendarCheck, CalendarPlus, CheckCircle, CreditCard, DollarSign, User as UserIcon, Wallet } from "lucide-react";
 
 interface ExtendStayDialogProps {
   guest: Guest | null;
@@ -29,6 +30,16 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [collector, setCollector] = useState<string>("");
+
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    enabled: open,
+  });
+
+  const collectorOptions = useMemo(
+    () => users.map((u) => getDefaultCollector(u)),
+    [users]
+  );
 
   const presetOptions = useMemo(() => ([
     { label: "1 day", value: 1 },
@@ -102,11 +113,20 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
     }
   }, [open, user]);
 
+  useEffect(() => {
+    if (open && days === 1 && price === "") {
+      setPrice("45");
+    }
+  }, [open, days, price]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Extend Stay</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <CalendarPlus className="h-5 w-5 text-blue-600" />
+            Extend Stay
+          </DialogTitle>
           <DialogDescription>
             {guest ? `Extend ${guest.name}'s stay in ${guest.capsuleNumber}` : ''}
           </DialogDescription>
@@ -115,7 +135,9 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3 items-end">
             <div className="col-span-2">
-              <Label>Duration</Label>
+              <Label className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" /> Duration
+              </Label>
               <div className="flex gap-2 mt-1">
                 <Select onValueChange={(v) => setDays(parseInt(v))}>
                   <SelectTrigger className="w-[140px]">
@@ -138,14 +160,18 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
               </div>
             </div>
             <div>
-              <Label>New checkout</Label>
+              <Label className="flex items-center gap-1">
+                <CalendarCheck className="h-4 w-4" /> New checkout
+              </Label>
               <div className="mt-2 text-sm font-medium">{computedNewCheckout || '—'}</div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>New charges (RM)</Label>
+              <Label className="flex items-center gap-1">
+                <DollarSign className="h-4 w-4" /> New charges (RM)
+              </Label>
               <Input
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
@@ -155,7 +181,9 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
               />
             </div>
             <div>
-              <Label>Paid now (RM)</Label>
+              <Label className="flex items-center gap-1">
+                <Wallet className="h-4 w-4" /> Paid now (RM)
+              </Label>
               <Input
                 value={paidNow}
                 onChange={(e) => setPaidNow(e.target.value)}
@@ -189,13 +217,17 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
 
           <div className="flex items-center gap-2">
             <Checkbox id="paid" checked={isPaid} onCheckedChange={(v) => setIsPaid(Boolean(v))} />
-            <Label htmlFor="paid">Payment done</Label>
+            <Label htmlFor="paid" className="flex items-center gap-1">
+              <CheckCircle className="h-4 w-4" /> Payment done
+            </Label>
             <span className="text-xs text-gray-500">(Will auto-enable when outstanding is RM 0.00)</span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Method</Label>
+              <Label className="flex items-center gap-1">
+                <CreditCard className="h-4 w-4" /> Method
+              </Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
@@ -209,8 +241,39 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
               </Select>
             </div>
             <div>
-              <Label>Paid to (collector)</Label>
-              <Input value={collector} onChange={(e) => setCollector(e.target.value)} className="mt-1" />
+              <Label className="flex items-center gap-1">
+                <UserIcon className="h-4 w-4" /> Paid to (collector)
+              </Label>
+              <Select
+                value={collectorOptions.includes(collector) ? collector : "custom"}
+                onValueChange={(v) => {
+                  if (v === "custom") {
+                    setCollector("");
+                  } else {
+                    setCollector(v);
+                  }
+                }}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select collector" />
+                </SelectTrigger>
+                <SelectContent>
+                  {collectorOptions.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">Custom collector...</SelectItem>
+                </SelectContent>
+              </Select>
+              {!collectorOptions.includes(collector) && (
+                <Input
+                  value={collector}
+                  onChange={(e) => setCollector(e.target.value)}
+                  placeholder="Enter collector name"
+                  className="mt-2"
+                />
+              )}
             </div>
           </div>
 
