@@ -75,18 +75,33 @@ export default function AdminNotifications() {
   const unreadNotifications = unreadNotificationsResponse?.data || [];
   const notificationsToShow = showAll ? allNotifications : unreadNotifications;
 
-  // Don't show notifications if not authenticated or no unread notifications
-  if (!isAuthenticated || unreadNotifications.length === 0) {
+  // Don't show notifications if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // If no unread notifications and not showing all, don't display
+  if (unreadNotifications.length === 0 && !showAll) {
     return null;
   }
 
   const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    try {
+      const dateObj = new Date(date);
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid date';
+      }
+      return dateObj.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error, 'for date:', date);
+      return 'Invalid date';
+    }
   };
 
   const getNotificationIcon = (type: string) => {

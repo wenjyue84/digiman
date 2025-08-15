@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMinus, CheckCheck, ToggleLeft, ToggleRight, ChevronRight, User, Calendar, Bell, Filter as FilterIcon } from "lucide-react";
+import { UserMinus, CheckCheck, ToggleLeft, ToggleRight, ChevronRight, User, Calendar, Bell, Filter as FilterIcon, CreditCard, List, Table as TableIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
@@ -70,6 +71,7 @@ export default function CheckOut() {
   const isMobile = useIsMobile();
   const [isCondensedView, setIsCondensedView] = useState(() => isMobile);
   const [showBulkCheckoutConfirmation, setShowBulkCheckoutConfirmation] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'list' | 'table'>('table');
 
   // Auto-switch view mode based on device type
   useEffect(() => {
@@ -190,6 +192,274 @@ export default function CheckOut() {
     return guest.expectedCheckoutDate < today;
   });
 
+  // Render functions for different view modes
+  const renderTableView = () => {
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Guest</TableHead>
+              <TableHead>{labels.singular}</TableHead>
+              <TableHead>Check-in Time</TableHead>
+              <TableHead>Duration</TableHead>
+              {!isCondensedView && (
+                <>
+                  <TableHead>Expected Checkout</TableHead>
+                  <TableHead>Payment</TableHead>
+                  <TableHead>Status</TableHead>
+                </>
+              )}
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredGuests.map((guest) => {
+              const genderIcon = getGenderIcon(guest.gender || undefined);
+              const isGuestCheckingOut = checkoutMutation.isPending && checkoutMutation.variables === guest.id;
+              const isOverdue = guest.expectedCheckoutDate && guest.expectedCheckoutDate < today;
+              const isToday = guest.expectedCheckoutDate === today;
+              
+              return (
+                <TableRow key={guest.id} className={`hover:bg-gray-50 ${isOverdue ? 'bg-red-50' : isToday ? 'bg-orange-50' : ''}`}>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 ${genderIcon.bgColor} rounded-full flex items-center justify-center mr-4`}>
+                        <span className={`${genderIcon.textColor} font-medium`}>
+                          {genderIcon.icon || getInitials(guest.name)}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-hostel-text">{guest.name}</div>
+                        <div className="text-sm text-gray-500">ID: #{guest.id.slice(0, 8)}</div>
+                        {guest.nationality && (
+                          <div className="text-xs text-gray-400">{guest.nationality}</div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white`}>
+                      {guest.capsuleNumber}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {new Date(guest.checkinTime).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-hostel-text font-medium">{formatDuration(guest.checkinTime.toString())}</div>
+                    <div className="text-xs text-gray-500">Since check-in</div>
+                  </TableCell>
+                  {!isCondensedView && (
+                    <>
+                      <TableCell className="text-sm text-gray-600">
+                        {guest.expectedCheckoutDate ? (
+                          <div>
+                            <span className={`font-medium ${isOverdue ? 'text-red-600' : isToday ? 'text-orange-600' : 'text-gray-900'}`}>
+                              {new Date(guest.expectedCheckoutDate).toLocaleDateString()}
+                            </span>
+                            {isOverdue && <div className="text-xs text-red-500">Overdue</div>}
+                            {isToday && <div className="text-xs text-orange-500">Today</div>}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {guest.paymentAmount ? (
+                          <div>
+                            <div className="font-medium">RM {guest.paymentAmount}</div>
+                            <div className="text-xs text-gray-500">{guest.paymentCollector || 'N/A'}</div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">No payment</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 ${isGuestPaid(guest) ? 'bg-green-500' : 'bg-red-500'} rounded-full`}></div>
+                          <span className="text-xs text-gray-600">{isGuestPaid(guest) ? 'Paid' : 'Unpaid'}</span>
+                        </div>
+                      </TableCell>
+                    </>
+                  )}
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCheckout(guest.id)}
+                      disabled={checkoutMutation.isPending}
+                      isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
+                      className="text-hostel-error hover:text-red-700 font-medium p-1"
+                      title="Checkout"
+                    >
+                      <UserMinus className="h-3 w-3" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
+  const renderListView = () => {
+    return (
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredGuests.map((guest) => {
+          const genderIcon = getGenderIcon(guest.gender || undefined);
+          const isOverdue = guest.expectedCheckoutDate && guest.expectedCheckoutDate < today;
+          const isToday = guest.expectedCheckoutDate === today;
+          
+          return (
+            <div key={guest.id} className={`flex items-center justify-between rounded-md border px-3 py-2 ${
+              isOverdue ? 'border-red-200 bg-red-50' : 
+              isToday ? 'border-orange-200 bg-orange-50' : 
+              'border-gray-200 bg-white'
+            }`}>
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className={`w-8 h-8 ${genderIcon.bgColor} rounded-full flex items-center justify-center flex-shrink-0`}>
+                  <span className={`${genderIcon.textColor} text-xs font-medium`}>
+                    {genderIcon.icon || getInitials(guest.name)}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white text-xs`}>
+                      {guest.capsuleNumber}
+                    </Badge>
+                    <span className="font-medium text-sm truncate">{guest.name}</span>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    {formatDuration(guest.checkinTime.toString())}
+                    {!isCondensedView && guest.paymentAmount && (
+                      <span className="ml-2">• RM {guest.paymentAmount}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleCheckout(guest.id)}
+                disabled={checkoutMutation.isPending}
+                className="text-hostel-error hover:text-red-700 ml-2"
+                title="Checkout"
+              >
+                <UserMinus className="h-3 w-3" />
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderCardView = () => {
+    return (
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {filteredGuests.map((guest) => {
+          const genderIcon = getGenderIcon(guest.gender || undefined);
+          const isOverdue = guest.expectedCheckoutDate && guest.expectedCheckoutDate < today;
+          const isToday = guest.expectedCheckoutDate === today;
+          
+          return (
+            <Card key={guest.id} className={`hover:shadow-md transition-shadow ${
+              isOverdue ? 'border-red-200 bg-red-50' : 
+              isToday ? 'border-orange-200 bg-orange-50' : ''
+            }`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 ${genderIcon.bgColor} rounded-full flex items-center justify-center`}>
+                      <span className={`${genderIcon.textColor} font-medium`}>
+                        {genderIcon.icon || getInitials(guest.name)}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">{guest.name}</div>
+                      <div className="text-xs text-gray-500">ID: #{guest.id.slice(0, 8)}</div>
+                    </div>
+                  </div>
+                  <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white`}>
+                    {guest.capsuleNumber}
+                  </Badge>
+                </div>
+                
+                <div className="space-y-2 mb-4">
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-800">Duration:</span>
+                    <span className="ml-1">{formatDuration(guest.checkinTime.toString())}</span>
+                  </div>
+                  
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-800">Check-in:</span>
+                    <span className="ml-1 text-gray-600">
+                      {new Date(guest.checkinTime).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true 
+                      })}
+                    </span>
+                  </div>
+                  
+                  {guest.expectedCheckoutDate && (
+                    <div className="text-sm">
+                      <span className="font-medium text-gray-800">Expected Out:</span>
+                      <span className={`ml-1 ${isOverdue ? 'text-red-600' : isToday ? 'text-orange-600' : 'text-gray-600'}`}>
+                        {new Date(guest.expectedCheckoutDate).toLocaleDateString()}
+                        {isOverdue && <span className="text-red-500 ml-1">(Overdue)</span>}
+                        {isToday && <span className="text-orange-500 ml-1">(Today)</span>}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {guest.paymentAmount && (
+                    <div className="text-sm">
+                      <span className="font-medium text-gray-800">Payment:</span>
+                      <span className="ml-1">RM {guest.paymentAmount}</span>
+                      {!isGuestPaid(guest) && <span className="text-red-500 ml-1">(Unpaid)</span>}
+                    </div>
+                  )}
+                  
+                  {guest.nationality && (
+                    <div className="text-sm">
+                      <span className="font-medium text-gray-800">Nationality:</span>
+                      <span className="ml-1 text-gray-600">{guest.nationality}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <Button 
+                  variant="destructive"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleCheckout(guest.id)}
+                  disabled={checkoutMutation.isPending}
+                  isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
+                >
+                  <UserMinus className="h-4 w-4 mr-2" />
+                  {checkoutMutation.isPending && checkoutMutation.variables === guest.id ? "Checking out..." : "Check Out"}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <Card>
@@ -241,6 +511,36 @@ export default function CheckOut() {
                     </Button>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* View Mode Switcher */}
+                    <div className="flex items-center gap-1 mr-2">
+                      <Button 
+                        variant={viewMode === 'card' ? 'default' : 'outline'} 
+                        size="sm" 
+                        onClick={() => setViewMode('card')}
+                        className="px-2"
+                      >
+                        <CreditCard className="h-4 w-4 mr-1" />
+                        Card
+                      </Button>
+                      <Button 
+                        variant={viewMode === 'list' ? 'default' : 'outline'} 
+                        size="sm" 
+                        onClick={() => setViewMode('list')}
+                        className="px-2"
+                      >
+                        <List className="h-4 w-4 mr-1" />
+                        List
+                      </Button>
+                      <Button 
+                        variant={viewMode === 'table' ? 'default' : 'outline'} 
+                        size="sm" 
+                        onClick={() => setViewMode('table')}
+                        className="px-2"
+                      >
+                        <TableIcon className="h-4 w-4 mr-1" />
+                        Table
+                      </Button>
+                    </div>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="outline" size="sm" className="h-8 gap-2">
@@ -350,194 +650,20 @@ export default function CheckOut() {
                 </div>
               </div>
 
-              {/* Desktop Table View */}
-              <div className="overflow-x-auto hidden md:block">
-                <table className="w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{labels.singular}</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-in Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                      {!isCondensedView && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expected Checkout</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </>
-                      )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredGuests.map((guest) => {
-                      const genderIcon = getGenderIcon(guest.gender || undefined);
-                      const isGuestCheckingOut = checkoutMutation.isPending && checkoutMutation.variables === guest.id;
-                      const isOverdue = guest.expectedCheckoutDate && guest.expectedCheckoutDate < today;
-                      const isToday = guest.expectedCheckoutDate === today;
-                      
-                      return (
-                        <tr key={guest.id} className={`hover:bg-gray-50 ${isOverdue ? 'bg-red-50' : isToday ? 'bg-orange-50' : ''}`}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className={`w-10 h-10 ${genderIcon.bgColor} rounded-full flex items-center justify-center mr-4`}>
-                                <span className={`${genderIcon.textColor} font-medium`}>
-                                  {genderIcon.icon || getInitials(guest.name)}
-                                </span>
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-hostel-text">{guest.name}</div>
-                                <div className="text-sm text-gray-500">ID: #{guest.id.slice(0, 8)}</div>
-                                {guest.nationality && (
-                                  <div className="text-xs text-gray-400">{guest.nationality}</div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white`}>
-                              {guest.capsuleNumber}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {new Date(guest.checkinTime).toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric', 
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true 
-                            })}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-hostel-text font-medium">{formatDuration(guest.checkinTime.toString())}</div>
-                            <div className="text-xs text-gray-500">Since check-in</div>
-                          </td>
-                          {!isCondensedView && (
-                            <>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {guest.expectedCheckoutDate ? (
-                                  <div>
-                                    <span className={`font-medium ${isOverdue ? 'text-red-600' : isToday ? 'text-orange-600' : 'text-gray-900'}`}>
-                                      {new Date(guest.expectedCheckoutDate).toLocaleDateString()}
-                                    </span>
-                                    {isOverdue && <div className="text-xs text-red-500">Overdue</div>}
-                                    {isToday && <div className="text-xs text-orange-500">Today</div>}
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400">—</span>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {guest.paymentAmount ? (
-                                  <div>
-                                    <div className="font-medium">RM {guest.paymentAmount}</div>
-                                    <div className="text-xs text-gray-500">{guest.paymentCollector || 'N/A'}</div>
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400">No payment</span>
-                                )}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-2 h-2 ${isGuestPaid(guest) ? 'bg-green-500' : 'bg-red-500'} rounded-full`}></div>
-                                  <span className="text-xs text-gray-600">{isGuestPaid(guest) ? 'Paid' : 'Unpaid'}</span>
-                                </div>
-                              </td>
-                            </>
-                          )}
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCheckout(guest.id)}
-                              disabled={checkoutMutation.isPending}
-                              isLoading={checkoutMutation.isPending && checkoutMutation.variables === guest.id}
-                              className="text-hostel-error hover:text-red-700 font-medium p-1"
-                              title="Checkout"
-                            >
-                              <UserMinus className="h-3 w-3" />
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                {filteredGuests.map((guest) => {
-                  const genderIcon = getGenderIcon(guest.gender || undefined);
-                  const isGuestCheckingOut = checkoutMutation.isPending && checkoutMutation.variables === guest.id;
-                  const isOverdue = guest.expectedCheckoutDate && guest.expectedCheckoutDate < today;
-                  const isToday = guest.expectedCheckoutDate === today;
-                  
-                  return (
-                    <Card key={guest.id} className={`p-3 hover-card-pop ${isOverdue ? 'bg-red-50 border-red-200' : isToday ? 'bg-orange-50 border-orange-200' : ''}`}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 ${genderIcon.bgColor} rounded-full flex items-center justify-center text-sm font-semibold ${genderIcon.textColor}`}>
-                            {genderIcon.icon || getInitials(guest.name)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white`}>
-                                {guest.capsuleNumber}
-                              </Badge>
-                              <span className="font-medium">{guest.name}</span>
-                            </div>
-                            <div className="text-xs text-gray-600 mt-1">
-                              In: {new Date(guest.checkinTime).toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true 
-                              })}
-                            </div>
-                            {!isCondensedView && (
-                              <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700">
-                                <div>
-                                  <span className="font-medium text-gray-800">Duration:</span> {formatDuration(guest.checkinTime.toString())}
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-800">Nationality:</span> {guest.nationality || '—'}
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-800">Phone:</span> {guest.phoneNumber || '—'}
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-800">Payment:</span> {guest.paymentAmount ? `RM ${guest.paymentAmount}` : '—'}
-                                </div>
-                                {guest.expectedCheckoutDate && (
-                                  <div className="col-span-2">
-                                    <span className="font-medium text-gray-800">Expected Out:</span> 
-                                    <span className={`ml-1 ${isOverdue ? 'text-red-600' : isToday ? 'text-orange-600' : 'text-gray-900'}`}>
-                                      {new Date(guest.expectedCheckoutDate).toLocaleDateString()}
-                                      {isOverdue && <span className="text-red-500 ml-1">(Overdue)</span>}
-                                      {isToday && <span className="text-orange-500 ml-1">(Today)</span>}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <Button 
-                          variant="destructive" 
-                          className="h-11 w-11 rounded-full"
-                          onClick={() => handleCheckout(guest.id)}
-                          disabled={isGuestCheckingOut}
-                          title="Checkout"
-                        >
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </Card>
-                  );
-                })}
+              {/* Dynamic View Rendering */}
+              <div>
+                {(() => {
+                  switch (viewMode) {
+                    case 'table':
+                      return renderTableView();
+                    case 'list':
+                      return renderListView();
+                    case 'card':
+                      return renderCardView();
+                    default:
+                      return renderTableView();
+                  }
+                })()}
               </div>
 
               {/* Summary Information */}

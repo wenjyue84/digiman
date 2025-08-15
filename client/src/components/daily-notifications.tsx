@@ -101,16 +101,60 @@ export default function DailyNotifications() {
     }
   };
 
+  // Helper function to safely format dates
+  const formatGuestDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "—";
+    
+    try {
+      let normalizedDate = dateStr;
+      if (normalizedDate.includes('T')) {
+        normalizedDate = normalizedDate.split('T')[0];
+      }
+      const date = new Date(normalizedDate + 'T00:00:00');
+      return isNaN(date.getTime()) ? "—" : date.toLocaleDateString();
+    } catch (error) {
+      console.error('Date formatting error:', error, 'for date:', dateStr);
+      return "—";
+    }
+  };
+
   // Check for guests checking out today (expected checkout date is today)
-  const today = new Date().toISOString().split('T')[0];
-  const checkingOutToday = guests.filter(guest => 
-    guest.expectedCheckoutDate === today
-  );
+  // Use local date to avoid timezone issues
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' + 
+    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(today.getDate()).padStart(2, '0');
+
+  const checkingOutToday = guests.filter(guest => {
+    if (!guest.expectedCheckoutDate) return false;
+    
+    // Normalize the guest's expected checkout date to YYYY-MM-DD format
+    let guestDateStr = guest.expectedCheckoutDate;
+    
+    // Handle different date formats
+    if (guestDateStr.includes('T')) {
+      // ISO format: extract date part
+      guestDateStr = guestDateStr.split('T')[0];
+    }
+    
+    return guestDateStr === todayStr;
+  });
 
   // Check for guests past their expected checkout
   const overdueCheckouts = guests.filter(guest => {
     if (!guest.expectedCheckoutDate) return false;
-    return guest.expectedCheckoutDate < today;
+    
+    // Normalize the guest's expected checkout date
+    let guestDateStr = guest.expectedCheckoutDate;
+    if (guestDateStr.includes('T')) {
+      guestDateStr = guestDateStr.split('T')[0];
+    }
+    
+    // Compare dates properly
+    const guestDate = new Date(guestDateStr + 'T00:00:00');
+    const todayDate = new Date(todayStr + 'T00:00:00');
+    
+    return guestDate < todayDate;
   });
 
   const currentHour = new Date().getHours();
@@ -285,7 +329,7 @@ export default function DailyNotifications() {
                       <div className="flex flex-col gap-2 text-sm text-gray-700">
                         <div className="flex items-center justify-between">
                           <span className="text-gray-600">Expected Checkout</span>
-                          <span className="font-medium">{guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate).toLocaleDateString() : "—"}</span>
+                          <span className="font-medium">{formatGuestDate(guest.expectedCheckoutDate)}</span>
                         </div>
                         {guest.phoneNumber && (
                           <div className="flex items-center justify-between">
