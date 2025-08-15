@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone, AlertCircle, Clock, Ban, Star } from "lucide-react";
+import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone, AlertCircle, Clock, Ban, Star, LogOut } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -56,7 +56,7 @@ export default function SortableGuestTable() {
   useEffect(() => {
     setIsCondensedView(isMobile);
   }, [isMobile]);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
     field: 'capsuleNumber',
     order: 'asc'
@@ -434,10 +434,17 @@ export default function SortableGuestTable() {
           <div className="flex items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={isMobile ? "h-8 w-8 px-0" : "h-8 gap-2"}
+                  title="Filter guests"
+                >
                   <FilterIcon className="h-4 w-4" />
-                  Filter Guests
-                  {hasActiveGuestFilters && <span className="ml-1 inline-block h-2 w-2 rounded-full bg-blue-600" />}
+                  {!isMobile && "Filter Guests"}
+                  {hasActiveGuestFilters && (
+                    <span className="ml-1 inline-block h-2 w-2 rounded-full bg-blue-600" />
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80" align="end">
@@ -537,6 +544,17 @@ export default function SortableGuestTable() {
                 <TooltipContent side="bottom">Detailed</TooltipContent>
               </Tooltip>
             </div>
+            {isAuthenticated && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 md:hidden"
+                onClick={logout}
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
