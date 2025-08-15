@@ -347,6 +347,14 @@ export default function SortableGuestTable() {
     return `${window.location.origin}/guest-checkin?token=${token}`;
   };
 
+  const handlePendingCheckinClick = (tokenId: string) => {
+    const token = activeTokens.find(t => t.id === tokenId)?.token;
+    if (!token) return;
+    const link = getCheckinLink(token);
+    copyToClipboard(link);
+    window.location.href = link;
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -869,10 +877,13 @@ export default function SortableGuestTable() {
                           P
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handlePendingCheckinClick(pendingData.id)}
+                            className="flex items-center gap-2 focus:outline-none"
+                          >
                             <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">{pendingData.capsuleNumber}</Badge>
-                            <span className="font-medium">{pendingData.name}</span>
-                          </div>
+                            <span className="font-medium cursor-pointer underline-offset-2 hover:underline">{pendingData.name}</span>
+                          </button>
                           <div className="text-xs text-orange-700 mt-1">
                             In: {formatShortDateTime(pendingData.createdAt)}
                             <span className="ml-2">Expires: {formatShortDate(pendingData.expiresAt)}</span>
@@ -892,17 +903,8 @@ export default function SortableGuestTable() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(getCheckinLink(activeTokens.find(t => t.id === pendingData.id)?.token || ''))}
-                          className="h-11 w-11 rounded-full text-blue-600 hover:text-blue-800"
-                          title="Copy check-in link"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
                         {isAuthenticated ? (
-                          <Button 
+                          <Button
                             variant="outline"
                             className="h-11 px-4 rounded-full"
                             onClick={() => cancelTokenMutation.mutate(pendingData.id)}
