@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { UseFormReturn, FieldErrors } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ interface EmergencyContactSectionProps {
 }
 
 export function EmergencyContactSection({ form, errors, t }: EmergencyContactSectionProps) {
+  const [showHint, setShowHint] = useState(false);
   return (
     <div className="bg-red-50 rounded-lg p-4 border border-red-200">
       <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
@@ -19,7 +21,11 @@ export function EmergencyContactSection({ form, errors, t }: EmergencyContactSec
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="emergencyContact" className="text-sm font-medium text-hostel-text">
+          <Label
+            htmlFor="emergencyContact"
+            className="text-sm font-medium text-hostel-text cursor-pointer"
+            onClick={() => setShowHint((prev) => !prev)}
+          >
             Emergency Contact Name
           </Label>
           <Input
@@ -29,7 +35,9 @@ export function EmergencyContactSection({ form, errors, t }: EmergencyContactSec
             className="mt-1"
             {...form.register("emergencyContact")}
           />
-          <p className="text-xs text-gray-500 mt-1">{t.emergencyContactHint}</p>
+          {showHint && (
+            <p className="text-xs text-gray-500 mt-1">{t.emergencyContactHint}</p>
+          )}
           {errors.emergencyContact && (
             <p className="text-red-500 text-sm mt-1">{errors.emergencyContact.message}</p>
           )}

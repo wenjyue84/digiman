@@ -1,6 +1,7 @@
 import { Upload, Camera, CheckCircle, Info, Calendar } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { UseFormReturn } from "react-hook-form";
 import { GuestSelfCheckin } from "@shared/schema";
 import { ObjectUploader } from "@/components/ObjectUploader";
@@ -33,47 +34,51 @@ export function DocumentUploadSection({
         <Calendar className="mr-2 h-4 w-4" />
         {t.identityDocs}
       </h3>
-      <div className="mb-3 p-2 bg-green-100 border border-green-300 rounded text-xs text-green-700">
-        <p className="font-medium">📱 Mobile Check-in:</p>
-        <p>All guests must upload a document photo. Use your phone's camera for best results.</p>
-      </div>
-      <div className="space-y-4">
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800 font-medium mb-1">📋 Document Selection Rule</p>
-          <p className="text-sm text-gray-600">
+      <Accordion type="multiple" className="mb-4 space-y-2">
+        <AccordionItem value="mobile-checkin">
+          <AccordionTrigger className="text-xs text-green-700">
+            📱 Mobile Check-in
+          </AccordionTrigger>
+          <AccordionContent className="text-xs text-green-700">
+            All guests must upload a document photo. Use your phone's camera for best results.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="doc-rule">
+          <AccordionTrigger className="text-sm text-blue-800">
+            📋 Document Selection Rule
+          </AccordionTrigger>
+          <AccordionContent className="text-sm text-gray-600">
             {isMalaysian
               ? <span>Provide your IC number and upload your IC photo. <strong>Both IC number and IC photo are required for Malaysian guests.</strong></span>
               : <span>Provide your passport number and upload your passport photo. <strong>Both passport number and photo are required for non-Malaysian guests.</strong></span>
             }
-          </p>
-          <div className="mt-2 p-2 bg-blue-100 border border-blue-200 rounded text-xs text-blue-700">
-            <p className="font-medium">📱 Mobile Note:</p>
-            <p>{isMalaysian ? "Enter your IC number and upload your IC photo." : "Enter your passport number and upload your passport photo."}</p>
-            <div className="mt-1 p-1 bg-green-50 border border-green-200 rounded text-xs text-green-600">
-              <p className="font-medium">🚀 Pro Tip:</p>
-              <p>{isMalaysian ? "Have your IC ready to quickly type the number and take a clear photo." : "Have your passport ready to quickly type the number and take a clear photo."}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-3 bg-white border border-gray-200 rounded-lg">
-          <div className="flex items-start gap-2 text-sm text-gray-700">
-            <Info className="h-4 w-4 mt-0.5 text-gray-600" />
-            <div>
-              <div className="font-medium mb-1">{t.photoTipsTitle}</div>
-              <ul className="list-disc list-inside space-y-1">
-                <li>{t.photoTipLighting}</li>
-                <li>{t.photoTipGlare}</li>
-                <li>{t.photoTipSize}</li>
-              </ul>
-              <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
-                <p className="font-medium">📱 Mobile Tips:</p>
-                <p>Hold your phone steady, ensure good lighting, and avoid shadows on the document.</p>
+            <div className="mt-2 text-xs text-blue-700">
+              <strong>📱 Mobile Note:</strong> {isMalaysian ? "Enter your IC number and upload your IC photo." : "Enter your passport number and upload your passport photo."}
+              <div className="mt-1 text-green-600">
+                <strong>🚀 Pro Tip:</strong> {isMalaysian ? "Have your IC ready to quickly type the number and take a clear photo." : "Have your passport ready to quickly type the number and take a clear photo."}
               </div>
             </div>
-          </div>
-        </div>
-        
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="photo-tips">
+          <AccordionTrigger className="text-sm text-gray-700 flex items-center gap-2">
+            <Info className="h-4 w-4 text-gray-600" />
+            {t.photoTipsTitle}
+          </AccordionTrigger>
+          <AccordionContent className="text-sm text-gray-600">
+            <ul className="list-disc list-inside space-y-1 mt-2">
+              <li>{t.photoTipLighting}</li>
+              <li>{t.photoTipGlare}</li>
+              <li>{t.photoTipSize}</li>
+            </ul>
+            <div className="mt-2 text-xs">
+              <strong>📱 Mobile Tips:</strong> Hold your phone steady, ensure good lighting, and avoid shadows on the document.
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {isMalaysian && (
           <div>
@@ -122,15 +127,18 @@ export function DocumentUploadSection({
             <Upload className="h-4 w-4" />
             {isMalaysian ? 'Upload IC Photo' : 'Upload Passport Photo'} <span className="text-red-500">*</span>
           </Label>
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-3">
-            <p className="text-sm text-amber-800 font-medium mb-1">📸 Photo Requirement</p>
-            <p className="text-sm text-gray-700">{isMalaysian ? 'Malaysian guests must upload a clear photo of their IC.' : 'Non-Malaysian guests must upload a clear photo of their passport.'}</p>
-            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-              <p className="font-medium mb-1">📱 Mobile Users:</p>
-              <p>Use your phone's camera to take a clear photo. Ensure good lighting and avoid glare on the document.</p>
-            </div>
-          </div>
-          
+          <Accordion type="single" collapsible className="mb-3">
+            <AccordionItem value="photo-req">
+              <AccordionTrigger className="text-sm text-amber-800">📸 Photo Requirement</AccordionTrigger>
+              <AccordionContent className="text-sm text-gray-700">
+                {isMalaysian ? 'Malaysian guests must upload a clear photo of their IC.' : 'Non-Malaysian guests must upload a clear photo of their passport.'}
+                <div className="mt-2 text-xs text-blue-700">
+                  <strong>📱 Mobile Users:</strong> Use your phone's camera to take a clear photo. Ensure good lighting and avoid glare on the document.
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
           {(isMalaysian ? !!icDocumentUrl : !!passportDocumentUrl) ? (
             <div className="mt-2 p-3 bg-green-100 border border-green-300 rounded-lg">
               <div className="flex items-center gap-2">
@@ -191,15 +199,20 @@ export function DocumentUploadSection({
                 {isMalaysian ? 'Upload a clear photo of your IC' : 'Upload a clear photo of your passport'}
               </p>
               <p className="text-xs text-gray-500 mb-3">{t.photoHint}</p>
-              <div className="mb-3 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
-                <p className="font-medium mb-1">💡 Tip:</p>
-                <p><span className="hidden sm:inline">{isMalaysian ? 'Tap the button below to select your IC photo. It will upload automatically once selected.' : 'Tap the button below to select your passport photo. It will upload automatically once selected.'}</span>
-                <span className="sm:hidden">{isMalaysian ? 'Tap the button to select IC photo. It uploads automatically.' : 'Tap the button to select passport photo. It uploads automatically.'}</span></p>
-                <div className="mt-1 p-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-600">
-                  <p className="font-medium">📱 Quick Upload:</p>
-                  <p>Photos upload automatically once selected. No need to click upload button.</p>
-                </div>
-              </div>
+              <Accordion type="single" collapsible className="mb-3 text-xs">
+                <AccordionItem value="upload-tip">
+                  <AccordionTrigger>💡 Tip</AccordionTrigger>
+                  <AccordionContent className="text-gray-600">
+                    <p>
+                      <span className="hidden sm:inline">{isMalaysian ? 'Tap the button below to select your IC photo. It will upload automatically once selected.' : 'Tap the button below to select your passport photo. It will upload automatically once selected.'}</span>
+                      <span className="sm:hidden">{isMalaysian ? 'Tap the button to select IC photo. It uploads automatically.' : 'Tap the button to select passport photo. It uploads automatically.'}</span>
+                    </p>
+                    <div className="mt-1 text-blue-600">
+                      <strong>📱 Quick Upload:</strong> Photos upload automatically once selected. No need to click upload button.
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
               <div className="flex flex-col sm:flex-row gap-2 justify-center items-center w-full">
                 {isMalaysian ? (
                   <ObjectUploader

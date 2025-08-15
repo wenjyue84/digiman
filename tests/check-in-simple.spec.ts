@@ -87,6 +87,7 @@ test.describe('Check In Page - Simplified Tests', () => {
     
     // Verify mobile-specific elements
     await expect(page.locator('text=📱 Mobile Check-in Ready')).toBeVisible();
+    await page.click('text=Photo tips');
     await expect(page.locator('text=📱 Mobile Tips')).toBeVisible();
     
     // Test mobile form interactions
