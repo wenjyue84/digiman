@@ -34,6 +34,12 @@ import { useAutoSave } from "@/hooks/guest-checkin/useAutoSave";
 import CountdownTimer from "@/components/guest-checkin/CountdownTimer";
 import { AlertTriangle } from "lucide-react";
 
+// Format a Date object into YYYY-MM-DD string in the user's local timezone
+const formatDateInput = (date: Date): string => {
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - tzOffset).toISOString().split("T")[0];
+};
+
 
 export default function GuestCheckin() {
   const [, setLocation] = useLocation();
@@ -113,15 +119,14 @@ export default function GuestCheckin() {
       gender: undefined,
       nationality: "Malaysian",
       checkInDate: (() => {
-        // Always get today's date fresh when form initializes
-        const today = new Date();
-        return today.toISOString().split('T')[0];
+        // Always get today's date fresh when form initializes (local timezone)
+        return formatDateInput(new Date());
       })(),
       checkOutDate: (() => {
-        // Always get tomorrow's date fresh when form initializes
+        // Always get tomorrow's date fresh when form initializes (local timezone)
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
+        return formatDateInput(tomorrow);
       })(),
       icNumber: "",
       passportNumber: "",
@@ -214,24 +219,34 @@ export default function GuestCheckin() {
   
   useAutoSave({ form, token });
 
-  // Ensure dates are always set to today/tomorrow if not already set or if they need refresh
+  // Ensure dates are always set to today/tomorrow if not already set
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    
+    const today = formatDateInput(new Date());
+    const tomorrow = formatDateInput(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
     const currentCheckIn = form.watch("checkInDate");
     const currentCheckOut = form.watch("checkOutDate");
-    
-    // Set default dates if they're empty or invalid
+
     if (!currentCheckIn) {
       form.setValue("checkInDate", today);
     }
     if (!currentCheckOut) {
-      form.setValue("checkOutDate", tomorrowStr);
+      form.setValue("checkOutDate", tomorrow);
     }
   }, [form]);
+
+  // Auto-adjust check-out date when check-in date changes
+  useEffect(() => {
+    if (!watchedCheckInDate) return;
+    const currentCheckOut = form.watch("checkOutDate");
+    const nextDay = new Date(watchedCheckInDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = formatDateInput(nextDay);
+
+    if (!currentCheckOut || new Date(currentCheckOut) <= new Date(watchedCheckInDate)) {
+      form.setValue("checkOutDate", nextDayStr);
+    }
+  }, [watchedCheckInDate, form]);
 
   // Clear the disabled field when the other field is filled
   useEffect(() => {
