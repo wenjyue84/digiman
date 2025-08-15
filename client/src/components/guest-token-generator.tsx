@@ -92,17 +92,20 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
       return response.json();
     },
     onSuccess: async (data) => {
-      // Automatically copy to clipboard
       try {
         await navigator.clipboard.writeText(data.link);
         toast({
-          title: "Instant Link Created & Copied!",
-          description: `Auto-assign link copied to clipboard. ${labels.singular}: ${data.capsuleNumber}`,
+          title: "Instant link copied",
+          description: data.capsuleNumber
+            ? `${labels.singular} ${data.capsuleNumber} link copied to clipboard`
+            : `Link copied to clipboard. ${labels.singular} will be auto-assigned`,
         });
       } catch (error) {
         toast({
-          title: "Link Created",
-          description: `Auto-assign link created for capsule ${data.capsuleNumber}. Manual copy needed.`,
+          title: "Instant link created",
+          description: data.capsuleNumber
+            ? `${labels.singular} ${data.capsuleNumber} link created. Copy manually if needed.`
+            : `Link created. ${labels.singular} will be auto-assigned. Copy manually if needed.`,
         });
       }
       onTokenCreated?.();
