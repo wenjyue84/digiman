@@ -5,7 +5,7 @@ export function getInitials(name: string): string {
 }
 
 export function truncateName(name: string): string {
-  return name.length > 5 ? name.slice(0, 5) + '...' : name;
+  return name.length > 5 ? name.slice(0, 5) + '..' : name;
 }
 
 export function getFirstInitial(name: string): string {
