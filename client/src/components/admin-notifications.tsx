@@ -73,18 +73,12 @@ export default function AdminNotifications() {
   // Now handle conditional logic after all hooks are called
   const allNotifications = allNotificationsResponse?.data || [];
   const unreadNotifications = unreadNotificationsResponse?.data || [];
-
-  // Don't show notifications if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Don't show admin notifications if there are no unread notifications
-  if (unreadNotifications.length === 0) {
-    return null;
-  }
-
   const notificationsToShow = showAll ? allNotifications : unreadNotifications;
+
+  // Don't show notifications if not authenticated or no unread notifications
+  if (!isAuthenticated || unreadNotifications.length === 0) {
+    return null;
+  }
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('en-US', {

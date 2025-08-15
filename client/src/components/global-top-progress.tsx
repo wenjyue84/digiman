@@ -36,10 +36,8 @@ export default function GlobalTopProgress() {
 
   const widthStyle = useMemo(() => ({ width: `${progress}%` }), [progress]);
 
-  if (!visible) return null;
-
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] h-0.5 bg-transparent">
+    <div className={`fixed top-0 left-0 right-0 z-[9999] h-0.5 bg-transparent ${!visible ? 'hidden' : ''}`}>
       <div
         className="h-full bg-gradient-to-r from-orange-500 via-pink-500 to-purple-500 transition-[width] duration-200"
         style={widthStyle}

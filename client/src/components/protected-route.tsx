@@ -18,7 +18,5 @@ export function ProtectedRoute({ children, requireAuth = false }: ProtectedRoute
     }
   }, [requireAuth, isAuthenticated, location, setLocation]);
 
-  if (requireAuth && !isAuthenticated) return null;
-
-  return <>{children}</>;
+  return requireAuth && !isAuthenticated ? null : <>{children}</>;
 }

@@ -30,11 +30,6 @@ export default function DailyNotifications() {
   
   const guests = guestsResponse?.data || [];
 
-  // Don't show notifications if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
-
   const checkoutMutation = useMutation({
     mutationFn: async (guestId: string) => {
       const response = await apiRequest("POST", "/api/guests/checkout", { id: guestId });
@@ -120,6 +115,11 @@ export default function DailyNotifications() {
 
   const currentHour = new Date().getHours();
   const isNoonTime = currentHour === 12; // 12 PM
+
+  // Don't show notifications if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (isLoading) {
     return (
