@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone } from "lucide-react";
+import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone, AlertCircle, Clock, Ban, Star } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -125,6 +125,41 @@ export default function SortableGuestTable() {
     } catch {
       return false;
     }
+  };
+
+  const getGuestStatusInfo = (guest: Guest) => {
+    if (guest.status === 'blacklisted') {
+      return {
+        label: 'Blacklisted',
+        icon: <Ban className="h-4 w-4 text-red-600" />,
+        variant: 'destructive' as const,
+      };
+    }
+    if (guest.status === 'vip') {
+      return {
+        label: 'VIP',
+        icon: <Star className="h-4 w-4 text-yellow-500" />,
+        variant: 'default' as const,
+        className: 'bg-yellow-500 text-black',
+      };
+    }
+    const today = new Date();
+    const checkout = guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate) : null;
+    if (checkout && checkout < new Date(today.toDateString())) {
+      return {
+        label: 'Overdue',
+        icon: <Clock className="h-4 w-4 text-red-600" />,
+        variant: 'destructive' as const,
+      };
+    }
+    if (!isGuestPaid(guest)) {
+      return {
+        label: 'Outstanding',
+        icon: <AlertCircle className="h-4 w-4 text-orange-500" />,
+        variant: 'destructive' as const,
+      };
+    }
+    return null;
   };
 
   // Create a combined list of guests and pending check-ins
@@ -563,6 +598,7 @@ export default function SortableGuestTable() {
                     const genderIcon = getGenderIcon(guest.gender || undefined);
                     const isGuestCheckingOut = checkoutMutation.isPending && checkoutMutation.variables === guest.id;
                     const stayDays = calculatePlannedStayDays(guest.checkinTime, guest.expectedCheckoutDate);
+                    const statusInfo = getGuestStatusInfo(guest);
                     return (
                       <SwipeableGuestRow
                         key={guest.id}
@@ -655,7 +691,17 @@ export default function SortableGuestTable() {
                               )}
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              {statusInfo ? (
+                                isCondensedView ? (
+                                  statusInfo.icon
+                                ) : (
+                                  <Badge variant={statusInfo.variant} className={statusInfo.className}>
+                                    {statusInfo.label}
+                                  </Badge>
+                                )
+                              ) : (
+                                <span className="text-gray-400 text-xs">-</span>
+                              )}
                             </td>
                           </>
                         )}
@@ -786,6 +832,7 @@ export default function SortableGuestTable() {
               if (item.type === 'guest') {
                 const guest = item.data as Guest;
                 const isGuestCheckingOut = checkoutGuest?.id === guest.id;
+                const statusInfo = getGuestStatusInfo(guest);
                 return (
                   <Card key={`guest-${guest.id}`} className="p-0 overflow-hidden hover-card-pop">
                     <SwipeableGuestCard
@@ -804,6 +851,7 @@ export default function SortableGuestTable() {
                           >
                             {truncateName(guest.name)}
                           </button>
+                          {statusInfo && <span title={statusInfo.label}>{statusInfo.icon}</span>}
                         </div>
                         <div className="text-xs text-gray-600 mt-1">
                           In: {formatShortDate(guest.checkinTime.toString())}

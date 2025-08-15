@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Calendar, MapPin, Phone, Mail, CreditCard, Edit, Save, X } from "lucide-react";
+import { User, Calendar, MapPin, Phone, Mail, CreditCard, Edit, Save, X, Flag } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 import { useToast } from "@/hooks/use-toast";
@@ -67,6 +67,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
       emergencyPhone: guest.emergencyPhone || "",
       notes: guest.notes || "",
       paymentMethod: guest.paymentMethod || "cash",
+      status: guest.status || "",
     });
     setIsEditing(true);
   };
@@ -468,8 +469,43 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
               <div className="md:col-span-3">
                 <Label>Collected By</Label>
                 <div className="mt-1 text-sm">{guest.paymentCollector || "Not specified"}</div>
-              </div>
             </div>
+          </div>
+        </div>
+
+          <Separator />
+
+          {/* Guest Status */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+              <Flag className="h-4 w-4 mr-2" />
+              Guest Status
+            </h3>
+            {isEditing ? (
+              <Select
+                value={editData.status || guest.status || "none"}
+                onValueChange={(value) => setEditData({ ...editData, status: value === "none" ? null : value as any })}
+              >
+                <SelectTrigger className="w-[180px] mt-1">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="vip">VIP</SelectItem>
+                  <SelectItem value="blacklisted">Blacklisted</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="mt-1">
+                {guest.status ? (
+                  <Badge variant={guest.status === "blacklisted" ? "destructive" : "default"}>
+                    {guest.status.charAt(0).toUpperCase() + guest.status.slice(1)}
+                  </Badge>
+                ) : (
+                  <span className="text-sm text-gray-500">None</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Notes */}

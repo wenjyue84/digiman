@@ -57,6 +57,7 @@ export const guests = pgTable("guests", {
   age: text("age"),
   profilePhotoUrl: text("profile_photo_url"),
   selfCheckinToken: text("self_checkin_token"), // Link back to the token used for self check-in
+  status: text("status"),
 }, (table) => ([
   index("idx_guests_capsule_number").on(table.capsuleNumber),
   index("idx_guests_is_checked_in").on(table.isCheckedIn),
@@ -220,6 +221,7 @@ export const insertGuestSchema = createInsertSchema(guests).omit({
     .max(500, "Notes too long. Please use 500 characters or fewer to describe any special requirements")
     .transform(val => val?.trim() || "")
     .optional(),
+  status: z.enum(["vip", "blacklisted"]).optional(),
   expectedCheckoutDate: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected checkout date must be in YYYY-MM-DD format")
     .refine(val => {
