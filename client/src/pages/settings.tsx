@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle } from "lucide-react";
+import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle, MoreHorizontal } from "lucide-react";
 import MaintenanceTab from "../components/settings/MaintenanceTab";
 import UsersTab from "../components/settings/UsersTab";
 import CapsulesTab from "../components/settings/CapsulesTab";
@@ -28,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AuthContext } from "@/lib/auth";
 import { updateSettingsSchema, type UpdateSettings, type CapsuleProblem, type User, type InsertUser, insertUserSchema, type PaginatedResponse, type Capsule, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -151,7 +153,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100">
               <Cog className="h-3 w-3 text-blue-600" />
@@ -170,24 +172,43 @@ export default function SettingsPage() {
             </div>
             Maintenance
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100">
-              <UserCheck className="h-3 w-3 text-green-600" />
-            </div>
-            Users
-          </TabsTrigger>
           <TabsTrigger value="guide" className="flex items-center gap-2">
             <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100">
               <BookOpen className="h-3 w-3 text-indigo-600" />
             </div>
             Guest Guide
           </TabsTrigger>
-          <TabsTrigger value="tests" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100">
-              <TestTube className="h-3 w-3 text-pink-600" />
-            </div>
-            Tests
-          </TabsTrigger>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center gap-2",
+                  activeTab === "users" || activeTab === "tests"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground"
+                )}
+              >
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-100">
+                  <MoreHorizontal className="h-3 w-3 text-gray-600" />
+                </div>
+                More
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setActiveTab("users")}>
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100 mr-2">
+                  <UserCheck className="h-3 w-3 text-green-600" />
+                </div>
+                Users
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveTab("tests")}>
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100 mr-2">
+                  <TestTube className="h-3 w-3 text-pink-600" />
+                </div>
+                Tests
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
