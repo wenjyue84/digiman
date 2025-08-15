@@ -77,6 +77,11 @@ export function ObjectUploader({
         allowedFileTypes,
       },
       autoProceed: true,
+      locale: {
+        strings: {
+          dropPasteFiles: '📁 Drop files here or %{browseFiles}',
+        },
+      },
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
@@ -135,6 +140,7 @@ export function ObjectUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
+        note="📷 Upload a clear photo of your document"
       />
     </div>
   );
