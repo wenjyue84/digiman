@@ -1,0 +1,29 @@
+key,value,description,updated_by,updated_at
+accommodationType,capsule,"Type of accommodation (capsule, room, or house)",admin,2025-08-15T18:27:19.340Z
+guideIntro,"Welcome to Pelangi Capsule Hostel! Enjoy private sleeping pods with fresh linens, personal light, and power socket. Shared bathrooms are cleaned multiple times daily. Quiet hours are from 10:00 PM to 7:00 AM. Reception is available from 8:00 AM–10:00 PM; night staff is on call.",Guest guide introduction,admin,2025-08-15T18:27:19.343Z
+guideAddress,"26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\nPhone: +60 12-345 6789\nEmail: info@pelangicapsule.com",Hostel address,admin,2025-08-15T18:27:19.343Z
+guideWifiName,Pelangi_Guest,WiFi SSID,admin,2025-08-15T18:27:19.345Z
+guideWifiPassword,Pelangi2024!,WiFi password,admin,2025-08-15T18:27:19.346Z
+guideCheckin,"Check-In Time: 2:00 PM\nCheck-Out Time: 12:00 PM\n\nHow to check in:\n1) Present a valid ID/passport at the front desk.\n2) If you have a self-check-in token, show it to staff.\n3) Early check-in / late check-out may be available upon request.",How to check in instructions,admin,2025-08-15T18:27:19.347Z
+guideOther,"House Rules:\n- No smoking inside the building.\n- Keep noise to a minimum, especially during quiet hours.\n- Food is allowed in the pantry only.\n\nAmenities:\n- Free high-speed Wi‑Fi throughout the hostel.\n- Pantry with kettle, microwave, and fridge (label your items).\n- Laundry service (self-service machines on Level 2).",Other guidance,admin,2025-08-15T18:27:19.347Z
+guideFaq,"Q: What time are check-in/check-out?\nA: Check-in 2:00 PM, Check-out 12:00 PM.\n\nQ: Where can I store luggage?\nA: Free luggage storage at reception before check-in or after check-out.\n\nQ: Are towels provided?\nA: Yes, one towel per guest per stay.\n\nQ: Do you have parking?\nA: Limited street parking nearby; public car park is 3 minutes walk.",Guest FAQ,admin,2025-08-15T18:27:19.349Z
+guideImportantReminders,"• 🚫 Do not leave your card inside the capsule and close the door\n• 🚭 No Smoking in hostel area\n• 🎥 CCTV monitored - Violation (e.g., smoking) may result in RM300 penalty",Important reminders,admin,2025-08-15T18:27:19.350Z
+guideHostelPhotosUrl,,Hostel photos URL,system,2025-01-15T10:00:00.000Z
+guideGoogleMapsUrl,,Google Maps URL,system,2025-01-15T10:00:00.000Z
+guideCheckinVideoUrl,,Check-in video URL,system,2025-01-15T10:00:00.000Z
+guideCheckinTime,3:00 PM,Check-in time,admin,2025-08-15T18:27:19.351Z
+guideCheckoutTime,12:00 PM,Check-out time,admin,2025-08-15T18:27:19.351Z
+guideDoorPassword,1270#,Door password,admin,2025-08-15T18:27:19.352Z
+guideShowIntro,true,Show intro to guests,admin,2025-08-15T18:27:19.354Z
+guideShowAddress,true,Show address to guests,admin,2025-08-15T18:27:19.355Z
+guideShowWifi,true,Show WiFi to guests,admin,2025-08-15T18:27:19.355Z
+guideShowCheckin,true,Show check-in guidance,admin,2025-08-15T18:27:19.356Z
+guideShowOther,true,Show other guidance,admin,2025-08-15T18:27:19.357Z
+guideShowFaq,true,Show FAQ,admin,2025-08-15T18:27:19.358Z
+guideShowCapsuleIssues,false,Show capsule issues to guests,admin,2025-08-15T18:27:19.358Z
+guideShowSelfCheckinMessage,true,Show self-check-in message to guests,admin,2025-08-15T18:27:19.359Z
+guideShowHostelPhotos,true,Show hostel photos to guests,admin,2025-08-15T18:27:19.360Z
+guideShowGoogleMaps,true,Show Google Maps to guests,admin,2025-08-15T18:27:19.361Z
+guideShowCheckinVideo,true,Show check-in video to guests,admin,2025-08-15T18:27:19.362Z
+guideShowTimeAccess,true,Show time and access info to guests,admin,2025-08-15T18:27:19.362Z
+guideCustomStyles,,Custom CSS styles,admin,2025-08-15T18:27:19.353Z

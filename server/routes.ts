@@ -12,6 +12,7 @@ import { OAuth2Client } from "google-auth-library";
 import { validateData, securityValidationMiddleware, sanitizers, validators } from "./validation";
 import { getConfig, getConfigForAPI, validateConfigUpdate, AppConfig } from "./configManager";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { csvSettings } from "./csvSettings";
 import sgMail from "@sendgrid/mail";
 import multer from "multer";
 
@@ -1077,45 +1078,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Settings routes
+  // Settings routes - using CSV storage
   app.get("/api/settings", authenticateToken, async (req, res) => {
     try {
-      const accommodationTypeSetting = await storage.getSetting('accommodationType');
+      console.log('📖 Loading settings from CSV...');
+      
+      // Reload CSV file to get fresh data
+      csvSettings.reloadFromFile();
+      
+      const accommodationTypeSetting = csvSettings.getSetting('accommodationType');
       const accommodationType = accommodationTypeSetting?.value || 'capsule';
+      
       // Load guide fields (fallback empty strings)
-      const getVal = async (k: string) => (await storage.getSetting(k))?.value || "";
-      res.json({
+      const getVal = (k: string) => csvSettings.getSetting(k)?.value || "";
+      
+      const settings = {
         accommodationType,
-        guideIntro: await getVal('guideIntro'),
-        guideAddress: await getVal('guideAddress'),
-        guideWifiName: await getVal('guideWifiName'),
-        guideWifiPassword: await getVal('guideWifiPassword'),
-        guideCheckin: await getVal('guideCheckin'),
-        guideOther: await getVal('guideOther'),
-        guideFaq: await getVal('guideFaq'),
-        guideImportantReminders: await getVal('guideImportantReminders'),
-        guideHostelPhotosUrl: await getVal('guideHostelPhotosUrl'),
-        guideGoogleMapsUrl: await getVal('guideGoogleMapsUrl'),
-        guideCheckinVideoUrl: await getVal('guideCheckinVideoUrl'),
-        guideCheckinTime: await getVal('guideCheckinTime'),
-        guideCheckoutTime: await getVal('guideCheckoutTime'),
-        guideDoorPassword: await getVal('guideDoorPassword'),
-        selfCheckinSuccessMessage: await getVal('selfCheckinSuccessMessage'),
-        guideShowIntro: (await storage.getSetting('guideShowIntro'))?.value === 'true',
-        guideShowAddress: (await storage.getSetting('guideShowAddress'))?.value === 'true',
-        guideShowWifi: (await storage.getSetting('guideShowWifi'))?.value === 'true',
-        guideShowCheckin: (await storage.getSetting('guideShowCheckin'))?.value === 'true',
-        guideShowOther: (await storage.getSetting('guideShowOther'))?.value === 'true',
-        guideShowFaq: (await storage.getSetting('guideShowFaq'))?.value === 'true',
-        guideShowCapsuleIssues: (await storage.getSetting('guideShowCapsuleIssues'))?.value === 'true',
-        guideShowSelfCheckinMessage: (await storage.getSetting('guideShowSelfCheckinMessage'))?.value === 'true',
-        guideShowHostelPhotos: (await storage.getSetting('guideShowHostelPhotos'))?.value === 'true',
-        guideShowGoogleMaps: (await storage.getSetting('guideShowGoogleMaps'))?.value === 'true',
-        guideShowCheckinVideo: (await storage.getSetting('guideShowCheckinVideo'))?.value === 'true',
-        guideShowTimeAccess: (await storage.getSetting('guideShowTimeAccess'))?.value === 'true',
-      });
+        guideIntro: getVal('guideIntro'),
+        guideAddress: getVal('guideAddress'),
+        guideWifiName: getVal('guideWifiName'),
+        guideWifiPassword: getVal('guideWifiPassword'),
+        guideCheckin: getVal('guideCheckin'),
+        guideOther: getVal('guideOther'),
+        guideFaq: getVal('guideFaq'),
+        guideImportantReminders: getVal('guideImportantReminders'),
+        guideHostelPhotosUrl: getVal('guideHostelPhotosUrl'),
+        guideGoogleMapsUrl: getVal('guideGoogleMapsUrl'),
+        guideCheckinVideoUrl: getVal('guideCheckinVideoUrl'),
+        guideCheckinTime: getVal('guideCheckinTime'),
+        guideCheckoutTime: getVal('guideCheckoutTime'),
+        guideDoorPassword: getVal('guideDoorPassword'),
+        selfCheckinSuccessMessage: getVal('selfCheckinSuccessMessage'),
+        guideShowIntro: csvSettings.getSetting('guideShowIntro')?.value === 'true',
+        guideShowAddress: csvSettings.getSetting('guideShowAddress')?.value === 'true',
+        guideShowWifi: csvSettings.getSetting('guideShowWifi')?.value === 'true',
+        guideShowCheckin: csvSettings.getSetting('guideShowCheckin')?.value === 'true',
+        guideShowOther: csvSettings.getSetting('guideShowOther')?.value === 'true',
+        guideShowFaq: csvSettings.getSetting('guideShowFaq')?.value === 'true',
+        guideShowCapsuleIssues: csvSettings.getSetting('guideShowCapsuleIssues')?.value === 'true',
+        guideShowSelfCheckinMessage: csvSettings.getSetting('guideShowSelfCheckinMessage')?.value === 'true',
+        guideShowHostelPhotos: csvSettings.getSetting('guideShowHostelPhotos')?.value === 'true',
+        guideShowGoogleMaps: csvSettings.getSetting('guideShowGoogleMaps')?.value === 'true',
+        guideShowCheckinVideo: csvSettings.getSetting('guideShowCheckinVideo')?.value === 'true',
+        guideShowTimeAccess: csvSettings.getSetting('guideShowTimeAccess')?.value === 'true',
+      };
+      
+      console.log(`✅ Loaded ${Object.keys(settings).length} settings from CSV`);
+      res.json(settings);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch settings" });
+      console.error('❌ Error loading settings from CSV:', error);
+      res.status(500).json({ message: "Failed to fetch settings from CSV" });
     }
   });
 
@@ -1125,12 +1137,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     validateData(updateSettingsSchema, 'body'),
     async (req: any, res) => {
     try {
+      console.log('💾 Saving settings to CSV...');
       const validatedData = req.body;
-      const updatedBy = req.user.username || req.user.email || "Unknown";
+      const updatedBy = req.user.username || req.user.email || "admin";
 
       // Update accommodation type setting
       if (validatedData.accommodationType) {
-        await storage.setSetting(
+        csvSettings.setSetting(
           'accommodationType',
           validatedData.accommodationType,
           'Type of accommodation (capsule, room, or house)',
@@ -1139,50 +1152,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Upsert guide settings (optional fields)
-      const maybeSet = async (key: keyof typeof validatedData, desc: string) => {
+      const maybeSet = (key: keyof typeof validatedData, desc: string) => {
         const value = (validatedData as any)[key];
         if (typeof value === 'string') {
           const trimmed = value.trim();
-          if (trimmed.length === 0) {
-            return; // Skip empty optional strings
-          }
-          await storage.setSetting(key as string, trimmed, desc, updatedBy);
+          csvSettings.setSetting(key as string, trimmed, desc, updatedBy);
         }
       };
-      await maybeSet('guideIntro', 'Guest guide introduction');
-      await maybeSet('guideAddress', 'Hostel address');
-      await maybeSet('guideWifiName', 'WiFi SSID');
-      await maybeSet('guideWifiPassword', 'WiFi password');
-      await maybeSet('guideCheckin', 'How to check in instructions');
-      await maybeSet('guideOther', 'Other guidance');
-      await maybeSet('guideFaq', 'Guest FAQ');
-      await maybeSet('guideImportantReminders', 'Important reminders');
-      await maybeSet('guideHostelPhotosUrl', 'Hostel photos URL');
-      await maybeSet('guideGoogleMapsUrl', 'Google Maps URL');
-      await maybeSet('guideCheckinVideoUrl', 'Check-in video URL');
-      await maybeSet('guideCheckinTime', 'Check-in time');
-      await maybeSet('guideCheckoutTime', 'Check-out time');
-      await maybeSet('guideDoorPassword', 'Door password');
-      await maybeSet('guideCustomStyles', 'Custom CSS styles');
-      await maybeSet('selfCheckinSuccessMessage', 'Self check-in success message');
+      
+      maybeSet('guideIntro', 'Guest guide introduction');
+      maybeSet('guideAddress', 'Hostel address');
+      maybeSet('guideWifiName', 'WiFi SSID');
+      maybeSet('guideWifiPassword', 'WiFi password');
+      maybeSet('guideCheckin', 'How to check in instructions');
+      maybeSet('guideOther', 'Other guidance');
+      maybeSet('guideFaq', 'Guest FAQ');
+      maybeSet('guideImportantReminders', 'Important reminders');
+      maybeSet('guideHostelPhotosUrl', 'Hostel photos URL');
+      maybeSet('guideGoogleMapsUrl', 'Google Maps URL');
+      maybeSet('guideCheckinVideoUrl', 'Check-in video URL');
+      maybeSet('guideCheckinTime', 'Check-in time');
+      maybeSet('guideCheckoutTime', 'Check-out time');
+      maybeSet('guideDoorPassword', 'Door password');
+      maybeSet('guideCustomStyles', 'Custom CSS styles');
+      maybeSet('selfCheckinSuccessMessage', 'Self check-in success message');
+      
       // Visibility toggles
-      const setBool = async (key: string, val: any, desc: string) => {
+      const setBool = (key: string, val: any, desc: string) => {
         if (typeof val === 'boolean') {
-          await storage.setSetting(key, String(val), desc, updatedBy);
+          csvSettings.setSetting(key, String(val), desc, updatedBy);
         }
       };
-      await setBool('guideShowIntro', (validatedData as any).guideShowIntro, 'Show intro to guests');
-      await setBool('guideShowAddress', (validatedData as any).guideShowAddress, 'Show address to guests');
-      await setBool('guideShowWifi', (validatedData as any).guideShowWifi, 'Show WiFi to guests');
-      await setBool('guideShowCheckin', (validatedData as any).guideShowCheckin, 'Show check-in guidance');
-      await setBool('guideShowOther', (validatedData as any).guideShowOther, 'Show other guidance');
-      await setBool('guideShowFaq', (validatedData as any).guideShowFaq, 'Show FAQ');
-      await setBool('guideShowCapsuleIssues', (validatedData as any).guideShowCapsuleIssues, 'Show capsule issues to guests');
-      await setBool('guideShowSelfCheckinMessage', (validatedData as any).guideShowSelfCheckinMessage, 'Show self-check-in message to guests');
-      await setBool('guideShowHostelPhotos', (validatedData as any).guideShowHostelPhotos, 'Show hostel photos to guests');
-      await setBool('guideShowGoogleMaps', (validatedData as any).guideShowGoogleMaps, 'Show Google Maps to guests');
-      await setBool('guideShowCheckinVideo', (validatedData as any).guideShowCheckinVideo, 'Show check-in video to guests');
-      await setBool('guideShowTimeAccess', (validatedData as any).guideShowTimeAccess, 'Show time and access info to guests');
+      
+      setBool('guideShowIntro', (validatedData as any).guideShowIntro, 'Show intro to guests');
+      setBool('guideShowAddress', (validatedData as any).guideShowAddress, 'Show address to guests');
+      setBool('guideShowWifi', (validatedData as any).guideShowWifi, 'Show WiFi to guests');
+      setBool('guideShowCheckin', (validatedData as any).guideShowCheckin, 'Show check-in guidance');
+      setBool('guideShowOther', (validatedData as any).guideShowOther, 'Show other guidance');
+      setBool('guideShowFaq', (validatedData as any).guideShowFaq, 'Show FAQ');
+      setBool('guideShowCapsuleIssues', (validatedData as any).guideShowCapsuleIssues, 'Show capsule issues to guests');
+      setBool('guideShowSelfCheckinMessage', (validatedData as any).guideShowSelfCheckinMessage, 'Show self-check-in message to guests');
+      setBool('guideShowHostelPhotos', (validatedData as any).guideShowHostelPhotos, 'Show hostel photos to guests');
+      setBool('guideShowGoogleMaps', (validatedData as any).guideShowGoogleMaps, 'Show Google Maps to guests');
+      setBool('guideShowCheckinVideo', (validatedData as any).guideShowCheckinVideo, 'Show check-in video to guests');
+      setBool('guideShowTimeAccess', (validatedData as any).guideShowTimeAccess, 'Show time and access info to guests');
+
+      console.log(`✅ Settings saved to CSV: ${csvSettings.getFilePath()}`);
 
       res.json({
         message: "Settings updated successfully",
@@ -1250,6 +1265,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  // Get CSV file path for manual editing
+  app.get("/api/settings/csv-path", authenticateToken, async (req, res) => {
+    try {
+      const csvPath = csvSettings.getFilePath();
+      res.json({ 
+        path: csvPath,
+        exists: fs.existsSync(csvPath)
+      });
+    } catch (error) {
+      console.error('Error getting CSV path:', error);
+      res.status(500).json({ message: 'Failed to get CSV path' });
+    }
+  });
 
   // Import settings and capsules from JSON
   app.post("/api/settings/import",

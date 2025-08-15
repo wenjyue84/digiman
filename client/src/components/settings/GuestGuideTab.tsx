@@ -9,13 +9,34 @@ import { TimeSelect } from "@/components/ui/time-select";
 import { GuideTimeSelect } from "./GuideTimeSelect";
 import { Badge } from "@/components/ui/badge";
 import { 
-  BookOpen, MessageSquare, FileText, Camera, Globe, Video, Clock, CheckCircle, Wifi, MapPin, Smartphone, Monitor, Printer, Send, Save, Key, ClipboardList, HelpCircle, AlertTriangle
+  BookOpen, MessageSquare, FileText, Camera, Globe, Video, Clock, CheckCircle, Wifi, MapPin, Smartphone, Monitor, Printer, Send, Save, Key, ClipboardList, HelpCircle, AlertTriangle, FolderOpen
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
-export default function GuestGuideTab({ settings, form, updateSettingsMutation }: any) {
+export default function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, toast }: any) {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('mobile');
   const [activeSubTab, setActiveSubTab] = useState<'content' | 'preview'>('content');
   const [isQuickTemplatesExpanded, setIsQuickTemplatesExpanded] = useState(true);
+
+  // Query to get CSV file path with debouncing
+  const { data: csvPathData, error: csvPathError } = useQuery<{ path: string; exists: boolean }>({
+    queryKey: ["/api/settings/csv-path"],
+    enabled: !!settings && activeSubTab === 'content', // Only run when authenticated and on content tab
+    refetchOnWindowFocus: false,
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+
+  // Debug log for CSV path data
+  useEffect(() => {
+    if (csvPathData) {
+      console.log('💾 CSV Path Data:', csvPathData);
+    }
+    if (csvPathError) {
+      console.error('❌ CSV Path Error:', csvPathError);
+    }
+  }, [csvPathData, csvPathError]);
 
   // Ensure key sections are shown to guests by default if unset
   useEffect(() => {
@@ -551,11 +572,59 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation }
                   </FormItem>
                 )} />
 
-                <div className="pt-2">
-                  <Button type="submit" disabled={updateSettingsMutation.isPending} className="flex items-center gap-2">
-                    <Save className="h-4 w-4" />
-                    {updateSettingsMutation.isPending ? "Saving..." : "Save Guide"}
-                  </Button>
+                <div className="pt-2 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <Button type="submit" disabled={updateSettingsMutation.isPending} className="flex items-center gap-2">
+                      <Save className="h-4 w-4" />
+                      {updateSettingsMutation.isPending ? "Saving..." : "Save Guide"}
+                    </Button>
+                    
+{/* CSV Path Display - Always show for development, conditionally for production */}
+                    {(csvPathData?.path || process.env.NODE_ENV === 'development') && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg border">
+                        <FolderOpen className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">CSV File:</span>
+                        <code className="bg-white px-2 py-1 rounded border text-xs font-mono text-gray-800 max-w-xs sm:max-w-md truncate" title={csvPathData?.path || 'C:\\Users\\Jyue\\Desktop\\PelangiManager\\settings.csv'}>
+                          {csvPathData?.path || 'C:\\Users\\Jyue\\Desktop\\PelangiManager\\settings.csv'}
+                        </code>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const pathToCopy = csvPathData?.path || 'C:\\Users\\Jyue\\Desktop\\PelangiManager\\settings.csv';
+                            navigator.clipboard.writeText(pathToCopy);
+                            toast?.({
+                              title: "Path Copied",
+                              description: "CSV file path copied to clipboard",
+                            });
+                          }}
+                          className="text-xs px-2 py-1 h-auto"
+                        >
+                          Copy Path
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Debug info - remove after testing */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="text-xs text-gray-400 bg-gray-100 p-2 rounded">
+                        Debug: csvPathData = {JSON.stringify(csvPathData)} | csvPathError = {JSON.stringify(csvPathError)} | settings = {settings ? 'loaded' : 'null'}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {(csvPathData?.path || process.env.NODE_ENV === 'development') && (
+                    <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-600 mt-0.5">💡</span>
+                        <div>
+                          <strong>Manual Editing:</strong> You can directly edit the CSV file at the path above using any text editor (Excel, Notepad, VSCode, etc.). 
+                          After making changes, refresh this page to see the updates. The CSV format is: <code>key,value,description,updated_by,updated_at</code>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </form>
             </Form>

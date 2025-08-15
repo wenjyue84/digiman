@@ -72,14 +72,49 @@ export default function SettingsPage() {
     },
   });
 
-  // Update form when settings are loaded - use useEffect instead of if statement
+  // Update form when settings are loaded - populate ALL fields from CSV
   useEffect(() => {
-    if (settings && (
-      (form.getValues() as any).accommodationType !== (settings as any).accommodationType
-    )) {
+    if (settings) {
+      console.log('🔄 Resetting form with settings from CSV:', settings);
       form.reset({
+        // Basic settings
         accommodationType: (settings as any).accommodationType || "capsule",
+        
+        // Guide content
+        guideIntro: (settings as any).guideIntro || "",
+        guideAddress: (settings as any).guideAddress || "",
+        guideWifiName: (settings as any).guideWifiName || "",
+        guideWifiPassword: (settings as any).guideWifiPassword || "",
+        guideCheckin: (settings as any).guideCheckin || "",
+        guideOther: (settings as any).guideOther || "",
+        guideFaq: (settings as any).guideFaq || "",
+        guideImportantReminders: (settings as any).guideImportantReminders || "",
+        
+        // Quick links
+        guideHostelPhotosUrl: (settings as any).guideHostelPhotosUrl || "",
+        guideGoogleMapsUrl: (settings as any).guideGoogleMapsUrl || "",
+        guideCheckinVideoUrl: (settings as any).guideCheckinVideoUrl || "",
+        
+        // Time and access
+        guideCheckinTime: (settings as any).guideCheckinTime || "",
+        guideCheckoutTime: (settings as any).guideCheckoutTime || "",
+        guideDoorPassword: (settings as any).guideDoorPassword || "",
+        
+        // Visibility toggles
+        guideShowIntro: (settings as any).guideShowIntro === true,
+        guideShowAddress: (settings as any).guideShowAddress === true,
+        guideShowWifi: (settings as any).guideShowWifi === true,
+        guideShowCheckin: (settings as any).guideShowCheckin === true,
+        guideShowOther: (settings as any).guideShowOther === true,
+        guideShowFaq: (settings as any).guideShowFaq === true,
+        guideShowCapsuleIssues: (settings as any).guideShowCapsuleIssues === true,
+        guideShowSelfCheckinMessage: (settings as any).guideShowSelfCheckinMessage === true,
+        guideShowHostelPhotos: (settings as any).guideShowHostelPhotos === true,
+        guideShowGoogleMaps: (settings as any).guideShowGoogleMaps === true,
+        guideShowCheckinVideo: (settings as any).guideShowCheckinVideo === true,
+        guideShowTimeAccess: (settings as any).guideShowTimeAccess === true,
       } as any);
+      console.log('✅ Form reset complete with CSV data');
     }
   }, [settings, form]);
 
