@@ -153,63 +153,100 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100">
-              <Cog className="h-3 w-3 text-blue-600" />
-            </div>
-            General
+        <TooltipProvider>
+          <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="general" className="flex items-center justify-center md:justify-start gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100">
+                  <Cog className="h-3 w-3 text-blue-600" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">General</TooltipContent>
+            </Tooltip>
+            <span className="hidden md:inline">General</span>
           </TabsTrigger>
-          <TabsTrigger value="capsules" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
-              <Building className="h-3 w-3 text-purple-600" />
-            </div>
-            {labels.plural}
+          <TabsTrigger value="capsules" className="flex items-center justify-center md:justify-start gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
+                  <Building className="h-3 w-3 text-purple-600" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{labels.plural}</TooltipContent>
+            </Tooltip>
+            <span className="hidden md:inline">{labels.plural}</span>
           </TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-100">
-              <Wrench className="h-3 w-3 text-orange-600" />
-            </div>
-            Maintenance
+          <TabsTrigger value="maintenance" className="flex items-center justify-center md:justify-start gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-100">
+                  <Wrench className="h-3 w-3 text-orange-600" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Maintenance</TooltipContent>
+            </Tooltip>
+            <span className="hidden md:inline">Maintenance</span>
           </TabsTrigger>
-          <TabsTrigger value="guide" className="flex items-center gap-2">
-            <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100">
-              <BookOpen className="h-3 w-3 text-indigo-600" />
-            </div>
-            Guest Guide
+          <TabsTrigger value="guide" className="flex items-center justify-center md:justify-start gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100">
+                  <BookOpen className="h-3 w-3 text-indigo-600" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Guest Guide</TooltipContent>
+            </Tooltip>
+            <span className="hidden md:inline">Guest Guide</span>
           </TabsTrigger>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center gap-2",
-                  activeTab === "users" || activeTab === "tests"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground"
-                )}
-              >
-                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-100">
-                  <MoreHorizontal className="h-3 w-3 text-gray-600" />
-                </div>
-                More
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className={cn(
+                      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-center md:justify-start gap-2",
+                      activeTab === "users" || activeTab === "tests"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-100">
+                      <MoreHorizontal className="h-3 w-3 text-gray-600" />
+                    </div>
+                    <span className="hidden md:inline">More</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">More</TooltipContent>
+              </Tooltip>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setActiveTab("users")}>
-                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100 mr-2">
-                  <UserCheck className="h-3 w-3 text-green-600" />
-                </div>
-                Users
+              <DropdownMenuItem onClick={() => setActiveTab("users")} className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100">
+                      <UserCheck className="h-3 w-3 text-green-600" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Users</TooltipContent>
+                </Tooltip>
+                <span className="hidden md:inline">Users</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("tests")}>
-                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100 mr-2">
-                  <TestTube className="h-3 w-3 text-pink-600" />
-                </div>
-                Tests
+              <DropdownMenuItem onClick={() => setActiveTab("tests")} className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100">
+                      <TestTube className="h-3 w-3 text-pink-600" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Tests</TooltipContent>
+                </Tooltip>
+                <span className="hidden md:inline">Tests</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </TabsList>
+          </TabsList>
+        </TooltipProvider>
 
         <TabsContent value="general" className="space-y-6">
           <GeneralSettingsTab
