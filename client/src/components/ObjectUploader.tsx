@@ -89,6 +89,7 @@ export function ObjectUploader({
         strings: {
           dropPasteFiles: '📁 Drop files here or %{browseFiles}',
         },
+        pluralize: (count: number) => count === 1 ? 0 : 1,
       },
     })
       .use(AwsS3, {
@@ -190,10 +191,10 @@ export function ObjectUploader({
           type: file.type,
           uploadURL: uploadParams.url,
           data: file,
-          meta: {},
+          meta: { name: file.name },
           source: 'direct',
           isRemote: false,
-          remote: '',
+          remote: { body: {}, companionUrl: '', requestClientId: '', url: uploadParams.url },
           preview: undefined
         }],
         failed: []
