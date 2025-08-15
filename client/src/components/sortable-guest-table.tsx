@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus } from "lucide-react";
+import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -839,6 +839,18 @@ export default function SortableGuestTable() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
+                        {guest.phoneNumber && (
+                          <Button
+                            variant="secondary"
+                            className="h-11 w-11 rounded-full"
+                            asChild
+                            title={`Call ${guest.phoneNumber}`}
+                          >
+                            <a href={`tel:${guest.phoneNumber}`}>
+                              <Phone className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
                         <Button
                           variant="destructive"
                           className="h-11 w-11 rounded-full"
