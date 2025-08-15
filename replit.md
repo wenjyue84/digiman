@@ -2,7 +2,17 @@
 
 This is a capsule hostel management system called "Pelangi Capsule Hostel" built as a full-stack web application. The system manages guest check-ins, check-outs, and provides a dashboard for monitoring occupancy across 24 capsules (A-01 to A-08, B-01 to B-08, C-01 to C-08). The application features a modern React frontend with TypeScript and a Node.js/Express backend, designed for real-time hostel operations management.
 
-## Recent Updates (August 12, 2025)
+## Recent Updates (August 15, 2025)
+
+### **Fixed Dependencies and Startup Issues**
+- **Issue Resolution**: Fixed application startup problems after GitHub pull
+- **Missing Dependencies**: Installed react-copy-to-clipboard, jspdf, html2canvas packages
+- **Database Connection**: Verified PostgreSQL database connection working correctly
+- **Authentication System**: Confirmed admin login (admin/admin123) functioning properly
+- **Application Status**: Production-ready system with persistent data storage
+- **Expected Behavior**: 401 errors on some API calls are normal due to unauthenticated dashboard access feature
+
+## Previous Updates (August 12, 2025)
 
 ### **Database Migration to PostgreSQL - Production Ready**
 - **CRITICAL ARCHITECTURE CHANGE**: Migrated from in-memory storage to PostgreSQL database for production persistence
