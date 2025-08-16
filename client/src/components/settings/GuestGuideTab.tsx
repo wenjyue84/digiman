@@ -12,6 +12,7 @@ import {
   BookOpen, MessageSquare, FileText, Camera, Globe, Video, Clock, CheckCircle, Wifi, MapPin, Smartphone, Monitor, Printer, Send, Save, Key, ClipboardList, HelpCircle, AlertTriangle, FolderOpen
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import GuestSuccessPageTemplate from "@/components/guest-success/GuestSuccessPageTemplate";
 
 export default function GuestGuideTab({ settings, form, updateSettingsMutation, queryClient, toast }: any) {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('mobile');
@@ -656,281 +657,88 @@ export default function GuestGuideTab({ settings, form, updateSettingsMutation, 
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`preview-content ${previewMode === 'mobile' ? 'max-w-sm' : 'max-w-2xl'} mx-auto border rounded-lg overflow-hidden bg-gradient-to-br from-orange-50 to-pink-50 shadow-xl`}>
-              <div className="p-6">
-                {/* Success Header */}
-                <div className="text-center mb-6">
-                  <div className={`${previewMode === 'mobile' ? 'text-3xl mb-3' : 'text-4xl mb-4'}`}>🎉</div>
-                  <h1 className={`${previewMode === 'mobile' ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 mb-2`}>Good Day, Our Honorable Guest!</h1>
-                  <div className={`${previewMode === 'mobile' ? 'text-xl mb-3' : 'text-2xl mb-4'}`}>🎉</div>
-                </div>
-
-                {/* Welcome Section */}
-                {watchedValues.showIntro && watchedValues.intro && (
-                  <div className={`bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl ${previewMode === 'mobile' ? 'p-4' : 'p-6'} mb-6`}>
-                    <h2 className={`${previewMode === 'mobile' ? 'text-lg' : 'text-xl'} font-bold text-gray-800 mb-4 flex items-center justify-center gap-2`}>
-                      Welcome to Pelangi Capsule Hostel <span className={`${previewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>🌈</span>
-                    </h2>
-                    {/* Essential Information Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      {/* Address Section */}
-                      {watchedValues.showAddress && watchedValues.address && (
-                        <div className="bg-white/60 rounded-lg p-3">
-                          <div className="flex items-start gap-2 mb-2">
-                            <MapPin className="h-4 w-4 text-orange-600 mt-0.5" />
-                            <div>
-                              <div className="font-semibold text-gray-800 mb-1">Address</div>
-                              <div className="text-gray-700 whitespace-pre-line text-xs">
-                                {watchedValues.address}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {/* WiFi Section */}
-                      {watchedValues.showWifi && (watchedValues.wifiName || watchedValues.wifiPassword) && (
-                        <div className="bg-white/60 rounded-lg p-3">
-                          <div className="flex items-start gap-2 mb-2">
-                            <Wifi className="h-4 w-4 text-blue-600 mt-0.5" />
-                            <div>
-                              <div className="font-semibold text-gray-800 mb-1">WiFi Access</div>
-                              <div className="text-gray-700 text-xs">
-                                {watchedValues.wifiName && (
-                                  <div><span className="font-medium">Network:</span> {watchedValues.wifiName}</div>
-                                )}
-                                {watchedValues.wifiPassword && (
-                                  <div><span className="font-medium">Password:</span> {watchedValues.wifiPassword}</div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Quick Links */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                  {watchedValues.showHostelPhotos && watchedValues.hostelPhotosUrl && (
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center gap-2 h-auto py-3 px-4"
-                      onClick={() => window.open(watchedValues.hostelPhotosUrl, '_blank')}
-                    >
-                      <Camera className="h-4 w-4" />
-                      <span className="text-sm">Hostel Photos</span>
-                    </Button>
-                  )}
-                  {watchedValues.showGoogleMaps && watchedValues.googleMapsUrl && (
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center gap-2 h-auto py-3 px-4"
-                      onClick={() => window.open(watchedValues.googleMapsUrl, '_blank')}
-                    >
-                      <Globe className="h-4 w-4" />
-                      <span className="text-sm">Google Maps</span>
-                    </Button>
-                  )}
-                  {watchedValues.showCheckinVideo && watchedValues.checkinVideoUrl && (
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center gap-2 h-auto py-3 px-4"
-                      onClick={() => window.open(watchedValues.checkinVideoUrl, '_blank')}
-                    >
-                      <Video className="h-4 w-4" />
-                      <span className="text-sm">Check-in Video</span>
-                    </Button>
-                  )}
-                  {(!watchedValues.showHostelPhotos || !watchedValues.hostelPhotosUrl) && 
-                   (!watchedValues.showGoogleMaps || !watchedValues.googleMapsUrl) && 
-                   (!watchedValues.showCheckinVideo || !watchedValues.checkinVideoUrl) && (
-                    <div className="col-span-3 text-center text-gray-500 text-sm py-4">
-                      No quick links configured or visible. Add URLs in the Quick Links Configuration section above.
-                    </div>
-                  )}
-                </div>
-
-                {/* Time and Access Information */}
-                {watchedValues.showTimeAccess && (
-                  <div className="border-t border-gray-200 py-6 space-y-4">
-                    {/* Time Information */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                        Check-in & Check-out Times
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600">🕒</span>
-                          <span className="font-medium">Check-in:</span>
-                          <span className="font-semibold">{watchedValues.checkinTime || 'From 3:00 PM'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600">🕛</span>
-                          <span className="font-medium">Check-out:</span>
-                          <span className="font-semibold">{watchedValues.checkoutTime || 'Before 12:00 PM'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Access Information */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 space-y-3">
-                      <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        Access & Room Information
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600">🔐</span>
-                          <span className="font-medium">Door Password:</span>
-                          <span className="font-mono text-lg font-bold text-green-600 bg-white px-2 py-1 rounded border">
-                            {watchedValues.doorPassword || '1270#'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-600">🛌</span>
-                          <span className="font-medium">Capsule:</span>
-                          <span className="font-bold text-lg text-orange-600 bg-white px-2 py-1 rounded border">
-                            Assigned based on availability
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-blue-600">🃏</span>
-                        <span className="font-medium">Access Card:</span>
-                        <span className="text-sm text-gray-600">Collect from reception upon arrival</span>
-                      </div>
-
-                      {/* Capsule Issues Preview */}
-                      {watchedValues.showCapsuleIssues && (
-                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-yellow-600">⚠️</span>
-                            <span className="font-medium text-yellow-800">Capsule Issues</span>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="text-sm text-yellow-700 bg-white/60 p-2 rounded border">
-                              <div className="font-medium">Air conditioning not working properly</div>
-                              <div className="text-xs text-yellow-600 mt-1">
-                                Reported: {new Date().toLocaleDateString()}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mt-3 text-xs text-yellow-700">
-                            <strong>Note:</strong> These issues have been reported and are being addressed. 
-                            You may choose to accept this capsule or contact reception for alternatives.
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Check-in Instructions */}
-                {watchedValues.showCheckin && watchedValues.checkin && (
-                  <div className="space-y-2">
-                    <h3 className="font-bold text-gray-800">How to Check In:</h3>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{watchedValues.checkin}</div>
-                  </div>
-                )}
-
-                {/* Other Guidance */}
-                {watchedValues.showOther && watchedValues.other && (
-                  <div className="space-y-2">
-                    <h3 className="font-bold text-gray-800">Additional Information:</h3>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{watchedValues.other}</div>
-                  </div>
-                )}
-
-                {/* FAQ */}
-                {watchedValues.showFaq && watchedValues.faq && (
-                  <div className="space-y-2">
-                    <h3 className="font-bold text-gray-800">Frequently Asked Questions:</h3>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{watchedValues.faq}</div>
-                  </div>
-                )}
-
-                {/* Important Reminders */}
-                {watchedValues.importantReminders && (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                    <h3 className="font-bold text-red-800 mb-2 flex items-center gap-2">
-                      <span>⚠</span> Important Reminders:
-                    </h3>
-                    <div className="text-sm text-red-700 whitespace-pre-wrap">
-                      {watchedValues.importantReminders}
-                    </div>
-                  </div>
-                )}
-
-                <div className="text-center text-gray-600 text-sm">
-                  For any assistance, please contact reception.<br />
-                  Enjoy your stay at Pelangi Capsule Hostel! 💼🌟
-                </div>
-
-                {/* Print and Email buttons for testing */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 pt-4 border-t border-gray-200">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const printContent = document.querySelector('.preview-content') as HTMLElement;
-                      if (printContent) {
-                        const originalDisplay = printContent.style.display;
-                        printContent.style.display = 'block';
-                        window.print();
-                        printContent.style.display = originalDisplay;
-                      }
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <Printer className="h-4 w-4" />
-                    Print Check-in Slip
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const guestName = "Test Guest";
-                      const capsuleNumber = "C12";
-                      const checkinTime = watchedValues.checkinTime || 'From 3:00 PM';
-                      const checkoutTime = watchedValues.checkoutTime || 'Before 12:00 PM';
-                      const subject = encodeURIComponent('Your Check-in Slip - Pelangi Capsule Hostel');
-                      const body = encodeURIComponent(`
+            <GuestSuccessPageTemplate
+              viewMode={previewMode}
+              isPreview={true}
+              settings={settings}
+              visibility={{
+                showIntro: watchedValues.showIntro,
+                showAddress: watchedValues.showAddress,
+                showWifi: watchedValues.showWifi,
+                showCheckin: watchedValues.showCheckin,
+                showOther: watchedValues.showOther,
+                showFaq: watchedValues.showFaq,
+                showCapsuleIssues: watchedValues.showCapsuleIssues,
+                showTimeAccess: watchedValues.showTimeAccess,
+                showHostelPhotos: watchedValues.showHostelPhotos,
+                showGoogleMaps: watchedValues.showGoogleMaps,
+                showCheckinVideo: watchedValues.showCheckinVideo,
+              }}
+              content={{
+                intro: watchedValues.intro,
+                address: watchedValues.address,
+                wifiName: watchedValues.wifiName,
+                wifiPassword: watchedValues.wifiPassword,
+                checkin: watchedValues.checkin,
+                other: watchedValues.other,
+                faq: watchedValues.faq,
+                importantReminders: watchedValues.importantReminders,
+                hostelPhotosUrl: watchedValues.hostelPhotosUrl,
+                googleMapsUrl: watchedValues.googleMapsUrl,
+                checkinVideoUrl: watchedValues.checkinVideoUrl,
+                checkinTime: watchedValues.checkinTime,
+                checkoutTime: watchedValues.checkoutTime,
+                doorPassword: watchedValues.doorPassword,
+              }}
+            />
+            
+            {/* Preview-specific actions */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 pt-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  window.print();
+                }}
+                className="flex items-center gap-2"
+              >
+                <Printer className="h-4 w-4" />
+                Print Preview
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const guestName = "Test Guest";
+                  const capsuleNumber = "C12";
+                  const checkinTime = watchedValues.checkinTime || '3:00 PM';
+                  const checkoutTime = watchedValues.checkoutTime || '12:00 PM';
+                  const subject = encodeURIComponent('Your Check-in Information - Pelangi Capsule Hostel');
+                  const body = encodeURIComponent(`
 Dear ${guestName},
 
-Welcome to Pelangi Capsule Hostel! Here is your check-in slip:
+Welcome to Pelangi Capsule Hostel! Here is your arrival information:
 
-🏨 PELANGI CAPSULE HOSTEL - CHECK-IN SLIP
+🏨 PELANGI CAPSULE HOSTEL - ARRIVAL INFORMATION
 
 Guest Name: ${guestName}
 Capsule Number: ${capsuleNumber}
-Check-in: ${checkinTime}
-Check-out: ${checkoutTime}
+Arrival Time: ${checkinTime}
+Departure Time: ${checkoutTime}
 Door Password: ${watchedValues.doorPassword || '1270#'}
-Capsule Access Card: Placed on your pillow
-
-⚠️ IMPORTANT REMINDERS:
-• Do not leave your card inside the capsule and close the door
-• No Smoking in hostel area
-• CCTV monitored – Violation (e.g., smoking) may result in RM300 penalty
-
-📍 Address: (configure in Guest Guide)
 
 For any assistance, please contact reception.
 Enjoy your stay at Pelangi Capsule Hostel! 💼🌟
 
 ---
 This email was generated by Pelangi Capsule Hostel Management System
-                      `);
-                      const mailtoLink = `mailto:test@example.com?subject=${subject}&body=${body}`;
-                      window.open(mailtoLink, '_blank');
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <Send className="h-4 w-4" />
-                    Send via Email Client
-                  </Button>
-                </div>
-              </div>
+                  `);
+                  const mailtoLink = `mailto:test@example.com?subject=${subject}&body=${body}`;
+                  window.open(mailtoLink, '_blank');
+                }}
+                className="flex items-center gap-2"
+              >
+                <Send className="h-4 w-4" />
+                Test Email Client
+              </Button>
             </div>
           </CardContent>
         </Card>

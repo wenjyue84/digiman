@@ -13,8 +13,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { List, Table as TableIcon, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
-// ... (keep existing imports)
+// Types
+interface Guest {
+  id: string;
+  name: string;
+  capsuleNumber: string;
+  checkinTime: string;
+  checkoutTime?: string;
+}
 
+interface Capsule {
+  id: string;
+  number: string;
+  lastCleanedAt?: string;
+  lastCleanedBy?: string;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 function formatDuration(checkinTime: string, checkoutTime: string): string {
   const checkin = new Date(checkinTime);
@@ -49,6 +69,7 @@ export default function History() {
 
   const [rangeStart, setRangeStart] = useState<string>("");
   const [rangeEnd, setRangeEnd] = useState<string>("");
+  const [exactDate, setExactDate] = useState<string>("");
   
   const [cleaningViewMode, setCleaningViewMode] = useState<'table' | 'list' | 'card'>('table');
 
@@ -215,9 +236,60 @@ export default function History() {
                 case 'table':
                   return (
                     <div className="overflow-x-auto">
-                      <table className="w-full divide-y divide-gray-200">
-                        {/* ... table content ... */}
-                      </table>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Guest Name</TableHead>
+                            <TableHead>Capsule</TableHead>
+                            <TableHead>Check-in</TableHead>
+                            <TableHead>Check-out</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredHistory.map((guest) => (
+                            <TableRow key={guest.id}>
+                              <TableCell className="font-medium">{guest.name}</TableCell>
+                              <TableCell>
+                                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                                  {guest.capsuleNumber}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {new Date(guest.checkinTime).toLocaleString()}
+                              </TableCell>
+                              <TableCell>
+                                {guest.checkoutTime 
+                                  ? new Date(guest.checkoutTime).toLocaleString()
+                                  : <Badge variant="secondary">Still checked in</Badge>
+                                }
+                              </TableCell>
+                              <TableCell>
+                                {guest.checkoutTime 
+                                  ? formatDuration(guest.checkinTime, guest.checkoutTime)
+                                  : (() => {
+                                      const now = new Date().toISOString();
+                                      return formatDuration(guest.checkinTime, now);
+                                    })()
+                                }
+                              </TableCell>
+                              <TableCell>
+                                {guest.checkoutTime && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => recheckinMutation.mutate(guest.id)}
+                                    disabled={recheckinMutation.isPending}
+                                  >
+                                    {recheckinMutation.isPending ? 'Moving...' : 'Re-check in'}
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   );
                 case 'list':
@@ -272,19 +344,25 @@ export default function History() {
     {/* Cleaning History */}
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Button variant={cleaningViewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setCleaningViewMode('table')}>
-            <TableIcon className="h-4 w-4 mr-1" />
-            Table
-          </Button>
-          <Button variant={cleaningViewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setCleaningViewMode('list')}>
-            <List className="h-4 w-4 mr-1" />
-            List
-          </Button>
-          <Button variant={cleaningViewMode === 'card' ? 'default' : 'outline'} size="sm" onClick={() => setCleaningViewMode('card')}>
-            <CreditCard className="h-4 w-4 mr-1" />
-            Card
-          </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <div>
+            <CardTitle className="text-lg font-semibold text-hostel-text">Cleaning History</CardTitle>
+            <p className="text-sm text-gray-600">Record of capsule cleaning and maintenance activities</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant={cleaningViewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setCleaningViewMode('table')}>
+              <TableIcon className="h-4 w-4 mr-1" />
+              Table
+            </Button>
+            <Button variant={cleaningViewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setCleaningViewMode('list')}>
+              <List className="h-4 w-4 mr-1" />
+              List
+            </Button>
+            <Button variant={cleaningViewMode === 'card' ? 'default' : 'outline'} size="sm" onClick={() => setCleaningViewMode('card')}>
+              <CreditCard className="h-4 w-4 mr-1" />
+              Card
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -311,9 +389,53 @@ export default function History() {
                 case 'table':
                   return (
                     <div className="overflow-x-auto">
-                      <table className="w-full divide-y divide-gray-200">
-                        {/* ... table content ... */}
-                      </table>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Capsule Number</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Last Cleaned</TableHead>
+                            <TableHead>Cleaned By</TableHead>
+                            <TableHead>Duration Since Clean</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {cleanedCapsules.map((capsule) => (
+                            <TableRow key={capsule.id}>
+                              <TableCell className="font-medium">{capsule.number}</TableCell>
+                              <TableCell>
+                                <Badge className="bg-green-100 text-green-800 border-green-200">
+                                  Clean
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {capsule.lastCleanedAt 
+                                  ? new Date(capsule.lastCleanedAt).toLocaleString()
+                                  : 'N/A'
+                                }
+                              </TableCell>
+                              <TableCell>{capsule.lastCleanedBy || 'N/A'}</TableCell>
+                              <TableCell>
+                                {capsule.lastCleanedAt 
+                                  ? (() => {
+                                      const now = new Date();
+                                      const cleaned = new Date(capsule.lastCleanedAt);
+                                      const diffHours = Math.floor((now.getTime() - cleaned.getTime()) / (1000 * 60 * 60));
+                                      const diffDays = Math.floor(diffHours / 24);
+                                      
+                                      if (diffDays > 0) {
+                                        return `${diffDays}d ${diffHours % 24}h ago`;
+                                      } else {
+                                        return `${diffHours}h ago`;
+                                      }
+                                    })()
+                                  : 'N/A'
+                                }
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   );
                 case 'list':

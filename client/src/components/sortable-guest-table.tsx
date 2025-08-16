@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth";
 import GuestDetailsModal from "./guest-details-modal";
 import ExtendStayDialog from "./ExtendStayDialog";
 import { CheckoutConfirmationDialog } from "./confirmation-dialog";
+import CapsuleChangeDialog from "./CapsuleChangeDialog";
 import type { Guest, GuestToken, PaginatedResponse } from "@shared/schema";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
@@ -50,6 +51,8 @@ export default function SortableGuestTable() {
   const [isExtendOpen, setIsExtendOpen] = useState(false);
   const [checkoutGuest, setCheckoutGuest] = useState<Guest | null>(null);
   const [showCheckoutConfirmation, setShowCheckoutConfirmation] = useState(false);
+  const [capsuleChangeGuest, setCapsuleChangeGuest] = useState<Guest | null>(null);
+  const [isCapsuleChangeOpen, setIsCapsuleChangeOpen] = useState(false);
   const { toast } = useToast();
 
   // Auto-switch view mode based on device type
@@ -357,6 +360,11 @@ export default function SortableGuestTable() {
     setIsExtendOpen(true);
   };
 
+  const handleCapsuleChange = (guest: Guest) => {
+    setCapsuleChangeGuest(guest);
+    setIsCapsuleChangeOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsDetailsModalOpen(false);
     setSelectedGuest(null);
@@ -630,9 +638,15 @@ export default function SortableGuestTable() {
                       >
                         {/* Accommodation column - sticky first column */}
                         <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
-                          <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">
-                            {guest.capsuleNumber}
-                          </Badge>
+                          <button
+                            onClick={() => handleCapsuleChange(guest)}
+                            className="hover:opacity-80 transition-opacity cursor-pointer"
+                            title={`Click to change ${guest.name}'s capsule assignment`}
+                          >
+                            <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">
+                              {guest.capsuleNumber}
+                            </Badge>
+                          </button>
                         </td>
                         {/* Guest column */
                         }
@@ -862,7 +876,13 @@ export default function SortableGuestTable() {
                     <div className="p-3 flex items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">{guest.capsuleNumber}</Badge>
+                          <button
+                            onClick={() => handleCapsuleChange(guest)}
+                            className="hover:opacity-80 transition-opacity cursor-pointer"
+                            title={`Click to change ${guest.name}'s capsule assignment`}
+                          >
+                            <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">{guest.capsuleNumber}</Badge>
+                          </button>
                           <button
                             onClick={() => handleGuestClick(guest)}
                             className={`font-medium hover:underline focus:outline-none ${!isGuestPaid(guest) ? 'text-red-600' : ''}`}
@@ -1009,6 +1029,16 @@ export default function SortableGuestTable() {
           isLoading={checkoutMutation.isPending}
         />
       )}
+
+      {/* Capsule Change Dialog */}
+      <CapsuleChangeDialog
+        guest={capsuleChangeGuest}
+        isOpen={isCapsuleChangeOpen}
+        onClose={() => {
+          setIsCapsuleChangeOpen(false);
+          setCapsuleChangeGuest(null);
+        }}
+      />
     </Card>
   );
 }

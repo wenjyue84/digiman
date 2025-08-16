@@ -430,7 +430,12 @@ export const guestSelfCheckinSchema = z.object({
       return date >= today && date <= maxDate;
     }, "Check-out date must be between today and 1 year from now"),
   icNumber: z.string()
-    .regex(/^\d{12}$/, "IC number must be 12 digits (e.g., 840816015291)")
+    .optional()
+    .transform(val => val === "" ? undefined : val) // Convert empty strings to undefined
+    .refine((val) => {
+      if (val === undefined) return true; // Skip validation if undefined
+      return /^\d{12}$/.test(val);
+    }, "IC number must be 12 digits (e.g., 840816015291)")
     .refine(val => {
       if (!val) return true; // Optional when passport is provided
       // Basic IC validation - check if first 6 digits form a valid date
@@ -448,8 +453,7 @@ export const guestSelfCheckinSchema = z.object({
              date.getDate() === day &&
              month >= 1 && month <= 12 &&
              day >= 1 && day <= 31;
-    }, "Please enter a valid IC number with a valid birth date")
-    .optional(),
+    }, "Please enter a valid IC number with a valid birth date"),
   passportNumber: z.string()
     .optional()
     .transform(val => val === "" ? undefined : val) // Convert empty strings to undefined
@@ -507,24 +511,45 @@ export const guestSelfCheckinSchema = z.object({
     .max(500, "Notes must not exceed 500 characters")
     .optional(),
 }).refine((data) => {
-  // Malaysians must provide IC number and IC photo
+  // For Malaysians: must provide IC number and IC photo
   if (data.nationality === 'Malaysian') {
     return !!data.icNumber && !!data.icDocumentUrl;
   }
-  // Non-Malaysians must provide passport number and passport photo
-  return !!data.passportNumber && !!data.passportDocumentUrl;
+  // For non-Malaysians: this validation passes (handled separately)
+  return true;
 }, {
-  message: "Please provide the required document number and upload the photo.",
+  message: "Malaysian guests must provide IC number and upload IC photo.",
   path: ["icNumber"],
 }).refine((data) => {
-  // Specific messaging for Malaysians
+  // For non-Malaysians: must provide passport number and passport photo
+  if (data.nationality !== 'Malaysian') {
+    return !!data.passportNumber && !!data.passportDocumentUrl;
+  }
+  // For Malaysians: this validation passes (handled separately)
+  return true;
+}, {
+  message: "Foreign guests must provide passport number and upload passport photo.",
+  path: ["passportNumber"],
+}).refine((data) => {
+  // For Malaysians: check IC document upload
   if (data.nationality === 'Malaysian') {
     return !!data.icDocumentUrl;
   }
-  return !!data.passportDocumentUrl;
+  // For non-Malaysians: this validation passes (handled separately)
+  return true;
 }, {
-  message: "Please upload the required document photo.",
+  message: "Please upload your IC photo.",
   path: ["icDocumentUrl"],
+}).refine((data) => {
+  // For non-Malaysians: check passport document upload
+  if (data.nationality !== 'Malaysian') {
+    return !!data.passportDocumentUrl;
+  }
+  // For Malaysians: this validation passes (handled separately)
+  return true;
+}, {
+  message: "Please upload your passport photo.",
+  path: ["passportDocumentUrl"],
 }).refine((data) => {
   // If IC number is provided, IC document is required
   if (data.icNumber && !data.icDocumentUrl) {
