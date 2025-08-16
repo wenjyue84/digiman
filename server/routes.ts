@@ -424,9 +424,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ user: { id: req.user.id, email: req.user.email, firstName: req.user.firstName, lastName: req.user.lastName, role: req.user.role } });
   });
   
-  // Get occupancy summary
+  // Get occupancy summary - with caching
   app.get("/api/occupancy", async (_req, res) => {
     try {
+      // Cache occupancy data for 30 seconds
+      res.set('Cache-Control', 'public, max-age=30');
       const occupancy = await storage.getCapsuleOccupancy();
       res.json(occupancy);
     } catch (error) {
@@ -449,15 +451,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all checked-in guests
+  // Get all checked-in guests - with caching
   app.get("/api/guests/checked-in", async (req, res) => {
     try {
+      // Cache guest data for 15 seconds (frequently changing)
+      res.set('Cache-Control', 'public, max-age=15');
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const paginatedGuests = await storage.getCheckedInGuests({ page, limit });
       res.json(paginatedGuests);
     } catch (error) {
       res.status(500).json({ message: "Failed to get checked-in guests" });
+    }
+  });
+
+  // Bulk dashboard data endpoint - fetch all main dashboard data in one request
+  app.get("/api/dashboard", async (req, res) => {
+    try {
+      // Cache dashboard data for 15 seconds
+      res.set('Cache-Control', 'public, max-age=15');
+      
+      // Fetch all dashboard data concurrently for better performance
+      const [
+        occupancyData,
+        guestsResponse,
+        activeTokensResponse,
+        unreadNotificationsResponse
+      ] = await Promise.all([
+        storage.getCapsuleOccupancy(),
+        storage.getCheckedInGuests({ page: 1, limit: 20 }),
+        storage.getActiveGuestTokens({ page: 1, limit: 20 }),
+        storage.getUnreadAdminNotifications({ page: 1, limit: 20 })
+      ]);
+
+      res.json({
+        occupancy: occupancyData,
+        guests: guestsResponse,
+        activeTokens: activeTokensResponse,
+        unreadNotifications: unreadNotificationsResponse,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
     }
   });
 
@@ -1045,6 +1081,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/notifications/unread", authenticateToken, async (req, res) => {
     try {
+      // Cache unread notifications for 30 seconds
+      res.set('Cache-Control', 'private, max-age=30');
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const notifications = await storage.getUnreadAdminNotifications({ page, limit });
@@ -1078,22 +1116,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Settings routes - using CSV storage
+  // Settings routes - optimized bulk loading
   app.get("/api/settings", authenticateToken, async (req, res) => {
     try {
-      console.log('📖 Loading settings from CSV...');
-      
-      // Reload CSV file to get fresh data
+      // Reload CSV file once and cache all settings
       csvSettings.reloadFromFile();
+      const allSettings = csvSettings.getAllSettings();
       
-      const accommodationTypeSetting = csvSettings.getSetting('accommodationType');
-      const accommodationType = accommodationTypeSetting?.value || 'capsule';
-      
-      // Load guide fields (fallback empty strings)
-      const getVal = (k: string) => csvSettings.getSetting(k)?.value || "";
+      // Create fast lookup map to avoid repeated getSetting calls
+      const settingsMap = new Map(allSettings.map(s => [s.key, s.value]));
+      const getVal = (k: string) => settingsMap.get(k) || "";
+      const getBool = (k: string) => settingsMap.get(k) === 'true';
       
       const settings = {
-        accommodationType,
+        accommodationType: getVal('accommodationType') || 'capsule',
         guideIntro: getVal('guideIntro'),
         guideAddress: getVal('guideAddress'),
         guideWifiName: getVal('guideWifiName'),
@@ -1109,21 +1145,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         guideCheckoutTime: getVal('guideCheckoutTime'),
         guideDoorPassword: getVal('guideDoorPassword'),
         selfCheckinSuccessMessage: getVal('selfCheckinSuccessMessage'),
-        guideShowIntro: csvSettings.getSetting('guideShowIntro')?.value === 'true',
-        guideShowAddress: csvSettings.getSetting('guideShowAddress')?.value === 'true',
-        guideShowWifi: csvSettings.getSetting('guideShowWifi')?.value === 'true',
-        guideShowCheckin: csvSettings.getSetting('guideShowCheckin')?.value === 'true',
-        guideShowOther: csvSettings.getSetting('guideShowOther')?.value === 'true',
-        guideShowFaq: csvSettings.getSetting('guideShowFaq')?.value === 'true',
-        guideShowCapsuleIssues: csvSettings.getSetting('guideShowCapsuleIssues')?.value === 'true',
-        guideShowSelfCheckinMessage: csvSettings.getSetting('guideShowSelfCheckinMessage')?.value === 'true',
-        guideShowHostelPhotos: csvSettings.getSetting('guideShowHostelPhotos')?.value === 'true',
-        guideShowGoogleMaps: csvSettings.getSetting('guideShowGoogleMaps')?.value === 'true',
-        guideShowCheckinVideo: csvSettings.getSetting('guideShowCheckinVideo')?.value === 'true',
-        guideShowTimeAccess: csvSettings.getSetting('guideShowTimeAccess')?.value === 'true',
+        guideShowIntro: getBool('guideShowIntro'),
+        guideShowAddress: getBool('guideShowAddress'),
+        guideShowWifi: getBool('guideShowWifi'),
+        guideShowCheckin: getBool('guideShowCheckin'),
+        guideShowOther: getBool('guideShowOther'),
+        guideShowFaq: getBool('guideShowFaq'),
+        guideShowCapsuleIssues: getBool('guideShowCapsuleIssues'),
+        guideShowSelfCheckinMessage: getBool('guideShowSelfCheckinMessage'),
+        guideShowHostelPhotos: getBool('guideShowHostelPhotos'),
+        guideShowGoogleMaps: getBool('guideShowGoogleMaps'),
+        guideShowCheckinVideo: getBool('guideShowCheckinVideo'),
+        guideShowTimeAccess: getBool('guideShowTimeAccess'),
       };
       
-      console.log(`✅ Loaded ${Object.keys(settings).length} settings from CSV`);
+      // Cache response for performance
+      res.set('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
       res.json(settings);
     } catch (error) {
       console.error('❌ Error loading settings from CSV:', error);
@@ -2164,9 +2201,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calendar API - Get occupancy data for calendar visualization
+  // Calendar API - Get occupancy data for calendar visualization - with caching
   app.get("/api/calendar/occupancy/:year/:month", async (req, res) => {
     try {
+      // Cache calendar data for 5 minutes (changes less frequently)
+      res.set('Cache-Control', 'public, max-age=300');
       const { year, month } = req.params;
       const yearInt = parseInt(year);
       const monthInt = parseInt(month); // 0-based month (0 = January)
