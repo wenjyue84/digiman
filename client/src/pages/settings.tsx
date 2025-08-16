@@ -256,7 +256,7 @@ export default function SettingsPage() {
               </Tooltip>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setActiveTab("users")} className="flex items-center gap-2">
+              <DropdownMenuItem onSelect={() => setActiveTab("users")} className="flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100">
@@ -267,7 +267,7 @@ export default function SettingsPage() {
                 </Tooltip>
                 <span className="hidden md:inline">Users</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("tests")} className="flex items-center gap-2">
+              <DropdownMenuItem onSelect={() => setActiveTab("tests")} className="flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100">
