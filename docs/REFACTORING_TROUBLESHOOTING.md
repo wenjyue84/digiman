@@ -256,6 +256,38 @@ import { type User } from "../../shared/schema";
 
 **Test Result:** `npm run dev` starts successfully
 
+### 8. Port Already in Use (EADDRINUSE) 
+
+**Problem:** `Error: listen EADDRINUSE: address already in use 0.0.0.0:5000`
+
+**Root Cause:** Multiple Node.js processes running from previous dev sessions.
+
+**Solution (Windows):**
+```bash
+# Find all Node.js processes
+tasklist | findstr node
+
+# Kill all Node.js processes
+taskkill /f /im node.exe
+
+# Restart development server
+npm run dev
+```
+
+**Alternative Solutions:**
+```bash
+# Check specific port usage
+netstat -ano | findstr :5000
+
+# Kill specific process by PID
+taskkill /f /PID <process_id>
+
+# Use different port in package.json if needed
+"dev": "cross-env PORT=3000 tsx watch server/index.ts"
+```
+
+**Test Result:** Server starts successfully on port 5000
+
 ## Lessons Learned
 
 1. **Always backup** before major refactoring

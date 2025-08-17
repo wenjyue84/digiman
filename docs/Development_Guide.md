@@ -119,7 +119,13 @@ PelangiManager/
 ├── server/                 # Backend Node.js application
 │   ├── index.ts           # Server entry point
 │   ├── routes.ts          # API route definitions
-│   ├── storage.ts         # Storage interface
+│   ├── storage.ts         # ⚠️ Re-export wrapper ONLY (46 lines)
+│   ├── Storage/           # 🏗️ Modular Storage System
+│   │   ├── IStorage.ts        # Interface definitions (75 lines)
+│   │   ├── MemStorage.ts      # In-memory implementation (924 lines)
+│   │   ├── DatabaseStorage.ts # Database implementation (517 lines)
+│   │   ├── StorageFactory.ts  # Factory & initialization (20 lines)
+│   │   └── index.ts           # Module exports (10 lines)
 │   ├── configManager.ts   # Configuration management
 │   └── objectStorage.ts   # File storage implementation
 ├── shared/                 # Shared code between frontend and backend
@@ -140,9 +146,29 @@ PelangiManager/
 
 #### `/server`
 - **Express.js** server with TypeScript
-- **Dual storage system** (in-memory + PostgreSQL)
+- **🏗️ Modular storage system** (refactored from monolithic storage.ts)
 - **Configuration management** with hot-reload
 - **File storage** with Google Cloud integration
+
+#### `/server/Storage` 🏗️ **NEW MODULAR ARCHITECTURE**
+- **IStorage.ts**: Complete interface definition with 70+ methods
+- **MemStorage.ts**: In-memory storage implementation (development)
+- **DatabaseStorage.ts**: PostgreSQL implementation (production)
+- **StorageFactory.ts**: Automatic storage selection logic
+- **index.ts**: Clean module exports
+
+**⚠️ CRITICAL**: The main `storage.ts` file is now ONLY a re-export wrapper:
+```typescript
+// ⚠️ DO NOT ADD IMPLEMENTATIONS TO THIS FILE! ⚠️
+export { MemStorage, DatabaseStorage, createStorage } from "./Storage/index";
+export { storage } from "./Storage/index";
+export type { IStorage } from "./Storage/IStorage";
+```
+
+**Refactoring Results:**
+- **BEFORE**: 1,557 lines in single file
+- **AFTER**: 46 lines wrapper + 5 focused modules  
+- **Benefits**: 96% reduction, better maintainability, team collaboration
 
 #### `/shared`
 - **Type definitions** used by both frontend and backend

@@ -164,7 +164,56 @@ The system manages **22 capsules** organized in three physical sections:
 
 ## 4. Data Architecture
 
-### 4.1 Core Entities
+### 4.1 🏗️ Modular Storage Architecture (Refactored 2025)
+
+The storage layer has been completely refactored into a modular, maintainable architecture:
+
+```
+server/
+├── storage.ts (46 lines) ← Re-export wrapper ONLY
+└── Storage/
+    ├── IStorage.ts (75 lines) ← Interface definitions
+    ├── MemStorage.ts (924 lines) ← In-memory implementation  
+    ├── DatabaseStorage.ts (517 lines) ← Database implementation
+    ├── StorageFactory.ts (20 lines) ← Factory & initialization
+    └── index.ts (10 lines) ← Module exports
+```
+
+**Refactoring Benefits:**
+- **96% reduction** in main storage file (1,557 → 46 lines)
+- **Separation of concerns** - each file has single responsibility
+- **Easy maintenance** - find and edit specific storage features quickly
+- **Team collaboration** - multiple developers can work on different storage parts
+- **Clean imports** - clear, typed interface for all consumers
+- **Backward compatibility** - existing code continues working unchanged
+
+### 4.2 Storage Interface (IStorage.ts)
+
+All storage implementations follow the `IStorage` interface with 70+ methods:
+
+```typescript
+export interface IStorage {
+  // User management (8 methods)
+  getUser(id: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
+  // ... user operations
+
+  // Guest management (13 methods) 
+  createGuest(guest: InsertGuest): Promise<Guest>;
+  getCheckedInGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>>;
+  // ... guest operations
+
+  // Capsule management (12 methods)
+  getAllCapsules(): Promise<Capsule[]>;
+  getAvailableCapsules(): Promise<Capsule[]>;
+  // ... capsule operations
+
+  // Problem tracking, tokens, notifications, settings, expenses
+  // ... additional 37+ methods
+}
+```
+
+### 4.3 Core Entities
 
 #### Users
 - **Fields**: id, email, username, password, googleId, firstName, lastName, profileImage, role, createdAt, updatedAt
@@ -191,11 +240,42 @@ The system manages **22 capsules** organized in three physical sections:
 - **Relationships**: Many-to-one with users
 - **Indexes**: userId, token, expiresAt
 
-### 4.2 Storage Strategy
-- **Development**: In-memory storage with automatic data seeding
-- **Production**: PostgreSQL with Neon serverless database
+### 4.4 Storage Strategy
+
+#### Dual-Storage Architecture
+The system uses a factory pattern for automatic storage selection:
+
+```typescript
+// ./Storage/StorageFactory.ts
+export function createStorage(): IStorage {
+  try {
+    if (process.env.DATABASE_URL) {
+      return new DatabaseStorage(); // Production
+    } else {
+      return new MemStorage(); // Development
+    }
+  } catch (error) {
+    console.warn("Database failed, falling back to in-memory storage");
+    return new MemStorage(); // Graceful fallback
+  }
+}
+```
+
+#### Storage Implementations
+- **MemStorage (924 lines)**: In-memory storage with automatic data seeding
+- **DatabaseStorage (517 lines)**: PostgreSQL with Neon serverless database
 - **File Storage**: Google Cloud Storage with local fallback
 - **Automatic Fallback**: System automatically switches to in-memory if database fails
+
+#### Re-export Wrapper (storage.ts)
+⚠️ **CRITICAL**: The main `server/storage.ts` file serves ONLY as a backward compatibility wrapper:
+
+```typescript
+// ⚠️ DO NOT ADD IMPLEMENTATIONS TO THIS FILE! ⚠️
+export { MemStorage, DatabaseStorage, createStorage } from "./Storage/index";
+export { storage } from "./Storage/index";
+export type { IStorage } from "./Storage/IStorage";
+```
 
 ---
 

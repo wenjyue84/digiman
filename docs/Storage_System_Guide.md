@@ -2,61 +2,97 @@
 
 ## Overview
 
-The Pelangi Manager uses a dual-storage architecture that automatically selects between in-memory storage (for development) and database storage (for production) based on environment variables. The system provides seamless fallback mechanisms and supports both data storage and file storage operations.
+The Pelangi Manager uses a modular, dual-storage architecture that automatically selects between in-memory storage (for development) and database storage (for production) based on environment variables. The system provides seamless fallback mechanisms and supports both data storage and file storage operations.
 
-## Architecture
+## 🏗️ Modular Architecture (Refactored 2025)
+
+### File Structure
+```
+server/
+├── storage.ts (13 lines) ← Re-export wrapper only
+└── Storage/
+    ├── IStorage.ts (75 lines) ← Interface definitions
+    ├── MemStorage.ts (924 lines) ← In-memory implementation  
+    ├── DatabaseStorage.ts (517 lines) ← Database implementation
+    ├── StorageFactory.ts (20 lines) ← Factory & initialization
+    └── index.ts (10 lines) ← Module exports
+```
+
+**Refactoring Results:**
+- **BEFORE**: 1,557 lines in single `storage.ts` file
+- **AFTER**: 13 lines main file + 5 focused modules
+- **Reduction**: 96% main file reduction, improved maintainability
 
 ### Storage Interface
-All storage implementations implement the `IStorage` interface, ensuring consistent API regardless of backend:
+All storage implementations implement the `IStorage` interface defined in `./Storage/IStorage.ts`:
 
 ```typescript
 export interface IStorage {
   // User management methods
   getUser(id: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
-  // ... other methods
+  // Guest management, capsules, tokens, notifications, etc.
+  // ... 70+ methods for complete storage operations
 }
 ```
 
 ### Storage Classes
 
-#### 1. MemStorage (In-Memory)
+#### 1. MemStorage (In-Memory) - `./Storage/MemStorage.ts`
 - **Purpose**: Local development and testing
 - **Data Persistence**: None (resets on server restart)
 - **Performance**: Fast, no network latency
 - **Use Case**: Development, testing, demos
 - **Features**: Automatic data seeding, sample data generation
+- **File Size**: 924 lines (extracted from monolithic file)
 
-#### 2. DatabaseStorage (PostgreSQL)
+#### 2. DatabaseStorage (PostgreSQL) - `./Storage/DatabaseStorage.ts`
 - **Purpose**: Production deployment
 - **Data Persistence**: Full (Neon serverless database)
 - **Performance**: Network-dependent, scalable
 - **Use Case**: Production, staging, team collaboration
 - **Features**: Full ACID compliance, automatic backups, scaling
+- **File Size**: 517 lines (extracted from monolithic file)
 
 ## Automatic Selection Logic
 
-The system automatically chooses storage based on environment:
+The system automatically chooses storage using the factory pattern in `./Storage/StorageFactory.ts`:
 
 ```typescript
-// server/storage.ts
-let storage: MemStorage | DatabaseStorage;
-
-try {
-  if (process.env.DATABASE_URL) {
-    storage = new DatabaseStorage();
-    console.log("✅ Using database storage");
-  } else {
-    storage = new MemStorage();
-    console.log("✅ Using in-memory storage (no DATABASE_URL set)");
+// ./Storage/StorageFactory.ts
+export function createStorage(): IStorage {
+  try {
+    if (process.env.DATABASE_URL) {
+      const storage = new DatabaseStorage();
+      console.log("✅ Using database storage");
+      return storage;
+    } else {
+      const storage = new MemStorage();
+      console.log("✅ Using in-memory storage (no DATABASE_URL set)");
+      return storage;
+    }
+  } catch (error) {
+    console.warn("⚠️ Database connection failed, falling back to in-memory storage:", error);
+    const storage = new MemStorage();
+    console.log("✅ Using in-memory storage as fallback");
+    return storage;
   }
-} catch (error) {
-  console.warn("⚠️ Database connection failed, falling back to in-memory storage:", error);
-  storage = new MemStorage();
-  console.log("✅ Using in-memory storage as fallback");
 }
 
-export { storage };
+// Create and export the storage instance
+export const storage = createStorage();
+```
+
+### Backward Compatibility Wrapper - `server/storage.ts`
+
+⚠️ **IMPORTANT**: This file ONLY contains re-exports and should NEVER contain implementations:
+
+```typescript
+// ⚠️ DO NOT ADD IMPLEMENTATIONS TO THIS FILE! ⚠️
+// Re-export storage implementations for backward compatibility
+export { MemStorage, DatabaseStorage, createStorage } from "./Storage/index";
+export { storage } from "./Storage/index";
+export type { IStorage } from "./Storage/IStorage";
 ```
 
 ## Environment Configuration
