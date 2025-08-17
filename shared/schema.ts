@@ -1093,7 +1093,8 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({
     .min(1, "Description is required")
     .max(200, "Description must not exceed 200 characters")
     .transform(val => val.trim()),
-  amount: z.string()
+  // Coerce numeric input to string so API can accept numbers or strings
+  amount: z.coerce.string()
     .regex(/^\d+(\.\d{1,2})?$/, "Amount must be a valid number with up to 2 decimal places")
     .refine(val => {
       const num = parseFloat(val);
