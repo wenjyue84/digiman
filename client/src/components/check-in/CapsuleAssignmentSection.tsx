@@ -32,6 +32,9 @@ export default function CapsuleAssignmentSection({
         <p className="text-xs text-orange-600">
           ⚠️ Grey {labels.lowerPlural} cannot be selected (may need cleaning, maintenance, or be temporarily unavailable).
         </p>
+        <p className="text-xs text-red-600">
+          🚫 Red {labels.lowerPlural} are not suitable for rent due to major maintenance issues.
+        </p>
       </div>
       {capsulesLoading ? (
         <Skeleton className="w-full h-10" />
@@ -145,6 +148,9 @@ export default function CapsuleAssignmentSection({
                       if (!capsule.isAvailable) {
                         statusIcon = " ⚠️";
                         statusText = " Unavailable";
+                      } else if (capsule.toRent === false) {
+                        statusIcon = " 🚫";
+                        statusText = " Not Suitable for Rent";
                       } else if (capsule.cleaningStatus === "cleaned") {
                         statusIcon = " ✨";
                         statusText = " Clean";
@@ -157,22 +163,24 @@ export default function CapsuleAssignmentSection({
                       }
                       
                       const cleaningStatus = statusIcon + statusText;
-                      const isDisabled = !capsule.canAssign;
+                      const isDisabled = !capsule.canAssign || capsule.toRent === false;
                       
                       const labelText = `${capsule.number} - ${position} ${preference}${suitability}${cleaningStatus}`.trim();
+                      const isNotSuitableForRent = capsule.toRent === false;
+                      
                       return (
                         <SelectItem 
                           key={capsule.number} 
                           value={capsule.number} 
                           textValue={labelText}
                           disabled={isDisabled}
-                          className={isDisabled ? "opacity-50 cursor-not-allowed text-gray-400" : ""}
+                          className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
                         >
                           <div className="flex items-center justify-between w-full">
-                            <span className={isDisabled ? "text-gray-400" : ""}>
+                            <span className={isNotSuitableForRent ? "text-red-600 font-medium" : isDisabled ? "text-gray-400" : ""}>
                               {capsule.number} - {position} {preference}{suitability}{cleaningStatus}
                             </span>
-                            <span className={`text-xs capitalize ${isDisabled ? "text-gray-400" : "text-gray-500"}`}>
+                            <span className={`text-xs capitalize ${isNotSuitableForRent ? "text-red-500" : isDisabled ? "text-gray-400" : "text-gray-500"}`}>
                               {capsule.section || 'unknown'}
                             </span>
                           </div>

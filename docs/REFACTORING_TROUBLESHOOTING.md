@@ -234,6 +234,28 @@ npm run dev
 ✅ **Team-ready** - multiple developers can work simultaneously  
 ✅ **Clean architecture** - separation of concerns achieved  
 
+### 7. Storage Module Import Errors
+
+**Problem:** `SyntaxError: The requested module './IStorage' does not provide an export named 'IStorage'`
+
+**Root Cause:** Using TypeScript path mappings (`@shared/*`) in Storage module files that work for compilation but fail at Node.js runtime.
+
+**Solution:**
+```typescript
+// ❌ Before - using path mapping
+import { type User } from "@shared/schema";
+
+// ✅ After - using relative paths  
+import { type User } from "../../shared/schema";
+```
+
+**Fix Applied:**
+- Updated `server/Storage/IStorage.ts` 
+- Updated `server/Storage/MemStorage.ts`
+- Changed all `@shared/*` imports to relative paths `../../shared/*`
+
+**Test Result:** `npm run dev` starts successfully
+
 ## Lessons Learned
 
 1. **Always backup** before major refactoring
@@ -242,6 +264,7 @@ npm run dev
 4. **Check credentials** - verify actual admin password in code
 5. **Path configuration** - ensure TypeScript paths are configured correctly
 6. **Port management** - kill conflicting processes before restart
+7. **Runtime vs Compile-time paths** - TypeScript path mappings work for compilation but Node.js runtime requires actual relative paths
 
 ---
 

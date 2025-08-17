@@ -21,6 +21,33 @@ router.get("/available", async (_req, res) => {
   }
 });
 
+// Get all available capsules with assignment eligibility info (for admin check-in UI)
+router.get("/available-with-status", async (_req, res) => {
+  try {
+    const checkedInGuests = await storage.getCheckedInGuests();
+    const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
+    
+    // Get all capsules and show all except those occupied by guests
+    // This allows admins to see unavailable capsules as disabled options
+    const allCapsules = await storage.getAllCapsules();
+    const displayableCapsules = allCapsules.filter(capsule => {
+      // Only skip if occupied by a guest
+      return !occupiedCapsules.has(capsule.number);
+    });
+
+    // Add assignment eligibility info to each capsule
+    const capsulesWithStatus = displayableCapsules.map(capsule => ({
+      ...capsule,
+      canAssign: capsule.cleaningStatus === "cleaned" && capsule.isAvailable && capsule.toRent !== false
+    }));
+
+    res.json(capsulesWithStatus);
+  } catch (error) {
+    console.error("Error in available-with-status endpoint:", error);
+    res.status(500).json({ message: "Failed to get available capsules with status" });
+  }
+});
+
 // Get all capsules with their status
 router.get("/", async (_req, res) => {
   try {

@@ -1,4 +1,3 @@
-// Storage.ts - Main storage implementation file (Phase 3 refactoring in progress)
 import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type AppSetting, type InsertAppSetting, type MarkCapsuleCleaned, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, users, guests, capsules, sessions, guestTokens, capsuleProblems, adminNotifications, appSettings, expenses } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
@@ -222,7 +221,6 @@ export class MemStorage implements IStorage {
         section: 'back',
         isAvailable: true,
         cleaningStatus: 'cleaned',
-        toRent: true,
         lastCleanedAt: null,
         lastCleanedBy: null,
         color: null,
@@ -241,7 +239,6 @@ export class MemStorage implements IStorage {
         section: 'middle',
         isAvailable: true,
         cleaningStatus: 'cleaned',
-        toRent: true,
         lastCleanedAt: null,
         lastCleanedBy: null,
         color: null,
@@ -260,7 +257,6 @@ export class MemStorage implements IStorage {
         section: 'front',
         isAvailable: true,
         cleaningStatus: 'cleaned',
-        toRent: true,
         lastCleanedAt: null,
         lastCleanedBy: null,
         color: null,

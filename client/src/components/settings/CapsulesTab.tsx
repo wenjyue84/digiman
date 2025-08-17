@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building, Plus, Edit, Trash2 } from "lucide-react";
+import { Building, Plus, Edit, Trash2, Filter } from "lucide-react";
 
 import { apiRequest } from "@/lib/queryClient";
 import { type CapsuleProblem, type PaginatedResponse } from "@shared/schema";
@@ -25,6 +26,7 @@ const capsuleFormSchema = z.object({
   section: z.enum(["back", "middle", "front"], {
     required_error: "Section must be 'back', 'middle', or 'front'",
   }),
+  toRent: z.boolean().default(true),
   color: z.string().max(50, "Color must not exceed 50 characters").optional(),
   purchaseDate: z.string().optional(),
   position: z.enum(["top", "bottom"]).optional(),
@@ -40,8 +42,17 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
   const [selectedCapsule, setSelectedCapsule] = useState<any>(null);
   const [problemsByCapsule, setProblemsByCapsule] = useState<Record<string, any[]>>({});
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('table');
+  const [toRentFilter, setToRentFilter] = useState<'all' | 'yes' | 'no'>('all');
 
-  const items = Array.isArray(capsules) ? capsules : [];
+  const allItems = Array.isArray(capsules) ? capsules : [];
+  
+  // Filter items based on toRent status
+  const items = allItems.filter(capsule => {
+    if (toRentFilter === 'all') return true;
+    if (toRentFilter === 'yes') return capsule.toRent !== false; // Default to true if undefined
+    if (toRentFilter === 'no') return capsule.toRent === false;
+    return true;
+  });
 
   // Fetch problems for capsules
   const { data: problemsResponse } = useQuery<PaginatedResponse<CapsuleProblem>>({
@@ -67,6 +78,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     defaultValues: {
       number: "",
       section: "middle",
+      toRent: true,
       color: "",
       purchaseDate: "",
       position: undefined,
@@ -79,6 +91,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     defaultValues: {
       number: "",
       section: "middle",
+      toRent: true,
       color: "",
       purchaseDate: "",
       position: undefined,
@@ -170,6 +183,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     editCapsuleForm.reset({
       number: capsule.number,
       section: capsule.section,
+      toRent: capsule.toRent !== undefined ? capsule.toRent : true,
       color: capsule.color || "",
       purchaseDate: capsule.purchaseDate ? new Date(capsule.purchaseDate).toISOString().split('T')[0] : "",
       position: capsule.position || "",
@@ -214,6 +228,21 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               {labels.plural} ({items.length})
             </CardTitle>
             <div className="flex items-center gap-3">
+              {/* To Rent Filter */}
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-600" />
+                <Select value={toRentFilter} onValueChange={(value: 'all' | 'yes' | 'no') => setToRentFilter(value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="yes">To Rent: Yes</SelectItem>
+                    <SelectItem value="no">To Rent: No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               {/* View Mode Toggle */}
               <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                 <Button
@@ -293,8 +322,8 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                             )}
                           </div>
                           <div className="flex flex-col gap-1">
-                            <Badge variant={c.isAvailable ? "default" : "destructive"}>
-                              {c.isAvailable ? "Available" : "Unavailable"}
+                            <Badge variant={c.toRent !== false ? "default" : "destructive"}>
+                              To Rent: {c.toRent !== false ? "Yes" : "No"}
                             </Badge>
                             {getActiveProblemsCount(c.number) > 0 && (
                               <Badge variant="destructive" className="text-xs">
@@ -389,8 +418,8 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="flex flex-col items-end gap-1">
-                            <Badge variant={c.isAvailable ? "default" : "destructive"}>
-                              {c.isAvailable ? "Available" : "Unavailable"}
+                            <Badge variant={c.toRent !== false ? "default" : "destructive"}>
+                              To Rent: {c.toRent !== false ? "Yes" : "No"}
                             </Badge>
                             {getActiveProblemsCount(c.number) > 0 && (
                               <Badge variant="destructive" className="text-xs">
@@ -432,7 +461,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Number</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Section</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Position</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">To Rent</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Problems</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Color</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-900">Purchase Date</th>
@@ -460,9 +489,9 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            <Badge variant={c.isAvailable ? "default" : "destructive"}>
-                              {c.isAvailable ? "Available" : "Unavailable"}
-                            </Badge>
+                            <span className={`font-medium ${c.toRent !== false ? "text-green-600" : "text-red-600"}`}>
+                              {c.toRent !== false ? "Yes" : "No"}
+                            </span>
                           </td>
                           <td className="py-3 px-4">
                             {getActiveProblemsCount(c.number) > 0 ? (
@@ -564,6 +593,29 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={createCapsuleForm.control}
+                name="toRent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        To Rent
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Check if this capsule is suitable for rent (uncheck if it has major maintenance issues)
+                      </p>
+                    </div>
                   </FormItem>
                 )}
               />
@@ -686,6 +738,29 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editCapsuleForm.control}
+                name="toRent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        To Rent
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Check if this capsule is suitable for rent (uncheck if it has major maintenance issues)
+                      </p>
+                    </div>
                   </FormItem>
                 )}
               />

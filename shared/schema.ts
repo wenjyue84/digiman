@@ -72,6 +72,7 @@ export const capsules = pgTable("capsules", {
   section: text("section").notNull(), // 'back', 'middle', 'front'
   isAvailable: boolean("is_available").notNull().default(true),
   cleaningStatus: text("cleaning_status").notNull().default("cleaned"), // 'cleaned', 'to_be_cleaned'
+  toRent: boolean("to_rent").notNull().default(true), // true = suitable for rent, false = not suitable for rent due to major issues
   lastCleanedAt: timestamp("last_cleaned_at"),
   lastCleanedBy: text("last_cleaned_by"),
   color: text("color"), // Color of the capsule
@@ -83,6 +84,7 @@ export const capsules = pgTable("capsules", {
   index("idx_capsules_section").on(table.section),
   index("idx_capsules_cleaning_status").on(table.cleaningStatus),
   index("idx_capsules_position").on(table.position),
+  index("idx_capsules_to_rent").on(table.toRent),
 ]));
 
 // Separate table for tracking all capsule problems
@@ -288,6 +290,7 @@ export const insertCapsuleSchema = createInsertSchema(capsules).omit({
   cleaningStatus: z.enum(["cleaned", "to_be_cleaned"], {
     required_error: "Cleaning status must be 'cleaned' or 'to_be_cleaned'",
   }).default("cleaned"),
+  toRent: z.boolean().default(true),
   lastCleanedAt: z.date().optional(),
   lastCleanedBy: z.string().max(50, "Cleaner name must not exceed 50 characters").optional(),
   color: z.string().max(50, "Color must not exceed 50 characters").optional(),
@@ -313,6 +316,7 @@ export const updateCapsuleSchema = z.object({
   cleaningStatus: z.enum(["cleaned", "to_be_cleaned"], {
     required_error: "Cleaning status must be 'cleaned' or 'to_be_cleaned'",
   }).optional(),
+  toRent: z.boolean().optional(),
   color: z.string().max(50, "Color must not exceed 50 characters").optional(),
   purchaseDate: z.date().optional(),
   position: z.enum(["top", "bottom"]).optional(),
