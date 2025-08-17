@@ -323,7 +323,7 @@ export default function CapsuleCleaningStatus() {
                   <TableCell>
                     <Badge className="bg-green-600 text-white">Clean</Badge>
                   </TableCell>
-                  <TableCell>{new Date(capsule.lastCleanedAt).toLocaleString()}</TableCell>
+                  <TableCell>{capsule.lastCleanedAt ? new Date(capsule.lastCleanedAt).toLocaleString() : 'Never'}</TableCell>
                   <TableCell>{capsule.lastCleanedBy}</TableCell>
                 </TableRow>
               ))}

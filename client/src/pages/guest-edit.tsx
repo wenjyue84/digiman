@@ -25,7 +25,7 @@ export default function GuestEdit() {
     resolver: zodResolver(guestSelfCheckinSchema),
     defaultValues: {
       nameAsInDocument: "",
-      gender: undefined,
+      gender: "male" as const,
       nationality: "",
       checkInDate: new Date().toISOString().split('T')[0],
       checkOutDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -64,7 +64,7 @@ export default function GuestEdit() {
 
         // Pre-fill form with existing data
         form.setValue("nameAsInDocument", data.guest.name || "");
-        form.setValue("gender", data.guest.gender || undefined);
+        form.setValue("gender", data.guest.gender || "male");
         form.setValue("nationality", data.guest.nationality || "");
         form.setValue("paymentMethod", data.guest.paymentMethod || undefined);
         

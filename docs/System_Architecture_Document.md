@@ -351,10 +351,49 @@ src/
 - **Resolution Tracking**: Complete problem lifecycle
 
 ### 8.4 Configuration Management
-- **System Settings**: Configurable system parameters
-- **Hot Reload**: Configuration changes without restart
+
+The Settings page provides comprehensive system configuration through a tabbed interface with tooltips for enhanced user experience:
+
+#### Settings Page Tab Structure
+1. **General Tab**: System-wide configuration
+   - Accommodation type settings (Capsule/Room/Dormitory)
+   - System messages and notifications
+   - Basic operational parameters
+
+2. **Capsules Tab**: Accommodation management
+   - Add, edit, and remove capsules/rooms
+   - Manage capsule availability status
+   - Configure physical sections and numbering
+
+3. **Maintenance Tab**: Issue tracking and resolution
+   - Report capsule problems and maintenance issues
+   - Track repair status and assignments
+   - Manage maintenance workflows
+
+4. **Guest Guide Tab**: Customer-facing content management
+   - Configure guest success page content
+   - Set check-in/check-out instructions
+   - Manage WiFi details and contact information
+   - HTML editor for custom page layouts
+   - Preview functionality for mobile/desktop views
+
+5. **Users Tab** (Available in "More" dropdown): User management
+   - Create and manage user accounts
+   - Set user roles and permissions (admin/staff)
+   - Edit user profiles and credentials
+
+6. **Tests Tab** (Available in "More" dropdown): System testing
+   - Run system validation tests
+   - Test business logic and data validation
+   - Performance monitoring and diagnostics
+
+#### Technical Features
+- **CSV-based Storage**: Settings persisted in CSV format for portability
+- **Hot Reload**: Configuration changes without system restart
 - **Default Values**: Pre-configured system defaults
 - **Environment Override**: Environment variable configuration
+- **Tooltips**: Comprehensive help system for all navigation elements
+- **Responsive Design**: Mobile-optimized interface with icon-only display
 
 ### 8.5 File Management
 - **Photo Uploads**: Guest and capsule photos

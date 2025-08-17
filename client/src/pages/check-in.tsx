@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useVisibilityQuery } from "@/hooks/useVisibilityQuery";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +22,8 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import CheckinConfirmation from "@/components/guest-checkin/CheckinConfirmation";
 import { NATIONALITIES } from "@/lib/nationalities";
 import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
+import GuestSuccessPageTemplate from "@/components/guest-success/GuestSuccessPageTemplate";
+import { useQuery } from "@tanstack/react-query";
 import {
   getCurrentDateTime,
   getNextDayDate,
@@ -51,6 +54,9 @@ export default function CheckIn() {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [completed, setCompleted] = useState(false);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string>("");
+  const [showSuccessPage, setShowSuccessPage] = useState(false);
+  const [checkedInGuest, setCheckedInGuest] = useState<any>(null);
+  const [assignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
   
   const { data: availableCapsules = [], isLoading: capsulesLoading } = useVisibilityQuery<Capsule[]>({
     queryKey: ["/api/capsules/available"],
@@ -68,6 +74,38 @@ export default function CheckIn() {
   // Get the next guest number
   const nextGuestNumber = getNextGuestNumber(guestData.data || []);
 
+  // Fetch settings for guest success page
+  const { data: settings } = useQuery<{
+    guideHostelPhotosUrl?: string;
+    guideGoogleMapsUrl?: string;
+    guideCheckinVideoUrl?: string;
+    guideCheckinTime?: string;
+    guideCheckoutTime?: string;
+    guideDoorPassword?: string;
+    guideImportantReminders?: string;
+    guideAddress?: string;
+    guideWifiName?: string;
+    guideWifiPassword?: string;
+    guideShowCapsuleIssues?: boolean;
+    guideIntro?: string;
+    guideCheckin?: string;
+    guideOther?: string;
+    guideFaq?: string;
+    guideShowIntro?: boolean;
+    guideShowAddress?: boolean;
+    guideShowWifi?: boolean;
+    guideShowCheckin?: boolean;
+    guideShowOther?: boolean;
+    guideShowFaq?: boolean;
+    guideShowTimeAccess?: boolean;
+    guideShowHostelPhotos?: boolean;
+    guideShowGoogleMaps?: boolean;
+    guideShowCheckinVideo?: boolean;
+  }>({
+    queryKey: ["/api/settings"],
+    enabled: true,
+  });
+
 
   const form = useForm<InsertGuest>({
     resolver: zodResolver(insertGuestSchema),
@@ -77,7 +115,7 @@ export default function CheckIn() {
               paymentAmount: "45", // Default to RM45 per night
       paymentMethod: "cash" as const,
       paymentCollector: defaultCollector,
-      gender: undefined,
+      gender: "male" as const,
       nationality: "Malaysian",
       phoneNumber: "",
       email: "",
@@ -104,7 +142,21 @@ export default function CheckIn() {
     }
   }, [user, form, defaultCollector, nextGuestNumber]);
 
-  // Auto-assign capsule based on gender
+  // Auto-assign capsule when form loads with default gender
+  useEffect(() => {
+    const currentGender = form.getValues("gender");
+    const currentCapsule = form.getValues("capsuleNumber");
+    
+    // Auto-assign capsule if we have a gender (default "male") but no capsule selected
+    if (currentGender && availableCapsules.length > 0 && !currentCapsule) {
+      const recommendedCapsule = getRecommendedCapsule(currentGender, availableCapsules);
+      if (recommendedCapsule) {
+        form.setValue("capsuleNumber", recommendedCapsule);
+      }
+    }
+  }, [availableCapsules, form]);
+
+  // Auto-assign capsule based on gender changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === "gender" && value.gender && availableCapsules.length > 0) {
@@ -117,18 +169,23 @@ export default function CheckIn() {
       }
     });
     return () => subscription.unsubscribe();
-  }, [availableCapsules, form]); // Removed 'form' from dependencies to prevent infinite loop
+  }, [availableCapsules, form]);
 
   const checkinMutation = useMutation({
     mutationFn: async (data: InsertGuest) => {
       const response = await apiRequest("POST", "/api/guests/checkin", data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
-      form.reset();
+      
+      // Set capsule number and show success page
+      setAssignedCapsuleNumber(result.capsuleNumber || checkedInGuest?.capsuleNumber || null);
+      setShowSuccessPage(true);
+      setCompleted(true);
+      
       toast({
         title: "Success",
         description: "Guest checked in successfully",
@@ -156,6 +213,8 @@ export default function CheckIn() {
         ...formDataToSubmit,
         ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
       } as InsertGuest;
+      // Store the guest data before clearing formDataToSubmit
+      setCheckedInGuest(formDataToSubmit);
       checkinMutation.mutate(payload);
       setShowCheckinConfirmation(false);
       setFormDataToSubmit(null);
@@ -173,7 +232,7 @@ export default function CheckIn() {
               paymentAmount: "45", // Reset to default RM45 per night
       paymentMethod: "cash" as const,
       paymentCollector: getDefaultCollector(user),
-      gender: undefined,
+      gender: "male" as const,
       nationality: "Malaysian",
       phoneNumber: "",
       email: "",
@@ -191,12 +250,312 @@ export default function CheckIn() {
     });
   };
 
+  const handleBackToForm = () => {
+    setShowSuccessPage(false);
+    setCheckedInGuest(null);
+    setAssignedCapsuleNumber(null);
+    setCurrentStep(1);
+    setCompleted(false);
+    form.reset({
+      name: getNextGuestNumber(guestData.data || []),
+      capsuleNumber: "",
+      paymentAmount: "45",
+      paymentMethod: "cash" as const,
+      paymentCollector: getDefaultCollector(user),
+      gender: "male" as const,
+      nationality: "Malaysian",
+      phoneNumber: "",
+      email: "",
+      idNumber: "",
+      emergencyContact: "",
+      emergencyPhone: "",
+      age: "",
+      expectedCheckoutDate: getNextDayDate(),
+    });
+    setProfilePhotoUrl("");
+  };
+
   // Handle payment amount preset selection
   const handlePaymentPreset = (amount: string) => {
     form.setValue("paymentAmount", amount);
   };
 
   const { timeString, dateString } = getCurrentDateTime();
+
+  // Action handlers for success page
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSaveAsPdf = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        title: "Error",
+        description: "Please allow popups to save as PDF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const guestName = checkedInGuest?.name || 'Guest';
+    const capsule = assignedCapsuleNumber || checkedInGuest?.capsuleNumber || '';
+    const checkinTime = settings?.guideCheckinTime || "3:00 PM";
+    const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
+    const doorPassword = settings?.guideDoorPassword || "1270#";
+    const importantReminders = settings?.guideImportantReminders || "• Please keep your room key safe\n• Quiet hours are from 10:00 PM to 7:00 AM\n• No smoking inside the building";
+
+    const pdfContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Check-in Information - Pelangi Capsule Hostel</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .logo { font-size: 24px; color: #f97316; margin-bottom: 10px; }
+          .section { margin-bottom: 20px; }
+          .section-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #374151; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+          .info-item { padding: 10px; background: #f9fafb; border-radius: 8px; }
+          .label { font-weight: bold; color: #374151; }
+          .value { color: #6b7280; }
+          .important { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">🌈 PELANGI CAPSULE HOSTEL</div>
+          <h1>Guest Information</h1>
+          <p>Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Guest Information</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="label">Name:</div>
+              <div class="value">${guestName}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Capsule:</div>
+              <div class="value">${capsule}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Access Information</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="label">Arrival Time:</div>
+              <div class="value">${checkinTime}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Departure Time:</div>
+              <div class="value">${checkoutTime}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Door Password:</div>
+              <div class="value">${doorPassword}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">Access Card:</div>
+              <div class="value">Collect from reception upon arrival</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Address</div>
+          <p>${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}</p>
+        </div>
+
+        <div class="important">
+          <div class="section-title">Important Reminders</div>
+          <p>${importantReminders}</p>
+        </div>
+
+        <div class="footer">
+          <p>For assistance, please contact reception</p>
+          <p>Enjoy your stay at Pelangi Capsule Hostel! 💼🌟</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(pdfContent);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+
+    toast({
+      title: "PDF Ready",
+      description: "Your information is ready to save as PDF",
+    });
+  };
+
+  const handleEmail = () => {
+    const guestName = checkedInGuest?.name || 'Guest';
+    const capsule = assignedCapsuleNumber || checkedInGuest?.capsuleNumber || '';
+    const checkinTime = settings?.guideCheckinTime || "3:00 PM";
+    const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
+    const doorPassword = settings?.guideDoorPassword || "1270#";
+    const importantReminders = settings?.guideImportantReminders || "• Please keep your room key safe\n• Quiet hours are from 10:00 PM to 7:00 AM\n• No smoking inside the building";
+
+    const subject = encodeURIComponent('Your Stay Information - Pelangi Capsule Hostel');
+    const body = encodeURIComponent(`
+Dear ${guestName},
+
+Welcome to Pelangi Capsule Hostel! Here is your stay information:
+
+🏨 PELANGI CAPSULE HOSTEL - GUEST INFORMATION
+
+Guest Name: ${guestName}
+Capsule Number: ${capsule}
+Arrival Time: ${checkinTime}
+Departure Time: ${checkoutTime}
+Door Password: ${doorPassword}
+
+⚠️ IMPORTANT REMINDERS:
+${importantReminders}
+
+📍 Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
+
+For any assistance, please contact reception.
+Enjoy your stay at Pelangi Capsule Hostel! 💼🌟
+
+---
+This email was generated by Pelangi Capsule Hostel Management System
+    `);
+
+    const mailtoLink = `mailto:${checkedInGuest?.email || ''}?subject=${subject}&body=${body}`;
+    window.open(mailtoLink, '_blank');
+    
+    toast({
+      title: "Email Client Opened",
+      description: "Your default email client has opened with the guest information",
+    });
+  };
+
+  const handleShare = () => {
+    const guestName = checkedInGuest?.name || 'Guest';
+    const capsule = assignedCapsuleNumber || checkedInGuest?.capsuleNumber || '';
+    const checkinTime = settings?.guideCheckinTime || "3:00 PM";
+    const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
+    const doorPassword = settings?.guideDoorPassword || "1270#";
+
+    const shareText = `🏨 Pelangi Capsule Hostel - Guest Information
+
+Name: ${guestName}
+Capsule: ${capsule}
+Arrival: ${checkinTime}
+Departure: ${checkoutTime}
+Door Password: ${doorPassword}
+
+Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
+
+Welcome to Pelangi Capsule Hostel! 🌈`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Pelangi Capsule Hostel - Guest Information',
+        text: shareText,
+      }).catch(() => {
+        // Fallback to copying to clipboard
+        navigator.clipboard.writeText(shareText).then(() => {
+          toast({
+            title: "Copied to Clipboard",
+            description: "Guest information has been copied to clipboard for sharing",
+          });
+        });
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast({
+          title: "Copied to Clipboard",
+          description: "Guest information has been copied to clipboard for sharing",
+        });
+      }).catch(() => {
+        // Final fallback: WhatsApp share
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+        window.open(whatsappUrl, '_blank');
+        toast({
+          title: "Opening WhatsApp",
+          description: "WhatsApp is opening with the guest information ready to share",
+        });
+      });
+    }
+  };
+
+  const handleBookAgain = () => {
+    // Use the expected checkout date as the new check-in date
+    const checkoutDate = checkedInGuest?.expectedCheckoutDate;
+    if (checkoutDate) {
+      const checkoutDateObj = new Date(checkoutDate);
+      const nextCheckinDate = checkoutDateObj.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      window.location.href = `/check-in?checkin=${nextCheckinDate}`;
+    } else {
+      // Fallback to check-in page with no preset date
+      window.location.href = '/check-in';
+    }
+  };
+
+  // Show success page after successful check-in
+  if (showSuccessPage && checkedInGuest) {
+    return (
+      <div className="min-h-screen py-8">
+        <div className="max-w-4xl mx-auto px-4 mb-6">
+          <div className="text-center mb-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Guest Successfully Checked In!</h1>
+            <p className="text-gray-600 mb-4">Share this information with the guest or use it for reference</p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={handleBackToForm}
+                    variant="outline"
+                    className="mb-4"
+                  >
+                    ← Back to Check-In Form
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Return to check-in form for new guest</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        
+        <GuestSuccessPageTemplate
+          viewMode="desktop"
+          isPreview={false}
+          guestInfo={{
+            capsuleNumber: assignedCapsuleNumber || undefined,
+            guestName: checkedInGuest.name,
+            phoneNumber: checkedInGuest.phoneNumber,
+            email: checkedInGuest.email,
+            expectedCheckoutDate: checkedInGuest.expectedCheckoutDate,
+          }}
+          assignedCapsuleNumber={assignedCapsuleNumber}
+          capsuleIssues={[]}
+          settings={settings}
+          actions={{
+            onPrint: handlePrint,
+            onSavePDF: handleSaveAsPdf,
+            onEmail: handleEmail,
+            onShare: handleShare,
+            onBookAgain: handleBookAgain,
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
@@ -228,15 +587,22 @@ export default function CheckIn() {
                   {...form.register("name")}
                 />
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => form.setValue("name", getNextGuestNumber(guestData.data || []))}
-                    className="text-xs"
-                  >
-                    Reset to {nextGuestNumber}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => form.setValue("name", getNextGuestNumber(guestData.data || []))}
+                        className="text-xs"
+                      >
+                        Reset to {nextGuestNumber}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Reset guest name to next auto-generated number</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
               {form.formState.errors.name && (
@@ -292,24 +658,38 @@ export default function CheckIn() {
             <CheckInDetailsSection form={form} />
 
             <div className="flex space-x-4">
-              <Button 
-                type="submit"
-                disabled={checkinMutation.isPending || availableCapsules.length === 0}
-                isLoading={checkinMutation.isPending}
-                className="flex-1 bg-hostel-secondary hover:bg-green-600 text-white font-medium"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Complete Check-In</span>
-                <span className="sm:hidden">Complete</span>
-              </Button>
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={handleClear}
-                className="px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Clear
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    type="submit"
+                    disabled={checkinMutation.isPending || availableCapsules.length === 0}
+                    isLoading={checkinMutation.isPending}
+                    className="flex-1 bg-hostel-secondary hover:bg-green-600 text-white font-medium"
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Complete Check-In</span>
+                    <span className="sm:hidden">Complete</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Process guest check-in and assign capsule</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    type="button"
+                    variant="outline"
+                    onClick={handleClear}
+                    className="px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Clear
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Clear all form fields and start over</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </form>
           </Form>

@@ -69,7 +69,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
       section: "middle",
       color: "",
       purchaseDate: "",
-      position: "",
+      position: undefined,
       remark: "",
     },
   });
@@ -81,7 +81,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
       section: "middle",
       color: "",
       purchaseDate: "",
-      position: "",
+      position: undefined,
       remark: "",
     },
   });
@@ -530,7 +530,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
             <DialogTitle>Add New {labels.singular}</DialogTitle>
           </DialogHeader>
           <Form {...createCapsuleForm}>
-            <form onSubmit={createCapsuleForm.handleSubmit(handleCreateCapsule)} className="space-y-4">
+            <form onSubmit={createCapsuleForm.handleSubmit((data: CapsuleFormData) => handleCreateCapsule(data))} className="space-y-4">
               <FormField
                 control={createCapsuleForm.control}
                 name="number"
@@ -652,7 +652,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
             <DialogTitle>Edit {labels.singular}</DialogTitle>
           </DialogHeader>
           <Form {...editCapsuleForm}>
-            <form onSubmit={editCapsuleForm.handleSubmit(handleUpdateCapsule)} className="space-y-4">
+            <form onSubmit={editCapsuleForm.handleSubmit((data: CapsuleFormData) => handleUpdateCapsule(data))} className="space-y-4">
               <FormField
                 control={editCapsuleForm.control}
                 name="number"

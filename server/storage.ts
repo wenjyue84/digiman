@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type AppSetting, type InsertAppSetting, type MarkCapsuleCleaned, type PaginationParams, type PaginatedResponse, users, guests, capsules, sessions, guestTokens, capsuleProblems, adminNotifications, appSettings } from "@shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type AppSetting, type InsertAppSetting, type MarkCapsuleCleaned, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, users, guests, capsules, sessions, guestTokens, capsuleProblems, adminNotifications, appSettings, expenses } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
@@ -33,6 +33,7 @@ export interface IStorage {
   getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }>;
   getAvailableCapsules(): Promise<Capsule[]>;
   getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined>;
+  getGuestByToken(token: string): Promise<Guest | undefined>;
   
   // Capsule management methods
   getAllCapsules(): Promise<Capsule[]>;
@@ -79,12 +80,19 @@ export interface IStorage {
   setSetting(key: string, value: string, description?: string, updatedBy?: string): Promise<AppSetting>;
   getAllSettings(): Promise<AppSetting[]>;
   getGuestTokenExpirationHours(): Promise<number>;
+  
+  // Expense management methods
+  getExpenses(): Promise<Expense[]>;
+  addExpense(expense: InsertExpense & { createdBy: string }): Promise<Expense>;
+  updateExpense(expense: UpdateExpense): Promise<Expense | undefined>;
+  deleteExpense(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private guests: Map<string, Guest>;
   private capsules: Map<string, Capsule>;
+  private expenses: Map<string, Expense>;
   private sessions: Map<string, Session>;
   private guestTokens: Map<string, GuestToken>;
   private capsuleProblems: Map<string, CapsuleProblem>;
@@ -96,6 +104,7 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.guests = new Map();
     this.capsules = new Map();
+    this.expenses = new Map();
     this.sessions = new Map();
     this.guestTokens = new Map();
     this.capsuleProblems = new Map();
@@ -183,7 +192,7 @@ export class MemStorage implements IStorage {
         idNumber: null,
         emergencyContact: null,
         emergencyPhone: null,
-        age: guest.age,
+        age: guest.age?.toString() || null,
         profilePhotoUrl: null,
         selfCheckinToken: null,
       };
@@ -390,6 +399,7 @@ export class MemStorage implements IStorage {
       age: insertGuest.age || null,
       profilePhotoUrl: insertGuest.profilePhotoUrl || null,
       selfCheckinToken: insertGuest.selfCheckinToken || null,
+      status: insertGuest.status || null,
     };
     this.guests.set(id, guest);
     return guest;
@@ -570,6 +580,11 @@ export class MemStorage implements IStorage {
         guest.name === name && 
         guest.isCheckedIn === true
       );
+  }
+
+  async getGuestByToken(token: string): Promise<Guest | undefined> {
+    return Array.from(this.guests.values())
+      .find(guest => guest.selfCheckinToken === token);
   }
 
   // Cleaning management methods
@@ -925,6 +940,56 @@ export class MemStorage implements IStorage {
       },
     };
   }
+
+  // Expense management methods
+  async getExpenses(): Promise<Expense[]> {
+    return Array.from(this.expenses.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async addExpense(expense: InsertExpense & { createdBy: string }): Promise<Expense> {
+    const id = randomUUID();
+    const now = new Date();
+    const newExpense: Expense = {
+      id,
+      description: expense.description,
+      amount: expense.amount,
+      category: expense.category,
+      subcategory: expense.subcategory || null,
+      date: expense.date,
+      notes: expense.notes || null,
+      receiptPhotoUrl: expense.receiptPhotoUrl || null,
+      itemPhotoUrl: expense.itemPhotoUrl || null,
+      createdBy: expense.createdBy,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    this.expenses.set(id, newExpense);
+    return newExpense;
+  }
+
+  async updateExpense(expense: UpdateExpense): Promise<Expense | undefined> {
+    const existingExpense = this.expenses.get(expense.id!);
+    if (!existingExpense) {
+      return undefined;
+    }
+
+    const updatedExpense: Expense = {
+      ...existingExpense,
+      ...expense,
+      id: existingExpense.id,
+      createdBy: existingExpense.createdBy,
+      createdAt: existingExpense.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.expenses.set(expense.id!, updatedExpense);
+    return updatedExpense;
+  }
+
+  async deleteExpense(id: string): Promise<boolean> {
+    return this.expenses.delete(id);
+  }
 }
 
 // Database Storage Implementation
@@ -1228,6 +1293,16 @@ class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getGuestByToken(token: string): Promise<Guest | undefined> {
+    const result = await this.db
+      .select()
+      .from(guests)
+      .where(eq(guests.selfCheckinToken, token))
+      .limit(1);
+    
+    return result[0];
+  }
+
   // Capsule problem methods for DatabaseStorage
   async createCapsuleProblem(problem: InsertCapsuleProblem): Promise<CapsuleProblem> {
     const result = await this.db.insert(capsuleProblems).values(problem).returning();
@@ -1436,6 +1511,56 @@ class DatabaseStorage implements IStorage {
     const result = await this.db
       .delete(appSettings)
       .where(eq(appSettings.key, key))
+      .returning();
+    return result.length > 0;
+  }
+
+  // Expense management methods
+  async getExpenses(): Promise<Expense[]> {
+    return await this.db.select().from(expenses).orderBy(expenses.createdAt);
+  }
+
+  async addExpense(expense: InsertExpense & { createdBy: string }): Promise<Expense> {
+    const result = await this.db
+      .insert(expenses)
+      .values({
+        description: expense.description,
+        amount: expense.amount,
+        category: expense.category,
+        subcategory: expense.subcategory || null,
+        date: expense.date,
+        notes: expense.notes || null,
+        receiptPhotoUrl: expense.receiptPhotoUrl || null,
+        itemPhotoUrl: expense.itemPhotoUrl || null,
+        createdBy: expense.createdBy,
+      })
+      .returning();
+    return result[0];
+  }
+
+  async updateExpense(expense: UpdateExpense): Promise<Expense | undefined> {
+    const updateData: any = { updatedAt: new Date() };
+    if (expense.description !== undefined) updateData.description = expense.description;
+    if (expense.amount !== undefined) updateData.amount = expense.amount;
+    if (expense.category !== undefined) updateData.category = expense.category;
+    if (expense.subcategory !== undefined) updateData.subcategory = expense.subcategory;
+    if (expense.date !== undefined) updateData.date = expense.date;
+    if (expense.notes !== undefined) updateData.notes = expense.notes;
+    if (expense.receiptPhotoUrl !== undefined) updateData.receiptPhotoUrl = expense.receiptPhotoUrl;
+    if (expense.itemPhotoUrl !== undefined) updateData.itemPhotoUrl = expense.itemPhotoUrl;
+
+    const result = await this.db
+      .update(expenses)
+      .set(updateData)
+      .where(eq(expenses.id, expense.id!))
+      .returning();
+    return result[0];
+  }
+
+  async deleteExpense(id: string): Promise<boolean> {
+    const result = await this.db
+      .delete(expenses)
+      .where(eq(expenses.id, id))
       .returning();
     return result.length > 0;
   }

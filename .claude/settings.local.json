@@ -16,8 +16,18 @@
       "Bash(npm install:*)",
       "Bash(node:*)",
       "Bash(npx tsx:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx:*)",
+      "Bash(npm start)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run:*)",
+      "Bash(npm run:*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\d C:\\Users\\Jyue\\Desktop",
+      "C:\\c\\Users\\Jyue\\Desktop"
+    ]
   }
 }

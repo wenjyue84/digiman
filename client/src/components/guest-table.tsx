@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserMinus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -163,16 +164,25 @@ export default function GuestTable() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleCheckout(guest.id)}
-                        disabled={checkoutMutation.isPending}
-                        className="text-hostel-error hover:text-red-700 font-medium"
-                      >
-                        <UserMinus className="mr-1 h-4 w-4" />
-                        Check Out
-                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleCheckout(guest.id)}
+                              disabled={checkoutMutation.isPending}
+                              className="text-hostel-error hover:text-red-700 font-medium"
+                            >
+                              <UserMinus className="mr-1 h-4 w-4" />
+                              Check Out
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Check out {guest.name} and free their capsule</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </td>
                   </tr>
                 ))}

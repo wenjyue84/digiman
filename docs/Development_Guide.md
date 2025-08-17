@@ -371,6 +371,69 @@ const configSchema = z.object({
 });
 ```
 
+### Settings Page Development
+
+The Settings page is organized into multiple tabs for better user experience and organization:
+
+#### Tab Structure
+1. **General Tab** (`general`): Basic system configuration
+2. **Capsules Tab** (`capsules`): Accommodation management  
+3. **Maintenance Tab** (`maintenance`): Issue tracking
+4. **Guest Guide Tab** (`guide`): Customer-facing content
+5. **Users Tab** (`users`): Available in "More" dropdown
+6. **Tests Tab** (`tests`): Available in "More" dropdown
+
+#### Adding New Settings Tabs
+```typescript
+// 1. Create new tab component in /client/src/components/settings/
+export default function NewTab({ prop1, prop2 }: any) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>New Tab Configuration</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Tab content */}
+      </CardContent>
+    </Card>
+  );
+}
+
+// 2. Import and add to settings.tsx
+import NewTab from "../components/settings/NewTab";
+
+// 3. Add TabsTrigger in TabsList (or in DropdownMenu for secondary tabs)
+<TabsTrigger value="newtab" className="flex items-center gap-2">
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
+        <Icon className="h-3 w-3 text-purple-600" />
+      </div>
+    </TooltipTrigger>
+    <TooltipContent side="bottom">Descriptive tooltip for the new tab</TooltipContent>
+  </Tooltip>
+  <span className="hidden md:inline">New Tab</span>
+</TabsTrigger>
+
+// 4. Add TabsContent section
+<TabsContent value="newtab" className="space-y-6">
+  <NewTab prop1={value1} prop2={value2} />
+</TabsContent>
+```
+
+#### Settings Tab Guidelines
+- **Use Tooltips**: All navigation elements should have descriptive tooltips
+- **Responsive Design**: Tabs should work on both desktop and mobile
+- **Consistent Styling**: Follow existing color scheme and icon patterns
+- **Proper Data Flow**: Use React Query for data fetching and mutations
+- **Error Handling**: Include proper error states and user feedback
+
+#### Important Notes
+- **Users and Tests tabs**: Located in "More" dropdown to maintain clean tab layout
+- **Tooltip positioning**: Use `side="bottom"` for main tabs, `side="right"` for dropdown items
+- **Mobile compatibility**: Hide text labels on small screens, show only icons
+- **Grid layout**: TabsList uses `grid-cols-5` (4 main tabs + 1 dropdown)
+
 ---
 
 ## 8. File Management

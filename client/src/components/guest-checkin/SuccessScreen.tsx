@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -5,6 +6,7 @@ import { Printer, Send, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useI18n } from "@/lib/i18n";
 import GuestSuccessPageTemplate from "@/components/guest-success/GuestSuccessPageTemplate";
+import GuestExtendDialog from "@/components/guest-success/GuestExtendDialog";
 
 interface SuccessScreenProps {
   guestInfo: {
@@ -29,6 +31,16 @@ interface SuccessScreenProps {
   handlePrint: () => void;
   handleSaveAsPdf: () => void;
   handleSendEmail: () => void;
+  guestData?: {
+    id: string;
+    name: string;
+    capsuleNumber: string;
+    expectedCheckoutDate: string;
+    paymentAmount?: string;
+    notes?: string;
+    isPaid?: boolean;
+  } | null;
+  onRefresh?: () => void;
 }
 
 export default function SuccessScreen({
@@ -46,11 +58,21 @@ export default function SuccessScreen({
   handlePrint,
   handleSaveAsPdf,
   handleSendEmail,
+  guestData,
+  onRefresh,
 }: SuccessScreenProps) {
   const { t } = useI18n();
+  const [showExtendDialog, setShowExtendDialog] = useState(false);
+  
   // Derive a reliable capsule number
   const storedCapsuleNumber = (typeof window !== 'undefined') ? localStorage.getItem('lastAssignedCapsule') : null;
   const displayCapsuleNumber = assignedCapsuleNumber || guestInfo?.capsuleNumber || storedCapsuleNumber || "";
+  
+  // Get current token for extend functionality
+  const getCurrentToken = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token') || '';
+  };
   if (process.env.NODE_ENV !== 'production') {
     // Lightweight debug to help diagnose missing capsule numbers during development
     console.log('[SuccessScreen] capsule numbers', {
@@ -61,6 +83,60 @@ export default function SuccessScreen({
     });
   }
 
+  // Handle share action
+  const handleShare = () => {
+    const guestName = guestInfo?.guestName || 'Guest';
+    const capsule = displayCapsuleNumber || '';
+    const checkinTime = settings?.guideCheckinTime || "3:00 PM";
+    const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
+    const doorPassword = settings?.guideDoorPassword || "1270#";
+
+    const shareText = `🏨 Pelangi Capsule Hostel - My Stay Information
+
+Name: ${guestName}
+Capsule: ${capsule}
+Arrival: ${checkinTime}
+Departure: ${checkoutTime}
+Door Password: ${doorPassword}
+
+Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
+
+Welcome to Pelangi Capsule Hostel! 🌈`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Pelangi Capsule Hostel - My Stay Information',
+        text: shareText,
+      }).catch(() => {
+        navigator.clipboard.writeText(shareText).then(() => {
+          // Toast notification would be great here but we don't have access to toast in this component
+        });
+      });
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        // Fallback: copied to clipboard
+      }).catch(() => {
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+        window.open(whatsappUrl, '_blank');
+      });
+    }
+  };
+
+  // Handle extend stay action
+  const handleExtend = () => {
+    setShowExtendDialog(true);
+  };
+  
+  // Handle extend success (refresh the page data)
+  const handleExtendSuccess = () => {
+    if (onRefresh) {
+      onRefresh();
+    } else {
+      // Fallback: reload the page
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen py-8">
       <GuestSuccessPageTemplate
@@ -70,6 +146,16 @@ export default function SuccessScreen({
         assignedCapsuleNumber={assignedCapsuleNumber}
         capsuleIssues={capsuleIssues}
         settings={settings}
+        actions={{
+          onPrint: handlePrint,
+          onSavePDF: handleSaveAsPdf,
+          onEmail: () => {
+            setEmailForSlip(guestInfo?.email || "");
+            setShowEmailDialog(true);
+          },
+          onShare: handleShare,
+          onExtend: handleExtend,
+        }}
       />
 
       {/* Edit Section */}
@@ -98,38 +184,6 @@ export default function SuccessScreen({
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="max-w-2xl mx-auto px-4 mt-6">
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button
-            variant="outline"
-            onClick={handlePrint}
-            className="flex items-center gap-2"
-          >
-            <Printer className="h-4 w-4" />
-            {t.printCheckInSlip}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setEmailForSlip(guestInfo?.email || "");
-              setShowEmailDialog(true);
-            }}
-            className="flex items-center gap-2"
-          >
-            <Send className="h-4 w-4" />
-            Email
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleSaveAsPdf}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {t.saveAsPdf}
-          </Button>
-        </div>
-      </div>
       
       {/* Email Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
@@ -170,6 +224,15 @@ export default function SuccessScreen({
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Extend Stay Dialog */}
+      <GuestExtendDialog
+        guest={guestData}
+        token={getCurrentToken()}
+        open={showExtendDialog}
+        onOpenChange={setShowExtendDialog}
+        onSuccess={handleExtendSuccess}
+      />
     </div>
   );
 }

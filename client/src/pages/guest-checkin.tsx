@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { UserPlus, User, Phone, Mail, Calendar, MapPin, CheckCircle, Upload, Camera, Globe, Video, CreditCard, Users, Banknote, DollarSign, HelpCircle, Info, Clock, Printer, Send, Wifi, Download } from "lucide-react";
+// Icons will be imported dynamically where needed to reduce initial bundle size
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { guestSelfCheckinSchema, type GuestSelfCheckin } from "@shared/schema";
@@ -16,23 +16,29 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { ObjectUploader } from "@/components/ObjectUploader";
+// Lazy load heavy data and assets
+const lazyLoadNationalities = () => import("@/lib/nationalities").then(m => m.NATIONALITIES);
+const lazyLoadQrCode = () => import("@assets/WhatsApp Image 2025-08-08 at 19.49.44_5bbbcb18_1754653834112.jpg");
+
 import type { UploadResult } from "@uppy/core";
-import qrCodeImage from "@assets/WhatsApp Image 2025-08-08 at 19.49.44_5bbbcb18_1754653834112.jpg";
-import { NATIONALITIES } from "@/lib/nationalities";
 import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
-import SuccessScreen from "@/components/guest-checkin/SuccessScreen";
 import LoadingScreen from "@/components/guest-checkin/LoadingScreen";
 import { GuestInfoStep } from "@/components/guest-checkin/GuestInfoStep";
 import { EmergencyContactSection } from "@/components/guest-checkin/EmergencyContactSection";
 import { HelpFAQSection } from "@/components/guest-checkin/HelpFAQSection";
 import { AdditionalNotesSection } from "@/components/guest-checkin/AdditionalNotesSection";
 import { PaymentInformationSection } from "@/components/guest-checkin/PaymentInformationSection";
-import { DocumentUploadSection } from "@/components/guest-checkin/DocumentUploadSection";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTokenValidation } from "@/hooks/guest-checkin/useTokenValidation";
 import { useAutoSave } from "@/hooks/guest-checkin/useAutoSave";
 import CountdownTimer from "@/components/guest-checkin/CountdownTimer";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle, HelpCircle, Camera, Upload, Calendar, MapPin } from "lucide-react";
+
+// Lazy load heavy components for better performance
+const LazyObjectUploader = React.lazy(() => import("@/components/ObjectUploader").then(module => ({ default: module.ObjectUploader })));
+const LazySuccessScreen = React.lazy(() => import("@/components/guest-checkin/SuccessScreen"));
+const LazyDocumentUploadSection = React.lazy(() => import("@/components/guest-checkin/DocumentUploadSection").then(module => ({ default: module.DocumentUploadSection })));
 
 // Format a Date object into YYYY-MM-DD string in the user's local timezone
 const formatDateInput = (date: Date): string => {
@@ -93,7 +99,13 @@ export default function GuestCheckin() {
   const [localCanEdit, setCanEdit] = useState(false);
   const [localAssignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
 
-  // Fetch settings for quick links and time/access info
+  // Lazy loading states for performance optimization
+  const [nationalitiesLoaded, setNationalitiesLoaded] = useState(false);
+  const [nationalities, setNationalities] = useState<string[]>([]);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [showPaymentSection, setShowPaymentSection] = useState(false);
+
+  // Fetch settings for quick links and time/access info - non-blocking
   const { data: settings } = useQuery<{
     guideHostelPhotosUrl?: string;
     guideGoogleMapsUrl?: string;
@@ -109,6 +121,9 @@ export default function GuestCheckin() {
   }>({
     queryKey: ["/api/settings"],
     enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes - settings don't change often
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
   });
 
   const form = useForm<GuestSelfCheckin>({
@@ -116,7 +131,7 @@ export default function GuestCheckin() {
     defaultValues: {
       nameAsInDocument: "",
       phoneNumber: "",
-      gender: undefined,
+      gender: "male" as const,
       nationality: "Malaysian",
       checkInDate: (() => {
         // Always get today's date fresh when form initializes (local timezone)
@@ -216,6 +231,38 @@ export default function GuestCheckin() {
   } = useTokenValidation({ t, form });
   
   useAutoSave({ form, token });
+
+  // Clean check-in form - no pre-filled document handling needed
+
+  // Lazy load nationalities when nationality field is focused or expanded
+  useEffect(() => {
+    if (!nationalitiesLoaded) {
+      lazyLoadNationalities().then((data) => {
+        setNationalities(data);
+        setNationalitiesLoaded(true);
+      }).catch(() => {
+        // Fallback to basic options
+        setNationalities(['Malaysian', 'Singaporean', 'Indonesian', 'Thai', 'Other']);
+        setNationalitiesLoaded(true);
+      });
+    }
+  }, [nationalitiesLoaded]);
+
+  // Show document upload section only when user scrolls down or interacts with form
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowDocumentUpload(true);
+    }, 1000); // Load after 1 second for better initial load
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show payment section only after basic info is partially filled
+  useEffect(() => {
+    const hasBasicInfo = form.watch("nameAsInDocument") || form.watch("phoneNumber");
+    if (hasBasicInfo && !showPaymentSection) {
+      setShowPaymentSection(true);
+    }
+  }, [form.watch("nameAsInDocument"), form.watch("phoneNumber"), showPaymentSection]);
 
   // Ensure dates are always set to today/tomorrow if not already set
   useEffect(() => {
@@ -319,6 +366,17 @@ export default function GuestCheckin() {
 
       if (response.ok) {
         const result = await response.json();
+        
+        // Redirect to permanent success page that can be accessed forever
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentToken = urlParams.get('token');
+        if (currentToken) {
+          // Redirect to the permanent success page
+          window.location.href = `/guest-success?token=${currentToken}`;
+          return;
+        }
+        
+        // Fallback to old behavior if no token
         setIsSuccess(true);
         setEditToken(result.editToken);
         setEditExpiresAt(new Date(result.editExpiresAt));
@@ -536,7 +594,22 @@ export default function GuestCheckin() {
   };
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <h2 className="text-2xl font-bold text-gray-900">Preparing Your Check-in Form</h2>
+          <p className="text-gray-600 max-w-md">
+            We're validating your check-in link and loading your personalized form. This should only take a moment.
+          </p>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-3/4 mx-auto" />
+            <Skeleton className="h-4 w-1/2 mx-auto" />
+            <Skeleton className="h-4 w-2/3 mx-auto" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Print function
@@ -738,22 +811,32 @@ This email was generated by Pelangi Capsule Hostel Management System
 
   if (isSuccess) {
     return (
-      <SuccessScreen
-        guestInfo={guestInfo}
-        settings={settings}
-        assignedCapsuleNumber={localAssignedCapsuleNumber || assignedCapsuleNumber}
-        capsuleIssues={capsuleIssues}
-        canEdit={canEdit}
-        editExpiresAt={editExpiresAt}
-        editToken={editToken}
-        showEmailDialog={showEmailDialog}
-        setShowEmailDialog={setShowEmailDialog}
-        emailForSlip={emailForSlip}
-        setEmailForSlip={setEmailForSlip}
-        handlePrint={handlePrint}
-        handleSaveAsPdf={handleSaveAsPdf}
-        handleSendEmail={handleSendEmail}
-      />
+      <Suspense fallback={
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Loading Success Page...</h2>
+            <Skeleton className="h-8 w-64 mx-auto" />
+          </div>
+        </div>
+      }>
+        <LazySuccessScreen
+          guestInfo={guestInfo}
+          settings={settings}
+          assignedCapsuleNumber={localAssignedCapsuleNumber || assignedCapsuleNumber}
+          capsuleIssues={capsuleIssues}
+          canEdit={canEdit}
+          editExpiresAt={editExpiresAt}
+          editToken={editToken}
+          showEmailDialog={showEmailDialog}
+          setShowEmailDialog={setShowEmailDialog}
+          emailForSlip={emailForSlip}
+          setEmailForSlip={setEmailForSlip}
+          handlePrint={handlePrint}
+          handleSaveAsPdf={handleSaveAsPdf}
+          handleSendEmail={handleSendEmail}
+        />
+      </Suspense>
     );
   }
 
@@ -769,6 +852,8 @@ This email was generated by Pelangi Capsule Hostel Management System
               <div className="mt-4">
                 <LanguageSwitcher variant="compact" className="mx-auto" />
               </div>
+
+              {/* Clean guest check-in interface */}
               {plannedCheckinDateTime && (
                 <div className="mt-3 flex justify-center">
                   <CountdownTimer targetDate={plannedCheckinDateTime} />
@@ -882,16 +967,36 @@ This email was generated by Pelangi Capsule Hostel Management System
               />
 
               {/* Identity Documents */}
-              <DocumentUploadSection 
-                form={form}
-                errors={form.formState.errors}
-                t={t}
-                isMalaysian={isMalaysian}
-                icDocumentUrl={icDocumentUrl}
-                passportDocumentUrl={passportDocumentUrl}
-                handleGetUploadParameters={handleGetUploadParameters}
-                handleDocumentUpload={handleDocumentUpload}
-              />
+              {showDocumentUpload ? (
+                <Suspense fallback={
+                  <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                }>
+                  <LazyDocumentUploadSection 
+                    form={form}
+                    errors={form.formState.errors}
+                    t={t}
+                    isMalaysian={isMalaysian}
+                    icDocumentUrl={icDocumentUrl}
+                    passportDocumentUrl={passportDocumentUrl}
+                    handleGetUploadParameters={handleGetUploadParameters}
+                    handleDocumentUpload={handleDocumentUpload}
+                  />
+                </Suspense>
+              ) : (
+                <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="text-center text-gray-600">
+                    <Clock className="h-8 w-8 mx-auto mb-2" />
+                    <p>Document upload section loading...</p>
+                  </div>
+                </div>
+              )}
 
               {/* Emergency Contact */}
               <EmergencyContactSection 
@@ -908,12 +1013,21 @@ This email was generated by Pelangi Capsule Hostel Management System
               />
 
               {/* Payment Information */}
-              <PaymentInformationSection 
-                form={form}
-                errors={form.formState.errors}
-                t={t}
-                watchedPaymentMethod={watchedPaymentMethod}
-              />
+              {showPaymentSection ? (
+                <PaymentInformationSection 
+                  form={form}
+                  errors={form.formState.errors}
+                  t={t}
+                  watchedPaymentMethod={watchedPaymentMethod}
+                />
+              ) : (
+                <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="text-center text-gray-600">
+                    <Clock className="h-8 w-8 mx-auto mb-2" />
+                    <p>Payment section will appear after filling basic information...</p>
+                  </div>
+                </div>
+              )}
 
               {/* Help & FAQ */}
               <HelpFAQSection t={t} />

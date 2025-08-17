@@ -12,12 +12,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { NATIONALITIES } from "@/lib/nationalities";
 
 import type { Guest, PaginatedResponse } from "@shared/schema";
 import { isGuestPaid } from "@/lib/guest";
@@ -84,15 +87,108 @@ export default function CheckOut() {
   
   const guests = guestsResponse?.data || [];
 
+  // Helper functions for date shortcuts
+  const getDateString = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const getToday = () => getDateString(new Date());
+  const getYesterday = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    return getDateString(date);
+  };
+  const getTomorrow = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return getDateString(date);
+  };
+
+  const setCheckinDateShortcut = (type: 'today' | 'yesterday' | 'tomorrow') => {
+    let dateValue = '';
+    switch (type) {
+      case 'today':
+        dateValue = getToday();
+        break;
+      case 'yesterday':
+        dateValue = getYesterday();
+        break;
+      case 'tomorrow':
+        dateValue = getTomorrow();
+        break;
+    }
+    setFilters(prev => ({
+      ...prev,
+      checkinDateFrom: dateValue,
+      checkinDateTo: dateValue
+    }));
+  };
+
+  const setExpectedCheckoutDateShortcut = (type: 'today' | 'yesterday' | 'tomorrow') => {
+    let dateValue = '';
+    switch (type) {
+      case 'today':
+        dateValue = getToday();
+        break;
+      case 'yesterday':
+        dateValue = getYesterday();
+        break;
+      case 'tomorrow':
+        dateValue = getTomorrow();
+        break;
+    }
+    setFilters(prev => ({
+      ...prev,
+      expectedCheckoutDateFrom: dateValue,
+      expectedCheckoutDateTo: dateValue
+    }));
+  };
+
+  // Helper function to calculate length of stay in days
+  const getLengthOfStayDays = (checkinTime: string): number => {
+    const checkin = new Date(checkinTime);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - checkin.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // Get unique capsule numbers from current guests
+  const uniqueCapsules = useMemo(() => {
+    const capsules = [...new Set(guests.map(g => g.capsuleNumber))].sort((a, b) => {
+      // Sort capsules numerically if they're numbers, otherwise alphabetically
+      const aNum = parseInt(a);
+      const bNum = parseInt(b);
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return aNum - bNum;
+      }
+      return a.localeCompare(b);
+    });
+    return capsules;
+  }, [guests]);
+
+  // Use the standardized nationality list from the system
+  const availableNationalities = useMemo(() => {
+    return NATIONALITIES.map(n => n.value).sort();
+  }, []);
+
   // Filters (replicated from Dashboard)
   const [filters, setFilters] = useState({
     gender: 'any' as 'any' | 'male' | 'female',
     nationality: 'any' as 'any' | 'malaysian' | 'non-malaysian',
+    specificNationality: 'any' as string,
+    capsuleNumber: 'any' as string,
+    lengthOfStayMin: '',
+    lengthOfStayMax: '',
     outstandingOnly: false,
     checkoutTodayOnly: false,
+    checkinDateFrom: '',
+    checkinDateTo: '',
+    expectedCheckoutDateFrom: '',
+    expectedCheckoutDateTo: '',
   });
 
-  const hasActiveGuestFilters = filters.gender !== 'any' || filters.nationality !== 'any' || filters.outstandingOnly || filters.checkoutTodayOnly;
+  const hasActiveGuestFilters = filters.gender !== 'any' || filters.nationality !== 'any' || filters.specificNationality !== 'any' || filters.capsuleNumber !== 'any' || filters.lengthOfStayMin || filters.lengthOfStayMax || filters.outstandingOnly || filters.checkoutTodayOnly || filters.checkinDateFrom || filters.checkinDateTo || filters.expectedCheckoutDateFrom || filters.expectedCheckoutDateTo;
 
   const isDateToday = (dateStr?: string) => {
     if (!dateStr) return false;
@@ -110,11 +206,46 @@ export default function CheckOut() {
 
   const filteredGuests = useMemo(() => {
     return guests.filter((g) => {
+      // Gender filtering
       if (filters.gender !== 'any' && g.gender !== filters.gender) return false;
+      
+      // General nationality filtering (Malaysian vs Non-Malaysian)
       if (filters.nationality === 'malaysian' && g.nationality !== 'Malaysian') return false;
       if (filters.nationality === 'non-malaysian' && g.nationality === 'Malaysian') return false;
+      
+      // Specific nationality filtering
+      if (filters.specificNationality !== 'any' && g.nationality !== filters.specificNationality) return false;
+      
+      // Capsule number filtering
+      if (filters.capsuleNumber !== 'any' && g.capsuleNumber !== filters.capsuleNumber) return false;
+      
+      // Length of stay filtering (in days)
+      const lengthOfStay = getLengthOfStayDays(g.checkinTime.toString());
+      if (filters.lengthOfStayMin && lengthOfStay < parseInt(filters.lengthOfStayMin)) return false;
+      if (filters.lengthOfStayMax && lengthOfStay > parseInt(filters.lengthOfStayMax)) return false;
+      
+      // Payment and checkout status filtering
       if (filters.outstandingOnly && isGuestPaid(g)) return false;
       if (filters.checkoutTodayOnly && !isDateToday(g.expectedCheckoutDate || undefined)) return false;
+      
+      // Check-in date filtering
+      if (filters.checkinDateFrom) {
+        const checkinDate = new Date(g.checkinTime).toISOString().split('T')[0];
+        if (checkinDate < filters.checkinDateFrom) return false;
+      }
+      if (filters.checkinDateTo) {
+        const checkinDate = new Date(g.checkinTime).toISOString().split('T')[0];
+        if (checkinDate > filters.checkinDateTo) return false;
+      }
+      
+      // Expected checkout date filtering
+      if (filters.expectedCheckoutDateFrom && g.expectedCheckoutDate) {
+        if (g.expectedCheckoutDate < filters.expectedCheckoutDateFrom) return false;
+      }
+      if (filters.expectedCheckoutDateTo && g.expectedCheckoutDate) {
+        if (g.expectedCheckoutDate > filters.expectedCheckoutDateTo) return false;
+      }
+      
       return true;
     });
   }, [guests, filters]);
@@ -549,7 +680,7 @@ export default function CheckOut() {
                           {hasActiveGuestFilters && <span className="ml-1 inline-block h-2 w-2 rounded-full bg-blue-600" />}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80" align="end">
+                      <PopoverContent className="w-96" align="end">
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label className="text-xs uppercase text-gray-500">Gender</Label>
@@ -572,8 +703,9 @@ export default function CheckOut() {
                               </div>
                             </RadioGroup>
                           </div>
+                          
                           <div className="space-y-2">
-                            <Label className="text-xs uppercase text-gray-500">Nationality</Label>
+                            <Label className="text-xs uppercase text-gray-500">Nationality (General)</Label>
                             <RadioGroup
                               value={filters.nationality}
                               onValueChange={(val) => setFilters(prev => ({ ...prev, nationality: val as any }))}
@@ -592,6 +724,181 @@ export default function CheckOut() {
                                 <Label htmlFor="co-nat-nonmy">Non‑MY</Label>
                               </div>
                             </RadioGroup>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase text-gray-500">Specific Nationality</Label>
+                            <Select value={filters.specificNationality} onValueChange={(val) => setFilters(prev => ({ ...prev, specificNationality: val }))}>
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Select nationality" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="any">Any nationality</SelectItem>
+                                {availableNationalities.map((nationality) => (
+                                  <SelectItem key={nationality} value={nationality}>
+                                    {nationality}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase text-gray-500">Capsule Assignment</Label>
+                            <Select value={filters.capsuleNumber} onValueChange={(val) => setFilters(prev => ({ ...prev, capsuleNumber: val }))}>
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Select capsule" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="any">Any capsule</SelectItem>
+                                {uniqueCapsules.map((capsule) => (
+                                  <SelectItem key={capsule} value={capsule}>
+                                    Capsule {capsule}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase text-gray-500">Length of Stay (Days)</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs text-gray-500">Min days</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  placeholder="Min"
+                                  value={filters.lengthOfStayMin}
+                                  onChange={(e) => setFilters(prev => ({ ...prev, lengthOfStayMin: e.target.value }))}
+                                  className="h-8 text-xs"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-gray-500">Max days</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  placeholder="Max"
+                                  value={filters.lengthOfStayMax}
+                                  onChange={(e) => setFilters(prev => ({ ...prev, lengthOfStayMax: e.target.value }))}
+                                  className="h-8 text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs uppercase text-gray-500">Date Filters</Label>
+                            <div className="space-y-3">
+                              <div className="space-y-2">
+                                <Label className="text-xs font-medium">Check-in Date Range</Label>
+                                <div className="space-y-2">
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setCheckinDateShortcut('yesterday')}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Yesterday
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setCheckinDateShortcut('today')}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Today
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setCheckinDateShortcut('tomorrow')}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Tomorrow
+                                    </Button>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <Label className="text-xs text-gray-500">From</Label>
+                                      <Input
+                                        type="date"
+                                        value={filters.checkinDateFrom}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, checkinDateFrom: e.target.value }))}
+                                        className="h-8 text-xs"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs text-gray-500">To</Label>
+                                      <Input
+                                        type="date"
+                                        value={filters.checkinDateTo}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, checkinDateTo: e.target.value }))}
+                                        className="h-8 text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs font-medium">Expected Check-out Date Range</Label>
+                                <div className="space-y-2">
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setExpectedCheckoutDateShortcut('yesterday')}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Yesterday
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setExpectedCheckoutDateShortcut('today')}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Today
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setExpectedCheckoutDateShortcut('tomorrow')}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Tomorrow
+                                    </Button>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <Label className="text-xs text-gray-500">From</Label>
+                                      <Input
+                                        type="date"
+                                        value={filters.expectedCheckoutDateFrom}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, expectedCheckoutDateFrom: e.target.value }))}
+                                        className="h-8 text-xs"
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-xs text-gray-500">To</Label>
+                                      <Input
+                                        type="date"
+                                        value={filters.expectedCheckoutDateTo}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, expectedCheckoutDateTo: e.target.value }))}
+                                        className="h-8 text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <div className="space-y-2">
                             <Label className="text-xs uppercase text-gray-500">Quick filters</Label>
@@ -613,8 +920,21 @@ export default function CheckOut() {
                             </div>
                           </div>
                           <div className="flex justify-between pt-2">
-                            <Button variant="ghost" size="sm" onClick={() => setFilters({ gender: 'any', nationality: 'any', outstandingOnly: false, checkoutTodayOnly: false })}>
-                              Clear
+                            <Button variant="ghost" size="sm" onClick={() => setFilters({ 
+                              gender: 'any', 
+                              nationality: 'any',
+                              specificNationality: 'any',
+                              capsuleNumber: 'any',
+                              lengthOfStayMin: '',
+                              lengthOfStayMax: '',
+                              outstandingOnly: false, 
+                              checkoutTodayOnly: false,
+                              checkinDateFrom: '',
+                              checkinDateTo: '',
+                              expectedCheckoutDateFrom: '',
+                              expectedCheckoutDateTo: ''
+                            })}>
+                              Clear All Filters
                             </Button>
                           </div>
                         </div>

@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
+/**
+ * Application configuration interface defining all configurable settings
+ * Used throughout the app for consistent behavior and easy customization
+ */
 export interface AppConfig {
-  // Token and Session Settings
+  // Authentication and session management
   guestTokenExpirationHours: number;
   sessionExpirationHours: number;
   
@@ -43,7 +47,10 @@ export interface AppConfig {
   timezone: string;
 }
 
-// Default configuration values (fallback if API is unavailable)
+/**
+ * Default configuration values used as fallback when API is unavailable
+ * Ensures application continues to function even without server config
+ */
 export const DEFAULT_CONFIG: AppConfig = {
   guestTokenExpirationHours: 24,
   sessionExpirationHours: 24,
@@ -69,7 +76,8 @@ export const DEFAULT_CONFIG: AppConfig = {
 };
 
 /**
- * Hook to fetch and cache application configuration
+ * Primary hook for fetching and caching application configuration from server
+ * Returns config object with fallback to defaults if fetch fails
  */
 export function useConfig() {
   const { data, isLoading, error } = useQuery({
@@ -95,7 +103,8 @@ export function useConfig() {
 }
 
 /**
- * Hook to get specific configuration values with defaults
+ * Type-safe hook for accessing specific configuration values
+ * Automatically falls back to defaults if server config unavailable
  */
 export function useConfigValue<K extends keyof AppConfig>(key: K): AppConfig[K] {
   const { config } = useConfig();
@@ -103,7 +112,8 @@ export function useConfigValue<K extends keyof AppConfig>(key: K): AppConfig[K] 
 }
 
 /**
- * Hook to get query refresh interval in milliseconds
+ * Converts configured refresh interval from seconds to milliseconds
+ * Used by React Query for automatic data refetching
  */
 export function useQueryRefreshInterval(): number {
   const intervalSeconds = useConfigValue('queryRefreshIntervalSeconds');
@@ -111,7 +121,8 @@ export function useQueryRefreshInterval(): number {
 }
 
 /**
- * Hook to get cache time in milliseconds
+ * Converts configured cache time from minutes to milliseconds
+ * Used by React Query for data cache management
  */
 export function useCacheTime(): number {
   const cacheMinutes = useConfigValue('cacheTimeMinutes');
@@ -119,7 +130,8 @@ export function useCacheTime(): number {
 }
 
 /**
- * Hook to get pagination settings
+ * Provides pagination configuration for data tables and lists
+ * Ensures consistent pagination behavior across the application
  */
 export function usePaginationConfig() {
   const defaultPageSize = useConfigValue('defaultPageSize');
@@ -132,7 +144,8 @@ export function usePaginationConfig() {
 }
 
 /**
- * Hook to get age validation range
+ * Provides guest age validation rules and helper function
+ * Used for form validation and business rule enforcement
  */
 export function useAgeValidation() {
   const minAge = useConfigValue('minGuestAge');
@@ -146,7 +159,8 @@ export function useAgeValidation() {
 }
 
 /**
- * Hook to get payment configuration
+ * Provides payment system configuration including methods and limits
+ * Centralizes payment-related business rules
  */
 export function usePaymentConfig() {
   const defaultMethod = useConfigValue('defaultPaymentMethod');
@@ -160,7 +174,8 @@ export function usePaymentConfig() {
 }
 
 /**
- * Hook to get capsule configuration
+ * Provides capsule management configuration and validation helpers
+ * Defines hostel layout and numbering system
  */
 export function useCapsuleConfig() {
   const totalCapsules = useConfigValue('totalCapsules');
@@ -171,7 +186,7 @@ export function useCapsuleConfig() {
     totalCapsules,
     sections,
     numberFormat,
-    // Helper function to validate capsule number format
+    // Validates capsule numbers against configured format pattern
     isValidCapsuleNumber: (number: string) => {
       const pattern = numberFormat.replace(/[A-Z]/g, '[A-Z]').replace(/\d/g, '\\d');
       return new RegExp(`^${pattern}$`).test(number);
@@ -180,7 +195,8 @@ export function useCapsuleConfig() {
 }
 
 /**
- * Hook to get contact information
+ * Provides organization contact information for support and administration
+ * Used in error messages, help sections, and communication features
  */
 export function useContactInfo() {
   const adminEmail = useConfigValue('defaultAdminEmail');
@@ -195,7 +211,8 @@ export function useContactInfo() {
 }
 
 /**
- * Hook to get application information
+ * Provides application identity and localization information
+ * Used for branding, time formatting, and display purposes
  */
 export function useAppInfo() {
   const hostelName = useConfigValue('hostelName');

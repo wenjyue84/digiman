@@ -39,8 +39,8 @@ export function validateData(
             field: field,
             message: friendlyMessage,
             code: err.code,
-            expected: err.expected,
-            received: err.received
+            expected: (err as any).expected || undefined,
+            received: (err as any).received || undefined
           };
         });
         

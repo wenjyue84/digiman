@@ -29,7 +29,6 @@ import { useToast } from "@/hooks/use-toast";
 import { AuthContext } from "@/lib/auth";
 import { updateSettingsSchema, type UpdateSettings, type CapsuleProblem, type User, type InsertUser, insertUserSchema, type PaginatedResponse, type Capsule, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
 import { z } from "zod";
-import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -189,97 +188,149 @@ export default function SettingsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TooltipProvider>
-          <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="general" className="flex items-center justify-center md:justify-start gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100">
-                  <Cog className="h-3 w-3 text-blue-600" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">General</TooltipContent>
-            </Tooltip>
-            <span className="hidden md:inline">General</span>
-          </TabsTrigger>
-          <TabsTrigger value="capsules" className="flex items-center justify-center md:justify-start gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
-                  <Building className="h-3 w-3 text-purple-600" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{labels.plural}</TooltipContent>
-            </Tooltip>
-            <span className="hidden md:inline">{labels.plural}</span>
-          </TabsTrigger>
-          <TabsTrigger value="maintenance" className="flex items-center justify-center md:justify-start gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-100">
-                  <Wrench className="h-3 w-3 text-orange-600" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Maintenance</TooltipContent>
-            </Tooltip>
-            <span className="hidden md:inline">Maintenance</span>
-          </TabsTrigger>
-          <TabsTrigger value="guide" className="flex items-center justify-center md:justify-start gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100">
-                  <BookOpen className="h-3 w-3 text-indigo-600" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Guest Guide</TooltipContent>
-            </Tooltip>
-            <span className="hidden md:inline">Guest Guide</span>
-          </TabsTrigger>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Desktop: Show all 6 tabs directly */}
+          <TabsList className="hidden md:grid w-full grid-cols-6">
+            <TabsTrigger value="general" className="flex items-center justify-start gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    className={cn(
-                      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-center md:justify-start gap-2",
-                      activeTab === "users" || activeTab === "tests"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-100">
-                      <MoreHorizontal className="h-3 w-3 text-gray-600" />
-                    </div>
-                    <span className="hidden md:inline">More</span>
-                  </button>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100">
+                    <Cog className="h-3 w-3 text-blue-600" />
+                  </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">More</TooltipContent>
+                <TooltipContent side="bottom">General system settings and configuration</TooltipContent>
               </Tooltip>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setActiveTab("users")} className="flex items-center gap-2">
+              <span>General</span>
+            </TabsTrigger>
+            <TabsTrigger value="capsules" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
+                    <Building className="h-3 w-3 text-purple-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Manage {labels.singular.toLowerCase()} listings and availability</TooltipContent>
+              </Tooltip>
+              <span>{labels.plural}</span>
+            </TabsTrigger>
+            <TabsTrigger value="maintenance" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-100">
+                    <Wrench className="h-3 w-3 text-orange-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Report and track maintenance issues</TooltipContent>
+              </Tooltip>
+              <span>Maintenance</span>
+            </TabsTrigger>
+            <TabsTrigger value="guide" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100">
+                    <BookOpen className="h-3 w-3 text-indigo-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Configure guest success page content and settings</TooltipContent>
+              </Tooltip>
+              <span>Guest Guide</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100">
+                    <UserCheck className="h-3 w-3 text-green-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Manage user accounts and permissions</TooltipContent>
+              </Tooltip>
+              <span>Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="tests" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100">
+                    <TestTube className="h-3 w-3 text-pink-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">System tests and development tools</TooltipContent>
+              </Tooltip>
+              <span>Tests</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Mobile: Show 4 main tabs + More dropdown */}
+          <TabsList className="md:hidden grid w-full grid-cols-5">
+            <TabsTrigger value="general" className="flex items-center justify-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100">
+                    <Cog className="h-3 w-3 text-blue-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">General system settings and configuration</TooltipContent>
+              </Tooltip>
+            </TabsTrigger>
+            <TabsTrigger value="capsules" className="flex items-center justify-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
+                    <Building className="h-3 w-3 text-purple-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Manage {labels.singular.toLowerCase()} listings and availability</TooltipContent>
+              </Tooltip>
+            </TabsTrigger>
+            <TabsTrigger value="maintenance" className="flex items-center justify-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-100">
+                    <Wrench className="h-3 w-3 text-orange-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Report and track maintenance issues</TooltipContent>
+              </Tooltip>
+            </TabsTrigger>
+            <TabsTrigger value="guide" className="flex items-center justify-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-100">
+                    <BookOpen className="h-3 w-3 text-indigo-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Configure guest success page content and settings</TooltipContent>
+              </Tooltip>
+            </TabsTrigger>
+            
+            {/* More dropdown for mobile */}
+            <div className="flex items-center justify-center">
+              <DropdownMenu>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100">
-                      <UserCheck className="h-3 w-3 text-green-600" />
-                    </div>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="flex items-center justify-center gap-1 h-full w-full">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="text-xs">More</span>
+                      </Button>
+                    </DropdownMenuTrigger>
                   </TooltipTrigger>
-                  <TooltipContent side="right">Users</TooltipContent>
+                  <TooltipContent side="bottom">Additional settings tabs</TooltipContent>
                 </Tooltip>
-                <span className="hidden md:inline">Users</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setActiveTab("tests")} className="flex items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-pink-100">
-                      <TestTube className="h-3 w-3 text-pink-600" />
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem onSelect={() => setActiveTab("users")} className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-4 w-4 rounded-full bg-green-100">
+                      <UserCheck className="h-2.5 w-2.5 text-green-600" />
                     </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">Tests</TooltipContent>
-                </Tooltip>
-                <span className="hidden md:inline">Tests</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    <span>Users</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setActiveTab("tests")} className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-4 w-4 rounded-full bg-pink-100">
+                      <TestTube className="h-2.5 w-2.5 text-pink-600" />
+                    </div>
+                    <span>Tests</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </TabsList>
         </TooltipProvider>
 

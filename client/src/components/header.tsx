@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { User, LogOut } from "lucide-react";
 import { AuthContext } from "../lib/auth";
 
@@ -24,10 +25,19 @@ export default function Header() {
               <span className="font-medium">{user.firstName || user.email}</span>
               <span className="text-gray-500 capitalize">({user.role})</span>
             </div>
-            <Button variant="outline" size="sm" onClick={logout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={logout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sign out of your account</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         )}
       </div>

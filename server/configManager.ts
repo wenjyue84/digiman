@@ -1,18 +1,19 @@
 import { ConfigService, ConfigUtils } from "./config";
 import { type IStorage } from "./storage";
 
-// Global configuration manager instance
+// Global singleton instances for configuration management
 let configService: ConfigService | null = null;
 let configUtils: ConfigUtils | null = null;
 
 /**
- * Initialize the configuration service
+ * Initialize the configuration service with storage backend
+ * Sets up default settings and prepares the service for use
  */
 export async function initializeConfig(storage: IStorage): Promise<void> {
   configService = new ConfigService(storage);
   configUtils = new ConfigUtils(configService);
   
-  // Initialize default settings in the database
+  // Ensure default configuration values exist in storage
   await configService.initializeDefaults('system');
   
   console.log('✅ Configuration service initialized');
@@ -20,6 +21,7 @@ export async function initializeConfig(storage: IStorage): Promise<void> {
 
 /**
  * Get the configuration service instance
+ * Throws error if service hasn't been initialized
  */
 export function getConfig(): ConfigService {
   if (!configService) {
@@ -30,6 +32,7 @@ export function getConfig(): ConfigService {
 
 /**
  * Get the configuration utilities instance
+ * Provides helper methods for common configuration operations
  */
 export function getConfigUtils(): ConfigUtils {
   if (!configUtils) {
@@ -39,7 +42,8 @@ export function getConfigUtils(): ConfigUtils {
 }
 
 /**
- * Common configuration getters for frequently used values
+ * Static configuration accessor providing type-safe getters for all app settings
+ * Simplifies access to frequently used configuration values
  */
 export class AppConfig {
   private static config: ConfigService | null = null;
@@ -50,7 +54,7 @@ export class AppConfig {
     this.utils = utils;
   }
 
-  // Token and Session Settings
+  // Authentication and session configuration
   static async getTokenExpirationHours(): Promise<number> {
     return this.config!.get('guestTokenExpirationHours');
   }
@@ -67,7 +71,7 @@ export class AppConfig {
     return this.utils!.getSessionExpirationMs();
   }
 
-  // System Settings
+  // Core system configuration
   static async getDefaultUserRole(): Promise<string> {
     return this.config!.get('defaultUserRole');
   }
@@ -76,7 +80,7 @@ export class AppConfig {
     return this.config!.get('maxGuestStayDays');
   }
 
-  // Payment Settings
+  // Financial and payment configuration
   static async getDefaultPaymentMethod(): Promise<string> {
     return this.config!.get('defaultPaymentMethod');
   }
@@ -85,7 +89,7 @@ export class AppConfig {
     return this.config!.get('maxPaymentAmount');
   }
 
-  // Capsule Settings
+  // Accommodation and capsule configuration
   static async getTotalCapsules(): Promise<number> {
     return this.config!.get('totalCapsules');
   }
@@ -98,7 +102,7 @@ export class AppConfig {
     return this.config!.get('capsuleNumberFormat');
   }
 
-  // Cache and Performance
+  // Performance and caching configuration
   static async getCacheTimeMinutes(): Promise<number> {
     return this.config!.get('cacheTimeMinutes');
   }
@@ -115,7 +119,7 @@ export class AppConfig {
     return this.utils!.getQueryRefreshIntervalMs();
   }
 
-  // Pagination Settings
+  // Data pagination configuration
   static async getDefaultPageSize(): Promise<number> {
     return this.config!.get('defaultPageSize');
   }
@@ -124,7 +128,7 @@ export class AppConfig {
     return this.config!.get('maxPageSize');
   }
 
-  // Business Rules
+  // Business logic and validation rules
   static async getMinGuestAge(): Promise<number> {
     return this.config!.get('minGuestAge');
   }
@@ -137,7 +141,7 @@ export class AppConfig {
     return this.utils!.isValidAge(age);
   }
 
-  // Contact Information
+  // Organization contact information
   static async getDefaultAdminEmail(): Promise<string> {
     return this.config!.get('defaultAdminEmail');
   }
@@ -150,7 +154,7 @@ export class AppConfig {
     return this.config!.get('supportPhone');
   }
 
-  // Application Settings
+  // Application identity and branding
   static async getHostelName(): Promise<string> {
     return this.config!.get('hostelName');
   }
@@ -159,18 +163,19 @@ export class AppConfig {
     return this.config!.get('timezone');
   }
 
-  // Notification Settings
+  // Notification and communication settings
   static async getNotificationRetentionDays(): Promise<number> {
     return this.config!.get('notificationRetentionDays');
   }
 }
 
 /**
- * Configuration middleware for Express routes
+ * Express middleware that injects configuration services into request object
+ * Provides easy access to config throughout the request lifecycle
  */
 export function configMiddleware() {
   return (req: any, res: any, next: any) => {
-    // Attach config to request object
+    // Make configuration services available on request object
     req.config = getConfig();
     req.configUtils = getConfigUtils();
     req.AppConfig = AppConfig;
@@ -179,7 +184,8 @@ export function configMiddleware() {
 }
 
 /**
- * Helper function to get all configuration as JSON for API responses
+ * Retrieves complete configuration data for API responses
+ * Returns both settings values and metadata for client consumption
  */
 export async function getConfigForAPI(): Promise<{
   settings: any;
@@ -196,7 +202,8 @@ export async function getConfigForAPI(): Promise<{
 }
 
 /**
- * Validation helper for configuration updates
+ * Validates configuration updates against schema rules
+ * Returns validation results with detailed error messages
  */
 export async function validateConfigUpdate(
   updates: Record<string, any>
@@ -205,10 +212,11 @@ export async function validateConfigUpdate(
   const errors: string[] = [];
   
   try {
-    // This will validate all the updates against the schema
+    // Perform dry-run validation against configuration schema
     await config.updateMultiple(updates, 'validation');
     return { valid: true, errors: [] };
   } catch (error: any) {
+    // Extract detailed validation errors for client feedback
     if (error.errors && Array.isArray(error.errors)) {
       error.errors.forEach((err: any) => {
         errors.push(`${err.path?.join('.')}: ${err.message}`);

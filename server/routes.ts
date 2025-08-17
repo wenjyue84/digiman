@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import fs from "fs";
 import path from "path";
 import { storage } from "./storage";
-import { insertGuestSchema, checkoutGuestSchema, loginSchema, createCapsuleProblemSchema, resolveProblemSchema, googleAuthSchema, insertUserSchema, guestSelfCheckinSchema, createTokenSchema, updateSettingsSchema, updateGuestSchema, markCapsuleCleanedSchema, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
+import { insertGuestSchema, checkoutGuestSchema, loginSchema, createCapsuleProblemSchema, resolveProblemSchema, googleAuthSchema, insertUserSchema, guestSelfCheckinSchema, createTokenSchema, updateSettingsSchema, updateGuestSchema, markCapsuleCleanedSchema, insertCapsuleSchema, updateCapsuleSchema, insertExpenseSchema, updateExpenseSchema } from "@shared/schema";
 import { calculateAgeFromIC } from "@shared/utils";
 import { z } from "zod";
 import { randomUUID } from "crypto";
@@ -1386,7 +1386,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (c.remark !== undefined) updates.remark = c.remark || null;
             if (c.position !== undefined) updates.position = c.position || null;
             if (c.purchaseDate) {
-              try { updates.purchaseDate = new Date(c.purchaseDate); } catch { /* ignore invalid */ }
+              try { 
+                // Convert to ISO date string format for database storage
+                const date = new Date(c.purchaseDate);
+                updates.purchaseDate = date.toISOString().split('T')[0];
+              } catch { /* ignore invalid */ }
             }
 
             if (existing) {
@@ -1847,12 +1851,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/guest-tokens/:token", async (req, res) => {
     try {
       const { token } = req.params;
+      const { successPage } = req.query; // Check if this is for success page access
       const guestToken = await storage.getGuestToken(token);
 
       if (!guestToken) {
         return res.status(404).json({ message: "Token not found" });
       }
 
+      // For success page access, allow used tokens but get guest info
+      if (successPage === 'true' && guestToken.isUsed) {
+        // Find the guest associated with this token for success page
+        try {
+          const guest = await storage.getGuestByToken(token);
+          if (guest) {
+            return res.json({
+              ...guestToken,
+              isSuccessPageAccess: true,
+              guestData: {
+                id: guest.id, // Add guest ID for extend functionality
+                name: guest.name,
+                capsuleNumber: guest.capsuleNumber,
+                phoneNumber: guest.phoneNumber,
+                email: guest.email,
+                checkinTime: guest.checkinTime,
+                expectedCheckoutDate: guest.expectedCheckoutDate,
+                paymentAmount: guest.paymentAmount,
+                paymentMethod: guest.paymentMethod,
+                notes: guest.notes,
+                isPaid: guest.isPaid
+              }
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching guest data for success page:", error);
+        }
+        return res.status(400).json({ message: "Token used but no guest data found" });
+      }
+
+      // For regular form access, don't allow used tokens
       if (guestToken.isUsed) {
         return res.status(400).json({ message: "Token already used" });
       }
@@ -2087,6 +2123,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error processing guest check-in:", error);
       res.status(400).json({ message: error.message || "Failed to complete check-in" });
+    }
+  });
+
+  // Guest extend stay endpoint (public route)
+  app.post("/api/guest-extend/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const { days, price, paidNow, paymentMethod } = req.body;
+
+      // Verify token and get guest
+      const guestToken = await storage.getGuestToken(token);
+      if (!guestToken || !guestToken.isUsed) {
+        return res.status(400).json({ message: "Invalid token" });
+      }
+
+      const guest = await storage.getGuestByToken(token);
+      if (!guest) {
+        return res.status(404).json({ message: "Guest not found" });
+      }
+
+      // Calculate new checkout date
+      const currentCheckout = guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate) : new Date();
+      const newCheckoutDate = new Date(currentCheckout);
+      newCheckoutDate.setDate(newCheckoutDate.getDate() + (Number.isFinite(days) ? days : 0));
+      const newCheckoutDateStr = newCheckoutDate.toISOString().slice(0, 10);
+
+      // Calculate payment amounts using the same logic as ExtendStayDialog
+      const existingPaid = parseFloat(guest.paymentAmount || "0") || 0;
+      const priceNum = parseFloat(price || "0") || 0;
+      const paidNowNum = parseFloat(paidNow || "0") || 0;
+      
+      // Get existing outstanding balance from notes
+      const existingOutstanding = (() => {
+        const match = guest.notes?.match(/Outstanding balance: RM([\d.]+)/);
+        return match ? parseFloat(match[1]) : 0;
+      })();
+      
+      const newOutstanding = Math.max(existingOutstanding + priceNum - paidNowNum, 0);
+
+      // Merge notes: strip old outstanding marker if present
+      const baseNotes = (guest.notes || "").replace(/Outstanding balance: RM\d+(\.\d{1,2})?/i, "").trim();
+      const mergedNotes = newOutstanding > 0
+        ? (baseNotes ? `${baseNotes}. ` : "") + `Outstanding balance: RM${newOutstanding.toFixed(2)}`
+        : (baseNotes || null);
+
+      // Update guest using the same pattern as ExtendStayDialog
+      const updates = {
+        expectedCheckoutDate: newCheckoutDateStr,
+        // Increase cumulative paid amount when recording a new payment
+        ...(paidNow !== "" ? { paymentAmount: (existingPaid + paidNowNum).toFixed(2) } : {}),
+        // Auto-set paid flag based on computed outstanding
+        isPaid: newOutstanding === 0,
+        paymentMethod: paymentMethod as any,
+        paymentCollector: "Guest Self-Service", // Mark as guest self-service extension
+        ...(mergedNotes !== undefined ? { notes: mergedNotes as any } : {}),
+      };
+
+      const updatedGuest = await storage.updateGuest(guest.id, updates);
+      
+      if (!updatedGuest) {
+        throw new Error("Failed to update guest");
+      }
+
+      console.log("Guest extended stay:", {
+        guestId: guest.id,
+        guestName: guest.name,
+        capsuleNumber: guest.capsuleNumber,
+        days: days,
+        newCheckoutDate: newCheckoutDateStr,
+        priceCharged: priceNum,
+        paidNow: paidNowNum,
+        newOutstanding: newOutstanding
+      });
+
+      res.json({ 
+        message: "Stay extended successfully",
+        guest: updatedGuest,
+        newCheckoutDate: newCheckoutDateStr,
+        newOutstanding: newOutstanding,
+        willBePaid: newOutstanding === 0
+      });
+    } catch (error: any) {
+      console.error("Error extending guest stay:", error);
+      res.status(500).json({ message: error.message || "Failed to extend stay" });
     }
   });
 
@@ -2393,6 +2513,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) {
       console.error("Dev upload error:", e);
       res.status(500).json({ error: "Failed to upload" });
+    }
+  });
+
+  // Expense Management API endpoints
+  app.get("/api/expenses", authenticateToken, async (req: any, res) => {
+    try {
+      const result = await storage.getExpenses();
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to fetch expenses:", error);
+      res.status(500).json({ error: "Failed to fetch expenses" });
+    }
+  });
+
+  app.post("/api/expenses", authenticateToken, async (req: any, res) => {
+    try {
+      const validatedData = await validateData(insertExpenseSchema, req.body);
+      const result = await storage.addExpense({ 
+        ...validatedData, 
+        createdBy: req.user?.id || 'unknown'
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to add expense:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: error.errors 
+        });
+      }
+      res.status(500).json({ error: "Failed to add expense" });
+    }
+  });
+
+  app.put("/api/expenses/:id", authenticateToken, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = await validateData(updateExpenseSchema, { 
+        ...req.body, 
+        id 
+      });
+      const result = await storage.updateExpense(validatedData);
+      if (!result) {
+        return res.status(404).json({ error: "Expense not found" });
+      }
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to update expense:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: error.errors 
+        });
+      }
+      res.status(500).json({ error: "Failed to update expense" });
+    }
+  });
+
+  app.delete("/api/expenses/:id", authenticateToken, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const result = await storage.deleteExpense(id);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to delete expense:", error);
+      res.status(500).json({ error: "Failed to delete expense" });
     }
   });
 

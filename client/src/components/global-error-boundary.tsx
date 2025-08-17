@@ -33,6 +33,10 @@ interface ErrorReport {
   userId?: string;
 }
 
+/**
+ * Global error boundary component that catches JavaScript errors anywhere in the component tree
+ * Provides user-friendly error UI with retry functionality and error reporting
+ */
 export class GlobalErrorBoundary extends Component<Props, State> {
   private retryCount = 0;
   private maxRetries = 3;
@@ -42,8 +46,11 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false };
   }
 
+  /**
+   * React lifecycle method that updates state when an error is caught
+   * Generates unique error ID for tracking and support purposes
+   */
   static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI
     return {
       hasError: true,
       error,
@@ -51,11 +58,14 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     };
   }
 
+  /**
+   * React lifecycle method called when an error is caught
+   * Handles error logging and calls custom error handler
+   */
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log the error
     this.logError(error, errorInfo);
     
-    // Call custom error handler if provided
+    // Invoke custom error handler from parent component
     this.props.onError?.(error, errorInfo);
     
     this.setState({
@@ -64,6 +74,10 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     });
   }
 
+  /**
+   * Logs error details to console (development) or external service (production)
+   * Creates structured error report with context information
+   */
   private logError = (error: Error, errorInfo: ErrorInfo) => {
     const errorReport: ErrorReport = {
       timestamp: new Date().toISOString(),
@@ -88,13 +102,16 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       console.groupEnd();
     }
 
-    // In production, you might want to send to an error reporting service
-    // Example: Sentry, LogRocket, etc.
+    // Send error reports to monitoring service in production
     if (process.env.NODE_ENV === 'production') {
       this.reportErrorToService(errorReport);
     }
   };
 
+  /**
+   * Sends error report to backend service for monitoring and analysis
+   * Fails silently to avoid cascading errors
+   */
   private reportErrorToService = async (errorReport: ErrorReport) => {
     try {
       // Send error report to backend or external service
@@ -111,6 +128,10 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     }
   };
 
+  /**
+   * Attempts to recover from error by resetting component state
+   * Limited to prevent infinite retry loops
+   */
   private handleRetry = () => {
     if (this.retryCount < this.maxRetries) {
       this.retryCount++;
@@ -127,11 +148,15 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
+  /**
+   * Determines error severity based on error type and message
+   * Used to customize UI presentation and urgency indicators
+   */
   private getErrorSeverity = (error: Error): 'low' | 'medium' | 'high' => {
     const errorMessage = error.message.toLowerCase();
     const errorName = error.name.toLowerCase();
 
-    // High severity errors
+    // Critical errors that typically require page refresh
     if (
       errorName.includes('chunkerror') ||
       errorMessage.includes('loading chunk') ||
@@ -141,7 +166,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
       return 'high';
     }
 
-    // Medium severity errors
+    // Network-related errors that may resolve with retry
     if (
       errorMessage.includes('network') ||
       errorMessage.includes('fetch') ||
@@ -154,6 +179,10 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     return 'medium';
   };
 
+  /**
+   * Provides user-friendly advice based on error type
+   * Helps users understand what went wrong and how to recover
+   */
   private getErrorAdvice = (error: Error): string => {
     const errorMessage = error.message.toLowerCase();
     const errorName = error.name.toLowerCase();
@@ -175,7 +204,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      // Use custom fallback if provided
+      // Render custom fallback UI if provided by parent
       if (this.props.fallback) {
         return this.props.fallback;
       }
@@ -207,7 +236,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {/* Error ID for support */}
+              {/* Display error ID to help with support requests */}
               {this.state.errorId && (
                 <Alert>
                   <Bug className="h-4 w-4" />
@@ -219,7 +248,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 </Alert>
               )}
 
-              {/* Action buttons */}
+              {/* Recovery action buttons */}
               <div className="flex flex-wrap gap-2">
                 {canRetry && (
                   <Button onClick={this.handleRetry} className="flex items-center gap-2">
@@ -239,7 +268,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 </Button>
               </div>
 
-              {/* Technical details (collapsible) */}
+              {/* Show technical details in development mode */}
               {error && process.env.NODE_ENV === 'development' && (
                 <Collapsible>
                   <CollapsibleTrigger asChild>
@@ -281,7 +310,10 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Hook to manually trigger error boundary (for testing or manual error reporting)
+/**
+ * Hook for manually triggering error boundary
+ * Useful for testing error handling or reporting unexpected errors
+ */
 export const useErrorBoundary = () => {
   const [, setError] = React.useState<Error | null>(null);
 
@@ -294,7 +326,10 @@ export const useErrorBoundary = () => {
   return { triggerError };
 };
 
-// Higher-order component for wrapping components with error boundary
+/**
+ * Higher-order component that wraps any component with error boundary protection
+ * Provides a convenient way to add error handling to individual components
+ */
 export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   fallback?: ReactNode,

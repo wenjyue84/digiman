@@ -1,5 +1,9 @@
 import { createContext, useContext } from 'react';
 
+/**
+ * User interface representing authenticated user data
+ * Supports both admin and staff roles with optional profile information
+ */
 export interface User {
   id: string;
   email: string;
@@ -9,6 +13,10 @@ export interface User {
   role: 'admin' | 'staff';
 }
 
+/**
+ * Authentication context interface defining available auth methods and state
+ * Provides both traditional login and Google OAuth authentication
+ */
 export interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -18,8 +26,13 @@ export interface AuthContextType {
   isAuthenticated: boolean;
 }
 
+// React context for authentication state and methods
 export const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Hook to access authentication context
+ * Must be used within an AuthProvider component tree
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
@@ -28,12 +41,18 @@ export function useAuth() {
   return context;
 }
 
-// Token storage functions
+/**
+ * Utility functions for managing authentication tokens in localStorage
+ * Provides centralized token storage management
+ */
 export const getStoredToken = () => localStorage.getItem('auth_token');
 export const setStoredToken = (token: string) => localStorage.setItem('auth_token', token);
 export const removeStoredToken = () => localStorage.removeItem('auth_token');
 
-// API helper with authentication
+/**
+ * Wrapper around fetch that automatically includes authentication headers
+ * Simplifies making authenticated API requests throughout the application
+ */
 export const authenticatedFetch = (url: string, options: RequestInit = {}) => {
   const token = getStoredToken();
   return fetch(url, {
@@ -41,6 +60,7 @@ export const authenticatedFetch = (url: string, options: RequestInit = {}) => {
     headers: {
       ...options.headers,
       'Content-Type': 'application/json',
+      // Include auth token if available
       ...(token && { 'Authorization': `Bearer ${token}` })
     }
   });

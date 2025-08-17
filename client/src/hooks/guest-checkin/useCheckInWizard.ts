@@ -40,7 +40,7 @@ export function useCheckInWizard() {
     defaultValues: {
       nameAsInDocument: "",
       phoneNumber: "",
-      gender: undefined,
+      gender: "male" as const,
       nationality: "Malaysian",
       checkInDate: new Date().toISOString().split('T')[0],
       checkOutDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { MapPin, Wifi, Camera, Globe, Video, Clock, CheckCircle, Phone, Mail } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MapPin, Wifi, Camera, Globe, Video, Clock, CheckCircle, Phone, Mail, Printer, Send, Download, Share, Calendar } from "lucide-react";
 
 interface GuestSuccessPageTemplateProps {
   // Display mode
@@ -58,6 +59,11 @@ interface GuestSuccessPageTemplateProps {
     onHostelPhotos?: () => void;
     onGoogleMaps?: () => void;
     onCheckinVideo?: () => void;
+    onPrint?: () => void;
+    onSavePDF?: () => void;
+    onEmail?: () => void;
+    onShare?: () => void;
+    onExtend?: () => void;
   };
 }
 
@@ -128,7 +134,7 @@ export default function GuestSuccessPageTemplate({
           {/* Success Header */}
           <div className="text-center mb-6">
             <div className={`${viewMode === 'mobile' ? 'text-3xl mb-3' : 'text-4xl mb-4'}`}>🎉</div>
-            <h1 className={`${viewMode === 'mobile' ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 mb-2`}>Good Day, Our Honorable Guest!</h1>
+            <h1 className={`${viewMode === 'mobile' ? 'text-2xl' : 'text-3xl'} font-bold text-gray-900 mb-2`}>Guest Success page</h1>
             <div className={`${viewMode === 'mobile' ? 'text-xl mb-3' : 'text-2xl mb-4'}`}>🎉</div>
           </div>
 
@@ -140,7 +146,7 @@ export default function GuestSuccessPageTemplate({
               </h2>
               
               {/* Essential Information Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm">
                 {/* Address Section */}
                 {effectiveVisibility.showAddress && streetAddress && (
                   <div className="bg-white/70 rounded-lg p-3">
@@ -188,7 +194,7 @@ export default function GuestSuccessPageTemplate({
 
                 {/* WiFi Section */}
                 {effectiveVisibility.showWifi && (effectiveContent.wifiName || effectiveContent.wifiPassword) && (
-                  <div className="bg-white/70 rounded-lg p-3 md:col-span-3">
+                  <div className="bg-white/70 rounded-lg p-3">
                     <div className="flex items-start gap-2">
                       <Wifi className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <div className="min-w-0">
@@ -366,6 +372,101 @@ export default function GuestSuccessPageTemplate({
               <div className="text-sm text-red-700 whitespace-pre-wrap">
                 {effectiveContent.importantReminders}
               </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          {(actions.onPrint || actions.onSavePDF || actions.onEmail || actions.onShare || actions.onExtend) && (
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <TooltipProvider>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+                  {actions.onPrint && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          onClick={actions.onPrint}
+                          className={`flex items-center ${viewMode === 'mobile' ? 'w-12 h-12 p-0 justify-center' : 'gap-2'}`}
+                        >
+                          <Printer className="h-4 w-4" />
+                          {viewMode === 'desktop' && <span>Print</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Print this page</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {actions.onSavePDF && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          onClick={actions.onSavePDF}
+                          className={`flex items-center ${viewMode === 'mobile' ? 'w-12 h-12 p-0 justify-center' : 'gap-2'}`}
+                        >
+                          <Download className="h-4 w-4" />
+                          {viewMode === 'desktop' && <span>PDF</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Save as PDF</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {actions.onEmail && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          onClick={actions.onEmail}
+                          className={`flex items-center ${viewMode === 'mobile' ? 'w-12 h-12 p-0 justify-center' : 'gap-2'}`}
+                        >
+                          <Send className="h-4 w-4" />
+                          {viewMode === 'desktop' && <span>Email</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Send via email</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {actions.onShare && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          onClick={actions.onShare}
+                          className={`flex items-center ${viewMode === 'mobile' ? 'w-12 h-12 p-0 justify-center' : 'gap-2'}`}
+                        >
+                          <Share className="h-4 w-4" />
+                          {viewMode === 'desktop' && <span>Share</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Share with others</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {actions.onExtend && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="default"
+                          onClick={actions.onExtend}
+                          className={`flex items-center bg-blue-600 hover:bg-blue-700 text-white ${viewMode === 'mobile' ? 'w-12 h-12 p-0 justify-center' : 'gap-2'}`}
+                        >
+                          <Calendar className="h-4 w-4" />
+                          {viewMode === 'desktop' && <span>Extend Stay</span>}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Extend your current stay</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </TooltipProvider>
             </div>
           )}
 

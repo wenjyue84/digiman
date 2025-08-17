@@ -5,6 +5,10 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Hook to access authentication context
+ * Must be used within an AuthProvider component
+ */
 export function useAuth() {
   const context = React.useContext(AuthContext);
   if (!context) {
@@ -13,12 +17,16 @@ export function useAuth() {
   return context;
 }
 
+/**
+ * Authentication provider that manages user state and authentication methods
+ * Handles login, logout, and session persistence across app restarts
+ */
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing session on mount
+  // Restore authentication state from stored token on component mount
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = getStoredToken();
@@ -33,9 +41,11 @@ export default function AuthProvider({ children }: AuthProviderProps) {
             setUser(data.user);
             setToken(storedToken);
           } else {
+            // Token is invalid, clear stored credentials
             removeStoredToken();
           }
         } catch (error) {
+          // Network error or server issue, clear stored credentials
           removeStoredToken();
         }
       }
@@ -45,6 +55,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     checkAuth();
   }, []);
 
+  /**
+   * Authenticate user with email and password
+   * Returns true on success, false on failure
+   */
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/login', {
@@ -66,6 +80,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  /**
+   * Authenticate user with Google OAuth token
+   * Returns true on success, false on failure
+   */
   const loginWithGoogle = async (googleToken: string): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/google', {
@@ -87,6 +105,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  /**
+   * Sign out user and clear all authentication state
+   * Attempts server logout but continues even if it fails
+   */
   const logout = async () => {
     if (token) {
       try {
@@ -95,7 +117,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       } catch (error) {
-        // Logout even if server request fails
+        // Proceed with local logout even if server request fails
       }
     }
 
@@ -113,6 +135,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     isAuthenticated: !!user
   };
 
+  // Show loading screen while checking authentication status
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

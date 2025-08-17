@@ -206,7 +206,7 @@ const enTranslations: Translations = {
   completingCheckIn: "Completing Check-in...",
   editInfo: "Edit My Information",
 
-  goodDay: "Good Day, Our Honorable Guest!",
+  goodDay: "Guest Success page",
   welcomeHostel: "Welcome to Pelangi Capsule Hostel",
   address: "Address:",
   hostelPhotos: "📸 Hostel Photos",

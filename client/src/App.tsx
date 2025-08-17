@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,8 +16,10 @@ import CheckOut from "./pages/check-out";
 import History from "./pages/history";
 import Cleaning from "./pages/cleaning";
 import Settings from "./pages/settings";
+import Finance from "./pages/finance";
 import GuestCheckin from "./pages/guest-checkin";
 import GuestEdit from "./pages/guest-edit";
+import GuestSuccess from "./pages/guest-success";
 import Header from "./components/header";
 import Navigation from "./components/navigation";
 import MobileBottomNav from "./components/mobile-bottom-nav";
@@ -25,12 +27,21 @@ import { VisibilityIndicator } from "./components/visibility-indicator";
 import { toast } from "@/hooks/use-toast";
 import GlobalTopProgress from "./components/global-top-progress";
 
+/**
+ * Main router component handling all application routes
+ * Wraps content with layout components and progress indicator
+ */
 function Router() {
+  const [location] = useLocation();
+  
+  // Hide navigation for guest-facing pages
+  const isGuestPage = location?.startsWith('/guest-') || false;
+  
   return (
     <div className="min-h-screen bg-hostel-background">
       <GlobalTopProgress />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 md:pb-4 animate-fade-in">
-        <Navigation />
+        {!isGuestPage && <Navigation />}
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
@@ -52,9 +63,15 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/guest-checkin" component={GuestCheckin} />
           <Route path="/guest-edit" component={GuestEdit} />
+          <Route path="/guest-success" component={GuestSuccess} />
           <Route path="/settings">
             <ProtectedRoute requireAuth={true}>
               <Settings />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/finance">
+            <ProtectedRoute requireAuth={true}>
+              <Finance />
             </ProtectedRoute>
           </Route>
           <Route path="/login" component={LoginForm} />
@@ -66,14 +83,19 @@ function Router() {
   );
 }
 
-// Create I18n provider instance
+// Initialize internationalization provider for multi-language support
 const I18nProvider = createI18nProvider();
 
+/**
+ * Root application component with global providers and error handling
+ * Sets up React Query, i18n, authentication, and error boundaries
+ */
 function App() {
+  // Handle uncaught errors throughout the application
   const handleGlobalError = (error: Error) => {
     console.error('Global error caught:', error);
     
-    // Show user-friendly error toast
+    // Display user-friendly error message to prevent confusion
     toast({
       title: "Something went wrong",
       description: "An unexpected error occurred. Please try refreshing the page.",

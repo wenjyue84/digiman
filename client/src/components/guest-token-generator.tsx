@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link2, Copy, Clock, MapPin, Users } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -151,7 +152,6 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
       guestName: guestName.trim() || undefined,
       phoneNumber: phoneNumber.trim() || undefined,
       email: email.trim() || undefined,
-      checkInDate: checkInDate || undefined,
       expectedCheckoutDate: expectedCheckoutDate || undefined,
       // Optional per-token guide overrides
       guideOverrideEnabled: overrideGuide || undefined,
@@ -190,25 +190,40 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button 
-        variant="default" 
-        size="sm" 
-        onClick={handleInstantCreate}
-        disabled={instantCreateMutation.isPending}
-        className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-      >
-        <Link2 className="h-4 w-4" />
-        {instantCreateMutation.isPending ? "Creating..." : "Instant Create"}
-      </Button>
+    <TooltipProvider>
+      <div className="flex items-center gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={handleInstantCreate}
+              disabled={instantCreateMutation.isPending}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+            >
+              <Link2 className="h-4 w-4" />
+              {instantCreateMutation.isPending ? "Creating..." : "Instant Create"}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Quickly create a check-in link with auto-assigned capsule</p>
+          </TooltipContent>
+        </Tooltip>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
-            <Link2 className="h-4 w-4" />
-            Create Link
-          </Button>
-        </DialogTrigger>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4" />
+                  Create Link
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Create custom check-in link with specific options</p>
+              </TooltipContent>
+            </Tooltip>
+          </DialogTrigger>
         <DialogContent className="w-full max-w-sm sm:max-w-md mx-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -457,19 +472,26 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
                   />
                 );
               })()}
-                <Button
-                  size="sm"
-                  variant="outline"
-                onClick={() => {
-                  const url = new URL(generatedToken.link);
-                  if (checkInDate) url.searchParams.set("ci", checkInDate);
-                  if (prefillGender) url.searchParams.set("g", prefillGender);
-                  if (prefillNationality) url.searchParams.set("nat", prefillNationality);
-                  copyToClipboard(url.toString());
-                }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                    onClick={() => {
+                      const url = new URL(generatedToken.link);
+                      if (checkInDate) url.searchParams.set("ci", checkInDate);
+                      if (prefillGender) url.searchParams.set("g", prefillGender);
+                      if (prefillNationality) url.searchParams.set("nat", prefillNationality);
+                      copyToClipboard(url.toString());
+                    }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy link to clipboard</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-xs text-gray-500 mt-2">
                 Share this link with the guest. They can use it to complete their check-in information before arrival.
@@ -477,34 +499,49 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
             </div>
 
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setGeneratedToken(null);
-                  setSelectedCapsule("auto-assign");
-                  setGuestName("");
-                  setPhoneNumber("");
-                  setEmail("");
-                  setExpectedCheckoutDate("");
-                  setCheckInDate("");
-                  setPrefillGender("");
-                  setPrefillNationality("");
-                }}
-                className="flex-1"
-              >
-                Create Another
-              </Button>
-              <Button
-                onClick={() => setIsDialogOpen(false)}
-                className="flex-1"
-              >
-                Done
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setGeneratedToken(null);
+                      setSelectedCapsule("auto-assign");
+                      setGuestName("");
+                      setPhoneNumber("");
+                      setEmail("");
+                      setExpectedCheckoutDate("");
+                      setCheckInDate("");
+                      setPrefillGender("");
+                      setPrefillNationality("");
+                    }}
+                    className="flex-1"
+                  >
+                    Create Another
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Clear form and create another link</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setIsDialogOpen(false)}
+                    className="flex-1"
+                  >
+                    Done
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Close dialog and return to check-in</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         )}
       </DialogContent>
-    </Dialog>
-    </div>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }

@@ -1062,6 +1062,77 @@ export interface PaginatedResponse<T> {
 }
 
 // Validation utilities
+// Expenses table for finance tracking
+export const expenses = pgTable("expenses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  description: text("description").notNull(),
+  amount: text("amount").notNull(), // Store as decimal string for precision
+  category: text("category").notNull(), // repair, consumables, utilities, marketing, maintenance, other
+  subcategory: text("subcategory"),
+  date: date("date").notNull(),
+  notes: text("notes"),
+  receiptPhotoUrl: text("receipt_photo_url"),
+  itemPhotoUrl: text("item_photo_url"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ([
+  index("idx_expenses_category").on(table.category),
+  index("idx_expenses_date").on(table.date),
+  index("idx_expenses_created_by").on(table.createdBy),
+  index("idx_expenses_created_at").on(table.createdAt),
+]));
+
+export const insertExpenseSchema = createInsertSchema(expenses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  createdBy: true,
+}).extend({
+  description: z.string()
+    .min(1, "Description is required")
+    .max(200, "Description must not exceed 200 characters")
+    .transform(val => val.trim()),
+  amount: z.string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Amount must be a valid number with up to 2 decimal places")
+    .refine(val => {
+      const num = parseFloat(val);
+      return num >= 0 && num <= 99999.99;
+    }, "Amount must be between 0 and 99,999.99"),
+  category: z.enum(["salary", "utilities", "consumables", "maintenance", "equipment", "marketing", "operations", "other"], {
+    required_error: "Category is required"
+  }),
+  subcategory: z.string()
+    .max(100, "Subcategory must not exceed 100 characters")
+    .optional(),
+  date: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .refine(val => {
+      const date = new Date(val);
+      const today = new Date();
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(today.getFullYear() - 1);
+      return date >= oneYearAgo && date <= today;
+    }, "Date must be within the last year"),
+  notes: z.string()
+    .max(500, "Notes must not exceed 500 characters")
+    .optional(),
+  receiptPhotoUrl: z.string()
+    .url("Receipt photo must be a valid URL")
+    .optional(),
+  itemPhotoUrl: z.string()
+    .url("Item photo must be a valid URL")
+    .optional(),
+});
+
+export const updateExpenseSchema = insertExpenseSchema.partial().extend({
+  id: z.string().min(1, "Expense ID is required"),
+});
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+export type UpdateExpense = z.infer<typeof updateExpenseSchema>;
+
 export const validationUtils = {
   isValidEmail: (email: string): boolean => {
     try {

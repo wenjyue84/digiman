@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Book Again Feature</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+        }
+        button:hover { background: #0056b3; }
+        .log { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 4px; 
+            font-family: monospace; 
+            font-size: 12px; 
+            white-space: pre-wrap; 
+        }
+        .success { 
+            background: #d4edda; 
+            border-color: #c3e6cb; 
+            color: #155724; 
+        }
+        .error { 
+            background: #f8d7da; 
+            border-color: #f5c6cb; 
+            color: #721c24; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Book Again Feature</h1>
+        
+        <h3>Step 1: Create a Test Guest Token</h3>
+        <button onclick="createTestToken()">Create Test Guest Token</button>
+        <div id="tokenResult" class="log" style="display: none;"></div>
+        
+        <h3>Step 2: Mark Token as Used (Simulate Check-in)</h3>
+        <button onclick="markTokenUsed()" disabled id="markUsedBtn">Mark Token as Used</button>
+        <div id="markUsedResult" class="log" style="display: none;"></div>
+        
+        <h3>Step 3: Test Book Again</h3>
+        <button onclick="testBookAgain()" disabled id="bookAgainBtn">Test Book Again</button>
+        <div id="bookAgainResult" class="log" style="display: none;"></div>
+        
+        <h3>Step 4: Test Success Page Access</h3>
+        <button onclick="testSuccessPage()" disabled id="successPageBtn">Test Success Page Access</button>
+        <div id="successPageResult" class="log" style="display: none;"></div>
+    </div>
+
+    <script>
+        let testToken = null;
+        let newBookingToken = null;
+
+        async function createTestToken() {
+            try {
+                const response = await fetch('/api/guest-tokens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        guestName: "Test User",
+                        phoneNumber: "+601234567890",
+                        email: "test@example.com",
+                        autoAssign: false
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    testToken = result.token;
+                    document.getElementById('tokenResult').style.display = 'block';
+                    document.getElementById('tokenResult').className = 'log success';
+                    document.getElementById('tokenResult').textContent = 
+                        `✅ Token created successfully!\nToken: ${testToken}\nURL: ${result.url}`;
+                    document.getElementById('markUsedBtn').disabled = false;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                document.getElementById('tokenResult').style.display = 'block';
+                document.getElementById('tokenResult').className = 'log error';
+                document.getElementById('tokenResult').textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function markTokenUsed() {
+            if (!testToken) return;
+            
+            try {
+                // Simulate check-in by creating a guest record
+                const response = await fetch(`/api/guest-checkin/${testToken}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        nameAsInDocument: "Test User",
+                        phoneNumber: "+601234567890",
+                        gender: "male",
+                        nationality: "Malaysian",
+                        checkInDate: new Date().toISOString().split('T')[0],
+                        checkOutDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+                        paymentMethod: "cash"
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('markUsedResult').style.display = 'block';
+                    document.getElementById('markUsedResult').className = 'log success';
+                    document.getElementById('markUsedResult').textContent = 
+                        `✅ Token marked as used (check-in completed)!\nGuest ID: ${result.guest?.id}\nCapsule: ${result.capsuleNumber}`;
+                    document.getElementById('bookAgainBtn').disabled = false;
+                    document.getElementById('successPageBtn').disabled = false;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                document.getElementById('markUsedResult').style.display = 'block';
+                document.getElementById('markUsedResult').className = 'log error';
+                document.getElementById('markUsedResult').textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testBookAgain() {
+            if (!testToken) return;
+            
+            try {
+                const response = await fetch(`/api/guest-tokens/new-booking/${testToken}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        checkInDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+                        guestName: "Test User",
+                        phoneNumber: "+601234567890"
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    newBookingToken = result.token;
+                    document.getElementById('bookAgainResult').style.display = 'block';
+                    document.getElementById('bookAgainResult').className = 'log success';
+                    document.getElementById('bookAgainResult').textContent = 
+                        `✅ New booking link created successfully!\nNew Token: ${newBookingToken}\nBooking URL: ${result.bookingUrl}\nExpires: ${result.expiresAt}`;
+                    
+                    // Test the new booking URL
+                    window.open(result.bookingUrl, '_blank');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                document.getElementById('bookAgainResult').style.display = 'block';
+                document.getElementById('bookAgainResult').className = 'log error';
+                document.getElementById('bookAgainResult').textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testSuccessPage() {
+            if (!testToken) return;
+            
+            try {
+                const response = await fetch(`/api/guest-tokens/${testToken}?successPage=true`);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('successPageResult').style.display = 'block';
+                    document.getElementById('successPageResult').className = 'log success';
+                    document.getElementById('successPageResult').textContent = 
+                        `✅ Success page access works!\nGuest Data: ${JSON.stringify(result.guestData, null, 2)}`;
+                    
+                    // Test the success page URL
+                    window.open(`/guest-success?token=${testToken}`, '_blank');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                document.getElementById('successPageResult').style.display = 'block';
+                document.getElementById('successPageResult').className = 'log error';
+                document.getElementById('successPageResult').textContent = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

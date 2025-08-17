@@ -153,6 +153,8 @@ export function useTokenValidation({ t, form }: UseTokenValidationProps): TokenV
           form.setValue("phoneNumber", data.phoneNumber);
         }
         
+        // Token validation complete - basic info pre-filled from token
+        
         // If the guest has an assigned capsule already, track it
         if (data.capsuleNumber) {
           setAssignedCapsuleNumber(data.capsuleNumber);
