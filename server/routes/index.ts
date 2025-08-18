@@ -12,6 +12,7 @@ import dashboardRoutes from "./dashboard";
 <<<<<<< HEAD
 import testRoutes from "./tests";
 =======
+import userRoutes from "./users";
 >>>>>>> 69ba485cefd6e0d7fab3d7a2d39f873e678bb69d
 
 export function registerRoutes(app: Express) {
@@ -26,12 +27,18 @@ export function registerRoutes(app: Express) {
   
   // Register capsule routes
   app.use("/api/capsules", capsuleRoutes);
+
   // Register admin routes
   app.use("/api/admin", adminRoutes);
+
   // Register problem tracking routes
   app.use("/api/problems", problemRoutes);
+
   // Register settings routes
   app.use("/api/settings", settingsRoutes);
+
+  // Register user management routes
+  app.use("/api/users", userRoutes);
   
   // Register expense routes
   app.use("/api/expenses", expenseRoutes);
