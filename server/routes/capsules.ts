@@ -11,6 +11,28 @@ import { authenticateToken } from "./middleware/auth";
 
 const router = Router();
 
+// Helper function to determine warning level for capsule assignment
+function getWarningLevel(capsule: any): 'none' | 'minor' | 'major' | 'blocked' {
+  // Blocked - Cannot be assigned automatically
+  if (!capsule.isAvailable || capsule.toRent === false) {
+    return 'blocked';
+  }
+  
+  // Major warning - Needs cleaning
+  if (capsule.cleaningStatus === 'to_be_cleaned') {
+    return 'major';
+  }
+  
+  // Minor warning - Maintenance issues but still rentable
+  if (capsule.toRent !== false && capsule.cleaningStatus === 'cleaned') {
+    // Check if there are any active problems (we'd need to query this)
+    // For now, assume no minor warnings unless we have active problems
+    return 'none';
+  }
+  
+  return 'none';
+}
+
 // Get available capsules
 router.get("/available", async (_req, res) => {
   try {
@@ -38,13 +60,50 @@ router.get("/available-with-status", async (_req, res) => {
     // Add assignment eligibility info to each capsule
     const capsulesWithStatus = displayableCapsules.map(capsule => ({
       ...capsule,
-      canAssign: capsule.cleaningStatus === "cleaned" && capsule.isAvailable && capsule.toRent !== false
+      canAssign: capsule.cleaningStatus === "cleaned" && capsule.isAvailable && capsule.toRent !== false,
+      warningLevel: getWarningLevel(capsule),
+      // Allow manual override - show all capsules but mark those that need warnings
+      canManualAssign: capsule.isAvailable // As long as it's not occupied, admin can assign it
     }));
 
-    res.json(capsulesWithStatus);
+    // Sort by pure sequential order: C1, C2, C3, C4... C20, C21, C24 (regardless of assignment status)
+    const sortedCapsules = capsulesWithStatus.sort((a, b) => {
+      const aNum = parseInt(a.number.replace('C', ''));
+      const bNum = parseInt(b.number.replace('C', ''));
+      
+      // Pure numerical sort: lowest to highest
+      return aNum - bNum;
+    });
+
+    res.json(sortedCapsules);
   } catch (error) {
     console.error("Error in available-with-status endpoint:", error);
     res.status(500).json({ message: "Failed to get available capsules with status" });
+  }
+});
+
+// Get capsules that need cleaning attention (ONLY cleaning-related issues)
+router.get("/needs-attention", async (_req, res) => {
+  try {
+    const allCapsules = await storage.getAllCapsules();
+    
+    // Filter capsules that need CLEANING attention ONLY:
+    // Only include capsules that specifically need cleaning
+    const needsAttention = allCapsules.filter(capsule => 
+      capsule.cleaningStatus === 'to_be_cleaned'
+    );
+
+    // Sort by capsule number for consistent ordering
+    const sortedCapsules = needsAttention.sort((a, b) => {
+      const aNum = parseInt(a.number.replace('C', ''));
+      const bNum = parseInt(b.number.replace('C', ''));
+      return aNum - bNum;
+    });
+
+    res.json(sortedCapsules);
+  } catch (error) {
+    console.error("Error getting capsules needing cleaning:", error);
+    res.status(500).json({ message: "Failed to get capsules needing cleaning" });
   }
 });
 
@@ -186,7 +245,16 @@ router.get("/cleaning-status/:status", async (req, res) => {
 router.post("/:number/mark-cleaned", securityValidationMiddleware, async (req, res) => {
   try {
     const { number } = req.params;
-    const { cleanedBy } = markCapsuleCleanedSchema.parse(req.body);
+    
+    // Create a simple schema for just the cleanedBy field since capsuleNumber comes from URL
+    const cleanedBySchema = z.object({
+      cleanedBy: z.string()
+        .min(1, "Cleaner name is required")
+        .max(50, "Cleaner name must not exceed 50 characters")
+        .transform(val => val.trim()),
+    });
+    
+    const { cleanedBy } = cleanedBySchema.parse(req.body);
     
     const updatedCapsule = await storage.markCapsuleCleaned(number, cleanedBy);
     

@@ -353,7 +353,6 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               </div>
               
               {/* Export Button */}
-              <div className="text-red-500 font-bold text-lg">EXPORT BUTTON HERE</div>
               <Button 
                 variant="outline" 
                 onClick={exportCapsulesToCSV} 

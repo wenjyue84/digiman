@@ -48,57 +48,48 @@ export function getDefaultCollector(user: any): string {
 }
 
 // Gender-based capsule assignment logic
-export function getRecommendedCapsule(gender: string, availableCapsules: Capsule[]): string {
+export function getRecommendedCapsule(gender: string, availableCapsules: any[]): string {
   if (!availableCapsules || availableCapsules.length === 0) return "";
   
-  // Filter out uncleaned capsules (should already be filtered by the API, but double-check)
-  const cleanedCapsules = availableCapsules.filter(capsule => 
-    capsule.cleaningStatus === "cleaned"
+  // Filter for capsules that can be assigned (cleaned, available, and suitable for rent)
+  const assignableCapsules = availableCapsules.filter(capsule => 
+    capsule.cleaningStatus === "cleaned" && 
+    capsule.isAvailable && 
+    capsule.toRent !== false &&
+    (capsule.canAssign !== false) // Respect the canAssign flag from API
   );
   
-  if (cleanedCapsules.length === 0) return "";
+  if (assignableCapsules.length === 0) return "";
   
   // Parse capsule numbers for sorting
-  const capsulesWithNumbers = cleanedCapsules.map(capsule => {
+  const capsulesWithNumbers = assignableCapsules.map(capsule => {
     const match = capsule.number.match(/C(\d+)/);
     const numericValue = match ? parseInt(match[1]) : 0;
     return { ...capsule, numericValue, originalNumber: capsule.number };
   });
 
   if (gender === "female") {
-    // For females: back capsules with lowest number first, prefer bottom (even numbers)
+    // For females: back capsules with lowest number first in sequential order
     const backCapsules = capsulesWithNumbers
       .filter(c => c.section === "back") // Back section
-      .sort((a, b) => {
-        const aIsBottom = a.numericValue % 2 === 0;
-        const bIsBottom = b.numericValue % 2 === 0;
-        if (aIsBottom && !bIsBottom) return -1;
-        if (!aIsBottom && bIsBottom) return 1;
-        return a.numericValue - b.numericValue;
-      });
+      .sort((a, b) => a.numericValue - b.numericValue); // Sequential order: C1, C2, C3...
     
     if (backCapsules.length > 0) {
       return backCapsules[0].originalNumber;
     }
   } else {
-    // For non-females: front bottom capsules with lowest number first
-    const frontBottomCapsules = capsulesWithNumbers
-      .filter(c => c.section === "front" && c.numericValue % 2 === 0) // Front section, bottom (even numbers)
-      .sort((a, b) => a.numericValue - b.numericValue);
+    // For non-females: front capsules with lowest number first in sequential order
+    const frontCapsules = capsulesWithNumbers
+      .filter(c => c.section === "front") // Front section
+      .sort((a, b) => a.numericValue - b.numericValue); // Sequential order: C11, C12, C13...
     
-    if (frontBottomCapsules.length > 0) {
-      return frontBottomCapsules[0].originalNumber;
+    if (frontCapsules.length > 0) {
+      return frontCapsules[0].originalNumber;
     }
   }
 
-  // Fallback: any available capsule, prefer bottom (even numbers)
-  const sortedCapsules = capsulesWithNumbers.sort((a, b) => {
-    const aIsBottom = a.numericValue % 2 === 0;
-    const bIsBottom = b.numericValue % 2 === 0;
-    if (aIsBottom && !bIsBottom) return -1;
-    if (!aIsBottom && bIsBottom) return 1;
-    return a.numericValue - b.numericValue;
-  });
+  // Fallback: any available capsule in sequential order
+  const sortedCapsules = capsulesWithNumbers.sort((a, b) => a.numericValue - b.numericValue);
 
   return sortedCapsules[0]?.originalNumber || "";
 }

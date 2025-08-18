@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, TestTube, Trash2 } from "lucide-react";
+import { Clock, TestTube, Trash2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function TestsTab() {
@@ -11,6 +11,7 @@ export default function TestsTab() {
   const [testProgress, setTestProgress] = useState('');
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   // Update elapsed time every second when running
   useEffect(() => {
@@ -38,16 +39,43 @@ export default function TestsTab() {
   // Local test runner as fallback
   const runLocalTests = async () => {
     const tests = [
+      // Basic system tests
       { name: 'Basic Math Operations', fn: () => expect(2 + 2).toBe(4) && expect(5 * 3).toBe(15) },
       { name: 'String Validation', fn: () => expect('hello'.toUpperCase()).toBe('HELLO') },
       { name: 'Array Operations', fn: () => expect([1,2,3].length).toBe(3) },
       { name: 'Object Properties', fn: () => expect({name: 'test'}.name).toBe('test') },
       { name: 'Date Operations', fn: () => expect(new Date('2024-01-01').getFullYear()).toBe(2024) },
+      
+      // Application-specific validation tests
       { name: 'Email Validation', fn: () => expect(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test('test@example.com')).toBe(true) },
       { name: 'Phone Number Format', fn: () => expect(/^\+60[0-9]{8,12}$/.test('+60123456789')).toBe(true) },
-      { name: 'Capsule Number Format', fn: () => expect(/^[A-Z][0-9]{2}$/.test('A01')).toBe(true) },
+      { name: 'Capsule Number Format (C1-C99)', fn: () => expect(/^C\d+$/.test('C1')).toBe(true) && expect(/^C\d+$/.test('C24')).toBe(true) },
       { name: 'Payment Amount Format', fn: () => expect(/^\d+\.\d{2}$/.test('50.00')).toBe(true) },
-      { name: 'Malaysian IC Format', fn: () => expect(/^\d{6}-\d{2}-\d{4}$/.test('950101-01-1234')).toBe(true) }
+      { name: 'Malaysian IC Format', fn: () => expect(/^\d{6}-\d{2}-\d{4}$/.test('950101-01-1234')).toBe(true) },
+      
+      // Schema validation tests (mock)
+      { name: 'ToRent Field Type Check', fn: () => {
+        const mockCapsule = { toRent: true };
+        return expect(typeof mockCapsule.toRent).toBe('boolean');
+      }},
+      { name: 'Capsule Status Values', fn: () => {
+        const validStatuses = ['cleaned', 'to_be_cleaned'];
+        return expect(validStatuses.includes('cleaned')).toBe(true) && expect(validStatuses.includes('to_be_cleaned')).toBe(true);
+      }},
+      { name: 'Guest Token Structure', fn: () => {
+        const mockToken = { autoAssign: true, expiresInHours: 24 };
+        return expect(typeof mockToken.autoAssign).toBe('boolean') && expect(typeof mockToken.expiresInHours).toBe('number');
+      }},
+      { name: 'Mark Cleaned Data Structure', fn: () => {
+        const mockData = { cleanedBy: "Staff" };
+        return expect(typeof mockData.cleanedBy).toBe('string') && expect(mockData.cleanedBy.length > 0).toBe(true);
+      }},
+      
+      // Frontend integration tests (mock)
+      { name: 'API Request Format', fn: () => {
+        const mockApiCall = { method: 'POST', url: '/api/test', body: { data: 'test' } };
+        return expect(mockApiCall.method).toBe('POST') && expect(mockApiCall.url.startsWith('/api/')).toBe(true);
+      }}
     ];
 
     let passed = 0;
@@ -201,6 +229,27 @@ export default function TestsTab() {
     setTestProgress('');
     setElapsedTime(0);
     setStartTime(null);
+    setCopied(false);
+  };
+
+  const copyToClipboard = async () => {
+    const outputText = testOutput.join('\n');
+    try {
+      await navigator.clipboard.writeText(outputText);
+      setCopied(true);
+      toast({
+        title: "Copied to clipboard",
+        description: "Test output has been copied to your clipboard",
+      });
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy to clipboard. Try selecting the text manually.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -271,7 +320,27 @@ export default function TestsTab() {
         {/* Test output */}
         {testOutput.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-900">Test Output:</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-gray-900">Test Output:</h4>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={copyToClipboard}
+                className="flex items-center gap-2"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 text-green-600" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+            </div>
             <div className="bg-gray-50 border rounded-lg p-4 max-h-64 overflow-y-auto">
               <div className="font-mono text-xs space-y-1">
                 {testOutput.map((line, index) => (

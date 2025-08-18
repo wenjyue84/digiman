@@ -63,7 +63,21 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
       phoneNumber?: string;
       email?: string;
       expectedCheckoutDate?: string;
- 
+      checkInDate?: string;
+      expiresInHours?: number;
+      // Guide override parameters
+      guideOverrideEnabled?: boolean;
+      guideShowIntro?: boolean;
+      guideShowAddress?: boolean;
+      guideShowWifi?: boolean;
+      guideShowCheckin?: boolean;
+      guideShowOther?: boolean;
+      guideShowFaq?: boolean;
+      guideShowSelfCheckinMessage?: boolean;
+      guideShowHostelPhotos?: boolean;
+      guideShowGoogleMaps?: boolean;
+      guideShowCheckinVideo?: boolean;
+      guideShowTimeAccess?: boolean;
     }) => {
       const response = await apiRequest("POST", "/api/guest-tokens", data);
       return response.json();

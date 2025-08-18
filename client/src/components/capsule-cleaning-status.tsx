@@ -579,7 +579,7 @@ export default function CapsuleCleaningStatus() {
         <div>
           <div className="flex items-center gap-2 mb-4 justify-between flex-wrap">
             <Clock className="h-5 w-5 text-orange-500" />
-            <h3 className="font-semibold text-lg">Needs Attention ({capsulesToClean.length})</h3>
+            <h3 className="font-semibold text-lg">Need Cleaning ({capsulesToClean.length})</h3>
             <Button
               variant="destructive"
               size="sm"

@@ -109,6 +109,7 @@ export class MemStorage implements IStorage {
         age: guest.age?.toString() || null,
         profilePhotoUrl: null,
         selfCheckinToken: null,
+        status: null, // Add missing status field
       };
       
       this.guests.set(guestRecord.id, guestRecord);
@@ -127,6 +128,7 @@ export class MemStorage implements IStorage {
   private initializeCapsules() {
     // Back section: C1-C6
     for (let i = 1; i <= 6; i++) {
+      const isEven = i % 2 === 0;
       const capsule: Capsule = {
         id: randomUUID(),
         number: `C${i}`,
@@ -137,8 +139,8 @@ export class MemStorage implements IStorage {
         lastCleanedAt: null,
         lastCleanedBy: null,
         color: null,
-        purchaseDate: null,
-        position: null,
+        purchaseDate: '2024-01-01', // 01 Jan 24
+        position: isEven ? 'bottom' : 'top', // Even = bottom, Odd = top
         remark: null,
       };
       this.capsules.set(capsule.number, capsule);
@@ -146,6 +148,7 @@ export class MemStorage implements IStorage {
     
     // Middle section: C25, C26
     for (const num of [25, 26]) {
+      const isEven = num % 2 === 0;
       const capsule: Capsule = {
         id: randomUUID(),
         number: `C${num}`,
@@ -156,8 +159,8 @@ export class MemStorage implements IStorage {
         lastCleanedAt: null,
         lastCleanedBy: null,
         color: null,
-        purchaseDate: null,
-        position: null,
+        purchaseDate: '2024-01-01', // 01 Jan 24
+        position: isEven ? 'bottom' : 'top', // Even = bottom, Odd = top
         remark: null,
       };
       this.capsules.set(capsule.number, capsule);
@@ -165,6 +168,7 @@ export class MemStorage implements IStorage {
     
     // Front section: C11-C24
     for (let i = 11; i <= 24; i++) {
+      const isEven = i % 2 === 0;
       const capsule: Capsule = {
         id: randomUUID(),
         number: `C${i}`,
@@ -175,8 +179,8 @@ export class MemStorage implements IStorage {
         lastCleanedAt: null,
         lastCleanedBy: null,
         color: null,
-        purchaseDate: null,
-        position: null,
+        purchaseDate: '2024-01-01', // 01 Jan 24
+        position: isEven ? 'bottom' : 'top', // Even = bottom, Odd = top
         remark: null,
       };
       this.capsules.set(capsule.number, capsule);
@@ -403,11 +407,21 @@ export class MemStorage implements IStorage {
     const checkedInGuests = await this.getCheckedInGuests();
     const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
     
-    return Array.from(this.capsules.values()).filter(
+    const availableCapsules = Array.from(this.capsules.values()).filter(
       capsule => capsule.isAvailable && 
                   !occupiedCapsules.has(capsule.number) && 
-                  capsule.cleaningStatus === "cleaned"
+                  capsule.cleaningStatus === "cleaned" &&
+                  capsule.toRent !== false
     );
+
+    // Sort by sequential order: C1, C2, C3, C4... C20, C21, C24
+    return availableCapsules.sort((a, b) => {
+      const aNum = parseInt(a.number.replace('C', ''));
+      const bNum = parseInt(b.number.replace('C', ''));
+      
+      // Simple numerical sort: lowest to highest
+      return aNum - bNum;
+    });
   }
 
   // Get capsules that are available but not cleaned yet (for admin warnings)

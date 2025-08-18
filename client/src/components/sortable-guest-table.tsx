@@ -256,23 +256,47 @@ export default function SortableGuestTable() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
+      // Use refetchQueries for immediate updates instead of just invalidateQueries
+      queryClient.refetchQueries({ queryKey: ["/api/guests/checked-in"] });
+      queryClient.refetchQueries({ queryKey: ["/api/capsules/needs-attention"] });
+      
+      // Still invalidate other related queries
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
       queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/cleaning-status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available-with-status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules/cleaning-status/cleaned"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules/cleaning-status/to_be_cleaned"] });
       queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      
       toast({
         title: "Success",
         description: "Guest checked out successfully",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to check out guest",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      // Check if the error indicates the guest was already checked out
+      const errorMessage = error?.message || '';
+      const isAlreadyCheckedOut = errorMessage.includes('already') || errorMessage.includes('not found') || errorMessage.includes('checked out');
+      
+      if (isAlreadyCheckedOut) {
+        toast({
+          title: "Guest Already Checked Out",
+          description: "This guest has already been checked out. The page will refresh in a moment to update the list.",
+          variant: "default",
+        });
+        // Auto-refresh after showing the message
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ["/api/guests/checked-in"] });
+          queryClient.refetchQueries({ queryKey: ["/api/occupancy"] });
+        }, 2000);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to check out guest",
+          variant: "destructive",
+        });
+      }
     },
   });
 

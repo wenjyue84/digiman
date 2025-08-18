@@ -9,6 +9,7 @@ import settingsRoutes from "./settings";
 import expenseRoutes from "./expenses";
 import objectRoutes from "./objects";
 import dashboardRoutes from "./dashboard";
+import testRoutes from "./tests";
 
 export function registerRoutes(app: Express) {
   // Register auth routes
@@ -40,4 +41,7 @@ export function registerRoutes(app: Express) {
   
   // Register dashboard routes (includes /api/dashboard, /api/occupancy, /api/calendar)
   app.use("/api", dashboardRoutes);
+  
+  // Register test routes
+  app.use("/api/tests", testRoutes);
 }
