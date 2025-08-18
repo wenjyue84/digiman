@@ -24,7 +24,9 @@
       "Bash(npm run:*)",
       "Bash(npm run:*)",
       "Bash(grep:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(timeout 5 npm run dev)",
+      "Bash(cat:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

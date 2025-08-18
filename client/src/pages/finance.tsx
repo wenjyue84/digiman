@@ -202,7 +202,7 @@ export default function Finance() {
     },
   });
 
-  // Photo upload handlers
+  // Photo upload handlers - reverted to working version
   const handleGetUploadParameters = async () => {
     try {
       const response = await fetch("/api/objects/upload", {

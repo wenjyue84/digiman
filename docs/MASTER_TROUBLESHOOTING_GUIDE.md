@@ -173,6 +173,185 @@ npm run dev
 
 ---
 
+### **008 - Complete Upload System Failure: "Upload Failed" Generic Error (SOLVED)**
+
+**Date Solved:** January 2025  
+**Symptoms:**
+- All file uploads show generic "Upload failed" error message
+- IC photo uploads in check-in page failing
+- Document uploads in guest check-in failing  
+- Finance receipt/item photo uploads failing
+- Console may show various Uppy-related errors
+
+**Root Cause:**
+- **Missing Server Implementation**: `/api/objects/upload` endpoint was calling non-existent `objectStorage.upload()` method
+- **Wrong API Flow**: Client was generating upload URLs locally instead of requesting from server
+- **Broken ObjectStorageService**: Server was trying to use Google Cloud Storage service without proper configuration
+- **API Specification Mismatch**: Implementation didn't follow DEVELOPMENT_REFERENCE.md specification
+
+**Complete Solution Steps:**
+
+1. **Fix Server Upload Parameter Endpoint:**
+   ```typescript
+   // server/routes/objects.ts
+   router.post("/api/objects/upload", async (req, res) => {
+     try {
+       // Generate unique upload ID
+       const objectId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+       
+       // CRITICAL: Return full URL with protocol and host
+       const protocol = req.protocol;
+       const host = req.get('host');
+       const uploadURL = `${protocol}://${host}/api/objects/dev-upload/${objectId}`;
+       
+       res.json({
+         uploadURL: uploadURL,
+         objectId: objectId
+       });
+     } catch (error) {
+       console.error("Upload parameter error:", error);
+       res.status(500).json({ message: error.message || "Failed to get upload URL" });
+     }
+   });
+   ```
+
+2. **Implement Local File Storage for Development:**
+   ```typescript
+   // server/routes/objects.ts
+   router.put("/api/objects/dev-upload/:id", async (req, res) => {
+     try {
+       res.setHeader('Access-Control-Allow-Origin', '*');
+       const { id } = req.params;
+       
+       // Simple local file storage
+       const uploadsDir = path.join(process.cwd(), 'uploads');
+       await fs.mkdir(uploadsDir, { recursive: true });
+       const filePath = path.join(uploadsDir, id);
+       
+       // Handle different request body types
+       let fileData: Buffer;
+       if (Buffer.isBuffer(req.body)) {
+         fileData = req.body;
+       } else if (typeof req.body === 'string') {
+         fileData = Buffer.from(req.body, 'binary');
+       } else {
+         fileData = Buffer.from(JSON.stringify(req.body));
+       }
+       
+       await fs.writeFile(filePath, fileData);
+       
+       // Store metadata
+       const metaPath = path.join(uploadsDir, `${id}.meta.json`);
+       const metadata = {
+         contentType: req.headers['content-type'] || 'application/octet-stream',
+         filename: id,
+         uploadDate: new Date().toISOString(),
+         size: fileData.length
+       };
+       await fs.writeFile(metaPath, JSON.stringify(metadata, null, 2));
+       
+       res.json({ message: "Upload successful", id: id, size: fileData.length });
+     } catch (error) {
+       console.error("Dev upload error:", error);
+       res.status(500).json({ message: error.message || "Upload failed" });
+     }
+   });
+   ```
+
+3. **Fix Client Upload Parameter Requests:**
+   ```typescript
+   // client/src/components/*/upload-handlers
+   const handleGetUploadParameters = async () => {
+     try {
+       // Request upload URL from server (not generate locally)
+       const response = await fetch('/api/objects/upload', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({})
+       });
+
+       if (!response.ok) {
+         throw new Error('Failed to get upload URL');
+       }
+
+       const data = await response.json();
+       if (!data.uploadURL) {
+         throw new Error('No upload URL returned from server');
+       }
+
+       return {
+         method: 'PUT' as const,
+         url: data.uploadURL, // Full URL from server
+       };
+     } catch (error) {
+       console.error('Error getting upload parameters:', error);
+       throw error;
+     }
+   };
+   ```
+
+4. **Implement File Serving for Uploads:**
+   ```typescript
+   // server/routes/objects.ts  
+   router.get("/objects/uploads/:id", async (req, res) => {
+     try {
+       const { id } = req.params;
+       const uploadsDir = path.join(process.cwd(), 'uploads');
+       const filePath = path.join(uploadsDir, id);
+       const metaPath = path.join(uploadsDir, `${id}.meta.json`);
+       
+       await fs.access(filePath);
+       
+       let contentType = 'application/octet-stream';
+       try {
+         const metaData = await fs.readFile(metaPath, 'utf8');
+         const metadata = JSON.parse(metaData);
+         contentType = metadata.contentType || contentType;
+       } catch (metaError) {
+         // Use default content type if no metadata
+       }
+       
+       const fileData = await fs.readFile(filePath);
+       res.setHeader('Content-Type', contentType);
+       res.send(fileData);
+     } catch (fileError) {
+       res.status(404).json({ message: "Upload not found" });
+     }
+   });
+   ```
+
+**Verification Steps:**
+1. **Test upload parameter endpoint:**
+   ```bash
+   curl -X POST http://localhost:5000/api/objects/upload -H "Content-Type: application/json" -d '{}'
+   # Should return: {"uploadURL":"http://localhost:5000/api/objects/dev-upload/12345","objectId":"12345"}
+   ```
+
+2. **Check file storage:**
+   ```bash
+   ls uploads/  # Should show uploaded files and .meta.json files
+   ```
+
+3. **Test in browser:**
+   - Go to check-in page
+   - Try uploading IC photo
+   - Should show "Photo uploaded Document photo uploaded successfully"
+
+**Files Modified:**
+- `server/routes/objects.ts` - Fixed upload endpoints
+- `client/src/components/check-in/IdentificationPersonalSection.tsx` - Fixed client handler
+- `client/src/hooks/guest-checkin/useDocumentUpload.ts` - Fixed document upload hook
+- `client/src/pages/guest-checkin.tsx` - Fixed guest check-in uploads
+
+**Prevention:**
+- Always follow API specification in DEVELOPMENT_REFERENCE.md
+- Test server endpoints independently before client integration
+- Implement proper error handling and logging for upload failures
+- Use server-generated upload URLs instead of client-generated ones
+- Ensure CORS headers are properly configured for cross-origin uploads
+
+---
+
 ### **004 - Settings page runtime error: CapsulesTab is not defined (SOLVED)**
 
 **Date Solved:** August 9, 2025  

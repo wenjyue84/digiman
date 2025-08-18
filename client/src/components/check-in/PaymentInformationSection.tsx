@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { InsertGuest } from "@shared/schema";
+// REFACTORING: Import configuration utilities to eliminate hardcoded values
+import { useFormFieldConfig, useBusinessRules } from "@/lib/configUtils";
 
 interface PaymentInformationSectionProps {
   form: UseFormReturn<InsertGuest>;
@@ -11,6 +13,19 @@ interface PaymentInformationSectionProps {
 }
 
 export default function PaymentInformationSection({ form, defaultCollector }: PaymentInformationSectionProps) {
+  // REFACTORED: Use configuration utilities instead of hardcoded values
+  const { getPaymentMethods, getPaymentPresets, getFieldLimits } = useFormFieldConfig();
+  const { getPaymentRules } = useBusinessRules();
+
+  const paymentMethods = getPaymentMethods();
+  const paymentPresets = getPaymentPresets();
+  const fieldLimits = getFieldLimits();
+  const paymentRules = getPaymentRules();
+
+  const currentAmount = form.watch("paymentAmount") || "";
+  const presetValues = paymentPresets.map(p => p.value);
+  const isCustomAmount = currentAmount && !presetValues.includes(currentAmount);
+
   return (
     <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200">
       <h3 className="text-sm font-medium text-hostel-text mb-3">Payment Information</h3>
@@ -20,7 +35,7 @@ export default function PaymentInformationSection({ form, defaultCollector }: Pa
             Amount (RM)
           </Label>
           <Select
-            value={["45", "48", "650"].includes(form.watch("paymentAmount") || "45") ? form.watch("paymentAmount") || "45" : "custom"}
+            value={!isCustomAmount ? currentAmount || paymentPresets[0]?.value : "custom"}
             onValueChange={(value) => {
               if (value === "custom") {
                 // Clear the field and let user type custom amount
@@ -34,21 +49,25 @@ export default function PaymentInformationSection({ form, defaultCollector }: Pa
               <SelectValue placeholder="Select amount" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="45">RM45 (Standard)</SelectItem>
-              <SelectItem value="48">RM48 (Premium)</SelectItem>
-              <SelectItem value="650">RM650 (Monthly Package)</SelectItem>
+              {/* REFACTORED: Use configuration-based presets instead of hardcoded values */}
+              {paymentPresets.map((preset) => (
+                <SelectItem key={preset.value} value={preset.value}>
+                  {preset.label}
+                </SelectItem>
+              ))}
               <SelectItem value="custom">Custom Amount...</SelectItem>
             </SelectContent>
           </Select>
-          {!["45", "48", "650"].includes(form.watch("paymentAmount") || "") && (
+          {isCustomAmount && (
             <Input
               id="customPaymentAmount"
               type="number"
               step="0.01"
               min="0"
-              placeholder="Enter custom amount (e.g., 35.50)"
+              max={paymentRules.maxAmount}
+              placeholder={`Enter custom amount (max: RM${paymentRules.maxAmount})`}
               className="w-full mt-2"
-              value={form.watch("paymentAmount") || ""}
+              value={currentAmount}
               onChange={(e) => form.setValue("paymentAmount", e.target.value)}
               autoFocus
             />
@@ -69,10 +88,13 @@ export default function PaymentInformationSection({ form, defaultCollector }: Pa
               <SelectValue placeholder="Select payment method" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="cash">Cash</SelectItem>
-              <SelectItem value="tng">Touch 'n Go</SelectItem>
-              <SelectItem value="bank">Bank Transfer</SelectItem>
-              <SelectItem value="platform">Online Platform</SelectItem>
+              {/* REFACTORED: Use configuration-based payment methods */}
+              {paymentMethods.map((method) => (
+                <SelectItem key={method.value} value={method.value}>
+                  {method.label}
+                  {method.isDefault && " (Default)"}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {form.formState.errors.paymentMethod && (
@@ -92,6 +114,7 @@ export default function PaymentInformationSection({ form, defaultCollector }: Pa
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={defaultCollector}>{defaultCollector} (Current User)</SelectItem>
+              {/* REFACTORED: Consider making staff list configurable in future phases */}
               <SelectItem value="Alston">Alston</SelectItem>
               <SelectItem value="Jay">Jay</SelectItem>
               <SelectItem value="Le">Le</SelectItem>

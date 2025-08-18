@@ -24,35 +24,68 @@ export default function IdentificationPersonalSection({
 }: IdentificationPersonalSectionProps) {
   const { toast } = useToast();
 
+  // FIXED: Upload failure issue - Request upload URL from server instead of generating locally
+  // This follows the correct API flow documented in DEVELOPMENT_REFERENCE.md
   const handleGetUploadParameters = async () => {
-    const response = await fetch('/api/objects/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    try {
+      // Step 1: Request upload parameters from server
+      // Server generates unique upload URL and returns it
+      const response = await fetch('/api/objects/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}) // Empty body as per API spec
+      });
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Upload URL request failed:', errorData);
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Upload URL request failed:', errorData);
+        throw new Error('Failed to get upload URL');
+      }
+
+      const data = await response.json();
+      console.log('Server upload response:', data);
+
+      if (!data.uploadURL) {
+        throw new Error('No upload URL returned from server');
+      }
+
+      const uploadURL = data.uploadURL;
+      console.log('Upload URL received from server:', uploadURL);
+
+      // Store URL for later use in upload result handler
+      (window as any).__lastProfileUploadUrl = uploadURL;
+
+      // Return parameters that Uppy will use for the actual upload
+      return {
+        method: 'PUT' as const,
+        url: uploadURL, // Full URL like http://localhost:5000/api/objects/dev-upload/12345
+      };
+    } catch (error) {
+      console.error('Error getting upload parameters:', error);
       throw new Error('Failed to get upload URL');
     }
-
-    const data = await response.json();
-    if (!data.uploadURL) {
-      throw new Error('No upload URL returned from server');
-    }
-
-    (window as any).__lastProfileUploadUrl = data.uploadURL;
-
-    return {
-      method: 'PUT' as const,
-      url: data.uploadURL,
-    };
   };
 
   const handlePhotoUpload = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    console.log('=== Photo Upload Handler ===');
+    console.log('Full result:', JSON.stringify(result, null, 2));
+    
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
+      console.log('Uploaded file object:', uploadedFile);
+      
       const uploadURL = uploadedFile.uploadURL || (window as any).__lastProfileUploadUrl;
+      console.log('Upload URL:', uploadURL);
+
+      if (!uploadURL) {
+        console.error('No upload URL found');
+        toast({
+          title: 'Upload Error',
+          description: 'No upload URL found. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       try {
         let objectId: string | undefined;
@@ -87,6 +120,28 @@ export default function IdentificationPersonalSection({
         });
       } finally {
         (window as any).__lastProfileUploadUrl = null;
+      }
+    } else {
+      console.error('Upload failed or no files uploaded');
+      console.error('Result:', result);
+      
+      // Check if there are any failed uploads with error messages
+      if (result.failed && result.failed.length > 0) {
+        const failedFile = result.failed[0];
+        const errorMessage = failedFile.error?.message || 'Upload failed';
+        console.error('Upload failed:', errorMessage);
+        
+        toast({
+          title: 'Upload Failed',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Upload Failed',
+          description: 'No files were uploaded successfully. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
   };

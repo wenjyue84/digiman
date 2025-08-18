@@ -10,34 +10,40 @@ export function useDocumentUpload(form: UseFormReturn<GuestSelfCheckin>) {
   const [passportDocumentUrl, setPassportDocumentUrl] = useState<string>("");
 
   const handleGetUploadParameters = async () => {
-    const response = await fetch('/api/objects/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Upload URL request failed:', errorData);
+    try {
+      const response = await fetch('/api/objects/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Upload URL request failed:', errorData);
+        throw new Error('Failed to get upload URL');
+      }
+      
+      const data = await response.json();
+      console.log('Server upload response:', data);
+      
+      if (!data.uploadURL) {
+        throw new Error('No upload URL returned from server');
+      }
+      
+      const uploadUrl = data.uploadURL;
+      console.log('Upload URL:', uploadUrl);
+      
+      // Store URL in a way we can retrieve it later
+      (window as any).__lastUploadUrl = uploadUrl;
+      
+      return {
+        method: 'PUT' as const,
+        url: uploadUrl,
+      };
+    } catch (error) {
+      console.error('Error getting upload parameters:', error);
       throw new Error('Failed to get upload URL');
     }
-    
-    const data = await response.json();
-    console.log('Server upload response:', data);
-    
-    if (!data.uploadURL) {
-      throw new Error('No upload URL returned from server');
-    }
-    
-    const uploadUrl = data.uploadURL;
-    console.log('Upload URL:', uploadUrl);
-    
-    // Store URL in a way we can retrieve it later
-    (window as any).__lastUploadUrl = uploadUrl;
-    
-    return {
-      method: 'PUT' as const,
-      url: uploadUrl,
-    };
   };
 
   const handleDocumentUpload = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>, documentType: 'ic' | 'passport') => {

@@ -363,3 +363,399 @@ export const quickValidation = {
     return clientValidation.validatePassport(passport).isValid;
   }
 };
+
+/**
+ * React Hook Form validation rules factory
+ * Creates consistent validation rules for react-hook-form register()
+ * Eliminates duplication across form components
+ */
+export const createFormValidationRules = {
+  /**
+   * Required field validation rule
+   */
+  required: (fieldName: string) => ({
+    required: `${fieldName} is required`,
+  }),
+
+  /**
+   * Email field validation rules
+   */
+  email: (required: boolean = false, fieldName: string = "Email") => ({
+    ...(required && createFormValidationRules.required(fieldName)),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validateEmailRealTime(value);
+      return result.isValid || result.message || "Invalid email";
+    },
+  }),
+
+  /**
+   * Phone field validation rules
+   */
+  phone: (required: boolean = false, fieldName: string = "Phone number") => ({
+    ...(required && createFormValidationRules.required(fieldName)),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validatePhoneRealTime(value);
+      return result.isValid || result.message || "Invalid phone number";
+    },
+  }),
+
+  /**
+   * Name field validation rules
+   */
+  name: (required: boolean = true, fieldName: string = "Name") => ({
+    ...(required && createFormValidationRules.required(fieldName)),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validateNameRealTime(value);
+      return result.isValid || result.message || "Invalid name";
+    },
+  }),
+
+  /**
+   * IC number validation rules (for Malaysian nationals)
+   */
+  icNumber: (required: boolean = false) => ({
+    ...(required && createFormValidationRules.required("IC number")),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validateMalaysianIC(value);
+      return result.isValid || result.message || "Invalid IC number";
+    },
+  }),
+
+  /**
+   * Passport number validation rules (for non-Malaysian nationals)
+   */
+  passport: (required: boolean = false) => ({
+    ...(required && createFormValidationRules.required("Passport number")),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validatePassport(value);
+      return result.isValid || result.message || "Invalid passport number";
+    },
+  }),
+
+  /**
+   * Payment amount validation rules
+   */
+  paymentAmount: (required: boolean = true) => ({
+    ...(required && createFormValidationRules.required("Payment amount")),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validatePaymentAmount(value);
+      return result.isValid || result.message || "Invalid payment amount";
+    },
+  }),
+
+  /**
+   * Capsule number validation rules
+   */
+  capsuleNumber: (required: boolean = true) => ({
+    ...(required && createFormValidationRules.required("Capsule number")),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validateCapsuleNumber(value);
+      return result.isValid || result.message || "Invalid capsule number";
+    },
+  }),
+
+  /**
+   * Age validation rules
+   */
+  age: (required: boolean = false) => ({
+    ...(required && createFormValidationRules.required("Age")),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      const result = clientValidation.validateAge(value);
+      return result.isValid || result.message || "Invalid age";
+    },
+  }),
+
+  /**
+   * Date validation rules
+   */
+  date: (required: boolean = true, fieldName: string = "Date") => ({
+    ...(required && createFormValidationRules.required(fieldName)),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      if (!value || value.trim() === "") return required ? `${fieldName} is required` : true;
+      const date = new Date(value);
+      return !isNaN(date.getTime()) || `${fieldName} must be a valid date`;
+    },
+  }),
+
+  /**
+   * Future date validation rules (for expected checkout dates)
+   */
+  futureDate: (required: boolean = false, fieldName: string = "Date") => ({
+    ...(required && createFormValidationRules.required(fieldName)),
+    validate: (value: string) => {
+      if (!required && !value) return true;
+      if (!value || value.trim() === "") return required ? `${fieldName} is required` : true;
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return `${fieldName} must be a valid date`;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date >= today || `${fieldName} must be today or in the future`;
+    },
+  }),
+
+  /**
+   * Text field with length constraints
+   */
+  text: (required: boolean = false, minLength: number = 0, maxLength: number = 255, fieldName: string = "Field") => ({
+    ...(required && createFormValidationRules.required(fieldName)),
+    minLength: minLength > 0 ? {
+      value: minLength,
+      message: `${fieldName} must be at least ${minLength} characters long`,
+    } : undefined,
+    maxLength: maxLength > 0 ? {
+      value: maxLength,
+      message: `${fieldName} must be no more than ${maxLength} characters long`,
+    } : undefined,
+  }),
+
+  /**
+   * Numeric field validation rules
+   */
+  number: (required: boolean = false, min?: number, max?: number, fieldName: string = "Number") => ({
+    ...(required && createFormValidationRules.required(fieldName)),
+    validate: (value: string | number) => {
+      if (!required && (value === "" || value === null || value === undefined)) return true;
+      const num = typeof value === "string" ? parseFloat(value) : value;
+      if (isNaN(num)) return `${fieldName} must be a valid number`;
+      if (min !== undefined && num < min) return `${fieldName} must be at least ${min}`;
+      if (max !== undefined && num > max) return `${fieldName} must be no more than ${max}`;
+      return true;
+    },
+  }),
+};
+
+/**
+ * Form data sanitization utilities
+ * Cleans and formats form data before submission
+ * Ensures consistent data format across the application
+ */
+export const formDataSanitizer = {
+  /**
+   * Sanitizes complete guest form data
+   */
+  sanitizeGuestData: (data: any) => {
+    const sanitized = { ...data };
+
+    // Sanitize text fields
+    if (sanitized.name) {
+      sanitized.name = inputFormatters.formatName(sanitized.name);
+    }
+    
+    if (sanitized.email) {
+      sanitized.email = sanitized.email.trim().toLowerCase();
+    }
+    
+    if (sanitized.phoneNumber) {
+      sanitized.phoneNumber = sanitized.phoneNumber.replace(/[\s\-\(\)]/g, "");
+    }
+    
+    if (sanitized.idNumber && sanitized.nationality === "Malaysian") {
+      sanitized.idNumber = inputFormatters.formatIC(sanitized.idNumber);
+    } else if (sanitized.idNumber) {
+      sanitized.idNumber = sanitized.idNumber.toUpperCase().trim();
+    }
+    
+    if (sanitized.capsuleNumber) {
+      sanitized.capsuleNumber = inputFormatters.formatCapsuleNumber(sanitized.capsuleNumber);
+    }
+    
+    if (sanitized.paymentAmount) {
+      const amount = parseFloat(sanitized.paymentAmount);
+      sanitized.paymentAmount = isNaN(amount) ? "0" : amount.toFixed(2);
+    }
+    
+    // Sanitize optional fields (remove empty strings)
+    const optionalFields = ['email', 'phoneNumber', 'idNumber', 'emergencyContact', 'emergencyPhone', 'notes'];
+    optionalFields.forEach(field => {
+      if (sanitized[field] === "") {
+        sanitized[field] = null;
+      }
+    });
+    
+    return sanitized;
+  },
+
+  /**
+   * Sanitizes settings form data
+   */
+  sanitizeSettingsData: (data: any) => {
+    const sanitized = { ...data };
+    
+    // Sanitize URLs (remove trailing slashes, ensure protocol)
+    const urlFields = ['websiteUrl', 'supportUrl', 'bookingUrl'];
+    urlFields.forEach(field => {
+      if (sanitized[field] && sanitized[field] !== "") {
+        let url = sanitized[field].trim();
+        if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+          url = 'https://' + url;
+        }
+        sanitized[field] = url.replace(/\/+$/, ""); // Remove trailing slashes
+      }
+    });
+    
+    // Sanitize email addresses
+    const emailFields = ['adminEmail', 'supportEmail', 'notificationEmail'];
+    emailFields.forEach(field => {
+      if (sanitized[field] && sanitized[field] !== "") {
+        sanitized[field] = sanitized[field].trim().toLowerCase();
+      }
+    });
+    
+    // Sanitize numeric fields
+    const numericFields = ['maxGuestStayDays', 'totalCapsules', 'maxPaymentAmount'];
+    numericFields.forEach(field => {
+      if (sanitized[field] !== undefined && sanitized[field] !== "") {
+        const num = parseFloat(sanitized[field]);
+        sanitized[field] = isNaN(num) ? 0 : num;
+      }
+    });
+    
+    return sanitized;
+  },
+
+  /**
+   * General purpose sanitizer for any form data
+   */
+  sanitizeGeneral: (data: any) => {
+    const sanitized = { ...data };
+    
+    Object.keys(sanitized).forEach(key => {
+      const value = sanitized[key];
+      
+      if (typeof value === "string") {
+        // Trim whitespace
+        const trimmed = value.trim();
+        
+        // Convert empty strings to null for optional fields
+        if (trimmed === "") {
+          sanitized[key] = null;
+        } else {
+          sanitized[key] = trimmed;
+        }
+      }
+    });
+    
+    return sanitized;
+  },
+};
+
+/**
+ * Validation utility for handling nationality-based ID validation
+ * Handles the common pattern of IC vs Passport validation based on nationality
+ */
+export const nationalityValidation = {
+  /**
+   * Gets appropriate ID validation based on nationality
+   */
+  getIdValidation: (nationality: string, required: boolean = false) => {
+    if (nationality === "Malaysian") {
+      return createFormValidationRules.icNumber(required);
+    } else {
+      return createFormValidationRules.passport(required);
+    }
+  },
+
+  /**
+   * Gets appropriate ID label based on nationality
+   */
+  getIdLabel: (nationality: string) => {
+    return nationality === "Malaysian" ? "IC Number" : "Passport Number";
+  },
+
+  /**
+   * Gets appropriate ID placeholder based on nationality
+   */
+  getIdPlaceholder: (nationality: string) => {
+    return nationality === "Malaysian" ? "123456-78-9012" : "A1234567";
+  },
+
+  /**
+   * Validates ID based on nationality
+   */
+  validateId: (id: string, nationality: string) => {
+    if (nationality === "Malaysian") {
+      return clientValidation.validateMalaysianIC(id);
+    } else {
+      return clientValidation.validatePassport(id);
+    }
+  },
+};
+
+/**
+ * Bulk validation utilities for validating multiple fields at once
+ * Useful for form submission validation and displaying multiple errors
+ */
+export const bulkValidation = {
+  /**
+   * Validates guest form data and returns all errors
+   */
+  validateGuestForm: (data: any) => {
+    const errors: Record<string, string> = {};
+    
+    // Name validation
+    if (!data.name || data.name.trim() === "") {
+      errors.name = "Name is required";
+    } else {
+      const nameResult = clientValidation.validateNameRealTime(data.name);
+      if (!nameResult.isValid && nameResult.message) {
+        errors.name = nameResult.message;
+      }
+    }
+    
+    // Email validation (optional)
+    if (data.email && data.email.trim() !== "") {
+      const emailResult = clientValidation.validateEmailRealTime(data.email);
+      if (!emailResult.isValid && emailResult.message) {
+        errors.email = emailResult.message;
+      }
+    }
+    
+    // Phone validation (optional)
+    if (data.phoneNumber && data.phoneNumber.trim() !== "") {
+      const phoneResult = clientValidation.validatePhoneRealTime(data.phoneNumber);
+      if (!phoneResult.isValid && phoneResult.message) {
+        errors.phoneNumber = phoneResult.message;
+      }
+    }
+    
+    // ID validation based on nationality
+    if (data.idNumber && data.idNumber.trim() !== "") {
+      const idResult = nationalityValidation.validateId(data.idNumber, data.nationality || "Malaysian");
+      if (!idResult.isValid && idResult.message) {
+        errors.idNumber = idResult.message;
+      }
+    }
+    
+    // Capsule number validation
+    if (!data.capsuleNumber || data.capsuleNumber.trim() === "") {
+      errors.capsuleNumber = "Capsule number is required";
+    } else {
+      const capsuleResult = clientValidation.validateCapsuleNumber(data.capsuleNumber);
+      if (!capsuleResult.isValid && capsuleResult.message) {
+        errors.capsuleNumber = capsuleResult.message;
+      }
+    }
+    
+    // Payment amount validation
+    if (data.paymentAmount !== undefined && data.paymentAmount !== "") {
+      const amountResult = clientValidation.validatePaymentAmount(data.paymentAmount);
+      if (!amountResult.isValid && amountResult.message) {
+        errors.paymentAmount = amountResult.message;
+      }
+    }
+    
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors,
+    };
+  },
+};
