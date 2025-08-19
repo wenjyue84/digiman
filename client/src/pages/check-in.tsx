@@ -58,6 +58,10 @@ export default function CheckIn() {
   const [checkedInGuest, setCheckedInGuest] = useState<any>(null);
   const [assignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
   
+  // Add new state for capsule assignment warnings
+  const [showCapsuleWarning, setShowCapsuleWarning] = useState(false);
+  const [capsuleWarningMessage, setCapsuleWarningMessage] = useState("");
+
   const { data: availableCapsules = [], isLoading: capsulesLoading } = useVisibilityQuery<(Capsule & { canAssign: boolean })[]>({
     queryKey: ["/api/capsules/available-with-status"],
     // Uses smart config: nearRealtime (30s stale, 60s refetch)
@@ -205,9 +209,42 @@ export default function CheckIn() {
   });
 
   const onSubmit = (data: InsertGuest) => {
+    // Check if selected capsule has issues
+    const selectedCapsule = availableCapsules.find(c => c.number === data.capsuleNumber);
+    
+    if (selectedCapsule && !selectedCapsule.canAssign) {
+      // Show warning but allow admin to proceed
+      let warningMessage = "";
+      
+      if (selectedCapsule.cleaningStatus === "to_be_cleaned") {
+        warningMessage = `⚠️ WARNING: ${selectedCapsule.number} needs cleaning before it can be assigned. Are you sure you want to proceed with manual assignment?`;
+      } else if (selectedCapsule.toRent === false) {
+        warningMessage = `🚫 WARNING: ${selectedCapsule.number} is marked as "Not Suitable for Rent" due to major maintenance issues. Are you sure you want to assign it manually?`;
+      } else if (!selectedCapsule.isAvailable) {
+        warningMessage = `⚠️ WARNING: ${selectedCapsule.number} is currently unavailable. Are you sure you want to proceed with manual assignment?`;
+      } else {
+        warningMessage = `⚠️ WARNING: ${selectedCapsule.number} has some issues but can be manually assigned. Are you sure you want to proceed?`;
+      }
+      
+      setCapsuleWarningMessage(warningMessage);
+      setShowCapsuleWarning(true);
+      return;
+    }
+    
+    // Normal flow - no issues
     setFormDataToSubmit(data);
     setShowCheckinConfirmation(true);
     setCurrentStep(2);
+  };
+
+  const confirmCapsuleWarning = () => {
+    if (formDataToSubmit) {
+      setShowCapsuleWarning(false);
+      setCapsuleWarningMessage("");
+      // Proceed with check-in despite capsule issues
+      setShowCheckinConfirmation(true);
+      setCurrentStep(2);
+    }
   };
 
   const confirmCheckin = () => {
@@ -554,7 +591,6 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
             onSavePDF: handleSaveAsPdf,
             onEmail: handleEmail,
             onShare: handleShare,
-            onBookAgain: handleBookAgain,
           }}
         />
       </div>
@@ -661,12 +697,27 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
 
             <CheckInDetailsSection form={form} />
 
+            {/* Add warning message when no capsules can be auto-assigned */}
+            {availableCapsules.filter(capsule => capsule.canAssign).length === 0 && (
+              <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center gap-2 text-orange-700">
+                  <Bed className="h-4 w-4" />
+                  <span className="text-sm font-medium">No Capsules Available for Auto-Assignment</span>
+                </div>
+                <p className="text-xs text-orange-600 mt-1">
+                  All available capsules need cleaning, maintenance, or have other issues. 
+                  You can still manually assign a capsule by selecting one from the dropdown above, 
+                  but please ensure the guest is aware of any potential issues.
+                </p>
+              </div>
+            )}
+
             <div className="flex space-x-4">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     type="submit"
-                    disabled={checkinMutation.isPending || availableCapsules.filter(capsule => capsule.canAssign).length === 0}
+                    disabled={checkinMutation.isPending}
                     isLoading={checkinMutation.isPending}
                     className="flex-1 bg-hostel-secondary hover:bg-green-600 text-white font-medium"
                   >
@@ -728,6 +779,19 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
         cancelText="Cancel"
         onConfirm={confirmClear}
         variant="warning"
+      />
+      
+      {/* Add capsule assignment warning dialog */}
+      <ConfirmationDialog
+        open={showCapsuleWarning}
+        onOpenChange={setShowCapsuleWarning}
+        title="Capsule Assignment Warning"
+        description={capsuleWarningMessage}
+        confirmText="Yes, Proceed with Manual Assignment"
+        cancelText="Cancel and Choose Different Capsule"
+        onConfirm={confirmCapsuleWarning}
+        variant="warning"
+        icon={<Bed className="h-6 w-6 text-orange-600" />}
       />
     </div>
   );

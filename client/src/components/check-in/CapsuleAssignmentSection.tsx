@@ -79,7 +79,7 @@ export default function CapsuleAssignmentSection({
           💡 Smart Assignment: Select gender first for automatic {labels.lowerSingular} recommendation!
         </p>
         <p className="text-xs text-orange-600">
-          ⚠️ Grey {labels.lowerPlural} cannot be selected (may need cleaning, maintenance, or be temporarily unavailable).
+          ⚠️ Orange {labels.lowerPlural} cannot be selected (may need cleaning, maintenance, or be temporarily unavailable).
         </p>
         <p className="text-xs text-red-600">
           🚫 Red {labels.lowerPlural} are not suitable for rent due to major maintenance issues.
@@ -220,10 +220,10 @@ export default function CapsuleAssignmentSection({
                           className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
                         >
                           <div className="flex items-center justify-between w-full">
-                            <span className={isNotSuitableForRent ? "text-red-600 font-medium" : isDisabled ? "text-gray-400" : ""}>
+                            <span className={isNotSuitableForRent ? "text-red-600 font-medium" : isDisabled ? "text-orange-600 font-medium" : ""}>
                               {capsule.number} - {position} {preference}{suitability}{cleaningStatus}
                             </span>
-                            <span className={`text-xs capitalize ${isNotSuitableForRent ? "text-red-500" : isDisabled ? "text-gray-400" : "text-gray-500"}`}>
+                            <span className={`text-xs capitalize ${isNotSuitableForRent ? "text-red-500" : isDisabled ? "text-orange-500" : "text-gray-500"}`}>
                               {capsule.section || 'unknown'}
                             </span>
                           </div>
