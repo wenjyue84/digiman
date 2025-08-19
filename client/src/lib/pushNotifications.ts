@@ -348,15 +348,73 @@ class PushNotificationManager {
    */
   async testNotification(): Promise<void> {
     try {
-      await fetch('/api/push/test', {
+      // Check if we have permission first
+      if (Notification.permission !== 'granted') {
+        throw new Error('Notification permission not granted. Please enable notifications in your browser settings.');
+      }
+
+      // Check if we have an active subscription
+      if (!this.state.subscribed) {
+        throw new Error('No active subscription found. Please subscribe to push notifications first.');
+      }
+
+      // Check if service worker is registered
+      if (!navigator.serviceWorker.controller) {
+        throw new Error('Service worker not active. Please refresh the page and try again.');
+      }
+
+      const response = await fetch('/api/push/test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      console.log('Test notification sent');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Server responded with ${response.status}: ${response.statusText}`;
+        
+        if (response.status === 404) {
+          throw new Error('Push notification service not found. Please check if the server is running.');
+        } else if (response.status === 500) {
+          throw new Error('Server error occurred while sending test notification. Please try again later.');
+        } else if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        } else if (response.status === 403) {
+          throw new Error('Access denied. You may not have permission to send test notifications.');
+        } else {
+          throw new Error(`Test notification failed: ${errorMessage}`);
+        }
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('Test notification sent successfully:', result.message);
+      } else {
+        throw new Error(result.error || 'Test notification failed with unknown error');
+      }
     } catch (error) {
       console.error('Error sending test notification:', error);
+      
+      // Enhance error with additional context
+      if (error instanceof Error) {
+        // Network errors
+        if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch')) {
+          error.message = 'Network error: Unable to connect to the notification service. Please check your internet connection.';
+        }
+        
+        // Service worker errors
+        if (error.message.includes('service worker') || error.message.includes('ServiceWorker')) {
+          error.message = 'Service worker error: The notification service is not properly initialized. Please refresh the page.';
+        }
+        
+        // Permission errors
+        if (error.message.includes('permission') || error.message.includes('denied')) {
+          error.message = 'Permission error: Browser has blocked notification permissions. Please enable notifications in your browser settings.';
+        }
+      }
+      
       throw error;
     }
   }

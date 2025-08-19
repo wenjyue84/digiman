@@ -117,22 +117,98 @@ router.post('/test', async (req, res) => {
     const subscriptions = pushNotificationService.getAllSubscriptions();
     
     if (subscriptions.length === 0) {
-      return res.json({ 
-        success: true,
-        message: 'No active subscriptions found. Subscribe to push notifications first.'
+      return res.status(400).json({ 
+        success: false,
+        error: 'No active subscriptions found',
+        details: 'Subscribe to push notifications first before testing',
+        code: 'NO_SUBSCRIPTIONS'
+      });
+    }
+
+    // Check if VAPID keys are configured
+    try {
+      const publicKey = pushNotificationService.getVapidPublicKey();
+      if (!publicKey) {
+        return res.status(500).json({
+          success: false,
+          error: 'VAPID keys not configured',
+          details: 'Push notification service is not properly configured',
+          code: 'VAPID_NOT_CONFIGURED'
+        });
+      }
+    } catch (vapidError) {
+      return res.status(500).json({
+        success: false,
+        error: 'VAPID configuration error',
+        details: 'Failed to retrieve VAPID public key',
+        code: 'VAPID_ERROR'
       });
     }
 
     const testPayload = createNotificationPayload.dailyReminder(2, 1);
+    
+    // Validate payload before sending
+    if (!testPayload.title || !testPayload.body) {
+      return res.status(500).json({
+        success: false,
+        error: 'Invalid test payload',
+        details: 'Test notification payload is malformed',
+        code: 'INVALID_PAYLOAD'
+      });
+    }
+
     const sentCount = await pushNotificationService.sendToAll(testPayload);
+    
+    if (sentCount === 0) {
+      return res.status(500).json({
+        success: false,
+        error: 'No notifications delivered',
+        details: 'Test notification was sent but not delivered to any devices',
+        code: 'DELIVERY_FAILED'
+      });
+    }
     
     res.json({ 
       success: true,
-      message: `Test notification sent to ${sentCount} device(s)`
+      message: `Test notification sent to ${sentCount} device(s)`,
+      sentCount,
+      payload: {
+        title: testPayload.title,
+        body: testPayload.body
+      }
     });
   } catch (error) {
     console.error('Error sending test push notification:', error);
-    res.status(500).json({ error: 'Failed to send test notification' });
+    
+    // Provide more specific error messages based on error type
+    let errorMessage = 'Failed to send test notification';
+    let errorCode = 'UNKNOWN_ERROR';
+    let errorDetails = 'An unexpected error occurred';
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      
+      if (error.message.includes('VAPID')) {
+        errorCode = 'VAPID_ERROR';
+        errorDetails = 'Push notification service configuration issue';
+      } else if (error.message.includes('subscription')) {
+        errorCode = 'SUBSCRIPTION_ERROR';
+        errorDetails = 'Error processing push notification subscriptions';
+      } else if (error.message.includes('webpush')) {
+        errorCode = 'WEBPUSH_ERROR';
+        errorDetails = 'Error sending notification via web push protocol';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorCode = 'NETWORK_ERROR';
+        errorDetails = 'Network error while sending notification';
+      }
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      error: errorMessage,
+      details: errorDetails,
+      code: errorCode
+    });
   }
 });
 
