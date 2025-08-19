@@ -135,6 +135,59 @@ console.log('SW Controller:', navigator.serviceWorker.controller);
 
 ---
 
+## 🗄️ **DATABASE CONSTRAINT VIOLATION ERRORS**
+
+### **009 - Database Constraint Violation on Test Notification (SOLVED)**
+
+**Date Solved:** January 2025  
+**Symptoms:**
+- Error: `"null value in column \"key\" of relation \"app_settings\" violates not-null constraint"`
+- HTTP 400 error when clicking "Send Test Notification"
+- Database constraint violation preventing notification testing
+- Settings not being saved properly
+
+**Root Cause:**
+- **Null Key Values**: Code attempting to save settings with null/undefined key values
+- **Missing Validation**: Server-side validation not preventing invalid data
+- **Automatic Saving**: Some automatic preference saving triggered during test notification
+- **Database Constraints**: PostgreSQL enforcing NOT NULL constraint on app_settings.key column
+
+**Solution Implemented:**
+1. **Client-Side Validation**: Added proper key format for notification preferences
+2. **Server-Side Validation**: Enhanced settings route to validate key/value parameters
+3. **Storage Layer Validation**: Added validation in DatabaseStorage and MemStorage
+4. **Error Handling**: Better error categorization for database constraint violations
+5. **Preference Saving**: Fixed notification preferences to use proper key format
+
+**Error Prevention:**
+- **Input Validation**: All settings must have non-empty string keys
+- **Type Safety**: Values are converted to strings before database storage
+- **Key Format**: Notification preferences use `notification.{preferenceName}` format
+- **Error Messages**: Clear error messages for constraint violations
+
+**Testing & Verification:**
+```javascript
+// Check if settings are being saved properly
+console.log('Notification preferences:', preferences);
+
+// Verify API calls have proper key/value format
+fetch('/api/settings', {
+  method: 'PATCH',
+  body: JSON.stringify({
+    key: 'notification.guestCheckIn', // ✅ Proper format
+    value: 'true'                     // ✅ String value
+  })
+});
+```
+
+**Prevention:**
+- **Always validate inputs** before database operations
+- **Use consistent key naming** conventions
+- **Test database operations** with edge cases
+- **Monitor constraint violations** in logs
+
+---
+
 ## 🔔 **NOTIFICATION PERMISSION TROUBLESHOOTING**
 
 ### **Understanding Notification Permissions**

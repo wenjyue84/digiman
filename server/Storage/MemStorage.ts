@@ -776,16 +776,42 @@ export class MemStorage implements IStorage {
   }
 
   async setSetting(key: string, value: string, description?: string, updatedBy?: string): Promise<AppSetting> {
-    const setting: AppSetting = {
-      id: randomUUID(),
-      key,
-      value,
-      description: description || null,
-      updatedBy: updatedBy || null,
-      updatedAt: new Date(),
-    };
-    this.appSettings.set(key, setting);
-    return setting;
+    // Validate input parameters
+    if (!key || typeof key !== 'string' || key.trim() === '') {
+      throw new Error('Setting key is required and must be a non-empty string');
+    }
+    
+    if (value === null || value === undefined) {
+      throw new Error('Setting value is required');
+    }
+
+    const trimmedKey = key.trim();
+    const stringValue = String(value);
+    
+    const existing = this.appSettings.get(trimmedKey);
+    
+    if (existing) {
+      const updatedSetting: AppSetting = {
+        ...existing,
+        value: stringValue,
+        description: description || existing.description,
+        updatedBy: updatedBy || existing.updatedBy,
+        updatedAt: new Date(),
+      };
+      this.appSettings.set(trimmedKey, updatedSetting);
+      return updatedSetting;
+    } else {
+      const newSetting: AppSetting = {
+        id: randomUUID(),
+        key: trimmedKey,
+        value: stringValue,
+        description: description || null,
+        updatedBy: updatedBy || null,
+        updatedAt: new Date(),
+      };
+      this.appSettings.set(trimmedKey, newSetting);
+      return newSetting;
+    }
   }
 
   async getAllSettings(): Promise<AppSetting[]> {

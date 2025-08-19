@@ -423,20 +423,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setSetting(key: string, value: string, description?: string, updatedBy?: string): Promise<AppSetting> {
-    const existing = await this.getSetting(key);
+    // Validate input parameters
+    if (!key || typeof key !== 'string' || key.trim() === '') {
+      throw new Error('Setting key is required and must be a non-empty string');
+    }
+    
+    if (value === null || value === undefined) {
+      throw new Error('Setting value is required');
+    }
+
+    const trimmedKey = key.trim();
+    const stringValue = String(value);
+    
+    const existing = await this.getSetting(trimmedKey);
     
     if (existing) {
       const result = await this.db.update(appSettings).set({
-        value,
+        value: stringValue,
         description: description || existing.description,
         updatedBy,
         updatedAt: new Date(),
-      }).where(eq(appSettings.key, key)).returning();
+      }).where(eq(appSettings.key, trimmedKey)).returning();
       return result[0];
     } else {
       const result = await this.db.insert(appSettings).values({
-        key,
-        value,
+        key: trimmedKey,
+        value: stringValue,
         description: description || null,
         updatedBy: updatedBy || null,
       }).returning();

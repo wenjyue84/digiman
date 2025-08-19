@@ -50,12 +50,39 @@ router.patch("/",
   async (req: any, res) => {
   try {
     const { key, value } = req.body;
+    
+    // Validate that key is not null or undefined
+    if (!key || typeof key !== 'string' || key.trim() === '') {
+      return res.status(400).json({ 
+        message: "Setting key is required and must be a non-empty string",
+        error: "INVALID_KEY"
+      });
+    }
+
+    // Validate that value is not null or undefined
+    if (value === null || value === undefined) {
+      return res.status(400).json({ 
+        message: "Setting value is required",
+        error: "INVALID_VALUE"
+      });
+    }
+
     const updatedBy = req.user.username || req.user.email || "Unknown";
     
-    const setting = await storage.setSetting(key, value, updatedBy);
+    const setting = await storage.setSetting(key.trim(), String(value), updatedBy);
     res.json(setting);
   } catch (error: any) {
     console.error("Error updating setting:", error);
+    
+    // Handle database constraint violations specifically
+    if (error.message && error.message.includes('constraint')) {
+      return res.status(400).json({ 
+        message: "Database constraint violation. Please check the data being saved.",
+        error: "CONSTRAINT_VIOLATION",
+        details: error.message
+      });
+    }
+    
     res.status(400).json({ message: error.message || "Failed to update setting" });
   }
 });

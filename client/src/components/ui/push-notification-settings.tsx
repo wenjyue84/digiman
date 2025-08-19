@@ -85,12 +85,29 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
   const handlePreferencesChange = async (key: keyof NotificationPreferences, value: boolean) => {
     try {
       setPreferences(prev => ({ ...prev, [key]: value }));
-      // Here you would typically save to backend
+      
+      // Save notification preferences to backend with proper key format
+      const response = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: `notification.${key}`, // Use proper key format
+          value: String(value), // Convert boolean to string
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save notification preferences');
+      }
+
       toast({
         title: 'Settings Updated',
         description: 'Your notification preferences have been saved',
       });
     } catch (error) {
+      console.error('Error saving notification preferences:', error);
       toast({
         title: 'Error',
         description: 'Failed to update notification settings',
@@ -163,6 +180,22 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
           'Ensure VAPID keys are configured'
         ],
         actionRequired: 'Try again later or contact support'
+      };
+    }
+
+    // Database constraint errors
+    if (errorMessage.includes('constraint') || errorMessage.includes('null value') || errorMessage.includes('app_settings')) {
+      return {
+        type: 'server',
+        message: 'Database Configuration Error',
+        details: 'The system encountered a database configuration issue',
+        troubleshooting: [
+          'This is a system configuration issue',
+          'Contact support with the error details',
+          'Check server logs for more information',
+          'Database may need to be reinitialized'
+        ],
+        actionRequired: 'Contact support - this is a system issue'
       };
     }
 
