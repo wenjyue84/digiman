@@ -92,6 +92,8 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
       const originalFetch = window.fetch;
       window.fetch = async (...args) => {
         const [url, options] = args;
+        
+        // ONLY intercept settings API calls, NOT push API calls
         if (typeof url === 'string' && url.includes('/api/settings')) {
           console.log('🚨 INTERCEPTED SETTINGS API CALL during test:', { url, options });
           if (options?.body) {
@@ -106,6 +108,8 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
             }
           }
         }
+        
+        // For all other calls (including push notifications), use original fetch
         return originalFetch(...args);
       };
       
@@ -251,6 +255,23 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
           'Contact support if the problem persists'
         ],
         actionRequired: 'Refresh the page and try again'
+      };
+    }
+
+    // Authentication errors (401 Unauthorized)
+    if (errorMessage.includes('401') || errorMessage.includes('Authentication required') || errorMessage.includes('Invalid or expired token')) {
+      return {
+        type: 'server',
+        message: 'Authentication Required',
+        details: 'Your session has expired or you need to log in again',
+        troubleshooting: [
+          'Try refreshing the page',
+          'Log out and log back in',
+          'Check if you\'re still logged in',
+          'Clear browser cache and cookies',
+          'Check if your session expired'
+        ],
+        actionRequired: 'Refresh the page or log in again'
       };
     }
 

@@ -233,6 +233,61 @@ fetch('/api/settings', {
 
 ---
 
+## 🔐 **AUTHENTICATION ERRORS**
+
+### **011 - 401 Unauthorized During Test Notification (SOLVED)**
+
+**Date Solved:** January 2025  
+**Symptoms:**
+- Error: `401: {"message":"Invalid or expired token"}`
+- Occurs when clicking "Send Test Notification"
+- Authentication error preventing notification testing
+- Push notification routes expect no authentication
+
+**Root Cause:**
+- **Fetch Interceptor Issue**: Temporary debug interceptor was interfering with push API calls
+- **Route Configuration**: Push notification routes (`/api/push/*`) don't require authentication
+- **Client Side**: Test notification was being intercepted and modified by debug code
+- **Server Side**: Server was rejecting requests with unexpected auth headers
+
+**Solution Implemented:**
+1. **Fixed Fetch Interceptor**: Modified to only intercept `/api/settings` calls, not push API calls
+2. **Enhanced Error Handling**: Added specific 401 error categorization and user guidance
+3. **Route Isolation**: Ensured push notification routes remain unauthenticated
+4. **Better User Feedback**: Clear troubleshooting steps for authentication issues
+
+**Technical Details:**
+```javascript
+// BEFORE: Interceptor was affecting ALL fetch calls
+window.fetch = async (...args) => { /* intercepts everything */ };
+
+// AFTER: Only intercept settings API calls
+if (typeof url === 'string' && url.includes('/api/settings')) {
+  // Only intercept settings calls
+}
+// Push API calls use original fetch
+return originalFetch(...args);
+```
+
+**Error Categories Added:**
+- **Authentication Required**: Session expired or login needed
+- **Clear Troubleshooting**: Refresh page, log in again, clear cache
+- **User Action Required**: Specific steps to resolve authentication issues
+
+**Testing & Verification:**
+- ✅ Test notification works without authentication
+- ✅ Settings API calls are still monitored for debugging
+- ✅ No interference with push notification functionality
+- ✅ Clear error messages for authentication issues
+
+**Prevention:**
+- **Route Isolation**: Keep push routes unauthenticated
+- **Selective Interception**: Only intercept specific API endpoints
+- **Clear Error Messages**: Provide actionable troubleshooting steps
+- **Test Authentication**: Verify routes work with/without auth as expected
+
+---
+
 ## 🔔 **NOTIFICATION PERMISSION TROUBLESHOOTING**
 
 ### **Understanding Notification Permissions**
