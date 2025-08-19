@@ -198,4 +198,28 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+
+  // Graceful shutdown handling to prevent port conflicts
+  const handleShutdown = (signal: string) => {
+    console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
+    
+    server.close((err) => {
+      if (err) {
+        console.error('❌ Error during server shutdown:', err);
+        process.exit(1);
+      }
+      
+      console.log('✅ Server closed gracefully');
+      process.exit(0);
+    });
+
+    // Force shutdown after 10 seconds
+    setTimeout(() => {
+      console.log('⚡ Force shutting down...');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 })();

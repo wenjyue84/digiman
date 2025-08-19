@@ -5,8 +5,11 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch --clear-screen=false server/index.ts",
+    "dev:safe": "node scripts/start-dev.js",
+    "dev:clean": "npx kill-port 5000 && pkill -f \"tsx watch\" || true && npm run dev",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "cross-env NODE_ENV=production node dist/index.js",
+    "start:safe": "npx kill-port 5000 && npm run start",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "test": "jest --passWithNoTests",
@@ -14,7 +17,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "port:clean": "npx kill-port 5000",
+    "process:clean": "pkill -f \"tsx watch\" || true"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",

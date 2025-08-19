@@ -61,6 +61,7 @@ C:\Users\Jyue\Desktop\PelangiManager\
 - **Ask before all file operations** (moves, renames, deletions)
 - Confirm merge conflict resolutions
 - Keep user informed of all key decisions
+- **Always kill port processes before starting servers** (prevention-first approach)
 
 ## Test Commands (Auto-Detection)
 - **Node.js:** `npm test` or `npm run test`
@@ -153,12 +154,45 @@ rm -rf node_modules/.vite && rm -rf dist && npm run build
 ```
 **Then restart Replit application**
 
-### Port Conflicts
-**Problem:** `EADDRINUSE: address already in use 0.0.0.0:5000`
-**Solution:**
+### Port Conflicts (Critical Prevention Pattern)
+**Problem:** `EADDRINUSE: address already in use 0.0.0.0:5000` - Application hangs at startup
+**Root Cause:** Multiple development server instances or zombie processes occupying port 5000
+
+**Prevention-First Approach (Use This Pattern):**
 ```bash
+# Step 1: Always kill existing processes first
+pkill -f "tsx watch" || true
 npx kill-port 5000
+
+# Step 2: Then start development server
+npm run dev
 ```
+
+**Proactive Detection:**
+- **Warning Signs:** Application shows "Your app is starting" indefinitely
+- **Log Pattern:** `Error: listen EADDRINUSE: address already in use 0.0.0.0:5000`
+- **Environment:** Most common in Replit, but affects localhost too
+
+**Advanced Recovery (If Basic Kill Fails):**
+```bash
+# Find and kill all Node.js processes on port 5000
+lsof -ti:5000 | xargs kill -9
+# Or for Windows:
+netstat -ano | findstr :5000
+taskkill /PID [PID_NUMBER] /F
+```
+
+**Success Verification:**
+- ✅ Look for "serving on port 5000" in logs
+- ✅ Application loads dashboard successfully  
+- ✅ API endpoints respond normally
+- ✅ No "EADDRINUSE" errors in console
+
+**When to Use This Pattern:**
+- **Before every `npm run dev`** (prevention is better than cure)
+- **After git pulls** that might have changed server code
+- **When switching between projects** that use the same port
+- **In Replit workflows** as standard startup procedure
 
 ### Push Notification Dependencies
 **Problem:** Missing `express-validator` after git updates
