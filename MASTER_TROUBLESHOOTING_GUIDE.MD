@@ -68,6 +68,31 @@ export DISABLE_PWA=true
 
 ---
 
+## Push Notification Dependencies Issue (August 19, 2025)
+
+### Problem Description
+After git updates that added push notification features, application failed to start with "Your app is starting" hang due to missing `express-validator` dependency.
+
+### Root Cause
+Recent git commits introduced push notification routes (`server/routes/push.ts`) that import `express-validator` without ensuring the dependency was installed.
+
+### Error Symptoms
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'express-validator' imported from /home/runner/workspace/server/routes/push.ts
+```
+
+### Solution
+```bash
+npm install express-validator
+```
+
+### Prevention
+- Always install dependencies immediately after adding new routes/features
+- Check package.json dependencies match actual imports
+- Test application startup after git pulls with new features
+
+---
+
 ## Additional Troubleshooting Patterns
 
 ### Database Connection Issues
