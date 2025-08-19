@@ -103,8 +103,8 @@ class ServiceWorkerManagerImpl implements ServiceWorkerManager {
       console.log('Service Worker controlling:', event);
       this.dispatchEvent('controlling', event);
       
-      // Reload the page when the new SW is controlling
-      window.location.reload();
+      // Don't auto-reload to prevent deployment conflicts
+      // window.location.reload();
     });
 
     this.wb.addEventListener('activated', (event) => {
