@@ -113,6 +113,76 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'express-validator' imported f
 
 ---
 
+## React Component Caching Issue (August 19, 2025)
+
+### Problem Description
+After modifying React components (e.g., removing sections from GeneralSettingsTab), changes were not reflected in the browser despite multiple file edits and browser refreshes.
+
+### Root Cause Analysis
+1. **Vite Development Cache**: Vite caches compiled modules in `node_modules/.vite` directory
+2. **Browser Cache**: Browser may cache previous component builds
+3. **Build Cache Persistence**: Cached builds can persist through standard restarts
+
+### Error Symptoms
+- File modifications appear correct when inspected
+- Browser shows old component version with removed sections still visible
+- Standard browser refresh (F5) doesn't show changes
+- Component appears to load from cached version
+
+### Solution Steps (In Order)
+
+#### Step 1: Clear Vite Development Cache
+```bash
+rm -rf node_modules/.vite
+```
+
+#### Step 2: Rebuild Project
+```bash
+npm run build
+```
+
+#### Step 3: Restart Development Server
+```bash
+npm run dev
+```
+
+#### Step 4: Hard Refresh Browser
+- **Windows/Linux**: `Ctrl + Shift + R`
+- **Mac**: `Cmd + Shift + R`
+- **Alternative**: Open incognito/private window
+
+### Complete Command Sequence
+```bash
+# Kill current dev server
+# Clear Vite cache and rebuild
+rm -rf node_modules/.vite && npm run build && npm run dev
+```
+
+### Prevention Measures
+1. **Cache-First Troubleshooting**: Always suspect caching when changes don't appear
+2. **Hard Refresh**: Use hard refresh by default during development
+3. **Incognito Testing**: Use private windows to verify changes without cache interference
+4. **Full Cache Clear**: Clear Vite cache when making structural component changes
+
+### Related Files in This Case
+- `client/src/components/settings/GeneralSettingsTab.tsx` - Component being modified
+- `client/src/pages/settings.tsx` - Parent component importing the modified component
+- `node_modules/.vite/` - Vite cache directory
+
+### Testing Verification
+✅ Component changes appear immediately after cache clear
+✅ Browser shows updated component structure
+✅ Removed sections no longer visible
+✅ Hard refresh shows consistent results
+
+### When to Use This Solution
+- React component changes not appearing
+- UI modifications not reflecting in browser  
+- Structural changes to components seem ignored
+- Standard refresh doesn't show file modifications
+
+---
+
 ## Additional Troubleshooting Patterns
 
 ### Database Connection Issues
