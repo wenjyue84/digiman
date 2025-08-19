@@ -13,6 +13,7 @@ import { validateData, securityValidationMiddleware, sanitizers, validators } fr
 import { getConfig, AppConfig } from "../configManager";
 import { authenticateToken } from "./middleware/auth";
 import sgMail from "@sendgrid/mail";
+import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
 
 const router = Router();
 
@@ -184,6 +185,95 @@ router.patch("/:token/use",
   } catch (error) {
     console.error("Error marking token as used:", error);
     res.status(500).json({ message: "Failed to mark token as used" });
+  }
+});
+
+// Complete guest self-checkin
+router.post("/checkin/:token", 
+  securityValidationMiddleware,
+  validateData(guestSelfCheckinSchema, 'body'),
+  async (req: any, res) => {
+  try {
+    const { token } = req.params;
+    const validatedData = req.body;
+    
+    // Get guest token
+    const guestToken = await storage.getGuestTokenByToken(token);
+    
+    if (!guestToken) {
+      return res.status(404).json({ message: "Token not found" });
+    }
+    
+    if (guestToken.isUsed) {
+      return res.status(400).json({ message: "Token has already been used" });
+    }
+    
+    if (guestToken.expiresAt && new Date() > guestToken.expiresAt) {
+      return res.status(400).json({ message: "Token has expired" });
+    }
+
+    // Check if assigned capsule is still available
+    if (guestToken.assignedCapsule) {
+      const availableCapsules = await storage.getAvailableCapsules();
+      const availableCapsuleNumbers = availableCapsules.map(c => c.number);
+      
+      if (!availableCapsuleNumbers.includes(guestToken.assignedCapsule)) {
+        return res.status(400).json({ 
+          message: `Assigned capsule ${guestToken.assignedCapsule} is no longer available` 
+        });
+      }
+    }
+
+    // Calculate age from IC number if provided
+    if (validatedData.icNumber && validatedData.icNumber.length === 12) {
+      const age = calculateAgeFromIC(validatedData.icNumber);
+      if (age !== null) {
+        validatedData.age = age.toString();
+      }
+    }
+
+    // Create guest data for insertion
+    const guestData = {
+      ...validatedData,
+      name: validatedData.nameAsInDocument,
+      capsuleNumber: guestToken.assignedCapsule!,
+      checkinTime: new Date(),
+      expectedCheckoutDate: validatedData.checkOutDate,
+      guestType: 'self_checkin' as const,
+      paymentAmount: guestToken.ratePerNight,
+      paymentStatus: 'unpaid' as const,
+      idNumber: validatedData.icNumber || validatedData.passportNumber,
+    };
+
+    // Create the guest
+    const guest = await storage.createGuest(guestData);
+    
+    // Mark token as used
+    await storage.markGuestTokenAsUsed(token);
+    
+    // Send push notification for self-checkin
+    try {
+      const notificationPayload = createNotificationPayload.guestCheckIn(
+        guest.name,
+        `Capsule ${guest.capsuleNumber}`
+      );
+      
+      await pushNotificationService.sendToAdmins(notificationPayload);
+      console.log(`Push notification sent for self-checkin: ${guest.name}`);
+    } catch (error) {
+      console.error('Failed to send push notification for self-checkin:', error);
+      // Don't fail the request if notification fails
+    }
+    
+    res.status(201).json({
+      success: true,
+      guest,
+      capsuleNumber: guest.capsuleNumber,
+      message: "Check-in completed successfully"
+    });
+  } catch (error) {
+    console.error("Error completing self-checkin:", error);
+    res.status(500).json({ message: "Failed to complete check-in" });
   }
 });
 

@@ -19,6 +19,7 @@ import sgMail from "@sendgrid/mail";
 // REFACTORING: Import new utility functions to eliminate duplication
 import { handleRouteError, asyncRouteHandler, sendSuccessResponse } from "../lib/errorHandler";
 import { getTodayBoundary, isOverdue } from "../lib/dateUtils";
+import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
 
 const router = Router();
 
@@ -199,6 +200,21 @@ router.post("/checkin",
       }
 
       const guest = await storage.createGuest(validatedData);
+      
+      // Send push notification for new guest check-in
+      try {
+        const notificationPayload = createNotificationPayload.guestCheckIn(
+          guest.name,
+          `Capsule ${guest.capsuleNumber}`
+        );
+        
+        await pushNotificationService.sendToAdmins(notificationPayload);
+        console.log(`Push notification sent for guest check-in: ${guest.name}`);
+      } catch (error) {
+        console.error('Failed to send push notification for guest check-in:', error);
+        // Don't fail the request if notification fails
+      }
+      
       res.status(201).json(guest);
     } catch (error) {
       if (error instanceof z.ZodError) {

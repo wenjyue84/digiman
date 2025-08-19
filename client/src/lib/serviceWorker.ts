@@ -118,7 +118,22 @@ class ServiceWorkerManagerImpl implements ServiceWorkerManager {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', (event) => {
         console.log('Service Worker message:', event.data);
-        // Handle custom messages from service worker
+        
+        // Handle notification clicks
+        if (event.data?.type === 'NOTIFICATION_CLICK') {
+          const { url, action, data } = event.data;
+          
+          // Navigate to the specified URL
+          if (url && window.location.pathname !== url) {
+            window.location.href = url;
+          }
+          
+          // Handle specific actions
+          if (action === 'checkout' && data?.guestName) {
+            console.log('Quick checkout requested for:', data.guestName);
+            // Could trigger a checkout modal here
+          }
+        }
       });
     }
   }

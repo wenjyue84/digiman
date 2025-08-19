@@ -18,6 +18,11 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        additionalManifestEntries: [
+          { url: '/sw-push-handlers.js', revision: null }
+        ],
+        // Import push handlers into the service worker
+        importScripts: ['/sw-push-handlers.js'],
         runtimeCaching: [
           // Cache API responses with network-first strategy
           {

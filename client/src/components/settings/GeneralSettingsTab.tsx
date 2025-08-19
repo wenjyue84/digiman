@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building, Save, Download, Upload, FileText } from "lucide-react";
+import PushNotificationSettings from "@/components/ui/push-notification-settings";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -335,6 +336,9 @@ export default function GeneralSettingsTab({ settings, isLoading, form, onSubmit
                 </div>
               </CardContent>
             </Card>
+
+            {/* Push Notifications Card */}
+            <PushNotificationSettings />
 
             {/* Import Configuration Card */}
             <Card>

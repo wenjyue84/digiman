@@ -10,6 +10,7 @@ import expenseRoutes from "./expenses";
 import objectRoutes from "./objects";
 import dashboardRoutes from "./dashboard";
 import testRoutes from "./tests";
+import pushRoutes from "./push";
 
 export function registerRoutes(app: Express) {
   // Register auth routes
@@ -20,6 +21,9 @@ export function registerRoutes(app: Express) {
   
   // Register guest token routes
   app.use("/api/guest-tokens", guestTokenRoutes);
+  
+  // Register guest self-checkin routes (using guest-tokens route handlers)
+  app.use("/api/guest-checkin", guestTokenRoutes);
   
   // Register capsule routes
   app.use("/api/capsules", capsuleRoutes);
@@ -42,6 +46,9 @@ export function registerRoutes(app: Express) {
   
   // Register dashboard routes (includes /api/dashboard, /api/occupancy, /api/calendar)
   app.use("/api", dashboardRoutes);
+  
+  // Register push notification routes
+  app.use("/api/push", pushRoutes);
   
   // Register test routes
   app.use("/api/tests", testRoutes);
