@@ -183,6 +183,43 @@ rm -rf node_modules/.vite && npm run build && npm run dev
 
 ---
 
+## Port Conflict Issue (August 19, 2025)
+
+### Problem Description
+Application hangs at "Your app is starting" with port already in use error, preventing server startup.
+
+### Root Cause
+Multiple instances of the development server running simultaneously, causing port 5000 to be occupied.
+
+### Error Symptoms
+```
+Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+    at listenInCluster (node:net:1965:12)
+```
+
+### Solution Steps
+1. **Kill Existing Processes**
+   ```bash
+   pkill -f "tsx watch" || true
+   ```
+
+2. **Restart Workflow**
+   - Use the "Start application" workflow restart button
+   - Or manually restart the development server
+
+### Resolution Confirmation
+✅ Check for "serving on port 5000" message in workflow logs
+✅ Application loads dashboard successfully
+✅ API endpoints respond normally
+
+### Prevention
+- Always use workflow restart instead of manual server commands
+- Monitor for duplicate processes before starting new instances
+- Use proper workflow management to avoid port conflicts
+
+---
+
 ## Additional Troubleshooting Patterns
 
 ### Database Connection Issues
