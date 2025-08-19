@@ -61,6 +61,7 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
   const [testError, setTestError] = useState<TestNotificationError | null>(null);
   const [showTroubleshooting, setShowTroubleshooting] = useState(false);
   const [testAttempts, setTestAttempts] = useState(0);
+  const [isTestInProgress, setIsTestInProgress] = useState(false);
 
   const {
     supported,
@@ -82,8 +83,61 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
     }
   }, [subscribed]);
 
+  // Prevent any automatic preference saving during test notifications
+  useEffect(() => {
+    if (isTestInProgress) {
+      console.log('🛡️ Test in progress - blocking all preference saves');
+      
+      // Temporary: Intercept fetch calls to catch unexpected API calls
+      const originalFetch = window.fetch;
+      window.fetch = async (...args) => {
+        const [url, options] = args;
+        if (typeof url === 'string' && url.includes('/api/settings')) {
+          console.log('🚨 INTERCEPTED SETTINGS API CALL during test:', { url, options });
+          if (options?.body) {
+            try {
+              const body = JSON.parse(options.body as string);
+              console.log('📝 Request body:', body);
+              if (!body.key || body.key === '') {
+                console.error('❌ INVALID KEY DETECTED:', body.key);
+              }
+            } catch (e) {
+              console.error('❌ Failed to parse request body:', e);
+            }
+          }
+        }
+        return originalFetch(...args);
+      };
+      
+      return () => {
+        window.fetch = originalFetch;
+      };
+    }
+  }, [isTestInProgress]);
+
   const handlePreferencesChange = async (key: keyof NotificationPreferences, value: boolean) => {
     try {
+      // Debug logging to track preference changes
+      console.log('🔧 handlePreferencesChange called with:', { key, value, isTestInProgress });
+      
+      // Validate the key parameter
+      if (!key || typeof key !== 'string' || key.trim() === '') {
+        console.error('❌ Invalid preference key:', key);
+        toast({
+          title: 'Error',
+          description: 'Invalid preference key provided',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Prevent saving during test notifications
+      if (isTestInProgress) {
+        console.log('⏸️ Skipping preference save during test notification');
+        return;
+      }
+
+      console.log('💾 Saving preference:', { key, value });
       setPreferences(prev => ({ ...prev, [key]: value }));
       
       // Save notification preferences to backend with proper key format
@@ -102,12 +156,13 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
         throw new Error('Failed to save notification preferences');
       }
 
+      console.log('✅ Preference saved successfully');
       toast({
         title: 'Settings Updated',
         description: 'Your notification preferences have been saved',
       });
     } catch (error) {
-      console.error('Error saving notification preferences:', error);
+      console.error('❌ Error saving notification preferences:', error);
       toast({
         title: 'Error',
         description: 'Failed to update notification settings',
@@ -183,6 +238,22 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
       };
     }
 
+    // Invalid key errors (from our validation)
+    if (errorMessage.includes('INVALID_KEY') || errorMessage.includes('Setting key is required')) {
+      return {
+        type: 'server',
+        message: 'Configuration Error',
+        details: 'The system encountered a configuration issue while saving settings',
+        troubleshooting: [
+          'This is a system configuration issue',
+          'Try refreshing the page and testing again',
+          'Check if you have proper permissions',
+          'Contact support if the problem persists'
+        ],
+        actionRequired: 'Refresh the page and try again'
+      };
+    }
+
     // Database constraint errors
     if (errorMessage.includes('constraint') || errorMessage.includes('null value') || errorMessage.includes('app_settings')) {
       return {
@@ -231,12 +302,16 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
   };
 
   const handleTestNotification = async () => {
+    console.log('🚀 Starting test notification...');
+    setIsTestInProgress(true); // Set flag to prevent saving during test
     try {
       setTestError(null);
       setTestAttempts(prev => prev + 1);
       
+      console.log('📡 Calling testNotification()...');
       await testNotification();
       
+      console.log('✅ Test notification sent successfully');
       toast({
         title: 'Test Sent Successfully! 🎉',
         description: 'Check your device for the test notification. If you don\'t see it, check your notification settings.',
@@ -245,7 +320,7 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
       // Clear any previous errors
       setTestError(null);
     } catch (error) {
-      console.error('Test notification error:', error);
+      console.error('❌ Test notification error:', error);
       
       const categorizedError = categorizeError(error);
       setTestError(categorizedError);
@@ -255,6 +330,9 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
         description: categorizedError.message,
         variant: 'destructive',
       });
+    } finally {
+      console.log('🏁 Test notification process completed');
+      setIsTestInProgress(false); // Reset flag after test
     }
   };
 

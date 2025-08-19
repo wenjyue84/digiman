@@ -188,6 +188,51 @@ fetch('/api/settings', {
 
 ---
 
+## 🔑 **INVALID KEY ERRORS**
+
+### **010 - Invalid Key Error During Test Notification (INVESTIGATING)**
+
+**Date Identified:** January 2025  
+**Symptoms:**
+- Error: `400: {"message":"Setting key is required and must be a non-empty string","error":"INVALID_KEY"}`
+- Occurs when clicking "Send Test Notification"
+- Server-side validation catching invalid data before database
+- No database constraint violations (validation working)
+
+**Root Cause (Under Investigation):**
+- **Unknown Source**: Some code is calling `/api/settings` with null/undefined key
+- **Not from Preferences**: `handlePreferencesChange` has proper validation
+- **Not from Test Function**: `handleTestNotification` doesn't call settings API
+- **Possible External Code**: Another component or hook might be interfering
+
+**Current Investigation:**
+1. **Added Debug Logging**: Track all preference changes and API calls
+2. **Fetch Interceptor**: Monitor unexpected settings API calls during tests
+3. **Test Progress Flag**: Prevent preference saving during test notifications
+4. **Enhanced Validation**: Better error handling for invalid keys
+
+**Debug Information:**
+```javascript
+// Check browser console for these logs:
+🔧 handlePreferencesChange called with: { key, value, isTestInProgress }
+🚨 INTERCEPTED SETTINGS API CALL during test: { url, options }
+📝 Request body: { key, value }
+❌ INVALID KEY DETECTED: undefined
+```
+
+**Temporary Workaround:**
+- **Refresh the page** before testing notifications
+- **Check browser console** for debug information
+- **Report exact error** to support team
+
+**Next Steps:**
+- **Identify source** of invalid API calls
+- **Fix root cause** of automatic preference saving
+- **Remove temporary** fetch interceptor
+- **Add permanent** prevention measures
+
+---
+
 ## 🔔 **NOTIFICATION PERMISSION TROUBLESHOOTING**
 
 ### **Understanding Notification Permissions**
