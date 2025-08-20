@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone, AlertCircle, Clock, Ban, Star, LogOut } from "lucide-react";
+import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone, AlertCircle, Clock, Ban, Star, LogOut, Building2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -53,6 +53,7 @@ export default function SortableGuestTable() {
   const [showCheckoutConfirmation, setShowCheckoutConfirmation] = useState(false);
   const [capsuleChangeGuest, setCapsuleChangeGuest] = useState<Guest | null>(null);
   const [isCapsuleChangeOpen, setIsCapsuleChangeOpen] = useState(false);
+  const [showAllCapsules, setShowAllCapsules] = useState(false);
   const { toast } = useToast();
 
   // Auto-switch view mode based on device type
@@ -91,6 +92,28 @@ export default function SortableGuestTable() {
   });
   
   const activeTokens = activeTokensResponse?.data || [];
+
+  // Get all capsules when showAllCapsules is enabled
+  const { data: allCapsulesResponse } = useVisibilityQuery<Array<{
+    id: string;
+    number: string;
+    section: string;
+    isAvailable: boolean;
+    cleaningStatus: string;
+    toRent: boolean;
+    lastCleanedAt: string | null;
+    lastCleanedBy: string | null;
+    color: string | null;
+    purchaseDate: string | null;
+    position: string | null;
+    remark: string | null;
+  }>>({
+    queryKey: ["/api/capsules"],
+    enabled: showAllCapsules,
+    // Uses smart config: nearRealtime (30s stale, 60s refetch)
+  });
+  
+  const allCapsules = allCapsulesResponse || [];
 
   // Filters
   const [filters, setFilters] = useState({
@@ -165,7 +188,7 @@ export default function SortableGuestTable() {
     return null;
   };
 
-  // Create a combined list of guests and pending check-ins
+  // Create a combined list of guests, pending check-ins, and empty capsules
   const combinedData = useMemo(() => {
     const guestData = guests.map(guest => ({ type: 'guest' as const, data: guest }));
     const pendingData = activeTokens.map(token => ({ 
@@ -180,8 +203,57 @@ export default function SortableGuestTable() {
       }
     }));
     
-    return [...guestData, ...pendingData];
-  }, [guests, activeTokens]);
+    let data: Array<{ type: 'guest' | 'pending' | 'empty'; data: any }> = [...guestData, ...pendingData];
+    
+    // Add empty capsules when showAllCapsules is enabled
+    if (showAllCapsules && allCapsules.length > 0) {
+      const occupiedCapsules = new Set([
+        ...guests.map(g => g.capsuleNumber),
+        ...activeTokens.map(t => t.capsuleNumber)
+      ]);
+      
+      const emptyCapsules = allCapsules
+        .filter(capsule => !occupiedCapsules.has(capsule.number))
+        .map(capsule => ({
+          type: 'empty' as const,
+          data: {
+            id: `empty-${capsule.id}`,
+            name: 'Empty',
+            capsuleNumber: capsule.number,
+            checkinTime: null,
+            expectedCheckoutDate: null,
+            phoneNumber: null,
+            gender: null,
+            nationality: null,
+            isPaid: true,
+            paymentAmount: null,
+            paymentMethod: null,
+            paymentCollector: null,
+            notes: null,
+            email: null,
+            idNumber: null,
+            emergencyContact: null,
+            emergencyPhone: null,
+            age: null,
+            profilePhotoUrl: null,
+            selfCheckinToken: null,
+            status: null,
+            checkoutTime: null,
+            isCheckedIn: false,
+            // Add capsule-specific info
+            section: capsule.section,
+            isAvailable: capsule.isAvailable,
+            cleaningStatus: capsule.cleaningStatus,
+            toRent: capsule.toRent,
+            remark: capsule.remark,
+          }
+        }));
+      
+      data = [...data, ...emptyCapsules];
+    }
+    
+    return data;
+  }, [guests, activeTokens, showAllCapsules, allCapsules]);
 
   const filteredData = useMemo(() => {
     if (!combinedData.length) return [];
@@ -542,6 +614,26 @@ export default function SortableGuestTable() {
                       </label>
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase text-gray-500">Capsule Display</Label>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={showAllCapsules}
+                          onCheckedChange={(val) => setShowAllCapsules(Boolean(val))}
+                        />
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          Show all capsules
+                        </div>
+                      </label>
+                      {showAllCapsules && (
+                        <p className="text-xs text-gray-500 ml-6">
+                          Empty capsules will be shown with red background
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex justify-between pt-2">
                     <Button variant="ghost" size="sm" onClick={() => setFilters({ gender: 'any', nationality: 'any', outstandingOnly: false, checkoutTodayOnly: false })}>
                       Clear
@@ -641,7 +733,7 @@ export default function SortableGuestTable() {
                 </tr>
               </thead>
 
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-y divide-gray-200">
                 {sortedData.map((item) => {
                   if (item.type === 'guest') {
                     const guest = item.data;
@@ -672,8 +764,7 @@ export default function SortableGuestTable() {
                             </Badge>
                           </button>
                         </td>
-                        {/* Guest column */
-                        }
+                        {/* Guest column */}
                         <td className="px-2 py-3 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className={`w-6 h-6 ${genderIcon.bgColor} rounded-full flex items-center justify-center mr-2`}>
