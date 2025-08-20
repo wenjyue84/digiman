@@ -50,7 +50,9 @@ export function registerRoutes(app: Express) {
   // Register test routes
   app.use("/api/tests", testRoutes);
   
-  return require("http").createServer(app);
+  // Return null as this function should not create server
+  // Server creation is handled by the main routes.ts file
+  return null;
 }
 
 export function registerObjectRoutes(app: Express) {

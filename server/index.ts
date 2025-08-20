@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes, registerObjectRoutes } from "./routes";
+import { registerRoutes } from "./routes";
+import { registerObjectRoutes } from "./routes/index";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeConfig, AppConfig, getConfig, getConfigUtils } from "./configManager";
 import { storage } from "./storage";

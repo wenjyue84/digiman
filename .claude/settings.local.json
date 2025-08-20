@@ -26,7 +26,8 @@
       "Bash(grep:*)",
       "Bash(copy:*)",
       "Bash(timeout 5 npm run dev)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(pkill:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
