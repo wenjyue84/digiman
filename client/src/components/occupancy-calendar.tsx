@@ -43,7 +43,12 @@ export default function OccupancyCalendar() {
 
   // Fetch calendar data for the current month
   const { data: calendarData = {}, isLoading: isCalendarLoading } = useVisibilityQuery<CalendarData>({
-    queryKey: ["/api/calendar/occupancy", currentMonth.getFullYear(), currentMonth.getMonth()],
+    // Date.getMonth() is zero-indexed, but the API expects months 1-12
+    queryKey: [
+      "/api/calendar/occupancy",
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() + 1,
+    ],
     enabled: isCalendarVisible,
     // Uses smart config: nearRealtime (30s stale, 60s refetch) for calendar data
   });
