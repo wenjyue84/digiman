@@ -1169,6 +1169,83 @@ $env:PORT=5001; npm run dev
 
 ---
 
+---
+
+### **014 - "Show All Capsules" Checkbox Not Visible After Code Changes (SOLVED)**
+
+**Date Solved:** January 2025  
+**Symptoms:**
+- Added new "Show all capsules" checkbox in Filter Guests section
+- Code changes appear to be made but aren't reflected in the UI
+- Checkbox still not visible in Dashboard > Filter Guests popover
+- Browser shows old version without the new feature
+- Similar to other frontend changes not reflecting issues
+
+**Root Cause:**
+- **Build Artifacts Issue**: The `dist/` directory contains outdated compiled JavaScript code
+- **Vite Middleware Serving Old Code**: Server using Vite middleware serves from compiled build artifacts, not source code
+- **Source vs Compiled Mismatch**: Even after adding new checkbox component, old compiled versions are still being served
+- **Build Process Dependency**: The `npm run build` script generates compiled code that must be updated after source changes
+
+**Solution Implemented:**
+1. **Stop Development Server:**
+   ```powershell
+   # Ctrl+C to stop server
+   # Or kill all Node processes
+   taskkill /F /IM node.exe
+   ```
+
+2. **Clean Build Artifacts:**
+   ```powershell
+   # Remove compiled code directory
+   Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+   ```
+
+3. **Rebuild Application:**
+   ```powershell
+   npm run build
+   # Wait for successful build completion
+   ```
+
+4. **Start Fresh Server:**
+   ```powershell
+   npm run dev
+   # Wait for "serving on port 5000" message
+   ```
+
+**Verification Steps:**
+1. **Check Build Success**: Ensure no errors during build process
+2. **Verify Server Start**: Confirm server starts without port conflicts
+3. **Test New Feature**: Navigate to Dashboard > Filter Guests > Look for "Capsule Display" section
+4. **Confirm Checkbox Visible**: "Show all capsules" checkbox should now be visible with building icon
+
+**Technical Details:**
+- **Vite Middleware Setup**: Server configured with `setupVite()` in `server/vite.ts`
+- **Build Process**: Frontend compiled from TypeScript/JSX to static assets in `dist/public/`
+- **Serving Strategy**: Server serves compiled React app, not source code directly
+- **Hot Reload**: Not available in production build mode, requires manual rebuild
+
+**Prevention Steps:**
+- **Always rebuild after major component changes**: `npm run build`
+- **Clear build artifacts when changes don't reflect**: Remove `dist/` directory
+- **Follow the build process**: Source changes → Rebuild → Test
+- **Check build output**: Ensure no compilation errors before starting server
+
+**Related Issues:**
+- **Problem #007**: Frontend Changes Not Reflecting Due to Build Artifacts
+- **Problem #013**: Replit ENOENT: Missing Build Artifacts
+- **Port 5000 EADDRINUSE**: Address already in use errors
+
+**Troubleshooting Flow:**
+1. **Identify Issue**: Frontend changes not reflecting in UI
+2. **Check Build Status**: Look for `dist/` directory and build artifacts
+3. **Clean Environment**: Remove old compiled code
+4. **Rebuild Application**: Run `npm run build` successfully
+5. **Start Server**: Run `npm run dev` and wait for confirmation
+6. **Test Changes**: Verify new features are now visible
+
+---
+
 **Document Control:**
 - **Maintained By:** Development Team
 - **Last Updated:** January 2025

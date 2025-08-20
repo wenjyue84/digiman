@@ -84,6 +84,30 @@ C:\Users\Jyue\Desktop\PelangiManager\
 
 ## React Development Experience
 
+### Frontend Changes Not Reflecting - Build Artifacts Issue (SOLVED)
+**CRITICAL REMINDER:** When frontend changes don't appear in the UI, this is almost always a build artifacts issue.
+
+**Problem Pattern:**
+- Code changes made but not visible in browser
+- New components/features not appearing
+- UI showing old version despite code updates
+
+**Solution (Always Remember):**
+1. **Stop server** (Ctrl+C or `taskkill /F /IM node.exe`)
+2. **Clean build artifacts** (`Remove-Item -Recurse -Force dist`)
+3. **Rebuild application** (`npm run build`)
+4. **Start fresh server** (`npm run dev`)
+
+**Why This Happens:**
+- Server uses Vite middleware serving compiled code from `dist/` directory
+- Source code changes require rebuild to update compiled JavaScript
+- Old build artifacts continue to be served until cleaned and rebuilt
+
+**Prevention:**
+- Always rebuild after major component changes
+- Clear `dist/` directory when changes don't reflect
+- Follow: Source changes → Rebuild → Test workflow
+
 ### Component Size Management (800-Line Rule)
 **USER GUIDELINE:** "Keep files less than 800 lines, if it is more than that then you should check if it is suitable for refactoring and ask me."
 

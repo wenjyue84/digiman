@@ -24,7 +24,8 @@ import {
   Info,
   HelpCircle,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Play
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePushNotifications } from '@/lib/pushNotifications';
@@ -363,6 +364,199 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
     }
   };
 
+  // New function to test specific notification types
+  const handleTestSpecificNotification = async (type: keyof NotificationPreferences, e?: React.MouseEvent) => {
+    // Prevent any form submission
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log(`🚀 Starting test notification for: ${type}`);
+    setIsTestInProgress(true);
+    
+    try {
+      setTestError(null);
+      setTestAttempts(prev => prev + 1);
+      
+      // Create specific test payload based on notification type
+      let testPayload: any = {};
+      
+      switch (type) {
+        case 'guestCheckIn':
+          testPayload = {
+            title: '✅ Test: Guest Check-in',
+            body: 'John Doe has checked into Capsule A1 (Test Notification)',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'test-guest-checkin',
+            data: {
+              type: 'test-guest-checkin',
+              guestName: 'John Doe (Test)',
+              capsuleNumber: 'A1',
+              url: '/dashboard',
+              isTest: true
+            },
+            actions: [
+              {
+                action: 'view',
+                title: 'View Dashboard',
+              },
+            ],
+            requireInteraction: true,
+            vibrate: [200, 100, 200],
+          };
+          break;
+          
+        case 'checkoutReminders':
+          testPayload = {
+            title: '⏰ Test: Checkout Reminder',
+            body: 'Jane Smith in Capsule B2 is due for checkout today (Test Notification)',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'test-checkout-reminder',
+            data: {
+              type: 'test-checkout-reminder',
+              guestName: 'Jane Smith (Test)',
+              capsuleNumber: 'B2',
+              url: '/dashboard',
+              isTest: true
+            },
+            actions: [
+              {
+                action: 'checkout',
+                title: 'Check Out',
+              },
+              {
+                action: 'view',
+                title: 'View Details',
+              },
+            ],
+            requireInteraction: true,
+            vibrate: [300, 100, 300, 100, 300],
+          };
+          break;
+          
+        case 'overdueCheckouts':
+          testPayload = {
+            title: '🚨 Test: Overdue Checkout',
+            body: 'Mike Johnson in Capsule C3 is 2 day(s) overdue (Test Notification)',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'test-overdue-checkout',
+            data: {
+              type: 'test-overdue-checkout',
+              guestName: 'Mike Johnson (Test)',
+              capsuleNumber: 'C3',
+              daysPast: 2,
+              url: '/dashboard',
+              isTest: true
+            },
+            actions: [
+              {
+                action: 'checkout',
+                title: 'Check Out Now',
+              },
+            ],
+            requireInteraction: true,
+            vibrate: [500, 200, 500, 200, 500],
+          };
+          break;
+          
+        case 'maintenanceRequests':
+          testPayload = {
+            title: '🔧 Test: Maintenance Request',
+            body: 'Capsule D4: Air conditioning not working (Test Notification)',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'test-maintenance',
+            data: {
+              type: 'test-maintenance',
+              capsuleNumber: 'D4',
+              issue: 'Air conditioning not working (Test)',
+              url: '/dashboard',
+              isTest: true
+            },
+            actions: [
+              {
+                action: 'view',
+                title: 'View Details',
+              },
+            ],
+            requireInteraction: true,
+            vibrate: [200, 100, 200],
+          };
+          break;
+          
+        case 'dailyReminders':
+          testPayload = {
+            title: '📋 Test: Daily Checkout Reminder',
+            body: '3 checkouts due today, 1 overdue (Test Notification)',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'test-daily-reminder',
+            data: {
+              type: 'test-daily-reminder',
+              checkoutCount: 3,
+              overdueCount: 1,
+              url: '/dashboard',
+              isTest: true
+            },
+            actions: [
+              {
+                action: 'view',
+                title: 'View Dashboard',
+              },
+            ],
+            requireInteraction: false,
+            vibrate: [200, 100, 200],
+          };
+          break;
+          
+        default:
+          throw new Error('Unknown notification type');
+      }
+      
+      // Send test notification via API
+      const response = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      console.log('✅ Specific test notification sent successfully:', type);
+      toast({
+        title: `Test ${type} Sent! 🎉`,
+        description: `Test notification for ${type} has been sent. Check your device!`,
+      });
+      
+      setTestError(null);
+    } catch (error) {
+      console.error(`❌ Test notification error for ${type}:`, error);
+      
+      const categorizedError = categorizeError(error);
+      setTestError(categorizedError);
+      
+      toast({
+        title: 'Test Failed',
+        description: `Failed to send test ${type} notification: ${categorizedError.message}`,
+        variant: 'destructive',
+      });
+    } finally {
+      console.log(`🏁 Test notification process completed for: ${type}`);
+      setIsTestInProgress(false);
+    }
+  };
+
   const retryTestNotification = () => {
     setTestError(null);
     handleTestNotification();
@@ -691,72 +885,173 @@ export function PushNotificationSettings({ className = '' }: PushNotificationSet
         {/* Notification Preferences */}
         {subscribed && (
           <div className="space-y-4">
-            <h4 className="font-medium text-sm text-gray-900">Notification Types</h4>
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm text-gray-900">Notification Types</h4>
+              
+              {/* Test Button Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium text-blue-800">Test Your Notifications</div>
+                    <div className="text-xs text-blue-700">
+                      Click the <Play className="h-3 w-3 inline text-blue-600" /> button beside each toggle to test that specific notification type. 
+                      These are safe test notifications that won't affect your production data.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="guest-checkin" className="text-sm">
                   Guest Check-ins
                 </Label>
-                <Switch
-                  id="guest-checkin"
-                  checked={preferences.guestCheckIn}
-                  onCheckedChange={(checked) =>
-                    handlePreferencesChange('guestCheckIn', checked)
-                  }
-                />
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleTestSpecificNotification('guestCheckIn', e)}
+                    disabled={isTestInProgress}
+                    className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Test Guest Check-in Notification"
+                  >
+                    {isTestInProgress ? (
+                      <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 text-blue-600" />
+                    )}
+                  </Button>
+                  <Switch
+                    id="guest-checkin"
+                    checked={preferences.guestCheckIn}
+                    onCheckedChange={(checked) =>
+                      handlePreferencesChange('guestCheckIn', checked)
+                    }
+                  />
+                </div>
               </div>
               
               <div className="flex items-center justify-between">
                 <Label htmlFor="checkout-reminders" className="text-sm">
                   Checkout Reminders
                 </Label>
-                <Switch
-                  id="checkout-reminders"
-                  checked={preferences.checkoutReminders}
-                  onCheckedChange={(checked) =>
-                    handlePreferencesChange('checkoutReminders', checked)
-                  }
-                />
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleTestSpecificNotification('checkoutReminders', e)}
+                    disabled={isTestInProgress}
+                    className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Test Checkout Reminder Notification"
+                  >
+                    {isTestInProgress ? (
+                      <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 text-blue-600" />
+                    )}
+                  </Button>
+                  <Switch
+                    id="checkout-reminders"
+                    checked={preferences.checkoutReminders}
+                    onCheckedChange={(checked) =>
+                      handlePreferencesChange('checkoutReminders', checked)
+                    }
+                  />
+                </div>
               </div>
               
               <div className="flex items-center justify-between">
                 <Label htmlFor="overdue-checkouts" className="text-sm">
                   Overdue Checkouts
                 </Label>
-                <Switch
-                  id="overdue-checkouts"
-                  checked={preferences.overdueCheckouts}
-                  onCheckedChange={(checked) =>
-                    handlePreferencesChange('overdueCheckouts', checked)
-                  }
-                />
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleTestSpecificNotification('overdueCheckouts', e)}
+                    disabled={isTestInProgress}
+                    className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Test Overdue Checkout Notification"
+                  >
+                    {isTestInProgress ? (
+                      <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 text-blue-600" />
+                    )}
+                  </Button>
+                  <Switch
+                    id="overdue-checkouts"
+                    checked={preferences.overdueCheckouts}
+                    onCheckedChange={(checked) =>
+                      handlePreferencesChange('overdueCheckouts', checked)
+                    }
+                  />
+                </div>
               </div>
               
               <div className="flex items-center justify-between">
                 <Label htmlFor="maintenance" className="text-sm">
                   Maintenance Requests
                 </Label>
-                <Switch
-                  id="maintenance"
-                  checked={preferences.maintenanceRequests}
-                  onCheckedChange={(checked) =>
-                    handlePreferencesChange('maintenanceRequests', checked)
-                  }
-                />
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleTestSpecificNotification('maintenanceRequests', e)}
+                    disabled={isTestInProgress}
+                    className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Test Maintenance Request Notification"
+                  >
+                    {isTestInProgress ? (
+                      <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 text-blue-600" />
+                    )}
+                  </Button>
+                  <Switch
+                    id="maintenance"
+                    checked={preferences.maintenanceRequests}
+                    onCheckedChange={(checked) =>
+                      handlePreferencesChange('maintenanceRequests', checked)
+                    }
+                  />
+                </div>
               </div>
               
               <div className="flex items-center justify-between">
                 <Label htmlFor="daily-reminders" className="text-sm">
                   Daily Reminders (12 PM)
                 </Label>
-                <Switch
-                  id="daily-reminders"
-                  checked={preferences.dailyReminders}
-                  onCheckedChange={(checked) =>
-                    handlePreferencesChange('dailyReminders', checked)
-                  }
-                />
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleTestSpecificNotification('dailyReminders', e)}
+                    disabled={isTestInProgress}
+                    className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Test Daily Reminder Notification"
+                  >
+                    {isTestInProgress ? (
+                      <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4 text-blue-600" />
+                    )}
+                  </Button>
+                  <Switch
+                    id="daily-reminders"
+                    checked={preferences.dailyReminders}
+                    onCheckedChange={(checked) =>
+                      handlePreferencesChange('dailyReminders', checked)
+                    }
+                  />
+                </div>
               </div>
             </div>
           </div>
