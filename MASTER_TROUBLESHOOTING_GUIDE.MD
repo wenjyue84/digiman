@@ -213,10 +213,17 @@ Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
 ✅ Application loads dashboard successfully
 ✅ API endpoints respond normally
 
+### Smart Script Solution (August 19, 2025)
+Created enhanced `scripts/start-dev.js` with automatic port conflict prevention:
+- Automatically detects and kills processes on port 5000
+- Cleans up tsx watch processes proactively
+- Uses cross-platform process killing (npx kill-port, lsof, taskkill)
+- Runs via `npm run dev:safe` command for reliable startup
+
 ### Prevention
-- Always use workflow restart instead of manual server commands
-- Monitor for duplicate processes before starting new instances
-- Use proper workflow management to avoid port conflicts
+- Use `npm run dev:safe` instead of `npm run dev` for automatic conflict prevention
+- Smart script handles cleanup automatically, reducing manual troubleshooting
+- Monitor workflow logs for "✅ Killed existing process" confirmation
 
 ---
 
@@ -286,6 +293,73 @@ rm -rf node_modules/.vite && rm -rf dist && npm run build
 - **Localhost**: Auto-rebuilds on file changes
 - **Replit Production**: Requires manual cache clearing and rebuild
 - **Other Hosting**: Similar cache clearing may be needed
+
+---
+
+## Syntax Error Build Failure (August 19, 2025)
+
+### Problem Description
+Application startup fails during Vite build process due to JSX syntax errors in React components, preventing server startup.
+
+### Root Cause
+Malformed JSX conditional rendering structure causing ESBuild parse errors during Vite compilation.
+
+### Error Symptoms
+```
+ERROR: Expected ")" but found "{"
+file: /client/src/components/settings/GeneralSettingsTab.tsx:98:8
+Transform failed with 1 error
+```
+
+### Solution Steps
+1. **Identify the broken component** from build error logs
+2. **Fix JSX structure** ensuring proper conditional rendering syntax
+3. **Verify proper closing tags** and JSX element nesting
+4. **Rebuild application** once syntax is corrected
+
+### Resolution Confirmation
+✅ Build process completes without syntax errors
+✅ Server starts with "serving on port 5000" message
+✅ Application loads properly in browser
+
+### Prevention
+- Use TypeScript strict mode to catch syntax errors early
+- Implement proper JSX conditional rendering patterns
+- Test builds locally before deployment
+
+---
+
+## Complete Startup Hang Resolution Process (August 19, 2025)
+
+### Comprehensive Solution Sequence
+When "Your app is starting" hangs occur, follow this systematic approach:
+
+1. **Port Conflict Resolution**
+   ```bash
+   pkill -f "tsx watch" || true
+   # Restart workflow
+   ```
+
+2. **Smart Script Usage**
+   ```bash
+   npm run dev:safe  # Uses enhanced startup script
+   ```
+
+3. **Syntax Error Detection**
+   - Check build logs for JSX/TypeScript errors
+   - Fix component syntax issues
+   - Verify proper imports and exports
+
+4. **Dependency Verification**
+   ```bash
+   npm install  # Ensure all dependencies present
+   ```
+
+### Success Indicators
+✅ "serving on port 5000" in workflow logs
+✅ No build/compilation errors
+✅ API endpoints respond correctly
+✅ Dashboard loads with data
 
 ---
 

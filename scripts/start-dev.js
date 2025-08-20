@@ -6,8 +6,8 @@
  * Based on successful troubleshooting patterns from MASTER_TROUBLESHOOTING_GUIDE.MD
  */
 
-const { spawn, exec } = require('child_process');
-const { promisify } = require('util');
+import { spawn, exec } from 'child_process';
+import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 const PORT = process.env.PORT || 5000;
@@ -155,8 +155,8 @@ async function main() {
 }
 
 // Run if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-module.exports = { killPortProcesses, killTsxProcesses, main };
+export { killPortProcesses, killTsxProcesses, main };

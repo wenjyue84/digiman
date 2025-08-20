@@ -41,9 +41,6 @@ export function registerRoutes(app: Express) {
   // Register expense routes
   app.use("/api/expenses", expenseRoutes);
   
-  // Register object storage routes (includes both /api/objects and /objects paths)
-  app.use("", objectRoutes);
-  
   // Register dashboard routes (includes /api/dashboard, /api/occupancy, /api/calendar)
   app.use("/api", dashboardRoutes);
   
@@ -52,4 +49,12 @@ export function registerRoutes(app: Express) {
   
   // Register test routes
   app.use("/api/tests", testRoutes);
+  
+  return require("http").createServer(app);
+}
+
+export function registerObjectRoutes(app: Express) {
+  // Register object storage routes (includes both /api/objects and /objects paths)
+  // This is registered after Vite middleware to prevent route conflicts
+  app.use("/", objectRoutes);
 }

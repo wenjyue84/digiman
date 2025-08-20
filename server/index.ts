@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes, registerObjectRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeConfig, AppConfig, getConfig, getConfigUtils } from "./configManager";
 import { storage } from "./storage";
@@ -185,6 +185,9 @@ app.use((req, res, next) => {
     console.log("🔥 USING STATIC FILES");
     serveStatic(app);
   }
+  
+  // Register object routes after Vite middleware to prevent conflicts
+  registerObjectRoutes(app);
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
