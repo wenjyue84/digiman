@@ -10,12 +10,19 @@ const router = Router();
 // Get all expenses
 router.get("/", authenticateToken, async (req: any, res) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-
-    const expenses = await storage.getExpenses({ page, limit });
-
-    res.json(expenses);
+    // Only apply pagination if client explicitly requests it
+    const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
+    
+    if (hasPagination) {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const expenses = await storage.getExpenses({ page, limit });
+      res.json(expenses);
+    } else {
+      // Return all expenses without pagination for backward compatibility
+      const expenses = await storage.getExpenses();
+      res.json(expenses);
+    }
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch expenses" });
   }
@@ -49,8 +56,8 @@ router.put("/:id", authenticateToken, async (req: any, res) => {
     const validatedData = updateExpenseSchema.parse(req.body);
     
     const expense = await storage.updateExpense({
-      id,
-      ...validatedData
+      ...validatedData,
+      id
     });
     
     if (!expense) {
