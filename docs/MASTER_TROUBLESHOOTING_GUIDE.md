@@ -40,6 +40,118 @@ npm run dev
 
 ## 🔧 **ISSUE DATABASE - SOLVED PROBLEMS**
 
+### **009 - Finance Page Crash & Expense Creation Errors (SOLVED)**
+
+**Date Solved:** January 2025  
+**Symptoms:**
+- Finance page shows "Something went wrong" error with error ID (e.g., error_1755734762244_3m5bb9sqr)
+- Expense creation fails with "401: Invalid or expired token" error
+- Page completely crashes when trying to access /finance
+- Error boundary catches JavaScript errors during component rendering
+
+**Root Causes:**
+1. **ObjectUploader Component Issues**: The Uppy-based photo upload component has dependency conflicts
+2. **Authentication Token Expiry**: Session tokens expire and need refresh
+3. **Storage Method Mismatch**: Backend methods `createExpense`/`getAllExpenses` vs interface methods `addExpense`/`getExpenses`
+
+**SOLUTION:**
+```bash
+# 1. Fix authentication - logout and login again
+# In browser: Click profile > Logout > Login again
+
+# 2. Clear browser storage if needed
+# DevTools > Application > Storage > Clear
+
+# 3. Temporarily disable photo uploads (already fixed in code)
+# ObjectUploader components replaced with disabled buttons
+
+# 4. Fixed backend storage method names
+# Changed routes to use correct IStorage interface methods
+```
+
+**Files Modified:**
+- `client/src/pages/finance.tsx` - Disabled ObjectUploader components
+- `server/routes/expenses.ts` - Fixed method names (createExpense → addExpense, getAllExpenses → getExpenses)
+
+**Prevention:**
+- Regular session refresh for long-running sessions
+- Monitor Uppy dependency updates for breaking changes
+- Ensure storage interface consistency between routes and implementations
+
+---
+
+### **009 - Finance Page Crash & Expense Creation Errors (SOLVED)**
+
+**Date Solved:** January 2025  
+**Symptoms:**
+- Finance page shows "Something went wrong" error with error ID (e.g., error_1755734762244_3m5bb9sqr)
+- Expense creation fails with "401: Invalid or expired token" error
+- Page completely crashes when trying to access /finance
+- Error boundary catches JavaScript errors during component rendering
+- TypeError: G.toFixed is not a function
+
+**Root Causes:**
+1. **ObjectUploader Component Issues**: The Uppy-based photo upload component has dependency conflicts
+2. **Authentication Token Expired**: User session has expired and needs fresh login
+3. **Backend Method Mismatch**: API calls wrong storage methods (createExpense vs addExpense)
+4. **Amount Type Error**: Expense amounts stored as strings but .toFixed() called on them
+
+**Complete Solution:**
+1. **Fix Amount Parsing Issues** (Main fix):
+   ```typescript
+   // Add parseAmount helper function in finance.tsx:
+   const parseAmount = (amount: any): number => {
+     if (typeof amount === 'number') return amount;
+     if (typeof amount === 'string') return parseFloat(amount) || 0;
+     return 0;
+   };
+   
+   // Replace all amount calculations:
+   expense.amount.toFixed(2) → parseAmount(expense.amount).toFixed(2)
+   .reduce((sum, exp) => sum + (exp.amount || 0), 0) → 
+   .reduce((sum, exp) => sum + parseAmount(exp.amount), 0)
+   ```
+
+2. **Fix Backend Storage Methods** (server/routes/expenses.ts):
+   ```typescript
+   // Change method names to match IStorage interface:
+   storage.getAllExpenses() → storage.getExpenses()
+   storage.createExpense() → storage.addExpense()
+   ```
+
+3. **Add Error Reporting Endpoint** (server/routes/index.ts):
+   ```typescript
+   app.post("/api/errors/report", async (req, res) => {
+     const errorReport = req.body;
+     if (process.env.NODE_ENV === 'development') {
+       console.log('🐛 Client Error Report:', JSON.stringify(errorReport, null, 2));
+     }
+     res.json({ success: true, message: 'Error report received' });
+   });
+   ```
+
+4. **Temporarily Disable Photo Upload** (if ObjectUploader causes issues):
+   ```typescript
+   // Comment out ObjectUploader imports and usage
+   // Replace with disabled buttons until Uppy dependencies are fixed
+   ```
+
+5. **Authentication Fix**:
+   - Log out and log back in (admin@pelangi.com / admin123)
+   - Clear localStorage auth_token if needed
+   - Restart server: `npm run build && npm run dev`
+
+**Test Steps:**
+1. Go to http://localhost:5000/finance
+2. Add expense (description, amount, category, date)
+3. Should create successfully without crashes
+4. Amount displays correctly in table
+
+**Prevention:**
+- Always use parseAmount() helper for any amount calculations
+- Ensure backend storage method names match IStorage interface
+- Include error reporting endpoint in all deployments
+
 ### **008 - Push Notification Test Failures (SOLVED)**
 
 **Date Solved:** January 2025  
