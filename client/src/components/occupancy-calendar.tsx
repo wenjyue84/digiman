@@ -68,43 +68,7 @@ export default function OccupancyCalendar() {
     return calendarData[dateString] || null;
   }, [selectedDate, calendarData]);
 
-  const getDayContent = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    const dayData = calendarData[dateString];
-    const dayHolidays = getHolidaysForDate(dateString);
-    const hasHoliday = dayHolidays.length > 0;
-    const isPublicHoliday = hasHoliday && dayHolidays.some(h => h.isPublicHoliday);
-    
-    if (!dayData) return null;
 
-    const occupancyRate = dayData.totalCapsules > 0 ? (dayData.occupancy / dayData.totalCapsules) * 100 : 0;
-    
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center relative">
-        <span className="text-sm">{date.getDate()}</span>
-        
-        {/* Holiday indicator */}
-        {hasHoliday && (
-          <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full ${
-            isPublicHoliday ? 'bg-green-500' : 'bg-blue-500'
-          }`}></div>
-        )}
-        
-        {dayData.checkins.length > 0 && (
-          <div className="w-1.5 h-1.5 bg-green-500 rounded-full absolute top-0 right-0"></div>
-        )}
-        {dayData.checkouts.length > 0 && (
-          <div className="w-1.5 h-1.5 bg-red-500 rounded-full absolute top-0 left-0"></div>
-        )}
-        {occupancyRate > 80 && (
-          <div className="w-full h-1 bg-orange-400 rounded absolute bottom-0"></div>
-        )}
-        {occupancyRate === 100 && (
-          <div className="w-full h-1 bg-red-500 rounded absolute bottom-0"></div>
-        )}
-      </div>
-    );
-  };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newMonth = new Date(currentMonth);
@@ -250,8 +214,53 @@ export default function OccupancyCalendar() {
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               className="w-full rounded-md border"
-              components={{
-                DayContent: ({ date }) => getDayContent(date),
+              modifiers={{
+                hasData: (date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  return !!calendarData[dateString];
+                },
+                hasCheckins: (date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  const dayData = calendarData[dateString];
+                  return dayData && dayData.checkins.length > 0;
+                },
+                hasCheckouts: (date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  const dayData = calendarData[dateString];
+                  return dayData && dayData.checkouts.length > 0;
+                },
+                highOccupancy: (date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  const dayData = calendarData[dateString];
+                  if (!dayData || dayData.totalCapsules === 0) return false;
+                  const occupancyRate = (dayData.occupancy / dayData.totalCapsules) * 100;
+                  return occupancyRate > 80;
+                },
+                fullOccupancy: (date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  const dayData = calendarData[dateString];
+                  if (!dayData || dayData.totalCapsules === 0) return false;
+                  const occupancyRate = (dayData.occupancy / dayData.totalCapsules) * 100;
+                  return occupancyRate === 100;
+                },
+                holiday: (date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  const dayHolidays = getHolidaysForDate(dateString);
+                  return dayHolidays.length > 0;
+                },
+                publicHoliday: (date) => {
+                  const dateString = date.toISOString().split('T')[0];
+                  const dayHolidays = getHolidaysForDate(dateString);
+                  return dayHolidays.some(h => h.isPublicHoliday);
+                }
+              }}
+              modifiersClassNames={{
+                hasCheckins: "relative after:absolute after:top-0 after:right-0 after:w-1.5 after:h-1.5 after:bg-green-500 after:rounded-full",
+                hasCheckouts: "relative before:absolute before:top-0 before:left-0 before:w-1.5 before:h-1.5 before:bg-red-500 before:rounded-full",
+                highOccupancy: "relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-orange-400 after:rounded",
+                fullOccupancy: "relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-red-500 after:rounded",
+                holiday: "relative before:absolute before:top-0 before:left-1/2 before:transform before:-translate-x-1/2 before:w-2 before:h-2 before:bg-blue-500 before:rounded-full",
+                publicHoliday: "relative before:absolute before:top-0 before:left-1/2 before:transform before:-translate-x-1/2 before:w-2 before:h-2 before:bg-green-500 before:rounded-full"
               }}
             />
           </div>

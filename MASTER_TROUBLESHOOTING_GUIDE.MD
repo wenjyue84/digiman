@@ -210,6 +210,86 @@ Updated error categorization in `client/src/components/ui/push-notification-sett
 - `server/routes/push.ts:230-328` - Added new `/send` endpoint
 - `client/src/components/ui/push-notification-settings.tsx:603-665` - Enhanced error handling
 - `MASTER_TROUBLESHOOTING_GUIDE.MD` - This documentation
+
+---
+
+## "Instant Create" Guest Check-in Links Invalid/Expired Error (August 20, 2025)
+
+### Problem Description
+The "Instant Create" guest check-in links from localhost:5000/check-in were showing "invalid or expired link. This check-in link is invalid or has expired" error on both mobile and desktop versions, despite the feature working previously.
+
+### Root Cause Analysis
+**Method Name Mismatch** in the guest token retrieval system:
+
+1. **Storage Interface**: Defines `getGuestToken(token: string)` method
+2. **Route Implementation**: Called non-existent `getGuestTokenByToken(token)` method  
+3. **Runtime Error**: `TypeError: storage.getGuestTokenByToken is not a function`
+4. **User Impact**: All guest check-in links appeared invalid due to 500 server errors
+
+### Error Symptoms
+- Guest check-in links show "invalid or expired" message
+- Server logs show `TypeError: storage.getGuestTokenByToken is not a function`
+- 500 HTTP errors when accessing `/api/guest-tokens/:token` endpoint
+- Both mobile and desktop affected equally
+- Issue occurred after code changes/refactoring
+
+### Solution Steps
+
+#### Step 1: Identify the Storage Method Mismatch
+**Server logs revealed the error:**
+```
+Error fetching guest token: TypeError: storage.getGuestTokenByToken is not a function
+at server\routes\guest-tokens.ts:151:38
+```
+
+#### Step 2: Check Storage Interface
+**Verified correct method name in `server\Storage\IStorage.ts:57`:**
+```typescript
+getGuestToken(token: string): Promise<GuestToken | undefined>;
+```
+
+#### Step 3: Fix Route Implementation
+**Updated `server\routes\guest-tokens.ts` in two locations:**
+- **Line 151**: `storage.getGuestTokenByToken(token)` → `storage.getGuestToken(token)`
+- **Line 201**: `storage.getGuestTokenByToken(token)` → `storage.getGuestToken(token)`
+
+#### Step 4: Verify Fix
+- ✅ Created test guest token successfully
+- ✅ Retrieved guest token data (200 response)  
+- ✅ Guest check-in links load properly
+- ✅ No more server errors in logs
+
+### System Behavior (After Fix)
+- **Token Creation**: `POST /api/guest-tokens` returns proper link with token
+- **Token Validation**: `GET /api/guest-tokens/:token` returns token details
+- **Link Access**: Guest check-in links work on both mobile and desktop
+- **Error Handling**: Proper validation of expired/used tokens
+
+### Prevention Measures
+1. **Method Verification**: Always verify method names against storage interface
+2. **Error Monitoring**: Watch server logs for `TypeError` and method-not-found errors
+3. **Testing Protocol**: Test guest token workflow after any storage-related changes
+4. **Code Review**: Check all storage method calls during refactoring
+5. **Interface Consistency**: Use IDE auto-complete to avoid method name typos
+
+### Related Files Modified
+- `server/routes/guest-tokens.ts:151,201` - Fixed method name from `getGuestTokenByToken` to `getGuestToken`
+- `MASTER_TROUBLESHOOTING_GUIDE.MD` - This documentation
+
+### Debugging Commands
+```bash
+# Check storage interface methods
+grep -n "getGuestToken" server/Storage/IStorage.ts
+
+# Test token creation
+curl -X POST http://localhost:5000/api/guest-tokens -H "Authorization: Bearer TOKEN" -d '{"capsuleNumber":"C2","hoursValid":24}'
+
+# Test token retrieval  
+curl http://localhost:5000/api/guest-tokens/TOKEN_ID
+
+# Monitor server logs for errors
+# Watch for: TypeError: storage.METHOD_NAME is not a function
+```
 4. **Documentation**: Keep PWA configuration clearly documented for future changes
 
 ### Related Files Modified

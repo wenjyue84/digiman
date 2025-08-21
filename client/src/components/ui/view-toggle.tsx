@@ -45,3 +45,5 @@ export function ViewToggle({ isCondensedView, onToggle, className = '' }: ViewTo
     </div>
   );
 }
+
+

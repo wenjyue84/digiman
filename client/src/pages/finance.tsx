@@ -16,8 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, Plus, Trash2, Edit, TrendingUp, TrendingDown, Calendar, FileText, Tag, Tags, MessageSquare, Camera, Image, ArrowUpDown, Filter, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import type { UploadResult } from "@uppy/core";
+// import { ObjectUploader } from "@/components/ObjectUploader";
+// import type { UploadResult } from "@uppy/core";
 
 // Expense schema
 const expenseSchema = z.object({
@@ -92,6 +92,13 @@ const expenseCategories = {
 export default function Finance() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Helper function to safely parse amounts
+  const parseAmount = (amount: any): number => {
+    if (typeof amount === 'number') return amount;
+    if (typeof amount === 'string') return parseFloat(amount) || 0;
+    return 0;
+  };
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -135,13 +142,22 @@ export default function Finance() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
-      setShowAddExpense(false);
-      resetForm();
-      toast({
-        title: "Expense Added",
-        description: "Expense has been recorded successfully",
-      });
+      try {
+        queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+        setShowAddExpense(false);
+        resetForm();
+        toast({
+          title: "Expense Added",
+          description: "Expense has been recorded successfully",
+        });
+      } catch (error) {
+        console.error("Error in expense success handler:", error);
+        // Still show success toast even if cleanup fails
+        toast({
+          title: "Expense Added",
+          description: "Expense recorded successfully",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -202,7 +218,8 @@ export default function Finance() {
     },
   });
 
-  // Photo upload handlers - reverted to working version
+  // Temporarily disabled - photo upload handlers
+  /*
   const handleGetUploadParameters = async () => {
     try {
       const response = await fetch("/api/objects/upload", {
@@ -224,32 +241,9 @@ export default function Finance() {
       throw error;
     }
   };
+  */
 
-  const handleReceiptPhotoUpload = (result: UploadResult) => {
-    const fileData = result.successful[0];
-    if (fileData && fileData.uploadURL) {
-      const url = fileData.uploadURL;
-      setReceiptPhotoUrl(url);
-      form.setValue("receiptPhotoUrl", url);
-      toast({
-        title: "Receipt Photo Uploaded",
-        description: "Receipt photo has been uploaded successfully",
-      });
-    }
-  };
-
-  const handleItemPhotoUpload = (result: UploadResult) => {
-    const fileData = result.successful[0];
-    if (fileData && fileData.uploadURL) {
-      const url = fileData.uploadURL;
-      setItemPhotoUrl(url);
-      form.setValue("itemPhotoUrl", url);
-      toast({
-        title: "Item Photo Uploaded",
-        description: "Item photo has been uploaded successfully",
-      });
-    }
-  };
+  // Photo upload functions temporarily removed due to dependency issues
 
   const onSubmit = (data: ExpenseFormData) => {
     const payload = {
@@ -284,11 +278,16 @@ export default function Finance() {
   };
 
   const resetForm = () => {
-    form.reset();
-    setReceiptPhotoUrl("");
-    setItemPhotoUrl("");
-    setSelectedFormCategory("");
-    setEditingExpense(null);
+    try {
+      form.reset();
+      setReceiptPhotoUrl("");
+      setItemPhotoUrl("");
+      setSelectedFormCategory("");
+      setEditingExpense(null);
+    } catch (error) {
+      console.error("Error in resetForm:", error);
+      // Gracefully handle any reset errors
+    }
   };
 
   // Date range shortcuts
@@ -346,7 +345,7 @@ export default function Finance() {
   // Calculate totals and analytics
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
-  const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + parseAmount(exp.amount), 0);
   const monthlyExpenses = expenses
     .filter(exp => {
       if (!exp.date) return false;
@@ -354,7 +353,7 @@ export default function Finance() {
       if (isNaN(expDate.getTime())) return false;
       return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
     })
-    .reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    .reduce((sum, exp) => sum + parseAmount(exp.amount), 0);
 
   // Calculate monthly breakdowns for the last 6 months
   const monthlyBreakdowns = [];
@@ -371,9 +370,9 @@ export default function Finance() {
       return expDate.getMonth() === month && expDate.getFullYear() === year;
     });
     
-    const total = monthExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    const total = monthExpenses.reduce((sum, exp) => sum + parseAmount(exp.amount), 0);
     const categoryTotals = monthExpenses.reduce((acc, exp) => {
-      acc[exp.category] = (acc[exp.category] || 0) + (exp.amount || 0);
+      acc[exp.category] = (acc[exp.category] || 0) + parseAmount(exp.amount);
       return acc;
     }, {} as Record<string, number>);
     
@@ -395,7 +394,7 @@ export default function Finance() {
       return expDate.getMonth() === currentMonth && expDate.getFullYear() === currentYear;
     })
     .reduce((acc, exp) => {
-      acc[exp.category] = (acc[exp.category] || 0) + (exp.amount || 0);
+      acc[exp.category] = (acc[exp.category] || 0) + parseAmount(exp.amount);
       return acc;
     }, {} as Record<string, number>);
 
@@ -637,35 +636,25 @@ export default function Finance() {
                                 ✓
                               </div>
                             </div>
-                            <ObjectUploader
-                              maxNumberOfFiles={1}
-                              maxFileSize={10485760} // 10MB
-                              allowedFileTypes={['image/*']}
-                              onGetUploadParameters={handleGetUploadParameters}
-                              onComplete={handleReceiptPhotoUpload}
-                              buttonClassName="w-full h-8 text-xs"
-                              directFileUpload={true}
-                              showCameraOption={true}
+                            <Button
+                              variant="outline"
+                              disabled={true}
+                              className="w-full h-8 text-xs"
                             >
                               <Camera className="mr-2 h-3 w-3" />
-                              Change Receipt Photo
-                            </ObjectUploader>
+                              Photo Upload Temporarily Disabled
+                            </Button>
                           </div>
                         ) : (
                           <div className="mt-2">
-                            <ObjectUploader
-                              maxNumberOfFiles={1}
-                              maxFileSize={10485760} // 10MB
-                              allowedFileTypes={['image/*']}
-                              onGetUploadParameters={handleGetUploadParameters}
-                              onComplete={handleReceiptPhotoUpload}
-                              buttonClassName="w-full h-12 border-2 border-dashed border-gray-300 hover:border-gray-400"
-                              directFileUpload={true}
-                              showCameraOption={true}
+                            <Button
+                              variant="outline"
+                              disabled={true}
+                              className="w-full h-12 border-2 border-dashed border-gray-300"
                             >
                               <Camera className="mr-2 h-4 w-4" />
-                              Upload Receipt Photo (Optional)
-                            </ObjectUploader>
+                              Photo Upload Temporarily Disabled
+                            </Button>
                           </div>
                         )}
                         {form.formState.errors.receiptPhotoUrl && (
@@ -691,35 +680,25 @@ export default function Finance() {
                                 ✓
                               </div>
                             </div>
-                            <ObjectUploader
-                              maxNumberOfFiles={1}
-                              maxFileSize={10485760} // 10MB
-                              allowedFileTypes={['image/*']}
-                              onGetUploadParameters={handleGetUploadParameters}
-                              onComplete={handleItemPhotoUpload}
-                              buttonClassName="w-full h-8 text-xs"
-                              directFileUpload={true}
-                              showCameraOption={true}
+                            <Button
+                              variant="outline"
+                              disabled={true}
+                              className="w-full h-8 text-xs"
                             >
                               <Image className="mr-2 h-3 w-3" />
-                              Change Item Photo
-                            </ObjectUploader>
+                              Photo Upload Temporarily Disabled
+                            </Button>
                           </div>
                         ) : (
                           <div className="mt-2">
-                            <ObjectUploader
-                              maxNumberOfFiles={1}
-                              maxFileSize={10485760} // 10MB
-                              allowedFileTypes={['image/*']}
-                              onGetUploadParameters={handleGetUploadParameters}
-                              onComplete={handleItemPhotoUpload}
-                              buttonClassName="w-full h-12 border-2 border-dashed border-gray-300 hover:border-gray-400"
-                              directFileUpload={true}
-                              showCameraOption={true}
+                            <Button
+                              variant="outline"
+                              disabled={true}
+                              className="w-full h-12 border-2 border-dashed border-gray-300"
                             >
                               <Image className="mr-2 h-4 w-4" />
-                              Upload Item Photo (Optional)
-                            </ObjectUploader>
+                              Photo Upload Temporarily Disabled
+                            </Button>
                           </div>
                         )}
                       </div>
@@ -1007,7 +986,7 @@ export default function Finance() {
                             </div>
                           </TableCell>
                           <TableCell className="font-semibold">
-                            RM {(expense.amount || 0).toFixed(2)}
+                            RM {parseAmount(expense.amount).toFixed(2)}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">

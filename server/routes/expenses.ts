@@ -12,7 +12,7 @@ router.get("/", authenticateToken, async (req: any, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
-    const expenses = await storage.getAllExpenses({ page, limit });
+    const expenses = await storage.getExpenses();
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch expenses" });
@@ -25,7 +25,7 @@ router.post("/", authenticateToken, async (req: any, res) => {
     const validatedData = insertExpenseSchema.parse(req.body);
     const createdBy = req.user.username || req.user.email || "Unknown";
     
-    const expense = await storage.createExpense({
+    const expense = await storage.addExpense({
       ...validatedData,
       createdBy
     });
@@ -46,7 +46,10 @@ router.put("/:id", authenticateToken, async (req: any, res) => {
     const { id } = req.params;
     const validatedData = updateExpenseSchema.parse(req.body);
     
-    const expense = await storage.updateExpense(id, validatedData);
+    const expense = await storage.updateExpense({
+      id,
+      ...validatedData
+    });
     
     if (!expense) {
       return res.status(404).json({ message: "Expense not found" });

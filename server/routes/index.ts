@@ -50,6 +50,27 @@ export function registerRoutes(app: Express) {
   // Register test routes
   app.use("/api/tests", testRoutes);
   
+  // Error reporting endpoint (for global error boundary)
+  app.post("/api/errors/report", async (req, res) => {
+    try {
+      const errorReport = req.body;
+      
+      // In development, just log the error
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🐛 Client Error Report:', JSON.stringify(errorReport, null, 2));
+      }
+      
+      // For now, just acknowledge receipt
+      res.json({ 
+        success: true, 
+        message: 'Error report received'
+      });
+    } catch (error) {
+      console.error('Failed to process error report:', error);
+      res.status(500).json({ success: false, message: 'Failed to process error report' });
+    }
+  });
+  
   // Return null as this function should not create server
   // Server creation is handled by the main routes.ts file
   return null;

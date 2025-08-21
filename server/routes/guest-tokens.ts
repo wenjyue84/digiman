@@ -148,7 +148,7 @@ router.get("/active", async (req, res) => {
 router.get("/:token", async (req, res) => {
   try {
     const { token } = req.params;
-    const guestToken = await storage.getGuestTokenByToken(token);
+    const guestToken = await storage.getGuestToken(token);
     
     if (!guestToken) {
       return res.status(404).json({ message: "Token not found" });
@@ -198,7 +198,7 @@ router.post("/checkin/:token",
     const validatedData = req.body;
     
     // Get guest token
-    const guestToken = await storage.getGuestTokenByToken(token);
+    const guestToken = await storage.getGuestToken(token);
     
     if (!guestToken) {
       return res.status(404).json({ message: "Token not found" });
