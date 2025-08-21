@@ -69,3 +69,4 @@ Write-Host ""
 Write-Host "🚀 Start your app with: npm run dev" -ForegroundColor Cyan
 Write-Host ""
 Read-Host "Press Enter to exit"
+

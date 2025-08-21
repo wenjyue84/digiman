@@ -51,3 +51,4 @@ echo.
 echo 🚀 Start your app with: npm run dev
 echo.
 pause
+

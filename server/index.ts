@@ -179,6 +179,20 @@ app.use((req, res, next) => {
     res.json({ message: "SUCCESS: You are connected to the current server!" });
   });
   
+  // Special handling for service worker to ensure correct MIME type
+  app.get("/sw.js", (req, res) => {
+    const path = require("path");
+    const fs = require("fs");
+    const swPath = path.resolve(__dirname, "..", "client", "public", "sw.js");
+    if (fs.existsSync(swPath)) {
+      res.setHeader("Content-Type", "application/javascript");
+      res.setHeader("Service-Worker-Allowed", "/");
+      res.sendFile(swPath);
+    } else {
+      res.status(404).send("Service Worker not found");
+    }
+  });
+  
   if (app.get("env") === "development") {
     console.log("🔥 USING VITE MIDDLEWARE");
     await setupVite(app, server);

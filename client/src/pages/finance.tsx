@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Expense, PaginatedResponse } from "@shared/schema";
+import type { Expense as ExpenseType, PaginatedResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,19 +33,6 @@ const expenseSchema = z.object({
 });
 
 type ExpenseFormData = z.infer<typeof expenseSchema>;
-
-interface Expense {
-  id: string;
-  description: string;
-  amount: number;
-  category: string;
-  subcategory?: string;
-  date: string;
-  notes?: string;
-  receiptPhotoUrl?: string;
-  itemPhotoUrl?: string;
-  createdAt: string;
-}
 
 const expenseCategories = {
   salary: {
@@ -101,7 +88,7 @@ export default function Finance() {
     return 0;
   };
   const [showAddExpense, setShowAddExpense] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingExpense, setEditingExpense] = useState<ExpenseType | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState<string>("");
@@ -129,11 +116,11 @@ export default function Finance() {
   });
 
   // Fetch expenses
-  const { data: expenseResponse, isLoading } = useQuery<PaginatedResponse<Expense>>({
+  const { data: expenseResponse, isLoading } = useQuery<PaginatedResponse<ExpenseType>>({
     queryKey: ["/api/expenses"],
   });
   
-  const expenses = expenseResponse?.data || [];
+  const expenses = Array.isArray(expenseResponse?.data) ? expenseResponse.data : [];
 
   // Add expense mutation
   const addExpenseMutation = useMutation({
@@ -262,7 +249,7 @@ export default function Finance() {
     }
   };
 
-  const startEdit = (expense: Expense) => {
+  const startEdit = (expense: ExpenseType) => {
     setEditingExpense(expense);
     form.reset({
       description: expense.description,
@@ -424,7 +411,7 @@ export default function Finance() {
     }
     
     // Amount range filter
-    const amount = expense.amount || 0;
+    const amount = parseAmount(expense.amount);
     if (amountMin && amount < parseFloat(amountMin)) return false;
     if (amountMax && amount > parseFloat(amountMax)) return false;
     
@@ -441,8 +428,8 @@ export default function Finance() {
         const dateB = b.date ? new Date(b.date).getTime() : 0;
         comparison = dateA - dateB;
       } else if (sortBy === "amount") {
-        const amountA = a.amount || 0;
-        const amountB = b.amount || 0;
+        const amountA = parseAmount(a.amount);
+        const amountB = parseAmount(b.amount);
         comparison = amountA - amountB;
       }
       
