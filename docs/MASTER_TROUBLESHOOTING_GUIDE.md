@@ -152,6 +152,57 @@ npm run dev
 - Ensure backend storage method names match IStorage interface
 - Include error reporting endpoint in all deployments
 
+---
+
+### **017 - Pagination Bug Breaking Client Analytics (SOLVED)**
+
+**Date Solved:** August 21, 2025  
+**Symptoms:**
+- `GET /api/expenses` endpoint always applies default pagination (page 1, limit 20)
+- Client only receives first 20 expenses instead of complete dataset
+- Existing client-side analytics, filtering, and sorting features broken
+- Finance page shows incomplete expense data
+
+**Root Cause:**
+```typescript
+// BEFORE: Always forced pagination
+const page = parseInt(req.query.page as string) || 1;        // Always defaulted to 1
+const limit = parseInt(req.query.limit as string) || 20;     // Always defaulted to 20
+const expenses = await storage.getExpenses({ page, limit }); // Always paginated
+```
+
+**Solution Implemented:**
+```typescript
+// AFTER: Pagination only when explicitly requested
+const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
+
+if (hasPagination) {
+  // Apply pagination when client requests it
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const expenses = await storage.getExpenses({ page, limit });
+  res.json(expenses);
+} else {
+  // Return all expenses for backward compatibility
+  const expenses = await storage.getExpenses();
+  res.json(expenses);
+}
+```
+
+**Benefits:**
+✅ **Backward Compatibility**: Existing clients get all expenses as before  
+✅ **Pagination Support**: New clients can request paginated results  
+✅ **Analytics Fixed**: Client-side filtering and sorting work again  
+✅ **Performance**: No unnecessary pagination overhead when not needed  
+
+**Files Modified:**
+- `server/routes/expenses.ts` - Fixed pagination logic and duplicate `id` parameter issue
+
+**Prevention:**
+- Only apply pagination when client explicitly requests it
+- Maintain backward compatibility for existing API consumers
+- Test both paginated and non-paginated scenarios
+
 ### **008 - Push Notification Test Failures (SOLVED)**
 
 **Date Solved:** January 2025  
