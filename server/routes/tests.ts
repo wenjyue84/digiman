@@ -351,11 +351,11 @@ const systemTests = [
     async test() {
       try {
         // Test expense storage methods
-        if (typeof (storage as any).createExpense !== 'function') {
-          throw new Error("createExpense method missing");
+        if (typeof storage.addExpense !== 'function') {
+          throw new Error("addExpense method missing");
         }
-        if (typeof (storage as any).getAllExpenses !== 'function') {
-          throw new Error("getAllExpenses method missing");
+        if (typeof storage.getExpenses !== 'function') {
+          throw new Error("getExpenses method missing");
         }
         
         // Test expense data structure
@@ -397,8 +397,8 @@ const systemTests = [
         if (typeof storage.createCapsuleProblem !== 'function') {
           throw new Error("createCapsuleProblem method missing");
         }
-        if (typeof (storage as any).resolveCapsuleProblem !== 'function') {
-          throw new Error("resolveCapsuleProblem method missing");
+        if (typeof storage.resolveProblem !== 'function') {
+          throw new Error("resolveProblem method missing");
         }
         
         // Test problem data structure
@@ -664,7 +664,7 @@ const systemTests = [
         
         // STEP 4: Verify Capsule Status Update
         results.push("🔄 Step 4: Verifying Capsule Status...");
-        const updatedCapsule = await storage.getCapsuleByNumber(testCapsule.number);
+        const updatedCapsule = await storage.getCapsule(testCapsule.number);
         if (!updatedCapsule || updatedCapsule.isAvailable) {
           throw new Error("Capsule should be marked as unavailable after check-in");
         }
@@ -690,7 +690,7 @@ const systemTests = [
         // STEP 7: Capsule Cleaning Mark
         results.push("🧹 Step 7: Marking Capsule for Cleaning...");
         await storage.markCapsuleNeedsCleaning(testCapsule.number, "Checkout cleaning required");
-        const capsuleNeedsCleaning = await storage.getCapsuleByNumber(testCapsule.number);
+        const capsuleNeedsCleaning = await storage.getCapsule(testCapsule.number);
         if (capsuleNeedsCleaning.cleaningStatus !== "to_be_cleaned") {
           throw new Error("Capsule not properly marked for cleaning");
         }
@@ -699,7 +699,7 @@ const systemTests = [
         // STEP 8: Complete Cleaning Process
         results.push("✨ Step 8: Completing Cleaning Process...");
         await storage.markCapsuleAsCleaned(testCapsule.number, "Cleaned and ready for next guest");
-        const cleanedCapsule = await storage.getCapsuleByNumber(testCapsule.number);
+        const cleanedCapsule = await storage.getCapsule(testCapsule.number);
         if (cleanedCapsule.cleaningStatus !== "cleaned" || !cleanedCapsule.isAvailable) {
           throw new Error("Capsule not properly marked as cleaned and available");
         }
@@ -1289,29 +1289,29 @@ router.post("/run", async (req, res) => {
     output += `└${'─'.repeat(66)}┘\n`;
     
     if (failed === 0) {
-      output += `\\n🎉 EXCELLENT! All tests passed successfully!\\n`;
-      output += `   Your PelangiManager system is functioning correctly.\\n`;
+      output += `\n🎉 EXCELLENT! All tests passed successfully!\n`;
+      output += `   Your PelangiManager system is functioning correctly.\n`;
     } else {
-      output += `\\n⚠️  ATTENTION: ${failed} test(s) require attention.\\n`;
-      output += `   Review the troubleshooting suggestions above for fixes.\\n`;
+      output += `\n⚠️  ATTENTION: ${failed} test(s) require attention.\n`;
+      output += `   Review the troubleshooting suggestions above for fixes.\n`;
     }
     
     res.status(failed === 0 ? 200 : 400).send(output);
     
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    let output = `\\n`;
-    output += `╔══════════════════════════════════════════════════════════════════╗\\n`;
-    output += `║                      ❌ TEST RUNNER ERROR                        ║\\n`;
-    output += `╚══════════════════════════════════════════════════════════════════╝\\n\\n`;
-    output += `⚠️  Critical Error: ${error.message}\\n\\n`;
-    output += `⏱️  Runtime Duration: ${duration}ms\\n\\n`;
-    output += `┌─── 💡 TROUBLESHOOTING STEPS ─────────────────────────────────────┐\\n`;
-    output += `│ 1. Check server logs for detailed error information             │\\n`;
-    output += `│ 2. Verify database connection is working properly               │\\n`;
-    output += `│ 3. Ensure all required services are running                     │\\n`;
-    output += `│ 4. Restart the development server if needed                     │\\n`;
-    output += `└──────────────────────────────────────────────────────────────────┘\\n`;
+    let output = `\n`;
+    output += `╔══════════════════════════════════════════════════════════════════╗\n`;
+    output += `║                      ❌ TEST RUNNER ERROR                        ║\n`;
+    output += `╚══════════════════════════════════════════════════════════════════╝\n\n`;
+    output += `⚠️  Critical Error: ${error.message}\n\n`;
+    output += `⏱️  Runtime Duration: ${duration}ms\n\n`;
+    output += `┌─── 💡 TROUBLESHOOTING STEPS ─────────────────────────────────────┐\n`;
+    output += `│ 1. Check server logs for detailed error information             │\n`;
+    output += `│ 2. Verify database connection is working properly               │\n`;
+    output += `│ 3. Ensure all required services are running                     │\n`;
+    output += `│ 4. Restart the development server if needed                     │\n`;
+    output += `└──────────────────────────────────────────────────────────────────┘\n`;
     
     res.status(500).send(output);
   }
