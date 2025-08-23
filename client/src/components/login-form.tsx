@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { shouldShowDemoFeatures } from "../../shared/utils";
+import { shouldShowDemoFeatures } from "../../../shared/utils";
 
 declare global {
   interface Window {

@@ -501,7 +501,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertAppSetting(setting: InsertAppSetting): Promise<AppSetting> {
-    return this.setSetting(setting.key, setting.value, setting.description, setting.updatedBy || undefined);
+    return this.setSetting(setting.key, setting.value, setting.description || undefined, setting.updatedBy || undefined);
   }
 
   async getAllAppSettings(): Promise<AppSetting[]> {
