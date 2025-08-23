@@ -30,6 +30,56 @@ router.get("/test", (req, res) => {
   res.json({ message: "Guest tokens router is working", timestamp: new Date().toISOString() });
 });
 
+// Database health check endpoint
+router.get("/health", async (req, res) => {
+  try {
+    console.log("🏥 GET /api/guest-tokens/health - Checking database health");
+    
+    // Test database connection by trying to access storage
+    const testResult = await storage.getActiveGuestTokens();
+    console.log("✅ Database connection successful, guest tokens accessible");
+    
+    res.json({ 
+      status: "healthy",
+      message: "Database connection is working",
+      timestamp: new Date().toISOString(),
+      databaseType: storage.constructor.name,
+      guestTokensCount: Array.isArray(testResult) ? testResult.length : 'unknown'
+    });
+  } catch (error: any) {
+    console.error("❌ Database health check failed:", error);
+    
+    let errorType = "UNKNOWN_ERROR";
+    let errorDetails = error.message || "Unknown database error";
+    
+    if (error.code === 'ECONNREFUSED') {
+      errorType = "CONNECTION_REFUSED";
+      errorDetails = "Database server is not accessible";
+    } else if (error.code === 'ENOTFOUND') {
+      errorType = "HOST_NOT_FOUND";
+      errorDetails = "Database host cannot be resolved";
+    } else if (error.code === 'ETIMEDOUT') {
+      errorType = "CONNECTION_TIMEOUT";
+      errorDetails = "Database connection timed out";
+    } else if (error.code === '28P01') {
+      errorType = "AUTHENTICATION_FAILED";
+      errorDetails = "Database authentication failed - check credentials";
+    } else if (error.code === '3D000') {
+      errorType = "DATABASE_NOT_FOUND";
+      errorDetails = "Database does not exist";
+    }
+    
+    res.status(500).json({
+      status: "unhealthy",
+      message: "Database connection failed",
+      error: errorType,
+      details: errorDetails,
+      timestamp: new Date().toISOString(),
+      databaseType: storage.constructor.name
+    });
+  }
+});
+
 // Create guest token (for Instant Create and Create Link functionality)
 router.post("/", 
   securityValidationMiddleware,
@@ -341,18 +391,59 @@ router.delete("/:id", authenticateToken, async (req: any, res) => {
     const { id } = req.params;
     console.log(`🔴 DELETE /api/guest-tokens/${id} - Attempting to cancel guest token`);
     
+    // Validate token ID format
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      console.log(`❌ Invalid token ID: ${id}`);
+      return res.status(400).json({ 
+        message: "Invalid token ID provided",
+        error: "INVALID_TOKEN_ID",
+        details: "Token ID must be a non-empty string"
+      });
+    }
+    
     const success = await storage.deleteGuestToken(id);
     
     if (!success) {
       console.log(`❌ Guest token ${id} not found`);
-      return res.status(404).json({ message: "Guest token not found" });
+      return res.status(404).json({ 
+        message: "Guest token not found or already deleted",
+        error: "TOKEN_NOT_FOUND",
+        details: `No guest token found with ID: ${id}`,
+        tokenId: id
+      });
     }
     
     console.log(`✅ Guest token ${id} cancelled successfully`);
-    res.json({ message: "Guest token cancelled successfully" });
+    res.json({ 
+      message: "Guest token cancelled successfully",
+      tokenId: id,
+      timestamp: new Date().toISOString()
+    });
   } catch (error: any) {
     console.error("Error cancelling guest token:", error);
-    res.status(500).json({ message: "Failed to cancel guest token" });
+    
+    // Provide more specific error messages based on error type
+    let errorMessage = "Failed to cancel guest token";
+    let errorDetails = "An unexpected error occurred";
+    
+    if (error.code === '23503') {
+      // PostgreSQL foreign key constraint violation
+      errorMessage = "Database constraint violation";
+      errorDetails = "Cannot delete token due to existing references in the database";
+    } else if (error.code === '23505') {
+      // PostgreSQL unique constraint violation
+      errorMessage = "Database constraint violation";
+      errorDetails = "Token ID conflicts with existing data";
+    } else if (error.message) {
+      errorDetails = error.message;
+    }
+    
+    res.status(500).json({ 
+      message: errorMessage,
+      error: "DATABASE_ERROR",
+      details: errorDetails,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

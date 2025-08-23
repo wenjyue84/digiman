@@ -449,9 +449,13 @@ export default function SortableGuestTable() {
 
   const cancelTokenMutation = useMutation({
     mutationFn: async (tokenId: string) => {
-      await apiRequest("DELETE", `/api/guest-tokens/${tokenId}`);
+      console.log(`🚀 Attempting to cancel guest token: ${tokenId}`);
+      const response = await apiRequest("DELETE", `/api/guest-tokens/${tokenId}`);
+      console.log(`✅ API response received:`, response);
+      return response;
     },
     onSuccess: () => {
+      console.log(`🎉 Guest token cancelled successfully, invalidating queries`);
       queryClient.invalidateQueries({ queryKey: ["/api/guest-tokens/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
@@ -460,11 +464,63 @@ export default function SortableGuestTable() {
         description: "Pending check-in cancelled successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error(`💥 Cancel token mutation failed:`, error);
+      
+      // Enhanced error handling with detailed error messages
+      let errorTitle = "Error";
+      let errorDescription = "Failed to cancel pending check-in";
+      
+      if (error?.response?.status) {
+        const status = error.response.status;
+        const errorData = error.response.data;
+        
+        switch (status) {
+          case 401:
+            errorTitle = "Authentication Error";
+            errorDescription = errorData?.message || "Please log in again to cancel pending check-ins";
+            break;
+          case 403:
+            errorTitle = "Permission Denied";
+            errorDescription = errorData?.message || "You don't have permission to cancel this pending check-in";
+            break;
+          case 404:
+            errorTitle = "Token Not Found";
+            errorDescription = errorData?.message || "The pending check-in token was not found or has already been cancelled";
+            break;
+          case 500:
+            errorTitle = "Server Error";
+            errorDescription = errorData?.message || "Database or server error occurred. Please try again or contact support";
+            break;
+          default:
+            errorTitle = `Error ${status}`;
+            errorDescription = errorData?.message || `Unexpected error occurred (Status: ${status})`;
+        }
+      } else if (error?.message) {
+        // Network or other errors
+        if (error.message.includes('fetch')) {
+          errorTitle = "Network Error";
+          errorDescription = "Unable to connect to server. Please check your internet connection and try again";
+        } else if (error.message.includes('timeout')) {
+          errorTitle = "Request Timeout";
+          errorDescription = "Request took too long. Please try again";
+        } else {
+          errorDescription = error.message;
+        }
+      }
+      
+      console.error("Cancel token error details:", {
+        error,
+        status: error?.response?.status,
+        message: error?.response?.data?.message,
+        fullError: error
+      });
+      
       toast({
-        title: "Error",
-        description: "Failed to cancel pending check-in",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
+        duration: 5000, // Show longer for detailed error messages
       });
     },
   });
