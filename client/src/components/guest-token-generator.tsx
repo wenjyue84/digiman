@@ -24,7 +24,12 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
   const [guestName, setGuestName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [expectedCheckoutDate, setExpectedCheckoutDate] = useState("");
+  const [expectedCheckoutDate, setExpectedCheckoutDate] = useState(() => {
+    // Set default to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
   const [checkInDate, setCheckInDate] = useState("");
   const [prefillGender, setPrefillGender] = useState<string>("");
   const [prefillNationality, setPrefillNationality] = useState<string>("");
@@ -149,6 +154,17 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted with data:', {
+      selectedCapsule,
+      guestName,
+      phoneNumber,
+      email,
+      expectedCheckoutDate,
+      checkInDate,
+      prefillGender,
+      prefillNationality
+    });
+    
     if (!selectedCapsule) {
       toast({
         title: "Validation Error",
@@ -157,6 +173,16 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
       });
       return;
     }
+    
+    if (!expectedCheckoutDate) {
+      toast({
+        title: "Validation Error",
+        description: "Expected checkout date is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Name and phone are now optional - guest will fill them during self-check-in
 
     const isAutoAssign = selectedCapsule === "auto-assign";
@@ -228,7 +254,15 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
           <DialogTrigger asChild>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    console.log('Create Link button clicked, opening dialog');
+                    setIsDialogOpen(true);
+                  }}
+                >
                   <Link2 className="h-4 w-4" />
                   Create Link
                 </Button>

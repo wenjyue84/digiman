@@ -122,8 +122,20 @@ router.post("/",
       createdAt: guestToken.createdAt
     });
     
-    // Generate the check-in link
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    // Generate the check-in link - Environment-aware URL generation
+    let baseUrl: string;
+    
+    // Check if we're in Replit environment
+    if (process.env.PRIVATE_OBJECT_DIR) {
+      // In Replit, use the request headers to determine the correct URL
+      const protocol = req.protocol || 'https';
+      const host = req.get('host') || req.get('x-forwarded-host') || 'localhost:5000';
+      baseUrl = `${protocol}://${host}`;
+    } else {
+      // Local development - use environment variable or fallback
+      baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    }
+    
     const link = `${baseUrl}/guest-checkin?token=${token}`;
     
     res.json({
