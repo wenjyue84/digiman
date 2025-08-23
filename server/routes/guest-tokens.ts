@@ -18,6 +18,18 @@ import { handleDatabaseError, handleFeatureNotImplementedError } from "../lib/er
 
 const router = Router();
 
+// Debug middleware - log all requests to guest-tokens router
+router.use((req, res, next) => {
+  console.log(`🔍 ${req.method} ${req.originalUrl} - Guest tokens router`);
+  next();
+});
+
+// Test endpoint to verify router is working
+router.get("/test", (req, res) => {
+  console.log("🧪 GET /api/guest-tokens/test - Router is working");
+  res.json({ message: "Guest tokens router is working", timestamp: new Date().toISOString() });
+});
+
 // Create guest token (for Instant Create and Create Link functionality)
 router.post("/", 
   securityValidationMiddleware,
@@ -312,25 +324,7 @@ router.post("/checkin/:token",
   }
 });
 
-// Delete individual guest token (for cancelling pending check-ins)
-router.delete("/:id", authenticateToken, async (req: any, res) => {
-  try {
-    const { id } = req.params;
-    
-    const success = await storage.deleteGuestToken(id);
-    
-    if (!success) {
-      return res.status(404).json({ message: "Guest token not found" });
-    }
-    
-    res.json({ message: "Guest token cancelled successfully" });
-  } catch (error: any) {
-    console.error("Error cancelling guest token:", error);
-    res.status(500).json({ message: "Failed to cancel guest token" });
-  }
-});
-
-// Delete expired tokens (cleanup endpoint)
+// Delete expired tokens (cleanup endpoint) - MUST come before /:id route
 router.delete("/cleanup", authenticateToken, async (req: any, res) => {
   try {
     await storage.cleanExpiredTokens();
@@ -338,6 +332,27 @@ router.delete("/cleanup", authenticateToken, async (req: any, res) => {
   } catch (error) {
     console.error("Error cleaning up expired tokens:", error);
     res.status(500).json({ message: "Failed to cleanup expired tokens" });
+  }
+});
+
+// Delete individual guest token (for cancelling pending check-ins)
+router.delete("/:id", authenticateToken, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`🔴 DELETE /api/guest-tokens/${id} - Attempting to cancel guest token`);
+    
+    const success = await storage.deleteGuestToken(id);
+    
+    if (!success) {
+      console.log(`❌ Guest token ${id} not found`);
+      return res.status(404).json({ message: "Guest token not found" });
+    }
+    
+    console.log(`✅ Guest token ${id} cancelled successfully`);
+    res.json({ message: "Guest token cancelled successfully" });
+  } catch (error: any) {
+    console.error("Error cancelling guest token:", error);
+    res.status(500).json({ message: "Failed to cancel guest token" });
   }
 });
 

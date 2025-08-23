@@ -2056,12 +2056,13 @@ if (process.env.PRIVATE_OBJECT_DIR) {
 - Occurs in Dashboard > Current Guest table for guests with "Pending Check-in" status
 - Frontend shows error toast but no specific error details
 - Cancel button appears but doesn't function properly
+- **Replit Issue**: Works locally but fails in Replit preview mode even after server restart
 
-**Root Cause:**
-- **Missing Server Endpoint**: The DELETE endpoint `/api/guest-tokens/:id` was not implemented in the server routes
-- **Frontend-Backend Mismatch**: Frontend calls `DELETE /api/guest-tokens/${tokenId}` but server doesn't have this route
-- **Storage Method Exists**: The `deleteGuestToken(id)` method was implemented in storage but not exposed via API
-- **Route Registration Gap**: Guest token routes were missing the individual deletion endpoint
+**Root Causes:**
+1. **Missing Server Endpoint**: The DELETE endpoint `/api/guest-tokens/:id` was not implemented in the server routes
+2. **Route Ordering Problem**: The `/:id` route was placed after `/cleanup`, causing Express.js to treat "cleanup" as an ID parameter
+3. **Frontend-Backend Mismatch**: Frontend calls `DELETE /api/guest-tokens/${tokenId}` but server doesn't have this route
+4. **Storage Method Exists**: The `deleteGuestToken(id)` method was implemented in storage but not exposed via API
 
 **Solution Implemented:**
 1. **Added Missing DELETE Endpoint** in `server/routes/guest-tokens.ts`:
@@ -2070,13 +2071,16 @@ if (process.env.PRIVATE_OBJECT_DIR) {
    router.delete("/:id", authenticateToken, async (req: any, res) => {
      try {
        const { id } = req.params;
+       console.log(`🔴 DELETE /api/guest-tokens/${id} - Attempting to cancel guest token`);
        
        const success = await storage.deleteGuestToken(id);
        
        if (!success) {
+         console.log(`❌ Guest token ${id} not found`);
          return res.status(404).json({ message: "Guest token not found" });
        }
        
+       console.log(`✅ Guest token ${id} cancelled successfully`);
        res.json({ message: "Guest token cancelled successfully" });
      } catch (error: any) {
        console.error("Error cancelling guest token:", error);
@@ -2085,20 +2089,34 @@ if (process.env.PRIVATE_OBJECT_DIR) {
    });
    ```
 
-2. **Endpoint Features**:
-   - ✅ **Authentication Required**: Uses `authenticateToken` middleware
-   - ✅ **Proper Error Handling**: Returns 404 if token not found, 500 for server errors
-   - ✅ **Success Response**: Returns confirmation message when token is cancelled
-   - ✅ **Logging**: Logs errors for debugging purposes
+2. **Fixed Route Ordering Issue**:
+   ```typescript
+   // CORRECT ORDER: Specific routes must come before parameterized routes
+   router.delete("/cleanup", authenticateToken, async (req: any, res) => { /* cleanup logic */ });
+   router.delete("/:id", authenticateToken, async (req: any, res) => { /* delete by ID logic */ });
+   ```
+
+3. **Added Debug Logging**:
+   - Request logging middleware to track all requests
+   - Console logs for successful/failed operations
+   - Test endpoint `/api/guest-tokens/test` for router verification
+
+**Endpoint Features**:
+- ✅ **Authentication Required**: Uses `authenticateToken` middleware
+- ✅ **Proper Error Handling**: Returns 404 if token not found, 500 for server errors
+- ✅ **Success Response**: Returns confirmation message when token is cancelled
+- ✅ **Logging**: Logs errors for debugging purposes
+- ✅ **Route Ordering**: Specific routes placed before parameterized routes
 
 **Technical Details:**
 - **Route Pattern**: `DELETE /api/guest-tokens/:id` where `:id` is the guest token UUID
 - **Authentication**: Requires valid user session (admin/staff only)
 - **Storage Integration**: Calls existing `storage.deleteGuestToken(id)` method
 - **Response Format**: JSON with success/error messages and appropriate HTTP status codes
+- **Express.js Route Ordering**: Specific routes (like `/cleanup`) must be defined before parameterized routes (like `/:id`)
 
 **Files Modified:**
-- `server/routes/guest-tokens.ts` - Added DELETE endpoint for individual guest tokens
+- `server/routes/guest-tokens.ts` - Added DELETE endpoint for individual guest tokens and fixed route ordering
 
 **Testing & Verification:**
 1. **Navigate to Dashboard** > Current Guest table
@@ -2106,24 +2124,42 @@ if (process.env.PRIVATE_OBJECT_DIR) {
 3. **Click Cancel button** - should now work without errors
 4. **Success message**: "Pending check-in cancelled successfully" toast should appear
 5. **Guest removed**: Pending check-in should disappear from the table
+6. **Check console logs**: Should see debug messages for the operation
+
+**Replit Deployment Fix:**
+- **Route Ordering**: Ensure specific routes come before parameterized routes
+- **Server Restart**: Restart server after code changes: `npm run dev`
+- **Debug Logging**: Check console for request logs and operation status
+- **Test Endpoint**: Use `/api/guest-tokens/test` to verify router is working
 
 **Prevention:**
 - **Route Completeness**: Ensure all CRUD operations have corresponding API endpoints
 - **Frontend-Backend Sync**: Verify that frontend API calls match implemented server routes
+- **Route Ordering**: Always place specific routes before parameterized routes in Express.js
 - **Testing**: Test all UI actions to ensure they have working backend endpoints
 - **Error Handling**: Implement proper error handling for missing endpoints
+- **Debug Logging**: Add console logs for troubleshooting deployment issues
 
 **Related Issues:**
 - **Problem #003**: Problem Deletion Shows Success But Doesn't Delete (similar missing DELETE endpoint)
 - **Problem #007**: Frontend Changes Not Reflecting Due to Build Artifacts
 - **Route Registration**: Always verify that modular routes are properly registered
+- **Express.js Route Ordering**: Common issue with parameterized routes catching specific route names
 
 **Success Pattern:**
 - ✅ **Identify missing endpoint**: Frontend calls non-existent API route
 - ✅ **Check storage methods**: Verify that required storage methods exist
 - ✅ **Add missing route**: Implement the missing API endpoint
+- ✅ **Fix route ordering**: Ensure specific routes come before parameterized routes
+- ✅ **Add debug logging**: Include console logs for troubleshooting
 - ✅ **Test functionality**: Verify that the UI action now works correctly
 
----
+**Debug Commands for Replit:**
+```bash
+# Test if router is working
+curl https://your-replit-url.replit.co/api/guest-tokens/test
 
-## 🚨 **EMERGENCY RECOVERY PROCEDURE**
+# Check server logs for request tracking
+# Look for: 🔍 DELETE /api/guest-tokens/{id} - Guest tokens router
+# Look for: 🔴 DELETE /api/guest-tokens/{id} - Attempting to cancel guest token
+```
