@@ -115,7 +115,7 @@ router.post("/",
     
     const createdToken = await storage.createGuestToken({
       token: guestToken.token,
-      createdBy: 'system',
+      createdBy: req.user.id,
       expiresAt: guestToken.expiresAt,
       capsuleNumber: guestToken.capsuleNumber,
       email: guestToken.email,
