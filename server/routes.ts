@@ -32,6 +32,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Static file serving for uploads
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
+  // Static file serving for photos specifically
+  app.use('/uploads/photos', express.static(path.join(process.cwd(), 'uploads/photos')));
+  
+  // Static file serving for objects/uploads (to match existing database URLs)
+  app.use('/objects/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Catch-all handler for SPA
   app.get("*", (req, res) => {

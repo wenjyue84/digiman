@@ -290,4 +290,160 @@ router.post("/mark-cleaned-all", authenticateToken, async (req: any, res) => {
   }
 });
 
+// Switch guest between capsules with maintenance tracking
+router.post("/switch", 
+  securityValidationMiddleware,
+  authenticateToken,
+  async (req: any, res) => {
+  try {
+    const capsuleSwitchSchema = z.object({
+      guestId: z.string().min(1, "Guest ID is required"),
+      oldCapsuleNumber: z.string().min(1, "Old capsule number is required"),
+      newCapsuleNumber: z.string().min(1, "New capsule number is required"),
+      maintenanceRemark: z.string().nullable().optional()
+    });
+    
+    const { guestId, oldCapsuleNumber, newCapsuleNumber, maintenanceRemark } = capsuleSwitchSchema.parse(req.body);
+    
+    // Prevent switching to the same capsule
+    if (oldCapsuleNumber === newCapsuleNumber) {
+      return res.status(400).json({ message: "Cannot switch to the same capsule" });
+    }
+    
+    // Check if guest exists and is currently in the old capsule
+    const guest = await storage.getGuest(guestId);
+    if (!guest) {
+      return res.status(404).json({ message: "Guest not found" });
+    }
+    
+    if (guest.capsuleNumber !== oldCapsuleNumber) {
+      return res.status(400).json({ 
+        message: `Guest is not currently in capsule ${oldCapsuleNumber}. Current capsule: ${guest.capsuleNumber}` 
+      });
+    }
+    
+    // Check if new capsule exists and is available
+    const newCapsule = await storage.getCapsule(newCapsuleNumber);
+    if (!newCapsule) {
+      return res.status(404).json({ message: `Capsule ${newCapsuleNumber} not found` });
+    }
+    
+    // Check if new capsule is available (not occupied by another guest)
+    const allGuests = await storage.getCheckedInGuests();
+    const occupiedCapsules = new Set(allGuests.data.map(g => g.capsuleNumber));
+    
+    if (occupiedCapsules.has(newCapsuleNumber) && newCapsuleNumber !== oldCapsuleNumber) {
+      return res.status(400).json({ 
+        message: `Capsule ${newCapsuleNumber} is already occupied by another guest` 
+      });
+    }
+    
+    // Perform the switch with proper error handling and data sanitization
+    try {
+      // Sanitize maintenance remark to prevent injection
+      const sanitizedRemark = maintenanceRemark?.trim()
+        .replace(/[<>\"'&]/g, '') // Remove potentially harmful characters
+        .substring(0, 500); // Ensure max length
+      
+      // Double-check capsule availability just before the switch to prevent race conditions
+      const recentGuests = await storage.getCheckedInGuests();
+      const recentlyOccupiedCapsules = new Set(recentGuests.data.map(g => g.capsuleNumber));
+      
+      if (recentlyOccupiedCapsules.has(newCapsuleNumber) && newCapsuleNumber !== oldCapsuleNumber) {
+        return res.status(409).json({ 
+          message: `Capsule ${newCapsuleNumber} was just assigned to another guest` 
+        });
+      }
+      
+      // Perform all database operations atomically
+      // Note: This assumes storage layer supports transactions
+      // If not available, implement explicit rollback on error
+      const operations = [
+        // Update guest's capsule assignment
+        () => storage.updateGuest(guestId, { capsuleNumber: newCapsuleNumber }),
+        
+        // Release old capsule and mark it as needing cleaning
+        () => storage.updateCapsule(oldCapsuleNumber, { 
+          cleaningStatus: 'to_be_cleaned' as const,
+          isAvailable: true // Make it available but needs cleaning
+        }),
+        
+        // Update new capsule as occupied
+        () => storage.updateCapsule(newCapsuleNumber, { 
+          isAvailable: false // Mark as occupied
+        })
+      ];
+      
+      // Execute all operations
+      await Promise.all(operations.map(op => op()));
+      
+      // Handle maintenance remark separately after successful switch
+      if (sanitizedRemark && sanitizedRemark.length > 0) {
+        try {
+          // Get fresh capsule data and append maintenance note with timestamp
+          const timestamp = new Intl.DateTimeFormat('en-CA').format(new Date()); // YYYY-MM-DD format
+          const remarkWithTimestamp = `[${timestamp}] ${sanitizedRemark}`;
+          
+          const oldCapsule = await storage.getCapsule(oldCapsuleNumber);
+          const existingRemark = oldCapsule?.remark || '';
+          
+          // Limit total remark length to prevent database overflow
+          const combinedRemark = existingRemark 
+            ? `${existingRemark}\n${remarkWithTimestamp}`
+            : remarkWithTimestamp;
+          
+          const truncatedRemark = combinedRemark.length > 2000 
+            ? combinedRemark.substring(0, 2000) + '...'
+            : combinedRemark;
+            
+          await storage.updateCapsule(oldCapsuleNumber, { 
+            remark: truncatedRemark
+          });
+        } catch (remarkError) {
+          // Don't fail the entire switch if remark update fails
+          console.warn("Failed to update maintenance remark:", remarkError);
+        }
+      }
+      
+      const switchResult = {
+        success: true,
+        guestId,
+        oldCapsuleNumber,
+        newCapsuleNumber,
+        maintenanceRemark: sanitizedRemark || null,
+        message: `Guest successfully moved from ${oldCapsuleNumber} to ${newCapsuleNumber}`
+      };
+      
+      res.json(switchResult);
+      
+    } catch (switchError) {
+      console.error("Error during capsule switch:", switchError);
+      
+      // Attempt rollback if possible (implementation depends on storage layer capabilities)
+      try {
+        // Try to revert guest assignment
+        await storage.updateGuest(guestId, { capsuleNumber: oldCapsuleNumber });
+      } catch (rollbackError) {
+        console.error("Failed to rollback guest assignment:", rollbackError);
+      }
+      
+      throw new Error("Failed to complete capsule switch operation");
+    }
+    
+  } catch (error: any) {
+    console.error("Capsule switch error:", error);
+    
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        message: "Invalid data", 
+        errors: error.errors 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: error.message || "Failed to switch capsules" 
+    });
+  }
+});
+
 export default router;

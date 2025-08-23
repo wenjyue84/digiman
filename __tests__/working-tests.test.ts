@@ -51,10 +51,10 @@ describe('Comprehensive Working Tests', () => {
   describe('Date and Time Operations', () => {
     it('should create and manipulate dates correctly', () => {
       const date = new Date('2024-01-01T12:00:00Z');
-      expect(date.getFullYear()).toBe(2024);
-      expect(date.getMonth()).toBe(0); // January is 0
-      expect(date.getDate()).toBe(1);
-      expect(date.getHours()).toBe(12);
+      expect(date.getUTCFullYear()).toBe(2024);
+      expect(date.getUTCMonth()).toBe(0); // January is 0
+      expect(date.getUTCDate()).toBe(1);
+      expect(date.getUTCHours()).toBe(12);
       
       const now = new Date();
       expect(now instanceof Date).toBe(true);

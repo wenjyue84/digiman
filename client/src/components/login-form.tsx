@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { shouldShowDemoFeatures } from "../../shared/utils";
 
 declare global {
   interface Window {
@@ -101,8 +102,7 @@ export function LoginForm() {
     } else if (storageError) {
       console.error("Failed to get storage info:", storageError);
       // Fallback: auto-fill on localhost for development
-      if (typeof window !== 'undefined' && 
-          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      if (shouldShowDemoFeatures()) {
         console.log("Fallback: Auto-filling credentials on localhost");
         setEmail("admin");
         setPassword("admin123");
@@ -114,9 +114,9 @@ export function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const success = await login(email, password);
+    const result = await login(email, password);
     
-    if (success) {
+    if (result.success) {
       toast({
         title: "🎉 Login Successful!",
         description: "Welcome back! Redirecting...",
@@ -138,32 +138,12 @@ export function LoginForm() {
         setLocation(redirect);
       }, 800);
     } else {
-      // Differentiate between network/connection error vs invalid credentials
-      try {
-        const res = await fetch('/api/storage/info', { credentials: 'include', cache: 'no-store' });
-        if (!res.ok) {
-          // Server reachable but returned an error → treat as invalid credentials for login
-          toast({
-            title: "Login Failed",
-            description: "Invalid email or password",
-            variant: "destructive"
-          });
-        } else {
-          // Server reachable and healthy; invalid credentials
-          toast({
-            title: "Login Failed",
-            description: "Invalid email or password",
-            variant: "destructive"
-          });
-        }
-      } catch (err) {
-        // Network error / server not started
-        toast({
-          title: "Connection Problem",
-          description: "Please check your internet connection and try again. If you're running locally, make sure the server is started: run 'npm run dev' in the project root.",
-          variant: "destructive",
-        });
-      }
+      // Show specific error message from server
+      toast({
+        title: "Login Failed",
+        description: result.error || "An unexpected error occurred",
+        variant: "destructive"
+      });
     }
     
     setIsLoading(false);
@@ -172,9 +152,9 @@ export function LoginForm() {
   const handleGoogleSignIn = async (response: any) => {
     setIsLoading(true);
     
-    const success = await loginWithGoogle(response.credential);
+    const result = await loginWithGoogle(response.credential);
     
-    if (success) {
+    if (result.success) {
       toast({
         title: "🎉 Google Login Successful!",
         description: "Welcome! Redirecting...",
@@ -197,7 +177,7 @@ export function LoginForm() {
     } else {
       toast({
         title: "Google Login Failed",
-        description: "Unable to sign in with Google",
+        description: result.error || "Unable to sign in with Google",
         variant: "destructive"
       });
     }
@@ -217,7 +197,7 @@ export function LoginForm() {
             </div>
           )}
           {typeof window !== 'undefined' &&
-            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+            shouldShowDemoFeatures() &&
             (!storageInfo || storageInfo.isDatabase) && (
               <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-gray-600">
                 <strong>Demo Login:</strong> admin / admin123
@@ -264,7 +244,7 @@ export function LoginForm() {
           <div id="google-signin-button" className="w-full"></div>
           
           {typeof window !== 'undefined' &&
-            (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+            shouldShowDemoFeatures() && (
               <div className="mt-4 text-sm text-gray-600 text-center">
                 <p>Demo Login: admin@pelangi.com / admin123</p>
               </div>

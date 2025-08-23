@@ -11,6 +11,8 @@ import objectRoutes from "./objects";
 import dashboardRoutes from "./dashboard";
 import testRoutes from "./tests";
 import pushRoutes from "./push";
+import databaseRoutes from "./database";
+import environmentRoutes from "./environment";
 
 export function registerRoutes(app: Express) {
   // Register auth routes
@@ -46,6 +48,12 @@ export function registerRoutes(app: Express) {
   
   // Register push notification routes
   app.use("/api/push", pushRoutes);
+  
+  // Register database management routes
+  app.use("/", databaseRoutes);
+  
+  // Register environment configuration routes
+  app.use("/", environmentRoutes);
   
   // Register test routes
   app.use("/api/tests", testRoutes);

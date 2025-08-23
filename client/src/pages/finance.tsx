@@ -17,8 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, Plus, Trash2, Edit, TrendingUp, TrendingDown, Calendar, FileText, Tag, Tags, MessageSquare, Camera, Image, ArrowUpDown, Filter, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-// import { ObjectUploader } from "@/components/ObjectUploader";
-// import type { UploadResult } from "@uppy/core";
+import { SmartPhotoUploader } from "@/components/SmartPhotoUploader";
+import { OptimizedPhotoUploader } from "@/components/OptimizedPhotoUploader";
 
 // Expense schema
 const expenseSchema = z.object({
@@ -99,13 +99,13 @@ export default function Finance() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [receiptPhotoUrl, setReceiptPhotoUrl] = useState<string>("");
   const [itemPhotoUrl, setItemPhotoUrl] = useState<string>("");
-  const [selectedFormCategory, setSelectedFormCategory] = useState<string>("");
+  const [selectedFormCategory, setSelectedFormCategory] = useState<string>("other");
 
   const form = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
-      description: "",
-      amount: "",
+      description: "Spending",
+      amount: "0",
       category: "other",
       subcategory: "",
       date: new Date().toISOString().split('T')[0],
@@ -208,32 +208,16 @@ export default function Finance() {
     },
   });
 
-  // Temporarily disabled - photo upload handlers
-  /*
-  const handleGetUploadParameters = async () => {
-    try {
-      const response = await fetch("/api/objects/upload", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to get upload parameters");
-      }
-      const params = await response.json();
-      return {
-        method: "PUT" as const,
-        url: params.uploadURL,
-      };
-    } catch (error) {
-      console.error("Error getting upload parameters:", error);
-      throw error;
-    }
+  // Photo upload handlers
+  const handleReceiptPhotoUpload = (photoUrl: string) => {
+    setReceiptPhotoUrl(photoUrl);
+    form.setValue("receiptPhotoUrl", photoUrl);
   };
-  */
 
-  // Photo upload functions temporarily removed due to dependency issues
+  const handleItemPhotoUpload = (photoUrl: string) => {
+    setItemPhotoUrl(photoUrl);
+    form.setValue("itemPhotoUrl", photoUrl);
+  };
 
   const onSubmit = (data: ExpenseFormData) => {
     const payload = {
@@ -269,10 +253,19 @@ export default function Finance() {
 
   const resetForm = () => {
     try {
-      form.reset();
+      form.reset({
+        description: "Spending",
+        amount: "0",
+        category: "other",
+        subcategory: "",
+        date: new Date().toISOString().split('T')[0],
+        notes: "",
+        receiptPhotoUrl: "",
+        itemPhotoUrl: "",
+      });
       setReceiptPhotoUrl("");
       setItemPhotoUrl("");
-      setSelectedFormCategory("");
+      setSelectedFormCategory("other");
       setEditingExpense(null);
     } catch (error) {
       console.error("Error in resetForm:", error);
@@ -513,6 +506,8 @@ export default function Finance() {
                           id="description"
                           placeholder="e.g., Plumber repair for C05"
                           {...form.register("description")}
+                          onFocus={(e) => e.target.select()}
+                          onClick={(e) => e.target.select()}
                         />
                         {form.formState.errors.description && (
                           <p className="text-sm text-red-600">{form.formState.errors.description.message}</p>
@@ -530,6 +525,8 @@ export default function Finance() {
                           step="0.01"
                           placeholder="0.00"
                           {...form.register("amount")}
+                          onFocus={(e) => e.target.select()}
+                          onClick={(e) => e.target.select()}
                         />
                         {form.formState.errors.amount && (
                           <p className="text-sm text-red-600">{form.formState.errors.amount.message}</p>
@@ -541,7 +538,7 @@ export default function Finance() {
                           <Tag className="h-4 w-4" />
                           Category *
                         </Label>
-                        <Select onValueChange={(value) => {
+                        <Select value={selectedFormCategory} onValueChange={(value) => {
                           form.setValue("category", value as any);
                           setSelectedFormCategory(value);
                           form.setValue("subcategory", ""); // Reset subcategory when category changes
@@ -627,24 +624,26 @@ export default function Finance() {
                               </div>
                             </div>
                             <Button
+                              type="button"
                               variant="outline"
-                              disabled={true}
-                              className="w-full h-8 text-xs"
+                              onClick={() => {
+                                setReceiptPhotoUrl("");
+                                form.setValue("receiptPhotoUrl", "");
+                              }}
+                              className="w-full h-8 text-xs text-red-600"
                             >
-                              <Camera className="mr-2 h-3 w-3" />
-                              Photo Upload Temporarily Disabled
+                              <X className="mr-2 h-3 w-3" />
+                              Remove Photo
                             </Button>
                           </div>
                         ) : (
                           <div className="mt-2">
-                            <Button
-                              variant="outline"
-                              disabled={true}
+                            <OptimizedPhotoUploader
+                              onPhotoSelected={handleReceiptPhotoUpload}
+                              buttonText="Upload Receipt Photo"
                               className="w-full h-12 border-2 border-dashed border-gray-300"
-                            >
-                              <Camera className="mr-2 h-4 w-4" />
-                              Photo Upload Temporarily Disabled
-                            </Button>
+                              uploadType="expense"
+                            />
                           </div>
                         )}
                         {form.formState.errors.receiptPhotoUrl && (
@@ -671,24 +670,26 @@ export default function Finance() {
                               </div>
                             </div>
                             <Button
+                              type="button"
                               variant="outline"
-                              disabled={true}
-                              className="w-full h-8 text-xs"
+                              onClick={() => {
+                                setItemPhotoUrl("");
+                                form.setValue("itemPhotoUrl", "");
+                              }}
+                              className="w-full h-8 text-xs text-red-600"
                             >
-                              <Image className="mr-2 h-3 w-3" />
-                              Photo Upload Temporarily Disabled
+                              <X className="mr-2 h-3 w-3" />
+                              Remove Photo
                             </Button>
                           </div>
                         ) : (
                           <div className="mt-2">
-                            <Button
-                              variant="outline"
-                              disabled={true}
+                            <OptimizedPhotoUploader
+                              onPhotoSelected={handleItemPhotoUpload}
+                              buttonText="Upload Item Photo"
                               className="w-full h-12 border-2 border-dashed border-gray-300"
-                            >
-                              <Image className="mr-2 h-4 w-4" />
-                              Photo Upload Temporarily Disabled
-                            </Button>
+                              uploadType="expense"
+                            />
                           </div>
                         )}
                       </div>

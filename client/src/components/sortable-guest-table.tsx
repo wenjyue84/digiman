@@ -1,11 +1,12 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useVisibilityQuery } from "@/hooks/useVisibilityQuery";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone, AlertCircle, Clock, Ban, Star, LogOut, Building2 } from "lucide-react";
+import { UserMinus, ArrowUpDown, ArrowUp, ArrowDown, ToggleLeft, ToggleRight, ChevronLeft, Copy, Filter as FilterIcon, CalendarPlus, Phone, AlertCircle, Clock, Ban, Star, LogOut, Building2, Undo2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
@@ -40,10 +41,16 @@ import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
 type SortOrder = 'asc' | 'desc';
 
+// Define proper context interface for checkout mutation
+interface CheckoutMutationContext {
+  previousGuests: PaginatedResponse<Guest> | null;
+}
+
 export default function SortableGuestTable() {
   const queryClient = useQueryClient();
   const labels = useAccommodationLabels();
   const isMobile = useIsMobile();
+  const [, setLocation] = useLocation();
   const [isCondensedView, setIsCondensedView] = useState(() => isMobile);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -51,6 +58,8 @@ export default function SortableGuestTable() {
   const [isExtendOpen, setIsExtendOpen] = useState(false);
   const [checkoutGuest, setCheckoutGuest] = useState<Guest | null>(null);
   const [showCheckoutConfirmation, setShowCheckoutConfirmation] = useState(false);
+  const [undoGuest, setUndoGuest] = useState<Guest | null>(null);
+  const [showUndoConfirmation, setShowUndoConfirmation] = useState(false);
   const [capsuleChangeGuest, setCapsuleChangeGuest] = useState<Guest | null>(null);
   const [isCapsuleChangeOpen, setIsCapsuleChangeOpen] = useState(false);
   const [showAllCapsules, setShowAllCapsules] = useState(false);
@@ -327,12 +336,40 @@ export default function SortableGuestTable() {
       const response = await apiRequest("POST", "/api/guests/checkout", { id: guestId });
       return response.json();
     },
-    onSuccess: () => {
-      // Use refetchQueries for immediate updates instead of just invalidateQueries
-      queryClient.refetchQueries({ queryKey: ["/api/guests/checked-in"] });
-      queryClient.refetchQueries({ queryKey: ["/api/capsules/needs-attention"] });
+    onMutate: async (guestId: string): Promise<CheckoutMutationContext> => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/guests/checked-in"] });
       
-      // Still invalidate other related queries
+      // Snapshot the previous value with proper type checking
+      const previousGuests = queryClient.getQueryData<PaginatedResponse<Guest>>(["/api/guests/checked-in"]);
+      
+      if (!previousGuests) {
+        return { previousGuests: null };
+      }
+      
+      // Optimistically update by removing the guest from the list
+      const filteredData = previousGuests.data.filter(guest => guest.id !== guestId);
+      const updatedGuests = {
+        ...previousGuests,
+        data: filteredData,
+        // Update total count if present in paginated response
+        total: previousGuests.total ? Math.max(previousGuests.total - 1, 0) : filteredData.length
+      };
+      queryClient.setQueryData(["/api/guests/checked-in"], updatedGuests);
+      
+      // Show immediate feedback that checkout is processing
+      toast({
+        title: "Processing Checkout...",
+        description: "Guest is being checked out. Row will disappear momentarily.",
+        duration: 2000,
+      });
+      
+      // Return a context object with the snapshotted value
+      return { previousGuests };
+    },
+    onSuccess: () => {
+      // Invalidate all related queries for consistency
+      queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
       queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
@@ -340,32 +377,70 @@ export default function SortableGuestTable() {
       queryClient.invalidateQueries({ queryKey: ["/api/capsules/cleaning-status/cleaned"] });
       queryClient.invalidateQueries({ queryKey: ["/api/capsules/cleaning-status/to_be_cleaned"] });
       queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules/needs-attention"] });
       
       toast({
-        title: "Success",
-        description: "Guest checked out successfully",
+        title: "Guest Checked Out Successfully",
+        description: (
+          <div className="space-y-2">
+            <p>The guest has been checked out successfully. The guest list updates automatically every 30 seconds.</p>
+            <div className="flex flex-col space-y-1">
+              <button 
+                onClick={() => {
+                  // Force immediate refetch bypassing cache
+                  queryClient.refetchQueries({ 
+                    queryKey: ["/api/guests/checked-in"],
+                    type: 'active'
+                  });
+                  queryClient.refetchQueries({ 
+                    queryKey: ["/api/occupancy"],
+                    type: 'active'
+                  });
+                  toast({
+                    title: "Refreshing...",
+                    description: "Guest list is being updated with fresh data.",
+                    duration: 2000,
+                  });
+                }}
+                className="inline-flex items-center text-green-600 hover:text-green-800 underline text-sm font-medium w-fit"
+              >
+                🔄 Refresh guest list now
+              </button>
+              <button 
+                onClick={() => setLocation("/cleaning")}
+                className="inline-flex items-center text-blue-600 hover:text-blue-800 underline text-sm font-medium w-fit gap-1"
+              >
+                🧹 Clean
+              </button>
+            </div>
+          </div>
+        ),
+        duration: 8000, // Show longer to give user time to click link
       });
     },
-    onError: (error: any) => {
-      // Check if the error indicates the guest was already checked out
-      const errorMessage = error?.message || '';
-      const isAlreadyCheckedOut = errorMessage.includes('already') || errorMessage.includes('not found') || errorMessage.includes('checked out');
+    onError: (error: any, guestId: string, context: CheckoutMutationContext | undefined) => {
+      // Rollback optimistic update on error
+      if (context?.previousGuests) {
+        queryClient.setQueryData(["/api/guests/checked-in"], context.previousGuests);
+      }
+      
+      // Improved error handling with better type checking
+      const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error';
+      const isAlreadyCheckedOut = /already|not found|checked out/i.test(errorMessage);
       
       if (isAlreadyCheckedOut) {
         toast({
           title: "Guest Already Checked Out",
-          description: "This guest has already been checked out. The page will refresh in a moment to update the list.",
+          description: "This guest has already been checked out. The list will refresh to show the current state.",
           variant: "default",
         });
-        // Auto-refresh after showing the message
-        setTimeout(() => {
-          queryClient.refetchQueries({ queryKey: ["/api/guests/checked-in"] });
-          queryClient.refetchQueries({ queryKey: ["/api/occupancy"] });
-        }, 2000);
+        // Immediate refresh to get accurate data for "already checked out" case
+        queryClient.refetchQueries({ queryKey: ["/api/guests/checked-in"] });
+        queryClient.refetchQueries({ queryKey: ["/api/occupancy"] });
       } else {
         toast({
           title: "Error",
-          description: "Failed to check out guest",
+          description: "Failed to check out guest. Please try again.",
           variant: "destructive",
         });
       }
@@ -394,6 +469,34 @@ export default function SortableGuestTable() {
     },
   });
 
+  const undoCheckoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/guests/undo-recent-checkout");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: ["/api/guests/checked-in"] });
+      queryClient.refetchQueries({ queryKey: ["/api/capsules/needs-attention"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      
+      toast({
+        title: "Success",
+        description: "Check-out undone successfully",
+      });
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.message || 'Failed to undo checkout';
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCheckout = (guestId: string) => {
     if (!isAuthenticated) {
       toast({
@@ -405,7 +508,7 @@ export default function SortableGuestTable() {
       
       // Redirect to login page after a brief delay
       setTimeout(() => {
-        window.location.href = '/login';
+        setLocation('/login');
       }, 1000);
       
       return;
@@ -424,6 +527,54 @@ export default function SortableGuestTable() {
       checkoutMutation.mutate(checkoutGuest.id);
       setShowCheckoutConfirmation(false);
       setCheckoutGuest(null);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to undo checkouts. Redirecting to login page...",
+        variant: "destructive",
+        duration: 3000,
+      });
+      
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+      
+      return;
+    }
+    
+    try {
+      // First get the most recent checkout for confirmation
+      const response = await apiRequest("GET", "/api/guests/undo-recent-checkout");
+      const result = await response.json();
+      
+      if (result.statusCode === 200 && result.data?.guest) {
+        setUndoGuest(result.data.guest);
+        setShowUndoConfirmation(true);
+      } else {
+        toast({
+          title: "No Recent Checkout",
+          description: "No recently checked-out guest found to undo.",
+          variant: "default",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to find recent checkout to undo",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const confirmUndo = () => {
+    if (undoGuest) {
+      undoCheckoutMutation.mutate();
+      setShowUndoConfirmation(false);
+      setUndoGuest(null);
     }
   };
 
@@ -487,11 +638,16 @@ export default function SortableGuestTable() {
   };
 
   const handlePendingCheckinClick = (tokenId: string) => {
-    const token = activeTokens.find(t => t.id === tokenId)?.token;
-    if (!token) return;
-    const link = getCheckinLink(token);
-    copyToClipboard(link);
-    window.location.href = link;
+    // Find the token and copy the check-in link
+    const token = activeTokens.find(t => t.id === tokenId);
+    if (token) {
+      copyToClipboard(getCheckinLink(token.token));
+    }
+  };
+
+  // Handle empty capsule click - navigate to check-in page
+  const handleEmptyCapsuleClick = (capsuleNumber: string) => {
+    setLocation(`/check-in?capsule=${capsuleNumber}`);
   };
 
   if (isLoading) {
@@ -539,6 +695,17 @@ export default function SortableGuestTable() {
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className={isMobile ? "h-8 w-8 px-0" : "h-8 gap-2"}
+              onClick={handleUndo}
+              disabled={undoCheckoutMutation.isPending}
+              title="Undo recent checkout"
+            >
+              <Undo2 className="h-4 w-4" />
+              {!isMobile && "Undo"}
+            </Button>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -976,7 +1143,12 @@ export default function SortableGuestTable() {
                     // Empty capsule row
                     const emptyData = item.data;
                     return (
-                      <tr key={`empty-${emptyData.id}`} className="bg-red-50">
+                      <tr 
+                        key={`empty-${emptyData.id}`} 
+                        className="bg-red-50 hover:bg-red-100 cursor-pointer transition-colors"
+                        onClick={() => handleEmptyCapsuleClick(emptyData.capsuleNumber)}
+                        title={`Click to check-in guest to ${emptyData.capsuleNumber}`}
+                      >
                         {/* Accommodation column - sticky first column */}
                         <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-red-50 z-10">
                           <Badge variant="outline" className="bg-red-600 text-white border-red-600">
@@ -1180,7 +1352,11 @@ export default function SortableGuestTable() {
               } else if (item.type === 'empty') {
                 const emptyData = item.data;
                 return (
-                  <Card key={`empty-${emptyData.id}`} className="p-3 bg-red-50/60 hover-card-pop">
+                  <Card 
+                    key={`empty-${emptyData.id}`} 
+                    className="p-3 bg-red-50/60 hover-card-pop cursor-pointer"
+                    onClick={() => handleEmptyCapsuleClick(emptyData.capsuleNumber)}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
@@ -1242,6 +1418,22 @@ export default function SortableGuestTable() {
           guestName={checkoutGuest.name}
           capsuleNumber={checkoutGuest.capsuleNumber}
           isLoading={checkoutMutation.isPending}
+        />
+      )}
+
+      {/* Undo Checkout Confirmation Dialog */}
+      {undoGuest && (
+        <CheckoutConfirmationDialog
+          open={showUndoConfirmation}
+          onOpenChange={setShowUndoConfirmation}
+          onConfirm={confirmUndo}
+          guestName={undoGuest.name}
+          capsuleNumber={undoGuest.capsuleNumber}
+          isLoading={undoCheckoutMutation.isPending}
+          title="Undo Checkout"
+          message="Are you sure you want to undo check-out for capsule {capsuleNumber} {guestName}?"
+          confirmText="Undo"
+          variant="default"
         />
       )}
 

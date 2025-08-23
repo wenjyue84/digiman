@@ -14,6 +14,7 @@ import { getConfig, AppConfig } from "../configManager";
 import { authenticateToken } from "./middleware/auth";
 import sgMail from "@sendgrid/mail";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
+import { handleDatabaseError, handleFeatureNotImplementedError } from "../lib/errorHandler";
 
 const router = Router();
 
@@ -112,7 +113,15 @@ router.post("/",
       guideShowTimeAccess: validatedData.guideShowTimeAccess || null,
     };
     
-    const createdToken = await storage.createGuestToken(guestToken);
+    const createdToken = await storage.createGuestToken({
+      token: guestToken.token,
+      createdBy: 'system',
+      expiresAt: guestToken.expiresAt,
+      capsuleNumber: guestToken.capsuleNumber,
+      email: guestToken.email,
+      createdAt: guestToken.createdAt,
+      usedAt: guestToken.usedAt
+    });
     
     // Generate the check-in link
     const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
@@ -139,8 +148,18 @@ router.get("/active", async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const activeTokens = await storage.getActiveGuestTokens({ page, limit });
     res.json(activeTokens);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch active tokens" });
+  } catch (error: any) {
+    // Check if this is a table missing error for guest_tokens
+    if (error.message?.includes('relation "guest_tokens" does not exist')) {
+      return handleFeatureNotImplementedError(
+        'Guest Token Management',
+        '/api/guest-tokens/active',
+        res
+      );
+    }
+    
+    // Handle other database errors with detailed messages
+    handleDatabaseError(error, '/api/guest-tokens/active', res);
   }
 });
 
@@ -175,7 +194,7 @@ router.patch("/:token/use",
   async (req, res) => {
   try {
     const { token } = req.params;
-    const updatedToken = await storage.markGuestTokenAsUsed(token);
+    const updatedToken = await storage.markTokenAsUsed(token);
     
     if (!updatedToken) {
       return res.status(404).json({ message: "Token not found" });
@@ -213,13 +232,13 @@ router.post("/checkin/:token",
     }
 
     // Check if assigned capsule is still available
-    if (guestToken.assignedCapsule) {
+    if (guestToken.capsuleNumber) {
       const availableCapsules = await storage.getAvailableCapsules();
       const availableCapsuleNumbers = availableCapsules.map(c => c.number);
       
-      if (!availableCapsuleNumbers.includes(guestToken.assignedCapsule)) {
+              if (!availableCapsuleNumbers.includes(guestToken.capsuleNumber)) {
         return res.status(400).json({ 
-          message: `Assigned capsule ${guestToken.assignedCapsule} is no longer available` 
+          message: `Assigned capsule ${guestToken.capsuleNumber} is no longer available` 
         });
       }
     }
@@ -236,20 +255,22 @@ router.post("/checkin/:token",
     const guestData = {
       ...validatedData,
       name: validatedData.nameAsInDocument,
-      capsuleNumber: guestToken.assignedCapsule!,
+      capsuleNumber: guestToken.capsuleNumber!,
       checkinTime: new Date(),
       expectedCheckoutDate: validatedData.checkOutDate,
       guestType: 'self_checkin' as const,
-      paymentAmount: guestToken.ratePerNight,
+      paymentAmount: "0", // Default payment amount
       paymentStatus: 'unpaid' as const,
       idNumber: validatedData.icNumber || validatedData.passportNumber,
+      // Save the document photo URL to profilePhotoUrl field
+      profilePhotoUrl: validatedData.icDocumentUrl || validatedData.passportDocumentUrl || undefined,
     };
 
     // Create the guest
     const guest = await storage.createGuest(guestData);
     
     // Mark token as used
-    await storage.markGuestTokenAsUsed(token);
+    await storage.markTokenAsUsed(token);
     
     // Send push notification for self-checkin
     try {
@@ -280,7 +301,7 @@ router.post("/checkin/:token",
 // Delete expired tokens (cleanup endpoint)
 router.delete("/cleanup", authenticateToken, async (req: any, res) => {
   try {
-    await storage.cleanupExpiredTokens();
+    await storage.cleanExpiredTokens();
     res.json({ message: "Expired tokens cleaned up successfully" });
   } catch (error) {
     console.error("Error cleaning up expired tokens:", error);

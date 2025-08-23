@@ -5,6 +5,7 @@ import { updateSettingsSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware } from "../validation";
 import { getConfig, getConfigForAPI, validateConfigUpdate } from "../configManager";
 import { authenticateToken } from "./middleware/auth";
+import { handleDatabaseError, handleFeatureNotImplementedError } from "../lib/errorHandler";
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.put("/config", securityValidationMiddleware, async (req, res) => {
     const updates = req.body;
     const validation = await validateConfigUpdate(updates);
     
-    if (!validation.isValid) {
+    if (!validation.valid) {
       return res.status(400).json({ 
         message: "Invalid configuration", 
         errors: validation.errors 
@@ -32,7 +33,7 @@ router.put("/config", securityValidationMiddleware, async (req, res) => {
     }
 
     const config = getConfig();
-    await config.updateSettings(updates);
+    await config.updateMultiple(updates, req.user?.email || 'admin');
     
     res.json({ message: "Configuration updated successfully" });
   } catch (error) {
@@ -45,7 +46,7 @@ router.put("/config", securityValidationMiddleware, async (req, res) => {
 router.post("/config/reset", securityValidationMiddleware, async (req, res) => {
   try {
     const config = getConfig();
-    await config.resetToDefaults();
+    await config.resetAll(req.user?.email || 'admin');
     
     res.json({ message: "Configuration reset to defaults successfully" });
   } catch (error) {
@@ -61,8 +62,18 @@ router.get("/notifications", authenticateToken, async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const notifications = await storage.getAdminNotifications({ page, limit });
     res.json(notifications);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch notifications" });
+  } catch (error: any) {
+    // Check if this is a table missing error for admin_notifications
+    if (error.message?.includes('relation "admin_notifications" does not exist')) {
+      return handleFeatureNotImplementedError(
+        'Admin Notifications',
+        '/api/admin/notifications',
+        res
+      );
+    }
+    
+    // Handle other database errors with detailed messages
+    handleDatabaseError(error, '/api/admin/notifications', res);
   }
 });
 
@@ -73,8 +84,18 @@ router.get("/notifications/unread", authenticateToken, async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const notifications = await storage.getUnreadAdminNotifications({ page, limit });
     res.json(notifications);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch unread notifications" });
+  } catch (error: any) {
+    // Check if this is a table missing error for admin_notifications
+    if (error.message?.includes('relation "admin_notifications" does not exist')) {
+      return handleFeatureNotImplementedError(
+        'Admin Notifications',
+        '/api/admin/notifications/unread',
+        res
+      );
+    }
+    
+    // Handle other database errors with detailed messages
+    handleDatabaseError(error, '/api/admin/notifications/unread', res);
   }
 });
 

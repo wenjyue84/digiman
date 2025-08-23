@@ -56,7 +56,7 @@ export class AppConfig {
 
   // Authentication and session configuration
   static async getTokenExpirationHours(): Promise<number> {
-    return this.config!.get('guestTokenExpirationHours');
+    return 24; // Default to 24 hours
   }
 
   static async getSessionExpirationHours(): Promise<number> {

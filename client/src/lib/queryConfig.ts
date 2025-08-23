@@ -31,7 +31,7 @@ const HOUR = 60 * MINUTE;
 export const queryConfigs = {
   // Real-time data that changes frequently
   realtime: {
-    staleTime: 10 * SECOND,     // Consider stale after 10 seconds
+    staleTime: 5 * SECOND,      // Consider stale after 5 seconds (reduced from 10s for better responsiveness)
     gcTime: getConfigValue('cacheTimeMinutes') * MINUTE, // Use configured cache time
     refetchInterval: getConfigValue('queryRefreshIntervalSeconds') * SECOND, // Use configured refresh interval
     refetchOnWindowFocus: true,

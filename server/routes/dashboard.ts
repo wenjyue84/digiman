@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { storage } from "../storage";
+import { getStorage } from "../Storage/StorageFactory.js";
 // REFACTORING: Import new utility functions to eliminate duplication
 import { asyncRouteHandler } from "../lib/errorHandler";
 
@@ -7,6 +7,7 @@ const router = Router();
 
 // Get storage type info
 router.get("/storage/info", asyncRouteHandler(async (_req: any, res: any) => {
+  const storage = await getStorage();
   const storageType = storage.constructor.name;
   const isDatabase = storageType === 'DatabaseStorage';
   res.json({ 
@@ -20,6 +21,7 @@ router.get("/storage/info", asyncRouteHandler(async (_req: any, res: any) => {
 router.get("/occupancy", asyncRouteHandler(async (_req: any, res: any) => {
   // Cache occupancy data for 30 seconds
   res.set('Cache-Control', 'public, max-age=30');
+  const storage = await getStorage();
   const occupancy = await storage.getCapsuleOccupancy();
   res.json(occupancy);
 }));
@@ -28,6 +30,8 @@ router.get("/occupancy", asyncRouteHandler(async (_req: any, res: any) => {
 router.get("/dashboard", asyncRouteHandler(async (req: any, res: any) => {
   // Cache dashboard data for 15 seconds
   res.set('Cache-Control', 'public, max-age=15');
+  
+  const storage = await getStorage();
   
   // Fetch all dashboard data concurrently for better performance
   const [
@@ -62,6 +66,7 @@ router.get("/calendar/occupancy/:year/:month", asyncRouteHandler(async (req: any
   }
 
   // Get all guests for the month
+  const storage = await getStorage();
   const allGuests = await storage.getAllGuests();
   
   if (!allGuests || !allGuests.data) {

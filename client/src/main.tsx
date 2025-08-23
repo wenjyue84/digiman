@@ -2,13 +2,11 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { registerServiceWorker } from "./lib/serviceWorker";
+import { shouldEnablePWA } from "../shared/utils";
 
 // Register service worker for PWA functionality (including push notifications)
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const isProduction = process.env.NODE_ENV === 'production';
-const isReplit = window.location.hostname.includes('.replit.dev') || window.location.hostname.includes('.replit.app') || !!import.meta.env.VITE_REPL_ID;
-// Enable PWA for testing push notifications in all environments
-const shouldRegisterSW = isLocalhost || isProduction || isReplit;
+// Use centralized environment detection utility
+const shouldRegisterSW = shouldEnablePWA();
 
 if (shouldRegisterSW) {
   registerServiceWorker()

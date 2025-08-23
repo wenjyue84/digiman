@@ -1,11 +1,12 @@
-import { Upload, Camera, CheckCircle, Info, Calendar } from "lucide-react";
+import { Upload, Camera, CheckCircle, Info, Calendar, X } from "lucide-react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { UseFormReturn } from "react-hook-form";
 import { GuestSelfCheckin } from "@shared/schema";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import type { UploadResult } from "@uppy/core";
+import { OptimizedPhotoUploader } from "@/components/OptimizedPhotoUploader";
 
 interface DocumentUploadSectionProps {
   form: UseFormReturn<GuestSelfCheckin>;
@@ -14,8 +15,8 @@ interface DocumentUploadSectionProps {
   isMalaysian: boolean;
   icDocumentUrl: string;
   passportDocumentUrl: string;
-  handleGetUploadParameters: () => Promise<{ method: 'PUT'; url: string }>;
-  handleDocumentUpload: (result: UploadResult<Record<string, unknown>, Record<string, unknown>>, documentType: 'ic' | 'passport') => void;
+  onIcDocumentUpload: (photoUrl: string) => void;
+  onPassportDocumentUpload: (photoUrl: string) => void;
 }
 
 export function DocumentUploadSection({
@@ -25,8 +26,8 @@ export function DocumentUploadSection({
   isMalaysian,
   icDocumentUrl,
   passportDocumentUrl,
-  handleGetUploadParameters,
-  handleDocumentUpload
+  onIcDocumentUpload,
+  onPassportDocumentUpload
 }: DocumentUploadSectionProps) {
   return (
     <div className="bg-green-50 rounded-lg p-4 border border-green-200">
@@ -130,104 +131,105 @@ export function DocumentUploadSection({
             <p className="text-xs text-gray-600 mt-1">Use the buttons below to upload your document photo</p>
           </div>
 
-          {(isMalaysian ? !!icDocumentUrl : !!passportDocumentUrl) ? (
-            <div className="mt-2 p-3 bg-green-100 border border-green-300 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-2xl">✅</span>
+          {/* IC Document Upload */}
+          {isMalaysian ? (
+            <div>
+              <Label className="flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                IC Photo (Required)
+              </Label>
+              {icDocumentUrl ? (
+                <div className="mt-2 space-y-2">
+                  <div className="p-3 bg-green-50 border border-green-300 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">IC Photo Uploaded</span>
+                    </div>
+                    <p className="text-xs text-green-600 mt-1">Document uploaded successfully</p>
+                    <p className="text-xs text-blue-600 mt-1">📍 Stored in server uploads folder</p>
+                    <p className="text-xs text-gray-600 mt-1">🗂️ Server Path: /uploads/photos/[filename]</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      onIcDocumentUpload("");
+                      form.setValue("icDocumentUrl", "");
+                    }}
+                    className="w-full h-8 text-xs text-red-600"
+                  >
+                    <X className="mr-2 h-3 w-3" />
+                    Remove Photo
+                  </Button>
+                  <OptimizedPhotoUploader
+                    onPhotoSelected={onIcDocumentUpload}
+                    buttonText="Change IC Photo"
+                    className="w-full h-12 border-2 border-dashed border-gray-300"
+                    uploadType="document"
+                    showCameraOption={true}
+                  />
                 </div>
-                <span className="text-sm text-green-700">
-                  {isMalaysian ? "IC document uploaded successfully" : "Passport document uploaded successfully"}
-                </span>
-              </div>
-              <div className="mt-2 text-xs text-green-600">
-                {isMalaysian ? "✅ IC photo uploaded" : "✅ Passport photo uploaded"}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">
-                <span className="hidden sm:inline">Use the buttons below to change your uploaded document photo if needed.</span>
-                <span className="sm:hidden">Tap below to change photo if needed.</span>
-              </p>
-              <div className="mt-2 flex flex-col sm:flex-row gap-2">
-                {isMalaysian ? (
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={10485760} // 10MB
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={(result) => handleDocumentUpload(result, 'ic')}
-                    buttonClassName="flex-1 h-12 text-sm"
-                    directFileUpload={true}
+              ) : (
+                <div className="mt-2">
+                  <OptimizedPhotoUploader
+                    onPhotoSelected={onIcDocumentUpload}
+                    buttonText="📸 Upload IC Photo"
+                    className="w-full h-12 border-2 border-dashed border-gray-300"
+                    uploadType="document"
                     showCameraOption={true}
-                  >
-                    <Camera className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Change IC Photo</span>
-                    <span className="sm:hidden">Change IC</span>
-                  </ObjectUploader>
-                ) : (
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={10485760} // 10MB
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={(result) => handleDocumentUpload(result, 'passport')}
-                    buttonClassName="flex-1 h-12 text-sm"
-                    directFileUpload={true}
-                    showCameraOption={true}
-                  >
-                    <Camera className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Change Passport Photo</span>
-                    <span className="sm:hidden">Change Passport</span>
-                  </ObjectUploader>
-                )}
-              </div>
+                  />
+                </div>
+              )}
             </div>
           ) : (
-            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[40vh]">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Camera className="h-8 w-8 text-gray-400" />
-                <span className="text-2xl">📸</span>
-              </div>
-              <p className="text-sm text-gray-500 mb-2">
-                {isMalaysian ? 'Upload a clear photo of your IC' : 'Upload a clear photo of your passport'}
-              </p>
-              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-                <p className="font-medium">📱 Quick Upload</p>
-                <p>{isMalaysian ? 'Tap to select IC photo - uploads automatically' : 'Tap to select passport photo - uploads automatically'}</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center items-center w-full">
-                {isMalaysian ? (
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={10485760} // 10MB
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={(result) => handleDocumentUpload(result, 'ic')}
-                    buttonClassName="flex-1 h-12 text-sm"
-                    directFileUpload={true}
-                    showCameraOption={true}
+            /* Passport Document Upload */
+            <div>
+              <Label className="flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Passport Photo (Required)
+              </Label>
+              {passportDocumentUrl ? (
+                <div className="mt-2 space-y-2">
+                  <div className="p-3 bg-green-50 border border-green-300 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">Passport Photo Uploaded</span>
+                    </div>
+                    <p className="text-xs text-green-600 mt-1">Document uploaded successfully</p>
+                    <p className="text-xs text-blue-600 mt-1">📍 Stored in server uploads folder</p>
+                    <p className="text-xs text-gray-600 mt-1">🗂️ Server Path: /uploads/photos/[filename]</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      onPassportDocumentUpload("");
+                      form.setValue("passportDocumentUrl", "");
+                    }}
+                    className="w-full h-8 text-xs text-red-600"
                   >
-                    <Camera className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Select IC Photo</span>
-                    <span className="sm:hidden">IC Photo</span>
-                  </ObjectUploader>
-                ) : (
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={10485760} // 10MB
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={(result) => handleDocumentUpload(result, 'passport')}
-                    buttonClassName="flex-1 h-12 text-sm"
-                    directFileUpload={true}
+                    <X className="mr-2 h-3 w-3" />
+                    Remove Photo
+                  </Button>
+                  <OptimizedPhotoUploader
+                    onPhotoSelected={onPassportDocumentUpload}
+                    buttonText="Change Passport Photo"
+                    className="w-full h-12 border-2 border-dashed border-gray-300"
+                    uploadType="document"
                     showCameraOption={true}
-                  >
-                    <Camera className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Select Passport Photo</span>
-                    <span className="sm:hidden">Passport Photo</span>
-                  </ObjectUploader>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                <span className="hidden sm:inline">{isMalaysian ? 'Upload IC photo.' : 'Upload passport photo.'}</span>
-                <span className="sm:hidden">{isMalaysian ? 'Upload IC photo.' : 'Upload passport photo.'}</span>
-              </p>
+                  />
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <OptimizedPhotoUploader
+                    onPhotoSelected={onPassportDocumentUpload}
+                    buttonText="📸 Upload Passport Photo"
+                    className="w-full h-12 border-2 border-dashed border-gray-300"
+                    uploadType="document"
+                    showCameraOption={true}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

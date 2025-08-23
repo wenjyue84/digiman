@@ -4,7 +4,6 @@ import { type IStorage } from "./storage";
 // Default configuration values
 export const DEFAULT_CONFIG: UpdateSettings = {
   // Token and Session Settings
-  guestTokenExpirationHours: 24,
   sessionExpirationHours: 168,
   
   // System Settings
@@ -47,7 +46,6 @@ export const DEFAULT_CONFIG: UpdateSettings = {
 
 // Configuration setting descriptions
 export const CONFIG_DESCRIPTIONS: Record<keyof UpdateSettings, string> = {
-  guestTokenExpirationHours: "How long guest self-check-in tokens remain valid (hours)",
   sessionExpirationHours: "User session duration before auto-logout (hours)",
   defaultUserRole: "Default role assigned to new users",
   maxGuestStayDays: "Maximum number of days a guest can stay",
@@ -320,8 +318,8 @@ export class ConfigUtils {
    * Get token expiration time in milliseconds
    */
   async getTokenExpirationMs(): Promise<number> {
-    const hours = await this.config.get('guestTokenExpirationHours');
-    return hours * 60 * 60 * 1000;
+    // Default to 24 hours for guest tokens
+    return 24 * 60 * 60 * 1000;
   }
 
   /**

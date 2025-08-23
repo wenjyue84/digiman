@@ -1,7 +1,9 @@
 import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, users, guests, capsules, sessions, guestTokens, capsuleProblems, adminNotifications, appSettings, expenses } from "../../shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
 import { neon } from "@neondatabase/serverless";
-import { eq, ne, and, lte, isNotNull, isNull, count } from "drizzle-orm";
+import postgres from "postgres";
+import { eq, ne, and, lte, isNotNull, isNull, count, desc } from "drizzle-orm";
 import { IStorage } from "./IStorage";
 
 // Database Storage Implementation
@@ -12,8 +14,21 @@ export class DatabaseStorage implements IStorage {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is not set");
     }
-    const sql = neon(process.env.DATABASE_URL);
-    this.db = drizzle(sql);
+
+    // Check if we're using Neon (cloud) or local PostgreSQL
+    const isNeon = process.env.DATABASE_URL.includes('neon.tech') || 
+                    process.env.DATABASE_URL.includes('neon.tech') ||
+                    process.env.DATABASE_URL.includes('neon');
+
+    if (isNeon) {
+      // Neon database connection
+      const sql = neon(process.env.DATABASE_URL);
+      this.db = drizzle(sql);
+    } else {
+      // Local PostgreSQL connection
+      const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+      this.db = drizzlePostgres(sql);
+    }
   }
 
   // Helper function for pagination
@@ -110,7 +125,7 @@ export class DatabaseStorage implements IStorage {
       // Parse YYYY-MM-DD format and set time to current time
       const [year, month, day] = checkInDate.split('-').map(Number);
       const now = new Date();
-      insertData.checkinTime = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+      // checkinTime is automatically set by database default
     }
 
     const result = await this.db.insert(guests).values(insertData).returning();
@@ -167,6 +182,19 @@ export class DatabaseStorage implements IStorage {
         eq(guests.expectedCheckoutDate, today)
       )
     );
+  }
+
+  async getRecentlyCheckedOutGuest(): Promise<Guest | undefined> {
+    const result = await this.db.select().from(guests)
+      .where(
+        and(
+          eq(guests.isCheckedIn, false),
+          isNotNull(guests.checkoutTime)
+        )
+      )
+      .orderBy(desc(guests.checkoutTime))
+      .limit(1);
+    return result[0];
   }
 
   async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
@@ -254,7 +282,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCapsule(capsule: InsertCapsule): Promise<Capsule> {
-    const result = await this.db.insert(capsules).values(capsule).returning();
+    const result = await this.db.insert(capsules).values({
+      ...capsule,
+      purchaseDate: capsule.purchaseDate?.toISOString() || null
+    }).returning();
     return result[0];
   }
 
@@ -470,7 +501,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertAppSetting(setting: InsertAppSetting): Promise<AppSetting> {
-    return this.setSetting(setting.key, setting.value, setting.description, setting.updatedBy);
+    return this.setSetting(setting.key, setting.value, setting.description, setting.updatedBy || undefined);
   }
 
   async getAllAppSettings(): Promise<AppSetting[]> {

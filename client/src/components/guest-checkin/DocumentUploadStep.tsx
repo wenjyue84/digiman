@@ -149,6 +149,13 @@ export function DocumentUploadStep({
                   {icDocumentUrl && "✅ IC photo uploaded"}
                   {passportDocumentUrl && "✅ Passport photo uploaded"}
                 </div>
+                <div className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+                  <p className="font-medium mb-1">📁 Document Storage Information:</p>
+                  <p>• Documents are securely stored on our server</p>
+                  <p>• Accessible only to authorized staff</p>
+                  <p>• Automatically linked to your guest profile</p>
+                  <p>• Server Path: /uploads/photos/[filename]</p>
+                </div>
                 <p className="text-xs text-gray-600 mt-1">
                   <span className="hidden sm:inline">Use the buttons below to change your uploaded document photo if needed.</span>
                   <span className="sm:hidden">Tap below to change photo if needed.</span>

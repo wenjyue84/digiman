@@ -1,11 +1,10 @@
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js';
 import { Pool, neonConfig } from '@neondatabase/serverless';
+import postgres from 'postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
 import { migrate } from 'drizzle-orm/neon-serverless/migrator';
-
-// Configure Neon to use WebSocket constructor for serverless environments
-neonConfig.webSocketConstructor = ws;
 
 async function initDatabase() {
   try {
@@ -17,8 +16,27 @@ async function initDatabase() {
     }
 
     console.log("🔌 Connecting to database...");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    const db = drizzle({ client: pool, schema });
+    
+    // Check if we're using Neon (cloud) or local PostgreSQL
+    const isNeon = process.env.DATABASE_URL.includes('neon.tech') || 
+                    process.env.DATABASE_URL.includes('neon.tech') ||
+                    process.env.DATABASE_URL.includes('neon');
+
+    let pool: any;
+    let db: any;
+
+    if (isNeon) {
+      // Configure Neon to use WebSocket constructor for serverless environments
+      neonConfig.webSocketConstructor = ws;
+      
+      // Initialize Neon database connection pool and Drizzle ORM instance
+      pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      db = drizzle({ client: pool, schema });
+    } else {
+      // Local PostgreSQL connection
+      const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+      db = drizzlePostgres(sql, { schema });
+    }
 
     console.log("📋 Running database migrations...");
     
@@ -51,7 +69,9 @@ async function initDatabase() {
     console.log("  - app_settings");
     console.log("  - guest_tokens");
 
-    await pool.end();
+    if (pool) {
+      await pool.end();
+    }
     process.exit(0);
   } catch (error) {
     console.error("❌ Database initialization failed:", error);

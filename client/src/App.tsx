@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalErrorBoundary } from "./components/global-error-boundary";
+import { DatabaseErrorBoundary } from "./components/DatabaseErrorBoundary";
 import AuthProvider from "./components/auth-provider";
 import { ProtectedRoute } from "./components/protected-route";
 import { createI18nProvider } from "./lib/i18n";
@@ -106,18 +107,20 @@ function App() {
 
   return (
     <GlobalErrorBoundary onError={handleGlobalError}>
-      <QueryClientProvider client={queryClient}>
-        <I18nProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              <Router />
-              <Toaster />
-              <VisibilityIndicator />
-              <OfflineIndicator />
-            </TooltipProvider>
-          </AuthProvider>
-        </I18nProvider>
-      </QueryClientProvider>
+      <DatabaseErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <I18nProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                <Router />
+                <Toaster />
+                <VisibilityIndicator />
+                <OfflineIndicator />
+              </TooltipProvider>
+            </AuthProvider>
+          </I18nProvider>
+        </QueryClientProvider>
+      </DatabaseErrorBoundary>
     </GlobalErrorBoundary>
   );
 }

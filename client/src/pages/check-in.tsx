@@ -62,6 +62,25 @@ export default function CheckIn() {
   const [showCapsuleWarning, setShowCapsuleWarning] = useState(false);
   const [capsuleWarningMessage, setCapsuleWarningMessage] = useState("");
 
+  // Add state for pre-selected capsule from Dashboard
+  const [preSelectedCapsule, setPreSelectedCapsule] = useState<string | null>(null);
+  const [isCapsuleLocked, setIsCapsuleLocked] = useState(false);
+
+  // Check for pre-selected capsule from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const capsuleParam = urlParams.get('capsule');
+    if (capsuleParam) {
+      setPreSelectedCapsule(capsuleParam);
+      setIsCapsuleLocked(true);
+      // Show toast to inform user
+      toast({
+        title: "Capsule Pre-selected",
+        description: `${labels.singular} ${capsuleParam} has been pre-selected from Dashboard. You can now enter guest information.`,
+      });
+    }
+  }, [toast, labels.singular]);
+
   const { data: availableCapsules = [], isLoading: capsulesLoading } = useVisibilityQuery<(Capsule & { canAssign: boolean })[]>({
     queryKey: ["/api/capsules/available-with-status"],
     // Uses smart config: nearRealtime (30s stale, 60s refetch)
@@ -151,6 +170,15 @@ export default function CheckIn() {
     const currentGender = form.getValues("gender");
     const currentCapsule = form.getValues("capsuleNumber");
     
+    // If we have a pre-selected capsule from Dashboard, use that instead of auto-assignment
+    if (preSelectedCapsule && availableCapsules.length > 0) {
+      const capsuleExists = availableCapsules.some(capsule => capsule.number === preSelectedCapsule);
+      if (capsuleExists) {
+        form.setValue("capsuleNumber", preSelectedCapsule);
+        return; // Skip auto-assignment when capsule is pre-selected
+      }
+    }
+    
     // Auto-assign capsule if we have a gender (default "male") but no capsule selected
     if (currentGender && availableCapsules.length > 0 && !currentCapsule) {
       // Only recommend capsules that can be assigned (cleaned)
@@ -160,11 +188,14 @@ export default function CheckIn() {
         form.setValue("capsuleNumber", recommendedCapsule);
       }
     }
-  }, [availableCapsules, form]);
+  }, [availableCapsules, form, preSelectedCapsule]);
 
   // Auto-assign capsule based on gender changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
+      // Skip auto-assignment if capsule is locked from Dashboard
+      if (isCapsuleLocked) return;
+      
       if (name === "gender" && value.gender && availableCapsules.length > 0) {
         // Always suggest a new capsule when gender changes
         // Only recommend capsules that can be assigned (cleaned)
@@ -177,7 +208,7 @@ export default function CheckIn() {
       }
     });
     return () => subscription.unsubscribe();
-  }, [availableCapsules, form]);
+  }, [availableCapsules, form, isCapsuleLocked]);
 
   const checkinMutation = useMutation({
     mutationFn: async (data: InsertGuest) => {
@@ -625,6 +656,7 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
                   placeholder="Guest name (auto-generated, editable)"
                   className="w-full"
                   {...form.register("name")}
+                  onFocus={(e) => e.target.select()}
                 />
                 <div className="flex gap-2">
                   <Tooltip>
@@ -678,7 +710,8 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
             <CapsuleAssignmentSection 
               form={form} 
               availableCapsules={availableCapsules} 
-              capsulesLoading={capsulesLoading} 
+              capsulesLoading={capsulesLoading}
+              isCapsuleLocked={isCapsuleLocked}
             />
 
             <PaymentInformationSection form={form} defaultCollector={defaultCollector} />

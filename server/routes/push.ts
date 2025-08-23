@@ -29,7 +29,7 @@ router.post('/subscribe', [
   body('subscription.endpoint').isURL().withMessage('Valid endpoint URL is required'),
   body('subscription.keys.p256dh').notEmpty().withMessage('p256dh key is required'),
   body('subscription.keys.auth').notEmpty().withMessage('auth key is required'),
-], (req, res) => {
+], (req: any, res: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -71,7 +71,7 @@ router.post('/subscribe', [
  */
 router.post('/unsubscribe', [
   body('endpoint').isURL().withMessage('Valid endpoint URL is required'),
-], (req, res) => {
+], (req: any, res: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -126,7 +126,7 @@ router.post('/unsubscribe', [
  * 3. Sending simple test payload without complex state management
  * 4. Returning clear success/error responses
  */
-router.post('/test', async (req, res) => {
+router.post('/test', async (req: any, res: any) => {
   try {
     // Check if there are any subscriptions first
     const subscriptions = pushNotificationService.getAllSubscriptions();
@@ -440,7 +440,7 @@ router.get('/stats', (req, res) => {
 /**
  * Clean up invalid subscriptions
  */
-router.post('/cleanup', async (req, res) => {
+router.post('/cleanup', async (req: any, res: any) => {
   try {
     const cleanedCount = await pushNotificationService.cleanupInvalidSubscriptions();
     

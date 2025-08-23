@@ -5,6 +5,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Home, UserPlus, UserX, Settings, Clock, LayoutGrid, LogOut, ChevronRightCircle, CalendarDays, ListChecks, Database, HardDrive, DollarSign } from "lucide-react";
 import { AuthContext } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
+import { DatabaseSelector } from "./DatabaseSelector";
+import { DatabaseHealthMonitor } from "./DatabaseHealthMonitor";
 
 const navigationItems = [
   { 
@@ -67,9 +69,6 @@ export default function Navigation() {
     queryKey: ["/api/occupancy"],
   });
 
-  const { data: storageInfo } = useQuery<{type: string; isDatabase: boolean; label: string}>({
-    queryKey: ["/api/storage/info"],
-  });
 
   // Update current time every second
   useEffect(() => {
@@ -171,21 +170,11 @@ export default function Navigation() {
               </TooltipContent>
             </Tooltip>
             
-            {/* Memory Storage Warning - Only show when using in-memory storage */}
-            {storageInfo && !storageInfo.isDatabase && (
-              <div 
-                className="flex items-center gap-1 bg-orange-50 px-2 py-1 rounded text-xs text-orange-700 border border-orange-200 cursor-help"
-                title="⚠️ DEVELOPMENT MODE: You are using in-memory storage (no database). All data will be lost when you restart the server. This is intended for local development only. For production, set DATABASE_URL environment variable to use a real database."
-              >
-                <HardDrive className="h-3 w-3 text-orange-600" />
-                <span className="font-medium hidden sm:inline">
-                  Memory
-                </span>
-                <span className="font-medium sm:hidden">
-                  Mem
-                </span>
-              </div>
-            )}
+            {/* Database Health Monitor */}
+            <DatabaseHealthMonitor />
+            
+            {/* Database Selector for authenticated users */}
+            <DatabaseSelector />
           </>
                  ) : (
            <div className="flex items-center gap-2">
@@ -206,22 +195,11 @@ export default function Navigation() {
                </TooltipContent>
              </Tooltip>
              
-             {/* Storage Type Indicator */}
-             {storageInfo && (
-               <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-xs text-gray-600 border border-gray-200">
-                 {storageInfo.isDatabase ? (
-                   <Database className="h-3 w-3 text-blue-600" />
-                 ) : (
-                   <HardDrive className="h-3 w-3 text-orange-600" />
-                 )}
-                 <span className="font-medium hidden sm:inline">
-                   {storageInfo.label}
-                 </span>
-                 <span className="font-medium sm:hidden">
-                   {storageInfo.label === 'Database' ? 'DB' : 'Mem'}
-                 </span>
-               </div>
-             )}
+             {/* Database Health Monitor */}
+             <DatabaseHealthMonitor />
+             
+             {/* Database Selector */}
+             <DatabaseSelector />
            </div>
          )}
         </div>

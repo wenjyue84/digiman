@@ -1,34 +1,58 @@
-node_modules
-dist
-.DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
 
 # Environment files
 .env
 .env.local
 .env.production
 .env.development
+.env.*.local
 
 # Local development
 .local/
+*.local
 
 # Logs
+logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
 # Database
 *.db
 *.sqlite
+*.sqlite3
 
 # OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 *.tmp
+*.temp
 
 # IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # User uploads and attached files
 uploads/
@@ -37,3 +61,34 @@ attached_assets/
 # Test coverage
 coverage/
 .nyc_output
+.jest/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Archives and backups
+*.tar.gz
+*.zip
+*.rar
+archive/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Server public files
+server/public
+
+# Vite
+vite.config.ts.*
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+# Package manager
+.pnpm-store/
+.yarn/

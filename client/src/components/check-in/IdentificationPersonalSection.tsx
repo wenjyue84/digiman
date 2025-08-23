@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Camera, Calendar } from "lucide-react";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { EnhancedObjectUploader } from "@/components/EnhancedObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { useToast } from "@/hooks/use-toast";
 import { NATIONALITIES } from "@/lib/nationalities";
@@ -128,7 +129,7 @@ export default function IdentificationPersonalSection({
       // Check if there are any failed uploads with error messages
       if (result.failed && result.failed.length > 0) {
         const failedFile = result.failed[0];
-        const errorMessage = failedFile.error?.message || 'Upload failed';
+        const errorMessage = (failedFile.error as any)?.message || 'Upload failed';
         console.error('Upload failed:', errorMessage);
         
         toast({
@@ -201,29 +202,29 @@ export default function IdentificationPersonalSection({
           </Label>
           <div className="mt-2 space-y-2">
             {profilePhotoUrl ? (
-              <div className="flex items-center gap-3">
-                <img
-                  src={profilePhotoUrl}
-                  alt="Profile"
-                  className="w-16 h-20 object-cover rounded border border-gray-300"
-                />
-                <div className="flex flex-col gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setProfilePhotoUrl("")}
-                    className="text-xs"
-                  >
-                    Remove Photo
-                  </Button>
-                  <span className="text-xs text-gray-500">
-                    Photo uploaded successfully
+              <div className="p-3 bg-green-50 border border-green-300 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">
+                    {form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"} Uploaded
                   </span>
                 </div>
+                <p className="text-xs text-green-600 mt-1">Document uploaded successfully</p>
+                <p className="text-xs text-blue-600 mt-1">📍 Stored in server uploads folder</p>
+                <p className="text-xs text-gray-600 mt-1">📁 Accessible to staff in Guest Details</p>
+                <p className="text-xs text-gray-600 mt-1">🗂️ Server Path: /uploads/photos/[filename]</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setProfilePhotoUrl("")}
+                  className="text-xs mt-2"
+                >
+                  Remove Photo
+                </Button>
               </div>
             ) : (
-              <ObjectUploader
+              <EnhancedObjectUploader
                 maxNumberOfFiles={1}
                 maxFileSize={5 * 1024 * 1024}
                 onGetUploadParameters={handleGetUploadParameters}
@@ -231,10 +232,12 @@ export default function IdentificationPersonalSection({
                 buttonClassName="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 directFileUpload={true}
                 showCameraOption={true}
+                useOptimization={true}
+                uploadType="document"
               >
                 <Camera className="mr-2 h-4 w-4" />
                 {`Upload ${form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"}`}
-              </ObjectUploader>
+              </EnhancedObjectUploader>
             )}
           </div>
         </div>

@@ -51,7 +51,7 @@ export function useVisibilityQuery<TData = unknown>(
     ...restOptions,
     queryKey,
     enabled: queryEnabled,
-    refetchInterval: activeRefetchInterval,
+    refetchInterval: activeRefetchInterval as number | false,
     staleTime: finalStaleTime,
     gcTime: finalGcTime,
     refetchOnWindowFocus: smartConfig?.refetchOnWindowFocus ?? restOptions.refetchOnWindowFocus,

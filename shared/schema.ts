@@ -1013,9 +1013,90 @@ export const paymentAmountSchema = z.string()
     return !isNaN(num) && num >= 0 && num <= 9999.99;
   }, "Payment amount must be between 0 and 9999.99");
 
-// Update guest schema for editing
-export const updateGuestSchema = insertGuestSchema.partial().extend({
+// Update guest schema for editing - only validate fields that are actually being updated
+export const updateGuestSchema = z.object({
   id: z.string().min(1, "Guest ID is required"),
+  name: z.string()
+    .min(2, "Please enter the guest's full name (at least 2 characters)")
+    .max(100, "Guest name too long. Please use 100 characters or fewer")
+    .regex(/^[a-zA-Z0-9\s.'-]+$/, "Guest name can only contain letters, numbers, spaces, periods (.), apostrophes ('), and hyphens (-). Special symbols are not allowed")
+    .transform(val => val.trim())
+    .optional(),
+  capsuleNumber: z.string()
+    .min(1, "Please select a capsule for the guest")
+    .regex(/^C\d+$/, "Invalid capsule format. Please use format like C1, C2, or C24 (C followed by numbers)")
+    .optional(),
+  paymentAmount: z.string()
+    .regex(/^\d*\.?\d{0,2}$/, "Invalid amount format. Please enter numbers only (e.g., 50.00 or 150)")
+    .transform(val => val || "0")
+    .refine(val => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 9999.99;
+    }, "Amount must be within the allowed range. Please check with admin for current limits")
+    .optional(),
+  paymentMethod: z.enum(["cash", "tng", "bank", "platform"], {
+    required_error: "Please select a payment method"
+  }).optional(),
+  paymentCollector: z.string()
+    .min(1, "Please select who collected the payment")
+    .max(50, "Collector name too long. Please use 50 characters or fewer")
+    .regex(/^[a-zA-Z\s'-]+$/, "Invalid collector name. Please use letters, spaces, apostrophes ('), and hyphens (-) only")
+    .transform(val => val.trim())
+    .optional(),
+  isPaid: z.boolean().optional(),
+  notes: z.string()
+    .max(500, "Notes too long. Please use 500 characters or fewer to describe any special requirements")
+    .transform(val => val?.trim() || "")
+    .optional(),
+  status: z.enum(["vip", "blacklisted"]).optional(),
+  expectedCheckoutDate: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected checkout date must be in YYYY-MM-DD format")
+    .refine(val => {
+      if (!val) return true; // Optional field
+      const date = new Date(val);
+      const today = new Date();
+      const maxDate = new Date();
+      maxDate.setFullYear(today.getFullYear() + 1); // Max 1 year from now
+      return date >= today && date <= maxDate;
+    }, "Expected checkout date must be between today and 1 year from now")
+    .optional(),
+  checkInDate: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Check-in date must be in YYYY-MM-DD format")
+    .refine(val => {
+      if (!val) return true; // Optional field
+      const date = new Date(val);
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + 1); // Max 1 year from now
+      return date <= maxDate;
+    }, "Check-in date cannot be more than 1 year in the future")
+    .optional(),
+  gender: z.enum(["male", "female", "other", "prefer-not-to-say"]).optional(),
+  nationality: z.string()
+    .transform(val => val?.trim())
+    .refine(val => !val || (val.length >= 2 && val.length <= 50 && /^[a-zA-Z\s-]+$/.test(val)), "Nationality must be 2-50 characters and contain only letters, spaces, and hyphens")
+    .optional(),
+  phoneNumber: z.string()
+    .transform(val => val?.replace(/\s/g, ""))
+    .refine(val => !val || /^[+]?[\d\s\-\(\)]{7,20}$/.test(val), "Please enter a valid phone number (7-20 digits, may include +, spaces, dashes, parentheses)")
+    .optional(),
+  email: z.union([
+    z.string().email("Invalid email format. Please enter a valid email address like john@example.com").transform(val => val.toLowerCase().trim()),
+    z.literal("")
+  ]).optional(),
+  idNumber: z.string()
+    .transform(val => val?.toUpperCase())
+    .refine(val => !val || (val.length >= 6 && val.length <= 20 && /^[A-Z0-9\-]+$/i.test(val)), "ID/Passport number must be 6-20 characters with letters, numbers, and hyphens only")
+    .optional(),
+  emergencyContact: z.string()
+    .transform(val => val?.trim())
+    .refine(val => !val || (val.length >= 2 && val.length <= 100 && /^[a-zA-Z\s.'-]+$/.test(val)), "Emergency contact name must be 2-100 characters with letters, spaces, periods, apostrophes, and hyphens only")
+    .optional(),
+  emergencyPhone: z.string()
+    .transform(val => val?.replace(/\s/g, ""))
+    .refine(val => !val || /^[+]?[\d\s\-\(\)]{7,20}$/.test(val), "Please enter a valid emergency phone number (7-20 digits, may include +, spaces, dashes, parentheses)")
+    .optional(),
+  age: z.string().optional(),
+  profilePhotoUrl: z.any().optional(),
 });
 
 // Update user schema for editing

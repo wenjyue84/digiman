@@ -111,6 +111,15 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
   const balance = getGuestBalance(guest);
   const paid = isGuestPaid(guest);
   const isSelfCheckin = guest.paymentCollector === 'Self Check-in' || !!guest.selfCheckinToken;
+  
+  // Get document photo URL from profilePhotoUrl field
+  const documentPhotoUrl = guest.profilePhotoUrl;
+  const hasDocumentPhoto = !!documentPhotoUrl;
+  
+  // Determine document type based on nationality and ID number
+  const isMalaysian = guest.nationality === 'Malaysian';
+  const hasICNumber = guest.idNumber && guest.idNumber.length === 12 && /^\d{12}$/.test(guest.idNumber);
+  const documentType = isMalaysian && hasICNumber ? 'IC Document' : 'Passport Document';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -153,24 +162,24 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
 
         <div className="space-y-6">
           {/* Photo + Summary side-by-side when photo exists */}
-          {guest.profilePhotoUrl ? (
+          {hasDocumentPhoto ? (
             <div className="flex flex-col sm:flex-row items-start gap-4">
               <div className="flex flex-col items-center sm:items-start">
                 <button
                   type="button"
                   className="focus:outline-none"
                   onClick={() => setIsImageOpen(true)}
-                  title="Click to enlarge"
+                  title={`Click to view ${documentType} in full size`}
                 >
                   <img
-                    src={guest.profilePhotoUrl}
-                    alt="Guest document"
+                    src={documentPhotoUrl}
+                    alt={`Guest ${documentType}`}
                     className="w-24 h-32 object-cover rounded border border-gray-300 hover:opacity-90"
                   />
                 </button>
-                {isSelfCheckin && (
-                  <div className="text-xs text-gray-500 mt-1">Uploaded by guest during self check-in</div>
-                )}
+                <div className="text-xs text-gray-500 mt-1 text-center">
+                  {documentType}<br/>{isSelfCheckin ? "Self check-in" : "Staff uploaded"}
+                </div>
               </div>
               <div className="flex-1 w-full">
                 <div className="p-3 rounded-lg border bg-gray-50">
@@ -191,18 +200,49 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
               </div>
             </div>
           ) : (
-            <div className="p-3 rounded-lg border bg-gray-50">
-              <div className="flex flex-col gap-2 text-sm">
-                <div><span className="font-medium">Name:</span> {guest.name}</div>
-                <div className="flex flex-wrap gap-4">
-                  <span><span className="font-medium">Phone:</span> {guest.phoneNumber || '—'}</span>
-                  <span><span className="font-medium">Check‑in:</span> {formatDate(guest.checkinTime)}</span>
-                  <span><span className="font-medium">Expected Checkout:</span> {guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate.toString()).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) : '—'}</span>
-                  <span><span className="font-medium">Payment:</span> RM {guest.paymentAmount} • {guest.paymentMethod?.toUpperCase()}</span>
-                  <span><span className="font-medium">Status:</span> {paid ? 'Paid' : 'Outstanding'}</span>
-                  {balance > 0 && (
-                    <span className="text-red-600 font-medium">Balance: RM{balance}</span>
-                  )}
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <div className="flex flex-col items-center sm:items-start">
+                <div className="w-24 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                  <div className="text-center text-gray-500 text-xs">
+                    <div className="mb-1">📷</div>
+                    <div>No Photo</div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-400 mt-1 text-center">
+                  No document photo uploaded
+                </div>
+                {!isEditing && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="mt-2 text-xs"
+                    onClick={() => {
+                      // TODO: Implement photo upload functionality for staff
+                      toast({
+                        title: "Photo Upload",
+                        description: "Photo upload functionality for existing guests will be implemented soon.",
+                      });
+                    }}
+                  >
+                    📤 Upload Photo
+                  </Button>
+                )}
+              </div>
+              <div className="flex-1 w-full">
+                <div className="p-3 rounded-lg border bg-gray-50">
+                  <div className="flex flex-col gap-2 text-sm">
+                    <div><span className="font-medium">Name:</span> {guest.name}</div>
+                    <div className="flex flex-wrap gap-4">
+                      <span><span className="font-medium">Phone:</span> {guest.phoneNumber || '—'}</span>
+                      <span><span className="font-medium">Check‑in:</span> {formatDate(guest.checkinTime)}</span>
+                      <span><span className="font-medium">Expected Checkout:</span> {guest.expectedCheckoutDate ? new Date(guest.expectedCheckoutDate.toString()).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) : '—'}</span>
+                      <span><span className="font-medium">Payment:</span> RM {guest.paymentAmount} • {guest.paymentMethod?.toUpperCase()}</span>
+                      <span><span className="font-medium">Status:</span> {paid ? 'Paid' : 'Outstanding'}</span>
+                      {balance > 0 && (
+                        <span className="text-red-600 font-medium">Balance: RM{balance}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -558,12 +598,12 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
         </div>
         
         {/* Fullscreen image preview */}
-        {guest.profilePhotoUrl && (
+        {hasDocumentPhoto && (
           <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
             <DialogContent className="max-w-4xl p-0 bg-transparent border-0 shadow-none">
               <img
-                src={guest.profilePhotoUrl}
-                alt="Guest document full size"
+                src={documentPhotoUrl}
+                alt={`Guest ${documentType} - Full Size`}
                 className="w-full h-auto max-h-[85vh] object-contain rounded"
               />
             </DialogContent>

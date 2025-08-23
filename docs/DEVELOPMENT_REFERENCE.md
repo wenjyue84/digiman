@@ -63,8 +63,95 @@ npm run dev
 # Development (in-memory storage)
 # No DATABASE_URL needed
 
+# Local PostgreSQL Development
+DATABASE_URL=postgresql://pelangi_user:pelangi_password@localhost:5432/pelangi_manager
+
 # Production (PostgreSQL)
 DATABASE_URL=postgresql://user:password@localhost:5432/pelangi
+```
+
+### **Local PostgreSQL Setup**
+
+#### **Option 1: Docker (Recommended)**
+```bash
+# Start PostgreSQL container
+docker run --name pelangi-postgres \
+  -e POSTGRES_PASSWORD=pelangi_password \
+  -e POSTGRES_USER=pelangi_user \
+  -e POSTGRES_DB=pelangi_manager \
+  -p 5432:5432 \
+  -d postgres:15
+
+# Verify container is running
+docker ps
+
+# Test connection
+docker exec -it pelangi-postgres psql -U pelangi_user -d pelangi_manager -c "SELECT version();"
+```
+
+#### **Option 2: Manual Installation**
+1. Download PostgreSQL from [postgresql.org](https://www.postgresql.org/download/)
+2. Install with default settings
+3. Create database and user:
+```sql
+CREATE DATABASE pelangi_manager;
+CREATE USER pelangi_user WITH PASSWORD 'pelangi_password';
+GRANT ALL PRIVILEGES ON DATABASE pelangi_manager TO pelangi_user;
+```
+
+#### **Database Initialization**
+```bash
+# Set environment variable (PowerShell)
+$env:DATABASE_URL="postgresql://pelangi_user:pelangi_password@localhost:5432/pelangi_manager"
+
+# Set environment variable (Command Prompt)
+set DATABASE_URL=postgresql://pelangi_user:pelangi_password@localhost:5432/pelangi_manager
+
+# Initialize database schema
+npm run db:init
+```
+
+#### **Database Connection Details**
+- **Host:** localhost
+- **Port:** 5432
+- **Database:** pelangi_manager
+- **Username:** pelangi_user
+- **Password:** pelangi_password
+- **Connection String:** `postgresql://pelangi_user:pelangi_password@localhost:5432/pelangi_manager`
+
+#### **Troubleshooting Common Issues**
+
+**Container not starting:**
+```bash
+# Check if port 5432 is already in use
+netstat -an | findstr :5432
+
+# Remove existing container and recreate
+docker rm -f pelangi-postgres
+docker run --name pelangi-postgres -e POSTGRES_PASSWORD=pelangi_password -e POSTGRES_USER=pelangi_user -e POSTGRES_DB=pelangi_manager -p 5432:5432 -d postgres:15
+```
+
+**Connection refused:**
+```bash
+# Ensure Docker Desktop is running
+# Check container status
+docker ps
+
+# View container logs
+docker logs pelangi-postgres
+```
+
+**Environment variable not working:**
+```bash
+# PowerShell (use $env:)
+$env:DATABASE_URL="postgresql://pelangi_user:pelangi_password@localhost:5432/pelangi_manager"
+
+# Command Prompt (use set)
+set DATABASE_URL=postgresql://pelangi_user:pelangi_password@localhost:5432/pelangi_manager
+
+# Verify it's set
+echo $env:DATABASE_URL  # PowerShell
+echo %DATABASE_URL%      # Command Prompt
 ```
 
 ### **Available Scripts**

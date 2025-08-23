@@ -47,6 +47,25 @@ export class ObjectStorageService {
     return dir;
   }
 
+  // Get your specific bucket ID
+  getBucketId(): string {
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) {
+      throw new Error("DEFAULT_OBJECT_STORAGE_BUCKET_ID not set");
+    }
+    return bucketId;
+  }
+
+  // Get public search paths
+  getPublicSearchPaths(): string {
+    return process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
+  }
+
+  // Check if Neon database is configured
+  isNeonDatabase(): boolean {
+    return process.env.DATABASE_URL?.includes('neon.tech') || false;
+  }
+
   // Downloads an object to the response.
   async downloadObject(file: File, res: Response, cacheTtlSec: number = 3600) {
     try {

@@ -54,9 +54,12 @@ export function SmartPhotoUploader({
       }
       onPhotoSelected(chosenUrl, file);
       
+      // Show compression info if available
+      const compressionMessage = data?.compression?.message || "Stored on server";
+      
       toast({
-        title: "Photo uploaded",
-        description: "Stored on server",
+        title: "Photo uploaded & optimized",
+        description: compressionMessage,
       });
       return true;
     } catch (error) {

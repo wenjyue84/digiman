@@ -218,7 +218,7 @@ const systemTests = [
         }
         
         // Test capsule sections exist
-        const sections = [...new Set(allCapsules.map(c => c.section))];
+        const sections = Array.from(new Set(allCapsules.map(c => c.section)));
         const expectedSections = ['back', 'middle', 'front'];
         const missingSections = expectedSections.filter(s => !sections.includes(s));
         if (missingSections.length > 0) {
@@ -351,10 +351,10 @@ const systemTests = [
     async test() {
       try {
         // Test expense storage methods
-        if (typeof storage.createExpense !== 'function') {
+        if (typeof (storage as any).createExpense !== 'function') {
           throw new Error("createExpense method missing");
         }
-        if (typeof storage.getAllExpenses !== 'function') {
+        if (typeof (storage as any).getAllExpenses !== 'function') {
           throw new Error("getAllExpenses method missing");
         }
         
@@ -397,7 +397,7 @@ const systemTests = [
         if (typeof storage.createCapsuleProblem !== 'function') {
           throw new Error("createCapsuleProblem method missing");
         }
-        if (typeof storage.resolveCapsuleProblem !== 'function') {
+        if (typeof (storage as any).resolveCapsuleProblem !== 'function') {
           throw new Error("resolveCapsuleProblem method missing");
         }
         
@@ -523,10 +523,10 @@ const systemTests = [
     async test() {
       try {
         // Test settings storage
-        if (typeof storage.updateSettings !== 'function') {
+        if (typeof (storage as any).updateSettings !== 'function') {
           throw new Error("updateSettings method missing");
         }
-        if (typeof storage.getSettings !== 'function') {
+        if (typeof (storage as any).getSettings !== 'function') {
           throw new Error("getSettings method missing");
         }
         
@@ -848,6 +848,10 @@ const systemTests = [
   }
 ];
 
+router.get("/hello", (req, res) => {
+  res.json({ message: "Hello from Gemini!" });
+});
+
 // Main test runner endpoint
 router.post("/run", async (req, res) => {
   const watch = req.query.watch === '1';
@@ -940,6 +944,202 @@ router.get("/health", async (req, res) => {
       status: "unhealthy", 
       error: error.message,
       timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Sample data population endpoint
+router.post("/populate-sample-guests", async (req, res) => {
+  try {
+    const storageType = process.env.DATABASE_URL ? "database" : "memory";
+    
+    if (storageType === "memory") {
+      return res.json({ 
+        message: "Sample guests are automatically created in memory mode",
+        action: "none_required",
+        storageType: "memory"
+      });
+    }
+    
+    // For database mode, populate sample guests
+    console.log("🎯 Populating sample guests via API...");
+    
+    // Check current guests count
+    const existingGuests = await storage.getCheckedInGuests();
+    
+    if (existingGuests.data.length > 0) {
+      return res.json({
+        message: `${existingGuests.data.length} guests already exist`,
+        action: "skipped", 
+        storageType: "database",
+        existingCount: existingGuests.data.length
+      });
+    }
+    
+    // Sample guest data matching MemStorage.ts
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 14, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const dayAfter = new Date(today); dayAfter.setDate(today.getDate() + 2);
+    
+    const fmtDate = (d: Date) => d.toISOString().split('T')[0];
+    
+    const sampleGuests = [
+      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Wei Ming", capsule: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
+      { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
+      { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
+      { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
+      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
+    ];
+    
+    let created = 0;
+    for (const guest of sampleGuests) {
+      const standardRate = 45; // RM45 per night
+      const totalAmount = guest.nights * standardRate;
+      const isOutstanding = guest.paymentStatus === "outstanding";
+      const paidAmount = isOutstanding ? Math.floor(totalAmount * 0.8) : totalAmount;
+      
+      const guestData = {
+        name: guest.name,
+        capsuleNumber: guest.capsule,
+        checkinTime: new Date(guest.checkin),
+        expectedCheckoutDate: guest.checkout,
+        paymentAmount: paidAmount.toString(),
+        paymentMethod: "cash" as any,
+        paymentCollector: isOutstanding ? "" : "Admin",
+        isPaid: !isOutstanding,
+        notes: isOutstanding ? `Outstanding balance: RM${totalAmount - paidAmount}` : "",
+        gender: guest.gender as any,
+        nationality: guest.nationality,
+        phoneNumber: guest.phone,
+        email: guest.email,
+        age: guest.age.toString(),
+      };
+      
+      await storage.createGuest(guestData);
+      created++;
+    }
+    
+    console.log(`✅ Created ${created} sample guests via API`);
+    
+    res.json({
+      message: `Successfully created ${created} sample guests`,
+      action: "created",
+      storageType: "database", 
+      guestsCreated: created,
+      guests: sampleGuests.map(g => ({ name: g.name, capsule: g.capsule, status: g.paymentStatus }))
+    });
+    
+  } catch (error: any) {
+    console.error("❌ Error populating sample guests:", error);
+    res.status(500).json({ 
+      message: "Failed to populate sample guests",
+      error: error.message,
+      action: "failed"
+    });
+  }
+});
+
+// Clear and repopulate sample guests endpoint
+router.post("/refresh-sample-guests", async (req, res) => {
+  try {
+    const storageType = process.env.DATABASE_URL ? "database" : "memory";
+    
+    if (storageType === "memory") {
+      return res.json({ 
+        message: "Sample guests are automatically managed in memory mode",
+        action: "none_required",
+        storageType: "memory"
+      });
+    }
+    
+    console.log("🔄 Refreshing sample guests (clear and repopulate)...");
+    
+    // First, clear all existing guests
+    const existingGuests = await storage.getCheckedInGuests();
+    console.log(`🧹 Clearing ${existingGuests.data.length} existing guests...`);
+    
+    // Clear guests from database using postgres
+    const postgres = (await import('postgres')).default;
+    const sql = postgres(process.env.DATABASE_URL || '');
+    
+    // Clear all guests and reset capsule availability
+    await sql`DELETE FROM guests`;
+    await sql`UPDATE capsules SET is_available = true`;
+    
+    await sql.end();
+    
+    console.log("✅ Cleared all existing guest data");
+    
+    // Now populate fresh sample data using the same logic as populate-sample-guests
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 14, 0, 0);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const dayAfter = new Date(today); dayAfter.setDate(today.getDate() + 2);
+    
+    const fmtDate = (d: Date) => d.toISOString().split('T')[0];
+    
+    const sampleGuests = [
+      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Wei Ming", capsule: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
+      { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
+      { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
+      { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
+      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
+    ];
+    
+    let created = 0;
+    for (const guest of sampleGuests) {
+      const standardRate = 45; // RM45 per night
+      const totalAmount = guest.nights * standardRate;
+      const isOutstanding = guest.paymentStatus === "outstanding";
+      const paidAmount = isOutstanding ? Math.floor(totalAmount * 0.8) : totalAmount;
+      
+      const guestData = {
+        name: guest.name,
+        capsuleNumber: guest.capsule,
+        checkinTime: new Date(guest.checkin),
+        expectedCheckoutDate: guest.checkout,
+        paymentAmount: paidAmount.toString(),
+        paymentMethod: "cash" as any,
+        paymentCollector: isOutstanding ? "" : "Admin",
+        isPaid: !isOutstanding,
+        notes: isOutstanding ? `Outstanding balance: RM${totalAmount - paidAmount}` : "",
+        gender: guest.gender as any,
+        nationality: guest.nationality,
+        phoneNumber: guest.phone,
+        email: guest.email,
+        age: guest.age.toString(),
+      };
+      
+      await storage.createGuest(guestData);
+      created++;
+    }
+    
+    console.log(`✅ Refreshed with ${created} fresh sample guests`);
+    
+    res.json({
+      message: `Successfully refreshed with ${created} fresh sample guests`,
+      action: "refreshed",
+      storageType: "database", 
+      guestsCleared: existingGuests.data.length,
+      guestsCreated: created,
+      guests: sampleGuests.map(g => ({ name: g.name, capsule: g.capsule, status: g.paymentStatus }))
+    });
+    
+  } catch (error: any) {
+    console.error("❌ Error refreshing sample guests:", error);
+    res.status(500).json({ 
+      message: "Failed to refresh sample guests",
+      error: error.message,
+      action: "failed"
     });
   }
 });

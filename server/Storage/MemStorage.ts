@@ -389,6 +389,24 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getRecentlyCheckedOutGuest(): Promise<Guest | undefined> {
+    const checkedOutGuests = Array.from(this.guests.values()).filter(
+      guest => !guest.isCheckedIn && guest.checkoutTime !== null
+    );
+    
+    if (checkedOutGuests.length === 0) {
+      return undefined;
+    }
+    
+    // Sort by checkout time descending and return the most recent
+    checkedOutGuests.sort((a, b) => {
+      if (!a.checkoutTime || !b.checkoutTime) return 0;
+      return b.checkoutTime.getTime() - a.checkoutTime.getTime();
+    });
+    
+    return checkedOutGuests[0];
+  }
+
   async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
     const checkedInGuestsResponse = await this.getCheckedInGuests();
     const occupied = checkedInGuestsResponse.pagination.total;
@@ -486,7 +504,7 @@ export class MemStorage implements IStorage {
       lastCleanedAt: insertCapsule.lastCleanedAt || null,
       lastCleanedBy: insertCapsule.lastCleanedBy || null,
       color: insertCapsule.color || null,
-      purchaseDate: insertCapsule.purchaseDate || null,
+      purchaseDate: insertCapsule.purchaseDate?.toISOString() || null,
       position: insertCapsule.position || null,
       remark: insertCapsule.remark || null,
     };
@@ -829,7 +847,7 @@ export class MemStorage implements IStorage {
   }
 
   async upsertAppSetting(setting: InsertAppSetting): Promise<AppSetting> {
-    return this.setSetting(setting.key, setting.value, setting.description, setting.updatedBy);
+    return this.setSetting(setting.key, setting.value, setting.description, setting.updatedBy || undefined);
   }
 
   async getAllAppSettings(): Promise<AppSetting[]> {
@@ -964,8 +982,8 @@ export class MemStorage implements IStorage {
       receiptPhotoUrl: expense.receiptPhotoUrl || null,
       itemPhotoUrl: expense.itemPhotoUrl || null,
       createdBy: expense.createdBy,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
     this.expenses.set(id, newExpense);
     return newExpense;
@@ -983,7 +1001,7 @@ export class MemStorage implements IStorage {
       id: existingExpense.id,
       createdBy: existingExpense.createdBy,
       createdAt: existingExpense.createdAt,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(),
     };
     this.expenses.set(expense.id!, updatedExpense);
     return updatedExpense;

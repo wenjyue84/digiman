@@ -12,7 +12,7 @@ export function createStorage(): IStorage {
   try {
     if (process.env.DATABASE_URL) {
       const storage = new DatabaseStorage();
-      console.log("✅ Using database storage");
+      console.log(`✅ Using database storage (${process.env.DATABASE_URL.includes('localhost') ? 'Docker' : 'Cloud'})`);
       return storage;
     } else {
       const storage = new MemStorage();
@@ -56,6 +56,15 @@ export function getStorage(): Promise<IStorage> {
     storagePromise = initializeStorageWithMigration();
   }
   return storagePromise;
+}
+
+/**
+ * Reset storage instance to force reinitialization
+ * Used when switching database configurations at runtime
+ */
+export function resetStorage(): void {
+  console.log("🔄 Resetting storage instance for database switch...");
+  storagePromise = null;
 }
 
 // For immediate access (backward compatibility)

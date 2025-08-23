@@ -17,11 +17,19 @@ export interface User {
  * Authentication context interface defining available auth methods and state
  * Provides both traditional login and Google OAuth authentication
  */
+/**
+ * Login result interface to provide detailed error information
+ */
+export interface LoginResult {
+  success: boolean;
+  error?: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  loginWithGoogle: (googleToken: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  loginWithGoogle: (googleToken: string) => Promise<LoginResult>;
   logout: () => void;
   isAuthenticated: boolean;
 }

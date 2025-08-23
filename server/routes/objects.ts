@@ -4,8 +4,135 @@ import { securityValidationMiddleware } from "../validation";
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import multer from "multer";
+import { optimizeAndSaveImage } from "../lib/imageOptimization";
 
 const router = Router();
+
+// Configure multer for memory storage (we'll handle file saving ourselves)
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+// Photo upload endpoint for expenses with image optimization
+router.post("/api/upload-photo", upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No photo provided" });
+    }
+
+    const file = req.file;
+    
+    // Use the reusable image optimization service
+    const result = await optimizeAndSaveImage(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 85,
+        outputFormat: 'jpeg',
+        progressive: true,
+        mozjpeg: true
+      }
+    );
+    
+    // Return the URL where the file can be accessed with compression info
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const fullUrl = `${protocol}://${host}${result.fileUrl}`;
+    
+    res.json({
+      success: true,
+      url: fullUrl,
+      absoluteUrl: fullUrl,
+      filename: result.filename,
+      originalName: file.originalname,
+      size: result.metadata.optimizedSize,
+      compression: result.compressionInfo
+    });
+    
+  } catch (error: any) {
+    console.error("Photo upload error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Failed to upload photo" 
+    });
+  }
+});
+
+// Guest document upload endpoint with optimization (IC/Passport photos)
+router.post("/api/upload-document", upload.single('document'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No document photo provided" });
+    }
+
+    const file = req.file;
+    
+    // Use optimized settings for document photos (slightly higher quality, smaller max size)
+    const result = await optimizeAndSaveImage(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      {
+        maxWidth: 1000,  // Slightly smaller for documents
+        maxHeight: 1000,
+        quality: 90,     // Higher quality for document readability
+        outputFormat: 'jpeg',
+        progressive: true,
+        mozjpeg: true
+      },
+      'uploads' // Store in same directory as other uploads
+    );
+    
+    // Return the URL in the format expected by ObjectUploader
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const fullUrl = `${protocol}://${host}${result.fileUrl}`;
+    
+    console.log('=== Document Upload Response ===');
+    console.log('File URL:', result.fileUrl);
+    console.log('Full URL:', fullUrl);
+    console.log('Filename:', result.filename);
+    
+    const response = {
+      success: true,
+      url: fullUrl,
+      absoluteUrl: fullUrl,
+      filename: result.filename,
+      originalName: file.originalname,
+      size: result.metadata.optimizedSize,
+      compression: result.compressionInfo,
+      // Additional info for guest documents
+      documentType: 'identity',
+      optimized: true
+    };
+    
+    console.log('Response object:', JSON.stringify(response, null, 2));
+    res.json(response);
+    
+  } catch (error: any) {
+    console.error("Document upload error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Failed to upload document photo" 
+    });
+  }
+});
 
 // Get upload URL for file uploads
 // Environment-aware upload URL generation for both localhost and Replit

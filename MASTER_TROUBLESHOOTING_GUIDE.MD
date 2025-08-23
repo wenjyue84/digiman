@@ -605,6 +605,286 @@ When "Your app is starting" hangs occur, follow this systematic approach:
 
 ---
 
+## Login Failed Error with Database Schema Issue (August 22, 2025)
+
+### Problem Description
+User encountered "Login failed" error when attempting to log in to localhost application, preventing access to the admin dashboard.
+
+### Root Cause Analysis
+**Database Schema Issue** - The `sessions` table was missing the UUID default value configuration:
+
+1. **Authentication Working**: User credentials were validated correctly (admin@pelangi.com found, password verified)
+2. **Session Creation Failing**: PostgreSQL error `null value in column "id" of relation "sessions" violates not-null constraint`
+3. **Missing UUID Function**: The `sessions.id` column default was `null` instead of `gen_random_uuid()`
+4. **Migration Incomplete**: Database schema wasn't properly configured during initial setup
+
+### Error Symptoms
+- Login endpoint returns HTTP 500 "Login failed" instead of authentication token
+- Server logs show: `Login attempt: {...}` and `User found: Yes`
+- PostgreSQL error: `violates not-null constraint` for sessions table id column
+- Session creation fails despite successful user authentication
+
+### Troubleshooting Process
+
+#### Step 1: Server Status Verification
+```bash
+# Check if development server is running
+tasklist | findstr node
+netstat -ano | findstr :5000
+
+# Start server if needed
+npx kill-port 5000
+npm run dev
+```
+
+#### Step 2: API Endpoint Testing
+```bash
+# Test login endpoint directly
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@pelangi.com","password":"admin123"}'
+
+# Check server logs for detailed error information
+```
+
+#### Step 3: User Verification
+```bash
+# Run system tests to confirm admin user exists
+curl -X POST http://localhost:5000/api/tests/run
+# Look for: "✅ Authentication system ready. Admin user: admin@pelangi.com"
+```
+
+#### Step 4: Database Schema Diagnosis
+**Created diagnostic script to check database schema:**
+```javascript
+import postgres from 'postgres';
+
+async function checkDatabaseSchema() {
+  const sql = postgres(process.env.DATABASE_URL);
+  
+  // Check if pgcrypto extension is enabled
+  await sql`CREATE EXTENSION IF NOT EXISTS pgcrypto`;
+  
+  // Verify sessions table schema
+  const tableInfo = await sql`
+    SELECT column_name, column_default, is_nullable, data_type 
+    FROM information_schema.columns 
+    WHERE table_name = 'sessions' 
+    ORDER BY ordinal_position
+  `;
+  
+  console.log('Sessions table schema:', tableInfo);
+}
+```
+
+#### Step 5: Fix Database Schema
+**Applied schema fix:**
+```javascript
+import postgres from 'postgres';
+
+async function fixSessionsTable() {
+  const sql = postgres(process.env.DATABASE_URL);
+  
+  // Fix the sessions table id column default
+  await sql`ALTER TABLE sessions ALTER COLUMN id SET DEFAULT gen_random_uuid()`;
+  
+  // Test session creation
+  const testResult = await sql`
+    INSERT INTO sessions (user_id, token, expires_at) 
+    VALUES ('test-user', 'test-token-' || extract(epoch from now()), now() + interval '1 hour')
+    RETURNING id, user_id, token
+  `;
+  
+  // Clean up test data
+  await sql`DELETE FROM sessions WHERE user_id = 'test-user'`;
+}
+```
+
+### Solution Implementation
+1. **Enabled pgcrypto Extension**: `CREATE EXTENSION IF NOT EXISTS pgcrypto`
+2. **Fixed Column Default**: `ALTER TABLE sessions ALTER COLUMN id SET DEFAULT gen_random_uuid()`
+3. **Verified Fix**: Tested session creation successfully
+4. **Confirmed Login**: Authentication now returns proper token and user data
+
+### Resolution Confirmation
+✅ **Login Successful**: Returns authentication token and user details
+✅ **Session Creation**: Database properly generates UUID for session id
+✅ **Server Logs**: HTTP 200 responses for login attempts
+✅ **Admin Access**: Full dashboard functionality restored
+
+**Successful Login Response:**
+```json
+{
+  "token": "2d6ed0e2-9bbb-46a6-8ebe-ba33b9433929",
+  "user": {
+    "id": "admin-001",
+    "email": "admin@pelangi.com", 
+    "firstName": null,
+    "lastName": null,
+    "role": "admin"
+  }
+}
+```
+
+### Default Admin Credentials
+- **Email**: `admin@pelangi.com`
+- **Password**: `admin123`
+- **Role**: `admin`
+
+### Prevention Measures
+1. **Migration Verification**: Always verify database schema after migrations
+2. **Extension Dependencies**: Ensure PostgreSQL extensions (pgcrypto) are properly enabled
+3. **UUID Configuration**: Verify UUID default values are applied to primary key columns
+4. **Login Testing**: Test authentication flow after any database schema changes
+5. **Error Log Analysis**: Monitor server logs for constraint violation errors
+
+### Related Files
+- `server/routes/auth.ts:98-104` - Session creation logic
+- `shared/schema.ts` - Sessions table definition with UUID default
+- `server/Storage/DatabaseStorage.ts:98-105` - Database session creation method
+
+### Debugging Commands
+```bash
+# Test login endpoint
+curl -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" -d '{"email":"admin@pelangi.com","password":"admin123"}'
+
+# Check sessions table schema
+psql $DATABASE_URL -c "SELECT column_name, column_default FROM information_schema.columns WHERE table_name = 'sessions';"
+
+# Verify pgcrypto extension
+psql $DATABASE_URL -c "SELECT extname FROM pg_extension WHERE extname = 'pgcrypto';"
+
+# Test UUID generation
+psql $DATABASE_URL -c "SELECT gen_random_uuid() as test_uuid;"
+```
+
+---
+
+## Manual Refresh Not Working - Server-Side Cache Issue (August 22, 2025)
+
+### Problem Description
+When users check out a guest and click "🔄 Refresh guest list now" button, the checked-out guest doesn't disappear immediately from the dashboard, despite the optimistic UI updates working correctly.
+
+### Root Cause Analysis
+**Server-Side HTTP Cache Headers** preventing real-time updates:
+
+1. **15-Second Cache Control**: The `/api/guests/checked-in` endpoint had `Cache-Control: 'public, max-age=15'` header
+2. **Browser Cache Persistence**: Browser cached guest list responses for 15 seconds
+3. **Manual Refresh Ineffective**: Even forced React Query refetch couldn't bypass HTTP cache
+4. **Real-Time Data Conflict**: Caching inappropriate for frequently changing guest checkout data
+
+### Error Symptoms
+- Optimistic UI updates work (guest disappears momentarily during checkout)
+- Manual refresh button doesn't immediately remove checked-out guests
+- Automatic 30-second refresh eventually shows correct data
+- Server-side checkout working correctly (guest marked as `isCheckedIn: false`)
+- React Query invalidation and refetch not effective
+
+### Solution Implementation
+
+#### Step 1: Remove Server-Side Caching
+**File**: `server/routes/guests.ts` (Line 113-120)
+
+**Before (Problematic)**:
+```javascript
+router.get("/checked-in", asyncRouteHandler(async (req: any, res: any) => {
+  // Cache guest data for 15 seconds (frequently changing)
+  res.set('Cache-Control', 'public, max-age=15');
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const paginatedGuests = await storage.getCheckedInGuests({ page, limit });
+  res.json(paginatedGuests);
+}));
+```
+
+**After (Fixed)**:
+```javascript
+router.get("/checked-in", asyncRouteHandler(async (req: any, res: any) => {
+  // Disable caching for real-time guest checkout updates
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const paginatedGuests = await storage.getCheckedInGuests({ page, limit });
+  res.json(paginatedGuests);
+}));
+```
+
+#### Step 2: Enhanced Frontend Manual Refresh
+**File**: `client/src/components/sortable-guest-table.tsx`
+
+**Improved Manual Refresh Button**:
+```javascript
+<button onClick={() => {
+  // Force immediate refetch bypassing cache
+  queryClient.refetchQueries({ 
+    queryKey: ["/api/guests/checked-in"],
+    type: 'active'
+  });
+  queryClient.refetchQueries({ 
+    queryKey: ["/api/occupancy"],
+    type: 'active'
+  });
+  toast({
+    title: "Refreshing...",
+    description: "Guest list is being updated with fresh data.",
+    duration: 2000,
+  });
+}}>
+🔄 Refresh guest list now
+</button>
+```
+
+### Resolution Confirmation
+✅ **Immediate Refresh**: Manual refresh button now immediately removes checked-out guests
+✅ **No Cache Delay**: HTTP cache no longer interferes with real-time updates  
+✅ **Optimistic Updates**: UI still provides immediate feedback during checkout process
+✅ **Real-Time Accuracy**: Guest list reflects actual database state instantly
+
+### Cache Strategy Guidelines
+
+#### When to Use Caching
+- **Static Data**: Settings, configurations, user profiles
+- **Slow-Changing Data**: Guest history, reports, analytics
+- **Reference Data**: Nationality lists, capsule configurations
+
+#### When to Avoid Caching  
+- **Real-Time Critical Data**: Current guest check-ins, occupancy status
+- **Frequently Updated Data**: Active guest tokens, live notifications
+- **Transaction-Dependent Data**: Payment statuses, booking confirmations
+- **User Action Results**: Checkout results, form submissions
+
+#### Recommended Cache Headers by Data Type
+```javascript
+// Real-time data (guest check-ins, occupancy)
+res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+// Near real-time data (notifications, active tokens) 
+res.set('Cache-Control', 'no-cache, max-age=0');
+
+// Moderate change data (guest history, reports)
+res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+
+// Static data (settings, configurations)
+res.set('Cache-Control', 'public, max-age=3600'); // 1 hour
+```
+
+### Prevention Measures
+1. **Data Classification**: Classify all endpoints by update frequency and real-time requirements
+2. **Cache Policy Review**: Regular review of cache headers for appropriateness
+3. **Manual Refresh Testing**: Always test manual refresh functionality after implementing caching
+4. **Real-Time Data Priority**: Prioritize data accuracy over performance for critical operations
+5. **Client-Side Cache Strategy**: Align React Query cache settings with server-side cache policies
+
+### Related Files Modified
+- `server/routes/guests.ts:113-120` - Removed 15-second cache for checked-in guests endpoint
+- `client/src/components/sortable-guest-table.tsx:388-404` - Enhanced manual refresh with forced refetch
+- Cache control headers simplified from 3 separate headers to single directive
+
+### Key Learning Point
+**"No cache is the solution"** for real-time guest management data. When user actions need immediate visual feedback, server-side caching can create confusing delays that make the system appear unresponsive or broken.
+
+---
+
 ## Additional Troubleshooting Patterns
 
 ### Database Connection Issues
@@ -626,3 +906,384 @@ When "Your app is starting" hangs occur, follow this systematic approach:
 - Monitor API response times in workflow logs
 - Use pagination for large datasets
 - Implement proper caching strategies
+
+---
+
+## Sample Data Dialog Implementation Success (August 22, 2025)
+
+### Problem Description
+User requested a dialog when switching from Memory DB to Docker DB mode asking whether to refresh sample guest data (Keong, Prem, Jeevan, etc.) or maintain persistent state.
+
+### Implementation Requirements
+- Show dialog only when switching TO Docker DB mode (not from Docker to other modes)
+- Provide two options: "Refresh Sample Data" and "Keep Current Data"
+- If refresh chosen: clear all guest data and populate 9 sample guests
+- If keep chosen: maintain existing database state
+- Toast notifications for user feedback
+
+### Solution Architecture
+
+#### 1. API Endpoints (server/routes/tests.ts)
+- `POST /api/tests/refresh-sample-guests` - Clears all data and repopulates samples
+- Returns: `{action: 'refreshed', guestsCreated: 9}` or `{action: 'kept', message: 'Data maintained'}`
+
+#### 2. React Component State (DatabaseSelector.tsx)
+```typescript
+const [showSampleDataDialog, setShowSampleDataDialog] = useState(false);
+const [pendingDatabaseType, setPendingDatabaseType] = useState<string | null>(null);
+```
+
+#### 3. Dialog Trigger Logic
+```typescript
+// Show dialog only when switching TO Docker DB (not when switching from Docker)
+if (type === 'docker' && !refreshSampleData) {
+  setPendingDatabaseType(type);
+  setShowSampleDataDialog(true);
+  return;
+}
+```
+
+#### 4. User Choice Handler
+```typescript
+const handleSampleDataChoice = (refreshData: boolean) => {
+  if (pendingDatabaseType) {
+    switchDatabase(pendingDatabaseType, refreshData);
+  }
+};
+```
+
+### Troubleshooting Experience
+
+#### Issue: Dialog Not Appearing
+**Symptom**: User reported dialog wasn't showing when switching to Docker DB
+**Root Cause**: Frontend changes not reflecting due to Vite build cache
+**Solution Applied**:
+1. Clear build artifacts: `rm -rf dist && rm -rf node_modules/.vite`
+2. Rebuild application: `npm run build`
+3. Restart development server: `npm run dev`
+
+#### Debugging Approach
+- Added temporary test button to verify dialog functionality
+- Implemented debug logging to trace state changes
+- Confirmed dialog system worked independently of database switching
+- Isolated issue to build cache problems
+
+### Implementation Details
+
+#### Sample Guest Data Structure
+Original 9 sample guests restored from MemStorage.ts:
+```javascript
+const sampleGuests = [
+  { name: "Keong", capsule: "C1", phone: "017-6632979", nationality: "Malaysia" },
+  { name: "Prem", capsule: "C4", phone: "019-7418889", nationality: "India" },
+  { name: "Jeevan", capsule: "C7", phone: "016-5123456", nationality: "India" },
+  { name: "Ahmad", capsule: "C10", phone: "013-9876543", nationality: "Malaysia" },
+  { name: "Wei Ming", capsule: "C2", phone: "012-3456789", nationality: "China" },
+  { name: "Raj", capsule: "C5", phone: "017-8901234", nationality: "India" },
+  { name: "Hassan", capsule: "C8", phone: "019-2345678", nationality: "Malaysia" },
+  { name: "Li Wei", capsule: "C11", phone: "016-7890123", nationality: "China" },
+  { name: "Siti", capsule: "C3", phone: "013-4567890", nationality: "Malaysia" }
+];
+```
+
+#### Dialog UI Components
+- Uses shadcn/ui AlertDialog for consistent styling
+- Clear action buttons: "Keep Current Data" vs "Refresh Sample Data"
+- Informative description explaining the choice implications
+- Loading states during database operations
+
+### Success Confirmation
+✅ Dialog appears when switching from Memory DB to Docker DB
+✅ User can choose between refreshing or keeping data
+✅ Sample data refresh correctly populates 9 guests
+✅ Keep data option maintains existing database state
+✅ Toast notifications provide clear feedback
+✅ No dialog shown for other database switches (Docker → Memory, etc.)
+
+### Key Learning Points
+1. **Build Cache Awareness**: Frontend component changes require proper cache clearing and rebuild
+2. **Conditional Dialog Logic**: Dialog should only trigger for specific direction switches (TO Docker, not FROM Docker)
+3. **State Management**: Pending state variables prevent race conditions during async operations
+4. **User Feedback**: Toast messages essential for confirming database operations
+5. **Debug Tools**: Temporary test components useful for isolating functionality from business logic
+
+### Prevention Measures
+- Always rebuild application after significant component changes
+- Use `rm -rf dist && npm run build` when changes don't reflect
+- Test dialog functionality independently before integrating with API calls
+- Implement proper loading states for async database operations
+- Clear temporary debug code after successful implementation
+
+### Related Files Modified
+- `client/src/components/DatabaseSelector.tsx` - Main dialog implementation
+- `server/routes/tests.ts` - Sample data refresh API endpoint
+- All changes tested and confirmed working by user
+
+---
+
+## Enhanced Error Handling Implementation Success (August 22, 2025)
+
+### Problem Description
+User experienced generic "Connection problem .. please check your inter connection ..." error messages when switching between navigation tabs, providing no specific information about the actual issues or how to resolve them.
+
+### Root Cause Analysis
+**Missing Database Tables** causing 500 errors on specific API endpoints:
+1. **`/api/guest-tokens/active`** - Failed due to missing `guest_tokens` table in PostgreSQL database
+2. **`/api/admin/notifications/unread`** - Failed due to missing `admin_notifications` table in PostgreSQL database
+3. **Generic Error Responses** - Both endpoints returned unhelpful 500 errors with "Failed to fetch" messages
+
+### Error Symptoms (Before Fix)
+- Generic connection error messages across navigation tabs
+- HTTP 500 status codes with non-descriptive error responses
+- Server logs showing repeated failures: `Failed to fetch active tokens` and `Failed to fetch unread notifications`
+- No guidance on how to resolve database table issues
+- Users left guessing about root causes and solutions
+
+### Solution Architecture
+
+#### 1. Enhanced Error Handler Utility (server/lib/errorHandler.ts)
+**New Comprehensive Error Response Format:**
+```typescript
+interface DetailedErrorResponse extends ErrorResponse {
+  details?: string;          // What went wrong specifically
+  solution?: string;         // Step-by-step resolution guide  
+  endpoint?: string;         // Which API endpoint failed
+  errorCode?: string;        // Categorized error type
+}
+
+const ErrorCodes = {
+  DATABASE_TABLE_MISSING: 'DB_TABLE_MISSING',
+  DATABASE_CONNECTION: 'DB_CONNECTION_ERROR',
+  MISSING_DEPENDENCIES: 'MISSING_DEPENDENCIES',
+  SCHEMA_MIGRATION_REQUIRED: 'SCHEMA_MIGRATION_REQUIRED',
+  AUTHENTICATION_FAILED: 'AUTH_FAILED',
+  INVALID_REQUEST: 'INVALID_REQUEST'
+};
+```
+
+#### 2. Database-Specific Error Detection
+**PostgreSQL Error Pattern Matching:**
+- **Table Missing**: Detects `relation "table_name" does not exist` errors
+- **Connection Issues**: Identifies `connect ECONNREFUSED` and connection failures
+- **Authentication Problems**: Catches `password authentication failed` errors
+- **Host Resolution**: Handles `ENOTFOUND` DNS lookup failures
+
+#### 3. Actionable Solution Guidance
+**Multi-Step Resolution Instructions:**
+```typescript
+const createDatabaseTableMissingError = (tableName: string, endpoint: string): DetailedErrorResponse => {
+  return {
+    message: `Database Table Missing: ${tableName}`,
+    details: `The database table "${tableName}" does not exist in the PostgreSQL database. This is required for ${endpoint} to function properly.`,
+    solution: `Run database migrations to create missing tables:
+1. Execute: npm run migrate
+2. Or run: node server/init-db.js
+3. Restart the application
+
+Alternatively, switch to Memory DB mode for testing.`,
+    endpoint,
+    errorCode: ErrorCodes.DATABASE_TABLE_MISSING,
+    statusCode: 501  // Not Implemented instead of generic 500
+  };
+};
+```
+
+### Implementation Results
+
+#### Before Enhancement
+```json
+{
+  "message": "Failed to fetch active tokens"
+}
+```
+**Status Code**: 500 (Internal Server Error)
+
+#### After Enhancement  
+```json
+{
+  "message": "Feature Not Available: Guest Token Management",
+  "details": "The Guest Token Management feature requires database tables that are not yet implemented in the current database setup.",
+  "solution": "Enable this feature:\n1. Run database migrations to create required tables\n2. Execute: npm run migrate\n3. Or manually create tables using schema.sql\n4. Switch to Memory DB mode for basic testing\n5. This feature will be available after proper database setup",
+  "endpoint": "/api/guest-tokens/active",
+  "errorCode": "MISSING_DEPENDENCIES", 
+  "statusCode": 501
+}
+```
+**Status Code**: 501 (Not Implemented - more accurate than 500)
+
+### Files Modified
+
+#### 1. Enhanced Error Handler (server/lib/errorHandler.ts)
+- **Lines 14-28**: Added DetailedErrorResponse interface and ErrorCodes constants
+- **Lines 151-251**: Implemented comprehensive database error handling functions
+- Added specific error creators for table missing, connection, authentication, and host resolution issues
+
+#### 2. Guest Tokens Route (server/routes/guest-tokens.ts)
+- **Line 17**: Added import for enhanced error handling functions
+- **Lines 143-155**: Updated `/active` endpoint with specific table missing detection and comprehensive error responses
+
+#### 3. Admin Notifications Routes (server/routes/admin.ts)
+- **Line 8**: Added import for enhanced error handling functions  
+- **Lines 65-77**: Updated `/notifications` endpoint with detailed error handling
+- **Lines 87-99**: Updated `/notifications/unread` endpoint with comprehensive error responses
+
+### Success Confirmation
+
+#### Testing Results
+```bash
+# Before: Generic 500 error
+curl "http://localhost:5000/api/guest-tokens/active"
+# Response: {"message":"Failed to fetch active tokens"}
+
+# After: Detailed 501 response with solutions
+curl "http://localhost:5000/api/guest-tokens/active" 
+# Response: Comprehensive error with specific steps to resolve
+```
+
+#### User Experience Impact
+✅ **Error Clarity**: Users now understand exactly what went wrong  
+✅ **Solution Guidance**: Step-by-step instructions provided for resolution  
+✅ **Proper Status Codes**: 501 (Not Implemented) instead of misleading 500 errors  
+✅ **Alternative Options**: Always suggests Memory DB mode as working fallback  
+✅ **Reduced Support Burden**: Self-service troubleshooting with clear instructions
+
+#### Server Logs Improvement
+**Before**: `3:XX:XX PM [express] GET /api/guest-tokens/active 500 in Xms :: {"message":"Failed to fetch active tokens"}`  
+**After**: `3:XX:XX PM [express] GET /api/guest-tokens/active 501 in Xms :: {"message":"Feature Not Available: G...`
+
+### Key Benefits Achieved
+
+1. **Diagnostic Precision**: Specific identification of missing database tables vs connection issues
+2. **Solution-Oriented**: Every error includes actionable resolution steps
+3. **Development Efficiency**: Developers can immediately understand and fix issues
+4. **User Empowerment**: Non-technical users get clear guidance instead of cryptic messages
+5. **Proper HTTP Semantics**: 501 for unimplemented features vs 500 for server errors
+6. **Extensible Framework**: Easy to add new error types and solutions
+
+### Prevention Measures
+1. **Proactive Error Handling**: Detect and categorize database-specific errors
+2. **Comprehensive Testing**: Test all error scenarios including missing dependencies
+3. **Clear Documentation**: Provide specific steps for common database issues
+4. **Fallback Options**: Always offer working alternatives (Memory DB mode)
+5. **Status Code Accuracy**: Use appropriate HTTP codes for different error types
+
+### User Feedback Confirmation
+**User Quote**: *"after ur editing above, i hardly see teh error message just now"*
+
+This confirms that the enhanced error handling successfully:
+- **Reduced Error Frequency**: Users experiencing fewer unexplained connection issues
+- **Improved Error Quality**: When errors do occur, they provide actionable guidance
+- **Better User Experience**: Less frustration with cryptic error messages
+
+### Related Files Modified
+- `server/lib/errorHandler.ts:14-251` - Enhanced comprehensive error handling system
+- `server/routes/guest-tokens.ts:17,143-155` - Guest tokens endpoint with detailed errors  
+- `server/routes/admin.ts:8,65-77,87-99` - Admin notifications endpoints with enhanced error handling
+- All changes tested and confirmed working by user
+
+---
+
+## Login Failed Error Recurrence During Feature Development (August 22, 2025)
+
+### Problem Description
+During implementation of the "Undo" checkout feature, the "Login failed" error returned despite authentication previously working. The user could not access the admin dashboard even with correct credentials.
+
+### Root Cause Analysis
+**Server Process Conflict** - Not a database schema issue this time:
+
+1. **Multiple Server Instances**: Several tsx processes were running simultaneously causing port conflicts
+2. **Startup Hang**: Application showing "Your app is starting" indefinitely 
+3. **Connection Failures**: curl requests failing with "Failed to connect" errors
+4. **Stale Processes**: Old development server processes interfering with new startup
+
+### Error Symptoms
+- Login page accessible but login attempts fail
+- Server not responding on port 5000
+- Connection refused errors when testing API endpoints
+- Multiple background bash processes showing as "running"
+- No "serving on port 5000" message in logs
+
+### Solution Applied
+**Process Cleanup and Fresh Restart:**
+
+#### Step 1: Kill Conflicted Processes
+```bash
+npx kill-port 5000
+```
+
+#### Step 2: Fresh Server Startup
+```bash
+npm run dev
+```
+
+#### Step 3: Verification
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@pelangi.com","password":"admin123"}'
+```
+
+### Resolution Confirmation
+✅ **Server Started**: `5:15:31 PM [express] serving on port 5000`
+✅ **Authentication Working**: Login returns proper JWT token and user data
+✅ **Database Connected**: `✅ Using database storage (Docker)`
+✅ **API Responding**: All endpoints respond normally
+
+**Successful Login Response:**
+```json
+{
+  "token": "de447575-8540-4b75-acf3-f43e93287f18",
+  "user": {
+    "id": "admin-001",
+    "email": "admin@pelangi.com",
+    "firstName": null,
+    "lastName": null,
+    "role": "admin"
+  }
+}
+```
+
+### Key Learning Points
+1. **Process vs Schema**: Not all "login failed" errors are database schema issues
+2. **Port Conflicts**: Multiple development servers cause authentication failures
+3. **Clean Restart**: Simple server restart often resolves authentication issues
+4. **Prevention First**: Use `npx kill-port 5000` before starting development server
+
+### Differentiation from Previous Database Schema Issue
+**This Case (Process Conflict)**:
+- Server not responding at all
+- Connection refused errors
+- No server logs appearing
+- Resolution: Process cleanup
+
+**Previous Case (Database Schema)**:
+- Server responding but returning 500 errors
+- Authentication succeeding but session creation failing
+- PostgreSQL constraint violation errors
+- Resolution: Database schema fixes (pgcrypto, UUID defaults)
+
+### Prevention Measures
+1. **Proactive Port Cleanup**: Always kill port before starting dev server
+2. **Monitor Process State**: Check for multiple running tsx processes
+3. **Server Status Verification**: Confirm "serving on port 5000" before testing
+4. **Systematic Troubleshooting**: Check server connectivity before debugging authentication
+
+### Commands for Quick Diagnosis
+```bash
+# Check server status
+curl -s http://localhost:5000/api/database/config
+
+# Kill conflicted processes  
+npx kill-port 5000
+
+# Start fresh server
+npm run dev
+
+# Test login
+curl -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" -d '{"email":"admin@pelangi.com","password":"admin123"}'
+```
+
+### Related Files
+- No code changes required - purely operational issue
+- Server startup and process management
+- Authentication system working correctly once server restarted

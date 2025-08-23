@@ -26,6 +26,7 @@ export interface IStorage {
   checkoutGuest(id: string): Promise<Guest | undefined>;
   updateGuest(id: string, updates: Partial<Guest>): Promise<Guest | undefined>;
   getGuestsWithCheckoutToday(): Promise<Guest[]>;
+  getRecentlyCheckedOutGuest(): Promise<Guest | undefined>;
   getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }>;
   getAvailableCapsules(): Promise<Capsule[]>;
   getUncleanedAvailableCapsules(): Promise<Capsule[]>;

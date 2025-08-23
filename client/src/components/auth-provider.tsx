@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ReactNode } from "react";
-import { AuthContext, type User, type AuthContextType, getStoredToken, setStoredToken, removeStoredToken } from "../lib/auth";
+import { AuthContext, type User, type AuthContextType, type LoginResult, getStoredToken, setStoredToken, removeStoredToken } from "../lib/auth";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -57,9 +57,9 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Authenticate user with email and password
-   * Returns true on success, false on failure
+   * Returns detailed result with error information
    */
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -72,19 +72,35 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         setUser(data.user);
         setToken(data.token);
         setStoredToken(data.token);
-        return true;
+        return { success: true };
+      } else {
+        // Try to get error message from server
+        try {
+          const errorData = await response.json();
+          return { 
+            success: false, 
+            error: errorData.message || `Server error (${response.status})` 
+          };
+        } catch {
+          return { 
+            success: false, 
+            error: `Server error (${response.status}: ${response.statusText})` 
+          };
+        }
       }
-      return false;
     } catch (error) {
-      return false;
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Network error - please check your connection' 
+      };
     }
   };
 
   /**
    * Authenticate user with Google OAuth token
-   * Returns true on success, false on failure
+   * Returns detailed result with error information
    */
-  const loginWithGoogle = async (googleToken: string): Promise<boolean> => {
+  const loginWithGoogle = async (googleToken: string): Promise<LoginResult> => {
     try {
       const response = await fetch('/api/auth/google', {
         method: 'POST',
@@ -97,11 +113,27 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         setUser(data.user);
         setToken(data.token);
         setStoredToken(data.token);
-        return true;
+        return { success: true };
+      } else {
+        // Try to get error message from server
+        try {
+          const errorData = await response.json();
+          return { 
+            success: false, 
+            error: errorData.message || `Google login failed (${response.status})` 
+          };
+        } catch {
+          return { 
+            success: false, 
+            error: `Google login failed (${response.status}: ${response.statusText})` 
+          };
+        }
       }
-      return false;
     } catch (error) {
-      return false;
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Network error during Google login' 
+      };
     }
   };
 
