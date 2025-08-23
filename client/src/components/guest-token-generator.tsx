@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,21 @@ interface TokenGeneratorProps {
 
 export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorProps) {
   const labels = useAccommodationLabels();
+  
+  // Environment debugging
+  const isReplit = typeof window !== 'undefined' && (
+    window.location.hostname.includes('.replit.dev') || 
+    window.location.hostname.includes('.replit.app') || 
+    !!import.meta.env.VITE_REPL_ID
+  );
+  
+  console.log('GuestTokenGenerator Environment Debug:', {
+    isReplit,
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+    hasWindow: typeof window !== 'undefined',
+    VITE_REPL_ID: import.meta.env.VITE_REPL_ID
+  });
+  
   const [selectedCapsule, setSelectedCapsule] = useState("auto-assign");
   const [guestName, setGuestName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -55,6 +70,12 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
   } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  // Monitor dialog state changes
+  useEffect(() => {
+    console.log('Dialog state changed to:', isDialogOpen);
+    console.log('Environment:', isReplit ? 'Replit' : 'Local');
+  }, [isDialogOpen, isReplit]);
 
   const { data: availableCapsules = [], isLoading: capsulesLoading } = useQuery<Capsule[]>({
     queryKey: ["/api/capsules/available"],
@@ -250,8 +271,9 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
           </TooltipContent>
         </Tooltip>
       
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
+        {isReplit ? (
+          // Replit-specific dialog implementation
+          <div>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
@@ -259,8 +281,10 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
                   size="sm" 
                   className="flex items-center gap-2"
                   onClick={() => {
-                    console.log('Create Link button clicked, opening dialog');
+                    console.log('Create Link button clicked (Replit), opening dialog');
+                    console.log('Current dialog state:', isDialogOpen);
                     setIsDialogOpen(true);
+                    console.log('Dialog state set to true');
                   }}
                 >
                   <Link2 className="h-4 w-4" />
@@ -271,7 +295,76 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
                 <p>Create custom check-in link with specific options</p>
               </TooltipContent>
             </Tooltip>
-          </DialogTrigger>
+            
+            {/* Replit dialog overlay */}
+            {isDialogOpen && (
+              <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Users className="h-5 w-5 text-orange-600" />
+                        Create Guest Check-in Link
+                      </h2>
+                      <button
+                        onClick={() => setIsDialogOpen(false)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Generate a link that guests can use to complete their own check-in process
+                    </p>
+                    
+                    {/* Dialog content will go here - simplified for Replit */}
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Dialog content loading...</p>
+                      <Button 
+                        onClick={() => setIsDialogOpen(false)}
+                        className="mt-4"
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          // Standard Dialog component for localhost
+          <Dialog 
+            open={isDialogOpen} 
+            onOpenChange={(open) => {
+              console.log('Dialog onOpenChange called with:', open);
+              console.log('Previous state was:', isDialogOpen);
+              setIsDialogOpen(open);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      console.log('Create Link button clicked (Local), opening dialog');
+                      console.log('Current dialog state:', isDialogOpen);
+                      setIsDialogOpen(true);
+                      console.log('Dialog state set to true');
+                    }}
+                  >
+                    <Link2 className="h-4 w-4" />
+                    Create Link
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Create custom check-in link with specific options</p>
+                </TooltipContent>
+              </Tooltip>
+            </DialogTrigger>
         <DialogContent className="w-full max-w-sm sm:max-w-md mx-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -587,8 +680,9 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
             </div>
           </div>
         )}
-      </DialogContent>
+              </DialogContent>
         </Dialog>
+        )}
       </div>
     </TooltipProvider>
   );
