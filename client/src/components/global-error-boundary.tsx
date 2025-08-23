@@ -51,9 +51,12 @@ export class GlobalErrorBoundary extends Component<Props, State> {
    * Generates unique error ID for tracking and support purposes
    */
   static getDerivedStateFromError(error: Error): State {
+    // Add null/undefined check to prevent cascading errors
+    const safeError = error || new Error('Unknown error occurred');
+    
     return {
       hasError: true,
-      error,
+      error: safeError,
       errorId: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
   }
@@ -79,17 +82,21 @@ export class GlobalErrorBoundary extends Component<Props, State> {
    * Creates structured error report with context information
    */
   private logError = (error: Error, errorInfo: ErrorInfo) => {
+    // Add safety checks to prevent undefined errors during error reporting
+    const safeError = error || { name: 'UnknownError', message: 'Unknown error occurred', stack: 'No stack available' };
+    const safeErrorInfo = errorInfo || { componentStack: 'No component stack available' };
+    
     const errorReport: ErrorReport = {
       timestamp: new Date().toISOString(),
       url: window.location.href,
       userAgent: navigator.userAgent,
       error: {
-        name: error.name,
-        message: error.message,
-        stack: error.stack || 'No stack trace available'
+        name: safeError.name || 'UnknownError',
+        message: safeError.message || 'Unknown error occurred',
+        stack: safeError.stack || 'No stack trace available'
       },
       errorInfo: {
-        componentStack: errorInfo.componentStack || 'No component stack available'
+        componentStack: safeErrorInfo.componentStack || 'No component stack available'
       }
     };
 
@@ -153,8 +160,11 @@ export class GlobalErrorBoundary extends Component<Props, State> {
    * Used to customize UI presentation and urgency indicators
    */
   private getErrorSeverity = (error: Error): 'low' | 'medium' | 'high' => {
-    const errorMessage = error.message.toLowerCase();
-    const errorName = error.name.toLowerCase();
+    // Add safety checks to prevent undefined errors
+    if (!error) return 'medium';
+    
+    const errorMessage = (error.message || '').toLowerCase();
+    const errorName = (error.name || '').toLowerCase();
 
     // Critical errors that typically require page refresh
     if (
@@ -184,8 +194,11 @@ export class GlobalErrorBoundary extends Component<Props, State> {
    * Helps users understand what went wrong and how to recover
    */
   private getErrorAdvice = (error: Error): string => {
-    const errorMessage = error.message.toLowerCase();
-    const errorName = error.name.toLowerCase();
+    // Add safety checks to prevent undefined errors
+    if (!error) return 'An unexpected error occurred. Please try refreshing the page.';
+    
+    const errorMessage = (error.message || '').toLowerCase();
+    const errorName = (error.name || '').toLowerCase();
 
     if (errorName.includes('chunkerror') || errorMessage.includes('loading chunk')) {
       return 'This usually happens after an app update. Please refresh the page to load the latest version.';

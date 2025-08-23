@@ -28,8 +28,8 @@ export class DatabaseErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
-    // Check if this is a database-related error
-    const isDatabaseError = this.isDatabaseError(error);
+    // Check if this is a database-related error - add null check
+    const isDatabaseError = error ? DatabaseErrorBoundary.isDatabaseError(error) : false;
     
     return {
       hasError: true,
@@ -39,6 +39,10 @@ export class DatabaseErrorBoundary extends Component<Props, State> {
   }
 
   private static isDatabaseError(error: Error): boolean {
+    if (!error || !error.message) {
+      return false;
+    }
+    
     const errorMessage = error.message.toLowerCase();
     const databaseKeywords = [
       'database',
