@@ -446,4 +446,79 @@ router.post("/switch",
   }
 });
 
+// Fix capsule sections and positions endpoint
+router.post("/fix-capsule-data", async (_req, res) => {
+  try {
+    const allCapsules = await storage.getAllCapsules();
+    let fixedCount = 0;
+    
+    // Fix capsule sections and positions based on number
+    for (const capsule of allCapsules) {
+      const num = parseInt(capsule.number.replace('C', ''));
+      let correctSection = '';
+      let correctPosition = '';
+      
+      // Determine section based on capsule number
+      if (num >= 1 && num <= 6) {
+        correctSection = 'back';
+      } else if (num >= 25 && num <= 26) {
+        correctSection = 'middle';
+      } else if (num >= 11 && num <= 24) {
+        correctSection = 'front';
+      }
+      
+      // Determine position (even = bottom, odd = top)
+      correctPosition = num % 2 === 0 ? 'bottom' : 'top';
+      
+      // Update if section or position is incorrect/missing
+      const updates: any = {};
+      if (correctSection && capsule.section !== correctSection) {
+        updates.section = correctSection;
+      }
+      if (correctPosition && capsule.position !== correctPosition) {
+        updates.position = correctPosition;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await storage.updateCapsule(capsule.number, updates);
+        console.log(`Fixed capsule ${capsule.number}: section=${updates.section || capsule.section}, position=${updates.position || capsule.position}`);
+        fixedCount++;
+      }
+    }
+    
+    res.json({ 
+      message: `Capsule data fixed successfully. Updated ${fixedCount} capsules.`,
+      fixedCount 
+    });
+  } catch (error) {
+    console.error("Error fixing capsule data:", error);
+    res.status(500).json({ message: "Failed to fix capsule data" });
+  }
+});
+
+// Debug endpoint to check capsule data
+router.get("/debug-capsules", async (_req, res) => {
+  try {
+    const allCapsules = await storage.getAllCapsules();
+    const capsuleData = allCapsules.map(capsule => ({
+      number: capsule.number,
+      section: capsule.section,
+      position: capsule.position,
+      cleaningStatus: capsule.cleaningStatus,
+      isAvailable: capsule.isAvailable,
+      toRent: capsule.toRent
+    }));
+    
+    res.json({ 
+      totalCapsules: capsuleData.length,
+      capsules: capsuleData,
+      sections: [...new Set(capsuleData.map(c => c.section))],
+      positions: [...new Set(capsuleData.map(c => c.position))]
+    });
+  } catch (error) {
+    console.error("Error getting capsule debug data:", error);
+    res.status(500).json({ message: "Failed to get capsule debug data" });
+  }
+});
+
 export default router;

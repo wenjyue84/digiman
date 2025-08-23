@@ -31,6 +31,7 @@ import {
   getDefaultCollector,
   getRecommendedCapsule
 } from "@/components/check-in/utils";
+import { getClientEnvironment } from "@shared/utils";
 import PaymentInformationSection from "@/components/check-in/PaymentInformationSection";
 import ContactInformationSection from "@/components/check-in/ContactInformationSection";
 import IdentificationPersonalSection from "@/components/check-in/IdentificationPersonalSection";
@@ -179,13 +180,31 @@ export default function CheckIn() {
       }
     }
     
+    // Debug logging for environment detection
+    const env = getClientEnvironment();
+    console.log('🌍 Environment Debug:', {
+      isLocalhost: env.isLocalhost,
+      isReplit: env.isReplit,
+      hostname: env.hostname,
+      currentGender,
+      currentCapsule,
+      availableCapsulesCount: availableCapsules?.length || 0
+    });
+
     // Auto-assign capsule if we have a gender (default "male") but no capsule selected
     if (currentGender && availableCapsules.length > 0 && !currentCapsule) {
+      console.log('🤖 Attempting smart assignment for gender:', currentGender);
+      
       // Only recommend capsules that can be assigned (cleaned)
       const assignableCapsules = availableCapsules.filter(capsule => capsule.canAssign);
+      console.log('✅ Assignable capsules for smart assignment:', assignableCapsules.length);
+      
       const recommendedCapsule = getRecommendedCapsule(currentGender, assignableCapsules);
       if (recommendedCapsule) {
+        console.log('🎯 Smart assignment result:', recommendedCapsule);
         form.setValue("capsuleNumber", recommendedCapsule);
+      } else {
+        console.warn('⚠️ No capsule recommended by smart assignment');
       }
     }
   }, [availableCapsules, form, preSelectedCapsule]);
@@ -197,13 +216,20 @@ export default function CheckIn() {
       if (isCapsuleLocked) return;
       
       if (name === "gender" && value.gender && availableCapsules.length > 0) {
+        console.log('🔄 Gender changed to:', value.gender);
+        
         // Always suggest a new capsule when gender changes
         // Only recommend capsules that can be assigned (cleaned)
         const assignableCapsules = availableCapsules.filter(capsule => capsule.canAssign);
+        console.log('✅ Available capsules for gender change assignment:', assignableCapsules.length);
+        
         const recommendedCapsule = getRecommendedCapsule(value.gender, assignableCapsules);
         
         if (recommendedCapsule && recommendedCapsule !== form.getValues("capsuleNumber")) {
+          console.log('🎯 Gender-based assignment result:', recommendedCapsule);
           form.setValue("capsuleNumber", recommendedCapsule);
+        } else {
+          console.warn('⚠️ No new capsule recommended for gender change');
         }
       }
     });

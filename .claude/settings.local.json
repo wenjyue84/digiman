@@ -52,7 +52,8 @@
       "Bash(Gemini -p \"Test this thumbnail removal feature for both check-in and guest self check-in forms. Verify that:\n1. Document upload still works but without thumbnail previews\n2. Shows success indicators instead of image previews\n3. Upload, change, and remove functionality still works\n4. No broken UI elements or layout issues\n5. Forms submit successfully with document uploads\nPlease check both admin check-in form and guest self check-in form at localhost:5000\")",
       "WebFetch(domain:localhost)",
       "Bash(Gemini:*)",
-      "Bash(title \"Add Photo Display to Guest Details\")"
+      "Bash(title \"Add Photo Display to Guest Details\")",
+      "Bash(powershell:*)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
