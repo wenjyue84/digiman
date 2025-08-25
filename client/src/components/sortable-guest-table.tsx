@@ -801,6 +801,131 @@ export default function SortableGuestTable() {
     setLocation(`/check-in?capsule=${capsuleNumber}`);
   };
 
+  // Handle WhatsApp export - generate capsule status in WhatsApp-friendly format
+  const handleWhatsAppExport = useCallback(() => {
+    // Get all capsules data
+    const checkedInGuests = guests || [];
+    
+    // Create WhatsApp-friendly format
+    let whatsappText = "🏨 *PELANGI CAPSULE STATUS* 🏨\n\n";
+    
+    // Group capsules by section and handle special cases
+    const sections = ['back', 'middle', 'front'];
+    
+    sections.forEach(section => {
+      const sectionCapsules = allCapsules
+        .filter(capsule => capsule.section === section)
+        .sort((a, b) => {
+          const aNum = parseInt(a.number.replace('C', ''));
+          const bNum = parseInt(b.number.replace('C', ''));
+          return aNum - bNum;
+        });
+      
+      if (sectionCapsules.length > 0) {
+        whatsappText += `📍 *${section.toUpperCase()} SECTION* 📍\n`;
+        
+        sectionCapsules.forEach(capsule => {
+          const guest = checkedInGuests.find(g => g.capsuleNumber === capsule.number);
+          
+          if (guest) {
+            // Guest is checked in
+            const isPaid = isGuestPaid(guest);
+            const checkoutDate = guest.expectedCheckoutDate ? formatShortDate(guest.expectedCheckoutDate) : '';
+            const paymentStatus = isPaid ? '✅' : '❌';
+            
+            // Check for outstanding balance
+            const balance = getGuestBalance(guest);
+            const outstandingText = balance > 0 ? ` (Outstanding RM${balance})` : '';
+            
+            whatsappText += `${capsule.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
+          } else {
+            // Empty capsule
+            whatsappText += `${capsule.number.replace('C', '')})\n`;
+          }
+        });
+        
+        whatsappText += '\n';
+      }
+    });
+    
+    // Handle special sections - Living Room (capsules 25, 26)
+    whatsappText += '🏠 *LIVING ROOM* 🏠\n';
+    const livingRoomCapsules = allCapsules.filter(capsule => {
+      const num = parseInt(capsule.number.replace('C', ''));
+      return num === 25 || num === 26;
+    }).sort((a, b) => {
+      const aNum = parseInt(a.number.replace('C', ''));
+      const bNum = parseInt(b.number.replace('C', ''));
+      return aNum - bNum;
+    });
+    
+    livingRoomCapsules.forEach(capsule => {
+      const guest = checkedInGuests.find(g => g.capsuleNumber === capsule.number);
+      if (guest) {
+        const isPaid = isGuestPaid(guest);
+        const checkoutDate = guest.expectedCheckoutDate ? formatShortDate(guest.expectedCheckoutDate) : '';
+        const paymentStatus = isPaid ? '✅' : '❌';
+        const balance = getGuestBalance(guest);
+        const outstandingText = balance > 0 ? ` (Outstanding RM${balance})` : '';
+        whatsappText += `${capsule.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
+      } else {
+        whatsappText += `${capsule.number.replace('C', '')})\n`;
+      }
+    });
+    
+    // Handle special sections - Room (capsules 1-6)
+    whatsappText += '\n🛏️ *ROOM* 🛏️\n';
+    const roomCapsules = allCapsules.filter(capsule => {
+      const num = parseInt(capsule.number.replace('C', ''));
+      return num >= 1 && num <= 6;
+    }).sort((a, b) => {
+      const aNum = parseInt(a.number.replace('C', ''));
+      const bNum = parseInt(b.number.replace('C', ''));
+      return aNum - bNum;
+    });
+    
+    roomCapsules.forEach(capsule => {
+      const guest = checkedInGuests.find(g => g.capsuleNumber === capsule.number);
+      if (guest) {
+        const isPaid = isGuestPaid(guest);
+        const checkoutDate = guest.expectedCheckoutDate ? formatShortDate(guest.expectedCheckoutDate) : '';
+        const paymentStatus = isPaid ? '✅' : '❌';
+        const balance = getGuestBalance(guest);
+        const outstandingText = balance > 0 ? ` (Outstanding RM${balance})` : '';
+        whatsappText += `${capsule.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
+      } else {
+        whatsappText += `${capsule.number.replace('C', '')})\n`;
+      }
+    });
+    
+    whatsappText += '\n——————————————\n';
+    whatsappText += '📅 *Last Updated:* ' + new Date().toLocaleDateString('en-GB') + '\n';
+    whatsappText += '⏰ *Time:* ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(whatsappText).then(() => {
+      toast({
+        title: "WhatsApp Export Ready! 📱",
+        description: "Capsule status copied to clipboard. You can now paste it in WhatsApp!",
+        variant: "default",
+      });
+    }).catch(() => {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = whatsappText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      toast({
+        title: "WhatsApp Export Ready! 📱",
+        description: "Capsule status copied to clipboard. You can now paste it in WhatsApp!",
+        variant: "default",
+      });
+    });
+  }, [allCapsules, guests, toast]);
+
   if (isLoading) {
     return (
       <Card>
@@ -952,6 +1077,18 @@ export default function SortableGuestTable() {
                         <p className="text-xs text-gray-500 ml-6">
                           Empty capsules will be shown with red background
                         </p>
+                      )}
+                      {showAllCapsules && (
+                        <div className="pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleWhatsAppExport}
+                            className="w-full text-xs"
+                          >
+                            📱 Export to WhatsApp
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
