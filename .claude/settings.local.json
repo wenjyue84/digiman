@@ -60,7 +60,13 @@
       "Bash(start http://localhost:5000/check-in)",
       "Bash(dir:*)",
       "Bash(del \"C:\\Users\\Jyue\\desktop\\projects\\pelangimanager\\.claude\\agents\\~$st-runner.md\")",
-      "Bash(claude-code doctor)"
+      "Bash(claude-code doctor)",
+      "Bash(start http://localhost:3003)",
+      "Bash(start http://localhost:3003/current-guests)",
+      "Bash(start http://localhost:3001)",
+      "Bash(start http://localhost:3002)",
+      "Bash(start http://localhost:3002/finance)",
+      "Bash(start http://localhost:3001/finance)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

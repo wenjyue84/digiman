@@ -2,7 +2,7 @@ import { useContext, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Home, UserPlus, UserX, Settings, Clock, LayoutGrid, LogOut, ChevronRightCircle, CalendarDays, ListChecks, Database, HardDrive, DollarSign } from "lucide-react";
+import { Home, UserPlus, UserX, Settings, Clock, LayoutGrid, LogOut, ChevronRightCircle, CalendarDays, ListChecks, Database, HardDrive, DollarSign, User } from "lucide-react";
 import { AuthContext } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { DatabaseStatus } from "./DatabaseSelector";

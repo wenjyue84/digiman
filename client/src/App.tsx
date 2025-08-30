@@ -21,6 +21,7 @@ import Finance from "./pages/finance";
 import GuestCheckin from "./pages/guest-checkin";
 import GuestEdit from "./pages/guest-edit";
 import GuestSuccess from "./pages/guest-success";
+import GuestGuide from "./pages/guest-guide";
 import Header from "./components/header";
 import Navigation from "./components/navigation";
 import MobileBottomNav from "./components/mobile-bottom-nav";
@@ -74,6 +75,11 @@ function Router() {
           <Route path="/finance">
             <ProtectedRoute requireAuth={true}>
               <Finance />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/guest-guide">
+            <ProtectedRoute requireAuth={true}>
+              <GuestGuide />
             </ProtectedRoute>
           </Route>
           <Route path="/login" component={LoginForm} />

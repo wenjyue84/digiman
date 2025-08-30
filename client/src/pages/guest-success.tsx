@@ -4,9 +4,117 @@ import { useI18n } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle } from "lucide-react";
+import { GuestGuideProvider, useGuestGuide } from "@/lib/contexts/guest-guide-context";
+import GuestSuccessPageTemplate from "@/components/guest-success/GuestSuccessPageTemplate";
 
 // Lazy load the success screen component
 const LazySuccessScreen = React.lazy(() => import("@/components/guest-checkin/SuccessScreen"));
+
+/**
+ * Enhanced Success Page Component with Context Integration
+ * Uses the exact same approach as the preview to ensure perfect synchronization
+ */
+const EnhancedGuestSuccessPage: React.FC<{
+  guestInfo: any;
+  settings: any;
+}> = ({ guestInfo, settings }) => {
+  const { settings: contextSettings, isLoading: contextLoading, error } = useGuestGuide();
+  
+  // Use context settings if available (same as preview), fallback to API settings
+  const useContextSettings = !contextLoading && !error && contextSettings?.content;
+  
+  // Handler functions for success screen actions
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSaveAsPdf = () => {
+    window.print();
+  };
+
+  const handleSendEmail = async () => {
+    console.log("Send email functionality would be implemented here");
+  };
+
+  const handleShare = () => {
+    const guestName = guestInfo?.name || 'Guest';
+    const capsule = guestInfo?.capsuleNumber || '';
+    const contentToUse = useContextSettings ? contextSettings.content : settings;
+    const checkinTime = contentToUse?.checkinTime || contentToUse?.guideCheckinTime || "3:00 PM";
+    const checkoutTime = contentToUse?.checkoutTime || contentToUse?.guideCheckoutTime || "12:00 PM";
+    const doorPassword = contentToUse?.doorPassword || contentToUse?.guideDoorPassword || "1270#";
+    const address = contentToUse?.address || contentToUse?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia';
+
+    const shareText = `🏨 Pelangi Capsule Hostel - My Stay Information
+
+Name: ${guestName}
+Capsule: ${capsule}
+Arrival: ${checkinTime}
+Departure: ${checkoutTime}
+Door Password: ${doorPassword}
+
+Address: ${address?.split('\n')[0] || address}
+
+Welcome to Pelangi Capsule Hostel! 🌈`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Pelangi Capsule Hostel - My Stay Information',
+        text: shareText,
+      }).catch(() => {
+        navigator.clipboard.writeText(shareText);
+      });
+    } else {
+      navigator.clipboard.writeText(shareText).catch(() => {
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+        window.open(whatsappUrl, '_blank');
+      });
+    }
+  };
+
+  // Debug logging (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[EnhancedGuestSuccessPage] Debug Info:', {
+      useContextSettings,
+      contextLoading,
+      error,
+      hasContextContent: !!contextSettings?.content,
+      hasApiSettings: !!settings
+    });
+  }
+
+  return (
+    <div className="min-h-screen py-8">
+      <GuestSuccessPageTemplate
+        viewMode="desktop"
+        isPreview={false}
+        guestInfo={{
+          capsuleNumber: guestInfo.capsuleNumber,
+          guestName: guestInfo.name,
+          phoneNumber: guestInfo.phoneNumber,
+          email: guestInfo.email,
+          expectedCheckoutDate: guestInfo.expectedCheckoutDate,
+        }}
+        assignedCapsuleNumber={guestInfo.capsuleNumber}
+        capsuleIssues={[]}
+        // Use the SAME approach as preview: pass settings=null when using context
+        settings={useContextSettings ? null : settings}
+        // Pass content and visibility directly from context (same as preview)
+        content={useContextSettings ? contextSettings.content : undefined}
+        visibility={useContextSettings ? contextSettings.visibility : undefined}
+        actions={{
+          onPrint: handlePrint,
+          onSavePDF: handleSaveAsPdf,
+          onEmail: handleSendEmail,
+          onShare: handleShare,
+          onExtend: () => {
+            // Extend functionality would be implemented here
+          },
+        }}
+      />
+    </div>
+  );
+};
 
 /**
  * Permanent Guest Success Page
@@ -40,22 +148,6 @@ export default function GuestSuccessPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Handler functions for success screen actions
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleSaveAsPdf = () => {
-    // This would typically use a PDF generation library
-    // For now, just trigger print dialog
-    window.print();
-  };
-
-  const handleSendEmail = async () => {
-    // This would send check-in details via email
-    // Implementation would call the email API endpoint
-    console.log("Send email functionality would be implemented here");
-  };
 
   // Show loading state while validating access
   if (isLoading) {
@@ -80,70 +172,37 @@ export default function GuestSuccessPage() {
   // Show the success screen if access is valid
   if (isValidAccess && guestInfo) {
     return (
-      <div className="min-h-screen bg-hostel-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          {/* Header indicating this is permanent access */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full border border-green-200">
-              <CheckCircle className="h-5 w-5" />
-              <span className="text-sm font-medium">✨ Your Permanent Check-in Success Page</span>
-            </div>
-            <p className="text-gray-600 mt-2 text-sm">
-              Bookmark this page! You can return here anytime to extend your stay or access your information.
-            </p>
-          </div>
-
-          <Suspense fallback={
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-              <div className="text-center">
-                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Loading Your Success Page...</h2>
-                <Skeleton className="h-8 w-64 mx-auto" />
+      <GuestGuideProvider>
+        <div className="min-h-screen bg-hostel-background">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            {/* Header indicating this is permanent access */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full border border-green-200">
+                <CheckCircle className="h-5 w-5" />
+                <span className="text-sm font-medium">✨ Your Permanent Check-in Success Page</span>
               </div>
+              <p className="text-gray-600 mt-2 text-sm">
+                Bookmark this page! You can return here anytime to extend your stay or access your information.
+              </p>
             </div>
-          }>
-            <LazySuccessScreen
-              guestInfo={{
-                guestName: guestInfo.name,
-                phoneNumber: guestInfo.phoneNumber,
-                email: guestInfo.email,
-                expectedCheckoutDate: guestInfo.expectedCheckoutDate,
-                capsuleNumber: guestInfo.capsuleNumber,
-                autoAssign: false,
-                position: guestInfo.capsuleNumber ? 
-                  (parseInt(guestInfo.capsuleNumber.replace('C', '')) % 2 === 0 ? 'Bottom (Preferred)' : 'Top') 
-                  : 'Available'
-              }}
-              settings={settings}
-              assignedCapsuleNumber={guestInfo.capsuleNumber}
-              capsuleIssues={[]} // No issues to show on success page
-              canEdit={false} // No editing allowed on permanent success page
-              editExpiresAt={null}
-              editToken=""
-              showEmailDialog={false}
-              setShowEmailDialog={() => {}}
-              emailForSlip={guestInfo.email || ""}
-              setEmailForSlip={() => {}}
-              handlePrint={handlePrint}
-              handleSaveAsPdf={handleSaveAsPdf}
-              handleSendEmail={handleSendEmail}
-              guestData={{
-                id: guestInfo.id,
-                name: guestInfo.name,
-                capsuleNumber: guestInfo.capsuleNumber,
-                expectedCheckoutDate: guestInfo.expectedCheckoutDate,
-                paymentAmount: guestInfo.paymentAmount,
-                notes: guestInfo.notes,
-                isPaid: guestInfo.isPaid
-              }}
-              onRefresh={() => {
-                // Force refresh of the guest data
-                window.location.reload();
-              }}
-            />
-          </Suspense>
+
+            <Suspense fallback={
+              <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                <div className="text-center">
+                  <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Loading Your Success Page...</h2>
+                  <Skeleton className="h-8 w-64 mx-auto" />
+                </div>
+              </div>
+            }>
+              <EnhancedGuestSuccessPage
+                guestInfo={guestInfo}
+                settings={settings}
+              />
+            </Suspense>
+          </div>
         </div>
-      </div>
+      </GuestGuideProvider>
     );
   }
 

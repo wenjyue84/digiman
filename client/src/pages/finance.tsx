@@ -19,6 +19,7 @@ import { DollarSign, Plus, Trash2, Edit, TrendingUp, TrendingDown, Calendar, Fil
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SmartPhotoUploader } from "@/components/SmartPhotoUploader";
 import { OptimizedPhotoUploader } from "@/components/OptimizedPhotoUploader";
+import { OutstandingBalances } from "@/components/outstanding-balances";
 
 // Expense schema
 const expenseSchema = z.object({
@@ -474,6 +475,7 @@ export default function Finance() {
       <Tabs defaultValue="expenses" className="space-y-4">
         <TabsList>
           <TabsTrigger value="expenses">Expense Records</TabsTrigger>
+          <TabsTrigger value="outstanding">Outstanding</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
         
@@ -1007,6 +1009,10 @@ export default function Finance() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="outstanding" className="space-y-4">
+          <OutstandingBalances />
         </TabsContent>
         
         <TabsContent value="analytics" className="space-y-4">
