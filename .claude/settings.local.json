@@ -55,7 +55,8 @@
       "Bash(title \"Add Photo Display to Guest Details\")",
       "Bash(powershell:*)",
       "Bash(echo:*)",
-      "Bash(claude-code --output-style personal-assistant)"
+      "Bash(claude-code --output-style personal-assistant)",
+      "Bash(start http://localhost:5000)"
     ],
     "defaultMode": "acceptEdits",
     "additionalDirectories": [

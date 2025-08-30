@@ -244,14 +244,59 @@ router.get("/active", async (req, res) => {
 router.get("/:token", async (req, res) => {
   try {
     const { token } = req.params;
+    const { successPage } = req.query;
     const guestToken = await storage.getGuestToken(token);
     
     if (!guestToken) {
       return res.status(404).json({ message: "Token not found" });
     }
     
+    // Handle used tokens
     if (guestToken.isUsed) {
-      return res.status(400).json({ message: "Token has already been used" });
+      // For used tokens, check if there's a completed check-in (guest record)
+      try {
+        const guests = await storage.getAllGuests({ page: 1, limit: 1000 });
+        const guestRecord = guests.data.find(guest => 
+          guest.name === guestToken.guestName || 
+          guest.phoneNumber === guestToken.phoneNumber ||
+          guest.capsuleNumber === guestToken.capsuleNumber
+        );
+        
+        if (guestRecord && successPage) {
+          // Return success page data with guest information
+          return res.json({
+            ...guestToken,
+            isSuccessPageAccess: true,
+            guestData: {
+              id: guestRecord.id,
+              name: guestRecord.name,
+              capsuleNumber: guestRecord.capsuleNumber,
+              phoneNumber: guestRecord.phoneNumber,
+              email: guestRecord.email,
+              checkinTime: guestRecord.checkinTime,
+              expectedCheckoutDate: guestRecord.expectedCheckoutDate,
+              paymentAmount: guestRecord.paymentAmount,
+              paymentMethod: guestRecord.paymentMethod,
+              notes: guestRecord.notes,
+              isPaid: guestRecord.paymentStatus === 'paid'
+            }
+          });
+        } else if (guestRecord) {
+          // Token used and has guest record - allow basic access (for any duplicate requests)
+          return res.json(guestToken);
+        } else {
+          // Token used but no guest record found
+          return res.status(400).json({ message: "Token has already been used" });
+        }
+      } catch (guestFetchError) {
+        console.error("Error checking guest records:", guestFetchError);
+        // If we can't check guest records, fall back to original behavior
+        if (successPage) {
+          return res.json(guestToken);
+        } else {
+          return res.status(400).json({ message: "Token has already been used" });
+        }
+      }
     }
     
     if (guestToken.expiresAt && new Date() > guestToken.expiresAt) {

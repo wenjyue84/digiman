@@ -358,7 +358,7 @@ export default function GuestCheckin() {
       console.log("Submitting data:", submitData);
       console.log("Form errors:", form.formState.errors);
       
-      const response = await fetch(`/api/guest-checkin/${token}`, {
+      const response = await fetch(`/api/guest-checkin/checkin/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData)
