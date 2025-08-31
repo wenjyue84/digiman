@@ -11197,6 +11197,60 @@ This solution transforms the development experience from manual build workflows 
 - **Always use real API calls** instead of mock functions in production features
 - **Implement proper query invalidation** to ensure UI updates after mutations
 - **Test payment flows end-to-end** to verify balance persistence
+
+---
+
+### **024 - Guest Shows RM9 Balance Despite Full Payment (SOLVED)**
+
+**Date Solved:** January 2025  
+**Symptoms:**
+- Guests checking in for 1 day with RM45 payment showing RM9 outstanding balance
+- Balance appears even though full payment was collected at check-in
+- Dashboard shows "Bal: RM9" for newly checked-in guests
+- All guests with RM45 payment consistently show same RM9 balance
+
+**Root Cause:**
+- **Faulty Fallback Calculation**: Code in `/client/src/lib/guest.ts` incorrectly assumed 20% of payment amount was outstanding when no balance was specified in notes field
+- **Mathematical Pattern**: RM45 × 0.2 = RM9 (explaining the consistent RM9 balance)
+- **Legacy Code Assumption**: Fallback logic was meant for existing data but applied to all new check-ins
+- **Incorrect Business Logic**: Assumed unpaid guests always have 20% outstanding balance
+
+**Solution Implemented:**
+```typescript
+// BEFORE: Incorrect fallback calculation in client/src/lib/guest.ts
+// If no balance found in notes, calculate from payment fields
+const totalAmount = guest.paymentAmount ? parseFloat(guest.paymentAmount) || 0 : 0;
+if (totalAmount > 0 && !guest.isPaid) {
+  // Assume there's still an outstanding balance if payment amount exists but not marked as paid
+  // This is a rough estimation for existing data
+  return Math.max(0, totalAmount * 0.2); // ❌ WRONG: Assumes 20% outstanding for all unpaid guests
+}
+
+// AFTER: Fixed - No assumptions about outstanding balance
+// If no balance found in notes and guest is not paid, return 0
+// Don't assume any outstanding balance unless explicitly specified in notes
+return 0; // ✅ CORRECT: Only show balance if explicitly specified
+```
+
+**Technical Details:**
+- **getGuestBalance() Function**: This function calculates outstanding balance for display in UI
+- **Balance Sources**: Function checks two sources:
+  1. New format: `Balance: RM{amount}` in notes field
+  2. Legacy format: Any `RM{amount}` pattern in notes
+- **Fallback Logic**: When neither format found, code incorrectly assumed 20% outstanding
+- **Impact**: All guests without explicit balance in notes showed false RM9 balance
+
+**Verification Steps:**
+1. Check in new guest with RM45 payment
+2. Dashboard should show no balance indicator
+3. Only guests with actual outstanding amounts show balances
+4. Existing guests with real balances unaffected
+
+**Prevention:**
+- **Never assume financial calculations** without explicit data
+- **Test edge cases** for payment and balance calculations
+- **Avoid percentage-based fallbacks** for financial data
+- **Use explicit balance tracking** instead of derived calculations
 - **Use structured notes format** for payment history tracking
 - **Handle backward compatibility** when updating balance calculation logic
 
