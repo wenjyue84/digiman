@@ -555,7 +555,9 @@ export default function SortableGuestTable() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (showAllCapsules: boolean) => {
-      const response = await apiRequest("PATCH", "/api/settings", { showAllCapsules });
+      const response = await apiRequest("PATCH", "/api/settings", { 
+        showAllCapsules: showAllCapsules
+      });
       return response.json();
     },
     onSuccess: () => {

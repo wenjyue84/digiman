@@ -38,7 +38,22 @@ const upload = multer({
 // Get all settings
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    const settings = await storage.getAllSettings();
+    const settingsArray = await storage.getAllSettings();
+    
+    // Transform array of {key, value} objects into a flat object
+    const settings: Record<string, any> = {};
+    for (const setting of settingsArray) {
+      let value: any = setting.value;
+      
+      // Parse boolean values
+      if (value === 'true') value = true;
+      else if (value === 'false') value = false;
+      // Parse numeric values
+      else if (!isNaN(Number(value)) && value !== '') value = Number(value);
+      
+      settings[setting.key] = value;
+    }
+    
     res.json(settings);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch settings" });
@@ -52,28 +67,23 @@ router.patch("/",
   validateData(updateSettingsSchema, 'body'),
   async (req: any, res) => {
   try {
-    const { key, value } = req.body;
-    
-    // Validate that key is not null or undefined
-    if (!key || typeof key !== 'string' || key.trim() === '') {
-      return res.status(400).json({ 
-        message: "Setting key is required and must be a non-empty string",
-        error: "INVALID_KEY"
-      });
-    }
-
-    // Validate that value is not null or undefined
-    if (value === null || value === undefined) {
-      return res.status(400).json({ 
-        message: "Setting value is required",
-        error: "INVALID_VALUE"
-      });
-    }
-
     const updatedBy = req.user.username || req.user.email || "Unknown";
+    const settingsData = req.body;
     
-    const setting = await storage.setSetting(key.trim(), String(value), updatedBy);
-    res.json(setting);
+    // Process each setting in the body
+    const results = [];
+    for (const [key, value] of Object.entries(settingsData)) {
+      if (value !== null && value !== undefined) {
+        const setting = await storage.setSetting(key, String(value), updatedBy);
+        results.push(setting);
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      updatedSettings: results.length,
+      settings: results 
+    });
   } catch (error: any) {
     console.error("Error updating setting:", error);
     
