@@ -24,8 +24,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "port:clean": "npx kill-port 5000",
-    "process:clean": "pkill -f \"tsx watch\" || true",
-    "postinstall": "npm install --os=linux --cpu=x64 sharp"
+    "process:clean": "pkill -f \"tsx watch\" || true"
   },
   "dependencies": {
     "@esbuild/linux-x64": "^0.25.9",
