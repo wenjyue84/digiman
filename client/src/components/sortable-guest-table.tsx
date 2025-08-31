@@ -66,12 +66,26 @@ export default function SortableGuestTable() {
   const [capsuleChangeGuest, setCapsuleChangeGuest] = useState<Guest | null>(null);
   const [showAllCapsules, setShowAllCapsules] = useState(false);
   const { toast } = useToast();
+  const { isAuthenticated, logout } = useAuth();
+
+  // Load settings to get showAllCapsules preference
+  const { data: settings } = useVisibilityQuery<{ showAllCapsules?: boolean }>({
+    queryKey: ["/api/settings"],
+    enabled: isAuthenticated,
+    // Uses smart config: standard (5min stale, 10min refetch)
+  });
+
+  // Initialize showAllCapsules from settings
+  useEffect(() => {
+    if (settings && typeof settings.showAllCapsules === 'boolean') {
+      setShowAllCapsules(settings.showAllCapsules);
+    }
+  }, [settings]);
 
   // Auto-switch view mode based on device type
   useEffect(() => {
     setIsCondensedView(isMobile);
   }, [isMobile]);
-  const { isAuthenticated, logout } = useAuth();
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
     field: 'capsuleNumber',
     order: 'asc'
@@ -539,6 +553,23 @@ export default function SortableGuestTable() {
     },
   });
 
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (showAllCapsules: boolean) => {
+      const response = await apiRequest("PATCH", "/api/settings", { showAllCapsules });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to save setting. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCheckout = (guestId: string) => {
     if (!isAuthenticated) {
       toast({
@@ -722,27 +753,24 @@ export default function SortableGuestTable() {
   const CapsuleSelector = ({ guest }: { guest: Guest }) => {
     const currentCapsule = guest.capsuleNumber;
 
-    // If not authenticated, show a simple display with login prompt
+    // If not authenticated, show clickable capsule number
     if (!isAuthenticated) {
       return (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">{currentCapsule}</span>
-          <button
-            onClick={() => {
-              toast({
-                title: "Authentication Required",
-                description: "Please login to change capsule assignments",
-                variant: "destructive",
-              });
-              const currentPath = window.location.pathname;
-              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-            }}
-            className="text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer"
-            title="Click to login and change capsule"
-          >
-            Change
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            toast({
+              title: "Authentication Required",
+              description: "Please login to change capsule assignments",
+              variant: "destructive",
+            });
+            const currentPath = window.location.pathname;
+            window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+          }}
+          className="text-sm font-medium text-blue-600 hover:text-blue-800 underline cursor-pointer"
+          title="Click to login and change capsule"
+        >
+          {currentCapsule}
+        </button>
       );
     }
 
@@ -765,7 +793,7 @@ export default function SortableGuestTable() {
         onValueChange={(newCapsule) => handleCapsuleChange(guest, newCapsule)}
       >
         <SelectTrigger className="w-16 h-8 text-xs">
-          <SelectValue />
+          <SelectValue>{currentCapsule}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {capsuleOptions.map((option) => (
@@ -1080,7 +1108,13 @@ export default function SortableGuestTable() {
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={showAllCapsules}
-                          onCheckedChange={(val) => setShowAllCapsules(Boolean(val))}
+                          onCheckedChange={(val) => {
+                            const newValue = Boolean(val);
+                            setShowAllCapsules(newValue);
+                            if (isAuthenticated) {
+                              updateSettingsMutation.mutate(newValue);
+                            }
+                          }}
                         />
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4" />
@@ -1169,7 +1203,7 @@ export default function SortableGuestTable() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 min-w-[100px]">
                     <div className="flex items-center gap-1">
                       {labels.singular}
                       <SortButton field="capsuleNumber" currentSort={sortConfig} onSort={handleSort} />
@@ -1230,7 +1264,7 @@ export default function SortableGuestTable() {
                         isCheckingOut={isGuestCheckingOut}
                       >
                         {/* Accommodation column - sticky first column */}
-                        <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
+                        <td className="px-3 py-3 whitespace-nowrap sticky left-0 bg-white z-10 min-w-[100px]">
                           <CapsuleSelector guest={guest} />
                         </td>
                         {/* Guest column */}
@@ -1354,7 +1388,7 @@ export default function SortableGuestTable() {
                     return (
                       <tr key={`pending-${pendingData.id}`} className="bg-orange-50">
                         {/* Accommodation column with copy icon - sticky first column */}
-                        <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-orange-50 z-10">
+                        <td className="px-3 py-3 whitespace-nowrap sticky left-0 bg-orange-50 z-10 min-w-[100px]">
                           <div className="flex items-center gap-1">
                             <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">
                               {pendingData.capsuleNumber}
@@ -1444,7 +1478,7 @@ export default function SortableGuestTable() {
                         title={`Click to check-in guest to ${emptyData.capsuleNumber}`}
                       >
                         {/* Accommodation column - sticky first column */}
-                        <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-red-50 z-10">
+                        <td className="px-3 py-3 whitespace-nowrap sticky left-0 bg-red-50 z-10 min-w-[100px]">
                           <Badge variant="outline" className="bg-red-600 text-white border-red-600">
                             {emptyData.capsuleNumber}
                           </Badge>
@@ -1519,8 +1553,8 @@ export default function SortableGuestTable() {
                       onExtend={handleExtend}
                       isCheckingOut={isGuestCheckingOut}
                     >
-                    <div className="p-3 flex items-center justify-between gap-3">
-                      <div>
+                    <div className="p-3 flex items-center gap-3">
+                      <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <CapsuleSelector guest={guest} />
                           <button
@@ -1564,6 +1598,21 @@ export default function SortableGuestTable() {
                           </div>
                         )}
                       </div>
+                      
+                      {/* Payment Status Display in Center */}
+                      <div className="flex flex-col items-center justify-center px-2">
+                        {isGuestPaid(guest) ? (
+                          <div className="flex items-center text-green-600">
+                            <span className="text-lg">✓</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center text-red-600">
+                            <span className="text-xs font-medium">Bal</span>
+                            <span className="text-sm font-bold">RM{getGuestBalance(guest)}</span>
+                          </div>
+                        )}
+                      </div>
+                      
                       <div className="flex items-center gap-2">
                         {guest.phoneNumber && (
                           <Button

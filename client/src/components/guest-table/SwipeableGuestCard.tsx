@@ -24,39 +24,56 @@ export function SwipeableGuestCard({ guest, onCheckout, onExtend, isCheckingOut,
     if (isCheckingOut) return;
     startXRef.current = clientX;
     startTimeRef.current = Date.now();
-    setIsDragging(true);
+    // Don't immediately set isDragging to true - wait for actual movement
     maxSwipeRef.current = 0;
   }, [isCheckingOut]);
 
   const handleMove = useCallback((clientX: number) => {
-    if (!isDragging || isCheckingOut) return;
+    if (isCheckingOut) return;
     const delta = clientX - startXRef.current;
+    
+    // Only start dragging if the user has moved more than 10 pixels
+    if (!isDragging && Math.abs(delta) > 10) {
+      setIsDragging(true);
+    }
+    
+    if (!isDragging) return;
+    
     const clamped = Math.max(Math.min(delta, MAX_SWIPE), -MAX_SWIPE);
     setSwipeOffset(clamped);
     maxSwipeRef.current = Math.max(maxSwipeRef.current, Math.abs(clamped));
   }, [isDragging, isCheckingOut]);
 
   const handleEnd = useCallback(() => {
-    if (!isDragging || isCheckingOut) return;
-    const swipeTime = Date.now() - startTimeRef.current;
-    const quick = maxSwipeRef.current >= 50 && swipeTime < 300;
-    const isRight = swipeOffset > 0;
-    const isLeft = swipeOffset < 0;
-    const reached = Math.abs(maxSwipeRef.current) >= SWIPE_THRESHOLD || quick;
-    setIsDragging(false);
-    if (reached) {
-      if (isLeft) {
-        setSwipeOffset(-MAX_SWIPE);
-        onCheckout(guest.id);
-        return;
+    if (isCheckingOut) return;
+    
+    // If we were dragging, handle the swipe action
+    if (isDragging) {
+      const swipeTime = Date.now() - startTimeRef.current;
+      const quick = maxSwipeRef.current >= 50 && swipeTime < 300;
+      const isRight = swipeOffset > 0;
+      const isLeft = swipeOffset < 0;
+      const reached = Math.abs(maxSwipeRef.current) >= SWIPE_THRESHOLD || quick;
+      
+      if (reached) {
+        if (isLeft) {
+          setSwipeOffset(-MAX_SWIPE);
+          onCheckout(guest.id);
+          setIsDragging(false);
+          return;
+        }
+        if (isRight && onExtend) {
+          setSwipeOffset(MAX_SWIPE);
+          onExtend(guest);
+          setIsDragging(false);
+          return;
+        }
       }
-      if (isRight && onExtend) {
-        setSwipeOffset(MAX_SWIPE);
-        onExtend(guest);
-        return;
-      }
+      setSwipeOffset(0);
     }
-    setSwipeOffset(0);
+    
+    // Always reset dragging state
+    setIsDragging(false);
   }, [isDragging, isCheckingOut, swipeOffset, guest, onCheckout, onExtend]);
 
   useEffect(() => {
@@ -83,12 +100,18 @@ export function SwipeableGuestCard({ guest, onCheckout, onExtend, isCheckingOut,
         backgroundColor,
         transition: isDragging ? 'none' : 'transform 0.3s ease-out, background-color 0.2s ease-out',
       }}
-      onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX); }}
-      onMouseMove={(e) => { if (isDragging) handleMove(e.clientX); }}
+      onMouseDown={(e) => { handleStart(e.clientX); }}
+      onMouseMove={(e) => { 
+        handleMove(e.clientX); 
+        if (isDragging) e.preventDefault();
+      }}
       onMouseUp={handleEnd}
       onMouseLeave={() => { if (isDragging) handleEnd(); }}
-      onTouchStart={(e) => handleStart(e.touches[0].clientX)}
-      onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+      onTouchStart={(e) => { handleStart(e.touches[0].clientX); }}
+      onTouchMove={(e) => { 
+        handleMove(e.touches[0].clientX);
+        if (isDragging) e.preventDefault();
+      }}
       onTouchEnd={handleEnd}
     >
       {children}

@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import OccupancyCalendar from "@/components/occupancy-calendar";
 
 const SortableGuestTable = React.lazy(
   () => import("@/components/sortable-guest-table")
@@ -9,9 +10,6 @@ const DailyNotifications = React.lazy(
 );
 const AdminNotifications = React.lazy(
   () => import("@/components/admin-notifications")
-);
-const OccupancyCalendar = React.lazy(
-  () => import("@/components/occupancy-calendar")
 );
 
 function useLazyRender<T extends Element>() {

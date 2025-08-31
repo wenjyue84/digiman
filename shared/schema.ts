@@ -904,6 +904,11 @@ export const updateSettingsSchema = z.object({
     .int("Maximum age must be a whole number")
     .default(120),
   
+  // UI Preferences
+  showAllCapsules: z.boolean()
+    .default(false)
+    .describe("Show all capsules (including empty ones) in the dashboard by default"),
+  
   // Contact Information
   defaultAdminEmail: z.string()
     .email("Default admin email must be a valid email address")

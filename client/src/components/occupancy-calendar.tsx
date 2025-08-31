@@ -7,7 +7,7 @@ import { CalendarDays, Users, Bed, ArrowLeft, ArrowRight, AlertTriangle } from "
 import { useVisibilityQuery } from "@/hooks/useVisibilityQuery";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Guest } from "@shared/schema";
-import { getHolidayLabel, hasPublicHoliday, getHolidaysForDate } from "@/lib/holidays";
+import { getHolidayLabel, hasPublicHoliday, getHolidaysForDate, getMonthHolidays } from "@/lib/holidays";
 
 interface DayData {
   date: string;
@@ -57,7 +57,6 @@ export default function OccupancyCalendar() {
     queryKey: ["/api/holidays", currentMonth.getFullYear(), currentMonth.getMonth()],
     enabled: isCalendarVisible,
     queryFn: async () => {
-      const { getMonthHolidays } = await import("@/lib/holidays");
       return getMonthHolidays(currentMonth.getFullYear(), currentMonth.getMonth());
     },
   });

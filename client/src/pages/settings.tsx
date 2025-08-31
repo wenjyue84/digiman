@@ -112,6 +112,9 @@ export default function SettingsPage() {
         guideShowGoogleMaps: (settings as any).guideShowGoogleMaps === true,
         guideShowCheckinVideo: (settings as any).guideShowCheckinVideo === true,
         guideShowTimeAccess: (settings as any).guideShowTimeAccess === true,
+        
+        // UI Preferences
+        showAllCapsules: (settings as any).showAllCapsules === true,
       } as any);
       console.log('✅ Form reset complete with CSV data');
     }
