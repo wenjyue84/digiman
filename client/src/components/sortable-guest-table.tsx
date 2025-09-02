@@ -1330,11 +1330,6 @@ export default function SortableGuestTable() {
                                 <div>
                                   <div className={`font-medium ${isGuestPaid(guest) ? '' : 'text-red-600'}`}>
                                     RM {guest.paymentAmount}
-                                    {!isGuestPaid(guest) && getGuestBalance(guest) > 0 && (
-                                      <span className="text-red-600 text-xs font-medium ml-1">
-                                        (Bal: RM{getGuestBalance(guest)})
-                                      </span>
-                                    )}
                                   </div>
                                   <div className="text-xs text-gray-500">{guest.paymentCollector || 'N/A'}</div>
                                 </div>
@@ -1586,11 +1581,6 @@ export default function SortableGuestTable() {
                               <span className={isGuestPaid(guest) ? '' : 'text-red-600 font-semibold'}>RM {guest.paymentAmount}</span>
                               {guest.paymentMethod && <span>• {guest.paymentMethod.toUpperCase()}</span>}
                               <Badge variant={isGuestPaid(guest) ? 'default' : 'destructive'}>{isGuestPaid(guest) ? 'Paid' : 'Outstanding'}</Badge>
-                              {!isGuestPaid(guest) && getGuestBalance(guest) > 0 && (
-                                <span className="text-red-600 text-xs font-medium">
-                                  Bal: RM{getGuestBalance(guest)}
-                                </span>
-                              )}
                             </div>
                             {guest.paymentCollector && (
                               <div className="col-span-2">
@@ -1608,9 +1598,8 @@ export default function SortableGuestTable() {
                             <span className="text-lg">✓</span>
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center text-red-600">
-                            <span className="text-xs font-medium">Bal</span>
-                            <span className="text-sm font-bold">RM{getGuestBalance(guest)}</span>
+                          <div className="flex items-center text-red-600">
+                            <span className="text-lg">✗</span>
                           </div>
                         )}
                       </div>
