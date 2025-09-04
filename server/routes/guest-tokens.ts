@@ -6,7 +6,8 @@ import path from "path";
 import { storage } from "../storage";
 import { 
   guestSelfCheckinSchema,
-  createTokenSchema
+  createTokenSchema,
+  updateGuestTokenCapsuleSchema
 } from "@shared/schema";
 import { calculateAgeFromIC } from "@shared/utils";
 import { validateData, securityValidationMiddleware, sanitizers, validators } from "../validation";
@@ -510,7 +511,7 @@ router.patch("/:id/cancel", authenticateToken, async (req: any, res) => {
     const { reason } = req.body;
     
     // Get the guest token to check if it exists and is not used
-    const guestToken = await storage.getGuestToken(id);
+    const guestToken = await storage.getGuestTokenById(id);
     if (!guestToken) {
       return res.status(404).json({ message: "Guest check-in not found" });
     }
@@ -520,7 +521,7 @@ router.patch("/:id/cancel", authenticateToken, async (req: any, res) => {
     }
     
     // Mark token as cancelled (we'll use isUsed field for this)
-    const updated = await storage.markTokenAsUsed(id);
+    const updated = await storage.markTokenAsUsed(guestToken.token);
     
     if (!updated) {
       return res.status(400).json({ message: "Failed to cancel check-in" });
@@ -530,6 +531,157 @@ router.patch("/:id/cancel", authenticateToken, async (req: any, res) => {
   } catch (error: any) {
     console.error("Error cancelling guest check-in:", error);
     res.status(400).json({ message: error.message || "Failed to cancel check-in" });
+  }
+});
+
+// Update guest token capsule assignment
+router.patch("/:tokenId/capsule", 
+  securityValidationMiddleware,
+  authenticateToken,
+  validateData(updateGuestTokenCapsuleSchema, 'body'),
+  async (req: any, res) => {
+  try {
+    const { tokenId } = req.params;
+    const validatedData = req.body;
+    
+    console.log('🔄 [Guest Token Capsule Update] Request received');
+    console.log('🔄 [Guest Token Capsule Update] User:', req.user?.email || 'Unknown');
+    console.log('🔄 [Guest Token Capsule Update] Token ID:', tokenId);
+    console.log('🔄 [Guest Token Capsule Update] Request data:', {
+      autoAssign: validatedData.autoAssign,
+      capsuleNumber: validatedData.capsuleNumber,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Get the existing guest token to check if it can be updated
+    const existingToken = await storage.getGuestTokenById(tokenId);
+    if (!existingToken) {
+      return res.status(404).json({ message: "Guest token not found" });
+    }
+    
+    // Prevent updating already used tokens
+    if (existingToken.isUsed) {
+      return res.status(400).json({ 
+        message: "Cannot update capsule assignment for already used guest token" 
+      });
+    }
+    
+    // Check if token is expired
+    if (existingToken.expiresAt && new Date() > existingToken.expiresAt) {
+      return res.status(400).json({ message: "Cannot update expired guest token" });
+    }
+    
+    // Store the previous capsule for response
+    const previousCapsule = existingToken.capsuleNumber;
+    
+    // Determine new capsule assignment
+    let newCapsuleNumber: string | null = null;
+    
+    if (validatedData.autoAssign) {
+      // Auto-assign logic: get available capsules and pick the best one
+      const availableCapsules = await storage.getAvailableCapsules();
+      
+      if (availableCapsules.length === 0) {
+        return res.status(400).json({ message: "No capsules available for auto-assignment" });
+      }
+      
+      // Use the same priority logic as token creation
+      const sortedCapsules = availableCapsules.sort((a, b) => {
+        const aNum = parseInt(a.number.replace('C', ''));
+        const bNum = parseInt(b.number.replace('C', ''));
+        
+        // Section priority: back (1-6) > middle (25-26) > front (11-24)
+        const getSectionPriority = (num: number) => {
+          if (num >= 1 && num <= 6) return 1; // back
+          if (num >= 25 && num <= 26) return 2; // middle
+          return 3; // front
+        };
+        
+        const aSectionPriority = getSectionPriority(aNum);
+        const bSectionPriority = getSectionPriority(bNum);
+        
+        if (aSectionPriority !== bSectionPriority) {
+          return aSectionPriority - bSectionPriority;
+        }
+        
+        // Within same section, prefer even numbers (bottom bunks)
+        const aIsEven = aNum % 2 === 0;
+        const bIsEven = bNum % 2 === 0;
+        
+        if (aIsEven && !bIsEven) return -1;
+        if (!aIsEven && bIsEven) return 1;
+        
+        // Same parity, sort by number
+        return aNum - bNum;
+      });
+      
+      newCapsuleNumber = sortedCapsules[0].number;
+    } else if (validatedData.capsuleNumber) {
+      // Verify specific capsule is available
+      const capsule = await storage.getCapsule(validatedData.capsuleNumber);
+      if (!capsule) {
+        return res.status(400).json({ message: "Specified capsule not found" });
+      }
+      if (!capsule.isAvailable) {
+        return res.status(400).json({ message: "Specified capsule is not available" });
+      }
+      newCapsuleNumber = validatedData.capsuleNumber;
+    }
+    
+    // Update the guest token
+    const updatedToken = await storage.updateGuestTokenCapsule(
+      tokenId, 
+      newCapsuleNumber, 
+      validatedData.autoAssign || false
+    );
+    
+    if (!updatedToken) {
+      return res.status(500).json({ message: "Failed to update guest token capsule assignment" });
+    }
+    
+    console.log('✅ [Guest Token Capsule Update] Update successful');
+    console.log('✅ [Guest Token Capsule Update] Response data:', {
+      tokenId: updatedToken.id?.substring(0, 8) + '...',
+      previousCapsule: previousCapsule,
+      newCapsule: newCapsuleNumber,
+      autoAssign: validatedData.autoAssign || false,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({
+      success: true,
+      updatedToken: {
+        id: updatedToken.id,
+        token: updatedToken.token,
+        capsuleNumber: updatedToken.capsuleNumber,
+        autoAssign: updatedToken.autoAssign,
+        guestName: updatedToken.guestName,
+        expiresAt: updatedToken.expiresAt,
+        isUsed: updatedToken.isUsed
+      },
+      previousCapsule: previousCapsule,
+      message: `Capsule assignment updated ${previousCapsule ? `from ${previousCapsule}` : ''} to ${newCapsuleNumber || 'auto-assign'}`
+    });
+    
+  } catch (error: any) {
+    console.error("❌ [Guest Token Capsule Update] Error occurred during update");
+    console.error("❌ [Guest Token Capsule Update] Error details:", {
+      message: error.message,
+      stack: error.stack?.split('\n')[0],
+      code: error.code,
+      timestamp: new Date().toISOString(),
+      tokenId: req.params?.tokenId,
+      requestData: {
+        autoAssign: req.body?.autoAssign,
+        capsuleNumber: req.body?.capsuleNumber
+      }
+    });
+    
+    res.status(500).json({ 
+      message: error.message || "Failed to update guest token capsule assignment",
+      details: "Check server logs for more information",
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

@@ -694,6 +694,16 @@ export class MemStorage implements IStorage {
     return this.guestTokens.get(token);
   }
 
+  async getGuestTokenById(id: string): Promise<GuestToken | undefined> {
+    // Find the token by ID
+    for (const token of this.guestTokens.values()) {
+      if (token.id === id) {
+        return token;
+      }
+    }
+    return undefined;
+  }
+
   async getActiveGuestTokens(pagination?: PaginationParams): Promise<PaginatedResponse<GuestToken>> {
     const now = new Date();
     const activeTokens = Array.from(this.guestTokens.values())
@@ -707,6 +717,30 @@ export class MemStorage implements IStorage {
     if (guestToken) {
       const updatedToken = { ...guestToken, isUsed: true, usedAt: new Date() };
       this.guestTokens.set(token, updatedToken);
+      return updatedToken;
+    }
+    return undefined;
+  }
+
+  async updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined> {
+    // Find the token by ID
+    let tokenKey: string | null = null;
+    let guestToken: GuestToken | null = null;
+    
+    this.guestTokens.forEach((token, key) => {
+      if (token.id === tokenId) {
+        tokenKey = key;
+        guestToken = token;
+      }
+    });
+    
+    if (guestToken && tokenKey) {
+      const updatedToken = { 
+        ...guestToken, 
+        capsuleNumber: capsuleNumber,
+        autoAssign: autoAssign 
+      };
+      this.guestTokens.set(tokenKey, updatedToken);
       return updatedToken;
     }
     return undefined;

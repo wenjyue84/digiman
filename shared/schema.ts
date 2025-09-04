@@ -669,6 +669,25 @@ export const createTokenSchema = z.object({
   path: ["capsuleNumber"],
 });
 
+// Validation schema for updating guest token capsule assignment
+export const updateGuestTokenCapsuleSchema = z.object({
+  capsuleNumber: z.string()
+    .min(1, "Capsule number is required")
+    .regex(/^C\d+$/, "Capsule number must be in format like C1, C11, C25")
+    .transform(val => val.toUpperCase())
+    .optional(),
+  autoAssign: z.boolean().optional(),
+}).refine((data) => {
+  // Either capsuleNumber or autoAssign must be provided, but not both
+  const hasCapsuleNumber = data.capsuleNumber && data.capsuleNumber.length > 0;
+  const hasAutoAssign = data.autoAssign === true;
+  
+  return (hasCapsuleNumber && !hasAutoAssign) || (!hasCapsuleNumber && hasAutoAssign);
+}, {
+  message: "Either specify a capsule number or choose auto assign (but not both)",
+  path: ["capsuleNumber"],
+});
+
 // Type exports
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -694,6 +713,7 @@ export type AdminNotification = typeof adminNotifications.$inferSelect;
 export type InsertAdminNotification = typeof adminNotifications.$inferInsert;
 export type GuestSelfCheckin = z.infer<typeof guestSelfCheckinSchema>;
 export type CreateToken = z.infer<typeof createTokenSchema>;
+export type UpdateGuestTokenCapsule = z.infer<typeof updateGuestTokenCapsuleSchema>;
 export type MarkCapsuleCleaned = z.infer<typeof markCapsuleCleanedSchema>;
 
 // Admin notification schema for validation

@@ -390,6 +390,19 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getGuestTokenById(id: string): Promise<GuestToken | undefined> {
+    const result = await this.db.select().from(guestTokens).where(eq(guestTokens.id, id)).limit(1);
+    return result[0];
+  }
+
+  async updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined> {
+    const result = await this.db.update(guestTokens).set({
+      capsuleNumber: capsuleNumber,
+      autoAssign: autoAssign,
+    }).where(eq(guestTokens.id, tokenId)).returning();
+    return result[0];
+  }
+
   async deleteGuestToken(id: string): Promise<boolean> {
     try {
       const result = await this.db.delete(guestTokens).where(eq(guestTokens.id, id)).returning();

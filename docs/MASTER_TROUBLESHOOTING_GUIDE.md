@@ -11395,3 +11395,250 @@ npm run dev
 - ✅ **Applied proven troubleshooting**: Problem #007/#010 pattern for build artifacts
 - ✅ **Enhanced UX**: Authentication-aware UI with single-click interactions
 - ✅ **Validated solution**: User confirmed "almost perfect" mobile experience
+
+---
+
+### **024 - Mobile Safari Clipboard Failure on "Instant Create" Button (SOLVED)**
+
+**Date Solved:** September 4, 2025  
+**Symptoms:**
+- "Instant Create" button creates guest tokens successfully but fails to copy link to clipboard on mobile Safari (iPhone 16 Pro Max)
+- Success message appears and new "pending-check-in" row is created correctly
+- Clipboard copy works on desktop browsers but fails on mobile
+- User can still copy link manually from Dashboard page
+
+**Root Cause:**
+- **Mobile Safari Security Restrictions**: `navigator.clipboard.writeText()` must be called within ~3-5 seconds of direct user interaction
+- **Async Callback Issue**: The clipboard operation was happening inside an async API callback after token creation
+- **User Activation Context Lost**: The async API request broke the "user activation context" required for clipboard access on mobile
+- **Desktop vs Mobile**: Desktop browsers are more lenient, mobile Safari is stricter with clipboard security
+
+**Solution Implemented:**
+1. **Replaced navigator.clipboard with react-copy-to-clipboard library**:
+   ```typescript
+   // BEFORE: Problematic async clipboard operation
+   onSuccess: async (data) => {
+     try {
+       await navigator.clipboard.writeText(data.link);  // ❌ Fails on mobile
+       toast({ title: "Instant link copied" });
+     } catch (error) {
+       toast({ title: "Instant link created", variant: "destructive" });
+     }
+   }
+   
+   // AFTER: Synchronous clipboard operation with automatic trigger
+   onSuccess: (data) => {
+     setInstantLink(data.link);  // ✅ Store link for CopyToClipboard
+     onTokenCreated?.();
+     // Success message handled by CopyToClipboard onCopy callback
+   }
+   ```
+
+2. **Added hidden CopyToClipboard component with auto-trigger**:
+   ```typescript
+   // Hidden copy button that gets triggered automatically
+   {instantLink && (
+     <CopyToClipboard text={instantLink} onCopy={handleInstantCopy}>
+       <button 
+         ref={copyButtonRef}
+         style={{ display: 'none' }}
+         aria-hidden="true"
+       />
+     </CopyToClipboard>
+   )}
+   
+   // Auto-trigger copy when link is generated
+   useEffect(() => {
+     if (instantLink && copyButtonRef.current) {
+       setTimeout(() => {
+         copyButtonRef.current?.click();
+       }, 100);
+     }
+   }, [instantLink]);
+   ```
+
+3. **Enhanced success messages with Dashboard fallback guidance**:
+   ```typescript
+   const handleInstantCopy = (text: string, result: boolean) => {
+     if (result) {
+       toast({
+         title: "Instant link copied!",
+         description: "Check-in link copied to clipboard. You can also find this link in the Dashboard page if needed.",
+       });
+     } else {
+       toast({
+         title: "Instant link created",
+         description: "Couldn't copy automatically. Please go to the Dashboard page to copy the link manually.",
+         variant: "destructive",
+       });
+     }
+   };
+   ```
+
+**Technical Implementation Details:**
+- **Library Choice**: Used existing `react-copy-to-clipboard` v5.1.0 already working elsewhere in the codebase
+- **Auto-trigger Pattern**: useEffect + setTimeout + useRef for automatic clipboard operation
+- **State Management**: Added `instantLink` state and `copyButtonRef` for coordination
+- **Error Handling**: Comprehensive success/failure messaging with fallback instructions
+
+**Files Modified:**
+- `client/src/components/guest-token-generator.tsx` - Replaced clipboard implementation with react-copy-to-clipboard
+
+**Testing Results:**
+- ✅ **Desktop**: Continues to work as before
+- ✅ **Mobile Safari**: Now successfully copies links to clipboard
+- ✅ **Fallback**: Clear guidance directs users to Dashboard if clipboard fails
+- ✅ **UX**: Maintains same user experience with better cross-platform reliability
+
+**User Feedback:**
+> "great u done it . Save into @docs\MASTER_TROUBLESHOOTING_GUIDE.md"
+
+**Prevention Steps:**
+- **Use proven clipboard libraries** like react-copy-to-clipboard for mobile compatibility
+- **Avoid async clipboard operations** in success callbacks on mobile
+- **Always provide fallback instructions** when clipboard operations may fail
+- **Test clipboard features** specifically on mobile Safari during development
+
+**Key Learning Points:**
+- **Mobile Safari clipboard security** requires synchronous operations within user activation context
+- **react-copy-to-clipboard handles cross-platform compatibility** better than native navigator.clipboard
+- **Hidden button + auto-trigger pattern** works for programmatic clipboard operations
+- **User guidance is critical** - always provide alternative ways to access generated content
+
+**Related Issues:**
+- **Problem #007**: Frontend Changes Not Reflecting Due to Build Artifacts (used for deployment)
+- Similar clipboard issues may occur with other file/link generation features
+
+**Success Pattern:**
+- ✅ **Identified mobile-specific failure**: Clipboard security restrictions on iOS Safari
+- ✅ **Used proven library solution**: react-copy-to-clipboard already in codebase
+- ✅ **Implemented auto-trigger pattern**: Hidden button + useEffect for seamless UX
+- ✅ **Enhanced user guidance**: Dashboard fallback instructions for reliability
+- ✅ **Validated cross-platform**: Works on both desktop and mobile browsers
+
+---
+
+### **021 - Guest Table Display Server Error After Capsule Assignment Feature (SOLVED)**
+
+**Date Solved:** September 4, 2025  
+**Symptoms:**
+- Dashboard guest table shows "Server Error - Something went wrong on our end. Please try again later."
+- Error occurred after adding capsule assignment functionality for pending customers
+- Browser console shows 500 Internal Server Error for multiple API endpoints
+- Guest table completely fails to load despite server running normally
+
+**Root Cause:**
+- **Type Mismatch in Token Lookup**: `guest-tokens.ts` route was calling `getGuestToken(tokenId)` with an ID parameter instead of a token string
+- **Wrong Storage Method Used**: Lines 557, 514, and 524 in `guest-tokens.ts` used token ID where token string was expected
+- **Missing Storage Method**: No `getGuestTokenById()` method existed to lookup tokens by ID
+- **Foreign Key Lookup Failure**: Database/storage couldn't find tokens when searching by ID in token field
+
+**Technical Details:**
+```typescript
+// BEFORE: Wrong - using ID parameter with token string method
+const existingToken = await storage.getGuestToken(tokenId); // ❌ tokenId is an ID, not token
+
+// AFTER: Correct - using ID parameter with ID method  
+const existingToken = await storage.getGuestTokenById(tokenId); // ✅ tokenId matches method expectation
+```
+
+**Solution Implemented:**
+
+1. **Created Missing Storage Method** - Added `getGuestTokenById()` to all storage layers:
+
+   **IStorage.ts Interface:**
+   ```typescript
+   getGuestTokenById(id: string): Promise<GuestToken | undefined>;
+   ```
+
+   **DatabaseStorage.ts Implementation:**
+   ```typescript
+   async getGuestTokenById(id: string): Promise<GuestToken | undefined> {
+     const result = await this.db.select().from(guestTokens).where(eq(guestTokens.id, id)).limit(1);
+     return result[0];
+   }
+   ```
+
+   **MemStorage.ts Implementation:**
+   ```typescript
+   async getGuestTokenById(id: string): Promise<GuestToken | undefined> {
+     for (const token of this.guestTokens.values()) {
+       if (token.id === id) {
+         return token;
+       }
+     }
+     return undefined;
+   }
+   ```
+
+2. **Fixed Token Lookup Calls** in `server/routes/guest-tokens.ts`:
+   ```typescript
+   // Lines 557, 514, and 524 - Changed from:
+   const existingToken = await storage.getGuestToken(tokenId);
+   
+   // To:
+   const existingToken = await storage.getGuestTokenById(tokenId);
+   ```
+
+3. **Fixed Server Networking Configuration** in `server/index.ts`:
+   ```typescript
+   // BEFORE: Windows networking issues
+   server.listen({
+     port,
+     host: "0.0.0.0",
+     reusePort: true,
+   });
+
+   // AFTER: Windows compatible
+   server.listen({
+     port,
+     host: "127.0.0.1",
+   });
+   ```
+
+**Verification Results:**
+- ✅ `/api/guests/checked-in` - Returns 9 guests with full data
+- ✅ `/api/guest-tokens/active` - Returns proper JSON response 
+- ✅ `/api/guest-tokens/health` - Shows healthy database connection
+- ✅ `/api/capsules/available` - Shows 13 available capsules
+- ✅ Server starts successfully with "serving on port 5000" message
+- ✅ Guest table now displays correctly on dashboard
+- ✅ Capsule assignment functionality working properly
+
+**Files Modified:**
+- `server/Storage/IStorage.ts` - Added `getGuestTokenById` method to interface
+- `server/Storage/DatabaseStorage.ts` - Implemented `getGuestTokenById` for database storage  
+- `server/Storage/MemStorage.ts` - Implemented `getGuestTokenById` for memory storage
+- `server/routes/guest-tokens.ts` - Fixed token lookup calls at lines 557, 514, 524
+- `server/index.ts` - Fixed Windows networking configuration
+
+**Prevention Steps:**
+- **Match parameter types with method expectations**: Ensure IDs go to ID methods, tokens go to token methods
+- **Implement complete storage interfaces**: Add missing methods when new functionality requires them
+- **Test API endpoints independently**: Use curl to verify endpoints work before frontend integration
+- **Use proper host configuration**: Use "127.0.0.1" instead of "0.0.0.0" on Windows development
+- **Verify foreign key relationships**: Ensure lookup methods search the correct database fields
+
+**Success Pattern:**
+- ✅ **Identified type mismatch**: Found getGuestToken(ID) vs getGuestToken(token) confusion
+- ✅ **Created missing infrastructure**: Added getGuestTokenById() method across all storage layers
+- ✅ **Fixed all occurrences systematically**: Updated lines 557, 514, and 524 consistently
+- ✅ **Tested endpoints independently**: Verified API responses before frontend testing
+- ✅ **Resolved networking issues**: Fixed Windows host binding problems
+- ✅ **Validated full functionality**: Confirmed both guest table display and capsule assignment work
+
+**Key Learning Points:**
+- **Method naming consistency** is critical - token lookups should clearly distinguish between ID vs token string parameters
+- **Complete interface implementation** prevents runtime errors when new features are added  
+- **Independent API testing** helps isolate backend issues from frontend problems
+- **Windows networking configuration** requires different settings than Linux/Docker environments
+
+**Related Issues:**
+- **Problem #018**: Expenses Foreign Key Constraint Violation (similar foreign key lookup pattern)
+- **Problem #019**: Guest Token Creation Foreign Key Constraint Violation (related to guest tokens)
+- Database constraint violations often indicate parameter type mismatches
+
+**User Feedback:**
+> "u solved it , save to @docs\MASTER_TROUBLESHOOTING_GUIDE.md"
+
+This resolution demonstrates the importance of proper parameter type matching and complete storage interface implementation when adding new features that interact with existing database lookup methods.

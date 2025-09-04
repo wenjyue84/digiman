@@ -20,7 +20,7 @@ import GuestDetailsModal from "./guest-details-modal";
 import ExtendStayDialog from "./ExtendStayDialog";
 import { CheckoutConfirmationDialog } from "./confirmation-dialog";
 
-import type { Guest, GuestToken, PaginatedResponse } from "@shared/schema";
+import type { Guest, GuestToken, PaginatedResponse, UpdateGuestTokenCapsule } from "@shared/schema";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
@@ -572,6 +572,31 @@ export default function SortableGuestTable() {
     },
   });
 
+  // Mutation for updating guest token capsule assignment
+  const updateTokenCapsuleMutation = useMutation({
+    mutationFn: async ({ tokenId, updateData }: { tokenId: string; updateData: UpdateGuestTokenCapsule }) => {
+      const response = await apiRequest("PATCH", `/api/guest-tokens/${tokenId}/capsule`, updateData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch guest tokens to update the UI
+      queryClient.invalidateQueries({ queryKey: ["/api/guest-tokens/active"] });
+      
+      toast({
+        title: "Capsule Updated",
+        description: data.message || "Guest token capsule assignment updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      const { title, description } = extractDetailedError(error);
+      toast({
+        title,
+        description,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCheckout = (guestId: string) => {
     if (!isAuthenticated) {
       toast({
@@ -670,6 +695,30 @@ export default function SortableGuestTable() {
     }
     
     cancelTokenMutation.mutate(tokenId);
+  };
+
+  // Handler for updating guest token capsule assignment
+  const handleTokenCapsuleChange = (tokenId: string, capsuleNumber: string | null, autoAssign?: boolean) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to update capsule assignments. Redirecting to login page...",
+        variant: "destructive",
+        duration: 3000,
+      });
+      
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+      
+      return;
+    }
+    
+    const updateData: UpdateGuestTokenCapsule = autoAssign 
+      ? { autoAssign: true }
+      : { capsuleNumber: capsuleNumber! };
+    
+    updateTokenCapsuleMutation.mutate({ tokenId, updateData });
   };
 
   const handleGuestClick = (guest: Guest) => {
@@ -1387,9 +1436,47 @@ export default function SortableGuestTable() {
                         {/* Accommodation column with copy icon - sticky first column */}
                         <td className="px-3 py-3 whitespace-nowrap sticky left-0 bg-orange-50 z-10 min-w-[100px]">
                           <div className="flex items-center gap-1">
-                            <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">
-                              {pendingData.capsuleNumber}
-                            </Badge>
+                            {isAuthenticated ? (
+                              <Select
+                                value={pendingData.capsuleNumber || 'auto-assign'}
+                                onValueChange={(value) => {
+                                  if (value === 'auto-assign') {
+                                    handleTokenCapsuleChange(pendingData.id, null, true);
+                                  } else {
+                                    handleTokenCapsuleChange(pendingData.id, value);
+                                  }
+                                }}
+                                disabled={updateTokenCapsuleMutation.isPending}
+                              >
+                                <SelectTrigger className="w-24 h-7 text-xs bg-orange-500 text-white border-orange-500 hover:bg-orange-600">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="auto-assign" className="text-xs">
+                                    <span className="font-medium">Auto-assign</span>
+                                  </SelectItem>
+                                  {availableCapsules
+                                    .sort((a, b) => {
+                                      const aNum = parseInt(a.number.replace('C', ''));
+                                      const bNum = parseInt(b.number.replace('C', ''));
+                                      return aNum - bNum;
+                                    })
+                                    .map((capsule) => (
+                                      <SelectItem key={capsule.number} value={capsule.number} className="text-xs">
+                                        <div className="flex items-center justify-between w-full">
+                                          <span>{capsule.number}</span>
+                                          {capsule.position === 'bottom' && <span title="Bottom bed">⭐</span>}
+                                        </div>
+                                      </SelectItem>
+                                    ))
+                                  }
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">
+                                {pendingData.capsuleNumber || 'Auto-assign'}
+                              </Badge>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1641,7 +1728,47 @@ export default function SortableGuestTable() {
                           onClick={() => handlePendingCheckinClick(pendingData.id)}
                           className="flex items-center gap-2 focus:outline-none"
                         >
-                          <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">{pendingData.capsuleNumber}</Badge>
+                          {isAuthenticated ? (
+                            <Select
+                              value={pendingData.capsuleNumber || 'auto-assign'}
+                              onValueChange={(value) => {
+                                if (value === 'auto-assign') {
+                                  handleTokenCapsuleChange(pendingData.id, null, true);
+                                } else {
+                                  handleTokenCapsuleChange(pendingData.id, value);
+                                }
+                              }}
+                              disabled={updateTokenCapsuleMutation.isPending}
+                            >
+                              <SelectTrigger className="w-24 h-6 text-xs bg-orange-500 text-white border-orange-500 hover:bg-orange-600">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="auto-assign" className="text-xs">
+                                  <span className="font-medium">Auto-assign</span>
+                                </SelectItem>
+                                {availableCapsules
+                                  .sort((a, b) => {
+                                    const aNum = parseInt(a.number.replace('C', ''));
+                                    const bNum = parseInt(b.number.replace('C', ''));
+                                    return aNum - bNum;
+                                  })
+                                  .map((capsule) => (
+                                    <SelectItem key={capsule.number} value={capsule.number} className="text-xs">
+                                      <div className="flex items-center justify-between w-full">
+                                        <span>{capsule.number}</span>
+                                        {capsule.position === 'bottom' && <span title="Bottom bed">⭐</span>}
+                                      </div>
+                                    </SelectItem>
+                                  ))
+                                }
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">
+                              {pendingData.capsuleNumber || 'Auto-assign'}
+                            </Badge>
+                          )}
                           <span className="font-medium cursor-pointer underline-offset-2 hover:underline">{truncateName(pendingData.name)}</span>
                         </button>
                         <div className="text-xs text-orange-700 mt-1">

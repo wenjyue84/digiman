@@ -56,8 +56,10 @@ export interface IStorage {
   // Guest token management methods
   createGuestToken(token: InsertGuestToken): Promise<GuestToken>;
   getGuestToken(token: string): Promise<GuestToken | undefined>;
+  getGuestTokenById(id: string): Promise<GuestToken | undefined>;
   getActiveGuestTokens(pagination?: PaginationParams): Promise<PaginatedResponse<GuestToken>>;
   markTokenAsUsed(token: string): Promise<GuestToken | undefined>;
+  updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined>;
   deleteGuestToken(id: string): Promise<boolean>;
   cleanExpiredTokens(): Promise<void>;
 
