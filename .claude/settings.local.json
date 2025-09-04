@@ -21,7 +21,10 @@
       "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
       "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server\\routes/**)",
       "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server\\routes/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)"
+      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
+      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
+      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager/**)",
+      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components\\guest-checkin/**)"
     ],
     "deny": [],
     "ask": [],
