@@ -164,14 +164,14 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port: 3001,
+    port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:3005',
         changeOrigin: true
       },
       '/objects': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:3005',
         changeOrigin: true
       }
     },
