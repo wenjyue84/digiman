@@ -13,7 +13,7 @@
     "dev:safe": "node scripts/start-dev.js",
     "dev:clean": "npx kill-port 5000 && npx kill-port 3000 && npm run dev",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "cross-env NODE_ENV=production node dist/index.js",
+    "start": "cross-env NODE_ENV=production PORT=5000 node dist/index.js",
     "start:aws": "cross-env NODE_ENV=production PORT=8080 node dist/index.js",
     "start:safe": "npx kill-port 3005 && npm run start",
     "check": "tsc",
