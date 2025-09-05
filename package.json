@@ -9,6 +9,7 @@
     "dev:frontend": "vite --port 3000",
     "dev:memory": "cross-env NODE_ENV=development PORT=3005 tsx watch --clear-screen=false server/index.ts",
     "dev:build": "npm run build && npm run dev:memory",
+    "dev:replit": "npm run build && tsx watch --clear-screen=false server/index.ts",
     "dev:safe": "node scripts/start-dev.js",
     "dev:clean": "npx kill-port 5000 && npx kill-port 3000 && npm run dev",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",

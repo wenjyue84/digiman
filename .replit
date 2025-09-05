@@ -35,7 +35,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev:build"
+args = "npm run dev:replit"
 waitForPort = 5000
 
 [agent]
