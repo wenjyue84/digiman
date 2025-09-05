@@ -1,15 +1,14 @@
-# Multi-stage Docker build for PelangiManager
-FROM node:18-alpine as builder
+# Simplified Dockerfile for AWS Elastic Beanstalk
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -17,34 +16,20 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine
-
-# Create app directory
-WORKDIR /app
+# Remove dev dependencies to reduce image size
+RUN npm ci --only=production && npm cache clean --force
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodeuser -u 1001
-
-# Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-
-# Copy any additional assets needed at runtime
-COPY --from=builder /app/settings.csv ./settings.csv 2>/dev/null || echo "No settings.csv found"
-
-# Change ownership to non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodeuser -u 1001
 RUN chown -R nodeuser:nodejs /app
 USER nodeuser
 
-# Expose port (Elastic Beanstalk expects port 8080)
+# Expose port 8080 (required by Elastic Beanstalk)
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:8080/api/database/config', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:8080/ || exit 1
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application with better error handling
+CMD ["sh", "-c", "NODE_ENV=production PORT=8080 npm run start:aws 2>&1 | tee /tmp/app.log"]
