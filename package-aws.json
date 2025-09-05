@@ -2,9 +2,9 @@
   "name": "pelangi-manager",
   "version": "1.0.0",
   "description": "PelangiManager Hostel Management System",
-  "main": "app.js",
+  "main": "app-aws.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app-aws.js"
   },
   "engines": {
     "node": "20.x"
