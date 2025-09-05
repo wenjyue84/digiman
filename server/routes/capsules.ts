@@ -12,7 +12,7 @@ import { authenticateToken } from "./middleware/auth";
 const router = Router();
 
 // Helper function to determine warning level for capsule assignment
-function getWarningLevel(capsule: any): 'none' | 'minor' | 'major' | 'blocked' {
+function getWarningLevel(capsule: any, activeProblems: any[] = []): 'none' | 'minor' | 'major' | 'blocked' {
   // Blocked - Cannot be assigned automatically
   if (!capsule.isAvailable || capsule.toRent === false) {
     return 'blocked';
@@ -23,11 +23,9 @@ function getWarningLevel(capsule: any): 'none' | 'minor' | 'major' | 'blocked' {
     return 'major';
   }
   
-  // Minor warning - Maintenance issues but still rentable
-  if (capsule.toRent !== false && capsule.cleaningStatus === 'cleaned') {
-    // Check if there are any active problems (we'd need to query this)
-    // For now, assume no minor warnings unless we have active problems
-    return 'none';
+  // Minor warning - Has active maintenance problems but still rentable
+  if (capsule.toRent !== false && capsule.cleaningStatus === 'cleaned' && activeProblems.length > 0) {
+    return 'minor';
   }
   
   return 'none';
@@ -57,14 +55,26 @@ router.get("/available-with-status", authenticateToken, async (_req, res) => {
       return !occupiedCapsules.has(capsule.number);
     });
 
+    // Get all active problems to check for maintenance issues
+    const activeProblemsResponse = await storage.getActiveProblems({ page: 1, limit: 1000 });
+    const allActiveProblems = activeProblemsResponse.data;
+
     // Add assignment eligibility info to each capsule
-    const capsulesWithStatus = displayableCapsules.map(capsule => ({
-      ...capsule,
-      canAssign: capsule.cleaningStatus === "cleaned" && capsule.isAvailable && capsule.toRent !== false,
-      warningLevel: getWarningLevel(capsule),
-      // Allow manual override - show all capsules but mark those that need warnings
-      canManualAssign: capsule.isAvailable // As long as it's not occupied, admin can assign it
-    }));
+    const capsulesWithStatus = displayableCapsules.map(capsule => {
+      // Find active problems for this specific capsule
+      const capsuleProblems = allActiveProblems.filter(problem => 
+        problem.capsuleNumber === capsule.number && !problem.isResolved
+      );
+
+      return {
+        ...capsule,
+        canAssign: capsule.cleaningStatus === "cleaned" && capsule.isAvailable && capsule.toRent !== false,
+        warningLevel: getWarningLevel(capsule, capsuleProblems),
+        activeProblems: capsuleProblems, // Include problems data for frontend use
+        // Allow manual override - show all capsules but mark those that need warnings
+        canManualAssign: capsule.isAvailable // As long as it's not occupied, admin can assign it
+      };
+    });
 
     // Sort by pure sequential order: C1, C2, C3, C4... C20, C21, C24 (regardless of assignment status)
     const sortedCapsules = capsulesWithStatus.sort((a, b) => {

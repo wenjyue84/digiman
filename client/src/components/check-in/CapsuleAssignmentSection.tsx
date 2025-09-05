@@ -11,7 +11,7 @@ import type { InsertGuest, Capsule } from "@shared/schema";
 
 interface CapsuleAssignmentSectionProps {
   form: UseFormReturn<InsertGuest>;
-  availableCapsules: (Capsule & { canAssign: boolean; warningLevel?: string; canManualAssign?: boolean })[];
+  availableCapsules: (Capsule & { canAssign: boolean; warningLevel?: string; canManualAssign?: boolean; activeProblems?: any[] })[];
   capsulesLoading: boolean;
   isCapsuleLocked?: boolean;
 }
@@ -35,6 +35,15 @@ export default function CapsuleAssignmentSection({
     if (capsule.cleaningStatus === 'to_be_cleaned') {
       return `⚠️ WARNING: This ${labels.lowerSingular} needs cleaning before it can be assigned. Are you sure you want to assign it without cleaning?`;
     }
+    
+    // Check for active maintenance problems
+    if (capsule.activeProblems && capsule.activeProblems.length > 0) {
+      const problemDescriptions = capsule.activeProblems.map((p: any) => p.description).join(', ');
+      const problemCount = capsule.activeProblems.length;
+      
+      return `🔧 MAINTENANCE WARNING: This ${labels.lowerSingular} has ${problemCount} active maintenance ${problemCount === 1 ? 'problem' : 'problems'}: ${problemDescriptions}. Are you sure you want to assign it?`;
+    }
+    
     return null;
   };
 
@@ -44,13 +53,14 @@ export default function CapsuleAssignmentSection({
     if (!selectedCapsule) return;
 
     const warning = getWarningMessage(selectedCapsule);
-    if (warning && !selectedCapsule.canAssign) {
-      // Show warning dialog for problematic capsules
+    if (warning) {
+      // Show warning dialog for all problematic capsules (cleaning, maintenance, or major issues)
+      // This includes capsules with maintenance problems even if they can be assigned
       setPendingCapsule(value);
       setWarningMessage(warning);
       setShowWarningDialog(true);
     } else {
-      // Direct assignment for normal capsules
+      // Direct assignment for normal capsules with no issues
       form.setValue("capsuleNumber", value);
     }
   };
@@ -82,6 +92,9 @@ export default function CapsuleAssignmentSection({
         </p>
         <p className="text-xs text-orange-600">
           ⚠️ Orange {labels.lowerPlural} cannot be selected (may need cleaning, maintenance, or be temporarily unavailable).
+        </p>
+        <p className="text-xs text-yellow-600">
+          🔧 {labels.lowerPlural} with wrench icons have active maintenance problems but can still be assigned.
         </p>
         <p className="text-xs text-red-600">
           🚫 Red {labels.lowerPlural} are not suitable for rent due to major maintenance issues.
@@ -159,6 +172,7 @@ export default function CapsuleAssignmentSection({
                     return sortedCapsules.map(capsule => {
                       const isRecommended = capsule.canAssign;
                       const hasWarning = capsule.warningLevel === 'warning' || capsule.warningLevel === 'error';
+                      const hasMaintenanceProblems = capsule.activeProblems && capsule.activeProblems.length > 0;
                       const isDisabled = !capsule.canManualAssign;
                       
                       return (
@@ -168,6 +182,7 @@ export default function CapsuleAssignmentSection({
                           disabled={isDisabled}
                           className={`
                             ${hasWarning ? 'text-orange-600' : ''}
+                            ${hasMaintenanceProblems && !hasWarning ? 'text-yellow-600' : ''}
                             ${isRecommended ? 'font-medium' : ''}
                           `}
                         >
@@ -175,6 +190,7 @@ export default function CapsuleAssignmentSection({
                             <span>{capsule.number}</span>
                             <div className="flex items-center gap-1">
                               {capsule.position === 'bottom' && <span title="Bottom bed">⭐</span>}
+                              {hasMaintenanceProblems && <span title={`${capsule.activeProblems.length} maintenance ${capsule.activeProblems.length === 1 ? 'problem' : 'problems'}`}>🔧</span>}
                               {hasWarning && <span title="Warning">⚠️</span>}
                               {!isRecommended && <span title="Not recommended">🚫</span>}
                             </div>
