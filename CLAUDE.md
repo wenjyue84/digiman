@@ -1,4 +1,10 @@
-# PelangiManager Project Rules
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# PelangiManager - Capsule System Management Platform
+
+A comprehensive hostel/capsule hotel management system built with React, TypeScript, Express, and PostgreSQL.
 
 ## 🧱 Project Standards
 - **Package Manager**: Always use `npm` (not pnpm)
@@ -10,47 +16,91 @@
 
 ## 🚀 Development Workflow
 - **Always kill port processes before starting servers** (prevention-first approach)
-- **CRITICAL: ALWAYS REBUILD AFTER FRONTEND CHANGES** - Frontend changes don't reflect without rebuild!
 - **800-Line Rule**: Keep files under 800 lines - proactively suggest refactoring if exceeded
 - **File Operations**: Always ask for confirmation before deleting any files
 - **Git Operations**: Work primarily on **main** branch, use Conventional Commits format
 
 ## 🔧 Tech Stack
-- **Frontend**: React with TypeScript, Vite build system
+- **Frontend**: React 18 with TypeScript, Vite build system, Tailwind CSS
 - **Backend**: Node.js with Express, TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
+- **Database**: PostgreSQL with Drizzle ORM (falls back to in-memory storage)
 - **Testing**: Jest for unit tests
-- **Styling**: Tailwind CSS
+- **UI Components**: Shadcn/ui with Radix UI primitives
+- **State Management**: TanStack Query for server state
+- **Form Management**: React Hook Form with Zod validation
 
----
+## 🏗️ High-Level Architecture
 
-## 📚 Imports
-
-### Core Documentation
-- `docs/MASTER_TROUBLESHOOTING_GUIDE.md` - Comprehensive troubleshooting patterns
-- `docs/CLAUDE_PROJECT_NOTES.md` - Development history and refactoring records
-- `docs/DEVELOPMENT_REFERENCE.md` - Project structure and development practices
-
-### On-Demand References
-- `docs/Storage_System_Guide.md` - Storage architecture documentation
-- `docs/System_Architecture_Document.md` - Overall system architecture
-- `docs/REFACTORING_TROUBLESHOOTING.md` - Import/export error solutions
-
----
-
-## 🎯 Core Capabilities
-I help with **file/folder operations** and **git operations with remote repositories**.
-
-## 📁 Project Structure
+### Full-Stack Structure
 ```
-C:\Users\Jyue\Desktop\PelangiManager\
-  ├── client/           # React frontend application
-  ├── server/           # Node.js backend API
-  ├── shared/           # Shared TypeScript schemas
-  ├── docs/             # Project documentation
-  ├── archive/          # Backup files from refactoring
-  └── tests/            # Test files
+├── client/                 # React frontend application
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/          # Route-based page components
+│   │   ├── hooks/          # Custom React hooks
+│   │   ├── lib/            # Utilities and service workers
+│   │   └── main.tsx        # App entry point with PWA setup
+├── server/                 # Node.js backend API
+│   ├── routes/             # Express route handlers (auth, guests, capsules, etc.)
+│   ├── storage/            # Data layer abstraction (Memory/Database)
+│   ├── configManager.ts    # System configuration management
+│   └── index.ts            # Server entry point with Vite middleware
+├── shared/                 # Shared TypeScript schemas and utilities
+│   ├── schema.ts           # Zod schemas for data validation
+│   └── utils.ts            # Cross-platform utilities
+└── docs/                   # Comprehensive system documentation
 ```
+
+### Storage Architecture
+- **Dual Storage System**: Automatic fallback from PostgreSQL to in-memory storage
+- **Storage Factory Pattern**: `server/storage/StorageFactory.ts` manages storage selection
+- **Data Models**: Guests, Capsules, Users, Problems, Settings, Guest Tokens
+- **Migration Support**: Built-in database migration system via MigrationHelper
+
+### API Structure
+- **RESTful API**: `/api/{resource}` endpoints for all operations
+- **Authentication**: Passport.js with session management
+- **File Handling**: `/objects/` endpoints for file upload/download
+- **Real-time Features**: WebSocket support for live updates
+
+## 🌐 Development Server Configuration
+
+### Current Port Setup
+- **Frontend (Vite)**: `http://localhost:3000`
+- **Backend (Express)**: `http://localhost:5000`
+- **API Proxy**: Vite proxies `/api` and `/objects` requests to backend
+
+### Starting Development
+```bash
+# Clean start (recommended)
+npm run dev:clean
+
+# Standard start
+npm run dev
+
+# Manual cleanup if needed
+npx kill-port 5000 && npx kill-port 3000
+```
+
+## 📚 Core Features
+
+### Guest Management System
+- **Check-in Flow**: `/client/src/pages/check-in.tsx` with capsule assignment
+- **Check-out System**: `/client/src/pages/check-out.tsx` with cleaning status
+- **Guest Profiles**: CRUD operations with photo upload support
+- **Guest Tokens**: Secure check-in tokens for contactless operations
+
+### Capsule Operations
+- **Visual Management**: Grid, list, and table views for capsule status
+- **Cleaning Workflow**: Track cleaning schedules and maintenance
+- **Problem Tracking**: Report and resolve capsule issues
+- **Availability Engine**: Real-time availability calculation
+
+### Settings & Configuration
+- **Modular Settings**: Tab-based interface for different config areas
+- **User Management**: Role-based access (admin/staff)
+- **System Testing**: Built-in validation tools
+- **Message Templates**: Customizable guest communications
 
 ## 🔒 Safety Protocols
 - Backup before major file operations
@@ -58,51 +108,11 @@ C:\Users\Jyue\Desktop\PelangiManager\
 - Always confirm before permanent deletions
 - Create archive backups before major refactoring
 
-## 🧪 Test Commands (Auto-Detection)
-- **Node.js:** `npm test` or `npm run test`
-- **Build:** `npm run build`
-- **Development:** `npm run dev`
-- **Linting:** `npm run lint` (run before commits)
-- **Type Check:** `npm run typecheck` (run before commits)
-
-## 🔄 Enhanced 5-Phase Development Workflow
-
-### Phase 1: Do What's Requested
-- Complete the user's specific request
-- Implement core functionality with clear, maintainable code
-- Focus on correctness and meeting specified requirements
-- Always create TodoWrite lists for multi-step tasks
-
-### Phase 2: Automated Testing
-- **Primary**: Use `Gemini -p "Test this [feature/component] with valid/invalid inputs, edge cases, and integration scenarios"`
-- **Fallback**: Use `@agent-test-runner` if Gemini fails
-- Test all functionality, edge cases, and integration points
-- Verify code works as expected before proceeding
-
-### Phase 3: Code Review & Quality Assurance
-- **Primary**: Use `Gemini -p "Review this code for security vulnerabilities, performance issues, and best practices"`
-- **Fallback**: Use `@agent-code-reviewer` if Gemini fails
-- Target specific review aspects: Architecture, Performance, Security, Best Practices
-
-### Phase 4: Enhancement & Refinement
-- Implement improvements based on Phase 2 and Phase 3 feedback
-- Address any issues found during testing
-- Optimize code based on review recommendations
-- Ensure all changes maintain existing functionality
-
-### Phase 5: Final Iteration & User Testing
-- Iterate through Phases 2-4 until all criteria are met
-- Present final solution to user for testing
-- Explain implementation in simple terms
-- Provide clear testing instructions
-
 ## 🚨 Critical Troubleshooting Patterns
 
-### ✅ TRUE HOT RELOAD IMPLEMENTED (August 30, 2025)
-**NEW DEVELOPMENT WORKFLOW:** No more manual builds needed during development!
-
-**Current Setup:**
-- **Frontend**: `http://localhost:3001` (Vite dev server with instant hot reload)
+### Hot Reload System (Current Setup)
+**Development Configuration:**
+- **Frontend**: `http://localhost:3000` (Vite dev server with instant hot reload)
 - **Backend**: `http://localhost:5000` (Express with auto-restart)  
 - **Single Command**: `npm run dev` starts both servers concurrently
 - **Smart Proxy**: API calls automatically routed to backend
@@ -110,30 +120,20 @@ C:\Users\Jyue\Desktop\PelangiManager\
 **Benefits:**
 - ✅ React changes reflect instantly in browser
 - ✅ Backend changes auto-restart server
-- ✅ No more `npm run build` needed for development
-- ✅ Modern development experience matching industry standards
+- ✅ No manual builds needed for development
 
-### Legacy Issue: Frontend Changes Not Reflecting - Build Artifacts Issue
-**NOTE:** This issue is now largely resolved with hot reload setup, but may still occur in edge cases.
-
-**If Hot Reload Fails (Rare Cases):**
-1. **Clean restart** (`npm run dev:clean`)
-2. **Check both ports** (3001 for frontend, 5000 for backend)
-3. **Fallback to manual build** if needed:
-   - Stop server → Clean dist → `npm run build` → `npm run dev`
-
-### Port Conflicts (Enhanced Prevention Pattern)  
+### Port Conflicts (Enhanced Prevention)
 **Prevention-First Approach:**
 ```bash
-# Clean restart with both ports
+# Clean restart with correct ports
 npm run dev:clean
 
 # Manual cleanup if needed
-npx kill-port 5000 && npx kill-port 3001
+npx kill-port 5000 && npx kill-port 3000
 npm run dev
 ```
 
-### React Component Caching
+### Component Caching Issues
 **Problem:** Component changes not appearing despite file modifications
 **Solution:**
 ```bash
@@ -153,8 +153,8 @@ rm -rf node_modules/.vite && npm run build && npm run dev
 
 ### Code Quality
 - **Always perform code review** before commits
-- **Auto-create GitHub issues** for bugs found during review
 - Run appropriate tests based on project type
+- Follow existing code patterns and conventions
 
 ## 🎨 React Development Experience
 
@@ -167,7 +167,6 @@ rm -rf node_modules/.vite && npm run build && npm run dev
 3. **Logical Extraction:** Extract complete logical sections, not arbitrary code blocks
 4. **Form Integration:** Maintain react-hook-form integration seamlessly
 5. **Type Safety:** Ensure all extracted components are properly typed
-6. **Testing:** Verify HMR works and functionality is preserved after each extraction
 
 ## ⚠️ Important Instructions
 
@@ -181,7 +180,6 @@ rm -rf node_modules/.vite && npm run build && npm run dev
 7. **Use TodoWrite tool** to track complex multi-step tasks
 8. **Refer to documentation files** in docs/ folder when encountering problems
 9. **ALWAYS kill port processes before starting servers** (prevention-first approach)
-10. **CRITICAL: ALWAYS REBUILD AFTER FRONTEND CHANGES**
 
 ### Code Standards
 - Follow existing code patterns and conventions
@@ -190,6 +188,18 @@ rm -rf node_modules/.vite && npm run build && npm run dev
 - Follow security best practices
 - Never expose secrets or keys
 - Keep components focused and under 800 lines
+
+## 📚 Documentation References
+
+### Core Documentation
+- `docs/MASTER_TROUBLESHOOTING_GUIDE.md` - Comprehensive troubleshooting patterns
+- `docs/CLAUDE_PROJECT_NOTES.md` - Development history and refactoring records
+- `docs/DEVELOPMENT_REFERENCE.md` - Project structure and development practices
+
+### On-Demand References
+- `docs/Storage_System_Guide.md` - Storage architecture documentation
+- `docs/System_Architecture_Document.md` - Overall system architecture
+- `docs/REFACTORING_TROUBLESHOOTING.md` - Import/export error solutions
 
 ---
 

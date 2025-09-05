@@ -170,11 +170,11 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3005',
+        target: 'http://localhost:5000',
         changeOrigin: true
       },
       '/objects': {
-        target: 'http://localhost:3005',
+        target: 'http://localhost:5000',
         changeOrigin: true
       }
     },
