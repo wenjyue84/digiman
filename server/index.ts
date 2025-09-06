@@ -179,6 +179,25 @@ app.use((req, res, next) => {
     res.json({ message: "SUCCESS: You are connected to the current server!" });
   });
   
+  // Health check endpoint for deployment platforms
+  app.get("/health", async (req, res) => {
+    try {
+      const capsules = await storage.getAllCapsules();
+      res.json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        capsulesCount: capsules.length,
+        storageType: process.env.DATABASE_URL ? "database" : "memory"
+      });
+    } catch (error: any) {
+      res.status(500).json({ 
+        status: "unhealthy", 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+  
   // Special handling for service worker to ensure correct MIME type
   app.get("/sw.js", (req, res) => {
     const path = require("path");
@@ -211,7 +230,7 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
-    host: "127.0.0.1",
+    host: process.env.NODE_ENV === 'production' ? "0.0.0.0" : "127.0.0.1",
   }, () => {
     log(`serving on port ${port}`);
   });
