@@ -142,6 +142,20 @@ export const adminNotifications = pgTable("admin_notifications", {
   index("idx_admin_notifications_created_at").on(table.createdAt),
 ]));
 
+// Push notification subscriptions
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dhKey: text("p256dh_key").notNull(),
+  authKey: text("auth_key").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastUsed: timestamp("last_used"),
+}, (table) => ([
+  index("idx_push_subscriptions_user_id").on(table.userId),
+  index("idx_push_subscriptions_endpoint").on(table.endpoint),
+]));
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -711,6 +725,8 @@ export type GuestToken = typeof guestTokens.$inferSelect;
 export type InsertGuestToken = typeof guestTokens.$inferInsert;
 export type AdminNotification = typeof adminNotifications.$inferSelect;
 export type InsertAdminNotification = typeof adminNotifications.$inferInsert;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type GuestSelfCheckin = z.infer<typeof guestSelfCheckinSchema>;
 export type CreateToken = z.infer<typeof createTokenSchema>;
 export type UpdateGuestTokenCapsule = z.infer<typeof updateGuestTokenCapsuleSchema>;
@@ -720,6 +736,13 @@ export type MarkCapsuleCleaned = z.infer<typeof markCapsuleCleanedSchema>;
 export const insertAdminNotificationSchema = createInsertSchema(adminNotifications).omit({ 
   id: true, 
   createdAt: true 
+});
+
+// Push subscription schema for validation
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  lastUsed: true,
 });
 
 // App settings table
