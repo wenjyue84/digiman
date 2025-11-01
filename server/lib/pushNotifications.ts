@@ -4,7 +4,8 @@
  */
 
 import webpush from 'web-push';
-import { v4 as uuidv4 } from 'uuid';
+import { storage } from '../storage.js';
+import type { PushSubscription } from '../../shared/schema.js';
 
 // VAPID keys for push notifications (should be in environment variables)
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || 'BNsNiqRbgUHSYd2RFNCH5LgRMb6EdGuNAn9bEhYreyTnaG8ORsVg30otyFTt_JkZcdRKp_3diX-nittK_sadJ3E';
@@ -16,18 +17,6 @@ webpush.setVapidDetails(
   VAPID_PUBLIC_KEY,
   VAPID_PRIVATE_KEY
 );
-
-export interface PushSubscription {
-  id: string;
-  userId?: string;
-  endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
-  createdAt: Date;
-  lastUsed?: Date;
-}
 
 export interface NotificationPayload {
   title: string;
@@ -48,8 +37,6 @@ export interface NotificationPayload {
 }
 
 class PushNotificationService {
-  private subscriptions: Map<string, PushSubscription> = new Map();
-
   /**
    * Get VAPID public key for client registration
    */
@@ -60,24 +47,30 @@ class PushNotificationService {
   /**
    * Subscribe a client to push notifications
    */
-  subscribe(subscription: Omit<PushSubscription, 'id' | 'createdAt'>): string {
-    const id = uuidv4();
-    const pushSub: PushSubscription = {
-      ...subscription,
-      id,
-      createdAt: new Date(),
-    };
+  async subscribe(subscription: { userId?: string; endpoint: string; keys: { p256dh: string; auth: string } }): Promise<string> {
+    // Check if subscription already exists
+    const existing = await storage.getPushSubscriptionByEndpoint(subscription.endpoint);
+    if (existing) {
+      console.log(`Push subscription already exists for endpoint: ${existing.id}`);
+      return existing.id;
+    }
+
+    const newSubscription = await storage.createPushSubscription({
+      userId: subscription.userId || null,
+      endpoint: subscription.endpoint,
+      p256dhKey: subscription.keys.p256dh,
+      authKey: subscription.keys.auth,
+    });
     
-    this.subscriptions.set(id, pushSub);
-    console.log(`New push subscription registered: ${id}`);
-    return id;
+    console.log(`New push subscription registered: ${newSubscription.id}`);
+    return newSubscription.id;
   }
 
   /**
    * Unsubscribe a client from push notifications
    */
-  unsubscribe(subscriptionId: string): boolean {
-    const removed = this.subscriptions.delete(subscriptionId);
+  async unsubscribe(subscriptionId: string): Promise<boolean> {
+    const removed = await storage.deletePushSubscription(subscriptionId);
     console.log(`Push subscription ${subscriptionId} ${removed ? 'removed' : 'not found'}`);
     return removed;
   }
@@ -85,16 +78,15 @@ class PushNotificationService {
   /**
    * Get all subscriptions for a user
    */
-  getUserSubscriptions(userId: string): PushSubscription[] {
-    return Array.from(this.subscriptions.values())
-      .filter(sub => sub.userId === userId);
+  async getUserSubscriptions(userId: string): Promise<PushSubscription[]> {
+    return storage.getUserPushSubscriptions(userId);
   }
 
   /**
    * Get all active subscriptions
    */
-  getAllSubscriptions(): PushSubscription[] {
-    return Array.from(this.subscriptions.values());
+  async getAllSubscriptions(): Promise<PushSubscription[]> {
+    return storage.getAllPushSubscriptions();
   }
 
   /**
@@ -107,7 +99,10 @@ class PushNotificationService {
     try {
       const webPushSubscription = {
         endpoint: subscription.endpoint,
-        keys: subscription.keys,
+        keys: {
+          p256dh: subscription.p256dhKey,
+          auth: subscription.authKey,
+        },
       };
 
       await webpush.sendNotification(
@@ -116,8 +111,7 @@ class PushNotificationService {
       );
 
       // Update last used timestamp
-      subscription.lastUsed = new Date();
-      this.subscriptions.set(subscription.id, subscription);
+      await storage.updatePushSubscriptionLastUsed(subscription.id);
       
       console.log(`Push notification sent successfully to ${subscription.id}`);
       return true;
@@ -126,7 +120,7 @@ class PushNotificationService {
       
       // If subscription is invalid, remove it
       if (error.statusCode === 410 || error.statusCode === 404) {
-        this.unsubscribe(subscription.id);
+        await this.unsubscribe(subscription.id);
       }
       
       return false;
@@ -137,7 +131,7 @@ class PushNotificationService {
    * Send push notification to specific user
    */
   async sendToUser(userId: string, payload: NotificationPayload): Promise<number> {
-    const userSubscriptions = this.getUserSubscriptions(userId);
+    const userSubscriptions = await this.getUserSubscriptions(userId);
     let successCount = 0;
 
     for (const subscription of userSubscriptions) {
@@ -153,7 +147,7 @@ class PushNotificationService {
    * Send push notification to all subscribers
    */
   async sendToAll(payload: NotificationPayload): Promise<number> {
-    const allSubscriptions = this.getAllSubscriptions();
+    const allSubscriptions = await this.getAllSubscriptions();
     let successCount = 0;
 
     for (const subscription of allSubscriptions) {
@@ -178,7 +172,7 @@ class PushNotificationService {
    * Clean up invalid subscriptions
    */
   async cleanupInvalidSubscriptions(): Promise<number> {
-    const subscriptions = this.getAllSubscriptions();
+    const subscriptions = await this.getAllSubscriptions();
     let cleanedCount = 0;
 
     for (const subscription of subscriptions) {
@@ -193,7 +187,7 @@ class PushNotificationService {
         await this.sendToSubscription(subscription, testPayload);
       } catch (error: any) {
         if (error.statusCode === 410 || error.statusCode === 404) {
-          this.unsubscribe(subscription.id);
+          await this.unsubscribe(subscription.id);
           cleanedCount++;
         }
       }

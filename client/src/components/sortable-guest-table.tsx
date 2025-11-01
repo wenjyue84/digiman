@@ -588,11 +588,11 @@ export default function SortableGuestTable() {
       });
     },
     onError: (error: any) => {
-      const { title, description } = extractDetailedError(error);
+      const errorToast = createErrorToast(extractDetailedError(error));
       toast({
-        title,
-        description,
-        variant: "destructive",
+        title: errorToast.title,
+        description: errorToast.description,
+        variant: errorToast.variant,
       });
     },
   });

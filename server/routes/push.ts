@@ -29,7 +29,7 @@ router.post('/subscribe', [
   body('subscription.endpoint').isURL().withMessage('Valid endpoint URL is required'),
   body('subscription.keys.p256dh').notEmpty().withMessage('p256dh key is required'),
   body('subscription.keys.auth').notEmpty().withMessage('auth key is required'),
-], (req: any, res: any) => {
+], async (req: any, res: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -44,7 +44,7 @@ router.post('/subscribe', [
     // Get user ID from auth context if available
     const userId = (req as any).user?.id;
     
-    const subscriptionId = pushNotificationService.subscribe({
+    const subscriptionId = await pushNotificationService.subscribe({
       userId,
       endpoint: subscription.endpoint,
       keys: {
@@ -71,7 +71,7 @@ router.post('/subscribe', [
  */
 router.post('/unsubscribe', [
   body('endpoint').isURL().withMessage('Valid endpoint URL is required'),
-], (req: any, res: any) => {
+], async (req: any, res: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -84,11 +84,11 @@ router.post('/unsubscribe', [
     const { endpoint } = req.body;
     
     // Find subscription by endpoint
-    const subscriptions = pushNotificationService.getAllSubscriptions();
+    const subscriptions = await pushNotificationService.getAllSubscriptions();
     const subscription = subscriptions.find(sub => sub.endpoint === endpoint);
     
     if (subscription) {
-      const success = pushNotificationService.unsubscribe(subscription.id);
+      const success = await pushNotificationService.unsubscribe(subscription.id);
       
       if (success) {
         console.log(`Push subscription unsubscribed: ${subscription.id}`);
@@ -129,7 +129,7 @@ router.post('/unsubscribe', [
 router.post('/test', async (req: any, res: any) => {
   try {
     // Check if there are any subscriptions first
-    const subscriptions = pushNotificationService.getAllSubscriptions();
+    const subscriptions = await pushNotificationService.getAllSubscriptions();
     
     if (subscriptions.length === 0) {
       return res.status(400).json({ 
@@ -246,7 +246,7 @@ router.post('/send', [
 
   try {
     // Check if there are any subscriptions first
-    const subscriptions = pushNotificationService.getAllSubscriptions();
+    const subscriptions = await pushNotificationService.getAllSubscriptions();
     
     if (subscriptions.length === 0) {
       return res.status(400).json({ 
@@ -412,9 +412,9 @@ router.post('/send-admin', [
 /**
  * Get subscription statistics
  */
-router.get('/stats', (req, res) => {
+router.get('/stats', async (req: any, res: any) => {
   try {
-    const subscriptions = pushNotificationService.getAllSubscriptions();
+    const subscriptions = await pushNotificationService.getAllSubscriptions();
     
     const stats = {
       totalSubscriptions: subscriptions.length,
