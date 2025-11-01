@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, users, guests, capsules, sessions, guestTokens, capsuleProblems, adminNotifications, appSettings, expenses } from "../../shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, users, guests, capsules, sessions, guestTokens, capsuleProblems, adminNotifications, pushSubscriptions, appSettings, expenses } from "../../shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
 import { neon } from "@neondatabase/serverless";
@@ -618,6 +618,53 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExpense(id: string): Promise<boolean> {
     const result = await this.db.delete(expenses).where(eq(expenses.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Push subscription management methods
+  async createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
+    const result = await this.db.insert(pushSubscriptions).values({
+      userId: subscription.userId || null,
+      endpoint: subscription.endpoint,
+      p256dhKey: subscription.p256dhKey,
+      authKey: subscription.authKey,
+    }).returning();
+    return result[0];
+  }
+
+  async getPushSubscription(id: string): Promise<PushSubscription | undefined> {
+    const result = await this.db.select().from(pushSubscriptions).where(eq(pushSubscriptions.id, id));
+    return result[0];
+  }
+
+  async getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined> {
+    const result = await this.db.select().from(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+    return result[0];
+  }
+
+  async getAllPushSubscriptions(): Promise<PushSubscription[]> {
+    return this.db.select().from(pushSubscriptions);
+  }
+
+  async getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    return this.db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  }
+
+  async updatePushSubscriptionLastUsed(id: string): Promise<PushSubscription | undefined> {
+    const result = await this.db.update(pushSubscriptions)
+      .set({ lastUsed: new Date() })
+      .where(eq(pushSubscriptions.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deletePushSubscription(id: string): Promise<boolean> {
+    const result = await this.db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async deletePushSubscriptionByEndpoint(endpoint: string): Promise<boolean> {
+    const result = await this.db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint)).returning();
     return result.length > 0;
   }
 }

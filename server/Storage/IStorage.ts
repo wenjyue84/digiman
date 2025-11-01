@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
 
 export interface IStorage {
   // User management methods
@@ -88,4 +88,14 @@ export interface IStorage {
   addExpense(expense: InsertExpense & { createdBy: string }): Promise<Expense>;
   updateExpense(expense: UpdateExpense): Promise<Expense | undefined>;
   deleteExpense(id: string): Promise<boolean>;
+  
+  // Push subscription management methods
+  createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
+  getPushSubscription(id: string): Promise<PushSubscription | undefined>;
+  getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined>;
+  getAllPushSubscriptions(): Promise<PushSubscription[]>;
+  getUserPushSubscriptions(userId: string): Promise<PushSubscription[]>;
+  updatePushSubscriptionLastUsed(id: string): Promise<PushSubscription | undefined>;
+  deletePushSubscription(id: string): Promise<boolean>;
+  deletePushSubscriptionByEndpoint(endpoint: string): Promise<boolean>;
 }

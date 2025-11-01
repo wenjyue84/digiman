@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
 import { randomUUID } from "crypto";
 import { IStorage } from "./IStorage";
 
@@ -11,6 +11,7 @@ export class MemStorage implements IStorage {
   private guestTokens: Map<string, GuestToken>;
   private capsuleProblems: Map<string, CapsuleProblem>;
   private adminNotifications: Map<string, AdminNotification>;
+  private pushSubscriptions: Map<string, PushSubscription>;
   private appSettings: Map<string, AppSetting>;
   private totalCapsules = 22; // C1-C6 (6) + C25-C26 (2) + C11-C24 (14)
 
@@ -23,6 +24,7 @@ export class MemStorage implements IStorage {
     this.guestTokens = new Map();
     this.capsuleProblems = new Map();
     this.adminNotifications = new Map();
+    this.pushSubscriptions = new Map();
     this.appSettings = new Map();
     
     // Initialize capsules, admin user, and sample guests
@@ -1065,5 +1067,62 @@ export class MemStorage implements IStorage {
 
   async deleteExpense(id: string): Promise<boolean> {
     return this.expenses.delete(id);
+  }
+
+  // Push subscription management methods
+  async createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
+    const id = randomUUID();
+    const newSubscription: PushSubscription = {
+      id,
+      userId: subscription.userId || null,
+      endpoint: subscription.endpoint,
+      p256dhKey: subscription.p256dhKey,
+      authKey: subscription.authKey,
+      createdAt: new Date(),
+      lastUsed: null,
+    };
+    this.pushSubscriptions.set(id, newSubscription);
+    return newSubscription;
+  }
+
+  async getPushSubscription(id: string): Promise<PushSubscription | undefined> {
+    return this.pushSubscriptions.get(id);
+  }
+
+  async getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined> {
+    return Array.from(this.pushSubscriptions.values()).find(sub => sub.endpoint === endpoint);
+  }
+
+  async getAllPushSubscriptions(): Promise<PushSubscription[]> {
+    return Array.from(this.pushSubscriptions.values());
+  }
+
+  async getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    return Array.from(this.pushSubscriptions.values()).filter(sub => sub.userId === userId);
+  }
+
+  async updatePushSubscriptionLastUsed(id: string): Promise<PushSubscription | undefined> {
+    const subscription = this.pushSubscriptions.get(id);
+    if (!subscription) {
+      return undefined;
+    }
+    const updated: PushSubscription = {
+      ...subscription,
+      lastUsed: new Date(),
+    };
+    this.pushSubscriptions.set(id, updated);
+    return updated;
+  }
+
+  async deletePushSubscription(id: string): Promise<boolean> {
+    return this.pushSubscriptions.delete(id);
+  }
+
+  async deletePushSubscriptionByEndpoint(endpoint: string): Promise<boolean> {
+    const subscription = await this.getPushSubscriptionByEndpoint(endpoint);
+    if (!subscription) {
+      return false;
+    }
+    return this.pushSubscriptions.delete(subscription.id);
   }
 }
