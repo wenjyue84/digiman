@@ -194,11 +194,13 @@ export function shouldShowDemoFeatures(): boolean {
 
 /**
  * Check if PWA features should be enabled
- * PWA is disabled in Replit to prevent deployment conflicts
+ * PWA is now enabled in all environments including Replit for push notification support
  */
 export function shouldEnablePWA(): boolean {
   const env = getEnvironment();
-  return (env.isLocalhost || env.isProduction) && !env.isReplit;
+  // Enable PWA in all environments (localhost, Replit, and production)
+  // This allows push notifications to work on mobile devices accessing via Replit URLs
+  return true;
 }
 
 /**
