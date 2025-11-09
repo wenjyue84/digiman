@@ -25,7 +25,7 @@ export function OfflineIndicator({ className = '', showDetails = false }: Offlin
   }
 
   return (
-    <div className={`fixed top-4 right-4 z-50 max-w-sm ${className}`}>
+    <div className={`fixed bottom-4 right-4 z-50 max-w-sm ${className}`}>
       {/* Offline Status */}
       {isOffline && (
         <Alert className="mb-2 border-red-200 bg-red-50">
