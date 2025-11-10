@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { List, Table as TableIcon, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, Table as TableIcon, CreditCard, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 // Types
@@ -59,6 +59,8 @@ export default function History() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(50);
+  const [sortBy, setSortBy] = useState<string>('checkoutTime');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   
   
@@ -76,8 +78,31 @@ export default function History() {
 
   
   const { data: guestHistoryResponse, isLoading } = useQuery<PaginatedResponse<Guest>>({
-    queryKey: [`/api/guests/history?page=${page}&limit=${limit}`],
+    queryKey: [`/api/guests/history?page=${page}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}`],
   });
+  
+  // Handle column header click for sorting
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      // Toggle sort order if clicking the same column
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to descending
+      setSortBy(column);
+      setSortOrder('desc');
+    }
+    setPage(1); // Reset to first page when sorting changes
+  };
+  
+  // Get sort icon for a column
+  const getSortIcon = (column: string) => {
+    if (sortBy !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-40" />;
+    }
+    return sortOrder === 'asc' 
+      ? <ArrowUp className="h-4 w-4 ml-1" />
+      : <ArrowDown className="h-4 w-4 ml-1" />;
+  };
   
   const guestHistory = guestHistoryResponse?.data || [];
   const totalGuests = guestHistoryResponse?.total || 0;
@@ -244,10 +269,46 @@ export default function History() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Guest Name</TableHead>
-                            <TableHead>Capsule</TableHead>
-                            <TableHead>Check-in</TableHead>
-                            <TableHead>Check-out</TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 select-none"
+                              onClick={() => handleSort('name')}
+                              data-testid="header-sort-name"
+                            >
+                              <div className="flex items-center">
+                                Guest Name
+                                {getSortIcon('name')}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 select-none"
+                              onClick={() => handleSort('capsuleNumber')}
+                              data-testid="header-sort-capsule"
+                            >
+                              <div className="flex items-center">
+                                Capsule
+                                {getSortIcon('capsuleNumber')}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 select-none"
+                              onClick={() => handleSort('checkinTime')}
+                              data-testid="header-sort-checkin"
+                            >
+                              <div className="flex items-center">
+                                Check-in
+                                {getSortIcon('checkinTime')}
+                              </div>
+                            </TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 select-none"
+                              onClick={() => handleSort('checkoutTime')}
+                              data-testid="header-sort-checkout"
+                            >
+                              <div className="flex items-center">
+                                Check-out
+                                {getSortIcon('checkoutTime')}
+                              </div>
+                            </TableHead>
                             <TableHead>Duration</TableHead>
                             <TableHead>Actions</TableHead>
                           </TableRow>

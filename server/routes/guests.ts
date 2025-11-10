@@ -123,7 +123,9 @@ router.get("/checked-in", asyncRouteHandler(async (req: any, res: any) => {
 router.get("/history", asyncRouteHandler(async (req: any, res: any) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
-  const history = await storage.getGuestHistory({ page, limit });
+  const sortBy = req.query.sortBy as string || 'checkoutTime';
+  const sortOrder = req.query.sortOrder as 'asc' | 'desc' || 'desc';
+  const history = await storage.getGuestHistory({ page, limit }, sortBy, sortOrder);
   res.json(history);
 }));
 

@@ -7,7 +7,7 @@ import { neon } from "@neondatabase/serverless";
 // Removing this causes "Cannot find module 'postgres'" startup errors
 // Last fixed: August 23, 2025 - Major system recovery
 import postgres from "postgres";
-import { eq, ne, and, lte, isNotNull, isNull, count, desc } from "drizzle-orm";
+import { eq, ne, and, lte, isNotNull, isNull, count, desc, asc } from "drizzle-orm";
 import { IStorage } from "./IStorage";
 
 // Database Storage Implementation
@@ -151,8 +151,17 @@ export class DatabaseStorage implements IStorage {
     return this.paginate(checkedInGuests, pagination);
   }
 
-  async getGuestHistory(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
-    const guestHistory = await this.db.select().from(guests).where(eq(guests.isCheckedIn, false));
+  async getGuestHistory(pagination?: PaginationParams, sortBy: string = 'checkoutTime', sortOrder: 'asc' | 'desc' = 'desc'): Promise<PaginatedResponse<Guest>> {
+    const orderColumn = sortBy === 'name' ? guests.name :
+                       sortBy === 'capsuleNumber' ? guests.capsuleNumber :
+                       sortBy === 'checkinTime' ? guests.checkinTime :
+                       sortBy === 'checkoutTime' ? guests.checkoutTime :
+                       guests.checkoutTime;
+    
+    const orderFn = sortOrder === 'asc' ? asc : desc;
+    const guestHistory = await this.db.select().from(guests)
+      .where(eq(guests.isCheckedIn, false))
+      .orderBy(orderFn(orderColumn));
     return this.paginate(guestHistory, pagination);
   }
 

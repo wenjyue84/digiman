@@ -342,8 +342,36 @@ export class MemStorage implements IStorage {
     return this.paginate(checkedInGuests, pagination);
   }
 
-  async getGuestHistory(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
-    const guestHistory = Array.from(this.guests.values()).filter(guest => !guest.isCheckedIn);
+  async getGuestHistory(pagination?: PaginationParams, sortBy: string = 'checkoutTime', sortOrder: 'asc' | 'desc' = 'desc'): Promise<PaginatedResponse<Guest>> {
+    let guestHistory = Array.from(this.guests.values()).filter(guest => !guest.isCheckedIn);
+    
+    // Sort the history
+    guestHistory.sort((a, b) => {
+      let aVal: any, bVal: any;
+      if (sortBy === 'name') {
+        aVal = a.name;
+        bVal = b.name;
+      } else if (sortBy === 'capsuleNumber') {
+        aVal = a.capsuleNumber;
+        bVal = b.capsuleNumber;
+      } else if (sortBy === 'checkinTime') {
+        aVal = new Date(a.checkinTime).getTime();
+        bVal = new Date(b.checkinTime).getTime();
+      } else if (sortBy === 'checkoutTime') {
+        aVal = a.checkoutTime ? new Date(a.checkoutTime).getTime() : 0;
+        bVal = b.checkoutTime ? new Date(b.checkoutTime).getTime() : 0;
+      } else {
+        aVal = a.checkoutTime ? new Date(a.checkoutTime).getTime() : 0;
+        bVal = b.checkoutTime ? new Date(b.checkoutTime).getTime() : 0;
+      }
+      
+      if (sortOrder === 'asc') {
+        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+      } else {
+        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+      }
+    });
+    
     return this.paginate(guestHistory, pagination);
   }
 
