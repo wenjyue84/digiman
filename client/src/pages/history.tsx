@@ -402,7 +402,7 @@ export default function History() {
                 {/* Page info and size selector */}
                 <div className="flex items-center gap-4">
                   <p className="text-sm text-gray-600">
-                    Showing <span className="font-medium">{((page - 1) * limit) + 1}-{Math.min(page * limit, totalGuests)}</span> of <span className="font-medium">{totalGuests}</span> guests
+                    Showing <span className="font-medium">{totalGuests === 0 ? 0 : ((page - 1) * limit) + 1}-{totalGuests === 0 ? 0 : Math.min(page * limit, totalGuests)}</span> of <span className="font-medium">{totalGuests}</span> guests
                   </p>
                   <Select value={limit.toString()} onValueChange={(value) => { setLimit(Number(value)); setPage(1); }}>
                     <SelectTrigger className="w-24">
