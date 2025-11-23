@@ -41,10 +41,16 @@ function formatDuration(checkinTime: string, checkoutTime: string): string {
   const checkout = new Date(checkoutTime);
   const diff = checkout.getTime() - checkin.getTime();
   
-  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const totalHours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   
-  return `${hours}h ${minutes}m`;
+  if (totalHours >= 24) {
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    return `${days}d ${hours}h`;
+  }
+  
+  return `${totalHours}h ${minutes}m`;
 }
 
 function getInitials(name: string): string {
