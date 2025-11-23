@@ -13,9 +13,11 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm ci --only=production
 
-# Copy source code and built files
-COPY dist ./dist
-COPY server/test-server.js ./
+# Copy source code to build
+COPY . .
+
+# Build the application
+RUN npm run build
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodeuser -u 1001
