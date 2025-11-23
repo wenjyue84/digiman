@@ -96,7 +96,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
       emergencyPhone: guest.emergencyPhone || "",
       notes: guest.notes || "",
       paymentMethod: guest.paymentMethod || "cash",
-      status: guest.status || "",
+      status: guest.status || null,
     });
     setIsEditing(true);
   };
@@ -590,7 +590,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
             </h3>
             {isEditing ? (
               <Select
-                value={editData.status || guest.status || "none"}
+                value={editData.status ? editData.status : "none"}
                 onValueChange={(value) => setEditData({ ...editData, status: value === "none" ? null : value as any })}
               >
                 <SelectTrigger className="w-[180px] mt-1">
@@ -605,11 +605,11 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
             ) : (
               <div className="mt-1">
                 {guest.status ? (
-                  <Badge variant={guest.status === "blacklisted" ? "destructive" : "default"}>
+                  <Badge variant={guest.status === "blacklisted" ? "destructive" : "default"} data-testid="badge-guest-status">
                     {guest.status.charAt(0).toUpperCase() + guest.status.slice(1)}
                   </Badge>
                 ) : (
-                  <span className="text-sm text-gray-500">None</span>
+                  <span className="text-sm text-gray-500" data-testid="text-guest-status-none">None</span>
                 )}
               </div>
             )}
