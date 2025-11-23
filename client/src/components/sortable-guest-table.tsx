@@ -1413,8 +1413,16 @@ export default function SortableGuestTable() {
                                 isCondensedView ? (
                                   statusInfo.icon
                                 ) : (
-                                  <Badge variant={statusInfo.variant} className={statusInfo.className}>
-                                    {statusInfo.label}
+                                  <Badge 
+                                    variant={statusInfo.variant} 
+                                    className={`${statusInfo.className || ''} cursor-pointer hover:opacity-75 transition-opacity`}
+                                    onClick={() => statusInfo.label === 'Outstanding' && handleToggleOutstandingDisplay(guest.id)}
+                                    title={statusInfo.label === 'Outstanding' ? 'Click to toggle amount' : ''}
+                                  >
+                                    {statusInfo.label === 'Outstanding' && toggledOutstandingGuests.has(guest.id)
+                                      ? extractOutstandingAmount(guest) || statusInfo.label
+                                      : statusInfo.label
+                                    }
                                   </Badge>
                                 )
                               ) : (
