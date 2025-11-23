@@ -144,7 +144,7 @@ export default function History() {
 
   
   
-  const [dateFilter, setDateFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("last7");
 
 
   
