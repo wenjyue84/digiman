@@ -103,6 +103,32 @@ function matchesExactDate(dateString: string, exactDate: string): boolean {
   return date >= targetStart && date <= targetEnd;
 }
 
+function isLast7Days(dateString: string): boolean {
+  const date = new Date(dateString);
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+  
+  const todayEnd = new Date(today);
+  todayEnd.setHours(23, 59, 59, 999);
+  
+  return date >= sevenDaysAgo && date <= todayEnd;
+}
+
+function isLast30Days(dateString: string): boolean {
+  const date = new Date(dateString);
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+  
+  const todayEnd = new Date(today);
+  todayEnd.setHours(23, 59, 59, 999);
+  
+  return date >= thirtyDaysAgo && date <= todayEnd;
+}
+
 export default function History() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -237,6 +263,12 @@ export default function History() {
         case 'today':
           return (checkinDate && isToday(checkinDate)) || (checkoutDate && isToday(checkoutDate));
         
+        case 'last7':
+          return (checkinDate && isLast7Days(checkinDate)) || (checkoutDate && isLast7Days(checkoutDate));
+        
+        case 'last30':
+          return (checkinDate && isLast30Days(checkinDate)) || (checkoutDate && isLast30Days(checkoutDate));
+        
         case 'week':
           return (checkinDate && isThisWeek(checkinDate)) || (checkoutDate && isThisWeek(checkoutDate));
         
@@ -297,6 +329,8 @@ export default function History() {
                 <SelectContent>
                   <SelectItem value="all">All Records</SelectItem>
                   <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="last7">Last 7 days</SelectItem>
+                  <SelectItem value="last30">Last 30 days</SelectItem>
                   <SelectItem value="week">This Week</SelectItem>
                   <SelectItem value="month">This Month</SelectItem>
                   <SelectItem value="exact">Exact Date…</SelectItem>
