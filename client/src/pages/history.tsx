@@ -256,46 +256,67 @@ export default function History() {
     }
   });
 
-  // Apply client-side date filtering
+  // Helper function to calculate duration in milliseconds for sorting
+  const getDurationMs = (guest: Guest): number => {
+    const checkin = new Date(guest.checkinTime).getTime();
+    const checkout = guest.checkoutTime ? new Date(guest.checkoutTime).getTime() : new Date().getTime();
+    return checkout - checkin;
+  };
+
+  // Apply client-side date filtering and sorting
   const filteredHistory = useMemo(() => {
-    if (dateFilter === 'all') return guestHistory;
+    let result = guestHistory;
     
-    return guestHistory.filter(guest => {
-      const checkinDate = guest.checkinTime;
-      const checkoutDate = guest.checkoutTime;
-      
-      // Check if either check-in or check-out matches the filter
-      switch (dateFilter) {
-        case 'today':
-          return (checkinDate && isToday(checkinDate)) || (checkoutDate && isToday(checkoutDate));
+    // Apply date filter
+    if (dateFilter !== 'all') {
+      result = result.filter(guest => {
+        const checkinDate = guest.checkinTime;
+        const checkoutDate = guest.checkoutTime;
         
-        case 'last7':
-          return (checkinDate && isLast7Days(checkinDate)) || (checkoutDate && isLast7Days(checkoutDate));
-        
-        case 'last30':
-          return (checkinDate && isLast30Days(checkinDate)) || (checkoutDate && isLast30Days(checkoutDate));
-        
-        case 'week':
-          return (checkinDate && isThisWeek(checkinDate)) || (checkoutDate && isThisWeek(checkoutDate));
-        
-        case 'month':
-          return (checkinDate && isThisMonth(checkinDate)) || (checkoutDate && isThisMonth(checkoutDate));
-        
-        case 'exact':
-          if (!exactDate) return true;
-          return (checkinDate && matchesExactDate(checkinDate, exactDate)) || 
-                 (checkoutDate && matchesExactDate(checkoutDate, exactDate));
-        
-        case 'range':
-          if (!rangeStart || !rangeEnd) return true;
-          return (checkinDate && isInDateRange(checkinDate, rangeStart, rangeEnd)) || 
-                 (checkoutDate && isInDateRange(checkoutDate, rangeStart, rangeEnd));
-        
-        default:
-          return true;
-      }
-    });
-  }, [guestHistory, dateFilter, exactDate, rangeStart, rangeEnd]);
+        // Check if either check-in or check-out matches the filter
+        switch (dateFilter) {
+          case 'today':
+            return (checkinDate && isToday(checkinDate)) || (checkoutDate && isToday(checkoutDate));
+          
+          case 'last7':
+            return (checkinDate && isLast7Days(checkinDate)) || (checkoutDate && isLast7Days(checkoutDate));
+          
+          case 'last30':
+            return (checkinDate && isLast30Days(checkinDate)) || (checkoutDate && isLast30Days(checkoutDate));
+          
+          case 'week':
+            return (checkinDate && isThisWeek(checkinDate)) || (checkoutDate && isThisWeek(checkoutDate));
+          
+          case 'month':
+            return (checkinDate && isThisMonth(checkinDate)) || (checkoutDate && isThisMonth(checkoutDate));
+          
+          case 'exact':
+            if (!exactDate) return true;
+            return (checkinDate && matchesExactDate(checkinDate, exactDate)) || 
+                   (checkoutDate && matchesExactDate(checkoutDate, exactDate));
+          
+          case 'range':
+            if (!rangeStart || !rangeEnd) return true;
+            return (checkinDate && isInDateRange(checkinDate, rangeStart, rangeEnd)) || 
+                   (checkoutDate && isInDateRange(checkoutDate, rangeStart, rangeEnd));
+          
+          default:
+            return true;
+        }
+      });
+    }
+    
+    // Apply client-side sorting for duration (since it's calculated dynamically)
+    if (sortBy === 'duration') {
+      result.sort((a, b) => {
+        const durationA = getDurationMs(a);
+        const durationB = getDurationMs(b);
+        return sortOrder === 'asc' ? durationA - durationB : durationB - durationA;
+      });
+    }
+    
+    return result;
+  }, [guestHistory, dateFilter, exactDate, rangeStart, rangeEnd, sortBy, sortOrder]);
 
   return (
     <div className="space-y-6">
@@ -482,7 +503,16 @@ export default function History() {
                                 {getSortIcon('checkoutTime')}
                               </div>
                             </TableHead>
-                            <TableHead>Duration</TableHead>
+                            <TableHead 
+                              className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 select-none"
+                              onClick={() => handleSort('duration')}
+                              data-testid="header-sort-duration"
+                            >
+                              <div className="flex items-center">
+                                Duration
+                                {getSortIcon('duration')}
+                              </div>
+                            </TableHead>
                             <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
