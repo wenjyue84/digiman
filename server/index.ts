@@ -212,9 +212,13 @@ app.use((req, res, next) => {
     }
   });
   
-  if (app.get("env") === "development") {
+  // Only setup Vite middleware if not running in concurrent mode
+  // When SKIP_VITE_MIDDLEWARE is set, the frontend runs its own Vite dev server
+  if (app.get("env") === "development" && !process.env.SKIP_VITE_MIDDLEWARE) {
     console.log("🔥 USING VITE MIDDLEWARE");
     await setupVite(app, server);
+  } else if (app.get("env") === "development" && process.env.SKIP_VITE_MIDDLEWARE) {
+    console.log("🔥 API SERVER MODE (Frontend runs separately on port 3000)");
   } else {
     console.log("🔥 USING STATIC FILES");
     serveStatic(app);

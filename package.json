@@ -4,8 +4,8 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:frontend\" --names \"server,frontend\" --prefix-colors \"blue,green\"",
-    "dev:server": "tsx watch --clear-screen=false server/index.ts",
+    "dev": "concurrently --raw \"npm run dev:server\" \"npm run dev:frontend\" --names \"server,frontend\" --prefix-colors \"blue,green\"",
+    "dev:server": "cross-env SKIP_VITE_MIDDLEWARE=true FORCE_COLOR=1 tsx watch --clear-screen=false server/index.ts",
     "dev:frontend": "vite --port 3000",
     "dev:memory": "cross-env NODE_ENV=development PORT=3005 tsx watch --clear-screen=false server/index.ts",
     "dev:build": "npm run build && npm run dev:memory",
