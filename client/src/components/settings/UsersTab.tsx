@@ -148,7 +148,7 @@ export default function UsersTab({ users, isLoading, queryClient, toast, current
     editUserForm.reset({
       email: user.email,
       username: user.username || "",
-      password: user.password || "", // Show existing password for admin
+      password: "", // Password field empty by default - leave empty to keep current
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       role: user.role as "staff" | "admin",
@@ -354,24 +354,6 @@ export default function UsersTab({ users, isLoading, queryClient, toast, current
                           <Badge variant={user.role === "admin" ? "destructive" : "default"}>{user.role}</Badge>
                           {user.username && <span className="text-xs text-gray-500">@{user.username}</span>}
                         </div>
-                        {/* Show password to admin */}
-                        {isAdmin && user.password && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs text-gray-500">Password:</span>
-                            <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
-                              {showPassword ? user.password : "••••••••"}
-                            </code>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">

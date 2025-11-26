@@ -73,13 +73,8 @@ router.post(
 router.patch("/:id", authenticateToken, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    let updates = req.body;
     const currentUser = req.user;
-
-    // Remove empty password field
-    if (updates.password === "") {
-      delete updates.password;
-    }
 
     // Role-based permission check
     const isAdmin = currentUser?.role === "admin";
@@ -89,18 +84,28 @@ router.patch("/:id", authenticateToken, async (req: any, res) => {
       return res.status(403).json({ message: "You can only edit your own account" });
     }
 
-    // Staff users can only update their own password, not other fields
-    if (!isAdmin && isOwnAccount) {
-      const allowedFields = ["password"];
-      const attemptedFields = Object.keys(updates);
-      const disallowedFields = attemptedFields.filter(f => !allowedFields.includes(f));
-      
-      if (disallowedFields.length > 0) {
-        return res.status(403).json({ 
-          message: "Staff users can only change their own password",
-          disallowedFields 
-        });
+    // Staff users can only update their own password - strictly enforce by filtering
+    if (!isAdmin) {
+      if (!isOwnAccount) {
+        return res.status(403).json({ message: "Staff users cannot edit other users" });
       }
+      // Only allow password field for staff, strip everything else
+      updates = updates.password ? { password: updates.password } : {};
+    }
+
+    // Remove empty password field
+    if (updates.password === "") {
+      delete updates.password;
+    }
+
+    // Prevent role escalation for non-admin users
+    if (!isAdmin && updates.role) {
+      delete updates.role;
+    }
+
+    // Check if there's anything to update
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update" });
     }
 
     // Validate password strength if being updated
