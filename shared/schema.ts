@@ -268,7 +268,7 @@ export const insertGuestSchema = createInsertSchema(guests).omit({
     .optional(),
   phoneNumber: z.string()
     .transform(val => val?.replace(/\s/g, ""))
-    .refine(val => !val || /^[+]?[\d\s\-\(\)]{7,20}$/.test(val), "Please enter a valid phone number (7-20 digits, may include +, spaces, dashes, parentheses)")
+    .refine(val => !val || /^[+]?[\d\s\-\(\)]{7,50}$/.test(val), "Please enter a valid phone number (7-50 digits, may include +, spaces, dashes, parentheses)")
     .optional(),
   email: z.union([
     z.string().email("Invalid email format. Please enter a valid email address like john@example.com").transform(val => val.toLowerCase().trim()),
@@ -411,11 +411,11 @@ export const guestSelfCheckinSchema = z.object({
     .transform(val => val.trim()),
   phoneNumber: z.string()
     .min(7, "Phone number must be at least 7 digits long")
-    .max(20, "Phone number must not exceed 20 characters")
+    .max(50, "Phone number must not exceed 50 characters")
     .regex(/^[+]?[\d\s\-\(\)]+$/, "Please enter a valid phone number (may include +, spaces, dashes, parentheses)")
     .transform(val => val.replace(/\s/g, "")),
-  gender: z.enum(["male", "female", "other", "prefer-not-to-say"], { 
-    required_error: "Please select your gender" 
+  gender: z.enum(["male", "female", "other", "prefer-not-to-say"], {
+    required_error: "Please select your gender"
   }),
   nationality: z.string()
     .min(2, "Nationality must be at least 2 characters long")
@@ -461,16 +461,16 @@ export const guestSelfCheckinSchema = z.object({
       const year = parseInt(datePart.substring(0, 2));
       const month = parseInt(datePart.substring(2, 4));
       const day = parseInt(datePart.substring(4, 6));
-      
+
       // Convert 2-digit year to 4-digit (assume 1900-2099)
       const fullYear = year < 30 ? 2000 + year : 1900 + year;
       const date = new Date(fullYear, month - 1, day);
-      
-      return date.getFullYear() === fullYear && 
-             date.getMonth() === month - 1 && 
-             date.getDate() === day &&
-             month >= 1 && month <= 12 &&
-             day >= 1 && day <= 31;
+
+      return date.getFullYear() === fullYear &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day &&
+        month >= 1 && month <= 12 &&
+        day >= 1 && day <= 31;
     }, "Please enter a valid IC number with a valid birth date"),
   passportNumber: z.string()
     .optional()
@@ -512,8 +512,8 @@ export const guestSelfCheckinSchema = z.object({
         return false;
       }
     }, "Passport document must be a valid URL"),
-  paymentMethod: z.enum(["cash", "bank", "online_platform"], { 
-    required_error: "Please select a payment method" 
+  paymentMethod: z.enum(["cash", "bank", "online_platform"], {
+    required_error: "Please select a payment method"
   }),
   guestPaymentDescription: z.string()
     .max(200, "Payment description must not exceed 200 characters")
@@ -632,7 +632,7 @@ export const createTokenSchema = z.object({
     .transform(val => val?.trim())
     .optional(),
   phoneNumber: z.string()
-    .regex(/^[+]?[\d\s\-\(\)]{7,20}$/, "Please enter a valid phone number (7-20 digits, may include +, spaces, dashes, parentheses)")
+    .regex(/^[+]?[\d\s\-\(\)]{7,50}$/, "Please enter a valid phone number (7-50 digits, may include +, spaces, dashes, parentheses)")
     .transform(val => val?.replace(/\s/g, ""))
     .optional(),
   email: z.string()
@@ -676,7 +676,7 @@ export const createTokenSchema = z.object({
   // Either capsuleNumber or autoAssign must be provided, but not both
   const hasCapsuleNumber = data.capsuleNumber && data.capsuleNumber.length > 0;
   const hasAutoAssign = data.autoAssign === true;
-  
+
   return (hasCapsuleNumber && !hasAutoAssign) || (!hasCapsuleNumber && hasAutoAssign);
 }, {
   message: "Either specify a capsule number or choose auto assign (but not both)",
@@ -695,7 +695,7 @@ export const updateGuestTokenCapsuleSchema = z.object({
   // Either capsuleNumber or autoAssign must be provided, but not both
   const hasCapsuleNumber = data.capsuleNumber && data.capsuleNumber.length > 0;
   const hasAutoAssign = data.autoAssign === true;
-  
+
   return (hasCapsuleNumber && !hasAutoAssign) || (!hasCapsuleNumber && hasAutoAssign);
 }, {
   message: "Either specify a capsule number or choose auto assign (but not both)",
@@ -733,9 +733,9 @@ export type UpdateGuestTokenCapsule = z.infer<typeof updateGuestTokenCapsuleSche
 export type MarkCapsuleCleaned = z.infer<typeof markCapsuleCleanedSchema>;
 
 // Admin notification schema for validation
-export const insertAdminNotificationSchema = createInsertSchema(adminNotifications).omit({ 
-  id: true, 
-  createdAt: true 
+export const insertAdminNotificationSchema = createInsertSchema(adminNotifications).omit({
+  id: true,
+  createdAt: true
 });
 
 // Push subscription schema for validation
@@ -768,7 +768,7 @@ export const updateSettingsSchema = z.object({
     .max(168, "Session expiration cannot exceed 168 hours (7 days)")
     .int("Session expiration must be a whole number of hours")
     .default(24),
-  
+
   // System Settings
   accommodationType: z.enum(["capsule", "room", "house"], {
     required_error: "Accommodation type must be capsule, room, or house",
@@ -781,7 +781,7 @@ export const updateSettingsSchema = z.object({
     .max(365, "Maximum stay cannot exceed 365 days")
     .int("Maximum stay must be a whole number of days")
     .default(30),
-  
+
   // Guest Guide Settings (all optional, editable in Settings > Guest Guide)
   guideIntro: z.string()
     .max(5000, "Introduction is too long")
@@ -881,7 +881,7 @@ export const updateSettingsSchema = z.object({
   guideShowGoogleMaps: z.boolean().default(true),
   guideShowCheckinVideo: z.boolean().default(true),
   guideShowTimeAccess: z.boolean().default(true),
-  
+
   // Payment Settings
   defaultPaymentMethod: z.enum(["cash", "tng", "bank", "platform"], {
     required_error: "Default payment method is required"
@@ -890,7 +890,7 @@ export const updateSettingsSchema = z.object({
     .min(0, "Maximum payment amount must be positive")
     .max(99999.99, "Maximum payment amount cannot exceed RM 99,999.99")
     .default(9999.99),
-  
+
   // Capsule Settings
   totalCapsules: z.number()
     .min(1, "Total capsules must be at least 1")
@@ -903,14 +903,14 @@ export const updateSettingsSchema = z.object({
   capsuleNumberFormat: z.string()
     .regex(/^[A-Z]\d+$/, "Capsule format must be like A01, B02, etc.")
     .default("A01"),
-  
+
   // Notification Settings
   notificationRetentionDays: z.number()
     .min(1, "Notification retention must be at least 1 day")
     .max(365, "Notification retention cannot exceed 365 days")
     .int("Notification retention must be a whole number of days")
     .default(30),
-  
+
   // Cache and Performance Settings
   cacheTimeMinutes: z.number()
     .min(1, "Cache time must be at least 1 minute")
@@ -922,7 +922,7 @@ export const updateSettingsSchema = z.object({
     .max(300, "Refresh interval cannot exceed 300 seconds (5 minutes)")
     .int("Refresh interval must be a whole number of seconds")
     .default(30),
-  
+
   // Data Pagination Settings
   defaultPageSize: z.number()
     .min(10, "Page size must be at least 10")
@@ -934,7 +934,7 @@ export const updateSettingsSchema = z.object({
     .max(500, "Maximum page size cannot exceed 500")
     .int("Maximum page size must be a whole number")
     .default(100),
-  
+
   // Business Rules
   minGuestAge: z.number()
     .min(16, "Minimum age must be at least 16")
@@ -946,12 +946,12 @@ export const updateSettingsSchema = z.object({
     .max(120, "Maximum age cannot exceed 120")
     .int("Maximum age must be a whole number")
     .default(120),
-  
+
   // UI Preferences
   showAllCapsules: z.boolean()
     .default(false)
     .describe("Show all capsules (including empty ones) in the dashboard by default"),
-  
+
   // Contact Information
   defaultAdminEmail: z.string()
     .email("Default admin email must be a valid email address")
@@ -962,7 +962,7 @@ export const updateSettingsSchema = z.object({
   supportPhone: z.string()
     .regex(/^[+]?[\d\s\-\(\)]{7,20}$/, "Support phone must be a valid phone number")
     .default("+60123456789"),
-  
+
   // Application Settings
   hostelName: z.string()
     .min(1, "Hostel name is required")
@@ -1015,16 +1015,16 @@ export const malaysianICSchema = z.string()
     const year = parseInt(datePart.substring(0, 2));
     const month = parseInt(datePart.substring(2, 4));
     const day = parseInt(datePart.substring(4, 6));
-    
+
     // Convert 2-digit year to 4-digit (assume 1900-2099)
     const fullYear = year < 30 ? 2000 + year : 1900 + year;
     const date = new Date(fullYear, month - 1, day);
-    
-    return date.getFullYear() === fullYear && 
-           date.getMonth() === month - 1 && 
-           date.getDate() === day &&
-           month >= 1 && month <= 12 &&
-           day >= 1 && day <= 31;
+
+    return date.getFullYear() === fullYear &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day &&
+      month >= 1 && month <= 12 &&
+      day >= 1 && day <= 31;
   }, "Please enter a valid IC number with a valid birth date");
 
 // International passport number validation
@@ -1288,7 +1288,7 @@ export const validationUtils = {
       return false;
     }
   },
-  
+
   isValidPhone: (phone: string): boolean => {
     try {
       phoneNumberSchema.parse(phone);
@@ -1297,7 +1297,7 @@ export const validationUtils = {
       return false;
     }
   },
-  
+
   isValidCapsuleNumber: (capsuleNumber: string): boolean => {
     try {
       capsuleNumberSchema.parse(capsuleNumber);
@@ -1306,7 +1306,7 @@ export const validationUtils = {
       return false;
     }
   },
-  
+
   isValidMalaysianIC: (ic: string): boolean => {
     try {
       malaysianICSchema.parse(ic);
@@ -1315,7 +1315,7 @@ export const validationUtils = {
       return false;
     }
   },
-  
+
   isValidPassportNumber: (passport: string): boolean => {
     try {
       passportNumberSchema.parse(passport);
@@ -1324,15 +1324,15 @@ export const validationUtils = {
       return false;
     }
   },
-  
+
   formatPhoneNumber: (phone: string): string => {
     return phone.replace(/\s/g, "");
   },
-  
+
   formatName: (name: string): string => {
     return name.trim().replace(/\s+/g, " ");
   },
-  
+
   sanitizeString: (str: string): string => {
     return str.trim().replace(/[<>"'&]/g, "");
   }
