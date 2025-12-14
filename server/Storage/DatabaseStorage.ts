@@ -276,11 +276,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
+    // Count only capsules that are available for rent (toRent = true)
+    const rentableCapsules = await this.db.select().from(capsules).where(eq(capsules.toRent, true));
+    const totalCapsules = rentableCapsules.length;
+    const rentableCapsuleNumbers = new Set(rentableCapsules.map(c => c.number));
+    
+    // Count only guests in rentable capsules
     const checkedInGuestsResponse = await this.getCheckedInGuests();
-    const occupied = checkedInGuestsResponse.pagination.total;
-    const totalCapsules = 22;
-    const available = totalCapsules - occupied;
-    const occupancyRate = Math.round((occupied / totalCapsules) * 100);
+    const occupied = checkedInGuestsResponse.data.filter(g => rentableCapsuleNumbers.has(g.capsuleNumber)).length;
+    
+    // Clamp values to prevent invalid metrics
+    const available = Math.max(0, totalCapsules - occupied);
+    const occupancyRate = totalCapsules > 0 ? Math.min(100, Math.round((occupied / totalCapsules) * 100)) : 0;
 
     return {
       total: totalCapsules,
@@ -297,7 +304,8 @@ export class DatabaseStorage implements IStorage {
     const availableCapsules = await this.db.select().from(capsules).where(
       and(
         eq(capsules.isAvailable, true),
-        eq(capsules.cleaningStatus, "cleaned")
+        eq(capsules.cleaningStatus, "cleaned"),
+        eq(capsules.toRent, true)
       )
     );
 
@@ -311,7 +319,8 @@ export class DatabaseStorage implements IStorage {
     const uncleanedCapsules = await this.db.select().from(capsules).where(
       and(
         eq(capsules.isAvailable, true),
-        eq(capsules.cleaningStatus, "to_be_cleaned")
+        eq(capsules.cleaningStatus, "to_be_cleaned"),
+        eq(capsules.toRent, true)
       )
     );
 

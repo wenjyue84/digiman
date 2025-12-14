@@ -469,13 +469,21 @@ export class MemStorage implements IStorage {
   }
 
   async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
+    // Count only capsules that are available for rent (toRent = true)
+    const rentableCapsules = Array.from(this.capsules.values()).filter(c => c.toRent !== false);
+    const totalCapsules = rentableCapsules.length;
+    const rentableCapsuleNumbers = new Set(rentableCapsules.map(c => c.number));
+    
+    // Count only guests in rentable capsules
     const checkedInGuestsResponse = await this.getCheckedInGuests();
-    const occupied = checkedInGuestsResponse.pagination.total;
-    const available = this.totalCapsules - occupied;
-    const occupancyRate = Math.round((occupied / this.totalCapsules) * 100);
+    const occupied = checkedInGuestsResponse.data.filter(g => rentableCapsuleNumbers.has(g.capsuleNumber)).length;
+    
+    // Clamp values to prevent invalid metrics
+    const available = Math.max(0, totalCapsules - occupied);
+    const occupancyRate = totalCapsules > 0 ? Math.min(100, Math.round((occupied / totalCapsules) * 100)) : 0;
 
     return {
-      total: this.totalCapsules,
+      total: totalCapsules,
       occupied,
       available,
       occupancyRate,
@@ -511,7 +519,8 @@ export class MemStorage implements IStorage {
     return Array.from(this.capsules.values()).filter(
       capsule => capsule.isAvailable && 
                   !occupiedCapsules.has(capsule.number) && 
-                  capsule.cleaningStatus === "to_be_cleaned"
+                  capsule.cleaningStatus === "to_be_cleaned" &&
+                  capsule.toRent !== false
     );
   }
 

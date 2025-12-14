@@ -294,7 +294,7 @@ export default function SortableGuestTable() {
       ]);
       
       const emptyCapsules = allCapsules
-        .filter(capsule => !occupiedCapsules.has(capsule.number))
+        .filter(capsule => !occupiedCapsules.has(capsule.number) && capsule.toRent !== false)
         .map(capsule => ({
           type: 'empty' as const,
           data: {
