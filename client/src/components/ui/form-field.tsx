@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ValidationHelpers } from "@/components/guest-checkin/shared/ValidationHelpers";
 import { cn } from "@/lib/utils";
+import { getCountryIndicatorText } from "@/lib/phoneCountryCodes";
 
 export interface FormFieldProps {
   name: string;
@@ -150,15 +151,26 @@ export function EmailField({ name = "email", label = "Email Address", ...props }
 }
 
 export function PhoneField({ name = "phoneNumber", label = "Phone Number", ...props }: Omit<FormFieldProps, 'type'>) {
+  const phoneValue = props.form.watch(name) || "";
+  const countryIndicator = getCountryIndicatorText(phoneValue);
+  
   return (
-    <FormField
-      name={name}
-      label={label}
-      type="tel"
-      autoComplete="tel"
-      inputMode="tel"
-      {...props}
-    />
+    <div className={props.className}>
+      <FormField
+        name={name}
+        label={label}
+        type="tel"
+        autoComplete="tel"
+        inputMode="tel"
+        {...props}
+        className=""
+      />
+      {countryIndicator && (
+        <p className="text-xs text-muted-foreground mt-1" data-testid="phone-country-indicator">
+          {countryIndicator}
+        </p>
+      )}
+    </div>
   );
 }
 
