@@ -47,13 +47,21 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
 
   const allItems = Array.isArray(capsules) ? capsules : [];
   
-  // Filter items based on toRent status
-  const items = allItems.filter(capsule => {
-    if (toRentFilter === 'all') return true;
-    if (toRentFilter === 'yes') return capsule.toRent !== false; // Default to true if undefined
-    if (toRentFilter === 'no') return capsule.toRent === false;
-    return true;
-  });
+  // Helper function to extract numeric part from capsule number for natural sorting
+  const extractCapsuleNumber = (capsuleNumber: string): number => {
+    const match = capsuleNumber.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+  
+  // Filter items based on toRent status and sort by capsule number ascending
+  const items = allItems
+    .filter(capsule => {
+      if (toRentFilter === 'all') return true;
+      if (toRentFilter === 'yes') return capsule.toRent !== false; // Default to true if undefined
+      if (toRentFilter === 'no') return capsule.toRent === false;
+      return true;
+    })
+    .sort((a, b) => extractCapsuleNumber(a.number) - extractCapsuleNumber(b.number));
 
   // Fetch problems for capsules
   const { data: problemsResponse } = useQuery<PaginatedResponse<CapsuleProblem>>({
