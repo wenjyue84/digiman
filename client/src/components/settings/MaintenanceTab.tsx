@@ -48,7 +48,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState<CapsuleProblem | null>(null);
-  const [concise, setConcise] = useState(false);
+  const [concise, setConcise] = useState(true);
   const [sortField, setSortField] = useState<SortField>("capsule");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
