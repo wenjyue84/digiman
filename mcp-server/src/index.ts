@@ -7,7 +7,7 @@ import { createMCPHandler } from './server.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.MCP_SERVER_PORT || 3001;
+const PORT = parseInt(process.env.MCP_SERVER_PORT || '3001', 10);
 
 // Middleware
 app.use(cors());
