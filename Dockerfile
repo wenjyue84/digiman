@@ -11,7 +11,9 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies needed for build)
-RUN npm ci --include=dev
+# Use npm install instead of npm ci to resolve platform-specific optional deps
+# (npm ci strictly follows lockfile which may lack linux-musl binaries)
+RUN npm install --include=dev
 
 # Copy source code
 COPY . .
