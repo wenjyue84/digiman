@@ -1,0 +1,6 @@
+name: pelangi-mcp-server
+build:
+  buildCommand: npm ci && npm run build
+  startCommand: npm start
+  port: 3001
+runtime: node20
