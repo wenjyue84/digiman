@@ -1,0 +1,8 @@
+{
+  "services": [
+    {
+      "name": "zeabur-pelangi-mcp",
+      "root": "mcp-server"
+    }
+  ]
+}
