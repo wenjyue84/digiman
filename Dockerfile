@@ -23,6 +23,9 @@ RUN npm run build
 # Prune devDependencies after build to reduce image size
 RUN npm prune --production
 
+# Set production environment
+ENV NODE_ENV=production
+
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nodeuser -u 1001
 RUN chown -R nodeuser:nodejs /app
