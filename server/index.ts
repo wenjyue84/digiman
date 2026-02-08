@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerObjectRoutes } from "./routes/index";
@@ -147,6 +148,32 @@ app.use((req, res, next) => {
     console.warn("Warning: could not seed sample problems:", e);
   }
 
+  // Health check endpoint - MUST be registered BEFORE registerRoutes()
+  // to avoid being caught by the catch-all route
+  app.get("/health", async (req, res) => {
+    try {
+      const capsules = await storage.getAllCapsules();
+      res.json({
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        capsulesCount: capsules.length,
+        storageType: process.env.DATABASE_URL ? "database" : "memory"
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: "unhealthy",
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Test route to verify browser connection - also before registerRoutes()
+  app.get("/BROWSER_TEST", (req, res) => {
+    console.log("🚨 BROWSER IS USING OUR CURRENT SERVER! 🚨");
+    res.json({ message: "SUCCESS: You are connected to the current server!" });
+  });
+
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
@@ -172,32 +199,7 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   console.log("🔥 NODE_ENV:", process.env.NODE_ENV);
   console.log("🔥 app.get('env'):", app.get("env"));
-  
-  // Add a test route to verify the browser is using our server
-  app.get("/BROWSER_TEST", (req, res) => {
-    console.log("🚨 BROWSER IS USING OUR CURRENT SERVER! 🚨");
-    res.json({ message: "SUCCESS: You are connected to the current server!" });
-  });
-  
-  // Health check endpoint for deployment platforms
-  app.get("/health", async (req, res) => {
-    try {
-      const capsules = await storage.getAllCapsules();
-      res.json({ 
-        status: "healthy", 
-        timestamp: new Date().toISOString(),
-        capsulesCount: capsules.length,
-        storageType: process.env.DATABASE_URL ? "database" : "memory"
-      });
-    } catch (error: any) {
-      res.status(500).json({ 
-        status: "unhealthy", 
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
-  
+
   // Special handling for service worker to ensure correct MIME type
   app.get("/sw.js", (req, res) => {
     const path = require("path");
