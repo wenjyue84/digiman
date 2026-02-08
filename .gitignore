@@ -91,4 +91,15 @@ vite.config.ts.*
 
 # Package manager
 .pnpm-store/
-.yarn/
+.yarn/.zeabur-token
+
+# WhatsApp & Zeabur sensitive files
+mcp-server/whatsapp-auth/
+whatsapp-auth/
+.env.zeabur
+.zeabur-token
+mcp-server/evolution-api.env
+
+# Test scripts (temporary)
+mcp-server/test-*.ts
+test-*.ts
