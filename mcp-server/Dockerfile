@@ -10,8 +10,8 @@ WORKDIR /src
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (TypeScript is now in dependencies, not devDependencies)
-RUN npm install
+# Install all dependencies including devDependencies for build
+RUN npm install --include=dev
 
 # Copy source code
 COPY . .
