@@ -32,6 +32,15 @@ import {
   exportGuestsCSV
 } from './analytics.js';
 
+// Phase 3: WhatsApp integration tools
+import {
+  whatsappTools,
+  whatsappStatus,
+  whatsappQrcode,
+  whatsappSend,
+  whatsappSendGuestStatus
+} from './whatsapp.js';
+
 class ToolRegistry {
   private tools: Map<string, MCPTool> = new Map();
   private handlers: Map<string, ToolHandler> = new Map();
@@ -72,6 +81,12 @@ class ToolRegistry {
     this.register(analyticsTools[0], capsuleUtilization);
     this.register(analyticsTools[1], guestStatistics);
     this.register(analyticsTools[2], exportGuestsCSV);
+
+    // Phase 3: WhatsApp integration (4 tools)
+    this.register(whatsappTools[0], whatsappStatus);
+    this.register(whatsappTools[1], whatsappQrcode);
+    this.register(whatsappTools[2], whatsappSend);
+    this.register(whatsappTools[3], whatsappSendGuestStatus);
   }
 
   private register(tool: MCPTool, handler: ToolHandler) {
@@ -108,11 +123,12 @@ class ToolRegistry {
     }
   }
 
-  getToolCount(): { total: number; phase1: number; phase2: number } {
+  getToolCount(): { total: number; phase1: number; phase2: number; phase3: number } {
     return {
       total: this.tools.size,
       phase1: 10,
-      phase2: this.tools.size - 10
+      phase2: 9,
+      phase3: 4
     };
   }
 }
