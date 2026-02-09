@@ -1,3 +1,5 @@
 {
-  "build_type": "docker"
+  "build_command": "npm run build",
+  "start_command": "npm start",
+  "install_command": "npm install"
 }
