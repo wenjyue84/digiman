@@ -138,6 +138,34 @@
       outline-offset: 2px;
     }
 
+    /* Tier toggle switches */
+    .tier-toggle {
+      position: relative;
+      transition: background-color 0.2s;
+    }
+
+    .tier-toggle::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .tier-toggle:checked::before {
+      transform: translateX(16px);
+    }
+
+    .tier-toggle:disabled {
+      opacity: 1;
+      cursor: not-allowed;
+    }
+
   </style>
 </head>
 <body class="bg-neutral-50 min-h-screen">
@@ -161,13 +189,14 @@
 <nav class="bg-white border-b">
   <div class="max-w-6xl mx-auto px-4 flex gap-0 overflow-x-auto">
     <button class="tab-btn tab-active px-4 py-3 text-sm whitespace-nowrap transition" data-tab="status">Status</button>
+    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="intent-manager">Classify Intent</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="intents">Intents & Routing</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="intent-manager">Intent Manager</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="static-replies">Static Messages</button>
+    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="workflow">Workflow</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="kb">Knowledge Base</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="preview">Preview</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="workflow">Workflow</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="settings">Settings</button>
+    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="testing">Run Tests</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="help">❓ Help</button>
   </div>
 </nav>
@@ -203,6 +232,28 @@
     <div class="bg-white rounded-2xl border p-5">
       <h3 class="font-semibold text-neutral-700 mb-3">Config Files</h3>
       <div id="config-files" class="flex flex-wrap gap-2 text-sm"></div>
+    </div>
+
+    <!-- KB File Edit Modal -->
+    <div id="kb-edit-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Edit <span id="kb-edit-filename" class="text-primary-600"></span></h3>
+          <button onclick="closeKbEditModal()" class="text-neutral-400 hover:text-neutral-600 text-xl">&times;</button>
+        </div>
+        <div class="flex-1 overflow-hidden">
+          <textarea
+            id="kb-edit-content"
+            class="w-full h-full border rounded-lg px-4 py-3 text-sm font-mono resize-none"
+            placeholder="Loading..."
+            style="min-height: 400px;"
+          ></textarea>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <button onclick="closeKbEditModal()" class="px-4 py-2 text-sm text-neutral-600 border rounded-lg hover:bg-neutral-50">Cancel</button>
+          <button onclick="saveKbFileFromModal()" id="kb-edit-save-btn" class="px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50">Save</button>
+        </div>
+      </div>
     </div>
 
     <!-- Add Instance Modal -->
@@ -249,127 +300,11 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- Intents & Routing Tab -->
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <section id="tab-intents" class="tab-content hidden">
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold text-neutral-800">Intents & Routing</h2>
-      <p class="text-sm text-neutral-500">Define intents the LLM classifies into, and control how each one is handled.</p>
-    </div>
-
-    <div class="bg-white border rounded-2xl p-5 mb-4">
-      <h3 class="font-semibold text-neutral-700 mb-3">Architecture</h3>
-      <div class="text-sm text-neutral-600 space-y-1">
-        <p>1. <span class="font-mono text-danger-600">Emergency regex</span> — fire, stolen, assault → instant staff escalation</p>
-        <p>2. <span class="font-mono text-primary-600">LLM classifies intent</span> from the defined list below</p>
-        <p>3. <span class="font-mono text-success-600">Routing rule</span> determines handling: static reply, LLM response, or workflow (booking, escalation, payment, etc.)</p>
-      </div>
-    </div>
-
-    <!-- Test Classifier -->
-    <div class="bg-white border rounded-2xl p-5 mb-4">
-      <h3 class="font-semibold text-neutral-700 mb-3">Test Classifier</h3>
-      <p class="text-sm text-neutral-500 mb-3">Send a test message to see how Rainbow classifies it and which routing rule applies.</p>
-      <div class="flex gap-2 mb-3">
-        <input id="test-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Type a guest message, e.g. 'what's the wifi password?'" onkeydown="if(event.key==='Enter')testClassifier()" />
-        <button onclick="testClassifier()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl transition">Test</button>
-      </div>
-      <div id="test-result" class="hidden">
-        <div class="bg-neutral-50 rounded-2xl p-4 text-sm space-y-2">
-          <div class="flex gap-4">
-            <span class="text-neutral-500 w-24">Intent:</span>
-            <span id="test-intent" class="font-medium"></span>
-          </div>
-          <div class="flex gap-4">
-            <span class="text-neutral-500 w-24">Detection:</span>
-            <span id="test-source" class="font-medium"></span>
-          </div>
-          <div class="flex gap-4">
-            <span class="text-neutral-500 w-24">Action:</span>
-            <span id="test-action" class="font-mono text-primary-600"></span>
-          </div>
-          <div class="flex gap-4">
-            <span class="text-neutral-500 w-24">Routed To:</span>
-            <span id="test-routed" class="font-mono text-success-700 font-medium"></span>
-          </div>
-          <div class="flex gap-4">
-            <span class="text-neutral-500 w-24">Confidence:</span>
-            <span id="test-confidence" class="font-medium"></span>
-          </div>
-          <div class="mt-2 pt-2 border-t">
-            <span class="text-neutral-500 block mb-1">Response:</span>
-            <div id="test-response" class="whitespace-pre-wrap text-neutral-800"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Intent Table -->
-    <div class="bg-white border rounded-2xl p-5 mb-4">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-neutral-700">Intent Routing Table</h3>
-        <button onclick="showAddIntent()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Add Intent</button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b text-left text-neutral-500">
-              <th class="py-2 pr-3 font-medium">Intent</th>
-              <th class="py-2 pr-3 font-medium">Enabled</th>
-              <th class="py-2 pr-3 font-medium">Routing</th>
-              <th class="py-2 pr-3 font-medium">Static Reply?</th>
-              <th class="py-2 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="intents-table-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Add Intent Modal -->
-    <div id="add-intent-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
-      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
-        <h3 class="text-lg font-semibold mb-4">Add Intent</h3>
-        <form onsubmit="submitAddIntent(event)">
-          <div class="mb-3">
-            <label class="block text-sm font-medium text-neutral-700 mb-1">Category (snake_case)</label>
-            <input id="add-i-category" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g. breakfast_info" />
-          </div>
-          <div class="mb-3">
-            <label class="block text-sm font-medium text-neutral-700 mb-1">Routing Action</label>
-            <select id="add-i-routing" class="w-full border rounded-2xl px-3 py-2 text-sm" onchange="onAddIntentRoutingChange(this.value)">
-              <option value="llm_reply">LLM Reply</option>
-              <option value="static_reply">Static Reply</option>
-              <option value="workflow">Workflow</option>
-            </select>
-          </div>
-          <div class="mb-3 hidden" id="add-i-workflow-picker">
-            <label class="block text-sm font-medium text-neutral-700 mb-1">Workflow</label>
-            <select id="add-i-workflow-id" class="w-full border rounded-2xl px-3 py-2 text-sm"></select>
-          </div>
-          <div class="mb-3">
-            <label class="block text-sm font-medium text-neutral-700 mb-1">Regex Patterns (one per line, optional)</label>
-            <textarea id="add-i-patterns" rows="3" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="\\b(keyword)\\b"></textarea>
-          </div>
-          <div class="mb-3 flex items-center gap-2">
-            <input type="checkbox" id="add-i-enabled" checked />
-            <label for="add-i-enabled" class="text-sm text-neutral-700">Enabled</label>
-          </div>
-          <div class="flex justify-end gap-2">
-            <button type="button" onclick="closeModal('add-intent-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
-            <button type="submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600">Save</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- Intent Manager Tab -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <section id="tab-intent-manager" class="tab-content hidden">
     <div class="mb-4">
-      <h2 class="text-lg font-semibold text-neutral-800">Intent Manager</h2>
+      <h2 class="text-lg font-semibold text-neutral-800">Classify Intent</h2>
       <p class="text-sm text-neutral-500">Manage keywords, training examples, and test the 4-tier intent classification system.</p>
     </div>
 
@@ -439,6 +374,10 @@
             <strong>Best for:</strong> Emergency detection (fire, ambulance, theft), strict patterns that must trigger immediately.
           </span>
         </h3>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <span class="text-sm text-neutral-500">Enable</span>
+          <input type="checkbox" id="tier1-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+        </label>
       </div>
 
       <div class="space-y-3">
@@ -479,9 +418,15 @@
             <strong>Best for:</strong> Direct keywords, abbreviations (e.g., "tq"), and handling typos.
           </span>
         </h3>
-        <div class="flex gap-2">
-          <button onclick="exportIntentData('json')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export JSON</button>
-          <button onclick="exportIntentData('csv')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export CSV</button>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-neutral-500">Enable</span>
+            <input type="checkbox" id="tier2-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+          </label>
+          <div class="flex gap-2">
+            <button onclick="exportIntentData('json')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export JSON</button>
+            <button onclick="exportIntentData('csv')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export CSV</button>
+          </div>
         </div>
       </div>
 
@@ -547,15 +492,21 @@
 
     <!-- T3: Training Examples Editor -->
     <div class="bg-white border rounded-2xl p-5 mb-4">
-      <h3 class="font-semibold text-neutral-700 mb-3 group relative">
-        🔬 T3 Training Examples (Semantic Matching)
-        <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
-        <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
-          <strong>Semantic Matching:</strong> AI-powered meaning-based matching (~50ms). Understands paraphrases: "what's the cost" = "how much" = "tell me the price".
-          <br><br>
-          <strong>Best for:</strong> Different phrasings with same meaning, synonyms, and natural language variations.
-        </span>
-      </h3>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🔬 T3 Training Examples (Semantic Matching)
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>Semantic Matching:</strong> AI-powered meaning-based matching (~50ms). Understands paraphrases: "what's the cost" = "how much" = "tell me the price".
+            <br><br>
+            <strong>Best for:</strong> Different phrasings with same meaning, synonyms, and natural language variations.
+          </span>
+        </h3>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <span class="text-sm text-neutral-500">Enable</span>
+          <input type="checkbox" id="tier3-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+        </label>
+      </div>
       <p class="text-sm text-neutral-500 mb-3">Add example phrases for semantic similarity matching. Server restart required after changes.</p>
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -592,15 +543,21 @@
 
     <!-- T4: LLM Settings -->
     <div class="bg-white border rounded-2xl p-5">
-      <h3 class="font-semibold text-neutral-700 mb-3 group relative">
-        🧠 T4 LLM Fallback Settings
-        <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
-        <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
-          <strong>LLM Fallback:</strong> Full AI classification for complex queries (~100-500ms). Used when other tiers don't match.
-          <br><br>
-          <strong>Best for:</strong> Complex conversational queries, ambiguous intents, and handling edge cases.
-        </span>
-      </h3>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🧠 T4 LLM Fallback Settings
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>LLM Fallback:</strong> Full AI classification for complex queries (~100-500ms). Used when other tiers don't match.
+            <br><br>
+            <strong>Best for:</strong> Complex conversational queries, ambiguous intents, and handling edge cases.
+          </span>
+        </h3>
+        <label class="flex items-center gap-2 cursor-not-allowed opacity-70">
+          <span class="text-sm text-neutral-500">Always Enabled</span>
+          <input type="checkbox" id="tier4-enabled" class="tier-toggle w-10 h-6 bg-primary-500 rounded-full relative appearance-none cursor-not-allowed" checked disabled />
+        </label>
+      </div>
       <p class="text-sm text-neutral-500 mb-4">Configure LLM behavior when regex, fuzzy, and semantic tiers don't match.</p>
 
       <div class="space-y-4">
@@ -626,23 +583,14 @@
           </div>
         </div>
 
-        <!-- LLM Provider Settings -->
+        <!-- T4 Provider Selection -->
         <div class="border rounded-2xl p-4">
-          <h4 class="text-sm font-semibold text-neutral-700 mb-3">LLM Provider</h4>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs text-neutral-500 mb-1">Provider</label>
-              <select id="llm-provider" class="w-full border rounded-2xl px-3 py-2 text-sm">
-                <option value="anthropic">Anthropic Claude</option>
-                <option value="openai">OpenAI GPT</option>
-                <option value="ollama">Ollama (Local)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs text-neutral-500 mb-1">Model</label>
-              <input id="llm-model" type="text" value="claude-3-5-sonnet-20241022" class="w-full border rounded-2xl px-3 py-2 text-sm" />
-              <div class="text-xs text-neutral-400 mt-1">Examples: claude-3-5-sonnet-20241022, gpt-4o-mini, qwen2.5:14b</div>
-            </div>
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3">T4 LLM Providers (Fallback Order)</h4>
+          <p class="text-xs text-neutral-400 mb-3">Select which providers to use for T4 classification and their fallback order. If none selected, all enabled providers from <a href="#" onclick="switchTab('settings');return false" class="text-primary-500 underline">Settings</a> will be used.</p>
+          <div id="t4-providers-list" class="space-y-2 mb-4">
+            <p class="text-sm text-neutral-400 italic">Loading providers...</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs text-neutral-500 mb-1">Max Tokens</label>
               <input id="llm-max-tokens" type="number" value="500" class="w-full border rounded-2xl px-3 py-2 text-sm" />
@@ -691,8 +639,199 @@
 
         <div class="pt-4 border-t">
           <button onclick="saveLLMSettings()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl text-sm">Save LLM Settings</button>
-          <button onclick="testLLMConnection()" class="ml-2 bg-neutral-500 hover:bg-neutral-600 text-white px-4 py-2 rounded-2xl text-sm">Test Connection</button>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Intents & Routing Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-intents" class="tab-content hidden">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Intents & Routing</h2>
+      <p class="text-sm text-neutral-500">Define intents the LLM classifies into, and control how each one is handled.</p>
+    </div>
+
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">Architecture</h3>
+      <div class="text-sm text-neutral-600 space-y-1">
+        <p>1. <span class="font-mono text-danger-600">Emergency regex</span> — fire, stolen, assault → instant staff escalation</p>
+        <p>2. <span class="font-mono text-primary-600">LLM classifies intent</span> from the defined list below</p>
+        <p>3. <span class="font-mono text-success-600">Routing rule</span> determines handling: static reply, LLM response, or workflow (booking, escalation, payment, etc.)</p>
+      </div>
+    </div>
+
+    <!-- Test Classifier -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">Test Classifier</h3>
+      <p class="text-sm text-neutral-500 mb-3">Send a test message to see how Rainbow classifies it and which routing rule applies.</p>
+      <div class="flex gap-2 mb-3">
+        <input id="test-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Type a guest message, e.g. 'what's the wifi password?'" onkeydown="if(event.key==='Enter')testClassifier()" />
+        <button onclick="testClassifier()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl transition">Test</button>
+      </div>
+      <div id="test-result" class="hidden">
+        <div class="bg-neutral-50 rounded-2xl p-4 text-sm space-y-2">
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Intent:</span>
+            <span id="test-intent" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Detection:</span>
+            <span id="test-source" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Action:</span>
+            <span id="test-action" class="font-mono text-primary-600"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Routed To:</span>
+            <span id="test-routed" class="font-mono text-success-700 font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Confidence:</span>
+            <span id="test-confidence" class="font-medium"></span>
+          </div>
+          <div class="mt-2 pt-2 border-t">
+            <span class="text-neutral-500 block mb-1">Response:</span>
+            <div id="test-response" class="whitespace-pre-wrap text-neutral-800"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Routing Templates -->
+    <div class="bg-white border rounded-2xl p-4 mb-4">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h3 class="font-semibold text-neutral-700 text-sm">Routing Templates</h3>
+          <p class="text-xs text-neutral-400">Quickly switch all intent routing at once</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="tpl-btn-smartest" onclick="applyTemplate('smartest')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="All LLM Reply + Workflows">
+            T1 Smartest
+          </button>
+          <button id="tpl-btn-performance" onclick="applyTemplate('performance')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="Maximize Static Reply">
+            T2 Performance
+          </button>
+          <button id="tpl-btn-custom" onclick="applyTemplate('custom')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="Your saved custom config">
+            T3 Custom
+          </button>
+          <span class="text-neutral-300">|</span>
+          <button onclick="saveCustomTemplate()" class="text-xs px-3 py-1.5 rounded-2xl border border-dashed border-neutral-300 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 transition" title="Save current routing as T3">
+            Save as T3
+          </button>
+        </div>
+      </div>
+      <div id="template-indicator" class="hidden mt-2 text-xs text-neutral-500"></div>
+    </div>
+
+    <!-- Intent Table -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700">Intent Routing Table</h3>
+        <button onclick="showAddIntent()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Add Intent</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-left text-neutral-500">
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Intent
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    The intent category name used for message classification (e.g., "greeting", "booking", "complaint")
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Enabled
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Whether this intent is active in the classifier. Disabled intents will not be matched against incoming messages.
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Routing
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    How messages with this intent are handled: Static Reply (pre-written response), LLM Reply (AI-generated response), or Workflow (multi-step process)
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Static Reply?
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Shows if a pre-written static reply exists in the knowledge base for this intent. Warnings appear if routing doesn't match availability.
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Actions
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-48 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Delete this intent and its routing configuration
+                  </span>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="intents-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add Intent Modal -->
+    <div id="add-intent-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Add Intent</h3>
+        <form onsubmit="submitAddIntent(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Category (snake_case)</label>
+            <input id="add-i-category" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g. breakfast_info" />
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Routing Action</label>
+            <select id="add-i-routing" class="w-full border rounded-2xl px-3 py-2 text-sm" onchange="onAddIntentRoutingChange(this.value)">
+              <option value="llm_reply">LLM Reply</option>
+              <option value="static_reply">Static Reply</option>
+              <option value="workflow">Workflow</option>
+            </select>
+          </div>
+          <div class="mb-3 hidden" id="add-i-workflow-picker">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Workflow</label>
+            <select id="add-i-workflow-id" class="w-full border rounded-2xl px-3 py-2 text-sm"></select>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Regex Patterns (one per line, optional)</label>
+            <textarea id="add-i-patterns" rows="3" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="\\b(keyword)\\b"></textarea>
+          </div>
+          <div class="mb-3 flex items-center gap-2">
+            <input type="checkbox" id="add-i-enabled" checked />
+            <label for="add-i-enabled" class="text-sm text-neutral-700">Enabled</label>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('add-intent-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600">Save</button>
+          </div>
+        </form>
       </div>
     </div>
   </section>
@@ -850,6 +989,102 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Workflow Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-workflow" class="tab-content hidden">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Workflows</h2>
+      <p class="text-sm text-neutral-500">Define step-by-step workflows for booking, escalation, payment, and more. Assign them to intents via the Intents tab.</p>
+    </div>
+
+    <!-- Workflow Builder -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <!-- Left: Workflow List -->
+      <div class="md:col-span-1">
+        <div class="bg-white border rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-neutral-700 text-sm">Workflows</h3>
+            <button onclick="createWorkflow()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-2 py-1 rounded transition">+ New</button>
+          </div>
+          <div id="workflow-list" class="space-y-2">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Right: Step Editor -->
+      <div class="md:col-span-2">
+        <div id="workflow-editor-placeholder" class="bg-white border rounded-2xl p-8 text-center text-neutral-400">
+          <p class="text-lg mb-1">Select a workflow</p>
+          <p class="text-sm">Click a workflow on the left to edit its steps</p>
+        </div>
+        <div id="workflow-editor" class="hidden bg-white border rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3 flex-1">
+              <input id="wf-edit-name" class="text-lg font-semibold border-b border-transparent hover:border-neutral-300 focus:border-primary-500 outline-none px-1 py-0.5 flex-1" />
+              <span id="wf-edit-id" class="text-xs font-mono text-neutral-400"></span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="saveCurrentWorkflow()" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl transition">Save</button>
+              <button onclick="deleteCurrentWorkflow()" class="text-sm text-danger-500 hover:bg-danger-50 px-3 py-1.5 rounded-2xl border transition">Delete</button>
+            </div>
+          </div>
+          <div id="wf-steps-container" class="space-y-0 mb-4"></div>
+          <button onclick="addStep()" class="text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-2 rounded-2xl w-full transition border border-dashed border-neutral-300">+ Add Step</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow Testing Box -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-semibold text-blue-900">Workflow Tester</h3>
+          <p class="text-xs text-blue-600 mt-1">Simulate and test your workflows in real-time</p>
+        </div>
+        <button onclick="resetWorkflowTest()" class="text-xs bg-white hover:bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 transition">Reset</button>
+      </div>
+
+      <!-- Workflow Selection -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-blue-800 mb-2">Select Workflow to Test</label>
+        <select id="test-workflow-select" onchange="loadWorkflowTestSteps()" class="w-full border border-blue-200 rounded-lg px-3 py-2 bg-white text-sm">
+          <option value="">-- Choose a workflow --</option>
+        </select>
+      </div>
+
+      <!-- Workflow Steps Preview -->
+      <div id="test-workflow-steps" class="hidden mb-4 bg-white rounded-lg border border-blue-200 p-4">
+        <h4 class="text-sm font-semibold text-blue-800 mb-3">Workflow Steps:</h4>
+        <div id="test-steps-list" class="space-y-2 text-sm"></div>
+      </div>
+
+      <!-- Test Chat Interface -->
+      <div id="test-workflow-chat" class="hidden">
+        <div class="bg-white rounded-lg border border-blue-200 p-4 mb-3 max-h-80 overflow-y-auto" id="test-chat-messages">
+          <div class="text-center text-blue-400 text-sm py-8">Start testing by clicking "Begin Test" below</div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="flex gap-2">
+          <input type="text" id="test-user-input" placeholder="Type user message..." class="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm" disabled />
+          <button onclick="sendTestMessage()" id="test-send-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition" disabled>Send</button>
+          <button onclick="beginWorkflowTest()" id="test-begin-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition">Begin Test</button>
+        </div>
+
+        <!-- Current Step Indicator -->
+        <div id="test-step-indicator" class="mt-3 text-xs text-blue-600 hidden">
+          <span class="font-semibold">Current Step:</span> <span id="test-current-step-text">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Settings (existing workflow.json) -->
+    <details class="bg-white border rounded-2xl">
+      <summary class="px-5 py-3 cursor-pointer text-sm font-semibold text-neutral-700 hover:bg-neutral-50 rounded-2xl">Advanced Workflow Settings</summary>
+      <div id="workflow-advanced-content" class="px-5 pb-5 space-y-4"></div>
+    </details>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- Knowledge Base Tab (Multi-File Progressive Disclosure Editor) -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <section id="tab-kb" class="tab-content hidden">
@@ -985,16 +1220,8 @@
           <button onclick="clearCurrentChat()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Clear Chat</button>
         </div>
 
-        <!-- Chat Messages (Scrollable) -->
-        <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-neutral-50">
-          <div class="text-center text-neutral-400 text-sm py-8">
-            <p>👋 Start a conversation by typing a message below</p>
-            <p class="text-xs mt-1">Try: "What's the wifi password?" or "I want to book a room"</p>
-          </div>
-        </div>
-
-        <!-- Chat Input (Fixed at Bottom) -->
-        <div class="border-t bg-white px-4 py-3">
+        <!-- Chat Input (Right below header) -->
+        <div class="border-b bg-white px-4 py-3">
           <form onsubmit="sendChatMessage(event)" class="flex gap-2">
             <input
               id="chat-input"
@@ -1013,6 +1240,14 @@
           </form>
           <div id="chat-meta" class="mt-2 text-xs text-neutral-500"></div>
         </div>
+
+        <!-- Chat Messages (Scrollable, newest at top) -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-neutral-50">
+          <div class="text-center text-neutral-400 text-sm py-8">
+            <p>👋 Start a conversation by typing a message below</p>
+            <p class="text-xs mt-1">Try: "What's the wifi password?" or "I want to book a room"</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1029,63 +1264,105 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- Workflow Tab -->
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <section id="tab-workflow" class="tab-content hidden">
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold text-neutral-800">Workflows</h2>
-      <p class="text-sm text-neutral-500">Define step-by-step workflows for booking, escalation, payment, and more. Assign them to intents via the Intents tab.</p>
-    </div>
-
-    <!-- Workflow Builder -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <!-- Left: Workflow List -->
-      <div class="md:col-span-1">
-        <div class="bg-white border rounded-2xl p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold text-neutral-700 text-sm">Workflows</h3>
-            <button onclick="createWorkflow()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-2 py-1 rounded transition">+ New</button>
-          </div>
-          <div id="workflow-list" class="space-y-2">Loading...</div>
-        </div>
-      </div>
-
-      <!-- Right: Step Editor -->
-      <div class="md:col-span-2">
-        <div id="workflow-editor-placeholder" class="bg-white border rounded-2xl p-8 text-center text-neutral-400">
-          <p class="text-lg mb-1">Select a workflow</p>
-          <p class="text-sm">Click a workflow on the left to edit its steps</p>
-        </div>
-        <div id="workflow-editor" class="hidden bg-white border rounded-2xl p-5">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3 flex-1">
-              <input id="wf-edit-name" class="text-lg font-semibold border-b border-transparent hover:border-neutral-300 focus:border-primary-500 outline-none px-1 py-0.5 flex-1" />
-              <span id="wf-edit-id" class="text-xs font-mono text-neutral-400"></span>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="saveCurrentWorkflow()" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl transition">Save</button>
-              <button onclick="deleteCurrentWorkflow()" class="text-sm text-danger-500 hover:bg-danger-50 px-3 py-1.5 rounded-2xl border transition">Delete</button>
-            </div>
-          </div>
-          <div id="wf-steps-container" class="space-y-0 mb-4"></div>
-          <button onclick="addStep()" class="text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-2 rounded-2xl w-full transition border border-dashed border-neutral-300">+ Add Step</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Advanced Settings (existing workflow.json) -->
-    <details class="bg-white border rounded-2xl">
-      <summary class="px-5 py-3 cursor-pointer text-sm font-semibold text-neutral-700 hover:bg-neutral-50 rounded-2xl">Advanced Workflow Settings</summary>
-      <div id="workflow-advanced-content" class="px-5 pb-5 space-y-4"></div>
-    </details>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- Settings Tab -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <section id="tab-settings" class="tab-content hidden">
     <h2 class="text-lg font-semibold text-neutral-800 mb-4">Settings</h2>
     <div id="settings-content" class="space-y-4"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Testing Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-testing" class="tab-content hidden">
+    <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-neutral-800">Automated Test Runner</h2>
+        <p class="text-sm text-neutral-500">Run Vitest unit, integration, and semantic tests from the browser</p>
+      </div>
+      <div class="flex gap-2">
+        <select id="test-project-select" class="text-sm border rounded-lg px-3 py-2 bg-white">
+          <option value="unit" selected>Unit Tests</option>
+          <option value="integration">Integration Tests</option>
+          <option value="semantic">Semantic Tests</option>
+        </select>
+        <button id="btn-run-tests" onclick="runTests()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition font-medium">
+          Run Tests
+        </button>
+        <button id="btn-run-coverage" onclick="runCoverage()" class="text-sm bg-neutral-600 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition font-medium">
+          Coverage
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div id="test-summary" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-total" class="text-2xl font-bold text-neutral-800">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Total Tests</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-passed" class="text-2xl font-bold text-green-600">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Passed</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-failed" class="text-2xl font-bold text-red-500">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Failed</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-duration" class="text-2xl font-bold text-indigo-500">0s</div>
+        <div class="text-xs text-neutral-500 mt-1">Duration</div>
+      </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div id="test-status-banner" class="hidden mb-4 rounded-2xl border p-4 flex items-center gap-3">
+      <div id="test-status-icon" class="text-2xl"></div>
+      <div>
+        <div id="test-status-text" class="font-semibold"></div>
+        <div id="test-status-sub" class="text-sm text-neutral-500"></div>
+      </div>
+    </div>
+
+    <!-- Running Indicator -->
+    <div id="test-running" class="hidden mb-4">
+      <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent mb-3"></div>
+        <div class="text-indigo-700 font-medium">Running tests...</div>
+        <div class="text-sm text-indigo-500 mt-1">This may take a few seconds</div>
+      </div>
+    </div>
+
+    <!-- Test Results by File -->
+    <div id="test-results" class="space-y-3"></div>
+
+    <!-- Coverage Results -->
+    <div id="coverage-results" class="hidden">
+      <h3 class="font-semibold text-neutral-700 mb-3">Code Coverage</h3>
+      <div class="bg-white rounded-2xl border overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">File</th>
+              <th class="px-4 py-2 font-medium text-right">Stmts</th>
+              <th class="px-4 py-2 font-medium text-right">Branch</th>
+              <th class="px-4 py-2 font-medium text-right">Funcs</th>
+              <th class="px-4 py-2 font-medium text-right">Lines</th>
+            </tr>
+          </thead>
+          <tbody id="coverage-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="test-empty" class="bg-white rounded-2xl border p-8 text-center">
+      <div class="text-4xl mb-3 text-neutral-300">
+        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+      <div class="text-neutral-500 font-medium">No test results yet</div>
+      <div class="text-sm text-neutral-400 mt-1">Select a test suite and click "Run Tests" to begin</div>
+    </div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -1587,7 +1864,7 @@ async function api(path, opts = {}) {
 
 // ─── Tabs (URL-based routing) ───────────────────────────────────────
 const BASE_PATH = '/admin/rainbow';
-const VALID_TABS = ['status', 'intents', 'intent-manager', 'static-replies', 'kb', 'preview', 'workflow', 'settings', 'help'];
+const VALID_TABS = ['status', 'intents', 'intent-manager', 'static-replies', 'kb', 'preview', 'workflow', 'settings', 'testing', 'help'];
 
 function getTabFromURL() {
   const seg = window.location.pathname.replace(BASE_PATH, '').replace(/^\//, '').split('/')[0];
@@ -1620,9 +1897,214 @@ function loadTab(tab) {
     preview: loadPreview,
     settings: loadSettings,
     workflow: loadWorkflow,
+    testing: () => {}, // Results loaded on-demand via Run button
     help: () => {} // No dynamic loading needed for help
   };
   if (loaders[tab]) loaders[tab]();
+}
+
+// ─── Test Runner ────────────────────────────────────────────────────
+let _testRunning = false;
+
+async function runTests() {
+  if (_testRunning) return;
+  _testRunning = true;
+  const project = document.getElementById('test-project-select').value;
+  const btnRun = document.getElementById('btn-run-tests');
+  const btnCov = document.getElementById('btn-run-coverage');
+  btnRun.disabled = true;
+  btnCov.disabled = true;
+  btnRun.textContent = 'Running...';
+
+  // Show running state, hide others
+  document.getElementById('test-empty').classList.add('hidden');
+  document.getElementById('test-summary').classList.add('hidden');
+  document.getElementById('test-status-banner').classList.add('hidden');
+  document.getElementById('test-results').innerHTML = '';
+  document.getElementById('coverage-results').classList.add('hidden');
+  document.getElementById('test-running').classList.remove('hidden');
+
+  try {
+    const data = await api('/tests/run', { method: 'POST', body: { project } });
+    document.getElementById('test-running').classList.add('hidden');
+    renderTestResults(data);
+  } catch (e) {
+    document.getElementById('test-running').classList.add('hidden');
+    document.getElementById('test-status-banner').classList.remove('hidden');
+    document.getElementById('test-status-banner').className = 'mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 flex items-center gap-3';
+    document.getElementById('test-status-icon').textContent = '!';
+    document.getElementById('test-status-text').textContent = 'Test run failed';
+    document.getElementById('test-status-sub').textContent = e.message;
+    toast(e.message, 'error');
+  } finally {
+    _testRunning = false;
+    btnRun.disabled = false;
+    btnCov.disabled = false;
+    btnRun.textContent = 'Run Tests';
+  }
+}
+
+async function runCoverage() {
+  if (_testRunning) return;
+  _testRunning = true;
+  const btnRun = document.getElementById('btn-run-tests');
+  const btnCov = document.getElementById('btn-run-coverage');
+  btnRun.disabled = true;
+  btnCov.disabled = true;
+  btnCov.textContent = 'Running...';
+
+  document.getElementById('test-empty').classList.add('hidden');
+  document.getElementById('test-summary').classList.add('hidden');
+  document.getElementById('test-status-banner').classList.add('hidden');
+  document.getElementById('test-results').innerHTML = '';
+  document.getElementById('coverage-results').classList.add('hidden');
+  document.getElementById('test-running').classList.remove('hidden');
+
+  try {
+    const data = await api('/tests/coverage', { method: 'POST' });
+    document.getElementById('test-running').classList.add('hidden');
+    renderCoverageResults(data);
+  } catch (e) {
+    document.getElementById('test-running').classList.add('hidden');
+    toast(e.message, 'error');
+  } finally {
+    _testRunning = false;
+    btnRun.disabled = false;
+    btnCov.disabled = false;
+    btnCov.textContent = 'Coverage';
+  }
+}
+
+function renderTestResults(data) {
+  // Summary cards
+  const summary = document.getElementById('test-summary');
+  summary.classList.remove('hidden');
+  document.getElementById('test-total').textContent = data.numTotalTests ?? 0;
+  document.getElementById('test-passed').textContent = data.numPassedTests ?? 0;
+  document.getElementById('test-failed').textContent = data.numFailedTests ?? 0;
+  const dur = data.duration ? (data.duration / 1000).toFixed(1) + 's' : '—';
+  document.getElementById('test-duration').textContent = dur;
+
+  // Status banner
+  const banner = document.getElementById('test-status-banner');
+  banner.classList.remove('hidden');
+  if (data.success) {
+    banner.className = 'mb-4 rounded-2xl border border-green-200 bg-green-50 p-4 flex items-center gap-3';
+    document.getElementById('test-status-icon').innerHTML = '<svg class="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    document.getElementById('test-status-text').textContent = 'All tests passed';
+    document.getElementById('test-status-sub').textContent = `${data.numPassedTests} tests across ${data.numPassedTestSuites} files in ${dur}`;
+  } else {
+    banner.className = 'mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 flex items-center gap-3';
+    document.getElementById('test-status-icon').innerHTML = '<svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    document.getElementById('test-status-text').textContent = `${data.numFailedTests} test${data.numFailedTests !== 1 ? 's' : ''} failed`;
+    document.getElementById('test-status-sub').textContent = `${data.numPassedTests} passed, ${data.numFailedTests} failed in ${dur}`;
+  }
+
+  // Test file cards
+  const container = document.getElementById('test-results');
+  container.innerHTML = '';
+
+  if (!data.testFiles || data.testFiles.length === 0) {
+    if (data.raw) {
+      container.innerHTML = `<div class="bg-white rounded-2xl border p-4"><pre class="text-xs text-neutral-600 whitespace-pre-wrap overflow-auto max-h-96">${escHtml(data.raw)}</pre></div>`;
+    }
+    return;
+  }
+
+  for (const file of data.testFiles) {
+    const passed = file.tests.filter(t => t.status === 'passed').length;
+    const failed = file.tests.filter(t => t.status === 'failed').length;
+    const total = file.tests.length;
+    const allPassed = failed === 0;
+    const fileDur = file.duration ? (file.duration / 1000).toFixed(2) + 's' : '';
+
+    let html = `<div class="bg-white rounded-2xl border overflow-hidden">`;
+    html += `<div class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-neutral-50 transition" onclick="this.nextElementSibling.classList.toggle('hidden')">`;
+    html += `<div class="flex items-center gap-3">`;
+    html += allPassed
+      ? `<span class="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0"></span>`
+      : `<span class="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0"></span>`;
+    html += `<span class="font-medium text-sm text-neutral-800">${escHtml(file.file)}</span>`;
+    html += `</div>`;
+    html += `<div class="flex items-center gap-3 text-xs">`;
+    if (fileDur) html += `<span class="text-neutral-400">${fileDur}</span>`;
+    html += `<span class="text-green-600 font-medium">${passed} passed</span>`;
+    if (failed > 0) html += `<span class="text-red-500 font-medium">${failed} failed</span>`;
+    html += `<svg class="w-4 h-4 text-neutral-400 transform transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>`;
+    html += `</div></div>`;
+
+    // Expandable test list
+    html += `<div class="hidden border-t divide-y">`;
+    for (const t of file.tests) {
+      const isPassed = t.status === 'passed';
+      const icon = isPassed
+        ? `<svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`
+        : `<svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+      html += `<div class="px-4 py-2 flex items-start gap-2 text-sm ${isPassed ? '' : 'bg-red-50'}">`;
+      html += icon;
+      html += `<div class="min-w-0">`;
+      html += `<div class="${isPassed ? 'text-neutral-700' : 'text-red-700'}">${escHtml(t.name)}</div>`;
+      if (t.duration != null) html += `<div class="text-xs text-neutral-400">${t.duration}ms</div>`;
+      if (t.failureMessages && t.failureMessages.length > 0) {
+        html += `<pre class="mt-1 text-xs text-red-600 whitespace-pre-wrap overflow-auto max-h-40 bg-red-100 rounded p-2">${escHtml(t.failureMessages.join('\n'))}</pre>`;
+      }
+      html += `</div></div>`;
+    }
+    html += `</div></div>`;
+    container.innerHTML += html;
+  }
+}
+
+function renderCoverageResults(data) {
+  const covDiv = document.getElementById('coverage-results');
+  covDiv.classList.remove('hidden');
+  const tbody = document.getElementById('coverage-tbody');
+  tbody.innerHTML = '';
+
+  if (!data.coverage || data.coverage.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-3 text-center text-neutral-400 text-sm">No coverage data available</td></tr>';
+    return;
+  }
+
+  for (const row of data.coverage) {
+    const isAll = row.file === 'All files';
+    const cls = isAll ? 'font-semibold bg-neutral-50' : '';
+    tbody.innerHTML += `<tr class="${cls} border-t">
+      <td class="px-4 py-2 ${isAll ? 'text-neutral-800' : 'text-neutral-600'}">${escHtml(row.file)}</td>
+      <td class="px-4 py-2 text-right ${covColor(row.stmts)}">${row.stmts}</td>
+      <td class="px-4 py-2 text-right ${covColor(row.branch)}">${row.branch}</td>
+      <td class="px-4 py-2 text-right ${covColor(row.funcs)}">${row.funcs}</td>
+      <td class="px-4 py-2 text-right ${covColor(row.lines)}">${row.lines}</td>
+    </tr>`;
+  }
+
+  // Show status banner for coverage
+  const banner = document.getElementById('test-status-banner');
+  banner.classList.remove('hidden');
+  if (data.success) {
+    banner.className = 'mb-4 rounded-2xl border border-green-200 bg-green-50 p-4 flex items-center gap-3';
+    document.getElementById('test-status-icon').innerHTML = '<svg class="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    document.getElementById('test-status-text').textContent = 'Coverage thresholds met';
+    document.getElementById('test-status-sub').textContent = 'All coverage thresholds are above minimum requirements';
+  } else {
+    banner.className = 'mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-center gap-3';
+    document.getElementById('test-status-icon').innerHTML = '<svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>';
+    document.getElementById('test-status-text').textContent = 'Coverage thresholds not met';
+    document.getElementById('test-status-sub').textContent = 'Some files are below minimum coverage requirements';
+  }
+}
+
+function covColor(val) {
+  const n = parseFloat(val);
+  if (isNaN(n)) return 'text-neutral-500';
+  if (n >= 80) return 'text-green-600 font-medium';
+  if (n >= 50) return 'text-amber-600';
+  return 'text-red-500';
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ─── Modal helpers ──────────────────────────────────────────────────
@@ -1720,10 +2202,14 @@ async function loadStatus() {
       `).join('');
     }
 
-    // AI Availability with enabled providers only
-    const aiProviders = (d.ai?.providers || []).filter(p => p.available);
+    // AI Availability with enabled providers only (sorted by priority, default first)
+    const aiProviders = (d.ai?.providers || [])
+      .filter(p => p.enabled && p.available)
+      .sort((a, b) => a.priority - b.priority);
     const aiHtml = aiProviders.map(provider => {
       const statusColor = provider.available ? 'bg-success-400' : 'bg-neutral-300';
+      const isDefault = provider.priority === 0;
+      const defaultBadge = isDefault ? '<span class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded ml-1 font-medium">⭐ Default</span>' : '';
       const typeBadge = provider.type === 'primary'
         ? '<span class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-1">Primary</span>'
         : provider.type === 'fallback'
@@ -1736,6 +2222,7 @@ async function loadStatus() {
             <div>
               <div class="flex items-center gap-1">
                 <span class="font-medium text-neutral-800">${esc(provider.name)}</span>
+                ${defaultBadge}
                 ${typeBadge}
               </div>
               <span class="text-xs ${provider.available ? 'text-success-600' : 'text-neutral-400'}">${esc(provider.details)}</span>
@@ -1743,7 +2230,7 @@ async function loadStatus() {
           </div>
           <button
             onclick="testAIProvider('${provider.id}')"
-            class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition disabled:opacity-50"
+            class="text-xs bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-1 rounded transition disabled:opacity-50"
             ${!provider.available ? 'disabled' : ''}
             id="test-btn-${provider.id}"
           >Test</button>
@@ -1765,6 +2252,11 @@ async function loadStatus() {
 
     document.getElementById('config-files').innerHTML = (d.config_files || [])
       .map(f => `<span class="px-2 py-1 bg-primary-50 text-primary-700 rounded text-xs font-mono">${f}.json</span>`).join('');
+
+    // Auto-test all enabled providers (show response times automatically)
+    aiProviders.forEach((p, i) => {
+      setTimeout(() => testAIProvider(p.id), i * 300);
+    });
   } catch (e) {
     document.getElementById('wa-instances').innerHTML = `<span class="text-danger-500">Error: ${e.message}</span>`;
   }
@@ -1772,21 +2264,36 @@ async function loadStatus() {
 
 async function testAIProvider(providerId) {
   const btn = document.getElementById(`test-btn-${providerId}`);
-  const originalText = btn.textContent;
-  btn.textContent = 'Testing...';
+  if (!btn) return;
+
+  btn.textContent = '...';
   btn.disabled = true;
+  btn.style.backgroundColor = '';
+  btn.style.color = '';
+  btn.style.borderColor = '';
 
   try {
     const result = await api(`/test-ai/${providerId}`, { method: 'POST' });
     if (result.ok) {
-      toast(`✓ ${providerId.toUpperCase()}: ${result.model} responded in ${result.responseTime}ms\nReply: ${result.reply}`, 'success');
+      // Show response time on button with green styling
+      btn.textContent = result.responseTime + 'ms';
+      btn.style.backgroundColor = '#f0fdf4'; // green-50
+      btn.style.color = '#16a34a'; // green-600
+      btn.style.borderColor = '#86efac'; // green-300
     } else {
+      btn.textContent = 'Fail';
+      btn.style.backgroundColor = '#fef2f2'; // red-50
+      btn.style.color = '#dc2626'; // red-600
+      btn.style.borderColor = '#fca5a5'; // red-300
       toast(`✗ ${providerId.toUpperCase()} test failed: ${result.error}`, 'error');
     }
   } catch (e) {
+    btn.textContent = 'Err';
+    btn.style.backgroundColor = '#fef2f2'; // red-50
+    btn.style.color = '#dc2626'; // red-600
+    btn.style.borderColor = '#fca5a5'; // red-300
     toast(`✗ ${providerId.toUpperCase()} test error: ${e.message}`, 'error');
   } finally {
-    btn.textContent = originalText;
     btn.disabled = false;
   }
 }
@@ -1924,6 +2431,7 @@ async function loadIntents() {
       const enabled = catEntry ? catEntry.enabled : true;
       const hasStatic = staticIntentNames.has(intent);
       const needsStatic = route === 'static_reply';
+      const isUnknown = intent === 'unknown';
 
       let warning = '';
       if (needsStatic && !hasStatic) warning = '<span class="badge-warn">No static reply!</span>';
@@ -1933,38 +2441,66 @@ async function loadIntents() {
         `<option value="${esc(w.id)}" ${wfId === w.id ? 'selected' : ''}>${esc(w.name)}</option>`
       ).join('');
 
-      rows.push(`
-        <tr class="border-b hover:bg-neutral-50" id="intent-row-${css(intent)}">
-          <td class="py-2.5 pr-3 font-mono text-sm">${esc(intent)}</td>
-          <td class="py-2.5 pr-3">
-            <button onclick="toggleIntent('${esc(intent)}', ${!enabled})"
-              class="text-xs px-2 py-0.5 rounded-full ${enabled ? 'bg-success-100 text-success-700' : 'bg-neutral-200 text-neutral-500'} hover:opacity-80">
-              ${enabled ? 'On' : 'Off'}
-            </button>
-          </td>
-          <td class="py-2.5 pr-3">
-            <div class="flex items-center gap-1">
-              <select onchange="changeRouting('${esc(intent)}', this.value, this)" class="text-xs border rounded px-2 py-1">
-                ${ACTIONS.map(a => `<option value="${a}" ${route === a ? 'selected' : ''}>${ACTION_LABELS[a]}</option>`).join('')}
-              </select>
-              <select onchange="changeWorkflowId('${esc(intent)}', this.value)" class="text-xs border rounded px-2 py-1 ${route === 'workflow' ? '' : 'hidden'}" id="wf-pick-${css(intent)}">
-                ${wfOptions}
-              </select>
-            </div>
-          </td>
-          <td class="py-2.5 pr-3 text-xs">${warning || (hasStatic ? '<span class="text-success-600">Yes</span>' : '<span class="text-neutral-400">—</span>')}</td>
-          <td class="py-2.5">
-            <button onclick="deleteIntent('${esc(intent)}')" class="text-xs px-2 py-1 text-danger-500 hover:bg-danger-50 rounded">Delete</button>
-          </td>
-        </tr>
-      `);
+      if (isUnknown) {
+        rows.push(`
+          <tr class="border-b bg-neutral-50/50" id="intent-row-${css(intent)}">
+            <td class="py-2.5 pr-3 font-mono text-sm">
+              <span class="relative group cursor-help">
+                ${esc(intent)}
+                <span class="inline-block ml-1 text-neutral-400 text-xs align-top">🔒</span>
+                <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                  The "unknown" intent is a system fallback. When the AI cannot classify a message into any known intent, it falls back here. It must always use LLM Reply so the AI can generate a helpful response.
+                </span>
+              </span>
+            </td>
+            <td class="py-2.5 pr-3">
+              <span class="text-xs px-2 py-0.5 rounded-full bg-success-100 text-success-700 opacity-60 cursor-not-allowed">Always On</span>
+            </td>
+            <td class="py-2.5 pr-3">
+              <span class="text-xs border rounded px-2 py-1 bg-neutral-100 text-neutral-500 cursor-not-allowed inline-block">LLM Reply</span>
+            </td>
+            <td class="py-2.5 pr-3 text-xs"><span class="text-neutral-400">—</span></td>
+            <td class="py-2.5">
+              <span class="text-xs px-2 py-1 text-neutral-300 cursor-not-allowed">Protected</span>
+            </td>
+          </tr>
+        `);
+      } else {
+        rows.push(`
+          <tr class="border-b hover:bg-neutral-50" id="intent-row-${css(intent)}">
+            <td class="py-2.5 pr-3 font-mono text-sm">${esc(intent)}</td>
+            <td class="py-2.5 pr-3">
+              <button onclick="toggleIntent('${esc(intent)}', ${!enabled})"
+                class="text-xs px-2 py-0.5 rounded-full ${enabled ? 'bg-success-100 text-success-700' : 'bg-neutral-200 text-neutral-500'} hover:opacity-80">
+                ${enabled ? 'On' : 'Off'}
+              </button>
+            </td>
+            <td class="py-2.5 pr-3">
+              <div class="flex items-center gap-1">
+                <select onchange="changeRouting('${esc(intent)}', this.value, this)" class="text-xs border rounded px-2 py-1">
+                  ${ACTIONS.map(a => `<option value="${a}" ${route === a ? 'selected' : ''}>${ACTION_LABELS[a]}</option>`).join('')}
+                </select>
+                <select onchange="changeWorkflowId('${esc(intent)}', this.value)" class="text-xs border rounded px-2 py-1 ${route === 'workflow' ? '' : 'hidden'}" id="wf-pick-${css(intent)}">
+                  ${wfOptions}
+                </select>
+              </div>
+            </td>
+            <td class="py-2.5 pr-3 text-xs">${warning || (hasStatic ? '<span class="text-success-600">Yes</span>' : '<span class="text-neutral-400">—</span>')}</td>
+            <td class="py-2.5">
+              <button onclick="deleteIntent('${esc(intent)}')" class="text-xs px-2 py-1 text-danger-500 hover:bg-danger-50 rounded">Delete</button>
+            </td>
+          </tr>
+        `);
+      }
     }
 
     el.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="5" class="text-neutral-400 py-4 text-center">No intents configured</td></tr>';
+    detectActiveTemplate();
   } catch (e) { toast(e.message, 'error'); }
 }
 
 async function changeRouting(intent, action, selectEl) {
+  if (intent === 'unknown') { toast('"unknown" intent routing cannot be changed.', 'error'); loadIntents(); return; }
   try {
     const body = { action };
     // Show/hide workflow picker
@@ -1992,6 +2528,7 @@ async function changeWorkflowId(intent, workflowId) {
 }
 
 async function toggleIntent(category, enabled) {
+  if (category === 'unknown') { toast('"unknown" intent is always enabled.', 'error'); return; }
   try {
     await api('/intents/' + encodeURIComponent(category), { method: 'PUT', body: { enabled } });
     toast(category + ': ' + (enabled ? 'enabled' : 'disabled'));
@@ -2000,6 +2537,7 @@ async function toggleIntent(category, enabled) {
 }
 
 async function deleteIntent(category) {
+  if (category === 'unknown') { toast('"unknown" is a protected system intent and cannot be deleted.', 'error'); return; }
   if (!confirm('Delete intent "' + category + '"? This also removes its routing rule.')) return;
   try {
     // Delete from intents.json
@@ -2011,6 +2549,126 @@ async function deleteIntent(category) {
     toast('Deleted: ' + category);
     loadIntents();
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Routing Templates ──────────────────────────────────────────────
+const WORKFLOW_INTENTS = ['booking', 'complaint', 'contact_staff'];
+
+function buildSmartestRouting() {
+  const routing = {};
+  for (const intent of Object.keys(cachedRouting)) {
+    if (intent === 'unknown') {
+      routing[intent] = { action: 'llm_reply' };
+    } else if (WORKFLOW_INTENTS.includes(intent) && cachedRouting[intent]?.action === 'workflow') {
+      routing[intent] = { ...cachedRouting[intent] };
+    } else {
+      routing[intent] = { action: 'llm_reply' };
+    }
+  }
+  return routing;
+}
+
+function buildPerformanceRouting() {
+  const staticIntentNames = new Set((cachedKnowledge.static || []).map(e => e.intent));
+  const routing = {};
+  for (const intent of Object.keys(cachedRouting)) {
+    if (intent === 'unknown') {
+      routing[intent] = { action: 'llm_reply' };
+    } else if (WORKFLOW_INTENTS.includes(intent) && cachedRouting[intent]?.action === 'workflow') {
+      routing[intent] = { ...cachedRouting[intent] };
+    } else if (staticIntentNames.has(intent)) {
+      routing[intent] = { action: 'static_reply' };
+    } else {
+      routing[intent] = { action: 'llm_reply' };
+    }
+  }
+  return routing;
+}
+
+function routingMatchesTemplate(current, template) {
+  const keys = Object.keys(current);
+  if (keys.length !== Object.keys(template).length) return false;
+  return keys.every(k => {
+    if (!template[k]) return false;
+    if (current[k]?.action !== template[k]?.action) return false;
+    if (current[k]?.action === 'workflow' && current[k]?.workflow_id !== template[k]?.workflow_id) return false;
+    return true;
+  });
+}
+
+function detectActiveTemplate() {
+  const btns = document.querySelectorAll('.template-btn');
+  const activeClasses = 'bg-primary-50 text-primary-700 border-primary-300 ring-2 ring-primary-200';
+  const defaultClasses = 'bg-neutral-100 text-neutral-600';
+  btns.forEach(b => {
+    b.className = b.className.replace(activeClasses, defaultClasses);
+  });
+
+  const indicator = document.getElementById('template-indicator');
+  indicator.classList.add('hidden');
+  indicator.textContent = '';
+
+  let matched = null;
+  if (routingMatchesTemplate(cachedRouting, buildSmartestRouting())) matched = 'smartest';
+  else if (routingMatchesTemplate(cachedRouting, buildPerformanceRouting())) matched = 'performance';
+  else {
+    const saved = localStorage.getItem('rainbow_custom_template');
+    if (saved) {
+      try {
+        const custom = JSON.parse(saved);
+        if (routingMatchesTemplate(cachedRouting, custom)) matched = 'custom';
+      } catch {}
+    }
+  }
+
+  if (matched) {
+    const btn = document.getElementById('tpl-btn-' + matched);
+    if (btn) btn.className = btn.className.replace(defaultClasses, activeClasses);
+    const labels = { smartest: 'T1 Smartest', performance: 'T2 Performance', custom: 'T3 Custom' };
+    indicator.textContent = 'Active template: ' + labels[matched];
+    indicator.classList.remove('hidden');
+  }
+}
+
+async function applyTemplate(name) {
+  let routing;
+  let label;
+
+  if (name === 'smartest') {
+    routing = buildSmartestRouting();
+    label = 'T1 Smartest';
+  } else if (name === 'performance') {
+    routing = buildPerformanceRouting();
+    label = 'T2 Performance';
+  } else if (name === 'custom') {
+    const saved = localStorage.getItem('rainbow_custom_template');
+    if (!saved) { toast('No custom template saved yet. Configure routing and click "Save as T3".', 'error'); return; }
+    try { routing = JSON.parse(saved); } catch { toast('Saved custom template is corrupted.', 'error'); return; }
+    label = 'T3 Custom';
+  } else {
+    return;
+  }
+
+  const changes = Object.keys(routing).filter(k => {
+    return routing[k]?.action !== cachedRouting[k]?.action ||
+      (routing[k]?.action === 'workflow' && routing[k]?.workflow_id !== cachedRouting[k]?.workflow_id);
+  });
+
+  if (changes.length === 0) { toast(label + ' is already active — no changes needed.', 'info'); return; }
+
+  if (!confirm('Apply ' + label + '? This will change routing for ' + changes.length + ' intent(s):\n\n' + changes.join(', '))) return;
+
+  try {
+    await api('/routing', { method: 'PUT', body: routing });
+    toast(label + ' applied — ' + changes.length + ' intent(s) updated.');
+    await loadIntents();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function saveCustomTemplate() {
+  localStorage.setItem('rainbow_custom_template', JSON.stringify(cachedRouting));
+  toast('Current routing saved as T3 Custom.');
+  detectActiveTemplate();
 }
 
 function showAddIntent() {
@@ -2423,7 +3081,7 @@ function filterStaticCategory(category) {
 // ═════════════════════════════════════════════════════════════════════
 // Knowledge Base Tab (Multi-File Progressive Disclosure Editor)
 // ═════════════════════════════════════════════════════════════════════
-const KB_API = 'http://localhost:5000/api/rainbow-kb';
+const KB_API = '/api/rainbow';
 async function kbApi(path, opts = {}) {
   const res = await fetch(KB_API + path, {
     headers: { 'Content-Type': 'application/json' },
@@ -2485,7 +3143,7 @@ function kbFilterCategory(cat) {
 
 async function kbSelectFile(filename) {
   try {
-    const d = await kbApi('/files/' + encodeURIComponent(filename));
+    const d = await kbApi('/kb-files/' + encodeURIComponent(filename));
     kbCurrentFile = filename;
     kbOriginalContent = d.content || '';
     document.getElementById('kb-file-editor').value = d.content || '';
@@ -2504,11 +3162,23 @@ async function kbSelectFile(filename) {
   }
 }
 
+function openKBFileFromPreview(filename) {
+  // Find the file category
+  const def = KB_FILE_DEFS.find(f => f.id === filename);
+  if (def) {
+    kbCurrentCategory = def.cat;
+  }
+  // Switch to KB tab
+  switchTab('kb');
+  // Load the file (with a small delay to ensure tab is switched)
+  setTimeout(() => kbSelectFile(filename), 100);
+}
+
 async function kbSaveFile() {
   if (!kbCurrentFile) return;
   const content = document.getElementById('kb-file-editor').value;
   try {
-    const d = await kbApi('/files/' + encodeURIComponent(kbCurrentFile), { method: 'PUT', body: { content } });
+    const d = await kbApi('/kb-files/' + encodeURIComponent(kbCurrentFile), { method: 'PUT', body: { content } });
     kbOriginalContent = content;
     kbCheckModified();
     toast(kbCurrentFile + ' saved. Backup: ' + d.backup);
@@ -2790,7 +3460,7 @@ async function testProviderBtn(id, showSuccessToast = true) {
 }
 
 function autoTestAllProviders() {
-  settingsProviders.forEach((p, i) => {
+  settingsProviders.filter(p => p.enabled).forEach((p, i) => {
     setTimeout(() => testProviderBtn(p.id, false), i * 300); // false = don't show success toasts
   });
 }
@@ -2938,6 +3608,7 @@ async function loadWorkflow() {
     cachedWorkflows = workflowsData;
     renderWorkflowList();
     renderAdvancedSettings(advancedData);
+    updateWorkflowTestSelect(); // Update workflow test dropdown
     // Re-select current workflow if one was active
     if (currentWorkflowId) {
       const still = workflowsData.workflows.find(w => w.id === currentWorkflowId);
@@ -2964,6 +3635,7 @@ function renderWorkflowList() {
       </div>
     </div>
   `).join('');
+  updateWorkflowTestSelect(); // Update test dropdown when workflows change
 }
 
 function hideWorkflowEditor() {
@@ -3318,7 +3990,8 @@ function renderChatMessages() {
     metaEl.innerHTML = '';
     return;
   }
-  messagesEl.innerHTML = session.history.map((msg, idx) => {
+  // Render messages in reverse order (newest at top)
+  messagesEl.innerHTML = session.history.slice().reverse().map((msg, idx) => {
     if (msg.role === 'user') {
       return `<div class="flex justify-end"><div class="bg-primary-500 text-white rounded-2xl px-4 py-2 max-w-md"><div class="text-sm">${esc(msg.content)}</div></div></div>`;
     } else {
@@ -3338,11 +4011,19 @@ function renderChatMessages() {
       const sourceIcon = msg.meta?.source ? sourceIcons[msg.meta.source] || '' : '';
       const sourceColor = msg.meta?.source ? sourceColors[msg.meta.source] || 'bg-neutral-50 text-neutral-700' : '';
       const sourceBadge = msg.meta?.source ? `<span class="px-1.5 py-0.5 ${sourceColor} rounded font-medium text-xs">${sourceIcon} ${msg.meta.source}</span>` : '';
+      const kbBadges = msg.meta?.kbFiles && msg.meta.kbFiles.length > 0
+        ? `<div class="mt-1 flex items-center gap-1 flex-wrap"><span class="text-neutral-400">📂</span>${msg.meta.kbFiles.map(f => `<span onclick="openKBFileFromPreview('${esc(f)}')" class="px-1.5 py-0.5 bg-violet-50 text-violet-700 rounded font-mono text-xs cursor-pointer hover:bg-violet-100 transition" title="Click to view ${esc(f)}">${esc(f)}</span>`).join('')}</div>`
+        : '';
+      const hMsgTypeIcons = { 'info': 'ℹ️', 'problem': '⚠️', 'complaint': '🔴' };
+      const hMsgTypeColors = { 'info': 'bg-green-50 text-green-700', 'problem': 'bg-orange-50 text-orange-700', 'complaint': 'bg-red-50 text-red-700' };
+      const hMsgType = msg.meta?.messageType || 'info';
+      const hMsgTypeBadge = msg.meta?.messageType ? `<span class="px-1.5 py-0.5 ${hMsgTypeColors[hMsgType] || 'bg-green-50 text-green-700'} rounded font-medium text-xs">${hMsgTypeIcons[hMsgType] || 'ℹ️'} ${hMsgType}</span>` : '';
+      const hOverrideBadge = msg.meta?.problemOverride ? `<span class="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-medium text-xs">🔀 Override</span>` : '';
 
-      return `<div class="flex justify-start"><div class="bg-white border rounded-2xl px-4 py-2 max-w-md"><div class="text-sm whitespace-pre-wrap">${esc(msg.content)}</div>${msg.meta ? `<div class="mt-2 pt-2 border-t flex items-center gap-2 text-xs text-neutral-500">${sourceBadge}<span class="px-1.5 py-0.5 bg-primary-50 text-primary-700 rounded font-mono">${esc(msg.meta.intent)}</span><span class="px-1.5 py-0.5 bg-success-50 text-success-700 rounded">${esc(msg.meta.routedAction)}</span>${msg.meta.model ? `<span class="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded font-mono text-xs">${esc(msg.meta.model)}</span>` : ''}${msg.meta.responseTime ? `<span class="px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded">${msg.meta.responseTime >= 1000 ? (msg.meta.responseTime / 1000).toFixed(1) + 's' : msg.meta.responseTime + 'ms'}</span>` : ''}${msg.meta.confidence ? `<span>${(msg.meta.confidence * 100).toFixed(0)}%</span>` : ''}</div>` : ''}</div></div>`;
+      return `<div class="flex justify-start"><div class="bg-white border rounded-2xl px-4 py-2 max-w-md"><div class="text-sm whitespace-pre-wrap">${esc(msg.content)}</div>${msg.meta ? `<div class="mt-2 pt-2 border-t flex items-center gap-2 text-xs text-neutral-500">${sourceBadge}${hMsgTypeBadge}${hOverrideBadge}<span class="px-1.5 py-0.5 bg-primary-50 text-primary-700 rounded font-mono">${esc(msg.meta.intent)}</span><span class="px-1.5 py-0.5 bg-success-50 text-success-700 rounded">${esc(msg.meta.routedAction)}</span>${msg.meta.model ? `<span class="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded font-mono text-xs">${esc(msg.meta.model)}</span>` : ''}${msg.meta.responseTime ? `<span class="px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded">${msg.meta.responseTime >= 1000 ? (msg.meta.responseTime / 1000).toFixed(1) + 's' : msg.meta.responseTime + 'ms'}</span>` : ''}${msg.meta.confidence ? `<span>${(msg.meta.confidence * 100).toFixed(0)}%</span>` : ''}</div>${kbBadges}` : ''}</div></div>`;
     }
   }).join('');
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  messagesEl.scrollTop = 0;
   const lastMsg = session.history[session.history.length - 1];
   if (lastMsg.role === 'assistant' && lastMsg.meta) {
     const timeStr = lastMsg.meta.responseTime ? (lastMsg.meta.responseTime >= 1000 ? (lastMsg.meta.responseTime / 1000).toFixed(1) + 's' : lastMsg.meta.responseTime + 'ms') : 'N/A';
@@ -3356,8 +4037,11 @@ function renderChatMessages() {
     };
     const detectionMethod = lastMsg.meta.source ? (sourceIcons[lastMsg.meta.source] || lastMsg.meta.source) : '';
     const detectionPrefix = detectionMethod ? `Detection: <b>${detectionMethod}</b> | ` : '';
+    const kbFilesStr = lastMsg.meta.kbFiles && lastMsg.meta.kbFiles.length > 0 ? ` | KB: <b>${lastMsg.meta.kbFiles.join(', ')}</b>` : '';
+    const hMsgTypeStr = lastMsg.meta.messageType ? ` | Type: <b>${lastMsg.meta.messageType}</b>` : '';
+    const hOverrideStr = lastMsg.meta.problemOverride ? ' | <b style="color:#d97706">🔀 Problem Override</b>' : '';
 
-    metaEl.innerHTML = `${detectionPrefix}Intent: <b>${esc(lastMsg.meta.intent)}</b> | Routed to: <b>${esc(lastMsg.meta.routedAction)}</b>${lastMsg.meta.model ? ` | Model: <b>${esc(lastMsg.meta.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${lastMsg.meta.confidence ? (lastMsg.meta.confidence * 100).toFixed(0) + '%' : 'N/A'}`;
+    metaEl.innerHTML = `${detectionPrefix}Intent: <b>${esc(lastMsg.meta.intent)}</b> | Routed to: <b>${esc(lastMsg.meta.routedAction)}</b>${hMsgTypeStr}${hOverrideStr}${lastMsg.meta.model ? ` | Model: <b>${esc(lastMsg.meta.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${lastMsg.meta.confidence ? (lastMsg.meta.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}`;
   }
 }
 
@@ -3398,8 +4082,8 @@ async function sendChatMessage(event) {
       <div class="text-sm">${esc(message)}</div>
     </div>
   `;
-  messagesEl.appendChild(userMsgEl);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  messagesEl.prepend(userMsgEl);
+  messagesEl.scrollTop = 0;
 
   // Update session title if it's the first message
   if (session.history.length === 1) {
@@ -3424,8 +4108,8 @@ async function sendChatMessage(event) {
       </div>
     </div>
   `;
-  messagesEl.appendChild(typingEl);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+  messagesEl.prepend(typingEl);
+  messagesEl.scrollTop = 0;
 
   try {
     // Send to API (exclude last user message from history)
@@ -3447,7 +4131,10 @@ async function sendChatMessage(event) {
         routedAction: result.routedAction,
         confidence: result.confidence,
         model: result.model,
-        responseTime: result.responseTime
+        responseTime: result.responseTime,
+        kbFiles: result.kbFiles || [],
+        messageType: result.messageType || 'info',
+        problemOverride: result.problemOverride || false
       }
     });
 
@@ -3476,11 +4163,18 @@ async function sendChatMessage(event) {
     const sourceColorMsg = result.source ? sourceColorsMsg[result.source] || 'bg-neutral-50 text-neutral-700' : '';
     const sourceBadgeMsg = result.source ? `<span class="px-1.5 py-0.5 ${sourceColorMsg} rounded font-medium text-xs">${sourceIconMsg} ${result.source}</span>` : '';
 
+    // Message type badge (info/problem/complaint)
+    const msgTypeIcons = { 'info': 'ℹ️', 'problem': '⚠️', 'complaint': '🔴' };
+    const msgTypeColors = { 'info': 'bg-green-50 text-green-700', 'problem': 'bg-orange-50 text-orange-700', 'complaint': 'bg-red-50 text-red-700' };
+    const msgType = result.messageType || 'info';
+    const msgTypeBadge = `<span class="px-1.5 py-0.5 ${msgTypeColors[msgType] || 'bg-green-50 text-green-700'} rounded font-medium text-xs">${msgTypeIcons[msgType] || 'ℹ️'} ${msgType}</span>`;
+    const overrideBadge = result.problemOverride ? `<span class="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded font-medium text-xs">🔀 Override → LLM</span>` : '';
+
     // KB files badge (only shown when LLM was used)
     const kbFilesBadge = result.kbFiles && result.kbFiles.length > 0
       ? `<div class="mt-1 flex items-center gap-1 flex-wrap">
            <span class="text-neutral-400">📂</span>
-           ${result.kbFiles.map(f => `<span class="px-1.5 py-0.5 bg-violet-50 text-violet-700 rounded font-mono text-xs">${esc(f)}</span>`).join('')}
+           ${result.kbFiles.map(f => `<span onclick="openKBFileFromPreview('${f}')" class="px-1.5 py-0.5 bg-violet-50 text-violet-700 rounded font-mono text-xs cursor-pointer hover:bg-violet-100 transition" title="Click to view ${f}">${esc(f)}</span>`).join('')}
          </div>`
       : '';
 
@@ -3489,6 +4183,8 @@ async function sendChatMessage(event) {
         <div class="text-sm whitespace-pre-wrap">${esc(result.message)}</div>
         <div class="mt-2 pt-2 border-t flex items-center gap-2 text-xs text-neutral-500">
           ${sourceBadgeMsg}
+          ${msgTypeBadge}
+          ${overrideBadge}
           <span class="px-1.5 py-0.5 bg-primary-50 text-primary-700 rounded font-mono">${esc(result.intent)}</span>
           <span class="px-1.5 py-0.5 bg-success-50 text-success-700 rounded">${esc(result.routedAction)}</span>
           ${result.model ? `<span class="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded font-mono text-xs">${esc(result.model)}</span>` : ''}
@@ -3498,8 +4194,8 @@ async function sendChatMessage(event) {
         ${kbFilesBadge}
       </div>
     `;
-    messagesEl.appendChild(assistantMsgEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    messagesEl.prepend(assistantMsgEl);
+    messagesEl.scrollTop = 0;
 
     // Update meta info
     const metaEl = document.getElementById('chat-meta');
@@ -3517,7 +4213,9 @@ async function sendChatMessage(event) {
     const kbFilesStr = result.kbFiles && result.kbFiles.length > 0
       ? ` | KB: <b>${result.kbFiles.join(', ')}</b>`
       : '';
-    metaEl.innerHTML = `Detection: <b>${detectionMethod}</b> | Intent: <b>${esc(result.intent)}</b> | Routed to: <b>${esc(result.routedAction)}</b>${result.model ? ` | Model: <b>${esc(result.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${result.confidence ? (result.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}`;
+    const msgTypeStr = result.messageType ? ` | Type: <b>${result.messageType}</b>` : '';
+    const overrideStr = result.problemOverride ? ' | <b style="color:#d97706">🔀 Problem Override</b>' : '';
+    metaEl.innerHTML = `Detection: <b>${detectionMethod}</b> | Intent: <b>${esc(result.intent)}</b> | Routed to: <b>${esc(result.routedAction)}</b>${msgTypeStr}${overrideStr}${result.model ? ` | Model: <b>${esc(result.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${result.confidence ? (result.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}`;
 
   } catch (error) {
     // Remove typing indicator
@@ -3531,8 +4229,8 @@ async function sendChatMessage(event) {
         <div class="text-sm">❌ Error: ${esc(error.message || 'Failed to get response')}</div>
       </div>
     `;
-    messagesEl.appendChild(errorMsgEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    messagesEl.prepend(errorMsgEl);
+    messagesEl.scrollTop = 0;
 
     toast(error.message || 'Failed to send message', 'error');
 
@@ -3583,10 +4281,67 @@ async function loadIntentManagerData() {
 
     // Load T4 LLM settings
     await loadLLMSettings();
+
+    // Load tier enabled states
+    loadTierStates();
+
+    // Set up tier toggle event listeners
+    setupTierToggles();
   } catch (err) {
     console.error('Failed to load Intent Manager data:', err);
-    showToast('Failed to load data', 'error');
+    toast('Failed to load data', 'error');
   }
+}
+
+// ─── Tier State Management ─────────────────────────────────────
+function loadTierStates() {
+  const savedStates = localStorage.getItem('tierStates');
+  const defaultStates = {
+    tier1: true,
+    tier2: true,
+    tier3: true,
+    tier4: true // Always true, cannot be changed
+  };
+
+  const states = savedStates ? JSON.parse(savedStates) : defaultStates;
+
+  // Apply states to checkboxes
+  document.getElementById('tier1-enabled').checked = states.tier1;
+  document.getElementById('tier2-enabled').checked = states.tier2;
+  document.getElementById('tier3-enabled').checked = states.tier3;
+  document.getElementById('tier4-enabled').checked = true; // Always true
+}
+
+function setupTierToggles() {
+  // T1 toggle
+  document.getElementById('tier1-enabled').addEventListener('change', (e) => {
+    saveTierState('tier1', e.target.checked);
+    toast(`T1 Regex ${e.target.checked ? 'Enabled' : 'Disabled'}`, 'info');
+  });
+
+  // T2 toggle
+  document.getElementById('tier2-enabled').addEventListener('change', (e) => {
+    saveTierState('tier2', e.target.checked);
+    toast(`T2 Fuzzy Matching ${e.target.checked ? 'Enabled' : 'Disabled'}`, 'info');
+  });
+
+  // T3 toggle
+  document.getElementById('tier3-enabled').addEventListener('change', (e) => {
+    saveTierState('tier3', e.target.checked);
+    toast(`T3 Semantic Matching ${e.target.checked ? 'Enabled' : 'Disabled'}`, 'info');
+  });
+
+  // T4 is always enabled, no event listener needed
+}
+
+function saveTierState(tier, enabled) {
+  const savedStates = localStorage.getItem('tierStates');
+  const states = savedStates ? JSON.parse(savedStates) : {};
+
+  states[tier] = enabled;
+  states.tier4 = true; // Always ensure T4 is true
+
+  localStorage.setItem('tierStates', JSON.stringify(states));
 }
 
 function renderIntentList() {
@@ -3728,7 +4483,7 @@ function addKeyword(lang) {
   }
 
   if (intentData.keywords[lang].includes(keyword)) {
-    showToast('Keyword already exists', 'error');
+    toast('Keyword already exists', 'error');
     return;
   }
 
@@ -3754,7 +4509,7 @@ function addExample() {
   if (!intentData) return;
 
   if (intentData.examples.includes(example)) {
-    showToast('Example already exists', 'error');
+    toast('Example already exists', 'error');
     return;
   }
 
@@ -3786,11 +4541,11 @@ async function saveKeywords() {
 
     if (!res.ok) throw new Error('Failed to save');
 
-    showToast('Keywords saved!', 'success');
+    toast('Keywords saved!', 'success');
     renderIntentList();
   } catch (err) {
     console.error('Failed to save keywords:', err);
-    showToast('Failed to save keywords', 'error');
+    toast('Failed to save keywords', 'error');
   }
 }
 
@@ -3809,11 +4564,11 @@ async function saveExamples() {
 
     if (!res.ok) throw new Error('Failed to save');
 
-    showToast('Examples saved! Restart server to reload semantic matcher.', 'success');
+    toast('Examples saved! Restart server to reload semantic matcher.', 'success');
     renderExampleIntentList();
   } catch (err) {
     console.error('Failed to save examples:', err);
-    showToast('Failed to save examples', 'error');
+    toast('Failed to save examples', 'error');
   }
 }
 
@@ -3841,7 +4596,7 @@ async function testIntentManager() {
     document.getElementById('im-test-result').classList.remove('hidden');
   } catch (err) {
     console.error('Failed to test intent:', err);
-    showToast('Failed to test intent', 'error');
+    toast('Failed to test intent', 'error');
   }
 }
 
@@ -3859,10 +4614,10 @@ async function exportIntentData(format) {
   try {
     const url = `/api/rainbow/intent-manager/export?format=${format}`;
     window.open(url, '_blank');
-    showToast(`Exporting as ${format.toUpperCase()}...`, 'success');
+    toast(`Exporting as ${format.toUpperCase()}...`, 'success');
   } catch (err) {
     console.error('Failed to export:', err);
-    showToast('Failed to export', 'error');
+    toast('Failed to export', 'error');
   }
 }
 
@@ -3876,7 +4631,7 @@ async function loadRegexPatterns() {
     renderRegexPatterns();
   } catch (err) {
     console.error('Failed to load regex patterns:', err);
-    showToast('Failed to load regex patterns', 'error');
+    toast('Failed to load regex patterns', 'error');
   }
 }
 
@@ -3904,7 +4659,7 @@ function addRegexPattern() {
   const description = descInput.value.trim();
 
   if (!pattern) {
-    showToast('Please enter a regex pattern', 'error');
+    toast('Please enter a regex pattern', 'error');
     return;
   }
 
@@ -3919,7 +4674,7 @@ function addRegexPattern() {
       new RegExp(pattern);
     }
   } catch (err) {
-    showToast('Invalid regex syntax: ' + err.message, 'error');
+    toast('Invalid regex syntax: ' + err.message, 'error');
     return;
   }
 
@@ -3944,37 +4699,160 @@ async function saveRegexPatterns() {
 
     if (!res.ok) throw new Error('Failed to save');
 
-    showToast('Regex patterns saved! Restart server to apply.', 'success');
+    toast('Regex patterns saved! Restart server to apply.', 'success');
   } catch (err) {
     console.error('Failed to save regex patterns:', err);
-    showToast('Failed to save regex patterns', 'error');
+    toast('Failed to save regex patterns', 'error');
   }
 }
 
 // ─── T4: LLM Settings Management ────────────────────────────────────────
 let imLLMSettings = {};
+let t4SelectedProviders = [];   // Array of { id, priority }
+let t4AllProviders = [];        // All providers from settings.json
 
 async function loadLLMSettings() {
   try {
-    const res = await fetch('/api/rainbow/intent-manager/llm-settings');
-    imLLMSettings = await res.json();
+    const [settingsRes, providersRes] = await Promise.all([
+      fetch('/api/rainbow/intent-manager/llm-settings'),
+      fetch('/api/rainbow/intent-manager/llm-settings/available-providers')
+    ]);
+    imLLMSettings = await settingsRes.json();
+    t4AllProviders = await providersRes.json();
+    t4SelectedProviders = Array.isArray(imLLMSettings.selectedProviders) ? [...imLLMSettings.selectedProviders] : [];
 
     // Populate form fields
     document.getElementById('llm-threshold-fuzzy').value = imLLMSettings.thresholds?.fuzzy || 0.80;
     document.getElementById('llm-threshold-semantic').value = imLLMSettings.thresholds?.semantic || 0.70;
     document.getElementById('llm-threshold-llm').value = imLLMSettings.thresholds?.llm || 0.60;
-    document.getElementById('llm-provider').value = imLLMSettings.provider || 'anthropic';
-    document.getElementById('llm-model').value = imLLMSettings.model || 'claude-3-5-sonnet-20241022';
     document.getElementById('llm-max-tokens').value = imLLMSettings.maxTokens || 500;
     document.getElementById('llm-temperature').value = imLLMSettings.temperature || 0.3;
     document.getElementById('llm-system-prompt').value = imLLMSettings.systemPrompt || '';
     document.getElementById('llm-fallback-unknown').checked = imLLMSettings.fallbackUnknown !== false;
     document.getElementById('llm-log-failures').checked = imLLMSettings.logFailures !== false;
     document.getElementById('llm-enable-context').checked = imLLMSettings.enableContext !== false;
+
+    renderT4ProvidersList();
   } catch (err) {
     console.error('Failed to load LLM settings:', err);
-    // Don't show error toast - settings might not exist yet
   }
+}
+
+function renderT4ProvidersList() {
+  const el = document.getElementById('t4-providers-list');
+  if (!el) return;
+
+  if (t4AllProviders.length === 0) {
+    el.innerHTML = '<p class="text-sm text-neutral-400 italic">No providers configured in Settings. <a href="#" onclick="switchTab(\'settings\');return false" class="text-primary-500 underline">Add providers</a> first.</p>';
+    return;
+  }
+
+  const selectedIds = new Set(t4SelectedProviders.map(s => s.id));
+  const selected = t4SelectedProviders
+    .sort((a, b) => a.priority - b.priority)
+    .map(s => t4AllProviders.find(p => p.id === s.id))
+    .filter(Boolean);
+  const available = t4AllProviders.filter(p => !selectedIds.has(p.id));
+
+  const typeBadge = (type) => ({
+    'openai-compatible': 'bg-blue-100 text-blue-700',
+    'groq': 'bg-purple-100 text-purple-700',
+    'ollama': 'bg-green-100 text-green-700'
+  }[type] || 'bg-neutral-100 text-neutral-600');
+
+  let html = '';
+
+  // Selected providers with rank badges
+  if (selected.length > 0) {
+    html += '<div class="mb-2"><span class="text-xs font-medium text-neutral-500">Selected (fallback order)</span></div>';
+    selected.forEach((p, i) => {
+      html += `
+        <div class="flex items-center gap-2 p-2.5 border rounded-xl bg-primary-50 border-primary-200">
+          <div class="flex flex-col gap-0.5">
+            <button onclick="moveT4Provider('${esc(p.id)}', -1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === 0 ? 'disabled style="opacity:0.3;cursor:default"' : ''}>&#9650;</button>
+            <button onclick="moveT4Provider('${esc(p.id)}', 1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === selected.length - 1 ? 'disabled style="opacity:0.3;cursor:default"' : ''}>&#9660;</button>
+          </div>
+          <span class="text-xs font-bold text-primary-600 bg-primary-100 rounded-full w-6 h-6 flex items-center justify-center shrink-0">#${i + 1}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-medium text-sm text-neutral-800">${esc(p.name)}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge(p.type)}">${esc(p.type)}</span>
+              ${!p.enabled ? '<span class="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">disabled</span>' : ''}
+            </div>
+            <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)}</div>
+          </div>
+          <button onclick="testT4Provider('${esc(p.id)}')" id="t4-test-${css(p.id)}" class="text-xs px-2 py-1 rounded border hover:bg-white transition shrink-0">Test</button>
+          <button onclick="toggleT4Provider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500 hover:bg-red-50 transition shrink-0">Remove</button>
+        </div>`;
+    });
+  }
+
+  // Available providers
+  if (available.length > 0) {
+    html += '<div class="mt-3 mb-2"><span class="text-xs font-medium text-neutral-500">Available</span></div>';
+    available.forEach(p => {
+      html += `
+        <div class="flex items-center gap-2 p-2.5 border rounded-xl bg-white ${!p.enabled ? 'opacity-50' : ''}">
+          <div class="w-6"></div>
+          <div class="w-6"></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-medium text-sm text-neutral-600">${esc(p.name)}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge(p.type)}">${esc(p.type)}</span>
+              ${!p.enabled ? '<span class="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">disabled in Settings</span>' : ''}
+            </div>
+            <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)}</div>
+          </div>
+          <button onclick="toggleT4Provider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-primary-200 text-primary-600 hover:bg-primary-50 transition shrink-0" ${!p.enabled ? 'disabled title="Enable in Settings first"' : ''}>+ Add</button>
+        </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function toggleT4Provider(id) {
+  const idx = t4SelectedProviders.findIndex(s => s.id === id);
+  if (idx >= 0) {
+    t4SelectedProviders.splice(idx, 1);
+  } else {
+    t4SelectedProviders.push({ id, priority: t4SelectedProviders.length });
+  }
+  // Re-normalize priorities
+  t4SelectedProviders.forEach((s, i) => { s.priority = i; });
+  renderT4ProvidersList();
+}
+
+function moveT4Provider(id, direction) {
+  const sorted = t4SelectedProviders.sort((a, b) => a.priority - b.priority);
+  const idx = sorted.findIndex(s => s.id === id);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= sorted.length) return;
+  // Swap priorities
+  const tmp = sorted[idx].priority;
+  sorted[idx].priority = sorted[newIdx].priority;
+  sorted[newIdx].priority = tmp;
+  renderT4ProvidersList();
+}
+
+async function testT4Provider(id) {
+  const btn = document.getElementById('t4-test-' + css(id));
+  if (btn) { btn.textContent = '...'; btn.disabled = true; btn.style.color = ''; btn.style.borderColor = ''; }
+  try {
+    const r = await api(`/test-ai/${id}`, { method: 'POST' });
+    if (r.ok) {
+      toast(`${id}: OK (${r.responseTime}ms)`);
+      if (btn) { btn.textContent = r.responseTime + 'ms'; btn.style.color = '#16a34a'; btn.style.borderColor = '#16a34a'; }
+    } else {
+      toast(`${id}: ${r.error}`, 'error');
+      if (btn) { btn.textContent = 'Fail'; btn.style.color = '#dc2626'; btn.style.borderColor = '#dc2626'; }
+    }
+  } catch (e) {
+    toast(e.message, 'error');
+    if (btn) { btn.textContent = 'Err'; btn.style.color = '#dc2626'; btn.style.borderColor = '#dc2626'; }
+  }
+  if (btn) btn.disabled = false;
 }
 
 async function saveLLMSettings() {
@@ -3984,8 +4862,7 @@ async function saveLLMSettings() {
       semantic: parseFloat(document.getElementById('llm-threshold-semantic').value),
       llm: parseFloat(document.getElementById('llm-threshold-llm').value)
     },
-    provider: document.getElementById('llm-provider').value,
-    model: document.getElementById('llm-model').value,
+    selectedProviders: t4SelectedProviders.sort((a, b) => a.priority - b.priority),
     maxTokens: parseInt(document.getElementById('llm-max-tokens').value),
     temperature: parseFloat(document.getElementById('llm-temperature').value),
     systemPrompt: document.getElementById('llm-system-prompt').value,
@@ -4003,34 +4880,216 @@ async function saveLLMSettings() {
 
     if (!res.ok) throw new Error('Failed to save');
 
-    showToast('LLM settings saved!', 'success');
+    toast('LLM settings saved!', 'success');
   } catch (err) {
     console.error('Failed to save LLM settings:', err);
-    showToast('Failed to save LLM settings', 'error');
+    toast('Failed to save LLM settings', 'error');
   }
 }
 
-async function testLLMConnection() {
-  const provider = document.getElementById('llm-provider').value;
-  const model = document.getElementById('llm-model').value;
+// ═════════════════════════════════════════════════════════════════════
+// Workflow Testing
+// ═════════════════════════════════════════════════════════════════════
+let testWorkflowData = null;
+let testWorkflowCurrentStep = 0;
+let testWorkflowMessages = [];
 
-  try {
-    const res = await fetch('/api/rainbow/intent-manager/llm-test', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, model })
-    });
+function loadWorkflowTestSteps() {
+  const select = document.getElementById('test-workflow-select');
+  const workflowId = select.value;
 
-    const result = await res.json();
+  if (!workflowId) {
+    document.getElementById('test-workflow-steps').classList.add('hidden');
+    document.getElementById('test-workflow-chat').classList.add('hidden');
+    return;
+  }
 
-    if (result.success) {
-      showToast('✓ LLM connection successful!', 'success');
-    } else {
-      showToast('✗ LLM connection failed: ' + (result.error || 'Unknown error'), 'error');
+  const workflow = cachedWorkflows.workflows.find(w => w.id === workflowId);
+  if (!workflow) return;
+
+  testWorkflowData = workflow;
+
+  // Show steps preview
+  const stepsList = document.getElementById('test-steps-list');
+  stepsList.innerHTML = workflow.steps.map((step, idx) => `
+    <div class="flex items-start gap-2 text-xs">
+      <span class="font-semibold text-blue-700 min-w-[60px]">Step ${idx + 1}:</span>
+      <span class="text-neutral-600">${esc(step.message.en)}</span>
+      ${step.waitForReply ? '<span class="ml-auto text-blue-500 italic">⏳ Waits</span>' : '<span class="ml-auto text-green-500 italic">✓ Auto</span>'}
+    </div>
+  `).join('');
+
+  document.getElementById('test-workflow-steps').classList.remove('hidden');
+  document.getElementById('test-workflow-chat').classList.remove('hidden');
+  resetWorkflowTest();
+}
+
+function resetWorkflowTest() {
+  testWorkflowCurrentStep = 0;
+  testWorkflowMessages = [];
+  const chatBox = document.getElementById('test-chat-messages');
+  chatBox.innerHTML = '<div class="text-center text-blue-400 text-sm py-8">Click "Begin Test" to start the workflow simulation</div>';
+
+  document.getElementById('test-user-input').disabled = true;
+  document.getElementById('test-send-btn').disabled = true;
+  document.getElementById('test-begin-btn').disabled = false;
+  document.getElementById('test-step-indicator').classList.add('hidden');
+}
+
+async function beginWorkflowTest() {
+  if (!testWorkflowData) return;
+
+  testWorkflowCurrentStep = 0;
+  testWorkflowMessages = [];
+
+  document.getElementById('test-begin-btn').disabled = true;
+  document.getElementById('test-step-indicator').classList.remove('hidden');
+
+  // Execute first step
+  await executeWorkflowStep();
+}
+
+async function executeWorkflowStep() {
+  if (!testWorkflowData || testWorkflowCurrentStep >= testWorkflowData.steps.length) {
+    // Workflow complete - send real WhatsApp message
+    document.getElementById('test-user-input').disabled = true;
+    document.getElementById('test-send-btn').disabled = true;
+    document.getElementById('test-current-step-text').textContent = 'Sending summary...';
+
+    try {
+      // Get admin phone from workflow settings
+      const workflowSettings = await api('/workflow');
+      const adminPhone = workflowSettings.payment?.forward_to || '+60127088789';
+
+      // Prepare collected data
+      const collectedData = {};
+      testWorkflowMessages.forEach(msg => {
+        if (msg.role === 'user') {
+          const step = testWorkflowData.steps[msg.step - 1];
+          if (step) {
+            collectedData[step.id] = msg.message;
+          }
+        }
+      });
+
+      // Send summary via API
+      const result = await api('/test-workflow/send-summary', {
+        method: 'POST',
+        body: {
+          workflowId: testWorkflowData.id,
+          collectedData,
+          phone: adminPhone
+        }
+      });
+
+      appendTestMessage('system', `✅ Workflow completed! Summary sent to ${adminPhone} via WhatsApp`);
+      document.getElementById('test-current-step-text').textContent = 'Finished & Sent';
+    } catch (err) {
+      console.error('Failed to send summary:', err);
+      appendTestMessage('system', `✅ Workflow completed! (Failed to send WhatsApp: ${err.message})`);
+      document.getElementById('test-current-step-text').textContent = 'Finished (send failed)';
     }
-  } catch (err) {
-    console.error('Failed to test LLM connection:', err);
-    showToast('Failed to test LLM connection', 'error');
+    return;
+  }
+
+  const step = testWorkflowData.steps[testWorkflowCurrentStep];
+  const stepNumber = testWorkflowCurrentStep + 1;
+
+  // Update step indicator
+  document.getElementById('test-current-step-text').textContent = `${stepNumber}/${testWorkflowData.steps.length} - ${step.id}`;
+
+  // Add bot message
+  appendTestMessage('bot', step.message.en);
+  testWorkflowMessages.push({ role: 'bot', message: step.message.en, step: stepNumber });
+
+  // If step waits for reply, enable input
+  if (step.waitForReply) {
+    document.getElementById('test-user-input').disabled = false;
+    document.getElementById('test-send-btn').disabled = false;
+    document.getElementById('test-user-input').focus();
+  } else {
+    // Auto-advance to next step
+    testWorkflowCurrentStep++;
+    setTimeout(async () => await executeWorkflowStep(), 500);
+  }
+}
+
+async function sendTestMessage() {
+  const input = document.getElementById('test-user-input');
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  // Add user message
+  appendTestMessage('user', message);
+  testWorkflowMessages.push({ role: 'user', message, step: testWorkflowCurrentStep + 1 });
+
+  input.value = '';
+  input.disabled = true;
+  document.getElementById('test-send-btn').disabled = true;
+
+  // Move to next step
+  testWorkflowCurrentStep++;
+
+  // Execute next step after a short delay
+  setTimeout(async () => await executeWorkflowStep(), 300);
+}
+
+function appendTestMessage(role, text) {
+  const chatBox = document.getElementById('test-chat-messages');
+
+  // Clear placeholder if this is first message
+  if (chatBox.children.length === 1 && chatBox.children[0].textContent.includes('Begin Test')) {
+    chatBox.innerHTML = '';
+  }
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `mb-3 ${role === 'user' ? 'text-right' : 'text-left'}`;
+
+  if (role === 'system') {
+    messageDiv.innerHTML = `
+      <div class="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-lg text-sm font-semibold border border-green-300">
+        ${esc(text)}
+      </div>
+    `;
+  } else if (role === 'bot') {
+    messageDiv.innerHTML = `
+      <div class="inline-block bg-blue-100 text-blue-900 px-4 py-2.5 rounded-xl text-sm max-w-[80%]">
+        <div class="text-xs text-blue-500 mb-1">🤖 Rainbow</div>
+        ${esc(text)}
+      </div>
+    `;
+  } else {
+    messageDiv.innerHTML = `
+      <div class="inline-block bg-white border border-blue-200 text-neutral-800 px-4 py-2.5 rounded-xl text-sm max-w-[80%]">
+        <div class="text-xs text-neutral-400 mb-1">👤 User</div>
+        ${esc(text)}
+      </div>
+    `;
+  }
+
+  chatBox.appendChild(messageDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Populate workflow test select when workflows load
+function updateWorkflowTestSelect() {
+  const select = document.getElementById('test-workflow-select');
+  if (!select) return;
+
+  const currentValue = select.value;
+  select.innerHTML = '<option value="">-- Choose a workflow --</option>';
+
+  (cachedWorkflows.workflows || []).forEach(w => {
+    const option = document.createElement('option');
+    option.value = w.id;
+    option.textContent = `${w.name} (${w.steps.length} steps)`;
+    select.appendChild(option);
+  });
+
+  // Restore selection if it still exists
+  if (currentValue && cachedWorkflows.workflows.some(w => w.id === currentValue)) {
+    select.value = currentValue;
   }
 }
 
@@ -4042,6 +5101,18 @@ function css(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, '_'); }
 function truncate(s, n) { return s.length > n ? s.slice(0, n) + '...' : s; }
 
 // ─── Init ───────────────────────────────────────────────────────────
+// Add Enter key handler for workflow test input
+setTimeout(() => {
+  const testInput = document.getElementById('test-user-input');
+  if (testInput) {
+    testInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !testInput.disabled) {
+        sendTestMessage();
+      }
+    });
+  }
+}, 100);
+
 switchTab(getTabFromURL(), false);
 
 // ─── Development Auto-Reload ────────────────────────────────────────
@@ -4066,6 +5137,95 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
       // Silently fail - server might be restarting
     });
   }, 2000);
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// KB File Edit Modal Functions
+// ═════════════════════════════════════════════════════════════════════
+let currentEditingFile = null;
+
+async function openKbEditModal(filename) {
+  currentEditingFile = filename;
+  const modal = document.getElementById('kb-edit-modal');
+  const filenameEl = document.getElementById('kb-edit-filename');
+  const contentEl = document.getElementById('kb-edit-content');
+  const saveBtn = document.getElementById('kb-edit-save-btn');
+
+  // Show modal
+  modal.classList.remove('hidden');
+  filenameEl.textContent = filename;
+  contentEl.value = 'Loading...';
+  contentEl.disabled = true;
+  saveBtn.disabled = true;
+
+  // Fetch file content
+  try {
+    const response = await fetch(`${KB_API}/kb-files/${encodeURIComponent(filename)}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to load file');
+    }
+
+    contentEl.value = data.content || '';
+    contentEl.disabled = false;
+    saveBtn.disabled = false;
+    contentEl.focus();
+  } catch (error) {
+    toast(`Failed to load ${filename}: ${error.message}`, 'error');
+    contentEl.value = `Error loading file: ${error.message}`;
+  }
+}
+
+function closeKbEditModal() {
+  const modal = document.getElementById('kb-edit-modal');
+  const contentEl = document.getElementById('kb-edit-content');
+
+  // Check if there are unsaved changes
+  if (contentEl.value !== '' && !contentEl.disabled) {
+    if (!confirm('Close without saving?')) {
+      return;
+    }
+  }
+
+  modal.classList.add('hidden');
+  currentEditingFile = null;
+}
+
+async function saveKbFileFromModal() {
+  if (!currentEditingFile) return;
+
+  const contentEl = document.getElementById('kb-edit-content');
+  const saveBtn = document.getElementById('kb-edit-save-btn');
+  const content = contentEl.value;
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+
+  try {
+    const response = await fetch(`${KB_API}/write`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file: currentEditingFile,
+        content: content
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to save file');
+    }
+
+    toast(`${currentEditingFile} saved successfully`);
+    closeKbEditModal();
+  } catch (error) {
+    toast(`Failed to save ${currentEditingFile}: ${error.message}`, 'error');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
 }
 </script>
 </body>
