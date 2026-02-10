@@ -163,7 +163,7 @@
     <button class="tab-btn tab-active px-4 py-3 text-sm whitespace-nowrap transition" data-tab="status">Status</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="intents">Intents & Routing</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="intent-manager">Intent Manager</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="static-replies">Static Replies</button>
+    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="static-replies">Static Messages</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="kb">Knowledge Base</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="preview">Preview</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="workflow">Workflow</button>
@@ -698,12 +698,12 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- Static Replies Tab (merged System Messages + FAQ) -->
+  <!-- Static Messages Tab (merged System Messages + FAQ) -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <section id="tab-static-replies" class="tab-content hidden">
     <div class="mb-4">
-      <h2 class="text-lg font-semibold text-neutral-800">Static Replies</h2>
-      <p class="text-sm text-neutral-500">Pre-written responses for intents routed to "Static Reply", plus system messages (errors, rate limits, etc.).</p>
+      <h2 class="text-lg font-semibold text-neutral-800">Static Messages</h2>
+      <p class="text-sm text-neutral-500">Pre-written messages including intent replies (user-triggered) and system notifications (auto-triggered by events like errors, rate limits, etc.).</p>
     </div>
 
     <!-- Search and Filter Bar -->
@@ -1110,7 +1110,7 @@
           <a href="#help-whatsapp" class="text-primary-600 hover:text-primary-700 hover:underline">→ WhatsApp Setup</a>
           <a href="#help-intents" class="text-primary-600 hover:text-primary-700 hover:underline">→ Intent Detection</a>
           <a href="#help-kb" class="text-primary-600 hover:text-primary-700 hover:underline">→ Knowledge Base</a>
-          <a href="#help-static-replies" class="text-primary-600 hover:text-primary-700 hover:underline">→ Static Replies</a>
+          <a href="#help-static-replies" class="text-primary-600 hover:text-primary-700 hover:underline">→ Static Messages</a>
           <a href="#help-ai-providers" class="text-primary-600 hover:text-primary-700 hover:underline">→ AI Providers</a>
           <a href="#help-workflow" class="text-primary-600 hover:text-primary-700 hover:underline">→ Workflows</a>
           <a href="#help-troubleshooting" class="text-primary-600 hover:text-primary-700 hover:underline">→ Troubleshooting</a>
@@ -1306,20 +1306,20 @@
         </div>
       </div>
 
-      <!-- Static Replies -->
+      <!-- Static Messages -->
       <div id="help-static-replies" class="bg-white rounded-2xl border p-6 mb-6">
         <div class="flex items-center gap-2 mb-4">
           <span class="text-2xl">💬</span>
-          <h3 class="text-xl font-semibold text-neutral-800">Static Replies</h3>
+          <h3 class="text-xl font-semibold text-neutral-800">Static Messages</h3>
         </div>
         <div class="space-y-4 text-sm text-neutral-700">
           <p class="leading-relaxed">
-            Static Replies are pre-written responses for common questions. When Rainbow detects a specific intent,
+            Static Messages are pre-written responses for common questions. When Rainbow detects a specific intent,
             it can send a static reply instantly without using AI, making responses faster and more consistent.
           </p>
 
           <div class="bg-neutral-50 rounded-xl p-4 border">
-            <p class="font-semibold text-neutral-800 mb-2">⚡ When to Use Static Replies:</p>
+            <p class="font-semibold text-neutral-800 mb-2">⚡ When to Use Static Messages:</p>
             <ul class="space-y-1 ml-4 text-neutral-700 text-xs">
               <li>• <strong>Greetings:</strong> "Hello! Welcome to [Hostel Name]. How can I help you?"</li>
               <li>• <strong>WiFi Info:</strong> "Our WiFi is [Name], password: [Password]"</li>
@@ -1486,7 +1486,7 @@
               <ul class="space-y-1 ml-4 text-danger-700 text-xs">
                 <li>• <strong>Update Knowledge Base:</strong> Add more details to relevant documents</li>
                 <li>• <strong>Add Keywords:</strong> Use Intent Manager to add keywords for better intent detection</li>
-                <li>• <strong>Refine Static Replies:</strong> Update pre-written responses to be more accurate</li>
+                <li>• <strong>Refine Static Messages:</strong> Update pre-written responses to be more accurate</li>
                 <li>• <strong>Test in Preview:</strong> Use Preview tab to test and refine responses before deploying</li>
               </ul>
             </div>
@@ -1495,7 +1495,7 @@
             <div class="bg-gradient-danger rounded-xl p-4 border border-danger-200">
               <p class="font-semibold text-danger-800 mb-2">❌ Slow Responses</p>
               <ul class="space-y-1 ml-4 text-danger-700 text-xs">
-                <li>• <strong>Use Static Replies:</strong> Pre-written responses are instant (no AI delay)</li>
+                <li>• <strong>Use Static Messages:</strong> Pre-written responses are instant (no AI delay)</li>
                 <li>• <strong>Optimize AI Provider:</strong> Try faster providers like Gemini for quick responses</li>
                 <li>• <strong>Reduce KB Size:</strong> Smaller knowledge base = faster search</li>
                 <li>• <strong>Check Server Load:</strong> Heavy traffic can cause delays</li>
@@ -2120,7 +2120,7 @@ async function testClassifier() {
 }
 
 // ═════════════════════════════════════════════════════════════════════
-// Static Replies Tab
+// Static Messages Tab
 // ═════════════════════════════════════════════════════════════════════
 async function loadStaticReplies() {
   try {
@@ -2358,7 +2358,7 @@ async function submitAddTemplate(e) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// Static Replies Search & Filter
+// Static Messages Search & Filter
 let currentStaticCategory = 'all';
 
 function categorizeIntent(intent) {
@@ -3476,6 +3476,14 @@ async function sendChatMessage(event) {
     const sourceColorMsg = result.source ? sourceColorsMsg[result.source] || 'bg-neutral-50 text-neutral-700' : '';
     const sourceBadgeMsg = result.source ? `<span class="px-1.5 py-0.5 ${sourceColorMsg} rounded font-medium text-xs">${sourceIconMsg} ${result.source}</span>` : '';
 
+    // KB files badge (only shown when LLM was used)
+    const kbFilesBadge = result.kbFiles && result.kbFiles.length > 0
+      ? `<div class="mt-1 flex items-center gap-1 flex-wrap">
+           <span class="text-neutral-400">📂</span>
+           ${result.kbFiles.map(f => `<span class="px-1.5 py-0.5 bg-violet-50 text-violet-700 rounded font-mono text-xs">${esc(f)}</span>`).join('')}
+         </div>`
+      : '';
+
     assistantMsgEl.innerHTML = `
       <div class="bg-white border rounded-2xl px-4 py-2 max-w-md">
         <div class="text-sm whitespace-pre-wrap">${esc(result.message)}</div>
@@ -3487,6 +3495,7 @@ async function sendChatMessage(event) {
           ${result.responseTime ? `<span class="px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded">${result.responseTime >= 1000 ? (result.responseTime / 1000).toFixed(1) + 's' : result.responseTime + 'ms'}</span>` : ''}
           ${result.confidence ? `<span>${(result.confidence * 100).toFixed(0)}%</span>` : ''}
         </div>
+        ${kbFilesBadge}
       </div>
     `;
     messagesEl.appendChild(assistantMsgEl);
@@ -3505,7 +3514,10 @@ async function sendChatMessage(event) {
     };
     const detectionMethod = sourceIcons[result.source] || result.source || 'Unknown';
 
-    metaEl.innerHTML = `Detection: <b>${detectionMethod}</b> | Intent: <b>${esc(result.intent)}</b> | Routed to: <b>${esc(result.routedAction)}</b>${result.model ? ` | Model: <b>${esc(result.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${result.confidence ? (result.confidence * 100).toFixed(0) + '%' : 'N/A'}`;
+    const kbFilesStr = result.kbFiles && result.kbFiles.length > 0
+      ? ` | KB: <b>${result.kbFiles.join(', ')}</b>`
+      : '';
+    metaEl.innerHTML = `Detection: <b>${detectionMethod}</b> | Intent: <b>${esc(result.intent)}</b> | Routed to: <b>${esc(result.routedAction)}</b>${result.model ? ` | Model: <b>${esc(result.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${result.confidence ? (result.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}`;
 
   } catch (error) {
     // Remove typing indicator
