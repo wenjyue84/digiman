@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Security: Prevent committing sensitive files
 echo "🔒 Running security checks..."
 

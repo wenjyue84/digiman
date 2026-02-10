@@ -26,7 +26,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "port:clean": "npx kill-port 5000",
-    "process:clean": "pkill -f \"tsx watch\" || true"
+    "process:clean": "pkill -f \"tsx watch\" || true",
+    "prepare": "husky"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
@@ -158,6 +159,7 @@
     "cross-env": "^10.0.0",
     "drizzle-kit": "^0.30.4",
     "esbuild": "^0.25.9",
+    "husky": "^9.1.7",
     "postcss": "^8.4.47",
     "supertest": "^6.3.4",
     "tailwindcss": "^3.4.17",
