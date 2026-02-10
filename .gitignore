@@ -103,3 +103,8 @@ mcp-server/evolution-api.env
 # Test scripts (temporary)
 mcp-server/test-*.ts
 test-*.ts
+
+# Windows system files
+nul
+*.stackdump
+*.pid
