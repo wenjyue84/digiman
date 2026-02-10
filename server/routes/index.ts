@@ -14,6 +14,8 @@ import testRoutes from "./tests";
 import pushRoutes from "./push";
 import databaseRoutes from "./database";
 import environmentRoutes from "./environment";
+import rainbowKBRoutes from "./rainbow-kb";
+import intentManagerRoutes from "./intent-manager";
 
 export function registerModularRoutes(app: Express) {
   // Register auth routes
@@ -58,7 +60,13 @@ export function registerModularRoutes(app: Express) {
   
   // Register environment configuration routes
   app.use("/", environmentRoutes);
-  
+
+  // Register Rainbow KB routes (used by MCP server dashboard)
+  app.use("/api/rainbow-kb", rainbowKBRoutes);
+
+  // Register Intent Manager routes (Phase 4 - Keyword Editor UI)
+  app.use("/api/intent-manager", intentManagerRoutes);
+
   // Register test routes
   app.use("/api/tests", testRoutes);
 
