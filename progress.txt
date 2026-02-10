@@ -1,0 +1,20 @@
+# Ralph Progress Log
+
+Ralph autonomous agent loop for PelangiManager project.
+
+## Setup - 2026-01-28
+
+✅ Ralph installed and configured
+- Created scripts/ralph/ with ralph.sh and CLAUDE.md
+- Created skills/ for PRD and Ralph skills
+- Ready for autonomous development
+
+## How to Use
+
+1. Create PRD: Load the prd skill and create a PRD for [feature]
+2. Convert to JSON: Load the ralph skill and convert tasks/prd-[feature].md to prd.json
+3. Run Ralph: ./scripts/ralph/ralph.sh
+
+## Learnings
+
+(This section will be populated by Ralph iterations with patterns, gotchas, and discoveries)
