@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, date, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, date, index, integer, real, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -58,12 +58,14 @@ export const guests = pgTable("guests", {
   profilePhotoUrl: text("profile_photo_url"),
   selfCheckinToken: text("self_checkin_token"), // Link back to the token used for self check-in
   status: text("status"),
+  alertSettings: text("alert_settings"), // JSON string for checkout alert configuration
 }, (table) => ([
   index("idx_guests_capsule_number").on(table.capsuleNumber),
   index("idx_guests_is_checked_in").on(table.isCheckedIn),
   index("idx_guests_checkin_time").on(table.checkinTime),
   index("idx_guests_checkout_time").on(table.checkoutTime),
   index("idx_guests_self_checkin_token").on(table.selfCheckinToken),
+  index("idx_guests_expected_checkout_date").on(table.expectedCheckoutDate),
 ]));
 
 export const capsules = pgTable("capsules", {
@@ -79,6 +81,7 @@ export const capsules = pgTable("capsules", {
   purchaseDate: date("purchase_date"), // When the capsule was purchased
   position: text("position"), // 'top' or 'bottom' for stacked capsules
   remark: text("remark"), // Additional notes about the capsule
+  branch: text("branch"), // Branch location identifier
 }, (table) => ([
   index("idx_capsules_is_available").on(table.isAvailable),
   index("idx_capsules_section").on(table.section),
@@ -199,12 +202,21 @@ export const insertUserSchema = createInsertSchema(users).omit({
   }).default("staff"),
 });
 
+// Guest alert settings validation schema
+export const guestAlertSettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  channels: z.array(z.enum(['whatsapp', 'push'])).default(['whatsapp']),
+  advanceNotice: z.array(z.number().min(0).max(30)).default([0]),
+  lastNotified: z.string().datetime().optional()
+});
+
 export const insertGuestSchema = createInsertSchema(guests).omit({
   id: true,
   checkinTime: true,
   checkoutTime: true,
   isCheckedIn: true,
   profilePhotoUrl: true, // Omit the auto-generated validation
+  alertSettings: true, // Omit from insert schema
 }).extend({
   name: z.string()
     .min(2, "Please enter the guest's full name (at least 2 characters)")
@@ -1157,6 +1169,18 @@ export const updateGuestSchema = z.object({
     .optional(),
   age: z.string().optional(),
   profilePhotoUrl: z.any().optional(),
+  alertSettings: z.string()
+    .transform(val => {
+      if (!val) return undefined;
+      try {
+        const parsed = JSON.parse(val);
+        const validated = guestAlertSettingsSchema.parse(parsed);
+        return JSON.stringify(validated); // Re-stringify for text column storage
+      } catch {
+        return undefined;
+      }
+    })
+    .optional(),
 });
 
 // Update user schema for editing
@@ -1278,6 +1302,34 @@ export const updateExpenseSchema = insertExpenseSchema.partial().extend({
 export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type UpdateExpense = z.infer<typeof updateExpenseSchema>;
+
+// Intent Detection Configuration (for Rainbow AI)
+export const intentDetectionSettings = pgTable("intent_detection_settings", {
+  id: serial("id").primaryKey(),
+  // Tier 1: Emergency Detection
+  tier1Enabled: boolean("tier1_enabled").default(true).notNull(),
+  tier1ContextMessages: integer("tier1_context_messages").default(0).notNull(),
+  // Tier 2: Fuzzy Matching
+  tier2Enabled: boolean("tier2_enabled").default(true).notNull(),
+  tier2ContextMessages: integer("tier2_context_messages").default(3).notNull(),
+  tier2Threshold: real("tier2_threshold").default(0.80).notNull(),
+  // Tier 3: Semantic Matching
+  tier3Enabled: boolean("tier3_enabled").default(true).notNull(),
+  tier3ContextMessages: integer("tier3_context_messages").default(5).notNull(),
+  tier3Threshold: real("tier3_threshold").default(0.70).notNull(),
+  // Tier 4: LLM Classification
+  tier4Enabled: boolean("tier4_enabled").default(true).notNull(),
+  tier4ContextMessages: integer("tier4_context_messages").default(5).notNull(),
+  // Conversation State Tracking
+  trackLastIntent: boolean("track_last_intent").default(true).notNull(),
+  trackSlots: boolean("track_slots").default(true).notNull(),
+  maxHistoryMessages: integer("max_history_messages").default(20).notNull(),
+  contextTTL: integer("context_ttl_minutes").default(30).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type IntentDetectionSettings = typeof intentDetectionSettings.$inferSelect;
+export type InsertIntentDetectionSettings = typeof intentDetectionSettings.$inferInsert;
 
 export const validationUtils = {
   isValidEmail: (email: string): boolean => {
