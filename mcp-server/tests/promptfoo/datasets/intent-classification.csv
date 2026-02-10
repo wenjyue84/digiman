@@ -1,0 +1,21 @@
+message,expected_intent
+hello,greeting
+hi there,greeting
+good morning,greeting
+thank you,thanks
+tq,thanks
+tqvm,thanks
+wifi password,wifi
+what's the wifi code?,wifi
+how much per night?,pricing
+what's the price?,pricing
+when is check in?,checkin_info
+check in time,checkin_info
+check out time,checkout_info
+when do I check out?,checkout_info
+I want to book a room,booking
+do you have rooms available?,availability
+I have a complaint,complaint
+I want to talk to someone,contact_staff
+do you have a kitchen?,facilities
+what are the house rules?,rules
