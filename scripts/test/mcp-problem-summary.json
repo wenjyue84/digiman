@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"pelangi_get_problem_summary","arguments":{}},"id":2}

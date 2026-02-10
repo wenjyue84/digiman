@@ -1,0 +1,87 @@
+{
+  "productName": "Feature Name",
+  "branchName": "feature/example-feature",
+  "overview": "Brief description of what this feature does",
+  "goals": [
+    "Primary goal of the feature",
+    "Secondary goal",
+    "Success metrics"
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add login form component",
+      "priority": 1,
+      "description": "Create a reusable login form component with email and password fields",
+      "acceptanceCriteria": [
+        "Form has email and password input fields",
+        "Form validates email format",
+        "Form shows validation errors",
+        "Submit button is disabled when form is invalid",
+        "Tests verify form behavior"
+      ],
+      "technicalNotes": [
+        "Use React Hook Form for form management",
+        "Use Zod for validation schema",
+        "Follow existing component patterns in client/src/components/",
+        "Add to shadcn/ui components if reusable"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-002",
+      "title": "Add authentication API endpoint",
+      "priority": 2,
+      "description": "Create POST /api/auth/login endpoint that validates credentials",
+      "acceptanceCriteria": [
+        "Endpoint accepts email and password",
+        "Validates credentials against database",
+        "Returns JWT token on success",
+        "Returns appropriate error messages",
+        "Tests cover happy path and error cases"
+      ],
+      "technicalNotes": [
+        "Use Express route in server/routes/auth.ts",
+        "Use Passport.js for authentication",
+        "Follow existing API patterns",
+        "Add rate limiting for security"
+      ],
+      "dependencies": ["US-001"],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "title": "Integrate login form with API",
+      "priority": 3,
+      "description": "Connect the login form to the authentication endpoint",
+      "acceptanceCriteria": [
+        "Form submits to /api/auth/login on submit",
+        "Shows loading state during submission",
+        "Redirects to dashboard on success",
+        "Shows error message on failure",
+        "Verify in browser using dev-browser skill"
+      ],
+      "technicalNotes": [
+        "Use TanStack Query for API calls",
+        "Store token in localStorage or session",
+        "Update auth context on success",
+        "Test in browser to verify user flow"
+      ],
+      "dependencies": ["US-001", "US-002"],
+      "estimatedComplexity": "small",
+      "passes": false
+    }
+  ],
+  "technicalContext": {
+    "affectedAreas": [
+      "client/src/components/ - New login form component",
+      "server/routes/auth.ts - Authentication endpoints",
+      "client/src/lib/api.ts - API integration"
+    ],
+    "testingStrategy": "Unit tests for form validation, integration tests for API, browser verification for UI flow",
+    "rollbackPlan": "Feature flag controlled, can disable via environment variable"
+  }
+}
