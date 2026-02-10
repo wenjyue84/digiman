@@ -1,0 +1,18 @@
+{
+  "instances": [
+    {
+      "id": "default",
+      "label": "Main Line",
+      "authDir": "C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager-Zeabur\\mcp-server\\whatsapp-auth",
+      "autoStart": true,
+      "createdAt": "2026-02-09T06:33:18.875Z"
+    },
+    {
+      "id": "60167052004",
+      "label": "Alston's assistant",
+      "authDir": "C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager-Zeabur\\mcp-server\\whatsapp-data\\60167052004",
+      "autoStart": false,
+      "createdAt": "2026-02-09T06:35:02.959Z"
+    }
+  ]
+}

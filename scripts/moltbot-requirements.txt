@@ -1,0 +1,6 @@
+# Moltbot Daily Report Dependencies
+# Install with: pip install -r moltbot-requirements.txt
+
+requests>=2.31.0
+schedule>=1.2.0
+pytz>=2023.3

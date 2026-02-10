@@ -1,0 +1,38 @@
+═══════════════════════════════════════════════════════════════
+QUICK ZEABUR DEPLOYMENT PROMPT (Paste to AI Assistant)
+═══════════════════════════════════════════════════════════════
+
+Deploy my MCP server to Zeabur at https://dash.zeabur.com
+
+REPOSITORY: https://github.com/wenjyue84/PelangiManager-Zeabur
+ROOT DIRECTORY: mcp-server (CRITICAL - must set this!)
+
+STEPS:
+1. Go to https://dash.zeabur.com (I'm logged in)
+2. Select project "pelangi-hostel" (ID: 6948c99fced85978abb44563)
+3. Click "Add Service" → "Git Service"
+4. Repository: wenjyue84/PelangiManager-Zeabur, Branch: main
+5. ROOT DIRECTORY: mcp-server ⚠️
+6. Add 4 environment variables:
+   PELANGI_API_URL=https://pelangi.zeabur.app
+   PELANGI_API_TOKEN=a30d5306-4e68-49db-9224-bb43c836fe12
+   MCP_SERVER_PORT=3001
+   NODE_ENV=production
+7. Generate domain (suggest: mcp-pelangi)
+8. Deploy
+
+VERIFY:
+curl https://YOUR-DOMAIN.zeabur.app/health
+Should return: {"status":"ok","service":"pelangi-mcp-server",...}
+
+curl -X POST https://YOUR-DOMAIN.zeabur.app/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"tools/list","id":1}' | jq '.result.tools | length'
+Should return: 19
+
+REPORT BACK:
+- Deployment status (success/fail)
+- Domain URL
+- Health check result
+- Tools count
+- Any errors
+
+═══════════════════════════════════════════════════════════════

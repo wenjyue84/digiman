@@ -1,0 +1,60 @@
+═══════════════════════════════════════════════════════════════
+ZEABUR DEPLOYMENT - RETRY WITH FIXES (Paste to Comet)
+═══════════════════════════════════════════════════════════════
+
+The MCP server code has been updated with Zeabur deployment fixes.
+Please redeploy to Zeabur at https://dash.zeabur.com
+
+REPOSITORY: https://github.com/wenjyue84/PelangiManager-Zeabur
+LATEST COMMIT: 4826331 (includes Node version fixes)
+
+CRITICAL SETTINGS:
+✅ Root Directory: mcp-server  (DO NOT SKIP THIS!)
+✅ Branch: main
+✅ Repository: wenjyue84/PelangiManager-Zeabur
+
+STEPS:
+1. Go to https://dash.zeabur.com
+2. Project: pelangi-hostel (6948c99fced85978abb44563)
+3. If service exists and failed:
+   - Click Settings
+   - Verify Root Directory = mcp-server
+   - Click "Redeploy"
+
+   OR delete service and create new one:
+   - Click "Add Service" → "Git Service"
+   - Repository: wenjyue84/PelangiManager-Zeabur
+   - Branch: main
+   - ⚠️ ROOT DIRECTORY: mcp-server
+
+4. Add 4 environment variables:
+   PELANGI_API_URL=https://pelangi.zeabur.app
+   PELANGI_API_TOKEN=a30d5306-4e68-49db-9224-bb43c836fe12
+   MCP_SERVER_PORT=3001
+   NODE_ENV=production
+
+5. Generate domain (suggest: mcp-pelangi)
+
+6. Deploy
+
+RECENT FIXES (commit 4826331):
+✅ Added .node-version file (forces Node 20)
+✅ Added engines field in package.json
+✅ Updated .zeabur.yaml with runtime config
+
+VERIFY AFTER DEPLOYMENT:
+curl https://YOUR-DOMAIN.zeabur.app/health
+Expected: {"status":"ok","service":"pelangi-mcp-server",...}
+
+curl -X POST https://YOUR-DOMAIN.zeabur.app/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","id":1}' | jq '.result.tools | length'
+Expected: 19
+
+REPORT BACK:
+- Deployment status
+- Domain URL
+- Health check result
+- Any remaining errors
+
+═══════════════════════════════════════════════════════════════
