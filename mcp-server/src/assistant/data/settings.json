@@ -5,8 +5,8 @@
     "groq_model": "llama-3.3-70b-versatile",
     "max_classify_tokens": 200,
     "max_chat_tokens": 800,
-    "classify_temperature": 0.1,
-    "chat_temperature": 0.7,
+    "classify_temperature": 1,
+    "chat_temperature": 1,
     "providers": [
       {
         "id": "groq-llama",
@@ -17,7 +17,7 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "llama-3.3-70b-versatile",
         "enabled": true,
-        "priority": 0
+        "priority": 1
       },
       {
         "id": "ollama-local",
@@ -28,7 +28,7 @@
         "base_url": "http://localhost:11434/v1",
         "model": "gpt-oss:20b-cloud",
         "enabled": true,
-        "priority": 1
+        "priority": 2
       },
       {
         "id": "groq-llama-8b",
@@ -75,17 +75,6 @@
         "priority": 5
       },
       {
-        "id": "ollama-gemini-flash",
-        "name": "Ollama Gemini 3 Flash",
-        "description": "Google's speed-optimized frontier model. Trained on Google Translate corpus — excels at understanding casual/slang multilingual input ('eh bro wifi pass apa'). Different architecture from Llama/Qwen/DeepSeek, so may succeed when others fail. Free via Ollama cloud.",
-        "type": "ollama",
-        "api_key_env": "",
-        "base_url": "http://localhost:11434/v1",
-        "model": "gemini-3-flash-preview:cloud",
-        "enabled": true,
-        "priority": 6
-      },
-      {
         "id": "groq-llama4-scout",
         "name": "Groq Llama 4 Scout 17B",
         "description": "Meta's newest Llama 4 (750 tok/s). First Llama with MoE — only ~4B params active per token despite 17B total. Near-8B speed with much better quality. Natively trained for multi-turn conversation. Best speed/quality ratio for chat.",
@@ -94,7 +83,7 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "llama-4-scout-17b",
         "enabled": false,
-        "priority": 7
+        "priority": 6
       },
       {
         "id": "groq-deepseek-r1",
@@ -105,18 +94,29 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "deepseek-r1-distill-llama-70b",
         "enabled": false,
+        "priority": 7
+      },
+      {
+        "id": "ollama-gemini-flash",
+        "name": "Ollama Gemini 3 Flash",
+        "description": "Google's speed-optimized frontier model. Trained on Google Translate corpus — excels at understanding casual/slang multilingual input ('eh bro wifi pass apa'). Different architecture from Llama/Qwen/DeepSeek, so may succeed when others fail. Free via Ollama cloud.",
+        "type": "ollama",
+        "api_key_env": "",
+        "base_url": "http://localhost:11434/v1",
+        "model": "gemini-3-flash-preview:cloud",
+        "enabled": true,
         "priority": 8
       },
       {
-        "id": "nvidia-kimi",
-        "name": "NVIDIA Kimi 2.5",
-        "description": "Moonshot AI's 1T parameter thinking model via NVIDIA NIM. Visible chain-of-thought reasoning with dual output (thinking + answer). Premium quality for deep analysis. Requires NVIDIA API key (free tier available).",
+        "id": "moonshot-kimi",
+        "name": "Moonshot Kimi 2.5",
+        "description": "Moonshot AI's Kimi K2.5 (262K context). Supports reasoning, images, and video. Premium quality multimodal model for deep analysis. Requires Moonshot API key from platform.moonshot.ai.",
         "type": "openai-compatible",
-        "api_key_env": "NVIDIA_API_KEY",
-        "base_url": "https://integrate.api.nvidia.com/v1",
-        "model": "moonshotai/kimi-k2.5",
+        "api_key_env": "MOONSHOT_API_KEY",
+        "base_url": "https://api.moonshot.ai/v1",
+        "model": "kimi-k2.5",
         "enabled": false,
-        "priority": 9
+        "priority": 10
       },
       {
         "id": "openrouter-qwen-32b",
