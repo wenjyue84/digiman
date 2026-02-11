@@ -46,6 +46,14 @@ function adminAuth(req: Request, res: Response, next: NextFunction): void {
 
 router.use(adminAuth);
 
+// PERMANENT FIX: Prevent browser caching of all admin API responses
+router.use((_req: Request, res: Response, next: NextFunction) => {
+  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.header('Pragma', 'no-cache');
+  res.header('Expires', '0');
+  next();
+});
+
 // ─── Markdown Knowledge Base (LLM-first) ───────────────────────────
 
 router.get('/knowledge-base', (_req: Request, res: Response) => {
@@ -1321,6 +1329,37 @@ router.delete('/conversations/:phone', async (req: Request, res: Response) => {
     const deleted = await deleteConversation(phone);
     res.json({ ok: deleted });
   } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Send manual message to guest
+router.post('/conversations/:phone/send', async (req: Request, res: Response) => {
+  try {
+    const phone = decodeURIComponent(req.params.phone);
+    const { message, instanceId } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      res.status(400).json({ error: 'message (string) required' });
+      return;
+    }
+
+    // Get existing conversation to retrieve pushName
+    const log = await getConversation(phone);
+    const pushName = log?.pushName || 'Guest';
+
+    // Send the message via WhatsApp
+    const { sendWhatsAppMessage } = await import('../lib/baileys-client.js');
+    await sendWhatsAppMessage(phone, message, instanceId);
+
+    // Log the manual message in the conversation history
+    const { logMessage } = await import('../assistant/conversation-logger.js');
+    await logMessage(phone, pushName, 'assistant', message, { manual: true, instanceId });
+
+    console.log(`[Admin] Manual message sent to ${phone}: ${message.substring(0, 50)}...`);
+    res.json({ ok: true, message: 'Message sent successfully' });
+  } catch (err: any) {
+    console.error('[Admin] Failed to send manual message:', err);
     res.status(500).json({ error: err.message });
   }
 });

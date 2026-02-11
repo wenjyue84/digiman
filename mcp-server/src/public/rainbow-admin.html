@@ -194,7 +194,6 @@
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="static-replies">Static Messages</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="workflow">Workflow</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="kb">Knowledge Base</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="memory">Memory</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="preview">Preview</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="real-chat">Real Chat</button>
     <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="settings">Settings</button>
@@ -1379,6 +1378,7 @@
       .rc-bubble-time { font-size:10.5px; color:#667781; }
       .rc-bubble-intent { font-size:10px; color:#6366f1; background:#ede9fe; padding:1px 6px; border-radius:4px; }
       .rc-bubble-confidence { font-size:10px; color:#667781; }
+      .rc-bubble-manual { font-size:10px; color:#f59e0b; background:#fef3c7; padding:1px 6px; border-radius:4px; font-weight:600; }
       .rc-empty-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#8696a0; }
       .rc-empty-state svg { width:80px; height:80px; margin-bottom:16px; opacity:.4; }
       .rc-empty-state h3 { font-size:22px; font-weight:300; color:#41525d; margin-bottom:8px; }
@@ -1386,6 +1386,13 @@
       .rc-sidebar-empty { padding:20px; text-align:center; color:#8696a0; font-size:13px; }
       .rc-stats-bar { padding:6px 16px; background:#fff; border-top:1px solid #e5e7eb; display:flex; gap:16px; font-size:11px; color:#6b7280; }
       .rc-stats-bar span { display:flex; align-items:center; gap:4px; }
+      .rc-input-area { padding:12px 16px; background:#f0f2f5; border-top:1px solid #e5e7eb; display:flex; align-items:center; gap:8px; }
+      .rc-input-box { flex:1; border:none; outline:none; background:#fff; border-radius:24px; padding:10px 16px; font-size:14px; font-family:inherit; resize:none; max-height:100px; min-height:40px; }
+      .rc-input-box:focus { border:1px solid #6366f1; padding:9px 15px; }
+      .rc-send-btn { background:#6366f1; color:#fff; border:none; border-radius:50%; width:42px; height:42px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .2s; flex-shrink:0; }
+      .rc-send-btn:hover:not(:disabled) { background:#4f46e5; }
+      .rc-send-btn:disabled { background:#cbd5e1; cursor:not-allowed; }
+      .rc-send-btn svg { width:20px; height:20px; }
       @media (max-width:768px) {
         .rc-sidebar { width:100%; position:absolute; z-index:10; }
         .rc-main { width:100%; }
@@ -1448,6 +1455,15 @@
             </div>
           </div>
           <div class="rc-messages" id="rc-messages"></div>
+          <div class="rc-input-area">
+            <textarea class="rc-input-box" id="rc-input-box" placeholder="Type a manual reply..." rows="1" oninput="autoResizeInput(this)" onkeydown="handleInputKeydown(event)"></textarea>
+            <button class="rc-send-btn" id="rc-send-btn" onclick="sendManualReply()" title="Send message">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
           <div class="rc-stats-bar" id="rc-stats-bar">
             <span id="rc-stat-total">0 messages</span>
             <span id="rc-stat-started">Started: —</span>
@@ -1557,85 +1573,6 @@
       </div>
       <div class="text-neutral-500 font-medium">No test results yet</div>
       <div class="text-sm text-neutral-400 mt-1">Select a test suite and click "Run Tests" to begin</div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- Memory Tab -->
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <section id="tab-memory" class="tab-content hidden">
-    <!-- Header Row -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <span class="text-2xl">🧠</span>
-        <h2 class="text-xl font-bold text-neutral-800">Operational Memory</h2>
-      </div>
-      <button onclick="memoryQuickNote()" class="px-3 py-1.5 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 transition">+ Quick Note</button>
-    </div>
-
-    <!-- Stats Row -->
-    <div class="grid grid-cols-4 gap-3 mb-4">
-      <div class="bg-white rounded-xl border p-3 text-center">
-        <div class="text-lg font-bold text-neutral-800" id="mem-stat-days">--</div>
-        <div class="text-xs text-neutral-500">Days Logged</div>
-      </div>
-      <div class="bg-white rounded-xl border p-3 text-center">
-        <div class="text-lg font-bold text-primary-600" id="mem-stat-today-entries">--</div>
-        <div class="text-xs text-neutral-500">Today's Entries</div>
-      </div>
-      <div class="bg-white rounded-xl border p-3 text-center">
-        <div class="text-lg font-bold text-neutral-800" id="mem-stat-durable">--</div>
-        <div class="text-xs text-neutral-500">Durable Memory</div>
-      </div>
-      <div class="bg-white rounded-xl border p-3 text-center">
-        <div class="text-lg font-bold text-neutral-800" id="mem-stat-date">--</div>
-        <div class="text-xs text-neutral-500">Today (MYT)</div>
-      </div>
-    </div>
-
-    <!-- Main Layout: Sidebar + Editor -->
-    <div class="flex gap-4" style="min-height: 500px;">
-      <!-- Left Sidebar -->
-      <div class="w-56 flex-shrink-0 bg-white rounded-xl border p-3">
-        <!-- Sub-tabs -->
-        <div class="flex gap-1 mb-3">
-          <button onclick="memSwitchSubTab('daily')" id="mem-subtab-daily" class="flex-1 px-2 py-1 text-xs font-semibold rounded bg-primary-100 text-primary-700">Daily Logs</button>
-          <button onclick="memSwitchSubTab('durable')" id="mem-subtab-durable" class="flex-1 px-2 py-1 text-xs font-semibold rounded text-neutral-500 hover:bg-neutral-100">Durable</button>
-        </div>
-        <!-- Day list -->
-        <div id="mem-day-list" class="space-y-1 max-h-80 overflow-y-auto text-sm">
-          <p class="text-neutral-400 text-xs italic">Loading...</p>
-        </div>
-        <!-- Boot Sequence Info -->
-        <div class="mt-4 p-2 bg-neutral-50 rounded-lg border border-neutral-200">
-          <div class="text-xs font-semibold text-neutral-600 mb-1">Boot Sequence</div>
-          <ol class="text-xs text-neutral-500 space-y-0.5 list-decimal list-inside">
-            <li>AGENTS.md + soul.md</li>
-            <li>memory.md (durable)</li>
-            <li>Today + yesterday logs</li>
-            <li>Topic files (per query)</li>
-          </ol>
-        </div>
-      </div>
-
-      <!-- Right Editor -->
-      <div class="flex-1 bg-white rounded-xl border p-4">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <h3 class="font-semibold text-neutral-700" id="mem-editor-title">Select a day...</h3>
-            <span class="hidden text-xs text-warning-600 font-medium" id="mem-unsaved-badge">Unsaved changes</span>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="memoryResetEditor()" class="px-2 py-1 text-xs bg-neutral-100 text-neutral-600 rounded hover:bg-neutral-200">Reset</button>
-            <button onclick="memorySaveEditor()" id="mem-save-btn" class="px-3 py-1 text-xs bg-primary-500 text-white rounded hover:bg-primary-600" disabled>Save</button>
-          </div>
-        </div>
-        <textarea id="mem-editor" class="w-full border rounded-lg p-3 text-sm font-mono resize-none" rows="20" placeholder="Select a day or durable memory to edit..." oninput="memoryEditorChanged()"></textarea>
-        <div class="flex justify-between mt-1 text-xs text-neutral-400">
-          <span id="mem-editor-stats">0 lines · 0 characters</span>
-          <span id="mem-editor-modified"></span>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -2138,7 +2075,7 @@ async function api(path, opts = {}) {
 
 // ─── Tabs (URL-based routing) ───────────────────────────────────────
 const BASE_PATH = '/admin/rainbow';
-const VALID_TABS = ['status', 'intents', 'intent-manager', 'static-replies', 'kb', 'memory', 'preview', 'real-chat', 'workflow', 'settings', 'testing', 'help'];
+const VALID_TABS = ['status', 'intents', 'intent-manager', 'static-replies', 'kb', 'preview', 'real-chat', 'workflow', 'settings', 'testing', 'help'];
 
 function getTabFromURL() {
   const seg = window.location.pathname.replace(BASE_PATH, '').replace(/^\//, '').split('/')[0];
@@ -2168,7 +2105,6 @@ function loadTab(tab) {
     'intent-manager': loadIntentManagerData,
     'static-replies': loadStaticReplies,
     kb: loadKB,
-    memory: loadMemory,
     preview: loadPreview,
     'real-chat': loadRealChat,
     settings: loadSettings,
@@ -2416,6 +2352,51 @@ async function deleteActiveChat() {
     loadRealChat();
   } catch (err) {
     alert('Failed to delete: ' + err.message);
+  }
+}
+
+async function sendManualReply() {
+  if (!_rcActivePhone) return;
+  const input = document.getElementById('rc-input-box');
+  const message = input.value.trim();
+  if (!message) return;
+
+  const btn = document.getElementById('rc-send-btn');
+  btn.disabled = true;
+
+  try {
+    // Get the instanceId from the active conversation
+    const log = _rcConversations.find(c => c.phone === _rcActivePhone);
+    const instanceId = log?.instanceId;
+
+    await api('/conversations/' + encodeURIComponent(_rcActivePhone) + '/send', {
+      method: 'POST',
+      body: { message, instanceId }
+    });
+
+    // Clear input
+    input.value = '';
+    input.style.height = '40px';
+
+    // Refresh the chat to show the sent message
+    await refreshActiveChat();
+  } catch (err) {
+    alert('Failed to send message: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+function autoResizeInput(textarea) {
+  textarea.style.height = '40px';
+  textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+}
+
+function handleInputKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendManualReply();
   }
 }
 
@@ -3617,8 +3598,12 @@ function filterStaticCategory(category) {
 // ═════════════════════════════════════════════════════════════════════
 const KB_API = '/api/rainbow';
 async function kbApi(path, opts = {}) {
-  const res = await fetch(KB_API + path, {
-    headers: { 'Content-Type': 'application/json' },
+  // PERMANENT FIX: Cache-busting to always get fresh content
+  const cacheBuster = '_=' + Date.now();
+  const separator = path.includes('?') ? '&' : '?';
+  const res = await fetch(KB_API + path + separator + cacheBuster, {
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    cache: 'no-store',
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined
   });
@@ -3631,11 +3616,27 @@ const KB_FILE_DEFS = [
   { id: 'soul.md', icon: '\uD83D\uDC9C', desc: "Rainbow's identity (personality, voice, boundaries)", cat: 'core', priority: 'always' },
   { id: 'users.md', icon: '\uD83D\uDC65', desc: 'Guest profiles, needs, and user journey', cat: 'core', priority: 'ondemand' },
   { id: 'memory.md', icon: '\uD83E\uDDE0', desc: 'Memory system architecture', cat: 'system', priority: 'internal' },
-  { id: 'houserules.md', icon: '\uD83D\uDEE1\uFE0F', desc: 'House rules and policies', cat: 'knowledge', priority: 'ondemand' },
-  { id: 'payment.md', icon: '\uD83D\uDCB3', desc: 'Pricing, payment methods, and refunds', cat: 'knowledge', priority: 'ondemand' },
-  { id: 'checkin.md', icon: '\u2705', desc: 'Check-in process and procedures', cat: 'knowledge', priority: 'ondemand' },
-  { id: 'facilities.md', icon: '\uD83C\uDFE0', desc: 'Facilities, amenities, and services', cat: 'knowledge', priority: 'ondemand' },
-  { id: 'faq.md', icon: '\u2753', desc: 'Frequently asked questions', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'houserules.md', icon: '\uD83D\uDEE1\uFE0F', desc: 'House rules quick reference', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'rules-quiet-smoking.md', icon: '\uD83D\uDD07', desc: 'Quiet hours & smoking policy', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'rules-guests-conduct.md', icon: '\uD83E\uDD1D', desc: 'Guest conduct, visitors, alcohol', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'rules-shared-spaces.md', icon: '\uD83C\uDF7D\uFE0F', desc: 'Kitchen, cleanliness, security, damage', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'payment.md', icon: '\uD83D\uDCB3', desc: 'Payment quick reference', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'pricing.md', icon: '\uD83D\uDCB0', desc: 'Rates, deposits, inclusions', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'payment-methods.md', icon: '\uD83C\uDFE6', desc: 'DuitNow, bank transfer, cash', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'refunds.md', icon: '\uD83D\uDD04', desc: 'Refunds, cancellation, disputes', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'checkin.md', icon: '\u2705', desc: 'Check-in quick reference', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'checkin-times.md', icon: '\u23F0', desc: 'Check-in/out times & flexibility', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'checkin-access.md', icon: '\uD83D\uDD11', desc: 'Door password & physical access', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'checkin-procedure.md', icon: '\uD83D\uDCCB', desc: 'Step-by-step self check-in', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'checkin-wifi.md', icon: '\uD83D\uDCF6', desc: 'WiFi credentials & connectivity', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'facilities.md', icon: '\uD83C\uDFE0', desc: 'Facilities quick reference', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'facilities-capsules.md', icon: '\uD83D\uDECF\uFE0F', desc: 'Capsule pods & sleep comfort', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'facilities-bathrooms.md', icon: '\uD83D\uDEBF', desc: 'Bathrooms & showers', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'facilities-kitchen.md', icon: '\uD83C\uDF7D\uFE0F', desc: 'Kitchen & dining facilities', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'facilities-common.md', icon: '\uD83D\uDECB\uFE0F', desc: 'Common areas & social spaces', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'availability.md', icon: '\uD83D\uDCC5', desc: 'Availability and booking info', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'location.md', icon: '\uD83D\uDCCD', desc: 'Address, directions, getting here', cat: 'knowledge', priority: 'ondemand' },
+  { id: 'faq.md', icon: '\u2753', desc: 'Unique FAQs and special situations', cat: 'knowledge', priority: 'ondemand' },
 ];
 let kbCurrentFile = null;
 let kbOriginalContent = '';
@@ -6335,256 +6336,6 @@ function esc(s) { const d = document.createElement('div'); d.textContent = Strin
 function css(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, '_'); }
 function truncate(s, n) { return s.length > n ? s.slice(0, n) + '...' : s; }
 
-// ─── Memory Tab ─────────────────────────────────────────────────────
-
-let _memSubTab = 'daily'; // 'daily' | 'durable'
-let _memSelectedDate = null;
-let _memOriginalContent = '';
-let _memDays = [];
-
-async function loadMemory() {
-  try {
-    const res = await fetch(API + '/memory');
-    const data = await res.json();
-    _memDays = data.days || [];
-
-    // Update stats
-    document.getElementById('mem-stat-days').textContent = data.totalDays || 0;
-    document.getElementById('mem-stat-today-entries').textContent = data.todayEntries || 0;
-    document.getElementById('mem-stat-durable').textContent = data.durableMemorySize ? (data.durableMemorySize > 1024 ? (data.durableMemorySize / 1024).toFixed(1) + 'K' : data.durableMemorySize + ' chr') : '0';
-    document.getElementById('mem-stat-date').textContent = data.today || '--';
-
-    renderMemoryDayList();
-
-    // Auto-load today's log
-    if (_memSubTab === 'daily' && data.today) {
-      memoryLoadDate(data.today);
-    } else if (_memSubTab === 'durable') {
-      memoryLoadDurable();
-    }
-  } catch (err) {
-    toast('Failed to load memory: ' + err.message, 'error');
-  }
-}
-
-function renderMemoryDayList() {
-  const el = document.getElementById('mem-day-list');
-  if (_memSubTab === 'durable') {
-    el.innerHTML = '<p class="text-neutral-400 text-xs italic">Switch to Daily Logs to see days</p>';
-    return;
-  }
-  if (_memDays.length === 0) {
-    el.innerHTML = '<p class="text-neutral-400 text-xs italic">No daily logs yet</p>';
-    return;
-  }
-
-  // Determine today's date from stats
-  const todayStr = document.getElementById('mem-stat-date').textContent;
-
-  el.innerHTML = _memDays.map(d => {
-    const isToday = d === todayStr;
-    const isSelected = d === _memSelectedDate;
-    const bgClass = isSelected ? 'bg-primary-100 text-primary-700' : 'hover:bg-neutral-50 text-neutral-600';
-    return `<button onclick="memoryLoadDate('${esc(d)}')" class="w-full text-left px-2 py-1 rounded text-xs ${bgClass} transition flex items-center gap-1">
-      <span>${esc(d)}</span>
-      ${isToday ? '<span class="ml-auto text-primary-500 font-semibold text-[10px]">Today</span>' : ''}
-    </button>`;
-  }).join('');
-}
-
-function memSwitchSubTab(tab) {
-  _memSubTab = tab;
-  // Update button styles
-  const dailyBtn = document.getElementById('mem-subtab-daily');
-  const durableBtn = document.getElementById('mem-subtab-durable');
-  if (tab === 'daily') {
-    dailyBtn.className = 'flex-1 px-2 py-1 text-xs font-semibold rounded bg-primary-100 text-primary-700';
-    durableBtn.className = 'flex-1 px-2 py-1 text-xs font-semibold rounded text-neutral-500 hover:bg-neutral-100';
-    renderMemoryDayList();
-    if (_memDays.length > 0) {
-      memoryLoadDate(_memDays[0]); // Load most recent
-    }
-  } else {
-    durableBtn.className = 'flex-1 px-2 py-1 text-xs font-semibold rounded bg-primary-100 text-primary-700';
-    dailyBtn.className = 'flex-1 px-2 py-1 text-xs font-semibold rounded text-neutral-500 hover:bg-neutral-100';
-    document.getElementById('mem-day-list').innerHTML = '<p class="text-neutral-400 text-xs italic">Editing durable memory (memory.md)</p>';
-    memoryLoadDurable();
-  }
-}
-
-async function memoryLoadDate(date) {
-  _memSelectedDate = date;
-  _memSubTab = 'daily';
-  renderMemoryDayList();
-
-  const editor = document.getElementById('mem-editor');
-  const titleEl = document.getElementById('mem-editor-title');
-  const saveBtn = document.getElementById('mem-save-btn');
-
-  titleEl.textContent = date + ' -- Daily Log';
-  editor.value = 'Loading...';
-  editor.disabled = true;
-  saveBtn.disabled = true;
-
-  try {
-    const res = await fetch(API + '/memory/' + date);
-    if (res.status === 404) {
-      // No log yet - show template
-      const template = `# ${date} -- Daily Memory\n\n## Staff Notes\n\n## Issues Reported\n\n## Operational Changes\n\n## Patterns Observed\n\n## AI Notes\n`;
-      editor.value = template;
-      _memOriginalContent = template;
-      editor.disabled = false;
-      saveBtn.disabled = false;
-      updateMemEditorStats();
-      return;
-    }
-    const data = await res.json();
-    editor.value = data.content || '';
-    _memOriginalContent = data.content || '';
-    editor.disabled = false;
-    saveBtn.disabled = false;
-    updateMemEditorStats();
-    if (data.modified) {
-      document.getElementById('mem-editor-modified').textContent = 'Last saved: ' + new Date(data.modified).toLocaleTimeString();
-    }
-  } catch (err) {
-    editor.value = 'Error loading: ' + err.message;
-  }
-  document.getElementById('mem-unsaved-badge').classList.add('hidden');
-}
-
-async function memoryLoadDurable() {
-  _memSelectedDate = null;
-  const editor = document.getElementById('mem-editor');
-  const titleEl = document.getElementById('mem-editor-title');
-  const saveBtn = document.getElementById('mem-save-btn');
-
-  titleEl.textContent = 'Durable Memory (memory.md)';
-  editor.value = 'Loading...';
-  editor.disabled = true;
-  saveBtn.disabled = true;
-
-  try {
-    const res = await fetch(API + '/memory/durable');
-    const data = await res.json();
-    editor.value = data.content || '';
-    _memOriginalContent = data.content || '';
-    editor.disabled = false;
-    saveBtn.disabled = false;
-    updateMemEditorStats();
-  } catch (err) {
-    editor.value = 'Error loading: ' + err.message;
-  }
-  document.getElementById('mem-unsaved-badge').classList.add('hidden');
-}
-
-function memoryEditorChanged() {
-  const editor = document.getElementById('mem-editor');
-  const badge = document.getElementById('mem-unsaved-badge');
-  if (editor.value !== _memOriginalContent) {
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
-  }
-  updateMemEditorStats();
-}
-
-function updateMemEditorStats() {
-  const editor = document.getElementById('mem-editor');
-  const text = editor.value;
-  const lines = text.split('\n').length;
-  const chars = text.length;
-  document.getElementById('mem-editor-stats').textContent = `${lines} lines · ${chars} characters`;
-}
-
-function memoryResetEditor() {
-  const editor = document.getElementById('mem-editor');
-  editor.value = _memOriginalContent;
-  document.getElementById('mem-unsaved-badge').classList.add('hidden');
-  updateMemEditorStats();
-}
-
-async function memorySaveEditor() {
-  const editor = document.getElementById('mem-editor');
-  const saveBtn = document.getElementById('mem-save-btn');
-  const content = editor.value;
-
-  saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving...';
-
-  try {
-    let url, method;
-    if (_memSubTab === 'durable') {
-      url = API + '/memory/durable';
-      method = 'PUT';
-    } else if (_memSelectedDate) {
-      url = API + '/memory/' + _memSelectedDate;
-      method = 'PUT';
-    } else {
-      toast('Nothing selected to save', 'error');
-      return;
-    }
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Save failed');
-
-    _memOriginalContent = content;
-    document.getElementById('mem-unsaved-badge').classList.add('hidden');
-    document.getElementById('mem-editor-modified').textContent = 'Saved just now';
-    toast('Memory saved');
-
-    // Refresh stats
-    loadMemory();
-  } catch (err) {
-    toast('Save failed: ' + err.message, 'error');
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
-  }
-}
-
-async function memoryQuickNote() {
-  const note = prompt('Quick staff note (appends to today\'s Staff Notes):');
-  if (!note || !note.trim()) return;
-
-  // Get today from stats display
-  const today = document.getElementById('mem-stat-date').textContent;
-  if (!today || today === '--') {
-    toast('Cannot determine today\'s date', 'error');
-    return;
-  }
-
-  try {
-    const res = await fetch(API + '/memory/' + today + '/append', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ section: 'Staff Notes', entry: note.trim() })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Append failed');
-
-    toast('Note added at ' + data.timestamp);
-
-    // Refresh if we're viewing today
-    if (_memSelectedDate === today) {
-      memoryLoadDate(today);
-    }
-    // Refresh stats
-    const statsRes = await fetch(API + '/memory');
-    const stats = await statsRes.json();
-    document.getElementById('mem-stat-today-entries').textContent = stats.todayEntries || 0;
-    _memDays = stats.days || [];
-    renderMemoryDayList();
-  } catch (err) {
-    toast('Failed to add note: ' + err.message, 'error');
-  }
-}
-
 // ─── Init ───────────────────────────────────────────────────────────
 // Add Enter key handler for workflow test input
 setTimeout(() => {
@@ -6645,7 +6396,7 @@ async function openKbEditModal(filename) {
 
   // Fetch file content
   try {
-    const response = await fetch(`${KB_API}/kb-files/${encodeURIComponent(filename)}`);
+    const response = await fetch(`${KB_API}/kb-files/${encodeURIComponent(filename)}?_=${Date.now()}`, { cache: 'no-store' });
     const data = await response.json();
 
     if (!response.ok) {

@@ -23,21 +23,57 @@ const TOPIC_FILE_MAP: Record<string, string[]> = {
   // Availability & Booking
   'availab|vacancy|room|capsule|space|bed|book|reserve|reservation|tempah|kosong|空房|预订':
     ['availability.md'],
-  // Payment & pricing
-  'price|cost|rate|how much|berapa|多少|rm\\d|ringgit|pay|bayar|deposit|refund|cancel':
-    ['payment.md'],
-  // Check-in/out
-  'check.?in|check.?out|arrive|leave|late|early|door|code|key|masuk|keluar|登记':
-    ['checkin.md'],
-  // Facilities
-  'wifi|internet|kitchen|laundry|wash|air.?con|park|facilit|dapur|cuci|网络|厨房':
+  // Pricing & rates
+  'price|cost|rate|how much|berapa|多少|rm\\d|ringgit':
+    ['pricing.md'],
+  // Payment methods & procedure
+  'pay|bayar|duitnow|bank|transfer|cash|maybank|boost|grabpay|shopeepay|touch.?n.?go':
+    ['payment-methods.md'],
+  // Deposits & refunds
+  'deposit|refund|cancel|return|pulang|退款':
+    ['refunds.md'],
+  // Check-in times
+  'check.?in.?time|check.?out.?time|what.?time|早到|晚退':
+    ['checkin-times.md'],
+  // Door access & password
+  'door|password|code|access|entry|entrance|masuk|pintu|密码|入口':
+    ['checkin-access.md'],
+  // Check-in procedure
+  'check.?in|self.?check|how.?to.?check|procedure|步骤':
+    ['checkin-procedure.md'],
+  // WiFi
+  'wifi|internet|password|网络|密码':
+    ['checkin-wifi.md'],
+  // Capsule facilities & features
+  'capsule|pod|bed|sleep|mattress|curtain|privacy|reading.?light|outlet|usb|charging':
+    ['facilities-capsules.md'],
+  // Bathrooms & showers
+  'bathroom|shower|hot.?water|toiletries|shampoo|soap|hair.?dryer|toilet':
+    ['facilities-bathrooms.md'],
+  // Kitchen & dining
+  'kitchen|cook|fridge|microwave|kettle|coffee|utensil|plate|dapur|厨房':
+    ['facilities-kitchen.md'],
+  // Common areas, laundry, storage
+  'lounge|common.?area|work|desk|outdoor|laundry|wash|locker|luggage|storage':
+    ['facilities-common.md'],
+  // General facilities (fallback)
+  'facilit|amenities|air.?con|park':
     ['facilities.md'],
-  // House rules
-  'rule|smoke|smoking|quiet|noise|visitor|allow|prohibit|peraturan|merokok|规则|吸烟':
+  // Quiet hours & smoking
+  'quiet|noise|loud|smoke|smoking|vape|rokok|merokok|安静|吸烟':
+    ['rules-quiet-smoking.md'],
+  // Guest conduct & visitors
+  'visitor|guest|friend|conduct|behav|alcohol|drink|drug|pelawat|规则':
+    ['rules-guests-conduct.md'],
+  // Shared spaces & kitchen rules
+  'clean|kitchen|shoe|damage|locker|security|key.?card|bersih|厨房|钥匙':
+    ['rules-shared-spaces.md'],
+  // General rules (loads quick reference)
+  'rule|allow|prohibit|peraturan':
     ['houserules.md'],
-  // Directions/location (served from faq.md)
+  // Location & directions
   'where|direction|map|location|address|nearby|food|restaurant|transport|grab|alamat|dimana|地址|怎么走':
-    ['faq.md'],
+    ['location.md'],
 };
 
 /**
