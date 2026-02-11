@@ -14,6 +14,7 @@ export interface LoggedMessage {
   intent?: string;
   confidence?: number;
   action?: string;
+  manual?: boolean;        // True if manually sent by admin
 }
 
 export interface ConversationLog {
@@ -86,7 +87,7 @@ export async function logMessage(
   pushName: string,
   role: 'user' | 'assistant',
   content: string,
-  meta?: { intent?: string; confidence?: number; action?: string; instanceId?: string }
+  meta?: { intent?: string; confidence?: number; action?: string; instanceId?: string; manual?: boolean }
 ): Promise<void> {
   try {
     const now = Date.now();
@@ -114,7 +115,8 @@ export async function logMessage(
       timestamp: now,
       ...(meta?.intent && { intent: meta.intent }),
       ...(meta?.confidence !== undefined && { confidence: meta.confidence }),
-      ...(meta?.action && { action: meta.action })
+      ...(meta?.action && { action: meta.action }),
+      ...(meta?.manual && { manual: meta.manual })
     });
     log.updatedAt = now;
 

@@ -2311,6 +2311,9 @@ function renderChatView(log) {
     const time = new Date(msg.timestamp).toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
 
     let footer = `<span class="rc-bubble-time">${time}</span>`;
+    if (!isGuest && msg.manual) {
+      footer += `<span class="rc-bubble-manual">✋ Manual</span>`;
+    }
     if (!isGuest && msg.intent) {
       footer += `<span class="rc-bubble-intent">${escapeHtml(msg.intent)}</span>`;
     }
