@@ -1,192 +1,104 @@
 # Pelangi MCP Server - Deployment Guide
 
-## Phase 1: Minimal HTTP MCP Server (COMPLETE ✅)
+## Zeabur Deployment
 
-### What's Implemented
+### Prerequisites
 
-**10 Core Tools:**
-1. `pelangi_list_guests` - List all checked-in guests with pagination
-2. `pelangi_get_guest` - Get specific guest details by ID
-3. `pelangi_search_guests` - Search guests by name, capsule, or nationality
-4. `pelangi_list_capsules` - List all capsules with status
-5. `pelangi_get_occupancy` - Get current occupancy statistics
-6. `pelangi_check_availability` - Get available capsules for assignment
-7. `pelangi_get_dashboard` - Bulk fetch dashboard data
-8. `pelangi_get_overdue_guests` - List guests past expected checkout date
-9. `pelangi_list_problems` - List active maintenance problems
-10. `pelangi_export_whatsapp_issues` - Export maintenance issues in WhatsApp format
+- Zeabur account with project access
+- Admin API token from PelangiManager (Settings > Security > API Tokens)
+- Git repository pushed to GitHub
 
-**Architecture:**
-- HTTP-based JSON-RPC server
-- Calls existing PelangiManager API on Zeabur
-- Ready for remote MCP clients
+### Step 1: Get Admin API Token
 
-### Local Testing (Verified ✅)
+1. Open PelangiManager: `https://pelangi.zeabur.app`
+2. Go to **Settings > Security > API Tokens**
+3. Generate and copy the admin token
+
+### Step 2: Create Zeabur Service
+
+1. Go to `https://dash.zeabur.com`
+2. Open your project (e.g., `pelangi-hostel`)
+3. Click **Add Service > Git Repository**
+4. Select the repository and set **Root Directory** to `mcp-server`
+
+### Step 3: Set Environment Variables
+
+In the Zeabur service's **Variable** tab:
+
+| Variable | Value |
+|----------|-------|
+| `PELANGI_API_URL` | `https://pelangi.zeabur.app` |
+| `PELANGI_API_TOKEN` | `<your-admin-token>` |
+| `MCP_SERVER_PORT` | `3001` |
+| `NODE_ENV` | `production` |
+| `NVIDIA_API_KEY` | `<optional: for Kimi K2.5>` |
+| `OPENROUTER_API_KEY` | `<optional: for free models>` |
+
+### Step 4: Build Configuration
+
+Zeabur auto-detects Node.js. Verify:
+
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm start`
+- **Port**: 3001
+
+### Step 5: Assign Domain
+
+1. In the service settings, go to **Domains**
+2. Add custom domain: `mcp-pelangi.zeabur.app` (or your preferred subdomain)
+
+### Step 6: Verify
 
 ```bash
 # Health check
-curl http://localhost:3001/health
+curl https://mcp-pelangi.zeabur.app/health
 
-# List all tools
-curl -X POST http://localhost:3001/mcp \
+# List tools
+curl -X POST https://mcp-pelangi.zeabur.app/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
 
-# Call a tool (example: get occupancy)
-curl -X POST http://localhost:3001/mcp \
+# Test a tool
+curl -X POST https://mcp-pelangi.zeabur.app/mcp \
   -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc":"2.0",
-    "method":"tools/call",
-    "params":{
-      "name":"pelangi_get_occupancy",
-      "arguments":{}
-    },
-    "id":2
-  }'
+  -d '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"pelangi_get_occupancy","arguments":{}},"id":2}'
 ```
 
-### Zeabur Deployment Steps
+## Docker Deployment (Alternative)
 
-#### 1. Prepare Zeabur Project
-
-1. Go to Zeabur dashboard
-2. Create new service from Git repository
-3. Select `mcp-server` directory as root path
-
-#### 2. Configure Build Settings
-
-**Build Command:**
 ```bash
-npm install && npm run build
+cd mcp-server
+docker build -t pelangi-mcp .
+docker run -p 3001:3001 \
+  -e PELANGI_API_URL=https://pelangi.zeabur.app \
+  -e PELANGI_API_TOKEN=your-token \
+  -e NODE_ENV=production \
+  pelangi-mcp
 ```
 
-**Start Command:**
-```bash
-npm start
-```
+## Troubleshooting
 
-**Port:** 3001
+| Issue | Solution |
+|-------|----------|
+| 500 on tool calls | Check `PELANGI_API_TOKEN` is valid |
+| Connection refused | Verify server is running, port not blocked |
+| Empty data returned | Check PelangiManager DB has data |
+| Build fails | Ensure `@rollup/rollup-linux-x64-musl` in `optionalDependencies` |
+| 502 despite RUNNING | Check Zeabur forum for platform outages |
 
-#### 3. Set Environment Variables
+## Zeabur Project IDs
 
-In Zeabur dashboard, add these environment variables:
+| Region | Project ID |
+|--------|-----------|
+| Singapore | `6948c99fced85978abb44563` |
+| Frankfurt | `6988ba46ea91e8e06ef1420c` |
 
-```
-PELANGI_API_URL=https://pelangi.zeabur.app
-PELANGI_API_TOKEN=<your-admin-token-from-pelangi-settings>
-MCP_SERVER_PORT=3001
-NODE_ENV=production
-```
+## Deploy Checklist
 
-**Getting the API Token:**
-1. Open PelangiManager app: https://pelangi.zeabur.app
-2. Go to Settings → Security → API Tokens
-3. Generate a new admin token
-4. Copy and paste into `PELANGI_API_TOKEN`
-
-#### 4. Deploy
-
-1. Push code to repository
-2. Zeabur will auto-deploy
-3. Assign domain (e.g., `mcp.pelangi.zeabur.app`)
-4. Verify deployment:
-   ```bash
-   curl https://mcp.pelangi.zeabur.app/health
-   ```
-
-### MCP Client Configuration
-
-#### Claude Code
-
-Add to `~/.claude/mcp_settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "pelangi": {
-      "transport": "http",
-      "url": "https://mcp.pelangi.zeabur.app/mcp",
-      "headers": {
-        "Content-Type": "application/json"
-      }
-    }
-  }
-}
-```
-
-#### Cursor
-
-Add to Cursor settings:
-
-```json
-{
-  "mcp": {
-    "servers": {
-      "pelangi": {
-        "url": "https://mcp.pelangi.zeabur.app/mcp"
-      }
-    }
-  }
-}
-```
-
-#### n8n Workflows
-
-Use HTTP Request node:
-
-- **URL:** `https://mcp.pelangi.zeabur.app/mcp`
-- **Method:** POST
-- **Body:**
-  ```json
-  {
-    "jsonrpc": "2.0",
-    "method": "tools/call",
-    "params": {
-      "name": "pelangi_list_guests",
-      "arguments": {}
-    },
-    "id": 1
-  }
-  ```
-
-### Verification Checklist
-
-- [x] Server builds successfully
-- [x] Server starts on port 3001
-- [x] Health endpoint returns 200 OK
-- [x] Tools/list returns all 10 tools
-- [x] Tools can be called successfully
-- [ ] Deployed to Zeabur
-- [ ] Domain configured
-- [ ] API token set
-- [ ] Accessible from remote clients
-- [ ] Integrated with n8n
-- [ ] Integrated with Periskope/WhatsApp
-
-### Next Steps (Phase 2)
-
-**Direct Storage Access:**
-1. Import StorageFactory from main project
-2. Add write operations (check-in, checkout, update)
-3. Implement high-level workflows
-4. Expand to 30 tools
-
-**Timeline:** 4-6 days
-
-### Troubleshooting
-
-**Issue: 500 Error on tool calls**
-- Check PELANGI_API_TOKEN is set correctly
-- Verify PelangiManager API is accessible
-- Check API token has admin permissions
-
-**Issue: Connection refused**
-- Verify server is running: `curl http://localhost:3001/health`
-- Check port 3001 is not blocked by firewall
-- Ensure correct port in environment variables
-
-**Issue: Tool returns empty data**
-- Check PelangiManager database has data
-- Verify API endpoints are working
-- Test API directly: `curl https://pelangi.zeabur.app/api/occupancy`
+- [ ] Code committed and pushed
+- [ ] Environment variables set in Zeabur
+- [ ] Domain assigned
+- [ ] Health check returns 200
+- [ ] Tools/list returns all tools
+- [ ] At least one tool call succeeds with real data
+- [ ] MCP client (Claude Code/Cursor) can connect
