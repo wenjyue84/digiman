@@ -187,18 +187,58 @@
 
 <!-- Tabs -->
 <nav class="bg-white border-b">
-  <div class="max-w-6xl mx-auto px-4 flex gap-0 overflow-x-auto">
+  <div class="max-w-6xl mx-auto px-4 flex gap-2 items-center py-2">
     <button class="tab-btn tab-active px-4 py-3 text-sm whitespace-nowrap transition" data-tab="status">Status</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="intent-manager">Classify Intent</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="intents">Intents & Routing</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="static-replies">Static Messages</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="workflow">Workflow</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="kb">Knowledge Base</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="preview">Preview</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="real-chat">Real Chat</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="settings">Settings</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="testing">Run Tests</button>
-    <button class="tab-btn px-4 py-3 text-sm whitespace-nowrap text-neutral-500 hover:text-neutral-700 transition" data-tab="help">❓ Help</button>
+
+    <!-- Intent & Routing Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('intent-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-primary-600 hover:bg-primary-50 rounded-lg transition">
+        Intent & Routing
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="intent-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition" data-tab="intent-manager" onclick="closeAllDropdowns()">Classify Intent</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition" data-tab="intents" onclick="closeAllDropdowns()">Intents & Routing</button>
+      </div>
+    </div>
+
+    <!-- Response Management Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('response-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-success-600 hover:bg-success-50 rounded-lg transition">
+        Response Management
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="response-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-success-50 hover:text-success-600 transition" data-tab="static-replies" onclick="closeAllDropdowns()">Static Messages</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-success-50 hover:text-success-600 transition" data-tab="workflow" onclick="closeAllDropdowns()">Workflow</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-success-50 hover:text-success-600 transition" data-tab="kb" onclick="closeAllDropdowns()">Knowledge Base</button>
+      </div>
+    </div>
+
+    <!-- Testing & Preview Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('testing-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-warning-600 hover:bg-warning-50 rounded-lg transition">
+        Testing & Preview
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="testing-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-warning-50 hover:text-warning-600 transition" data-tab="preview" onclick="closeAllDropdowns()">Preview</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-warning-50 hover:text-warning-600 transition" data-tab="real-chat" onclick="closeAllDropdowns()">Real Chat</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-warning-50 hover:text-warning-600 transition" data-tab="testing" onclick="closeAllDropdowns()">Run Tests</button>
+      </div>
+    </div>
+
+    <!-- Utilities Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('utilities-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-neutral-600 hover:bg-neutral-50 rounded-lg transition">
+        Utilities
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="utilities-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-600 transition" data-tab="settings" onclick="closeAllDropdowns()">Settings</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-600 transition" data-tab="help" onclick="closeAllDropdowns()">❓ Help</button>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -703,26 +743,15 @@
 
     <!-- Routing Templates -->
     <div class="bg-white border rounded-2xl p-4 mb-4">
-      <div class="flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
         <div>
           <h3 class="font-semibold text-neutral-700 text-sm">Routing Templates</h3>
           <p class="text-xs text-neutral-400">Quickly switch all intent routing at once</p>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <button id="tpl-btn-smartest" onclick="applyTemplate('smartest')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="All LLM Reply + Workflows">
-            T1 Smartest
-          </button>
-          <button id="tpl-btn-performance" onclick="applyTemplate('performance')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="Maximize Static Reply">
-            T2 Performance
-          </button>
-          <button id="tpl-btn-custom" onclick="applyTemplate('custom')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="Your saved custom config">
-            T3 Custom
-          </button>
-          <span class="text-neutral-300">|</span>
-          <button onclick="saveCustomTemplate()" class="text-xs px-3 py-1.5 rounded-2xl border border-dashed border-neutral-300 text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 transition" title="Save current routing as T3">
-            Save as T3
-          </button>
-        </div>
+        <button onclick="showSaveTemplateModal()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Save New Template</button>
+      </div>
+      <div id="template-buttons-container" class="flex items-center gap-2 flex-wrap">
+        <!-- Templates will be rendered here dynamically -->
       </div>
       <div id="template-indicator" class="hidden mt-2 text-xs text-neutral-500"></div>
     </div>
@@ -831,6 +860,24 @@
           <div class="flex justify-end gap-2">
             <button type="button" onclick="closeModal('add-intent-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
             <button type="submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Save Template Modal -->
+    <div id="save-template-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Save New Template</h3>
+        <form onsubmit="submitSaveTemplate(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Template Name</label>
+            <input id="save-template-name" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g., My Booking Setup" />
+            <p class="text-xs text-neutral-400 mt-1">Give your template a descriptive name</p>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('save-template-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-success-500 text-white rounded-2xl hover:bg-success-600">Save Template</button>
           </div>
         </form>
       </div>
@@ -1195,7 +1242,34 @@
             </div>
           </div>
           <div class="flex gap-2">
-            <button id="export-report-btn" onclick="exportAutotestReport(lastAutotestResults)" class="hidden text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Export Report</button>
+            <!-- View History Button -->
+            <button id="view-history-btn" onclick="showAutotestHistory()" class="hidden text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+              <span>📋</span>
+              <span>History</span>
+            </button>
+            <!-- Export Report Dropdown -->
+            <div id="export-report-dropdown" class="hidden relative">
+              <button onclick="toggleExportDropdown()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+                Export Report
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div id="export-dropdown-menu" class="hidden absolute right-0 mt-1 w-72 bg-white border border-neutral-300 rounded-xl shadow-lg z-50">
+                <button onclick="exportAutotestReport(lastAutotestResults, 'all')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 rounded-t-xl">
+                  <span class="text-lg">📊</span>
+                  <span>Export All Results</span>
+                </button>
+                <button onclick="exportAutotestReport(lastAutotestResults, 'warnings-failed')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-200">
+                  <span class="text-lg">⚠️</span>
+                  <span>Export Warnings & Failed Only</span>
+                </button>
+                <button onclick="exportAutotestReport(lastAutotestResults, 'failed')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-200 rounded-b-xl">
+                  <span class="text-lg">❌</span>
+                  <span>Export Failed Only</span>
+                </button>
+              </div>
+            </div>
             <button id="run-all-btn" onclick="runAutotest()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-2xl transition">Run All</button>
             <button onclick="toggleAutotest()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Back to Chat</button>
           </div>
@@ -1246,6 +1320,39 @@
       </div>
     </div>
 
+    <!-- Autotest History Modal -->
+    <div id="autotest-history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-semibold text-neutral-800">Autotest History</h2>
+            <p class="text-sm text-neutral-500">View and export previous test reports</p>
+          </div>
+          <button onclick="closeAutotestHistory()" class="text-neutral-400 hover:text-neutral-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- History List -->
+        <div id="autotest-history-list" class="flex-1 overflow-y-auto space-y-2">
+          <!-- Will be populated dynamically -->
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="mt-4 pt-4 border-t flex justify-between items-center">
+          <button onclick="clearAutotestHistory()" class="text-sm text-red-500 hover:text-red-600 transition">
+            Clear All History
+          </button>
+          <button onclick="closeAutotestHistory()" class="text-sm bg-neutral-200 hover:bg-neutral-300 px-4 py-2 rounded-xl transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ChatGPT-style Layout -->
     <div id="chat-layout" class="bg-white border rounded-2xl overflow-hidden flex" style="height: calc(100vh - 280px); min-height: 600px;">
 
@@ -1284,6 +1391,10 @@
             </div>
           </div>
           <div class="flex gap-2">
+            <button id="view-history-btn-preview" onclick="showAutotestHistory()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+              <span>📋</span>
+              <span>History</span>
+            </button>
             <button onclick="toggleAutotest()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-2xl transition">Autotest</button>
             <button onclick="clearCurrentChat()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Clear Chat</button>
           </div>
@@ -1379,6 +1490,26 @@
       .rc-bubble-intent { font-size:10px; color:#6366f1; background:#ede9fe; padding:1px 6px; border-radius:4px; }
       .rc-bubble-confidence { font-size:10px; color:#667781; }
       .rc-bubble-manual { font-size:10px; color:#f59e0b; background:#fef3c7; padding:1px 6px; border-radius:4px; font-weight:600; }
+      .rc-dev-toggle { background:#8b5cf6; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; transition:background .2s; font-weight:500; }
+      .rc-dev-toggle:hover { background:#7c3aed; }
+      .rc-dev-toggle.active { background:#10b981; }
+      .rc-translate-toggle { background:#3b82f6; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; transition:background .2s; font-weight:500; }
+      .rc-translate-toggle:hover { background:#2563eb; }
+      .rc-translate-toggle.active { background:#10b981; }
+      .rc-lang-selector { border:1px solid #d1d5db; border-radius:6px; padding:4px 8px; font-size:12px; background:#fff; color:#374151; cursor:pointer; margin-left:8px; }
+      .rc-translate-modal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:9999; }
+      .rc-translate-content { background:#fff; border-radius:12px; padding:24px; max-width:500px; width:90%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); }
+      .rc-translate-title { font-size:18px; font-weight:600; color:#1f2937; margin-bottom:16px; }
+      .rc-translate-text { background:#f3f4f6; border-radius:8px; padding:12px; font-size:14px; color:#374151; margin-bottom:16px; white-space:pre-wrap; word-break:break-word; }
+      .rc-translate-buttons { display:flex; gap:12px; justify-content:flex-end; }
+      .rc-translate-btn { padding:8px 16px; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer; transition:all .2s; border:none; }
+      .rc-translate-btn.cancel { background:#f3f4f6; color:#374151; }
+      .rc-translate-btn.cancel:hover { background:#e5e7eb; }
+      .rc-translate-btn.send { background:#10b981; color:#fff; }
+      .rc-translate-btn.send:hover { background:#059669; }
+      .rc-dev-meta { background:#f3f4f6; border-radius:8px; padding:8px 10px; margin-top:6px; font-size:11px; color:#374151; line-height:1.6; font-family:'Courier New',monospace; border-left:3px solid #6366f1; }
+      .rc-dev-meta-label { color:#6366f1; font-weight:600; }
+      .rc-dev-meta-value { color:#1f2937; }
       .rc-empty-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#8696a0; }
       .rc-empty-state svg { width:80px; height:80px; margin-bottom:16px; opacity:.4; }
       .rc-empty-state h3 { font-size:22px; font-weight:300; color:#41525d; margin-bottom:8px; }
@@ -1446,6 +1577,20 @@
               <div class="rc-header-phone" id="rc-active-phone">+60... <span id="rc-active-instance" class="rc-instance-badge" style="margin-left:4px;"></span></div>
             </div>
             <div class="rc-header-actions">
+              <button class="rc-dev-toggle" id="rc-dev-toggle" onclick="toggleDevMode()" title="Toggle Developer Mode">
+                🔧 Dev
+              </button>
+              <button class="rc-translate-toggle" id="rc-translate-toggle" onclick="toggleTranslateMode()" title="Toggle Translation Mode">
+                🌐 Translate
+              </button>
+              <select class="rc-lang-selector" id="rc-lang-selector" title="Target Language" style="display:none;" onchange="handleLangChange()">
+                <option value="en">English</option>
+                <option value="ms">Malay</option>
+                <option value="zh">Chinese</option>
+                <option value="id">Indonesian</option>
+                <option value="th">Thai</option>
+                <option value="vi">Vietnamese</option>
+              </select>
               <button onclick="refreshActiveChat()" title="Refresh">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16"/></svg>
               </button>
@@ -1469,6 +1614,25 @@
             <span id="rc-stat-started">Started: —</span>
             <span id="rc-stat-last">Last active: —</span>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Translation Confirmation Modal -->
+    <div id="rc-translate-modal" class="rc-translate-modal" style="display:none;" onclick="if(event.target===this) closeTranslateModal()">
+      <div class="rc-translate-content">
+        <div class="rc-translate-title">🌐 Confirm Translation</div>
+        <div style="margin-bottom:12px;">
+          <strong style="color:#6b7280;font-size:12px;">Original:</strong>
+          <div class="rc-translate-text" id="rc-translate-original"></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <strong style="color:#6b7280;font-size:12px;">Translated (<span id="rc-translate-lang-name"></span>):</strong>
+          <div class="rc-translate-text" id="rc-translate-translated"></div>
+        </div>
+        <div class="rc-translate-buttons">
+          <button class="rc-translate-btn cancel" onclick="closeTranslateModal()">Cancel</button>
+          <button class="rc-translate-btn send" onclick="confirmTranslation()">Send Translation</button>
         </div>
       </div>
     </div>
@@ -2082,6 +2246,30 @@ function getTabFromURL() {
   return VALID_TABS.includes(seg) ? seg : 'status';
 }
 
+function toggleDropdown(dropdownId) {
+  const dropdown = document.getElementById(dropdownId);
+  const isHidden = dropdown.classList.contains('hidden');
+
+  // Close all dropdowns first
+  closeAllDropdowns();
+
+  // Toggle this dropdown
+  if (isHidden) {
+    dropdown.classList.remove('hidden');
+  }
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('[id$="-dropdown"]').forEach(d => d.classList.add('hidden'));
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('.relative')) {
+    closeAllDropdowns();
+  }
+});
+
 function switchTab(tab, pushState = true) {
   document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('tab-active'); b.classList.add('text-neutral-500'); });
   const active = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
@@ -2126,8 +2314,138 @@ let _rcConversations = [];
 let _rcActivePhone = null;
 let _rcAutoRefresh = null;
 let _rcInstances = {};  // instanceId -> label map
+let _rcDevMode = localStorage.getItem('rc-dev-mode') === 'true';  // Developer mode state
+let _rcTranslateMode = localStorage.getItem('rc-translate-mode') === 'true';  // Translation mode state
+let _rcTranslateLang = localStorage.getItem('rc-translate-lang') || 'ms';  // Default to Malay
+let _rcPendingTranslation = null;  // Stores pending translation data
+
+function toggleDevMode() {
+  _rcDevMode = !_rcDevMode;
+  localStorage.setItem('rc-dev-mode', _rcDevMode);
+  const btn = document.getElementById('rc-dev-toggle');
+  if (_rcDevMode) {
+    btn.classList.add('active');
+    btn.textContent = '🔧 Dev ✓';
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = '🔧 Dev';
+  }
+  // Re-render current chat to show/hide metadata
+  if (_rcActivePhone) refreshActiveChat();
+}
+
+function toggleTranslateMode() {
+  _rcTranslateMode = !_rcTranslateMode;
+  localStorage.setItem('rc-translate-mode', _rcTranslateMode);
+  const btn = document.getElementById('rc-translate-toggle');
+  const selector = document.getElementById('rc-lang-selector');
+
+  if (_rcTranslateMode) {
+    btn.classList.add('active');
+    btn.textContent = '🌐 Translate ✓';
+    selector.style.display = '';
+    selector.value = _rcTranslateLang;
+  } else {
+    btn.classList.remove('active');
+    btn.textContent = '🌐 Translate';
+    selector.style.display = 'none';
+  }
+}
+
+// Handle language selector change
+function handleLangChange() {
+  const selector = document.getElementById('rc-lang-selector');
+  _rcTranslateLang = selector.value;
+  localStorage.setItem('rc-translate-lang', _rcTranslateLang);
+}
+
+// Translation modal management
+function showTranslateModal() {
+  if (!_rcPendingTranslation) return;
+
+  const modal = document.getElementById('rc-translate-modal');
+  const originalEl = document.getElementById('rc-translate-original');
+  const translatedEl = document.getElementById('rc-translate-translated');
+  const langEl = document.getElementById('rc-translate-lang-name');
+
+  originalEl.textContent = _rcPendingTranslation.original;
+  translatedEl.textContent = _rcPendingTranslation.translated;
+  langEl.textContent = _rcPendingTranslation.targetLang.toUpperCase();
+
+  modal.style.display = 'flex';
+}
+
+function closeTranslateModal() {
+  const modal = document.getElementById('rc-translate-modal');
+  modal.style.display = 'none';
+  _rcPendingTranslation = null;
+
+  // Re-enable send button
+  const btn = document.getElementById('rc-send-btn');
+  btn.disabled = false;
+
+  // Focus back to input
+  const input = document.getElementById('rc-input-box');
+  input.focus();
+}
+
+async function confirmTranslation() {
+  if (!_rcPendingTranslation || !_rcActivePhone) {
+    closeTranslateModal();
+    return;
+  }
+
+  const modal = document.getElementById('rc-translate-modal');
+  const confirmBtn = modal.querySelector('.rc-translate-btn.send');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Sending...';
+
+  try {
+    // Get the instanceId from the active conversation
+    const log = _rcConversations.find(c => c.phone === _rcActivePhone);
+    const instanceId = log?.instanceId;
+
+    // Send the translated message
+    await api('/conversations/' + encodeURIComponent(_rcActivePhone) + '/send', {
+      method: 'POST',
+      body: { message: _rcPendingTranslation.translated, instanceId }
+    });
+
+    // Clear input
+    const input = document.getElementById('rc-input-box');
+    input.value = '';
+    input.style.height = '40px';
+
+    // Close modal
+    closeTranslateModal();
+
+    // Refresh the chat to show the sent message
+    await refreshActiveChat();
+  } catch (err) {
+    alert('Failed to send translated message: ' + err.message);
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Send';
+  }
+}
 
 async function loadRealChat() {
+  // Restore developer mode button state
+  const devBtn = document.getElementById('rc-dev-toggle');
+  if (_rcDevMode) {
+    devBtn.classList.add('active');
+    devBtn.textContent = '🔧 Dev ✓';
+  }
+
+  // Restore translation mode button state
+  const translateBtn = document.getElementById('rc-translate-toggle');
+  const langSelector = document.getElementById('rc-lang-selector');
+  if (_rcTranslateMode) {
+    translateBtn.classList.add('active');
+    translateBtn.textContent = '🌐 Translate ✓';
+    langSelector.style.display = '';
+    langSelector.value = _rcTranslateLang;
+  }
+
   try {
     // Load conversations and WhatsApp instances in parallel
     const [convos, statusData] = await Promise.all([
@@ -2156,7 +2474,8 @@ async function loadRealChat() {
       try {
         const fresh = await api('/conversations');
         _rcConversations = fresh;
-        renderConversationList(fresh);
+        buildInstanceFilter(); // Rebuild dropdown to keep counts updated
+        renderConversationList(_rcConversations); // Use global _rcConversations, not fresh
         if (_rcActivePhone) refreshActiveChat();
       } catch {}
     }, 10000);
@@ -2206,20 +2525,31 @@ function renderConversationList(conversations) {
   const searchVal = (document.getElementById('rc-search').value || '').toLowerCase();
   const instanceVal = document.getElementById('rc-instance-filter').value;
 
+  console.log('[RealChat Filter] Selected instance:', instanceVal || '(all)');
+  console.log('[RealChat Filter] Total conversations:', conversations.length);
+
   let filtered = conversations;
   // Filter by instance
   if (instanceVal === '__unknown__') {
     filtered = filtered.filter(c => !c.instanceId);
+    console.log('[RealChat Filter] Filtered to unknown instances:', filtered.length);
   } else if (instanceVal) {
+    const beforeCount = filtered.length;
     filtered = filtered.filter(c => c.instanceId === instanceVal);
+    console.log(`[RealChat Filter] Filtered by instance "${instanceVal}": ${beforeCount} -> ${filtered.length}`);
+    // Debug: show which instanceIds are present
+    const uniqueIds = [...new Set(conversations.map(c => c.instanceId))];
+    console.log('[RealChat Filter] Available instanceIds:', uniqueIds);
   }
   // Filter by search text
   if (searchVal) {
+    const beforeCount = filtered.length;
     filtered = filtered.filter(c =>
       (c.pushName || '').toLowerCase().includes(searchVal) ||
       c.phone.toLowerCase().includes(searchVal) ||
       (c.lastMessage || '').toLowerCase().includes(searchVal)
     );
+    console.log(`[RealChat Filter] Filtered by search "${searchVal}": ${beforeCount} -> ${filtered.length}`);
   }
 
   if (!filtered.length) {
@@ -2249,6 +2579,7 @@ function renderConversationList(conversations) {
 }
 
 function filterConversations() {
+  console.log('[RealChat] Filter triggered');
   renderConversationList(_rcConversations);
 }
 
@@ -2323,10 +2654,29 @@ function renderChatView(log) {
       footer += `<span class="rc-bubble-confidence" style="color:${color}">${pct}%</span>`;
     }
 
+    // Developer mode metadata
+    let devMeta = '';
+    if (_rcDevMode && !isGuest && !msg.manual) {
+      const parts = [];
+      if (msg.source) parts.push(`Detection: ${msg.source === 'llm' ? '🤖 LLM' : msg.source.toUpperCase()}`);
+      if (msg.intent) parts.push(`Intent: ${escapeHtml(msg.intent)}`);
+      if (msg.routedAction) parts.push(`Routed to: ${escapeHtml(msg.routedAction)}`);
+      if (msg.messageType) parts.push(`Type: ${escapeHtml(msg.messageType)}`);
+      if (msg.model) parts.push(`Model: ${escapeHtml(msg.model)}`);
+      if (msg.responseTime) parts.push(`Time: ${(msg.responseTime / 1000).toFixed(1)}s`);
+      if (msg.confidence !== undefined) parts.push(`Confidence: ${Math.round(msg.confidence * 100)}%`);
+      if (msg.kbFiles && msg.kbFiles.length > 0) parts.push(`KB: ${msg.kbFiles.map(f => escapeHtml(f)).join(', ')}`);
+
+      if (parts.length > 0) {
+        devMeta = `<div class="rc-dev-meta">${parts.join(' | ')}</div>`;
+      }
+    }
+
     html += `<div class="rc-bubble-wrap ${side}">
       <div class="rc-bubble ${side}">
         <div class="rc-bubble-text">${escapeHtml(msg.content)}</div>
         <div class="rc-bubble-footer">${footer}</div>
+        ${devMeta}
       </div>
     </div>`;
   }
@@ -2368,6 +2718,31 @@ async function sendManualReply() {
   btn.disabled = true;
 
   try {
+    // If translation mode is enabled, translate first and show confirmation
+    if (_rcTranslateMode && _rcTranslateLang !== 'en') {
+      try {
+        const result = await api('/translate', {
+          method: 'POST',
+          body: { text: message, targetLang: _rcTranslateLang }
+        });
+
+        // Store pending translation
+        _rcPendingTranslation = {
+          original: message,
+          translated: result.translated,
+          targetLang: _rcTranslateLang
+        };
+
+        // Show confirmation modal
+        showTranslateModal();
+        return; // Wait for user confirmation
+      } catch (err) {
+        alert('Translation failed: ' + err.message);
+        btn.disabled = false;
+        return;
+      }
+    }
+
     // Get the instanceId from the active conversation
     const log = _rcConversations.find(c => c.phone === _rcActivePhone);
     const instanceId = log?.instanceId;
@@ -2702,13 +3077,77 @@ async function loadStatus() {
     if (totalCount === 0) {
       el.innerHTML = '<p class="text-neutral-400">No WhatsApp instances. Click "+ Add Number" to connect one.</p>';
     } else {
-      el.innerHTML = instances.map(i => `
-        <div class="flex items-center justify-between py-2 border-b last:border-0">
+      // Check for unlinked instances
+      const unlinkedInstances = instances.filter(i => i.unlinkedFromWhatsApp);
+
+      let html = '';
+
+      // Show unlinked warning banner if any
+      if (unlinkedInstances.length > 0) {
+        html += `
+          <div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <div class="flex items-start gap-2">
+              <span class="text-orange-600 text-xl">⚠️</span>
+              <div class="flex-1">
+                <h4 class="font-semibold text-orange-800 mb-1">WhatsApp Instances Unlinked</h4>
+                <p class="text-sm text-orange-700 mb-2">
+                  The following instance(s) were unlinked from WhatsApp (possibly by the user):
+                </p>
+                <ul class="text-sm text-orange-700 space-y-1 mb-2">
+                  ${unlinkedInstances.map(i => `
+                    <li class="flex items-center gap-1">
+                      <span class="font-medium">${esc(i.label)}</span>
+                      ${i.user ? `(${esc(i.user.phone || '')})` : `(${esc(i.id)})`}
+                      ${i.lastUnlinkedAt ? `<span class="text-xs text-orange-600">— ${new Date(i.lastUnlinkedAt).toLocaleString()}</span>` : ''}
+                    </li>
+                  `).join('')}
+                </ul>
+                <p class="text-xs text-orange-600">
+                  ℹ️ A notification has been sent to the user. If this was intentional, you can remove the instance below.
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      html += instances.map(i => {
+        // Format last connected time
+        let lastConnectedText = '';
+        if (i.lastConnectedAt) {
+          const lastConnected = new Date(i.lastConnectedAt);
+          const now = new Date();
+          const diffMs = now.getTime() - lastConnected.getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMs / 3600000);
+          const diffDays = Math.floor(diffMs / 86400000);
+
+          if (i.state === 'open') {
+            lastConnectedText = `<span class="text-success-600">● Online</span>`;
+          } else if (diffMins < 1) {
+            lastConnectedText = 'Just now';
+          } else if (diffMins < 60) {
+            lastConnectedText = `${diffMins}m ago`;
+          } else if (diffHours < 24) {
+            lastConnectedText = `${diffHours}h ago`;
+          } else {
+            lastConnectedText = `${diffDays}d ago`;
+          }
+        } else {
+          lastConnectedText = i.state === 'open' ? '<span class="text-success-600">● Online</span>' : 'Never';
+        }
+
+        return `
+        <div class="flex items-center justify-between py-2 border-b last:border-0 ${i.unlinkedFromWhatsApp ? 'bg-orange-50' : ''}">
           <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${i.state === 'open' ? 'bg-success-400' : 'bg-warning-400'}"></span>
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${i.state === 'open' ? 'bg-success-400' : i.unlinkedFromWhatsApp ? 'bg-orange-500' : 'bg-warning-400'}"></span>
             <div>
-              <div class="font-medium text-neutral-800">${esc(i.label)}</div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-neutral-800">${esc(i.label)}</span>
+                ${i.unlinkedFromWhatsApp ? '<span class="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Unlinked from WhatsApp</span>' : ''}
+              </div>
               <div class="text-xs text-neutral-400">${esc(i.id)} ${i.user ? '— ' + esc(i.user.name || '') + ' (' + esc(i.user.phone || '') + ')' : ''}</div>
+              <div class="text-xs text-neutral-500">Last: ${lastConnectedText}</div>
             </div>
           </div>
           <div class="flex gap-1 flex-shrink-0">
@@ -2717,7 +3156,10 @@ async function loadStatus() {
             <button onclick="removeInstance('${esc(i.id)}')" class="text-xs bg-danger-500 hover:bg-danger-600 text-white px-2 py-1 rounded transition">Remove</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
+
+      el.innerHTML = html;
     }
 
     // AI Availability with enabled providers only (sorted by priority, default first)
@@ -3013,7 +3455,7 @@ async function loadIntents() {
     }
 
     el.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="5" class="text-neutral-400 py-4 text-center">No intents configured</td></tr>';
-    detectActiveTemplate();
+    renderTemplateButtons();
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -3114,6 +3556,80 @@ function routingMatchesTemplate(current, template) {
   });
 }
 
+// ─── Template Management ──────────────────────────────────────────────
+
+function getSavedTemplates() {
+  const saved = localStorage.getItem('rainbow_saved_templates');
+  if (!saved) {
+    // Migrate old T3 Custom if it exists
+    const oldCustom = localStorage.getItem('rainbow_custom_template');
+    if (oldCustom) {
+      try {
+        const routing = JSON.parse(oldCustom);
+        const templates = [{
+          id: 't3_custom',
+          name: 'T3 Custom',
+          routing: routing,
+          created: Date.now(),
+          system: false
+        }];
+        localStorage.setItem('rainbow_saved_templates', JSON.stringify(templates));
+        localStorage.removeItem('rainbow_custom_template');
+        return templates;
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return [];
+  }
+}
+
+function saveTemplates(templates) {
+  localStorage.setItem('rainbow_saved_templates', JSON.stringify(templates));
+}
+
+function renderTemplateButtons() {
+  const container = document.getElementById('template-buttons-container');
+  const savedTemplates = getSavedTemplates();
+
+  // System templates (T1 and T2)
+  let html = `
+    <button id="tpl-btn-smartest" onclick="applyTemplate('smartest')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="All LLM Reply + Workflows">
+      T1 Smartest
+    </button>
+    <button id="tpl-btn-performance" onclick="applyTemplate('performance')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="Maximize Static Reply">
+      T2 Performance
+    </button>
+  `;
+
+  // Saved custom templates
+  if (savedTemplates.length > 0) {
+    html += '<span class="text-neutral-300">|</span>';
+    savedTemplates.forEach(tpl => {
+      html += `
+        <div class="inline-flex items-center gap-1 group">
+          <button id="tpl-btn-${esc(tpl.id)}" onclick="applyTemplate('${esc(tpl.id)}')" class="template-btn text-xs px-3 py-1.5 rounded-2xl border bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition" title="${esc(tpl.name)}">
+            ${esc(tpl.name)}
+          </button>
+          <button onclick="deleteTemplate('${esc(tpl.id)}')" class="opacity-0 group-hover:opacity-100 transition text-red-500 hover:text-red-700 p-1" title="Delete template">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      `;
+    });
+  }
+
+  container.innerHTML = html;
+  detectActiveTemplate();
+}
+
 function detectActiveTemplate() {
   const btns = document.querySelectorAll('.template-btn');
   const activeClasses = 'bg-primary-50 text-primary-700 border-primary-300 ring-2 ring-primary-200';
@@ -3127,23 +3643,31 @@ function detectActiveTemplate() {
   indicator.textContent = '';
 
   let matched = null;
-  if (routingMatchesTemplate(cachedRouting, buildSmartestRouting())) matched = 'smartest';
-  else if (routingMatchesTemplate(cachedRouting, buildPerformanceRouting())) matched = 'performance';
-  else {
-    const saved = localStorage.getItem('rainbow_custom_template');
-    if (saved) {
-      try {
-        const custom = JSON.parse(saved);
-        if (routingMatchesTemplate(cachedRouting, custom)) matched = 'custom';
-      } catch {}
+  let matchedLabel = '';
+
+  // Check system templates
+  if (routingMatchesTemplate(cachedRouting, buildSmartestRouting())) {
+    matched = 'smartest';
+    matchedLabel = 'T1 Smartest';
+  } else if (routingMatchesTemplate(cachedRouting, buildPerformanceRouting())) {
+    matched = 'performance';
+    matchedLabel = 'T2 Performance';
+  } else {
+    // Check saved templates
+    const savedTemplates = getSavedTemplates();
+    for (const tpl of savedTemplates) {
+      if (routingMatchesTemplate(cachedRouting, tpl.routing)) {
+        matched = tpl.id;
+        matchedLabel = tpl.name;
+        break;
+      }
     }
   }
 
   if (matched) {
     const btn = document.getElementById('tpl-btn-' + matched);
     if (btn) btn.className = btn.className.replace(defaultClasses, activeClasses);
-    const labels = { smartest: 'T1 Smartest', performance: 'T2 Performance', custom: 'T3 Custom' };
-    indicator.textContent = 'Active template: ' + labels[matched];
+    indicator.textContent = 'Active template: ' + matchedLabel;
     indicator.classList.remove('hidden');
   }
 }
@@ -3158,13 +3682,16 @@ async function applyTemplate(name) {
   } else if (name === 'performance') {
     routing = buildPerformanceRouting();
     label = 'T2 Performance';
-  } else if (name === 'custom') {
-    const saved = localStorage.getItem('rainbow_custom_template');
-    if (!saved) { toast('No custom template saved yet. Configure routing and click "Save as T3".', 'error'); return; }
-    try { routing = JSON.parse(saved); } catch { toast('Saved custom template is corrupted.', 'error'); return; }
-    label = 'T3 Custom';
   } else {
-    return;
+    // Check saved templates
+    const savedTemplates = getSavedTemplates();
+    const template = savedTemplates.find(t => t.id === name);
+    if (!template) {
+      toast('Template not found.', 'error');
+      return;
+    }
+    routing = template.routing;
+    label = template.name;
   }
 
   const changes = Object.keys(routing).filter(k => {
@@ -3183,10 +3710,71 @@ async function applyTemplate(name) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-function saveCustomTemplate() {
-  localStorage.setItem('rainbow_custom_template', JSON.stringify(cachedRouting));
-  toast('Current routing saved as T3 Custom.');
-  detectActiveTemplate();
+function showSaveTemplateModal() {
+  document.getElementById('save-template-modal').classList.remove('hidden');
+  document.getElementById('save-template-name').value = '';
+  document.getElementById('save-template-name').focus();
+}
+
+function submitSaveTemplate(e) {
+  e.preventDefault();
+  const name = document.getElementById('save-template-name').value.trim();
+  if (!name) {
+    toast('Please enter a template name.', 'error');
+    return;
+  }
+
+  const templates = getSavedTemplates();
+
+  // Generate unique ID from name
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+  // Check for duplicate ID
+  if (templates.some(t => t.id === id)) {
+    toast('A template with this name already exists.', 'error');
+    return;
+  }
+
+  // Prevent system template names
+  if (id === 'smartest' || id === 'performance' || id === 't1_smartest' || id === 't2_performance') {
+    toast('This name is reserved for system templates.', 'error');
+    return;
+  }
+
+  const newTemplate = {
+    id: id,
+    name: name,
+    routing: JSON.parse(JSON.stringify(cachedRouting)), // Deep clone
+    created: Date.now(),
+    system: false
+  };
+
+  templates.push(newTemplate);
+  saveTemplates(templates);
+
+  toast('Template "' + name + '" saved successfully.');
+  closeModal('save-template-modal');
+  renderTemplateButtons();
+}
+
+function deleteTemplate(id) {
+  const templates = getSavedTemplates();
+  const template = templates.find(t => t.id === id);
+
+  if (!template) {
+    toast('Template not found.', 'error');
+    return;
+  }
+
+  if (!confirm('Delete template "' + template.name + '"?\n\nThis cannot be undone.')) {
+    return;
+  }
+
+  const filtered = templates.filter(t => t.id !== id);
+  saveTemplates(filtered);
+
+  toast('Template "' + template.name + '" deleted.');
+  renderTemplateButtons();
 }
 
 function showAddIntent() {
@@ -3862,6 +4450,8 @@ async function loadSettings() {
   try {
     const d = await api('/settings');
     settingsProviders = (d.ai?.providers || []).sort((a, b) => a.priority - b.priority);
+    // CRITICAL: Load intent classification models (port 3002 only!)
+    intentClassificationModels = (d.ai?.intent_classification_models || []).sort((a, b) => a.priority - b.priority);
     const el = document.getElementById('settings-content');
     el.innerHTML = `
       <div class="bg-white border rounded-2xl p-5">
@@ -3872,6 +4462,23 @@ async function loadSettings() {
         <div id="providers-list" class="space-y-2"></div>
         <div id="provider-form-container" class="hidden mt-3"></div>
       </div>
+
+      <!-- Intent Classification Models -->
+      <!-- CRITICAL: This section is for INTENT CLASSIFICATION ONLY (port 3002) -->
+      <!-- Separate from general chat AI providers above -->
+      <!-- User requested: Similar UI to T4 LLM providers (Test, Star, Edit, Off, Del buttons) -->
+      <div class="bg-white border rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="font-semibold text-neutral-700">Intent Classification Models</h3>
+            <p class="text-xs text-neutral-500 mt-0.5">Select models for intent classification (usually simpler/faster models work best)</p>
+          </div>
+        </div>
+        <div id="intent-classification-models-list" class="space-y-2">
+          <p class="text-sm text-neutral-400 italic">Loading...</p>
+        </div>
+      </div>
+
       <div class="bg-white border rounded-2xl p-5">
         <h3 class="font-semibold text-neutral-700 mb-3">AI Parameters</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -3912,6 +4519,7 @@ async function loadSettings() {
       <button onclick="saveSettings()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl text-sm transition">Save Settings</button>
     `;
     renderProvidersList();
+    renderIntentClassificationModelsList(); // CRITICAL: Render intent classification models (port 3002 only)
     autoTestAllProviders();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -3924,65 +4532,80 @@ function renderProvidersList() {
     return;
   }
 
-  // Group by enabled status, then by type
-  const active = settingsProviders.filter(p => p.enabled);
-  const inactive = settingsProviders.filter(p => !p.enabled);
+  // Sort by priority FIRST (0 = highest priority = default), then group by enabled status
+  const sortedProviders = [...settingsProviders].sort((a, b) => a.priority - b.priority);
+  const active = sortedProviders.filter(p => p.enabled);
+  const inactive = sortedProviders.filter(p => !p.enabled);
 
-  const renderGroup = (providers, groupTitle, groupClass = '') => {
+  const renderGroup = (providers, groupTitle, groupClass = '', isCollapsible = false) => {
     if (providers.length === 0) return '';
 
-    // Sub-group by type
-    const byType = {};
-    providers.forEach(p => {
-      if (!byType[p.type]) byType[p.type] = [];
-      byType[p.type].push(p);
-    });
+    const groupId = isCollapsible ? 'inactive-providers-group' : '';
+    const headerMarkup = isCollapsible
+      ? `<button onclick="toggleInactiveProviders()" class="flex items-center gap-2 text-sm font-semibold text-neutral-600 mb-2 ${groupClass} hover:text-neutral-800 transition">
+           <svg id="inactive-toggle-icon" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+           </svg>
+           ${groupTitle} (${providers.length})
+         </button>`
+      : `<h4 class="text-sm font-semibold text-neutral-600 mb-2 ${groupClass}">${groupTitle}</h4>`;
 
-    const typeOrder = ['ollama', 'groq', 'openai-compatible'];
-    let html = `<div class="mb-4"><h4 class="text-sm font-semibold text-neutral-600 mb-2 ${groupClass}">${groupTitle}</h4>`;
+    let html = `<div class="mb-4">${headerMarkup}`;
 
-    typeOrder.forEach(type => {
-      if (!byType[type]) return;
-      const typeBadge = { 'openai-compatible': 'bg-blue-100 text-blue-700', 'groq': 'bg-purple-100 text-purple-700', 'ollama': 'bg-green-100 text-green-700' }[type] || 'bg-neutral-100 text-neutral-600';
-      const typeLabel = { 'openai-compatible': 'OpenAI Compatible', 'groq': 'Groq', 'ollama': 'Ollama' }[type] || type;
+    const contentClass = isCollapsible ? 'hidden' : '';
+    html += `<div id="${groupId}" class="${contentClass}">`;
 
-      html += `<div class="mb-3"><h5 class="text-xs font-medium text-neutral-500 mb-1.5 px-2">${typeLabel}</h5>`;
-      html += byType[type].map(p => {
-        const i = settingsProviders.indexOf(p);
-        const isDefault = p.priority === 0;
-        return `
-          <div class="flex items-center gap-2 p-3 border rounded-xl mb-2 ${p.enabled ? 'bg-white' : 'bg-neutral-50 opacity-60'}">
-            <div class="flex flex-col gap-1">
-              <button onclick="moveProvider(${i}, -1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === 0 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Move up">&#9650;</button>
-              <button onclick="moveProvider(${i}, 1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === settingsProviders.length - 1 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Move down">&#9660;</button>
+    // Render providers directly (already sorted by priority)
+    html += providers.map(p => {
+      const i = settingsProviders.indexOf(p);
+      const isDefault = p.priority === 0;
+      const typeBadge = { 'openai-compatible': 'bg-blue-100 text-blue-700', 'groq': 'bg-purple-100 text-purple-700', 'ollama': 'bg-green-100 text-green-700' }[p.type] || 'bg-neutral-100 text-neutral-600';
+
+      return `
+        <div class="flex items-center gap-2 p-3 border rounded-xl mb-2 ${p.enabled ? 'bg-white' : 'bg-neutral-50 opacity-60'}">
+          <div class="flex flex-col gap-1">
+            <button onclick="moveProvider(${i}, -1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === 0 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Move up">&#9650;</button>
+            <button onclick="moveProvider(${i}, 1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === settingsProviders.length - 1 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Move down">&#9660;</button>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-medium text-sm text-neutral-800">${esc(p.name)}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge}">${esc(p.type)}</span>
+              ${isDefault ? '<span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">DEFAULT</span>' : ''}
+              ${!p.enabled ? '<span class="text-xs px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-500">disabled</span>' : ''}
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-medium text-sm text-neutral-800">${esc(p.name)}</span>
-                <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge}">${esc(p.type)}</span>
-                ${isDefault ? '<span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">DEFAULT</span>' : ''}
-                ${!p.enabled ? '<span class="text-xs px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-500">disabled</span>' : ''}
-              </div>
-              <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)} &middot; ${esc(p.base_url)}</div>
-              ${p.description ? `<div class="text-xs text-neutral-400 mt-0.5 line-clamp-2">${esc(p.description)}</div>` : ''}
-            </div>
-            <div class="flex items-center gap-1 shrink-0">
-              <button onclick="testProviderBtn('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border hover:bg-neutral-50 transition" id="test-btn-${esc(p.id)}" title="Test connection">Test</button>
-              <button onclick="setDefaultProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border ${isDefault ? 'bg-amber-50 border-amber-300 text-amber-600 cursor-default' : 'hover:bg-neutral-50'} transition" ${isDefault ? 'disabled' : ''} title="${isDefault ? 'Current default' : 'Set as default'}">⭐</button>
-              <button onclick="editProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border hover:bg-neutral-50 transition" title="Edit">Edit</button>
-              <button onclick="toggleProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border hover:bg-neutral-50 transition" title="${p.enabled ? 'Disable' : 'Enable'}">${p.enabled ? 'Off' : 'On'}</button>
-              <button onclick="deleteProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500 hover:bg-red-50 transition" title="Delete">Del</button>
-            </div>
-          </div>`;
-      }).join('');
-      html += '</div>';
-    });
+            <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)} &middot; ${esc(p.base_url)}</div>
+            ${p.description ? `<div class="text-xs text-neutral-400 mt-0.5 line-clamp-2">${esc(p.description)}</div>` : ''}
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="testProviderBtn('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border hover:bg-neutral-50 transition" id="test-btn-${esc(p.id)}" title="Test connection">Test</button>
+            <button onclick="setDefaultProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border ${isDefault ? 'bg-amber-50 border-amber-300 text-amber-600 cursor-default' : 'hover:bg-neutral-50'} transition" ${isDefault ? 'disabled' : ''} title="${isDefault ? 'Current default' : 'Set as default'}">⭐</button>
+            <button onclick="editProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border hover:bg-neutral-50 transition" title="Edit">Edit</button>
+            <button onclick="toggleProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border hover:bg-neutral-50 transition" title="${p.enabled ? 'Disable' : 'Enable'}">${p.enabled ? 'Off' : 'On'}</button>
+            <button onclick="deleteProvider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500 hover:bg-red-50 transition" title="Delete">Del</button>
+          </div>
+        </div>`;
+    }).join('');
 
-    html += '</div>';
+    html += '</div></div>';
     return html;
   };
 
-  el.innerHTML = renderGroup(active, '✅ Active Providers', 'text-green-700') + renderGroup(inactive, '⏸️ Inactive Providers', 'text-neutral-500');
+  el.innerHTML = renderGroup(active, '✅ Active Providers', 'text-green-700', false) + renderGroup(inactive, '⏸️ Inactive Providers', 'text-neutral-500', true);
+}
+
+function toggleInactiveProviders() {
+  const group = document.getElementById('inactive-providers-group');
+  const icon = document.getElementById('inactive-toggle-icon');
+  if (!group || !icon) return;
+
+  if (group.classList.contains('hidden')) {
+    group.classList.remove('hidden');
+    icon.classList.add('rotate-90');
+  } else {
+    group.classList.add('hidden');
+    icon.classList.remove('rotate-90');
+  }
 }
 
 async function moveProvider(idx, direction) {
@@ -4172,6 +4795,146 @@ async function saveProviderForm(isEdit) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Intent Classification Models Management (CRITICAL: port 3002 only!)
+// User requested: Similar UI to T4 LLM providers with Test, Star, Edit, Off, Del
+// ═══════════════════════════════════════════════════════════════════════════
+let intentClassificationModels = []; // Selected models for intent classification
+
+async function renderIntentClassificationModelsList() {
+  const el = document.getElementById('intent-classification-models-list');
+  if (!el) return;
+
+  // Use the same providers list from settings
+  const allProviders = settingsProviders;
+
+  if (allProviders.length === 0) {
+    el.innerHTML = '<p class="text-sm text-neutral-400 italic">No providers configured. Add providers in the section above first.</p>';
+    return;
+  }
+
+  // Separate selected vs available
+  const selectedIds = new Set(intentClassificationModels.map(m => m.id));
+  const selected = intentClassificationModels
+    .sort((a, b) => a.priority - b.priority)
+    .map(m => allProviders.find(p => p.id === m.id))
+    .filter(Boolean);
+  const available = allProviders.filter(p => !selectedIds.has(p.id));
+
+  const typeBadge = (type) => ({
+    'openai-compatible': 'bg-blue-100 text-blue-700',
+    'groq': 'bg-purple-100 text-purple-700',
+    'ollama': 'bg-green-100 text-green-700'
+  }[type] || 'bg-neutral-100 text-neutral-600');
+
+  let html = '';
+
+  // Selected models
+  if (selected.length > 0) {
+    html += '<div class="mb-3"><span class="text-xs font-medium text-neutral-500">Selected (fallback order)</span></div>';
+    selected.forEach((p, i) => {
+      const isDefault = i === 0;
+      html += `
+        <div class="flex items-center gap-2 p-2.5 border rounded-xl bg-primary-50 border-primary-200">
+          <div class="flex flex-col gap-0.5">
+            <button onclick="moveIntentModel('${esc(p.id)}', -1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === 0 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Move up">&#9650;</button>
+            <button onclick="moveIntentModel('${esc(p.id)}', 1)" class="text-neutral-400 hover:text-neutral-700 text-xs leading-none" ${i === selected.length - 1 ? 'disabled style="opacity:0.3;cursor:default"' : ''} title="Move down">&#9660;</button>
+          </div>
+          <span class="text-xs font-bold text-primary-600 bg-primary-100 rounded-full w-6 h-6 flex items-center justify-center shrink-0">#${i + 1}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-medium text-sm text-neutral-800">${esc(p.name)}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge(p.type)}">${esc(p.type)}</span>
+              ${isDefault ? '<span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">DEFAULT</span>' : ''}
+              ${!p.enabled ? '<span class="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">disabled</span>' : ''}
+            </div>
+            <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)}</div>
+          </div>
+          <button onclick="testIntentModel('${esc(p.id)}')" id="intent-test-${css(p.id)}" class="text-xs px-2 py-1 rounded border hover:bg-white transition shrink-0">Test</button>
+          ${isDefault ? '<button class="text-xs px-2 py-1 rounded border bg-amber-50 border-amber-300 text-amber-600" disabled>⭐</button>' : '<button onclick="setDefaultIntentModel(\'' + esc(p.id) + '\')" class="text-xs px-2 py-1 rounded border hover:bg-amber-50 transition shrink-0">⭐</button>'}
+          <button onclick="toggleIntentModel('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-red-200 text-red-500 hover:bg-red-50 transition shrink-0">Remove</button>
+        </div>`;
+    });
+  }
+
+  // Available models
+  if (available.length > 0) {
+    html += '<div class="mt-3 mb-2"><span class="text-xs font-medium text-neutral-500">Available</span></div>';
+    available.forEach(p => {
+      html += `
+        <div class="flex items-center gap-2 p-2.5 border rounded-xl bg-white">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-medium text-sm text-neutral-800">${esc(p.name)}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge(p.type)}">${esc(p.type)}</span>
+              ${!p.enabled ? '<span class="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">disabled</span>' : ''}
+            </div>
+            <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)}</div>
+          </div>
+          <button onclick="testIntentModel('${esc(p.id)}')" id="intent-test-${css(p.id)}" class="text-xs px-2 py-1 rounded border hover:bg-neutral-50 transition shrink-0">Test</button>
+          <button onclick="toggleIntentModel('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-primary-200 text-primary-600 hover:bg-primary-50 transition shrink-0">Add</button>
+        </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function toggleIntentModel(id) {
+  const idx = intentClassificationModels.findIndex(m => m.id === id);
+  if (idx >= 0) {
+    intentClassificationModels.splice(idx, 1);
+  } else {
+    intentClassificationModels.push({ id, priority: intentClassificationModels.length });
+  }
+  // Re-normalize priorities
+  intentClassificationModels.forEach((m, i) => { m.priority = i; });
+  renderIntentClassificationModelsList();
+}
+
+function moveIntentModel(id, direction) {
+  const sorted = intentClassificationModels.sort((a, b) => a.priority - b.priority);
+  const idx = sorted.findIndex(m => m.id === id);
+  if (idx < 0) return;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= sorted.length) return;
+  // Swap priorities
+  const tmp = sorted[idx].priority;
+  sorted[idx].priority = sorted[newIdx].priority;
+  sorted[newIdx].priority = tmp;
+  renderIntentClassificationModelsList();
+}
+
+function setDefaultIntentModel(id) {
+  // Set this model as priority 0, shift others down
+  const model = intentClassificationModels.find(m => m.id === id);
+  if (!model) return;
+  intentClassificationModels.forEach(m => {
+    if (m.id === id) m.priority = 0;
+    else if (m.priority < model.priority) m.priority += 1;
+  });
+  renderIntentClassificationModelsList();
+}
+
+async function testIntentModel(id) {
+  const btn = document.getElementById('intent-test-' + css(id));
+  if (btn) { btn.textContent = '...'; btn.disabled = true; btn.style.color = ''; btn.style.borderColor = ''; }
+  try {
+    const r = await api(`/test-ai/${id}`, { method: 'POST' });
+    if (r.ok) {
+      toast(`${id}: OK (${r.responseTime}ms)`);
+      if (btn) { btn.textContent = r.responseTime + 'ms'; btn.style.color = '#16a34a'; btn.style.borderColor = '#16a34a'; }
+    } else {
+      toast(`${id}: ${r.error}`, 'error');
+      if (btn) { btn.textContent = 'Fail'; btn.style.color = '#dc2626'; btn.style.borderColor = '#dc2626'; }
+    }
+  } catch (e) {
+    toast(e.message, 'error');
+    if (btn) { btn.textContent = 'Err'; btn.style.color = '#dc2626'; btn.style.borderColor = '#dc2626'; }
+  }
+  if (btn) btn.disabled = false;
+}
+
 async function saveSettings() {
   try {
     await api('/settings', {
@@ -4181,7 +4944,9 @@ async function saveSettings() {
           max_classify_tokens: parseInt(document.getElementById('s-ai-classify-tokens').value) || 0,
           max_chat_tokens: parseInt(document.getElementById('s-ai-chat-tokens').value) || 0,
           classify_temperature: parseFloat(document.getElementById('s-ai-classify-temp').value) || 0,
-          chat_temperature: parseFloat(document.getElementById('s-ai-chat-temp').value) || 0
+          chat_temperature: parseFloat(document.getElementById('s-ai-chat-temp').value) || 0,
+          // CRITICAL: Save intent classification models (port 3002 only!)
+          intent_classification_models: intentClassificationModels.sort((a, b) => a.priority - b.priority)
         },
         rate_limits: {
           per_minute: parseInt(document.getElementById('s-rate-minute').value) || 0,
@@ -4195,7 +4960,7 @@ async function saveSettings() {
         system_prompt: document.getElementById('s-system-prompt').value
       }
     });
-    toast('Settings saved');
+    toast('Settings saved (including intent classification models)');
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -4853,6 +5618,142 @@ async function sendChatMessage(event) {
 
 let lastAutotestResults = null;
 let autotestRunning = false;
+let autotestHistory = []; // Store history of test runs
+let importedReports = []; // Store imported HTML reports
+
+// Load autotest history from localStorage on page load
+function loadAutotestHistory() {
+  try {
+    const saved = localStorage.getItem('rainbow-autotest-history');
+    if (saved) {
+      autotestHistory = JSON.parse(saved);
+      // Keep only last 20 reports to avoid excessive storage
+      if (autotestHistory.length > 20) {
+        autotestHistory = autotestHistory.slice(-20);
+        saveAutotestHistory();
+      }
+    }
+  } catch (e) {
+    console.error('Error loading autotest history:', e);
+    autotestHistory = [];
+  }
+
+  // Load imported reports
+  loadImportedReports();
+}
+
+// Load imported reports from localStorage
+function loadImportedReports() {
+  try {
+    const saved = localStorage.getItem('rainbow-imported-reports');
+    if (saved) {
+      importedReports = JSON.parse(saved);
+    } else {
+      // Initialize with existing report files
+      importedReports = [
+        {
+          id: 'imported-2026-02-10-2017',
+          filename: 'rainbow-autotest-2026-02-10-2017.html',
+          timestamp: '2026-02-10T20:17:00.000Z',
+          total: 34,
+          passed: 9,
+          warnings: 18,
+          failed: 7,
+          isImported: true
+        },
+        {
+          id: 'imported-2026-02-11-0003',
+          filename: 'rainbow-autotest-2026-02-11-0003.html',
+          timestamp: '2026-02-11T00:03:00.000Z',
+          total: 34,
+          passed: 9,
+          warnings: 18,
+          failed: 7,
+          isImported: true
+        },
+        {
+          id: 'imported-2026-02-11-0052',
+          filename: 'rainbow-autotest-2026-02-11-0052.html',
+          timestamp: '2026-02-11T00:52:00.000Z',
+          total: 34,
+          passed: 9,
+          warnings: 18,
+          failed: 7,
+          isImported: true
+        },
+        {
+          id: 'imported-2026-02-11-1103',
+          filename: 'rainbow-autotest-2026-02-11-1103.html',
+          timestamp: '2026-02-11T11:03:00.000Z',
+          total: 34,
+          passed: 9,
+          warnings: 18,
+          failed: 7,
+          isImported: true
+        },
+        {
+          id: 'imported-2026-02-11-2105',
+          filename: 'rainbow-autotest-2026-02-11-2105.html',
+          timestamp: '2026-02-11T21:05:00.000Z',
+          total: 34,
+          passed: 9,
+          warnings: 18,
+          failed: 7,
+          isImported: true
+        }
+      ];
+      saveImportedReports();
+    }
+  } catch (e) {
+    console.error('Error loading imported reports:', e);
+    importedReports = [];
+  }
+}
+
+// Save imported reports to localStorage
+function saveImportedReports() {
+  try {
+    localStorage.setItem('rainbow-imported-reports', JSON.stringify(importedReports));
+  } catch (e) {
+    console.error('Error saving imported reports:', e);
+  }
+}
+
+// Save autotest history to localStorage
+function saveAutotestHistory() {
+  try {
+    localStorage.setItem('rainbow-autotest-history', JSON.stringify(autotestHistory));
+  } catch (e) {
+    console.error('Error saving autotest history:', e);
+  }
+}
+
+// Update history button visibility across all locations
+function updateHistoryButtonVisibility() {
+  const hasHistory = autotestHistory.length > 0 || importedReports.length > 0;
+  const historyBtn = document.getElementById('view-history-btn');
+  const historyBtnPreview = document.getElementById('view-history-btn-preview');
+
+  // Always show the preview button (it's in the main view)
+  // Show/hide based on whether history exists
+  if (historyBtnPreview) {
+    if (hasHistory) {
+      historyBtnPreview.classList.remove('hidden');
+      historyBtnPreview.disabled = false;
+      historyBtnPreview.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+      // Show but disabled if no history
+      historyBtnPreview.classList.remove('hidden');
+      historyBtnPreview.disabled = true;
+      historyBtnPreview.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+  }
+
+  // The autotest panel button only shows after running tests
+  if (historyBtn && hasHistory) {
+    historyBtn.classList.remove('hidden');
+  }
+}
 
 // ─── Scenario Definitions ──────────────────────────────────────────
 
@@ -5064,6 +5965,211 @@ const AUTOTEST_SCENARIOS = [
         { type: 'contains_any', values: ['check-in', 'checkin', 'check in', '2', '3', '4', 'pm', 'PM', 'afternoon'], critical: false }
       ]}
     ]
+  },
+
+  // ── Enhanced Workflows (10) - New Features ──
+  { id: 'wf-booking-payment', name: 'Booking & Payment Handler', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'I want to book a room' },
+      { text: '2 people' },
+      { text: 'Check-in Feb 15, check-out Feb 17' },
+      { text: 'I already paid via bank transfer' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['book', 'help', 'guest', 'information'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['date', 'check-in', 'check-out'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['payment', 'receipt', 'admin', 'forward'], critical: true }
+      ]},
+      { turn: 3, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['✅', 'sent', 'admin', '+60127088789', 'contact'], critical: true },
+        { type: 'response_time', max: 15000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-checkin-full', name: 'Complete Check-in with Capsules', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'I want to check in' },
+      { text: 'I have arrived' },
+      { text: 'John Doe' },
+      { text: '[ID photo uploaded]' },
+      { text: 'February 15, 2026' },
+      { text: 'February 17, 2026' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['check-in', 'help', 'information'], critical: true }
+      ]},
+      { turn: 5, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['capsule', 'checking', 'system', 'available'], critical: true }
+      ]},
+      { turn: 6, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['✅', 'sent', 'details', 'admin'], critical: false },
+        { type: 'response_time', max: 20000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-lower-deck', name: 'Lower Deck Preference', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'I prefer a lower deck capsule' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['lower', 'deck', 'even', 'C2', 'C4', 'C6', 'available', 'popular'], critical: true },
+        { type: 'response_time', max: 15000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-complaint', name: 'Complaint with Priority Forward', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'This place is really dirty and unacceptable!' },
+      { text: 'The bathroom is filthy and my bed has stains' },
+      { text: '[photo of issue]' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['sorry', 'apologize', 'inconvenience', 'priority'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['escalate', 'management', 'forward', 'priority'], critical: true }
+      ]},
+      { turn: 3, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['✅', 'sent', 'priority', 'management', '+60127088789'], critical: true },
+        { type: 'response_time', max: 15000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-theft-emergency', name: 'Theft Emergency with Police GPS', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'Someone stole my phone!' },
+      { text: 'My iPhone 14 Pro' },
+      { text: 'About 30 minutes ago' },
+      { text: 'From my capsule when I went to shower' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['🚨', 'sorry', 'theft', 'safety', 'security', 'priority'], critical: true }
+      ]},
+      { turn: 4, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['🚨', 'URGENT', 'staff', 'notify', 'immediately'], critical: true }
+      ]},
+      { turn: 5, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['✅', 'notified', 'Police', 'Johor Bahru', 'GPS', '1.4655', 'google.com/maps', '+607'], critical: true },
+        { type: 'response_time', max: 15000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-card-locked', name: 'Card Locked with Staff Alert', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'My card is locked inside my capsule!' },
+      { text: 'I tried the emergency release but cannot find it' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['worry', 'solve', 'guide', 'help', 'step'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['Quick', 'Solution', 'emergency', 'release', 'mechanism'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['contact', 'staff', '+60127088789', 'master', 'help'], critical: true }
+      ]},
+      { turn: 3, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['✅', 'notified', 'Staff', '10-15', 'minutes', 'arrive'], critical: true },
+        { type: 'response_time', max: 15000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-tourist-guide', name: 'Tourist Guide with Website', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'What can I do in Johor Bahru? Any tourist attractions?' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['LEGOLAND', 'Desaru', 'Sultan Abu Bakar', 'City Square', 'Danga Bay', 'attractions'], critical: true },
+        { type: 'contains_any', values: ['pelangicapsulehostel.com', 'website', '🌐'], critical: true },
+        { type: 'response_time', max: 12000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-escalate-confirm', name: 'Escalate to Staff with Confirmation', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'I need to speak to staff right now!' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['connect', 'staff', 'help', 'assist'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['✅', 'sent', 'staff', 'contact', 'shortly'], critical: true },
+        { type: 'response_time', max: 10000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-booking-payment-ms', name: 'Booking (Malay) with Confirmation', category: 'Enhanced Workflows',
+    messages: [
+      { text: 'Saya nak booking bilik' },
+      { text: '3 orang' },
+      { text: 'Masuk 20 Feb, keluar 23 Feb' },
+      { text: 'Saya dah bayar guna online transfer' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['book', 'tempah', 'bantu', 'maklumat'], critical: false }
+      ]},
+      { turn: 3, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['✅', 'dihantar', 'admin', 'mesej', '+60127088789'], critical: false },
+        { type: 'response_time', max: 15000, critical: false }
+      ]}
+    ]
+  },
+
+  { id: 'wf-lower-deck-zh', name: 'Lower Deck (Chinese)', category: 'Enhanced Workflows',
+    messages: [
+      { text: '我想要下铺' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['下铺', 'lower', 'C2', 'C4', 'C6', '偶数', '可用'], critical: false },
+        { type: 'response_time', max: 15000, critical: false }
+      ]}
+    ]
   }
 ];
 
@@ -5092,7 +6198,7 @@ async function runAutotest() {
   autotestRunning = true;
 
   const runBtn = document.getElementById('run-all-btn');
-  const exportBtn = document.getElementById('export-report-btn');
+  const exportBtn = document.getElementById('export-report-dropdown');
   const progressEl = document.getElementById('autotest-progress');
   const progressBar = document.getElementById('at-progress-bar');
   const progressText = document.getElementById('at-progress-text');
@@ -5158,6 +6264,23 @@ async function runAutotest() {
   summaryEl.classList.remove('hidden');
 
   lastAutotestResults = { results, totalTime, timestamp: new Date().toISOString() };
+
+  // Save to history
+  autotestHistory.push({
+    id: Date.now(),
+    results,
+    totalTime,
+    timestamp: lastAutotestResults.timestamp,
+    passed: results.filter(r => r.status === 'pass').length,
+    warnings: results.filter(r => r.status === 'warn').length,
+    failed: results.filter(r => r.status === 'fail').length
+  });
+  saveAutotestHistory();
+
+  // Update history button visibility
+  updateHistoryButtonVisibility();
+
+  // Show export button
   exportBtn.classList.remove('hidden');
   runBtn.disabled = false;
   runBtn.textContent = 'Run All';
@@ -5362,12 +6485,184 @@ function renderScenarioCard(result) {
     </div>`;
 }
 
+// ─── Autotest History Functions ────────────────────────────────────
+
+function showAutotestHistory() {
+  // Don't open if no history
+  if (autotestHistory.length === 0 && importedReports.length === 0) {
+    alert('No test history available yet. Run the Autotest Suite to start building history.');
+    return;
+  }
+
+  const modal = document.getElementById('autotest-history-modal');
+  const listEl = document.getElementById('autotest-history-list');
+
+  if (!modal || !listEl) return;
+
+  // Combine and sort all reports by timestamp (newest first)
+  const allReports = [
+    ...autotestHistory.map(r => ({ ...r, source: 'local' })),
+    ...importedReports.map(r => ({ ...r, source: 'imported' }))
+  ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  if (allReports.length === 0) {
+    listEl.innerHTML = `
+      <div class="text-center text-neutral-400 py-12">
+        <p>No test history available</p>
+        <p class="text-xs mt-1">Run tests to start building history</p>
+      </div>`;
+  } else {
+    listEl.innerHTML = allReports.map((report) => {
+      const date = new Date(report.timestamp);
+      const total = report.source === 'local' ? report.results.length : report.total;
+      const passRate = ((report.passed / total) * 100).toFixed(1);
+      const isImported = report.source === 'imported';
+
+      return `
+        <div class="bg-white border border-neutral-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-sm transition cursor-pointer" onclick="${isImported ? `openImportedReport('${report.filename}')` : `loadHistoricalReport(${report.id})`}">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-neutral-800">
+                  ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}
+                </span>
+                ${isImported ? '<span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Imported</span>' : ''}
+              </div>
+              <div class="flex gap-4 text-sm">
+                <span class="text-green-600">✓ ${report.passed}</span>
+                <span class="text-yellow-600">⚠ ${report.warnings}</span>
+                <span class="text-red-600">✗ ${report.failed}</span>
+                ${!isImported ? `<span class="text-neutral-500">⏱ ${(report.totalTime / 1000).toFixed(1)}s</span>` : ''}
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+              <span class="text-sm font-semibold ${passRate >= 75 ? 'text-green-600' : passRate >= 50 ? 'text-yellow-600' : 'text-red-600'}">
+                ${passRate}% pass
+              </span>
+              ${isImported ?
+                `<span class="text-xs text-indigo-500">View Report →</span>` :
+                `<button onclick="event.stopPropagation(); exportHistoricalReport(${report.id})" class="text-xs text-indigo-500 hover:text-indigo-600 transition">Export →</button>`
+              }
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeAutotestHistory() {
+  const modal = document.getElementById('autotest-history-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function openImportedReport(filename) {
+  // Open the imported HTML report in a new tab
+  const reportPath = `/reports/autotest/${filename}`;
+  window.open(reportPath, '_blank');
+}
+
+function loadHistoricalReport(reportId) {
+  const report = autotestHistory.find(r => r.id === reportId);
+  if (!report) return;
+
+  // Set as current report
+  lastAutotestResults = report;
+
+  // Update UI with this report's data
+  const summaryEl = document.getElementById('autotest-summary');
+  const resultsEl = document.getElementById('autotest-results');
+
+  document.getElementById('at-total').textContent = report.results.length;
+  document.getElementById('at-passed').textContent = report.passed;
+  document.getElementById('at-warnings').textContent = report.warnings;
+  document.getElementById('at-failed').textContent = report.failed;
+  document.getElementById('at-time').textContent = (report.totalTime / 1000).toFixed(1) + 's';
+
+  // Render results
+  resultsEl.innerHTML = '';
+  for (const r of report.results) {
+    const card = renderAutotestResult(r);
+    resultsEl.appendChild(card);
+  }
+
+  summaryEl.classList.remove('hidden');
+
+  // Close modal
+  closeAutotestHistory();
+
+  // Show notification
+  const date = new Date(report.timestamp);
+  alert(`Loaded report from ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`);
+}
+
+function exportHistoricalReport(reportId) {
+  const report = autotestHistory.find(r => r.id === reportId);
+  if (!report) return;
+
+  exportAutotestReport(report, 'all');
+}
+
+function clearAutotestHistory() {
+  if (!confirm('Are you sure you want to clear all autotest history? This cannot be undone.')) {
+    return;
+  }
+
+  autotestHistory = [];
+  saveAutotestHistory();
+
+  // Update button visibility
+  updateHistoryButtonVisibility();
+
+  // Close modal
+  closeAutotestHistory();
+}
+
 // ─── Export Report ──────────────────────────────────────────────────
 
-function exportAutotestReport(data) {
+// Toggle export dropdown menu
+function toggleExportDropdown() {
+  const menu = document.getElementById('export-dropdown-menu');
+  menu.classList.toggle('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+  const dropdown = document.getElementById('export-report-dropdown');
+  const menu = document.getElementById('export-dropdown-menu');
+  if (dropdown && menu && !dropdown.contains(event.target)) {
+    menu.classList.add('hidden');
+  }
+});
+
+function exportAutotestReport(data, filterType = 'all') {
   if (!data || !data.results) return;
 
-  const { results, totalTime, timestamp } = data;
+  let { results, totalTime, timestamp } = data;
+
+  // Filter results based on filterType
+  let filteredResults = results;
+  let filterLabel = '';
+
+  if (filterType === 'warnings-failed') {
+    filteredResults = results.filter(r => r.status === 'warn' || r.status === 'fail');
+    filterLabel = ' (Warnings & Failed Only)';
+  } else if (filterType === 'failed') {
+    filteredResults = results.filter(r => r.status === 'fail');
+    filterLabel = ' (Failed Only)';
+  }
+
+  // Close dropdown after selection
+  const menu = document.getElementById('export-dropdown-menu');
+  if (menu) menu.classList.add('hidden');
+
+  // If no results match the filter, show alert
+  if (filteredResults.length === 0) {
+    alert(`No ${filterType === 'failed' ? 'failed' : 'warnings or failed'} results to export.`);
+    return;
+  }
+
   const passed = results.filter(r => r.status === 'pass').length;
   const warnings = results.filter(r => r.status === 'warn').length;
   const failed = results.filter(r => r.status === 'fail').length;
@@ -5375,7 +6670,7 @@ function exportAutotestReport(data) {
   const avgTime = (results.reduce((a, r) => a + r.time, 0) / results.length / 1000).toFixed(1);
 
   let scenariosHtml = '';
-  for (const r of results) {
+  for (const r of filteredResults) {
     const s = r.scenario;
     const statusColor = r.status === 'pass' ? '#16a34a' : r.status === 'warn' ? '#ca8a04' : '#dc2626';
     const statusBg = r.status === 'pass' ? '#f0fdf4' : r.status === 'warn' ? '#fefce8' : '#fef2f2';
@@ -5436,7 +6731,7 @@ function exportAutotestReport(data) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rainbow AI Autotest Report</title>
+<title>Rainbow AI Autotest Report${filterLabel}</title>
 <style>
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#333;background:#fafafa}
   h1{font-size:24px;margin:0 0 4px}
@@ -5448,8 +6743,8 @@ function exportAutotestReport(data) {
 </style>
 </head>
 <body>
-  <h1>Rainbow AI Autotest Report</h1>
-  <p style="color:#888;font-size:14px">${new Date(timestamp).toLocaleString()} | Pass rate: <b>${passRate}%</b></p>
+  <h1>Rainbow AI Autotest Report${filterLabel}</h1>
+  <p style="color:#888;font-size:14px">${new Date(timestamp).toLocaleString()} | Pass rate: <b>${passRate}%</b> | Showing: <b>${filteredResults.length} of ${results.length}</b> results</p>
 
   <div class="summary">
     <div class="summary-card"><div class="num" style="color:#333">${results.length}</div><div class="label">Total</div></div>
@@ -5470,7 +6765,16 @@ function exportAutotestReport(data) {
   const a = document.createElement('a');
   const now = new Date();
   const pad = n => String(n).padStart(2, '0');
-  a.download = `rainbow-autotest-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.html`;
+
+  // Add filter type to filename
+  let filenameSuffix = '';
+  if (filterType === 'warnings-failed') {
+    filenameSuffix = '-warnings-failed';
+  } else if (filterType === 'failed') {
+    filenameSuffix = '-failed-only';
+  }
+
+  a.download = `rainbow-autotest${filenameSuffix}-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.html`;
   a.href = url;
   a.click();
   URL.revokeObjectURL(url);
@@ -5682,8 +6986,20 @@ function renderExamples() {
   `).join('');
 }
 
+// Close history modal when clicking outside
+document.addEventListener('click', function(event) {
+  const modal = document.getElementById('autotest-history-modal');
+  if (modal && event.target === modal) {
+    closeAutotestHistory();
+  }
+});
+
 // Language tab switching
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize autotest history
+  loadAutotestHistory();
+  updateHistoryButtonVisibility();
+
   document.querySelectorAll('.im-lang-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       const lang = tab.dataset.lang;
@@ -5993,6 +7309,10 @@ function renderT4ProvidersList() {
     .filter(Boolean);
   const available = t4AllProviders.filter(p => !selectedIds.has(p.id));
 
+  // Separate active and inactive available providers
+  const availableActive = available.filter(p => p.enabled);
+  const availableInactive = available.filter(p => !p.enabled);
+
   const typeBadge = (type) => ({
     'openai-compatible': 'bg-blue-100 text-blue-700',
     'groq': 'bg-purple-100 text-purple-700',
@@ -6026,28 +7346,78 @@ function renderT4ProvidersList() {
     });
   }
 
-  // Available providers
-  if (available.length > 0) {
+  // Active available providers
+  if (availableActive.length > 0) {
     html += '<div class="mt-3 mb-2"><span class="text-xs font-medium text-neutral-500">Available</span></div>';
-    available.forEach(p => {
+    availableActive.forEach(p => {
       html += `
-        <div class="flex items-center gap-2 p-2.5 border rounded-xl bg-white ${!p.enabled ? 'opacity-50' : ''}">
+        <div class="flex items-center gap-2 p-2.5 border rounded-xl bg-white">
           <div class="w-6"></div>
           <div class="w-6"></div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="font-medium text-sm text-neutral-600">${esc(p.name)}</span>
               <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge(p.type)}">${esc(p.type)}</span>
-              ${!p.enabled ? '<span class="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">disabled in Settings</span>' : ''}
             </div>
             <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)}</div>
           </div>
-          <button onclick="toggleT4Provider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-primary-200 text-primary-600 hover:bg-primary-50 transition shrink-0" ${!p.enabled ? 'disabled title="Enable in Settings first"' : ''}>+ Add</button>
+          <button onclick="toggleT4Provider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-primary-200 text-primary-600 hover:bg-primary-50 transition shrink-0">+ Add</button>
         </div>`;
     });
   }
 
+  // Inactive available providers (collapsible)
+  if (availableInactive.length > 0) {
+    html += `
+      <div class="mt-3">
+        <button onclick="toggleT4InactiveProviders()" class="w-full text-left flex items-center justify-between p-2 hover:bg-neutral-50 rounded-lg transition">
+          <span class="text-xs font-medium text-neutral-500">
+            Inactive Providers (${availableInactive.length})
+          </span>
+          <svg id="t4-inactive-chevron" class="w-4 h-4 text-neutral-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        <div id="t4-inactive-providers" class="hidden space-y-2 mt-2">`;
+
+    availableInactive.forEach(p => {
+      html += `
+        <div class="flex items-center gap-2 p-2.5 border rounded-xl bg-white opacity-50">
+          <div class="w-6"></div>
+          <div class="w-6"></div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-medium text-sm text-neutral-600">${esc(p.name)}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded ${typeBadge(p.type)}">${esc(p.type)}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600">disabled in Settings</span>
+            </div>
+            <div class="text-xs text-neutral-500 mt-0.5 truncate">${esc(p.model)}</div>
+          </div>
+          <button onclick="toggleT4Provider('${esc(p.id)}')" class="text-xs px-2 py-1 rounded border border-neutral-200 text-neutral-400 cursor-not-allowed transition shrink-0" disabled title="Enable in Settings first">+ Add</button>
+        </div>`;
+    });
+
+    html += `
+        </div>
+      </div>`;
+  }
+
   el.innerHTML = html;
+}
+
+// Toggle inactive providers visibility
+function toggleT4InactiveProviders() {
+  const container = document.getElementById('t4-inactive-providers');
+  const chevron = document.getElementById('t4-inactive-chevron');
+  if (!container || !chevron) return;
+
+  if (container.classList.contains('hidden')) {
+    container.classList.remove('hidden');
+    chevron.style.transform = 'rotate(180deg)';
+  } else {
+    container.classList.add('hidden');
+    chevron.style.transform = 'rotate(0deg)';
+  }
 }
 
 function toggleT4Provider(id) {

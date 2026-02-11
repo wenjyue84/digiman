@@ -15,6 +15,13 @@ export interface LoggedMessage {
   confidence?: number;
   action?: string;
   manual?: boolean;        // True if manually sent by admin
+  // Developer mode metadata
+  source?: string;         // Detection method: regex | fuzzy | semantic | llm
+  model?: string;          // AI model used
+  responseTime?: number;   // Response time in ms
+  kbFiles?: string[];      // Knowledge base files used
+  messageType?: string;    // info | problem | complaint
+  routedAction?: string;   // static_reply | llm_reply | workflow | etc
 }
 
 export interface ConversationLog {
@@ -87,7 +94,19 @@ export async function logMessage(
   pushName: string,
   role: 'user' | 'assistant',
   content: string,
-  meta?: { intent?: string; confidence?: number; action?: string; instanceId?: string; manual?: boolean }
+  meta?: {
+    intent?: string;
+    confidence?: number;
+    action?: string;
+    instanceId?: string;
+    manual?: boolean;
+    source?: string;
+    model?: string;
+    responseTime?: number;
+    kbFiles?: string[];
+    messageType?: string;
+    routedAction?: string;
+  }
 ): Promise<void> {
   try {
     const now = Date.now();
@@ -116,7 +135,13 @@ export async function logMessage(
       ...(meta?.intent && { intent: meta.intent }),
       ...(meta?.confidence !== undefined && { confidence: meta.confidence }),
       ...(meta?.action && { action: meta.action }),
-      ...(meta?.manual && { manual: meta.manual })
+      ...(meta?.manual && { manual: meta.manual }),
+      ...(meta?.source && { source: meta.source }),
+      ...(meta?.model && { model: meta.model }),
+      ...(meta?.responseTime !== undefined && { responseTime: meta.responseTime }),
+      ...(meta?.kbFiles && { kbFiles: meta.kbFiles }),
+      ...(meta?.messageType && { messageType: meta.messageType }),
+      ...(meta?.routedAction && { routedAction: meta.routedAction })
     });
     log.updatedAt = now;
 

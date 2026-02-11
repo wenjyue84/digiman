@@ -104,7 +104,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
 
     // If in active workflow, continue workflow execution
     if (convo.workflowState) {
-      const result = await executeWorkflowStep(convo.workflowState, text, lang);
+      const result = await executeWorkflowStep(convo.workflowState, text, lang, phone, msg.pushName, msg.instanceId);
 
       if (result.newState) {
         updateWorkflowState(phone, result.newState);
@@ -163,8 +163,18 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       escalated: false, bookingStarted: false, workflowStarted: false
     };
 
+    // Track developer mode metadata
+    let _devMetadata = {
+      source: 'unknown' as string,
+      model: undefined as string | undefined,
+      responseTime: undefined as number | undefined,
+      kbFiles: [] as string[],
+      routedAction: 'unknown' as string
+    };
+
     if (isAIAvailable()) {
       const topicFiles = guessTopicFiles(processText);
+      _devMetadata.kbFiles = ['AGENTS.md', 'soul.md', 'memory.md', ...topicFiles];
       console.log(`[Router] KB files: [${topicFiles.join(', ')}]`);
       const systemPrompt = buildSystemPrompt(configStore.getSettings().system_prompt, topicFiles);
       const result = await classifyAndRespond(
@@ -172,6 +182,10 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         convo.messages.slice(0, -1),
         processText
       );
+
+      // Store developer metadata
+      _devMetadata.model = result.model;
+      _devMetadata.responseTime = result.responseTime;
 
       // Look up admin-controlled routing for this intent
       const routingConfig = configStore.getRouting();
@@ -188,6 +202,10 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       _diaryEvent.action = routedAction;
       _diaryEvent.messageType = messageType;
       _diaryEvent.confidence = result.confidence;
+
+      // Update developer metadata
+      _devMetadata.source = 'llm'; // classifyAndRespond uses LLM
+      _devMetadata.routedAction = routedAction;
 
       // Track intent for future repeat detection
       updateLastIntent(phone, result.intent, result.confidence);
@@ -300,7 +318,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
           console.log(`[Router] Starting workflow: ${workflow.name} (${workflowId})`);
           _diaryEvent.workflowStarted = true;
           const workflowState = createWorkflowState(workflowId);
-          const workflowResult = await executeWorkflowStep(workflowState, null, lang);
+          const workflowResult = await executeWorkflowStep(workflowState, null, lang, phone, msg.pushName, msg.instanceId);
 
           if (workflowResult.newState) {
             updateWorkflowState(phone, workflowResult.newState);
@@ -359,7 +377,13 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         intent: _diaryEvent.intent || undefined,
         confidence: _diaryEvent.confidence,
         action: _diaryEvent.action || undefined,
-        instanceId: msg.instanceId
+        instanceId: msg.instanceId,
+        source: _devMetadata.source,
+        model: _devMetadata.model,
+        responseTime: _devMetadata.responseTime,
+        kbFiles: _devMetadata.kbFiles.length > 0 ? _devMetadata.kbFiles : undefined,
+        messageType: _diaryEvent.messageType,
+        routedAction: _devMetadata.routedAction
       }).catch(() => {});
       await sendMessage(phone, response, msg.instanceId);
     }

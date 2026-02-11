@@ -73,6 +73,13 @@ export interface WorkflowStep {
   id: string;
   message: { en: string; ms: string; zh: string };
   waitForReply: boolean;
+
+  // Optional action to execute before/after sending message
+  action?: {
+    type: 'send_to_staff' | 'escalate' | 'forward_payment' |
+          'check_availability' | 'check_lower_deck' | 'get_police_gps';
+    params?: Record<string, any>;
+  };
 }
 
 export interface WorkflowDefinition {

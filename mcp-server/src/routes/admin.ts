@@ -7,7 +7,7 @@ import { configStore } from '../assistant/config-store.js';
 import type { KnowledgeData, IntentEntry, RoutingData, RoutingAction, WorkflowsData, WorkflowDefinition, AIProvider } from '../assistant/config-store.js';
 import { getWhatsAppStatus, logoutWhatsApp, whatsappManager } from '../lib/baileys-client.js';
 import QRCode from 'qrcode';
-import { isAIAvailable, classifyAndRespond, testProvider } from '../assistant/ai-client.js';
+import { isAIAvailable, classifyAndRespond, testProvider, translateText } from '../assistant/ai-client.js';
 import { getKnowledgeMarkdown, setKnowledgeMarkdown, buildSystemPrompt, guessTopicFiles, getTodayDate, getMYTTimestamp, listMemoryDays, getDurableMemory, getMemoryDir } from '../assistant/knowledge-base.js';
 import { chat } from '../assistant/ai-client.js';
 import axios from 'axios';
@@ -1042,7 +1042,10 @@ router.get('/status', async (_req: Request, res: Response) => {
       id: i.id,
       label: i.label,
       state: i.state,
-      user: i.user
+      user: i.user,
+      unlinkedFromWhatsApp: i.unlinkedFromWhatsApp,
+      lastUnlinkedAt: i.lastUnlinkedAt,
+      lastConnectedAt: i.lastConnectedAt
     })),
     ai: {
       available: isAIAvailable(),
@@ -1348,18 +1351,80 @@ router.post('/conversations/:phone/send', async (req: Request, res: Response) =>
     const log = await getConversation(phone);
     const pushName = log?.pushName || 'Guest';
 
+    // Check if requested instance is connected, fallback to any connected instance
+    let targetInstanceId = instanceId;
+    if (instanceId) {
+      const status = whatsappManager.getInstanceStatus(instanceId);
+      if (!status || status.state !== 'open') {
+        console.warn(`[Admin] Instance "${instanceId}" not connected, finding fallback...`);
+        // Find any connected instance
+        const instances = whatsappManager.getAllStatuses();
+        const connectedInstance = instances.find(i => i.state === 'open');
+        if (connectedInstance) {
+          targetInstanceId = connectedInstance.id;
+          console.log(`[Admin] Using fallback instance: ${targetInstanceId}`);
+        } else {
+          res.status(503).json({ error: 'No WhatsApp instances connected. Please check WhatsApp connection.' });
+          return;
+        }
+      }
+    }
+
     // Send the message via WhatsApp
     const { sendWhatsAppMessage } = await import('../lib/baileys-client.js');
-    await sendWhatsAppMessage(phone, message, instanceId);
+    await sendWhatsAppMessage(phone, message, targetInstanceId);
 
     // Log the manual message in the conversation history
     const { logMessage } = await import('../assistant/conversation-logger.js');
-    await logMessage(phone, pushName, 'assistant', message, { manual: true, instanceId });
+    await logMessage(phone, pushName, 'assistant', message, { manual: true, instanceId: targetInstanceId });
 
-    console.log(`[Admin] Manual message sent to ${phone}: ${message.substring(0, 50)}...`);
-    res.json({ ok: true, message: 'Message sent successfully' });
+    console.log(`[Admin] Manual message sent to ${phone} via ${targetInstanceId || 'default'}: ${message.substring(0, 50)}...`);
+    res.json({ ok: true, message: 'Message sent successfully', usedInstance: targetInstanceId });
   } catch (err: any) {
     console.error('[Admin] Failed to send manual message:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Translate text to target language
+router.post('/translate', async (req: Request, res: Response) => {
+  try {
+    const { text, targetLang } = req.body;
+
+    if (!text || typeof text !== 'string') {
+      res.status(400).json({ error: 'text (string) required' });
+      return;
+    }
+
+    if (!targetLang || typeof targetLang !== 'string') {
+      res.status(400).json({ error: 'targetLang (string) required' });
+      return;
+    }
+
+    // Language mapping for better translation
+    const langMap: Record<string, string> = {
+      'en': 'English',
+      'ms': 'Malay',
+      'zh': 'Chinese',
+      'id': 'Indonesian',
+      'th': 'Thai',
+      'vi': 'Vietnamese'
+    };
+
+    const sourceLang = 'auto'; // Auto-detect source language
+    const targetLangName = langMap[targetLang] || targetLang;
+
+    const translated = await translateText(text, sourceLang, targetLangName);
+
+    if (!translated) {
+      res.status(500).json({ error: 'Translation failed' });
+      return;
+    }
+
+    console.log(`[Admin] Translated text to ${targetLangName}: ${text.substring(0, 50)}... -> ${translated.substring(0, 50)}...`);
+    res.json({ translated, targetLang });
+  } catch (err: any) {
+    console.error('[Admin] Translation error:', err);
     res.status(500).json({ error: err.message });
   }
 });

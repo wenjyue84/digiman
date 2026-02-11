@@ -235,9 +235,105 @@
       "intent": "greeting",
       "confidence": 0.8,
       "action": "llm_reply"
+    },
+    {
+      "role": "user",
+      "content": "Hi  I wan check out",
+      "timestamp": 1770780990265
+    },
+    {
+      "role": "assistant",
+      "content": "Hi! I'm Rainbow, your AI assistant at Pelangi Hostel. Check‑out is at 12:00 PM (noon). If you need an earlier or later departure, let us know and we’ll help. Let me know anything else!\n— Rainbow 🌈",
+      "timestamp": 1770780994294,
+      "intent": "checkout_info",
+      "confidence": 0.95,
+      "action": "llm_reply",
+      "source": "llm",
+      "model": "Ollama GPT-OSS 20B",
+      "responseTime": 4025,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "faq.md"
+      ],
+      "messageType": "info",
+      "routedAction": "llm_reply"
+    },
+    {
+      "role": "assistant",
+      "content": "ddd",
+      "timestamp": 1770781218261,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "Bagaimana keadaan anda?",
+      "timestamp": 1770784997891,
+      "manual": true
+    },
+    {
+      "role": "user",
+      "content": "I wan to check in",
+      "timestamp": 1770790490171
+    },
+    {
+      "role": "assistant",
+      "content": "Great! I'll help you with the check-in process. 🎉 Let me collect some information.",
+      "timestamp": 1770790513997,
+      "intent": "checkin_info",
+      "confidence": 0.95,
+      "action": "workflow",
+      "source": "llm",
+      "model": "Ollama GPT-OSS 20B",
+      "responseTime": 23825,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "checkin-procedure.md"
+      ],
+      "messageType": "info",
+      "routedAction": "workflow"
+    },
+    {
+      "role": "assistant",
+      "content": "Have you already arrived at Pelangi Capsule Hostel, or are you planning to come?",
+      "timestamp": 1770790521587,
+      "action": "workflow"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfect! What is your full name as per your passport or IC?",
+      "timestamp": 1770790538487,
+      "action": "workflow"
+    },
+    {
+      "role": "user",
+      "content": "+18002428478",
+      "timestamp": 1770814642333
+    },
+    {
+      "role": "assistant",
+      "content": "I don't have that information. Let me connect you with our team.",
+      "timestamp": 1770814664388,
+      "intent": "unknown",
+      "confidence": 0,
+      "action": "llm_reply",
+      "source": "llm",
+      "model": "Groq Llama 3.3 70B",
+      "responseTime": 22045,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "faq.md"
+      ],
+      "messageType": "info",
+      "routedAction": "llm_reply"
     }
   ],
   "createdAt": 1770737635690,
-  "updatedAt": 1770778607419,
+  "updatedAt": 1770814664388,
   "instanceId": "60167052004"
 }

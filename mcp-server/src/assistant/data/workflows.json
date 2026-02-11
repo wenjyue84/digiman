@@ -1,22 +1,6 @@
 {
   "workflows": [
     {
-      "id": "booking",
-      "name": "Start Booking",
-      "steps": [
-        {
-          "id": "s1",
-          "message": { "en": "How many guests?", "ms": "Berapa orang?", "zh": "几位客人？" },
-          "waitForReply": true
-        },
-        {
-          "id": "s2",
-          "message": { "en": "What dates?", "ms": "Tarikh?", "zh": "什么日期？" },
-          "waitForReply": true
-        }
-      ]
-    },
-    {
       "id": "booking_payment_handler",
       "name": "Booking & Payment Handler",
       "steps": [
@@ -62,6 +46,18 @@
             "en": "Thank you! I'm forwarding your booking details and payment information to our admin at +60127088789. They will contact you shortly to confirm your reservation.",
             "ms": "Terima kasih! Saya menghantar butiran tempahan dan maklumat pembayaran anda ke admin kami di +60127088789. Mereka akan hubungi anda tidak lama lagi untuk sahkan tempahan.",
             "zh": "谢谢！我正在将您的预订详情和付款信息转发给我们的管理员 +60127088789。他们会尽快与您联系确认预订。"
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "forward_payment"
+          }
+        },
+        {
+          "id": "s6",
+          "message": {
+            "en": "✅ Message sent to admin (+60127088789). They will review your booking and contact you soon!",
+            "ms": "✅ Mesej dihantar ke admin (+60127088789). Mereka akan semak tempahan anda dan hubungi anda tidak lama lagi!",
+            "zh": "✅ 消息已发送给管理员 (+60127088789)。他们会审核您的预订并尽快联系您！"
           },
           "waitForReply": false
         }
@@ -132,14 +128,38 @@
             "ms": "Baik! Biar saya check capsule yang ada untuk anda... Sedang semak sistem. 🔍",
             "zh": "好的！让我为您查询可用的胶囊房... 正在查询系统。🔍"
           },
-          "waitForReply": false
+          "waitForReply": false,
+          "action": {
+            "type": "check_availability"
+          }
         },
         {
           "id": "s8",
           "message": {
-            "en": "Good news! We have available capsules for your dates. 🎊 I'm forwarding your details to our admin at +60127088789 who will assign you a capsule and send you the door password. You'll receive confirmation shortly!",
-            "ms": "Berita baik! Kami ada capsule untuk tarikh anda. 🎊 Saya hantar maklumat anda ke admin +60127088789 untuk assign capsule dan hantar password pintu. Anda akan terima konfirmasi tidak lama lagi!",
-            "zh": "好消息！我们有适合您日期的胶囊房。🎊 我正在将您的信息转发给管理员 +60127088789，他们会为您分配胶囊房并发送门禁密码。您很快就会收到确认信息！"
+            "en": "Good news! Available capsules: {{availableCapsules}} 🎊\n\nI'm forwarding your details to our admin at +60127088789 who will assign you a capsule and send you the door password. You'll receive confirmation shortly!",
+            "ms": "Berita baik! Capsule tersedia: {{availableCapsules}} 🎊\n\nSaya hantar maklumat anda ke admin +60127088789 untuk assign capsule dan hantar password pintu. Anda akan terima konfirmasi tidak lama lagi!",
+            "zh": "好消息！可用胶囊房: {{availableCapsules}} 🎊\n\n我正在将您的信息转发给管理员 +60127088789，他们会为您分配胶囊房并发送门禁密码。您很快就会收到确认信息！"
+          },
+          "waitForReply": false
+        },
+        {
+          "id": "s9",
+          "message": {
+            "en": "Forwarding your check-in details to admin now...",
+            "ms": "Menghantar butiran check-in anda ke admin sekarang...",
+            "zh": "正在将您的入住详情转发给管理员..."
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "forward_payment"
+          }
+        },
+        {
+          "id": "s10",
+          "message": {
+            "en": "✅ Check-in details sent to admin! They will confirm your capsule assignment shortly.",
+            "ms": "✅ Butiran check-in dihantar ke admin! Mereka akan confirm capsule anda tidak lama lagi.",
+            "zh": "✅ 入住详情已发送给管理员！他们会很快确认您的胶囊房分配。"
           },
           "waitForReply": false
         }
@@ -152,18 +172,21 @@
         {
           "id": "s1",
           "message": {
-            "en": "I understand you prefer a lower deck capsule! 😊 Lower decks (even-numbered capsules like 2, 4, 6, etc.) are very popular. Let me check availability for you.",
-            "ms": "Saya faham anda prefer lower deck! 😊 Lower deck (capsule nombor genap seperti 2, 4, 6, dll) sangat popular. Biar saya check untuk anda.",
-            "zh": "我明白您更喜欢下铺！😊 下铺（偶数编号如 2、4、6 等）非常受欢迎。让我为您查询。"
+            "en": "I understand you prefer a lower deck capsule! 😊 Lower decks (even-numbered capsules like C2, C4, C6, etc.) are very popular. Let me check availability for you.",
+            "ms": "Saya faham anda prefer lower deck! 😊 Lower deck (capsule nombor genap seperti C2, C4, C6, dll) sangat popular. Biar saya check untuk anda.",
+            "zh": "我明白您更喜欢下铺！😊 下铺（偶数编号如 C2、C4、C6 等）非常受欢迎。让我为您查询。"
           },
-          "waitForReply": false
+          "waitForReply": false,
+          "action": {
+            "type": "check_lower_deck"
+          }
         },
         {
           "id": "s2",
           "message": {
-            "en": "Good news! We have lower deck capsules available. Once you complete your payment, I'll check the exact capsule numbers available for your dates and confirm with you. Would you like to proceed with booking?",
-            "ms": "Berita baik! Kami ada lower deck capsule. Selepas anda buat pembayaran, saya akan check nombor capsule yang ada untuk tarikh anda dan confirm dengan anda. Nak proceed booking?",
-            "zh": "好消息！我们有下铺可用。付款后，我会为您查询确切的可用下铺编号并与您确认。您想继续预订吗？"
+            "en": "{{availabilityResult}}\n\nOnce you complete your payment, we can confirm your specific capsule assignment. Would you like to proceed with booking?",
+            "ms": "{{availabilityResult}}\n\nSelepas anda buat pembayaran, kami boleh confirm capsule anda. Nak proceed booking?",
+            "zh": "{{availabilityResult}}\n\n付款后，我们可以确认您的具体胶囊房分配。您想继续预订吗？"
           },
           "waitForReply": true
         }
@@ -176,9 +199,9 @@
         {
           "id": "s1",
           "message": {
-            "en": "Wonderful! Johor Bahru has amazing attractions! 🎡🏖️ Here are the TOP destinations near our hostel:\n\n🎢 **LEGOLAND Malaysia** (25 mins drive) - Malaysia's first international theme park with thrilling rides!\n\n🏖️ **Desaru Beach** (1 hour) - 25km of beautiful coastline perfect for swimming and water sports\n\n🕌 **Sultan Abu Bakar Mosque** (15 mins) - Stunning hilltop mosque with breathtaking views\n\n🛍️ **Johor Bahru City Square** (10 mins) - Premier shopping and dining destination\n\n🌊 **Danga Bay** (20 mins) - Beachfront paradise with amazing sunset views and seafood\n\n🐯 **Johor Zoo** (25 mins) - Newly renovated with diverse wildlife\n\n🏛️ **Chinese Heritage Museum** (12 mins) - Learn about Chinese immigration history\n\n🙏 **Arulmigu Sri Rajakaliamman Glass Temple** (15 mins) - Spectacular glass Hindu temple\n\nWould you like specific directions or recommendations for any of these places?",
-            "ms": "Hebat! Johor Bahru ada banyak tempat menarik! 🎡🏖️ Ini tempat-tempat TOP dekat hostel kami:\n\n🎢 **LEGOLAND Malaysia** (25 minit) - Taman tema antarabangsa pertama Malaysia!\n\n🏖️ **Pantai Desaru** (1 jam) - 25km pantai cantik untuk berenang\n\n🕌 **Masjid Sultan Abu Bakar** (15 minit) - Masjid di atas bukit dengan pemandangan cantik\n\n🛍️ **Johor Bahru City Square** (10 minit) - Pusat beli-belah utama\n\n🌊 **Danga Bay** (20 minit) - Pantai dengan sunset cantik dan makanan laut\n\n🐯 **Zoo Johor** (25 minit) - Baru direnovasi dengan pelbagai haiwan\n\n🏛️ **Muzium Warisan Cina** (12 minit) - Sejarah imigrasi Cina\n\n🙏 **Kuil Kaca Sri Rajakaliamman** (15 minit) - Kuil Hindu kaca yang cantik\n\nNak direction atau cadangan untuk mana-mana tempat ini?",
-            "zh": "太好了！新山有很多精彩景点！🎡🏖️ 以下是我们旅舍附近的热门目的地：\n\n🎢 **乐高乐园** (25分钟车程) - 马来西亚第一个国际主题公园！\n\n🏖️ **迪沙鲁海滩** (1小时) - 25公里美丽海岸线，适合游泳和水上运动\n\n🕌 **苏丹阿布峇卡清真寺** (15分钟) - 山顶清真寺，景色壮观\n\n🛍️ **新山城市广场** (10分钟) - 顶级购物和餐饮目的地\n\n🌊 **丹加湾** (20分钟) - 海滨天堂，日落美景和海鲜美食\n\n🐯 **新山动物园** (25分钟) - 新装修，各种野生动物\n\n🏛️ **华人文物馆** (12分钟) - 了解华人移民历史\n\n🙏 **玻璃兴都庙** (15分钟) - 壮观的玻璃兴都庙\n\n需要这些地方的具体路线或推荐吗？"
+            "en": "Wonderful! Johor Bahru has amazing attractions! 🎡🏖️ Here are the TOP destinations near our hostel:\n\n🎢 **LEGOLAND Malaysia** (25 mins drive) - Malaysia's first international theme park with thrilling rides!\n\n🏖️ **Desaru Beach** (1 hour) - 25km of beautiful coastline perfect for swimming and water sports\n\n🕌 **Sultan Abu Bakar Mosque** (15 mins) - Stunning hilltop mosque with breathtaking views\n\n🛍️ **Johor Bahru City Square** (10 mins) - Premier shopping and dining destination\n\n🌊 **Danga Bay** (20 mins) - Beachfront paradise with amazing sunset views and seafood\n\n🐯 **Johor Zoo** (25 mins) - Newly renovated with diverse wildlife\n\n🏛️ **Chinese Heritage Museum** (12 mins) - Learn about Chinese immigration history\n\n🙏 **Arulmigu Sri Rajakaliamman Glass Temple** (15 mins) - Spectacular glass Hindu temple\n\n🌐 For more info: https://pelangicapsulehostel.com/\n\nWould you like specific directions or recommendations for any of these places?",
+            "ms": "Hebat! Johor Bahru ada banyak tempat menarik! 🎡🏖️ Ini tempat-tempat TOP dekat hostel kami:\n\n🎢 **LEGOLAND Malaysia** (25 minit) - Taman tema antarabangsa pertama Malaysia!\n\n🏖️ **Pantai Desaru** (1 jam) - 25km pantai cantik untuk berenang\n\n🕌 **Masjid Sultan Abu Bakar** (15 minit) - Masjid di atas bukit dengan pemandangan cantik\n\n🛍️ **Johor Bahru City Square** (10 minit) - Pusat beli-belah utama\n\n🌊 **Danga Bay** (20 minit) - Pantai dengan sunset cantik dan makanan laut\n\n🐯 **Zoo Johor** (25 minit) - Baru direnovasi dengan pelbagai haiwan\n\n🏛️ **Muzium Warisan Cina** (12 minit) - Sejarah imigrasi Cina\n\n🙏 **Kuil Kaca Sri Rajakaliamman** (15 minit) - Kuil Hindu kaca yang cantik\n\n🌐 Maklumat lanjut: https://pelangicapsulehostel.com/\n\nNak direction atau cadangan untuk mana-mana tempat ini?",
+            "zh": "太好了！新山有很多精彩景点！🎡🏖️ 以下是我们旅舍附近的热门目的地：\n\n🎢 **乐高乐园** (25分钟车程) - 马来西亚第一个国际主题公园！\n\n🏖️ **迪沙鲁海滩** (1小时) - 25公里美丽海岸线，适合游泳和水上运动\n\n🕌 **苏丹阿布峇卡清真寺** (15分钟) - 山顶清真寺，景色壮观\n\n🛍️ **新山城市广场** (10分钟) - 顶级购物和餐饮目的地\n\n🌊 **丹加湾** (20分钟) - 海滨天堂，日落美景和海鲜美食\n\n🐯 **新山动物园** (25分钟) - 新装修，各种野生动物\n\n🏛️ **华人文物馆** (12分钟) - 了解华人移民历史\n\n🙏 **玻璃兴都庙** (15分钟) - 壮观的玻璃兴都庙\n\n🌐 更多信息: https://pelangicapsulehostel.com/\n\n需要这些地方的具体路线或推荐吗？"
           },
           "waitForReply": true
         }
@@ -218,9 +241,24 @@
         {
           "id": "s4",
           "message": {
-            "en": "I've escalated your complaint to our management team at +60127088789 with PRIORITY status. They will contact you within 15 minutes to resolve this. In the meantime, is there anything else I can help you with?",
-            "ms": "Saya telah forward aduan anda ke team pengurusan +60127088789 dengan status KEUTAMAAN. Mereka akan hubungi anda dalam 15 minit untuk selesaikan. Sementara itu, ada apa-apa lagi saya boleh bantu?",
-            "zh": "我已将您的投诉以优先级状态上报给管理团队 +60127088789。他们将在15分钟内与您联系解决。同时，还有其他我能帮您的吗？"
+            "en": "I'm escalating your complaint to our management team at +60127088789 with PRIORITY status right now...",
+            "ms": "Saya sedang forward aduan anda ke team pengurusan +60127088789 dengan status KEUTAMAAN sekarang...",
+            "zh": "我正在将您的投诉以优先级状态上报给管理团队 +60127088789..."
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "send_to_staff",
+            "params": {
+              "urgency": "high"
+            }
+          }
+        },
+        {
+          "id": "s5",
+          "message": {
+            "en": "✅ Priority complaint sent to management. They will contact you within 15 minutes to resolve this. In the meantime, is there anything else I can help you with?",
+            "ms": "✅ Aduan keutamaan dihantar ke pengurusan. Mereka akan hubungi anda dalam 15 minit untuk selesaikan. Sementara itu, ada apa-apa lagi saya boleh bantu?",
+            "zh": "✅ 优先投诉已发送给管理层。他们将在15分钟内与您联系解决。同时，还有其他我能帮您的吗？"
           },
           "waitForReply": true
         }
@@ -269,11 +307,29 @@
         {
           "id": "s5",
           "message": {
-            "en": "🚨 **URGENT THEFT CASE** - I'm immediately notifying our staff at +60127088789 and they will:\n\n1️⃣ Contact you immediately\n2️⃣ Review CCTV footage\n3️⃣ Assist with police report if needed\n4️⃣ Investigate the incident thoroughly\n\nDo NOT disturb anything at the scene. Our staff will be with you shortly. Would you like me to provide you with the nearest police station contact?",
-            "ms": "🚨 **KES KECURIAN SEGERA** - Saya notify staff +60127088789 segera dan mereka akan:\n\n1️⃣ Hubungi anda segera\n2️⃣ Semak rakaman CCTV\n3️⃣ Bantu buat laporan polis jika perlu\n4️⃣ Siasat kes dengan teliti\n\nJANGAN ganggu apa-apa di tempat kejadian. Staff kami akan sampai tidak lama lagi. Nak saya beri contact balai polis terdekat?",
-            "zh": "🚨 **紧急盗窃案件** - 我立即通知员工 +60127088789，他们将：\n\n1️⃣ 立即联系您\n2️⃣ 查看监控录像\n3️⃣ 如需要协助报警\n4️⃣ 彻底调查此事\n\n请不要触碰现场任何物品。我们的员工很快就会到。需要我提供最近警察局的联系方式吗？"
+            "en": "🚨 **URGENT THEFT CASE** - Notifying our staff at +60127088789 right now...",
+            "ms": "🚨 **KES KECURIAN SEGERA** - Memberitahu staff +60127088789 sekarang...",
+            "zh": "🚨 **紧急盗窃案件** - 正在立即通知员工 +60127088789..."
           },
-          "waitForReply": true
+          "waitForReply": false,
+          "action": {
+            "type": "send_to_staff",
+            "params": {
+              "urgency": "critical"
+            }
+          }
+        },
+        {
+          "id": "s6",
+          "message": {
+            "en": "✅ Staff notified! They will:\n\n1️⃣ Contact you immediately\n2️⃣ Review CCTV footage\n3️⃣ Assist with police report if needed\n4️⃣ Investigate the incident thoroughly\n\nDo NOT disturb anything at the scene. Our staff will be with you shortly.\n\n{{policeGPS}}",
+            "ms": "✅ Staff diberitahu! Mereka akan:\n\n1️⃣ Hubungi anda segera\n2️⃣ Semak rakaman CCTV\n3️⃣ Bantu buat laporan polis jika perlu\n4️⃣ Siasat kes dengan teliti\n\nJANGAN ganggu apa-apa di tempat kejadian. Staff kami akan sampai tidak lama lagi.\n\n{{policeGPS}}",
+            "zh": "✅ 员工已通知！他们将：\n\n1️⃣ 立即联系您\n2️⃣ 查看监控录像\n3️⃣ 如需要协助报警\n4️⃣ 彻底调查此事\n\n请不要触碰现场任何物品。我们的员工很快就会到。\n\n{{policeGPS}}"
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "get_police_gps"
+          }
         }
       ]
     },
@@ -302,9 +358,24 @@
         {
           "id": "s3",
           "message": {
-            "en": "If the above methods don't work, I'm contacting our staff at +60127088789 RIGHT NOW. They have master access and will come to help you immediately. Meanwhile:\n\n✅ Stay calm and comfortable inside\n✅ Keep your phone with you\n✅ The capsule has ventilation, so you're safe\n\nOur staff will arrive within 10-15 minutes. Is there anything you need while waiting?",
-            "ms": "Jika cara di atas tak berjaya, saya contact staff +60127088789 SEKARANG. Mereka ada master access dan akan datang bantu anda segera. Sementara itu:\n\n✅ Stay calm dan selesa dalam capsule\n✅ Simpan telefon dengan anda\n✅ Capsule ada pengudaraan, jadi anda selamat\n\nStaff kami akan sampai dalam 10-15 minit. Ada apa-apa yang anda perlukan sambil tunggu?",
-            "zh": "如果上述方法无效，我现在立即联系员工 +60127088789。他们有主钥匙，会立即来帮助您。同时：\n\n✅ 保持冷静和舒适\n✅ 保管好手机\n✅ 胶囊房有通风，所以您是安全的\n\n我们的员工会在10-15分钟内到达。等待期间需要什么吗？"
+            "en": "If the above methods don't work, I'm contacting our staff at +60127088789 RIGHT NOW...",
+            "ms": "Jika cara di atas tak berjaya, saya contact staff +60127088789 SEKARANG...",
+            "zh": "如果上述方法无效，我现在立即联系员工 +60127088789..."
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "send_to_staff",
+            "params": {
+              "urgency": "high"
+            }
+          }
+        },
+        {
+          "id": "s4",
+          "message": {
+            "en": "✅ Staff notified. They have master access and will arrive within 10-15 minutes. Meanwhile:\n\n✅ Stay calm and comfortable inside\n✅ Keep your phone with you\n✅ The capsule has ventilation, so you're safe\n\nIs there anything you need while waiting?",
+            "ms": "✅ Staff diberitahu. Mereka ada master access dan akan sampai dalam 10-15 minit. Sementara itu:\n\n✅ Stay calm dan selesa dalam capsule\n✅ Simpan telefon dengan anda\n✅ Capsule ada pengudaraan, jadi anda selamat\n\nAda apa-apa yang anda perlukan sambil tunggu?",
+            "zh": "✅ 员工已通知。他们有主钥匙，会在10-15分钟内到达。同时：\n\n✅ 保持冷静和舒适\n✅ 保管好手机\n✅ 胶囊房有通风，所以您是安全的\n\n等待期间需要什么吗？"
           },
           "waitForReply": true
         }
@@ -317,6 +388,14 @@
         {
           "id": "s1",
           "message": { "en": "Let me connect you to our staff...", "ms": "Saya hubungkan anda ke staf...", "zh": "正在为您转接工作人员..." },
+          "waitForReply": false,
+          "action": {
+            "type": "escalate"
+          }
+        },
+        {
+          "id": "s2",
+          "message": { "en": "✅ Message sent to staff. They will contact you shortly.", "ms": "✅ Mesej dihantar ke staf. Mereka akan hubungi anda tidak lama lagi.", "zh": "✅ 消息已发送给工作人员。他们会尽快联系您。" },
           "waitForReply": false
         }
       ]

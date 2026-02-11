@@ -1,29 +1,28 @@
 {
   "greeting": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "thanks": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "wifi": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "directions": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "checkin_info": {
     "action": "workflow",
     "workflow_id": "checkin_full"
   },
   "checkout_info": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "pricing": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "availability": {
-    "action": "workflow",
-    "workflow_id": "booking"
+    "action": "llm_reply"
   },
   "booking": {
     "action": "workflow",
@@ -31,36 +30,20 @@
   },
   "complaint": {
     "action": "workflow",
-    "workflow_id": "complaint_handling"
+    "workflow_id": "escalate"
   },
   "contact_staff": {
     "action": "workflow",
     "workflow_id": "escalate"
   },
   "facilities": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "rules": {
-    "action": "llm_reply"
+    "action": "static_reply"
   },
   "payment": {
-    "action": "llm_reply"
-  },
-  "theft": {
-    "action": "workflow",
-    "workflow_id": "theft_emergency"
-  },
-  "card_locked": {
-    "action": "workflow",
-    "workflow_id": "card_locked_troubleshoot"
-  },
-  "tourist_guide": {
-    "action": "workflow",
-    "workflow_id": "tourist_guide"
-  },
-  "lower_deck": {
-    "action": "workflow",
-    "workflow_id": "lower_deck_preference"
+    "action": "static_reply"
   },
   "general": {
     "action": "llm_reply"

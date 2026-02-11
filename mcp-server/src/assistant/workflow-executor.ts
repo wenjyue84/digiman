@@ -1,6 +1,15 @@
 import type { SendMessageFn } from './types.js';
 import { configStore } from './config-store.js';
 import type { WorkflowDefinition, WorkflowStep } from './config-store.js';
+import { enhanceWorkflowStep, WorkflowEnhancerContext } from './workflow-enhancer.js';
+import { callAPI as httpClientCallAPI } from '../lib/http-client.js';
+
+// Wrapper to adapt http-client callAPI to workflow-enhancer's expected signature
+async function callAPIWrapper(url: string, options?: RequestInit): Promise<any> {
+  const method = options?.method || 'GET';
+  const body = options?.body ? JSON.parse(options.body as string) : undefined;
+  return httpClientCallAPI(method, url, body);
+}
 
 export interface WorkflowState {
   workflowId: string;
@@ -36,7 +45,10 @@ export function createWorkflowState(workflowId: string): WorkflowState {
 export async function executeWorkflowStep(
   state: WorkflowState,
   userMessage: string | null,
-  language: string
+  language: string,
+  phone?: string,
+  pushName?: string,
+  instanceId?: string
 ): Promise<WorkflowExecutionResult> {
   const workflows = configStore.getWorkflows();
   const workflow = workflows.workflows.find(w => w.id === state.workflowId);
@@ -71,7 +83,40 @@ export async function executeWorkflowStep(
   }
 
   const currentStep = workflow.steps[state.currentStepIndex];
-  const response = getStepMessage(currentStep, language);
+  let response = getStepMessage(currentStep, language);
+
+  // NEW: Enhance step if action present and phone available
+  if (currentStep.action && phone && sendMessageFn) {
+    const enhancerContext: WorkflowEnhancerContext = {
+      workflowId: state.workflowId,
+      stepId: currentStep.id,
+      userInput: userMessage,
+      collectedData: state.collectedData,
+      language,
+      phone,
+      pushName: pushName || 'Guest',
+      instanceId
+    };
+
+    try {
+      const enhanced = await enhanceWorkflowStep(
+        currentStep,
+        enhancerContext,
+        callAPIWrapper,
+        sendMessageFn
+      );
+
+      response = enhanced.message; // Use enhanced message
+
+      // Log metadata for debugging
+      if (enhanced.metadata) {
+        console.log(`[WorkflowExecutor] Step ${currentStep.id} metadata:`, enhanced.metadata);
+      }
+    } catch (error) {
+      console.error(`[WorkflowExecutor] Failed to enhance step ${currentStep.id}:`, error);
+      // Continue with original message on error (graceful degradation)
+    }
+  }
 
   // Update state
   const newState: WorkflowState = {

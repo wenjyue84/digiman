@@ -32,6 +32,9 @@ export interface WhatsAppInstanceStatus {
   user: { name: string; id: string; phone: string } | null;
   authDir: string;
   qr: string | null;
+  unlinkedFromWhatsApp: boolean; // User unlinked from WhatsApp side (not from our system)
+  lastUnlinkedAt: string | null; // ISO timestamp of when unlink was detected
+  lastConnectedAt: string | null; // ISO timestamp of last successful connection
 }
 
 // ─── WhatsAppInstance Class ─────────────────────────────────────────
@@ -47,6 +50,10 @@ class WhatsAppInstance {
   private messageHandler: ((msg: IncomingMessage) => Promise<void>) | null = null;
   // LID → phone JID mapping (Baileys v7 uses @lid format for incoming messages)
   private lidToPhone = new Map<string, string>();
+  // Track if user unlinked from WhatsApp (not from our system)
+  unlinkedFromWhatsApp: boolean = false;
+  lastUnlinkedAt: string | null = null;
+  lastConnectedAt: string | null = null;
 
   constructor(id: string, label: string, authDir: string) {
     this.id = id;
@@ -113,6 +120,16 @@ class WhatsAppInstance {
     this.messageHandler = handler;
   }
 
+  /** Notify about unlinked instance via mainline or fallback */
+  private notifyUnlinked(): void {
+    // Defer notification to WhatsAppManager to avoid circular dependency
+    setTimeout(() => {
+      whatsappManager.notifyUnlinkedInstance(this.id, this.label).catch(err => {
+        console.error(`[Baileys:${this.id}] Failed to send unlink notification:`, err.message);
+      });
+    }, 1000);
+  }
+
   async start(): Promise<void> {
     // Ensure auth dir exists
     if (!fs.existsSync(this.authDir)) {
@@ -153,10 +170,20 @@ class WhatsAppInstance {
             this.start();
           }, delay);
         } else {
-          console.error(`[Baileys:${this.id}] Logged out. Remove auth dir and re-pair.`);
+          console.error(`[Baileys:${this.id}] Logged out from WhatsApp (user unlinked). Remove auth dir and re-pair.`);
+          // Mark as unlinked from WhatsApp side
+          this.unlinkedFromWhatsApp = true;
+          this.lastUnlinkedAt = new Date().toISOString();
+          // Trigger notification to user
+          this.notifyUnlinked();
         }
       } else if (connection === 'open') {
         this.qr = null;
+        // Clear unlinked status when reconnected
+        this.unlinkedFromWhatsApp = false;
+        this.lastUnlinkedAt = null;
+        // Update last connected timestamp
+        this.lastConnectedAt = new Date().toISOString();
         const user = (this.sock as any)?.user;
         console.log(`[Baileys:${this.id}] Connected: ${user?.name || 'Unknown'} (${user?.id?.split(':')[0] || '?'})`);
       }
@@ -317,7 +344,10 @@ class WhatsAppInstance {
       state: this.state,
       user: user ? { name: user.name, id: user.id, phone: user.id?.split(':')[0] } : null,
       authDir: this.authDir,
-      qr: this.qr
+      qr: this.qr,
+      unlinkedFromWhatsApp: this.unlinkedFromWhatsApp,
+      lastUnlinkedAt: this.lastUnlinkedAt,
+      lastConnectedAt: this.lastConnectedAt
     };
   }
 }
@@ -487,6 +517,51 @@ class WhatsAppManager {
     console.log('[WhatsAppManager] Message handler registered');
   }
 
+  async notifyUnlinkedInstance(unlinkedId: string, unlinkedLabel: string): Promise<void> {
+    const MAINLINE_ID = '60103084289'; // Southern Homestay mainline
+    const unlinkedInstance = this.instances.get(unlinkedId);
+    if (!unlinkedInstance) return;
+
+    const unlinkedUser = (unlinkedInstance as any).sock?.user;
+    const unlinkedPhone = unlinkedUser?.id?.split(':')[0];
+    if (!unlinkedPhone) {
+      console.warn(`[WhatsAppManager] Cannot notify unlink: no phone number for instance "${unlinkedId}"`);
+      return;
+    }
+
+    // Try mainline first, then fallback to any connected instance
+    let notifierInstance = this.instances.get(MAINLINE_ID);
+    if (!notifierInstance || notifierInstance.state !== 'open') {
+      console.log(`[WhatsAppManager] Mainline "${MAINLINE_ID}" not available, finding fallback...`);
+      // Find any connected instance except the unlinked one
+      for (const instance of this.instances.values()) {
+        if (instance.id !== unlinkedId && instance.state === 'open') {
+          notifierInstance = instance;
+          console.log(`[WhatsAppManager] Using fallback instance: ${instance.id}`);
+          break;
+        }
+      }
+    }
+
+    if (!notifierInstance || notifierInstance.state !== 'open') {
+      console.error(`[WhatsAppManager] No connected instance available to send unlink notification for "${unlinkedId}"`);
+      return;
+    }
+
+    const message = `⚠️ *WhatsApp Instance Unlinked*\n\n` +
+      `Your WhatsApp instance *"${unlinkedLabel}"* (${unlinkedPhone}) has been unlinked from PelangiManager.\n\n` +
+      `This may have been accidental. If you need to reconnect, please visit the admin panel and scan the QR code again.\n\n` +
+      `🔗 Admin Panel: http://localhost:3002/admin/rainbow/status\n\n` +
+      `If this was intentional, you can safely ignore this message.`;
+
+    try {
+      await notifierInstance.sendMessage(`${unlinkedPhone}@s.whatsapp.net`, message);
+      console.log(`[WhatsAppManager] Sent unlink notification for "${unlinkedId}" via "${notifierInstance.id}"`);
+    } catch (err: any) {
+      console.error(`[WhatsAppManager] Failed to send unlink notification:`, err.message);
+    }
+  }
+
   private loadConfig(): InstancesFile | null {
     try {
       if (!fs.existsSync(INSTANCES_FILE)) return null;
@@ -514,14 +589,21 @@ export function registerMessageHandler(handler: (msg: IncomingMessage) => Promis
   whatsappManager.registerMessageHandler(handler);
 }
 
-export function getWhatsAppStatus(): { state: string; user: any; authDir: string; qr: string | null } {
+export function getWhatsAppStatus(): { state: string; user: any; authDir: string; qr: string | null; unlinkedFromWhatsApp?: boolean; lastUnlinkedAt?: string | null } {
   // Return status of the default/first instance for backward compat
   const statuses = whatsappManager.getAllStatuses();
   if (statuses.length === 0) {
     return { state: 'close', user: null, authDir: LEGACY_AUTH_DIR, qr: null };
   }
   const s = statuses[0];
-  return { state: s.state, user: s.user, authDir: s.authDir, qr: s.qr };
+  return {
+    state: s.state,
+    user: s.user,
+    authDir: s.authDir,
+    qr: s.qr,
+    unlinkedFromWhatsApp: s.unlinkedFromWhatsApp,
+    lastUnlinkedAt: s.lastUnlinkedAt
+  };
 }
 
 export async function sendWhatsAppMessage(phone: string, text: string, instanceId?: string): Promise<any> {
