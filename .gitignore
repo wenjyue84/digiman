@@ -113,3 +113,16 @@ test-*.ts
 nul
 *.stackdump
 *.pid
+
+# Reports (generated)
+reports/
+
+# Large binaries (should never be committed)
+*.exe
+*.msi
+
+# Root-level SQL dumps (not migrations/)
+/*.sql
+
+# Root-level screenshots
+/*.png
