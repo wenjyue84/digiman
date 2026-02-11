@@ -40,6 +40,55 @@ npm run dev
 
 ## 🔧 **ISSUE DATABASE - SOLVED PROBLEMS**
 
+### **021 - Backend Server Not Running - One-Click Auto-Start Feature (SOLVED)**
+
+**Date Solved:** February 12, 2026
+**Symptoms:**
+- Login page shows error: "Backend Server Not Running"
+- Cannot access http://localhost:3000/login due to backend connection failure
+- API requests fail with `ECONNREFUSED` errors
+- User has to manually open terminal and run `npm run dev:clean`
+
+**Root Cause:**
+- Backend server (port 5000) not running after system restart
+- Frontend (port 3000) runs but cannot connect to backend API
+- No automatic backend startup mechanism
+
+**Solution Implemented:**
+1. **Smart Error Detection**: Login page now detects when backend is down
+2. **One-Click Start Button**: Big red "Start Backend Server" button appears automatically
+3. **Visual Feedback**: Shows loading spinner while starting (up to 30s)
+4. **Auto-Refresh**: Page updates automatically when backend is ready
+
+**Technical Implementation:**
+- **Vite Plugin**: `vite-plugin-dev-control.ts` adds `/__dev/start-backend` endpoint
+- **Frontend UI**: `login-form.tsx` updated with error detection and start button
+- **Process Management**: Plugin handles port cleanup and backend spawning
+- **Health Check**: Polls backend until ready, then notifies user
+
+**How to Use:**
+1. Visit http://localhost:3000/login (backend not running)
+2. See red error banner with "Start Backend Server" button
+3. Click button
+4. Wait for success notification (10-30 seconds)
+5. Login page works normally
+
+**Files Created:**
+- `vite-plugin-dev-control.ts` - Dev server control endpoints
+- `docs/AUTO-START-BACKEND-FEATURE.md` - Full feature documentation
+
+**Files Modified:**
+- `vite.config.ts` - Registered devControlPlugin
+- `client/src/components/login-form.tsx` - Added error UI and start handler
+
+**Result:** ✅ **SOLVED** - No more manual terminal commands needed!
+
+**Key Learning:** Better DX (Developer Experience) = detecting errors and providing actionable solutions directly in the UI.
+
+**Browser Automation Test:** ✅ Verified with agent-browser skill - auto-start works perfectly!
+
+---
+
 ### **020 - Missing Build Artifacts "ENOENT: dist/public/index.html" Error (SOLVED)**
 
 **Date Solved:** August 23, 2025  

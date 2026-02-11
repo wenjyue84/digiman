@@ -55,6 +55,10 @@ npm run db:push
 npm run dev:clean
 ```
 
+### Alternative: One-Click Backend Start
+
+If the backend server (port 5000) is not running, the login page will automatically detect this and show a **"Start Backend Server"** button. Just click it to start the backend without using the terminal! See [docs/AUTO-START-BACKEND-FEATURE.md](docs/AUTO-START-BACKEND-FEATURE.md) for details.
+
 ### Start MCP Server (separate terminal)
 
 ```bash
@@ -77,6 +81,7 @@ npm run dev
 - **Rainbow AI**: WhatsApp bot with intent detection, multi-language, knowledge base
 - **MCP Tools**: 19 tools for programmatic hostel management
 - **PWA**: Installable mobile app with offline support
+- **Dev UX**: One-click backend start button on login page (no terminal needed!)
 
 ## Commands
 
