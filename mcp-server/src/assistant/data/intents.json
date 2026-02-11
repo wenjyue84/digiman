@@ -1,130 +1,393 @@
 {
   "categories": [
     {
-      "category": "greeting",
-      "patterns": [
-        "^(hi|hello|hey|helo|hai|apa khabar|你好|嗨|good\\s?(morning|afternoon|evening|night))",
-        "^(assalamualaikum|salam|selamat\\s?(pagi|petang|malam))"
-      ],
-      "flags": "i",
-      "enabled": true
+      "phase": "GENERAL_SUPPORT",
+      "description": "Intents that can occur at any phase of the guest journey",
+      "intents": [
+        {
+          "category": "greeting",
+          "professional_term": "Guest Greeting",
+          "patterns": [
+            "^(hi|hello|hey|helo|hai|apa khabar|你好|嗨|good\\s?(morning|afternoon|evening|night))",
+            "^(assalamualaikum|salam|selamat\\s?(pagi|petang|malam))"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "thanks",
+          "professional_term": "Guest Appreciation",
+          "patterns": [
+            "\\b(thanks?|thank\\s?you|terima\\s?kasih|tq|ty|appreciate)\\b",
+            "(谢谢|感谢)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "contact_staff",
+          "professional_term": "Staff Assistance Request",
+          "patterns": [
+            "\\b(staff|manager|human|person|real\\s?person|talk\\s?to|speak\\s?to|contact|call|pekerja|pengurus|manusia)\\b",
+            "(联系|工作人员|找人|真人)"
+          ],
+          "flags": "i",
+          "enabled": true
+        }
+      ]
     },
     {
-      "category": "thanks",
-      "patterns": [
-        "\\b(thanks?|thank\\s?you|terima\\s?kasih|tq|ty|appreciate)\\b",
-        "(谢谢|感谢)"
-      ],
-      "flags": "i",
-      "enabled": true
+      "phase": "PRE_ARRIVAL",
+      "description": "Enquiry and booking phase - guest is researching or making a reservation",
+      "intents": [
+        {
+          "category": "pricing",
+          "professional_term": "Rate Inquiry",
+          "patterns": [
+            "\\b(price|pricing|rate|cost|how\\s?much|berapa|harga|kadar|rm\\s?\\d+)\\b",
+            "(价格|多少钱|费用)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "availability",
+          "professional_term": "Availability Check",
+          "patterns": [
+            "\\b(available|availability|any\\s?(room|capsule|bed)|vacancy|ada\\s?(bilik|katil|kosong))\\b",
+            "(有没有.*房|空房|还有.*位)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "booking",
+          "professional_term": "Reservation Request",
+          "patterns": [
+            "\\b(book|booking|reserve|reservation|tempah|tempahan|i\\s?want\\s?to\\s?(book|stay|reserve))\\b",
+            "(预[订定]|我要.*[订定])"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "directions",
+          "professional_term": "Location & Navigation Assistance",
+          "patterns": [
+            "\\b(direction|where|location|address|map|how\\s?to\\s?(get|go|reach|find)|google\\s?map|navigate|alamat|di\\s?mana|lokasi)\\b",
+            "(地址|位置|怎么走|在哪|路线)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "facilities_info",
+          "professional_term": "Amenity Information",
+          "patterns": [
+            "\\b(facilit\\w*|amenity|amenities|what.*have|kitchen|laundry|bathroom|shower|towel|parking|locker|kemudahan|dapur|dobi|bilik\\s?air|tuala)\\b",
+            "(设施|厨房|洗衣|浴室|毛巾|停车)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "rules_policy",
+          "professional_term": "House Rules & Policy Clarification",
+          "patterns": [
+            "\\b(rules?|policy|regulation|smoking|quiet\\s?hours?|pet|peraturan|dasar|merokok)\\b",
+            "(规则|规定|可以吗|允许)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "payment_info",
+          "professional_term": "Payment Information",
+          "patterns": [
+            "\\b(pay|payment|bank\\s?(account|transfer|details)|transfer|bayar|bayaran|akaun\\s?bank|pindahan)\\b",
+            "(付款|银行|转账|怎么付|付钱)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "payment_made",
+          "professional_term": "Payment Confirmation",
+          "patterns": [
+            "\\b(i\\s?(already|just|have)?\\s?(paid|transferred|sent|made\\s?payment)|payment\\s?done|already\\s?pay|sudah\\s?bayar|dah\\s?transfer|dah\\s?bayar)\\b",
+            "(已付|已经付|付了|转了)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "checkin_info",
+          "professional_term": "Check-In Policy Inquiry",
+          "patterns": [
+            "\\b(check[\\s-]?in\\s?(time|policy|procedure)|what\\s?time.*arrive|when.*come|masa\\s?masuk)\\b",
+            "(入住时间|几点.*入)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "checkout_info",
+          "professional_term": "Check-Out Policy Inquiry",
+          "patterns": [
+            "\\b(check[\\s-]?out\\s?(time|policy|procedure)|what\\s?time.*leave|when.*leave|masa\\s?keluar)\\b",
+            "(退房时间|几点.*退)"
+          ],
+          "flags": "i",
+          "enabled": true
+        }
+      ]
     },
     {
-      "category": "wifi",
-      "patterns": [
-        "\\b(wifi|wi-fi|internet|password|ssid)\\b",
-        "(网络|密码|无线)"
-      ],
-      "flags": "i",
-      "enabled": true
+      "phase": "ARRIVAL_CHECKIN",
+      "description": "Guest has arrived and is checking in",
+      "intents": [
+        {
+          "category": "check_in_arrival",
+          "professional_term": "Guest Arrival Notification",
+          "patterns": [
+            "\\b(i\\s?(want|need)\\s?to\\s?check[\\s-]?in|checking\\s?in|i\\s?have\\s?arrived|i('|\\s)?m\\s?here|nak\\s?check[\\s-]?in|saya\\s?dah\\s?sampai|dah\\s?tiba)\\b",
+            "(我要入住|要.*入住|到了|已经到)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "lower_deck_preference",
+          "professional_term": "Capsule Preference Request",
+          "patterns": [
+            "\\b(lower\\s?deck|bottom\\s?(bunk|bed)|even\\s?number|prefer\\s?(lower|bottom)|bawah|dek\\s?bawah)\\b",
+            "(下铺|下层|偶数)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "wifi",
+          "professional_term": "WiFi Access Request",
+          "patterns": [
+            "\\b(wifi|wi-fi|internet|password|ssid)\\b",
+            "(网络|密码|无线)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "facility_orientation",
+          "professional_term": "Facility Orientation Request",
+          "patterns": [
+            "\\b(where\\s?is\\s?(the)?(bathroom|shower|kitchen|locker|exit|toilet)|how\\s?to\\s?use|kemana|di\\s?mana)\\b",
+            "(哪里|在哪|怎么用)"
+          ],
+          "flags": "i",
+          "enabled": true
+        }
+      ]
     },
     {
-      "category": "directions",
-      "patterns": [
-        "\\b(direction|where|location|address|map|how\\s?to\\s?(get|go|reach|find)|google\\s?map|navigate|alamat|di\\s?mana|lokasi)\\b",
-        "(地址|位置|怎么走|在哪|路线)"
-      ],
-      "flags": "i",
-      "enabled": true
+      "phase": "DURING_STAY",
+      "description": "Guest is currently staying - requires immediate resolution",
+      "intents": [
+        {
+          "category": "climate_control_complaint",
+          "professional_term": "Climate Control Adjustment",
+          "severity": "HIGH",
+          "patterns": [
+            "\\b(too\\s?(cold|hot|warm)|temperature|ac|air\\s?cond\\w*|heater|sejuk|panas)\\b",
+            "(太冷|太热|温度|空调)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "noise_complaint",
+          "professional_term": "Ambient Noise Complaint",
+          "severity": "HIGH",
+          "patterns": [
+            "\\b(noisy|loud|noise|can('|\\s)?t\\s?sleep|bising|kuat|bunyi)\\b",
+            "(太吵|很吵|睡不着|噪音)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "cleanliness_complaint",
+          "professional_term": "Housekeeping Discrepancy",
+          "severity": "CRITICAL",
+          "patterns": [
+            "\\b(dirty|unclean|smell|stain|not\\s?clean|kotor|bau|comot)\\b",
+            "(脏|不干净|有味道|有污渍)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "facility_malfunction",
+          "professional_term": "Facility Maintenance Issue",
+          "severity": "HIGH",
+          "patterns": [
+            "\\b(broken|not\\s?working|malfunction|damaged|rosak|tak\\s?boleh\\s?guna)\\b",
+            "(坏了|不能用|故障)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "card_locked",
+          "professional_term": "Access Card Issue",
+          "severity": "CRITICAL",
+          "patterns": [
+            "\\b(card\\s?(locked|inside|stuck)|locked\\s?(out|in)|can('|\\s)?t\\s?(get\\s?in|open)|kad\\s?terkunci|terkunci\\s?(dalam|luar))\\b",
+            "(卡.*锁|钥匙.*在里面|打不开)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "theft_report",
+          "professional_term": "Security Incident Report",
+          "severity": "CRITICAL",
+          "patterns": [
+            "\\b(stole|stolen|theft|missing|lost|robbed|kecurian|hilang|dicuri|dirompak)\\b",
+            "(被偷|丢了|不见了|被盗)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "general_complaint_in_stay",
+          "professional_term": "Mid-Stay Service Issue",
+          "severity": "MEDIUM",
+          "patterns": [
+            "\\b(complain|complaint|uncomfortable|issue|problem|aduan|masalah)\\b",
+            "(投诉|有问题|不舒服)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "extra_amenity_request",
+          "professional_term": "Amenity Request",
+          "severity": "LOW",
+          "patterns": [
+            "\\b(need\\s?(more|extra)|can\\s?i\\s?(get|have)|blanket|pillow|towel|charger|adapter|boleh\\s?(dapat|minta)|tambah)\\b",
+            "(需要|能给|毯子|枕头|毛巾|充电器)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "tourist_guide",
+          "professional_term": "Local Recommendations",
+          "severity": "LOW",
+          "patterns": [
+            "\\b(tourist|attraction|visit|sightseeing|what\\s?to\\s?(do|see)|where\\s?to\\s?go|tempat\\s?menarik|lawatan|pelancong)\\b",
+            "(景点|旅游|游玩|哪里好玩|附近.*什么)"
+          ],
+          "flags": "i",
+          "enabled": true
+        }
+      ]
     },
     {
-      "category": "checkin_info",
-      "patterns": [
-        "\\b(check[\\s-]?in|daftar\\s?masuk|what\\s?time.*arrive|when.*come|masa\\s?masuk)\\b",
-        "(入住|几点.*入)"
-      ],
-      "flags": "i",
-      "enabled": true
+      "phase": "CHECKOUT_DEPARTURE",
+      "description": "Guest is checking out or preparing to depart",
+      "intents": [
+        {
+          "category": "checkout_procedure",
+          "professional_term": "Checkout Assistance",
+          "patterns": [
+            "\\b(how\\s?to\\s?check[\\s-]?out|checkout\\s?process|i\\s?want\\s?to\\s?leave|nak\\s?keluar)\\b",
+            "(怎么退房|要走了)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "late_checkout_request",
+          "professional_term": "Late Checkout Request",
+          "patterns": [
+            "\\b(late\\s?check[\\s-]?out|extend|stay\\s?(longer|more)|lewat\\s?keluar)\\b",
+            "(延迟退房|晚点走|延长)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "luggage_storage",
+          "professional_term": "Luggage Storage Inquiry",
+          "patterns": [
+            "\\b(luggage\\s?storage|keep\\s?(bag|luggage)|store\\s?(bag|suitcase)|simpan\\s?beg)\\b",
+            "(寄存|行李|存包)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "billing_inquiry",
+          "professional_term": "Billing Clarification",
+          "patterns": [
+            "\\b(bill|invoice|charge|receipt|bil|resit)\\b",
+            "(账单|收据|发票)"
+          ],
+          "flags": "i",
+          "enabled": true
+        }
+      ]
     },
     {
-      "category": "checkout_info",
-      "patterns": [
-        "\\b(check[\\s-]?out|daftar\\s?keluar|what\\s?time.*leave|when.*leave|masa\\s?keluar)\\b",
-        "(退房|几点.*退)"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "pricing",
-      "patterns": [
-        "\\b(price|pricing|rate|cost|how\\s?much|berapa|harga|kadar|rm\\s?\\d+)\\b",
-        "(价格|多少钱|费用)"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "availability",
-      "patterns": [
-        "\\b(available|availability|any\\s?(room|capsule|bed)|vacancy|ada\\s?(bilik|katil|kosong))\\b",
-        "(有没有.*房|空房|还有.*位)"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "booking",
-      "patterns": [
-        "\\b(book|booking|reserve|reservation|tempah|tempahan|i\\s?want\\s?to\\s?(book|stay|reserve))\\b",
-        "(预[订定]|我要.*[订定])"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "complaint",
-      "patterns": [
-        "\\b(complain|complaint|broken|dirty|noisy|loud|uncomfortable|issue|problem|not\\s?working|aduan|rosak|kotor|bising|masalah)\\b",
-        "(投诉|坏了|脏|太吵|有问题)"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "contact_staff",
-      "patterns": [
-        "\\b(staff|manager|human|person|real\\s?person|talk\\s?to|speak\\s?to|contact|call|pekerja|pengurus|manusia)\\b",
-        "(联系|工作人员|找人|真人)"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "facilities",
-      "patterns": [
-        "\\b(facilit\\w*|kitchen|laundry|bathroom|shower|towel|parking|locker|kemudahan|dapur|dobi|bilik\\s?air|tuala)\\b",
-        "(设施|厨房|洗衣|浴室|毛巾|停车)"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "rules",
-      "patterns": [
-        "\\b(rules?|policy|regulation|smoking|quiet\\s?hours?|pet|peraturan|dasar|merokok)\\b",
-        "(规则|规定|可以吗|允许)"
-      ],
-      "flags": "i",
-      "enabled": true
-    },
-    {
-      "category": "payment",
-      "patterns": [
-        "\\b(pay|payment|bank\\s?(account|transfer|details)|transfer|bayar|bayaran|akaun\\s?bank|pindahan)\\b",
-        "(付款|银行|转账|怎么付|付钱)"
-      ],
-      "flags": "i",
-      "enabled": true
+      "phase": "POST_CHECKOUT",
+      "description": "Guest has checked out - service recovery and claims",
+      "intents": [
+        {
+          "category": "forgot_item_post_checkout",
+          "professional_term": "Lost & Found Claim",
+          "severity": "MEDIUM",
+          "patterns": [
+            "\\b(forgot|left\\s?(behind|my)|forgot\\s?(my|something)|terlupa|tertinggal)\\b",
+            "(忘了|落下|遗留)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "post_checkout_complaint",
+          "professional_term": "Post-Stay Feedback",
+          "severity": "MEDIUM",
+          "patterns": [
+            "\\b(after.*check\\s?out|already\\s?left|was\\s?there|during\\s?my\\s?stay|lepas\\s?keluar|sudah\\s?balik).*\\b(complain|complaint|issue|problem|aduan|masalah)\\b",
+            "(离开后.*投诉|退房.*问题)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "billing_dispute",
+          "professional_term": "Billing Dispute",
+          "severity": "HIGH",
+          "patterns": [
+            "\\b(overcharge|wrong\\s?bill|incorrect\\s?charge|pertikaian\\s?bil|salah\\s?caj)\\b",
+            "(多收|账单错误|收费有误)"
+          ],
+          "flags": "i",
+          "enabled": true
+        },
+        {
+          "category": "review_feedback",
+          "professional_term": "Guest Review & Feedback",
+          "severity": "LOW",
+          "patterns": [
+            "\\b(review|rating|feedback|survey|ulasan|maklum\\s?balas)\\b",
+            "(评价|反馈|调查)"
+          ],
+          "flags": "i",
+          "enabled": true
+        }
+      ]
     }
   ]
 }
