@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { VitePWA } from 'vite-plugin-pwa';
+import { devControlPlugin } from './vite-plugin-dev-control';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -11,6 +12,7 @@ export default defineConfig({
   plugins: [
     react(),
     runtimeErrorOverlay(),
+    devControlPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
