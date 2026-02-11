@@ -1,233 +1,142 @@
-# CLAUDE.md
+# CLAUDE.md - PelangiManager
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Capsule hotel management system: React + TypeScript + Express + PostgreSQL + Drizzle ORM.
 
-# PelangiManager - Capsule System Management Platform
+## 🎯 Critical Rules
+1. **800-Line Rule**: Files >800 lines → ask user about refactoring
+2. **Port-First**: Always `npm run dev:clean` to kill ports before starting
+3. **Package Manager**: `npm` only (never pnpm/yarn)
+4. **Delete Confirmation**: Always ask before deleting files
+5. **Main Branch**: Work on `main`, use Conventional Commits
 
-A comprehensive hostel/capsule hotel management system built with React, TypeScript, Express, and PostgreSQL.
+## ⚡ Quick Commands
 
-## 🧱 Project Standards
-- **Package Manager**: Always use `npm` (not pnpm)
-- **Build Command**: `npm run build` for production builds
-- **Development**: `npm run dev` for development server
-- **Testing**: `npm test` for running tests
-- **Linting**: `npm run lint` before commits when available
-- **Type Checking**: `npm run typecheck` before commits when available
+| Task | Command | Notes |
+|------|---------|-------|
+| **Start dev** | `npm run dev:clean` | Kills ports 3000/5000 first |
+| **Build** | `npm run build` | Production build |
+| **Test** | `npm test` | Jest unit tests |
+| **Clear cache** | `rm -rf node_modules/.vite && npm run dev` | Component caching issues |
+| **Manual port kill** | `npx kill-port 5000 && npx kill-port 3000` | If dev:clean fails |
 
-## 🚀 Development Workflow
+## 🏗️ Architecture Quick Reference
 
-### Hybrid SPARC + BMAD Methodology
-PelangiManager uses a hybrid approach for development:
+### Ports & Endpoints
+- **Frontend**: `http://localhost:3000` (Vite dev server)
+- **Backend**: `http://localhost:5000` (Express API)
+- **Proxy**: `/api/*` and `/objects/*` → backend
 
-**SPARC ✨ (for simple edits, bug fixes, small features)**
-- 1-3 files affected
-- Under 800 lines
-- Hours to 1 day effort
-- Fast iteration needed
-- See `.sparc/README.md` for templates
+### Tech Stack
 
-**BMAD 🏗️ (for major features, architectural changes)**
-- 4+ files affected
-- Files > 800 lines (required by 800-line rule)
-- Days to weeks effort
-- Complex business logic
-- See `.bmad/README.md` for agent workflows
+| Layer | Tech |
+|-------|------|
+| Frontend | React 18 + TypeScript + Vite + Tailwind + shadcn/ui |
+| State | TanStack Query + React Hook Form + Zod |
+| Backend | Node.js + Express + TypeScript |
+| Database | PostgreSQL (Neon) + Drizzle ORM |
+| Auth | Passport.js sessions |
+| Testing | Jest + Playwright |
 
-**Decision Guide:** See `HYBRID-WORKFLOW-GUIDE.md` for detailed criteria and examples
+### Key Directories
 
-### Core Workflow Rules
-- **Always kill port processes before starting servers** (prevention-first approach)
-- **800-Line Rule**: Keep files under 800 lines - use BMAD for refactoring if exceeded
-- **File Operations**: Always ask for confirmation before deleting any files
-- **Git Operations**: Work primarily on **main** branch, use Conventional Commits format
+| Path | Purpose |
+|------|---------|
+| `client/src/pages/` | Route components (check-in, check-out, settings, etc.) |
+| `client/src/components/` | Reusable UI components |
+| `server/routes/` | Express API handlers |
+| `server/storage/` | Data layer (dual: PostgreSQL/in-memory) |
+| `shared/schema.ts` | Zod schemas + types |
+| `docs/` | Troubleshooting guides (read before asking) |
 
-## 🔧 Tech Stack
-- **Frontend**: React 18 with TypeScript, Vite build system, Tailwind CSS
-- **Backend**: Node.js with Express, TypeScript
-- **Database**: PostgreSQL with Drizzle ORM (falls back to in-memory storage)
-- **Testing**: Jest for unit tests
-- **UI Components**: Shadcn/ui with Radix UI primitives
-- **State Management**: TanStack Query for server state
-- **Form Management**: React Hook Form with Zod validation
+### Workflow Methodology
 
-## 🏗️ High-Level Architecture
+| Criteria | Use SPARC | Use BMAD |
+|----------|-----------|----------|
+| Files affected | 1-3 | 4+ |
+| File size | <800 lines | ≥800 lines |
+| Effort | Hours-1 day | Days-weeks |
+| Docs | `.sparc/README.md` | `.bmad/README.md` + `HYBRID-WORKFLOW-GUIDE.md` |
 
-### Full-Stack Structure
-```
-├── client/                 # React frontend application
-│   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Route-based page components
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── lib/            # Utilities and service workers
-│   │   └── main.tsx        # App entry point with PWA setup
-├── server/                 # Node.js backend API
-│   ├── routes/             # Express route handlers (auth, guests, capsules, etc.)
-│   ├── storage/            # Data layer abstraction (Memory/Database)
-│   ├── configManager.ts    # System configuration management
-│   └── index.ts            # Server entry point with Vite middleware
-├── shared/                 # Shared TypeScript schemas and utilities
-│   ├── schema.ts           # Zod schemas for data validation
-│   └── utils.ts            # Cross-platform utilities
-└── docs/                   # Comprehensive system documentation
-```
+## 🔥 Common Issues → Solutions
 
-### Storage Architecture
-- **Dual Storage System**: Automatic fallback from PostgreSQL to in-memory storage
-- **Storage Factory Pattern**: `server/storage/StorageFactory.ts` manages storage selection
-- **Data Models**: Guests, Capsules, Users, Problems, Settings, Guest Tokens
-- **Migration Support**: Built-in database migration system via MigrationHelper
+| Problem | Solution | Command |
+|---------|----------|---------|
+| Port conflicts | Clean start | `npm run dev:clean` |
+| Component cache stale | Clear Vite cache | `rm -rf node_modules/.vite && npm run dev` |
+| Hot reload broken | Restart dev servers | `npx kill-port 5000 3000 && npm run dev` |
+| DB schema mismatch | Push schema | `npm run db:push` |
+| Import errors | Check path aliases | See `docs/REFACTORING_TROUBLESHOOTING.md` |
 
-### API Structure
-- **RESTful API**: `/api/{resource}` endpoints for all operations
-- **Authentication**: Passport.js with session management
-- **File Handling**: `/objects/` endpoints for file upload/download
-- **Real-time Features**: WebSocket support for live updates
+## 🎯 Project-Specific Patterns
 
-## 🌐 Development Server Configuration
+### Dual Storage System (UNIQUE)
+- **Primary**: PostgreSQL (Neon) via Drizzle ORM
+- **Fallback**: In-memory storage (auto-failover)
+- **Factory**: `server/storage/StorageFactory.ts` selects storage
+- **Models**: Guests, Capsules, Users, Problems, Settings, GuestTokens
+- **⚠️ Note**: Always test DB connections with minimal scripts first (see `.claude/skills/database-troubleshooting/`)
 
-### Current Port Setup
-- **Frontend (Vite)**: `http://localhost:3000`
-- **Backend (Express)**: `http://localhost:5000`
-- **API Proxy**: Vite proxies `/api` and `/objects` requests to backend
+### Key File Locations
 
-### Starting Development
-```bash
-# Clean start (recommended)
-npm run dev:clean
+| Feature | File Path |
+|---------|-----------|
+| Check-in flow | `client/src/pages/check-in.tsx` |
+| Check-out flow | `client/src/pages/check-out.tsx` |
+| Settings UI | `client/src/pages/settings.tsx` |
+| Storage factory | `server/storage/StorageFactory.ts` |
+| API routes | `server/routes/*.ts` |
+| Shared schemas | `shared/schema.ts` |
+| System config | `server/configManager.ts` |
 
-# Standard start
-npm run dev
+### API Patterns
+- **REST**: `/api/{resource}` (CRUD operations)
+- **Auth**: Passport.js sessions (not JWT)
+- **Files**: `/objects/` endpoints for uploads/downloads
+- **WebSocket**: Real-time updates (when needed)
 
-# Manual cleanup if needed
-npx kill-port 5000 && npx kill-port 3000
-```
+## 🛠️ Skills Integration
 
-## 📚 Core Features
+| Task | Skill | Example |
+|------|-------|---------|
+| Token saving (reasoning) | `ollama-cloud`, `qwen-cli` | Analyze code patterns |
+| Deep debugging | `kimi-cli`, `deepseek-cli` | Complex logic issues |
+| Database issues | `.claude/skills/database-troubleshooting/` | Schema mismatches |
+| Zeabur deploy | `.claude/skills/zeabur-deployment/` | Deployment issues |
+| Git security | `.claude/skills/git-security-check/` | Pre-commit hook active |
 
-### Guest Management System
-- **Check-in Flow**: `/client/src/pages/check-in.tsx` with capsule assignment
-- **Check-out System**: `/client/src/pages/check-out.tsx` with cleaning status
-- **Guest Profiles**: CRUD operations with photo upload support
-- **Guest Tokens**: Secure check-in tokens for contactless operations
+## 🚫 Never Do (Token Saving)
+1. Don't create new files unless absolutely necessary
+2. Don't create docs/README unless explicitly asked
+3. Don't explain standard tools (React, TypeScript, etc.)
+4. Don't add TODOs/comments unless user asks
+5. Don't refactor beyond the requested scope
+6. Don't add error handling for impossible scenarios
 
-### Capsule Operations
-- **Visual Management**: Grid, list, and table views for capsule status
-- **Cleaning Workflow**: Track cleaning schedules and maintenance
-- **Problem Tracking**: Report and resolve capsule issues
-- **Availability Engine**: Real-time availability calculation
+## 📚 Docs (Read Before Asking)
 
-### Settings & Configuration
-- **Modular Settings**: Tab-based interface for different config areas
-- **User Management**: Role-based access (admin/staff)
-- **System Testing**: Built-in validation tools
-- **Message Templates**: Customizable guest communications
+| Issue Type | Read First |
+|------------|------------|
+| Port conflicts, caching | `docs/MASTER_TROUBLESHOOTING_GUIDE.md` |
+| Storage/DB errors | `docs/Storage_System_Guide.md` |
+| Import/export errors | `docs/REFACTORING_TROUBLESHOOTING.md` |
+| SPARC vs BMAD choice | `HYBRID-WORKFLOW-GUIDE.md` |
+| Development history | `docs/CLAUDE_PROJECT_NOTES.md` |
+| Full architecture | `docs/System_Architecture_Document.md` |
 
-## 🔒 Safety Protocols
-- Backup before major file operations
-- Never touch system directories without explicit permission
-- Always confirm before permanent deletions
-- Create archive backups before major refactoring
+## 🧠 Performance Optimizations
 
-## 🚨 Critical Troubleshooting Patterns
+### For Claude (Token Saving)
+- **Delegate reasoning** to `ollama-cloud` (3-17s, GPT-4 class) or `qwen-cli` (10s, 2K/day limit)
+- **Deep analysis** to `kimi-cli` (1T params, 9-30s)
+- **Check memory first** for project context (`.claude/projects/.../memory/MEMORY.md`)
+- **Use skills** instead of explaining (git-security, database-troubleshooting, zeabur-deployment)
 
-### Hot Reload System (Current Setup)
-**Development Configuration:**
-- **Frontend**: `http://localhost:3000` (Vite dev server with instant hot reload)
-- **Backend**: `http://localhost:5000` (Express with auto-restart)  
-- **Single Command**: `npm run dev` starts both servers concurrently
-- **Smart Proxy**: API calls automatically routed to backend
-
-**Benefits:**
-- ✅ React changes reflect instantly in browser
-- ✅ Backend changes auto-restart server
-- ✅ No manual builds needed for development
-
-### Port Conflicts (Enhanced Prevention)
-**Prevention-First Approach:**
-```bash
-# Clean restart with correct ports
-npm run dev:clean
-
-# Manual cleanup if needed
-npx kill-port 5000 && npx kill-port 3000
-npm run dev
-```
-
-### Component Caching Issues
-**Problem:** Component changes not appearing despite file modifications
-**Solution:**
-```bash
-rm -rf node_modules/.vite && npm run build && npm run dev
-```
-
-## 📝 Git Standards
-
-### Commit Standards
-- Use **Conventional Commits** format:
-  - `feat:` for new features
-  - `fix:` for bug fixes  
-  - `docs:` for documentation
-  - `refactor:` for code refactoring
-  - `test:` for tests
-  - `chore:` for maintenance
-
-### Code Quality
-- **Always perform code review** before commits
-- Run appropriate tests based on project type
-- Follow existing code patterns and conventions
-
-## 🎨 React Development Experience
-
-### Component Size Management (800-Line Rule)
-**USER GUIDELINE:** "Keep files less than 800 lines, if it is more than that then you should check if it is suitable for refactoring and ask me."
-
-### Refactoring Best Practices
-1. **Conservative Approach:** One component at a time, test between changes
-2. **Backup Strategy:** Always create backup before starting refactoring
-3. **Logical Extraction:** Extract complete logical sections, not arbitrary code blocks
-4. **Form Integration:** Maintain react-hook-form integration seamlessly
-5. **Type Safety:** Ensure all extracted components are properly typed
-
-## ⚠️ Important Instructions
-
-### Always Follow These Rules
-1. **Do what has been asked; nothing more, nothing less**
-2. **NEVER create files unless they're absolutely necessary for achieving the goal**
-3. **ALWAYS prefer editing an existing file to creating a new one**
-4. **NEVER proactively create documentation files (*.md) or README files** unless explicitly requested
-5. **Run linting and type-checking** before commits when commands are available
-6. **Ask for confirmation** on destructive operations (deletions, force pushes)
-7. **Use TodoWrite tool** to track complex multi-step tasks
-8. **Refer to documentation files** in docs/ folder when encountering problems
-9. **ALWAYS kill port processes before starting servers** (prevention-first approach)
-
-### Code Standards
-- Follow existing code patterns and conventions
-- Maintain TypeScript type safety
-- Use existing libraries (check package.json first)
-- Follow security best practices
-- Never expose secrets or keys
-- Keep components focused and under 800 lines
-
-## 📚 Documentation References
-
-### Methodology & Workflow
-- `HYBRID-WORKFLOW-GUIDE.md` - SPARC vs BMAD decision guide with examples
-- `.sparc/README.md` - SPARC methodology for simple edits
-- `.bmad/README.md` - BMAD methodology for major features
-- `.bmad/templates/` - BMAD phase templates (analysis, planning, implementation, testing)
-
-### Core Documentation
-- `docs/MASTER_TROUBLESHOOTING_GUIDE.md` - Comprehensive troubleshooting patterns
-- `docs/CLAUDE_PROJECT_NOTES.md` - Development history and refactoring records
-- `docs/DEVELOPMENT_REFERENCE.md` - Project structure and development practices
-
-### On-Demand References
-- `docs/Storage_System_Guide.md` - Storage architecture documentation
-- `docs/System_Architecture_Document.md` - Overall system architecture
-- `docs/REFACTORING_TROUBLESHOOTING.md` - Import/export error solutions
+### For Development
+- **Port-first workflow**: `dev:clean` prevents 90% of issues
+- **Cache strategy**: Only clear when changes don't appear (rare)
+- **Minimal restarts**: Vite hot reload handles most changes
+- **DB schema**: Push schema before assuming connection issues
 
 ---
 
-*This configuration prioritizes efficiency while maintaining safety through confirmations on critical operations.*
+**Summary**: Port-first workflow, 800-line rule, `npm` only, ask before deleting, main branch. Read `docs/` before troubleshooting.
