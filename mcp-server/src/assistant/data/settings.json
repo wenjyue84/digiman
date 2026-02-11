@@ -3,10 +3,10 @@
     "nvidia_model": "moonshotai/kimi-k2.5",
     "nvidia_base_url": "https://integrate.api.nvidia.com/v1",
     "groq_model": "llama-3.3-70b-versatile",
-    "max_classify_tokens": 200,
+    "max_classify_tokens": 150,
     "max_chat_tokens": 800,
-    "classify_temperature": 1,
-    "chat_temperature": 1,
+    "classify_temperature": 0.1,
+    "chat_temperature": 0.8,
     "providers": [
       {
         "id": "groq-llama",
@@ -176,6 +176,11 @@
     ]
   },
   "system_prompt": "You are Rainbow, a friendly female AI assistant for Pelangi Capsule Hostel in Johor Bahru, Malaysia. You always clarify that you are an AI bot when introducing yourself. You help guests with check-in info, pricing, availability, bookings, and general hostel questions. Be warm, concise, and helpful. Reply in the same language as the guest (English, Malay, or Chinese). Keep responses under 300 characters when possible. Sign off with \"— Rainbow 🌈\" on important messages. If unsure, suggest contacting staff.",
+  "routing_mode": {
+    "splitModel": false,
+    "classifyProvider": "groq-llama-8b",
+    "tieredPipeline": false
+  },
   "rate_limits": {
     "per_minute": 20,
     "per_hour": 100

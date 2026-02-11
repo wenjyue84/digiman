@@ -1,0 +1,14 @@
+{
+  "name": "pelangi-server-launcher",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Local HTTP server that starts PelangiManager dev servers on demand",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { UserMinus, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Guest } from "@shared/schema";
 
@@ -10,7 +10,7 @@ interface SwipeableGuestCardProps {
   children: React.ReactNode;
 }
 
-export function SwipeableGuestCard({ guest, onCheckout, onExtend, isCheckingOut, children }: SwipeableGuestCardProps) {
+export const SwipeableGuestCard = memo(function SwipeableGuestCard({ guest, onCheckout, onExtend, isCheckingOut, children }: SwipeableGuestCardProps) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef<number>(0);
@@ -167,6 +167,6 @@ export function SwipeableGuestCard({ guest, onCheckout, onExtend, isCheckingOut,
       )}
     </div>
   );
-}
+});
 
 

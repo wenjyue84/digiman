@@ -1,9 +1,9 @@
 {
   "greeting": {
-    "action": "static_reply"
+    "action": "llm_reply"
   },
   "thanks": {
-    "action": "static_reply"
+    "action": "llm_reply"
   },
   "wifi": {
     "action": "static_reply"
@@ -12,8 +12,7 @@
     "action": "static_reply"
   },
   "checkin_info": {
-    "action": "workflow",
-    "workflow_id": "checkin_full"
+    "action": "static_reply"
   },
   "checkout_info": {
     "action": "static_reply"

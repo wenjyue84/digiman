@@ -313,6 +313,17 @@ class WhatsAppInstance {
     console.log(`[Baileys:${this.id}] Logged out — session cleared`);
   }
 
+  async sendTypingIndicator(jid: string): Promise<void> {
+    if (!this.sock || this.state !== 'open') return;
+    const resolvedJid = this.resolveToPhoneJid(jid);
+    try {
+      await this.sock.sendPresenceUpdate('composing', resolvedJid);
+    } catch (err: any) {
+      // Non-fatal — typing indicator is best-effort
+      console.warn(`[Baileys:${this.id}] Typing indicator failed for ${resolvedJid}: ${err.message}`);
+    }
+  }
+
   async sendMessage(jid: string, text: string): Promise<any> {
     if (!this.sock || this.state !== 'open') {
       throw new Error(`Instance "${this.id}" not connected`);
@@ -478,6 +489,26 @@ class WhatsAppManager {
     await instance.stop();
   }
 
+  async sendTypingIndicator(phone: string, instanceId?: string): Promise<void> {
+    const jid = phone.includes('@')
+      ? phone
+      : `${formatPhoneNumber(phone)}@s.whatsapp.net`;
+
+    if (instanceId) {
+      const instance = this.instances.get(instanceId);
+      if (instance) await instance.sendTypingIndicator(jid);
+      return;
+    }
+
+    // No instanceId — use first connected instance
+    for (const instance of this.instances.values()) {
+      if (instance.state === 'open') {
+        await instance.sendTypingIndicator(jid);
+        return;
+      }
+    }
+  }
+
   async sendMessage(phone: string, text: string, instanceId?: string): Promise<any> {
     // If it's already a full JID (@s.whatsapp.net, @lid, @g.us), use as-is
     // Otherwise format as @s.whatsapp.net
@@ -608,6 +639,10 @@ export function getWhatsAppStatus(): { state: string; user: any; authDir: string
 
 export async function sendWhatsAppMessage(phone: string, text: string, instanceId?: string): Promise<any> {
   return whatsappManager.sendMessage(phone, text, instanceId);
+}
+
+export async function sendWhatsAppTypingIndicator(phone: string, instanceId?: string): Promise<void> {
+  return whatsappManager.sendTypingIndicator(phone, instanceId);
 }
 
 export async function logoutWhatsApp(): Promise<void> {

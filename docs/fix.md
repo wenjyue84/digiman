@@ -481,6 +481,204 @@ Before saying "changes aren't showing":
 
 ---
 
-**Last Updated:** 2025-02-11 11:36 AM
-**Related Docs:** `MASTER_TROUBLESHOOTING_GUIDE.md`, `REFACTORING_TROUBLESHOOTING.md`
-**Tags:** vite, react, port-conflicts, typescript, hot-reload, browser-cache, windows
+---
+
+## Issue: Pages Show Empty/Connection Refused (2026-02-12)
+
+### Symptom
+- Navigate to `http://localhost:3002/admin/rainbow/settings` → Connection refused
+- Navigate to `http://localhost:3000/dashboard` → Empty page or connection refused
+- Browser shows "ERR_CONNECTION_REFUSED" or blank white page
+
+### Root Cause
+**Servers not running!** The most common reason for "empty pages" is forgetting to start the dev servers.
+
+### Diagnostic Steps
+```bash
+# 1. Check which ports are actually listening
+netstat -ano | findstr ":3000 :3002 :5000" | findstr LISTENING
+
+# If output is empty → servers aren't running!
+```
+
+### Solution: Start the Servers
+
+#### Quick Start (Recommended)
+```bash
+# Start main app servers (frontend 3000 + backend 5000)
+npm run dev
+
+# Start MCP server (port 3002) in separate terminal
+cd mcp-server && npm run dev
+```
+
+#### Background Start (Alternative)
+```bash
+# Start both in background
+npm run dev &
+cd mcp-server && npm run dev &
+
+# Wait 5-8 seconds for servers to initialize
+sleep 8
+
+# Check they're running
+netstat -ano | findstr ":3000 :3002 :5000"
+```
+
+### Verification
+After starting servers, you should see:
+- Frontend: `http://localhost:3000/dashboard` → Guest cards visible
+- MCP Server: `http://localhost:3002/admin/rainbow/settings` → AI settings page
+
+### Screenshots (Confirmed Working)
+- ✅ `docs/rainbow-settings-working.png` - Settings page loaded
+- ✅ `docs/dashboard-working.png` - Dashboard with 16 guests
+
+### Key Lessons
+1. **Always check if servers are running FIRST** before debugging CSS/JavaScript issues
+2. **Don't assume servers auto-start** - they don't persist across terminal sessions
+3. **Wait 5-8 seconds** after starting servers before testing (especially MCP server)
+4. **Use `netstat` to verify** which ports are actually listening
+5. **MCP server needs separate start** - `npm run dev` only starts frontend + backend
+
+### Prevention
+Add to your startup checklist:
+```bash
+# Daily startup routine
+cd /path/to/PelangiManager-Zeabur
+npm run dev:clean          # Kills ports + starts frontend/backend
+cd mcp-server && npm run dev  # Start MCP server
+
+# Verify all running
+netstat -ano | findstr ":3000 :3002 :5000" | findstr LISTENING
+```
+
+---
+
+## Issue: Browser Extension Won't Load (2026-02-12)
+
+### Symptom
+- Chrome extension shows "Failed to load extension" error
+- Error: "Could not load icon 'icon16.png' specified in 'icons'"
+- Service worker registration failed (Status code: 15)
+- Error: "Cannot read properties of undefined (reading 'onErrorOccurred')"
+
+### Root Causes
+1. **Missing icon files** - manifest.json references icons that don't exist
+2. **Missing permissions** - `webNavigation` permission not declared in manifest
+3. **Service worker errors** - background.js tries to use missing icons and APIs without permission
+
+### Solutions
+
+#### Fix 1: Remove Icon References
+If you don't have icon files, remove icon references from `manifest.json`:
+
+**Before (causing error):**
+```json
+{
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
+```
+
+**After (fixed):**
+```json
+{
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
+```
+
+#### Fix 2: Remove Icon Usage in background.js
+If background.js tries to use icons in notifications:
+
+**Before (causing error):**
+```javascript
+chrome.notifications.create({
+  type: 'basic',
+  iconUrl: 'icon48.png',  // ❌ File doesn't exist
+  title: 'Server Not Running',
+  message: 'Click to start'
+});
+```
+
+**After (fixed):**
+```javascript
+console.log('[Extension] Connection refused detected:', details.url);
+// Removed notification - content script handles UI instead
+```
+
+#### Fix 3: Add Missing Permissions
+Add `webNavigation` permission to `manifest.json`:
+
+**Before (causing "undefined" error):**
+```json
+{
+  "permissions": [
+    "webRequest",
+    "activeTab"
+  ]
+}
+```
+
+**After (fixed):**
+```json
+{
+  "permissions": [
+    "webRequest",
+    "webNavigation",  // ✅ Added for chrome.webNavigation API
+    "activeTab"
+  ]
+}
+```
+
+### Reload Extension After Fixing
+1. Go to `chrome://extensions/`
+2. Find your extension
+3. Click the **refresh icon** ↻ (circular arrow)
+4. Should load without errors now
+5. Service worker should show as "active"
+
+### Verification
+Extension is working when:
+- ✅ No errors in `chrome://extensions/`
+- ✅ Service worker shows "Inspect views: service worker"
+- ✅ Visit `localhost:3000` when server is down → Purple button appears
+
+### Key Lessons
+1. **Icons are optional** - Remove references if you don't have icon files
+2. **Check permissions** - Every Chrome API needs explicit permission in manifest
+3. **Reload extension** - Click refresh icon after manifest.json changes
+4. **Service worker errors** - Check background.js isn't using missing resources
+5. **Manifest v3** - Stricter validation than v2, catches missing files immediately
+
+### Prevention
+When creating Chrome extensions:
+- Either create all referenced icons OR remove icon references
+- Check Chrome API docs for required permissions
+- Test manifest.json with Chrome's extension validator
+- Use console in background service worker to debug (Inspect views → service worker)
+
+### Related Files
+- `browser-extension/manifest.json` - Extension config
+- `browser-extension/background.js` - Service worker
+- `browser-extension/content.js` - Page injection script
+- `AUTO-START-GUIDE.md` - Full setup guide
+
+---
+
+**Last Updated:** 2026-02-12
+**Related Docs:** `MASTER_TROUBLESHOOTING_GUIDE.md`, `REFACTORING_TROUBLESHOOTING.md`, `AUTO-START-GUIDE.md`
+**Tags:** vite, react, port-conflicts, typescript, hot-reload, browser-cache, windows, servers-not-running, chrome-extension, manifest-v3, service-worker

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, memo } from "react";
 import { UserMinus, ChevronLeft, CalendarPlus, ChevronRight } from "lucide-react";
 import type { Guest } from "@shared/schema";
 
@@ -13,7 +13,7 @@ interface SwipeableGuestRowProps {
   isMobile: boolean;
 }
 
-export function SwipeableGuestRow({ guest, onCheckout, onExtend, onGuestClick, isCondensedView, children, isCheckingOut, isMobile }: SwipeableGuestRowProps) {
+export const SwipeableGuestRow = memo(function SwipeableGuestRow({ guest, onCheckout, onExtend, onGuestClick, isCondensedView, children, isCheckingOut, isMobile }: SwipeableGuestRowProps) {
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef<number>(0);
@@ -185,4 +185,4 @@ export function SwipeableGuestRow({ guest, onCheckout, onExtend, onGuestClick, i
       )}
     </tr>
   );
-}
+});

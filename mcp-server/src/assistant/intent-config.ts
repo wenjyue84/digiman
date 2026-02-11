@@ -49,7 +49,7 @@ export function getDefaultConfig(): IntentDetectionConfig {
       tier3_semantic: {
         enabled: true,
         contextMessages: 5,
-        threshold: 0.70
+        threshold: 0.67
       },
       tier4_llm: {
         enabled: true,
@@ -106,7 +106,7 @@ export function loadIntentConfigFromDB(dbConfig: any): void {
       tier3_semantic: {
         enabled: dbConfig.tier3Enabled ?? true,
         contextMessages: dbConfig.tier3ContextMessages ?? 5,
-        threshold: dbConfig.tier3Threshold ?? 0.70
+        threshold: dbConfig.tier3Threshold ?? 0.67
       },
       tier4_llm: {
         enabled: dbConfig.tier4Enabled ?? true,

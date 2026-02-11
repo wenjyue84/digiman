@@ -31,18 +31,18 @@ const HOUR = 60 * MINUTE;
 export const queryConfigs = {
   // Real-time data that changes frequently
   realtime: {
-    staleTime: 5 * SECOND,      // Consider stale after 5 seconds (reduced from 10s for better responsiveness)
+    staleTime: 60 * SECOND,     // Consider stale after 60 seconds (optimized for dashboard performance)
     gcTime: getConfigValue('cacheTimeMinutes') * MINUTE, // Use configured cache time
-    refetchInterval: getConfigValue('queryRefreshIntervalSeconds') * SECOND, // Use configured refresh interval
+    refetchInterval: 90 * SECOND, // Refetch every 90 seconds (optimized, was 30s)
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   },
 
   // Near real-time data (updates every few minutes)
   nearRealtime: {
-    staleTime: 30 * SECOND,      // Consider stale after 30 seconds
+    staleTime: 120 * SECOND,    // Consider stale after 120 seconds (optimized for dashboard performance)
     gcTime: getConfigValue('cacheTimeMinutes') * MINUTE, // Use configured cache time
-    refetchInterval: Math.max(getConfigValue('queryRefreshIntervalSeconds') * 2, 60) * SECOND, // Double the interval, min 60s
+    refetchInterval: 180 * SECOND, // Refetch every 180 seconds (optimized, was 60s)
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   },

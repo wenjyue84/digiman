@@ -1,5 +1,5 @@
 import type { IncomingMessage, SendMessageFn, CallAPIFn } from './types.js';
-import { isEmergency } from './intents.js';
+import { isEmergency, classifyMessageWithContext } from './intents.js';
 import { setDynamicKnowledge, deleteDynamicKnowledge, listDynamicKnowledge, getStaticReply } from './knowledge.js';
 import { getOrCreate, addMessage, updateBookingState, updateWorkflowState, incrementUnknown, resetUnknown, updateLastIntent, checkRepeatIntent } from './conversation.js';
 import { detectMessageType } from './problem-detector.js';
@@ -7,9 +7,10 @@ import { checkRate } from './rate-limiter.js';
 import { detectLanguage, getTemplate, detectFullLanguage } from './formatter.js';
 import { escalateToStaff, shouldEscalate, handleStaffReply } from './escalation.js';
 import { handleBookingStep, createBookingState } from './booking.js';
-import { isAIAvailable, classifyAndRespond, translateText } from './ai-client.js';
+import { isAIAvailable, classifyAndRespond, classifyOnly, generateReplyOnly, translateText } from './ai-client.js';
 import { buildSystemPrompt, guessTopicFiles } from './knowledge-base.js';
 import { configStore } from './config-store.js';
+import { sendWhatsAppTypingIndicator } from '../lib/baileys-client.js';
 import { initWorkflowExecutor, executeWorkflowStep, createWorkflowState, forwardWorkflowSummary } from './workflow-executor.js';
 import { maybeWriteDiary } from './memory-writer.js';
 import type { ConversationEvent } from './memory-writer.js';
@@ -173,15 +174,154 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
     };
 
     if (isAIAvailable()) {
+      // Send typing indicator immediately (composing bubble in WhatsApp)
+      sendWhatsAppTypingIndicator(phone, msg.instanceId).catch(() => {});
+
       const topicFiles = guessTopicFiles(processText);
       _devMetadata.kbFiles = ['AGENTS.md', 'soul.md', 'memory.md', ...topicFiles];
       console.log(`[Router] KB files: [${topicFiles.join(', ')}]`);
       const systemPrompt = buildSystemPrompt(configStore.getSettings().system_prompt, topicFiles);
-      const result = await classifyAndRespond(
-        systemPrompt,
-        convo.messages.slice(0, -1),
-        processText
-      );
+
+      // Ack timer: send "thinking" message if LLM takes >3s
+      let ackSent = false;
+      const ackTimer = setTimeout(async () => {
+        ackSent = true;
+        try {
+          // Refresh typing indicator
+          await sendWhatsAppTypingIndicator(phone, msg.instanceId);
+          const ackText = getTemplate('thinking', lang);
+          await sendMessage(phone, ackText, msg.instanceId);
+          console.log(`[Router] Sent thinking ack to ${phone} (LLM taking >3s)`);
+        } catch { /* non-fatal */ }
+      }, 3000);
+
+      const settings = configStore.getSettings();
+      const routingMode = settings.routing_mode;
+      const isSplitModel = routingMode?.splitModel === true;
+      const isTiered = routingMode?.tieredPipeline === true;
+
+      let result: { intent: string; action: string; response: string; confidence: number; model?: string; responseTime?: number };
+
+      if (isTiered) {
+        // ─── T5 TIERED-HYBRID: Fuzzy→Semantic→LLM pipeline ───
+        const startTime = Date.now();
+        const tierResult = await classifyMessageWithContext(
+          processText,
+          convo.messages.slice(0, -1),
+          convo.lastIntent
+        );
+        const classifyTime = Date.now() - startTime;
+
+        const routingConfig = configStore.getRouting();
+        const route = routingConfig[tierResult.category];
+        const routedAction: string = route?.action || 'llm_reply';
+
+        // If caught by fuzzy/semantic (not LLM), we skip LLM for static routes
+        const caughtByFastTier = tierResult.source === 'fuzzy' || tierResult.source === 'semantic' || tierResult.source === 'regex';
+
+        if (caughtByFastTier && routedAction !== 'llm_reply' && routedAction !== 'reply') {
+          // Zero LLM calls — serve static/workflow directly
+          clearTimeout(ackTimer);
+          result = {
+            intent: tierResult.category,
+            action: routedAction,
+            response: '', // Static/workflow handler below will fill this
+            confidence: tierResult.confidence,
+            model: 'none (tiered)',
+            responseTime: classifyTime
+          };
+          _devMetadata.source = tierResult.source;
+          console.log(`[Router] T5 fast path: ${tierResult.source} → ${tierResult.category} (${classifyTime}ms, zero LLM)`);
+        } else {
+          // Need LLM for reply generation (either llm_reply route or LLM classification)
+          if (caughtByFastTier) {
+            // Classified by fast tier but needs LLM for reply
+            const replyResult = await generateReplyOnly(
+              systemPrompt,
+              convo.messages.slice(0, -1),
+              processText,
+              tierResult.category
+            );
+            clearTimeout(ackTimer);
+            result = {
+              intent: tierResult.category,
+              action: routedAction,
+              response: replyResult.response,
+              confidence: tierResult.confidence,
+              model: replyResult.model,
+              responseTime: classifyTime + (replyResult.responseTime || 0)
+            };
+            _devMetadata.source = `${tierResult.source}+llm-reply`;
+          } else {
+            // LLM tier — full classify+respond (fallback)
+            const llmResult = await classifyAndRespond(
+              systemPrompt,
+              convo.messages.slice(0, -1),
+              processText
+            );
+            clearTimeout(ackTimer);
+            result = {
+              intent: llmResult.intent,
+              action: llmResult.action,
+              response: llmResult.response,
+              confidence: llmResult.confidence,
+              model: llmResult.model,
+              responseTime: classifyTime + (llmResult.responseTime || 0)
+            };
+            _devMetadata.source = 'tiered-llm-fallback';
+          }
+        }
+      } else if (isSplitModel) {
+        // ─── T4 SPLIT-MODEL: Fast 8B classify, then conditional 70B reply ───
+        const classifyResult = await classifyOnly(
+          processText,
+          convo.messages.slice(0, -1),
+          routingMode?.classifyProvider
+        );
+        clearTimeout(ackTimer);
+
+        const routingConfig = configStore.getRouting();
+        const route = routingConfig[classifyResult.intent];
+        const routedAction: string = route?.action || 'llm_reply';
+
+        // Only call the full model for llm_reply routes
+        if (routedAction === 'llm_reply' || routedAction === 'reply') {
+          const replyResult = await generateReplyOnly(
+            systemPrompt,
+            convo.messages.slice(0, -1),
+            processText,
+            classifyResult.intent
+          );
+          result = {
+            intent: classifyResult.intent,
+            action: routedAction,
+            response: replyResult.response,
+            confidence: classifyResult.confidence,
+            model: `${classifyResult.model} → ${replyResult.model}`,
+            responseTime: (classifyResult.responseTime || 0) + (replyResult.responseTime || 0)
+          };
+          _devMetadata.source = 'split-model';
+        } else {
+          result = {
+            intent: classifyResult.intent,
+            action: routedAction,
+            response: '', // Static/workflow routes don't need LLM response
+            confidence: classifyResult.confidence,
+            model: classifyResult.model,
+            responseTime: classifyResult.responseTime
+          };
+          _devMetadata.source = 'split-model-fast';
+        }
+      } else {
+        // ─── DEFAULT (T1/T2/T3): Single LLM call for classify + respond ───
+        result = await classifyAndRespond(
+          systemPrompt,
+          convo.messages.slice(0, -1),
+          processText
+        );
+        clearTimeout(ackTimer);
+        _devMetadata.source = 'llm';
+      }
 
       // Store developer metadata
       _devMetadata.model = result.model;
@@ -195,7 +335,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       // Sub-intent detection + repeat check
       const messageType = detectMessageType(processText);
       const repeatCheck = checkRepeatIntent(phone, result.intent);
-      console.log(`[Router] Intent: ${result.intent} | Action: ${result.action} | Routed: ${routedAction} | msgType: ${messageType} | repeat: ${repeatCheck.count} | Confidence: ${result.confidence.toFixed(2)}`);
+      console.log(`[Router] Intent: ${result.intent} | Action: ${result.action} | Routed: ${routedAction} | msgType: ${messageType} | repeat: ${repeatCheck.count} | Confidence: ${result.confidence.toFixed(2)}${ackSent ? ' | ack sent' : ''}${isSplitModel ? ' | split-model' : ''}`);
 
       // Populate diary event with classification results
       _diaryEvent.intent = result.intent;
@@ -204,7 +344,6 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       _diaryEvent.confidence = result.confidence;
 
       // Update developer metadata
-      _devMetadata.source = 'llm'; // classifyAndRespond uses LLM
       _devMetadata.routedAction = routedAction;
 
       // Track intent for future repeat detection

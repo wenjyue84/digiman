@@ -25,7 +25,7 @@ const __dirname_main = dirname(__filename_main);
 dotenv.config();
 
 const app = express();
-const PORT = parseInt(process.env.MCP_SERVER_PORT || '3001', 10);
+const PORT = parseInt(process.env.MCP_SERVER_PORT || '3002', 10);
 
 // Middleware
 app.use(cors());
@@ -42,8 +42,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Rainbow Admin Dashboard (wildcard for client-side tab routing)
-app.get('/admin/rainbow/:tab?', (_req, res) => {
+// Rainbow Admin Dashboard - Root path only
+app.get('/', (_req, res) => {
   try {
     // Disable caching for better development experience
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -94,6 +94,22 @@ app.get('/admin/whatsapp-qr', async (req, res) => {
 
 // Rainbow Admin API
 app.use('/api/rainbow', adminRoutes);
+
+// Dashboard tab routes (SPA client-side routing)
+const dashboardTabs = ['status', 'intents', 'intent-manager', 'static-replies', 'kb', 'preview', 'real-chat', 'workflow', 'settings', 'testing', 'help'];
+app.get(`/:tab(${dashboardTabs.join('|')})`, (_req, res) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+
+    const html = readFileSync(join(__dirname_main, 'public', 'rainbow-admin.html'), 'utf-8');
+    res.type('html').send(html);
+  } catch {
+    res.status(500).send('Dashboard file not found');
+  }
+});
 
 // MCP protocol endpoint
 app.post('/mcp', createMCPHandler());

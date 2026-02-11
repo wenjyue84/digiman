@@ -108,11 +108,24 @@ See `docs/API-CONTRACT.md` for full inter-module API reference.
 
 | Problem | Solution |
 |---------|----------|
+| **Empty pages / Connection refused** | **Servers not running!** Check `netstat -ano \| findstr ":3000 :3002 :5000"` then start with `npm run dev` + `cd mcp-server && npm run dev` |
 | Port conflicts | `npm run dev:clean` |
 | Component cache stale | `rm -rf node_modules/.vite && npm run dev` |
 | DB schema mismatch | `npm run db:push` |
 | Import errors | Check `@` and `@shared` aliases in `vite.config.ts` |
 | MCP server white page | Check port 3002 is running, port matches `.env` |
+
+**CRITICAL STARTUP CHECKLIST:**
+1. Always verify servers are running BEFORE debugging UI issues
+2. Frontend + Backend: `npm run dev` (ports 3000 + 5000)
+3. MCP Server: `cd mcp-server && npm run dev` (port 3002)
+4. Wait 5-8 seconds after starting before testing
+5. Use `netstat` to confirm ports are listening
+
+**AUTO-START SOLUTIONS** (see `AUTO-START-GUIDE.md`):
+- 🥇 Start Page Bookmark - Beautiful dashboard with one-click start (2 min setup)
+- 🥈 Browser Extension - Auto-detect errors and inject start button (15 min setup)
+- 🥉 Windows Startup - Auto-start on login, zero manual steps (5 min setup)
 
 ## Skills Integration
 

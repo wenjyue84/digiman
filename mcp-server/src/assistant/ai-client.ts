@@ -298,7 +298,8 @@ export async function classifyIntent(
     { role: 'system', content: systemPrompt }
   ];
 
-  const recentHistory = history.slice(-20);
+  // Use only 5 recent messages for classification (less noise, faster)
+  const recentHistory = history.slice(-5);
   for (const msg of recentHistory) {
     messages.push({ role: msg.role, content: msg.content });
   }
@@ -421,6 +422,131 @@ function parseAIResponse(raw: string): AIResponse {
   } catch {
     return { intent: 'general', action: 'reply', response: raw, confidence: 0.5 };
   }
+}
+
+// ─── Split-Model: Classify-Only (fast 8B model) ─────────────────────
+
+export interface ClassifyOnlyResult {
+  intent: string;
+  confidence: number;
+  model?: string;
+  responseTime?: number;
+}
+
+/**
+ * Classify intent using a specific fast provider (e.g., groq-llama-8b).
+ * Returns only the classification — no response generation.
+ * Used by T4 Smart-Fast template to split classify (8B) from reply (70B).
+ */
+export async function classifyOnly(
+  text: string,
+  history: ChatMessage[] = [],
+  classifyProviderId?: string
+): Promise<ClassifyOnlyResult> {
+  if (!isAIAvailable()) {
+    return { intent: 'unknown', confidence: 0, model: 'none' };
+  }
+
+  const systemPrompt = await getSystemPrompt();
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: systemPrompt }
+  ];
+
+  const recentHistory = history.slice(-5);
+  for (const msg of recentHistory) {
+    messages.push({ role: msg.role, content: msg.content });
+  }
+  messages.push({ role: 'user', content: text });
+
+  const aiCfg = getAISettings();
+  const startTime = Date.now();
+
+  // Use specific provider if given, otherwise use T4 or default providers
+  const providerIds = classifyProviderId ? [classifyProviderId] : getT4ProviderIds();
+  const { content, provider } = await chatWithFallback(
+    messages,
+    aiCfg.max_classify_tokens,
+    aiCfg.classify_temperature,
+    true,
+    providerIds
+  );
+  const responseTime = Date.now() - startTime;
+
+  if (content) {
+    try {
+      const parsed = JSON.parse(content);
+      const routing = configStore.getRouting();
+      const definedIntents = Object.keys(routing);
+      const intent = typeof parsed.category === 'string' && definedIntents.includes(parsed.category)
+        ? parsed.category
+        : (typeof parsed.intent === 'string' && definedIntents.includes(parsed.intent)
+          ? parsed.intent
+          : 'general');
+      const confidence = typeof parsed.confidence === 'number'
+        ? Math.min(1, Math.max(0, parsed.confidence))
+        : 0.5;
+
+      return {
+        intent,
+        confidence,
+        model: provider?.name || provider?.model || 'unknown',
+        responseTime
+      };
+    } catch {
+      console.error('[AI] Failed to parse classifyOnly result:', content);
+    }
+  }
+
+  return { intent: 'unknown', confidence: 0, model: 'failed', responseTime };
+}
+
+/**
+ * Generate a reply for a known intent without re-classifying.
+ * Used by T4 Smart-Fast and T5 Tiered-Hybrid when classification is already done.
+ */
+export async function generateReplyOnly(
+  systemPrompt: string,
+  history: ChatMessage[],
+  userMessage: string,
+  intent: string
+): Promise<{ response: string; model?: string; responseTime?: number }> {
+  if (!isAIAvailable()) {
+    return { response: '', model: 'none' };
+  }
+
+  // Augment the system prompt to skip classification
+  const replyPrompt = systemPrompt + `\n\nThe user's intent has been classified as "${intent}". Generate a helpful response. Reply in the same language as the user. Respond with ONLY valid JSON: {"response":"<your reply>"}`;
+
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: replyPrompt }
+  ];
+
+  const recentHistory = history.slice(-10);
+  for (const msg of recentHistory) {
+    messages.push({ role: msg.role, content: msg.content });
+  }
+  messages.push({ role: 'user', content: userMessage });
+
+  const aiCfg = getAISettings();
+  const startTime = Date.now();
+  const { content, provider } = await chatWithFallback(messages, aiCfg.max_chat_tokens, aiCfg.chat_temperature, true);
+  const responseTime = Date.now() - startTime;
+
+  if (content) {
+    try {
+      const parsed = JSON.parse(content);
+      return {
+        response: typeof parsed.response === 'string' ? parsed.response : content,
+        model: provider?.name || provider?.model || 'unknown',
+        responseTime
+      };
+    } catch {
+      // Raw text response — use as-is
+      return { response: content, model: provider?.name || 'unknown', responseTime };
+    }
+  }
+
+  return { response: '', model: 'failed', responseTime };
 }
 
 // ─── Translation ───────────────────────────────────────────────────

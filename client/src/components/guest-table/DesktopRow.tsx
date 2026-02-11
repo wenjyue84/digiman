@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ListChildComponentProps } from "react-window";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ interface RowData {
   activeTokens: GuestToken[];
 }
 
-export function DesktopRow({ index, style, data }: ListChildComponentProps<RowData>) {
+export const DesktopRow = memo(function DesktopRow({ index, style, data }: ListChildComponentProps<RowData>) {
   const item = data.items[index];
   if (item.type === 'guest') {
     const guest = item.data as Guest;
@@ -235,4 +236,4 @@ export function DesktopRow({ index, style, data }: ListChildComponentProps<RowDa
       </div>
     );
   }
-}
+});

@@ -143,7 +143,7 @@ export default function SortableGuestTable() {
   
   const activeTokens = activeTokensResponse?.data || [];
 
-  // Get all capsules when showAllCapsules is enabled
+  // Get all capsules (used for both empty capsule display and WhatsApp export)
   const { data: allCapsulesResponse } = useVisibilityQuery<Array<{
     id: string;
     number: string;
@@ -159,26 +159,7 @@ export default function SortableGuestTable() {
     remark: string | null;
   }>>({
     queryKey: ["/api/capsules"],
-    enabled: showAllCapsules,
-    // Uses smart config: nearRealtime (30s stale, 60s refetch)
-  });
-
-  // Get all capsules for WhatsApp export (always enabled)
-  const { data: allCapsulesForExport } = useVisibilityQuery<Array<{
-    id: string;
-    number: string;
-    section: string;
-    isAvailable: boolean;
-    cleaningStatus: string;
-    toRent: boolean;
-    lastCleanedAt: string | null;
-    lastCleanedBy: string | null;
-    color: string | null;
-    purchaseDate: string | null;
-    position: string | null;
-    remark: string | null;
-  }>>({
-    queryKey: ["/api/capsules"],
+    // Always enabled (used for both empty capsule display and WhatsApp export)
     // Uses smart config: nearRealtime (30s stale, 60s refetch)
   });
 
@@ -196,8 +177,9 @@ export default function SortableGuestTable() {
     // Uses smart config: nearRealtime (30s stale, 60s refetch)
   });
   
+  // Use the same capsules data for both empty display and WhatsApp export
   const allCapsules = allCapsulesResponse || [];
-  const exportCapsules = allCapsulesForExport || [];
+  const exportCapsules = allCapsulesResponse || [];
 
   // Filters
   const [filters, setFilters] = useState({
@@ -293,11 +275,13 @@ export default function SortableGuestTable() {
     return null;
   };
 
-  // Create a combined list of guests, pending check-ins, and empty capsules
-  const combinedData = useMemo(() => {
+  // Create a combined and filtered list of guests, pending check-ins, and empty capsules
+  // Merged combinedData and filteredData into a single memo for better performance
+  const filteredData = useMemo(() => {
+    // 1. Build combined data (guests + pending + empty capsules)
     const guestData = guests.map(guest => ({ type: 'guest' as const, data: guest }));
-    const pendingData = activeTokens.map(token => ({ 
-      type: 'pending' as const, 
+    const pendingData = activeTokens.map(token => ({
+      type: 'pending' as const,
       data: {
         id: token.id,
         name: token.guestName || 'Pending Check-in',
@@ -307,16 +291,16 @@ export default function SortableGuestTable() {
         phoneNumber: token.phoneNumber,
       }
     }));
-    
+
     let data: Array<{ type: 'guest' | 'pending' | 'empty'; data: any }> = [...guestData, ...pendingData];
-    
+
     // Add empty capsules when showAllCapsules is enabled
     if (showAllCapsules && allCapsules.length > 0) {
       const occupiedCapsules = new Set([
         ...guests.map(g => g.capsuleNumber),
         ...activeTokens.map(t => t.capsuleNumber)
       ]);
-      
+
       const emptyCapsules = allCapsules
         .filter(capsule => !occupiedCapsules.has(capsule.number) && capsule.toRent !== false)
         .map(capsule => ({
@@ -353,16 +337,13 @@ export default function SortableGuestTable() {
             remark: capsule.remark,
           }
         }));
-      
+
       data = [...data, ...emptyCapsules];
     }
-    
-    return data;
-  }, [guests, activeTokens, showAllCapsules, allCapsules]);
 
-  const filteredData = useMemo(() => {
-    if (!combinedData.length) return [];
-    return combinedData.filter(item => {
+    // 2. Apply filters (no separate useMemo needed)
+    if (!data.length) return [];
+    return data.filter(item => {
       if (item.type !== 'guest') {
         // Hide pending rows when any guest-specific filter is active
         return !hasActiveGuestFilters;
@@ -378,7 +359,7 @@ export default function SortableGuestTable() {
       }
       return true;
     });
-  }, [combinedData, filters, hasActiveGuestFilters]);
+  }, [guests, activeTokens, showAllCapsules, allCapsules, filters, hasActiveGuestFilters]);
 
   const sortedData = useMemo(() => {
     if (!filteredData.length) return [];

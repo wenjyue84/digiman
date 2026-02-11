@@ -42,6 +42,12 @@ export interface AIProvider {
   priority: number;
 }
 
+export interface RoutingMode {
+  splitModel: boolean;
+  classifyProvider: string;
+  tieredPipeline: boolean;
+}
+
 export interface SettingsData {
   ai: {
     nvidia_model: string;
@@ -53,6 +59,7 @@ export interface SettingsData {
     chat_temperature: number;
     providers?: AIProvider[];
   };
+  routing_mode?: RoutingMode;
   system_prompt: string;
   rate_limits: {
     per_minute: number;

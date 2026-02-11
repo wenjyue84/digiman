@@ -57,7 +57,7 @@ mcp-server/
 cd mcp-server
 npm install
 cp .env.example .env    # Edit: add API token, set port
-npm run dev             # Starts on port from .env (default 3001, typically 3002)
+npm run dev             # Starts on port from .env (default 3002)
 ```
 
 ### Environment Variables
@@ -66,7 +66,7 @@ npm run dev             # Starts on port from .env (default 3001, typically 3002
 |----------|----------|-------------|
 | `PELANGI_API_URL` | Yes | PelangiManager API (e.g., `https://pelangi.zeabur.app`) |
 | `PELANGI_API_TOKEN` | Yes | Admin API token from Settings > Security |
-| `MCP_SERVER_PORT` | No | Server port (default: 3001) |
+| `MCP_SERVER_PORT` | No | Server port (default: 3002) |
 | `NVIDIA_API_KEY` | No | For Kimi K2.5 AI provider |
 | `OPENROUTER_API_KEY` | No | For OpenRouter free models |
 | `NODE_ENV` | No | `production` or `development` |
@@ -120,7 +120,7 @@ The WhatsApp AI assistant handles guest inquiries automatically:
 - **Multi-language**: English, Malay, Chinese, Japanese support
 - **Workflows**: Multi-step booking, complaint escalation, payment forwarding
 - **Knowledge base**: RAG-powered answers from `.rainbow-kb/` files
-- **Admin dashboard**: `http://localhost:3002/admin/rainbow` (Settings, Intents, Workflows, KB, Testing)
+- **Admin dashboard**: `http://localhost:3002` (Settings, Intents, Workflows, KB, Testing)
 
 ### AI Providers (configured in admin dashboard)
 
