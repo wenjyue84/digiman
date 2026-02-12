@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rainbow Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+            success: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d' },
+            warning: { 50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309', 800: '#92400e', 900: '#78350f' },
+            danger: { 50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5', 400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c', 800: '#991b1b', 900: '#7f1d1d' },
+            neutral: { 50: '#fafafa', 100: '#f5f5f5', 200: '#e5e5e5', 300: '#d4d4d4', 400: '#a3a3a3', 500: '#737373', 600: '#525252', 700: '#404040', 800: '#262626', 900: '#171717' }
+          },
+          boxShadow: {
+            'soft': '0 2px 8px 0 rgba(0, 0, 0, 0.05)',
+            'medium': '0 4px 12px 0 rgba(0, 0, 0, 0.08)',
+            'strong': '0 8px 24px 0 rgba(0, 0, 0, 0.12)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+            success: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d' },
+            warning: { 50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309', 800: '#92400e', 900: '#78350f' },
+            danger: { 50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5', 400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c', 800: '#991b1b', 900: '#7f1d1d' },
+            neutral: { 50: '#fafafa', 100: '#f5f5f5', 200: '#e5e5e5', 300: '#d4d4d4', 400: '#a3a3a3', 500: '#737373', 600: '#525252', 700: '#404040', 800: '#262626', 900: '#171717' }
+          },
+          boxShadow: {
+            'soft': '0 2px 8px 0 rgba(0, 0, 0, 0.05)',
+            'medium': '0 4px 12px 0 rgba(0, 0, 0, 0.08)',
+            'strong': '0 8px 24px 0 rgba(0, 0, 0, 0.12)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Rainbow Dashboard Styles -->
+  <link rel="stylesheet" href="/public/css/rainbow-styles.css">
+</head>
+<body class="bg-neutral-50 min-h-screen">
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+<!-- Header -->
+<header class="bg-white border-b shadow-soft">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">🌈</span>
+      <h1 class="text-xl font-bold text-neutral-800">Rainbow</h1>
+      <span id="wa-badge" class="text-xs px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600">...</span>
+    </div>
+    <button onclick="reloadConfig()" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl transition">Reload Config</button>
+  </div>
+</header>
+
+<!-- Tabs -->
+<nav class="bg-white border-b">
+  <div class="max-w-6xl mx-auto px-4 flex gap-2 items-center py-2">
+    <button class="tab-btn tab-active px-4 py-3 text-sm whitespace-nowrap transition" data-tab="status">Status</button>
+
+    <!-- Intent & Routing Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('intent-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-primary-600 hover:bg-primary-50 rounded-lg transition">
+        Intent & Routing
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="intent-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition" data-tab="intent-manager" onclick="closeAllDropdowns()">Classify Intent</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition" data-tab="intents" onclick="closeAllDropdowns()">Intents & Routing</button>
+      </div>
+    </div>
+
+    <!-- Response Management Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('response-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-success-600 hover:bg-success-50 rounded-lg transition">
+        Response Management
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="response-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-success-50 hover:text-success-600 transition" data-tab="static-replies" onclick="closeAllDropdowns()">Static Messages</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-success-50 hover:text-success-600 transition" data-tab="workflow" onclick="closeAllDropdowns()">Workflow</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-success-50 hover:text-success-600 transition" data-tab="kb" onclick="closeAllDropdowns()">Knowledge Base</button>
+      </div>
+    </div>
+
+    <!-- Testing & Preview Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('testing-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-warning-600 hover:bg-warning-50 rounded-lg transition">
+        Testing & Preview
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="testing-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-warning-50 hover:text-warning-600 transition" data-tab="preview" onclick="closeAllDropdowns()">Preview</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-warning-50 hover:text-warning-600 transition" data-tab="real-chat" onclick="closeAllDropdowns()">Real Chat</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-warning-50 hover:text-warning-600 transition" data-tab="testing" onclick="closeAllDropdowns()">Run Tests</button>
+      </div>
+    </div>
+
+    <!-- Utilities Dropdown -->
+    <div class="relative">
+      <button onclick="toggleDropdown('utilities-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-neutral-600 hover:bg-neutral-50 rounded-lg transition">
+        Utilities
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </button>
+      <div id="utilities-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-600 transition" data-tab="settings" onclick="closeAllDropdowns()">Settings</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-600 transition" data-tab="feedback-stats" onclick="closeAllDropdowns()">📊 Feedback</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-600 transition" data-tab="intent-accuracy" onclick="closeAllDropdowns()">🎯 Intent Accuracy</button>
+        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-600 transition" data-tab="help" onclick="closeAllDropdowns()">❓ Help</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Content -->
+<main class="max-w-6xl mx-auto px-4 py-6">
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Status Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-status" class="tab-content">
+    <!-- WhatsApp Instances (Most Important) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-2xl border p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-neutral-700">WhatsApp Instances</h3>
+          <button onclick="showAddInstance()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-2 py-1 rounded transition">+ Add Number</button>
+        </div>
+        <div id="wa-instances" class="space-y-2 text-sm text-neutral-600">Loading...</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-5">
+        <h3 class="font-semibold text-neutral-700 mb-3">AI Availability</h3>
+        <div id="ai-status" class="space-y-2 text-sm text-neutral-600">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Server Status -->
+    <div class="mb-4 bg-white rounded-2xl border p-5">
+      <h3 class="font-semibold text-neutral-700 mb-3">🖥️ Server Status</h3>
+      <div id="server-status" class="grid grid-cols-1 md:grid-cols-3 gap-4">Loading...</div>
+    </div>
+
+    <div class="bg-white rounded-2xl border p-5">
+      <h3 class="font-semibold text-neutral-700 mb-3">Config Files</h3>
+      <div id="config-files" class="flex flex-wrap gap-2 text-sm"></div>
+    </div>
+
+
+    <!-- Add Instance Modal -->
+    <div id="add-instance-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-sm mx-4">
+        <h3 class="text-lg font-semibold mb-4">Add WhatsApp Number</h3>
+        <form id="add-instance-form" onsubmit="submitAddInstance(event)">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Phone Number</label>
+            <div class="flex items-center gap-1">
+              <span class="text-sm text-neutral-500 font-medium">+60</span>
+              <input id="add-inst-phone" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="167052004" inputmode="numeric" required
+                title="Malaysian phone number without leading 0 or country code" oninput="onPhoneInput(this)" />
+            </div>
+            <p id="add-inst-phone-hint" class="text-xs text-neutral-400 mt-1">Enter the number without leading 0. Example: <b>167052004</b> for 016-705 2004</p>
+            <p id="add-inst-phone-error" class="text-xs text-danger-500 mt-1 hidden"></p>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Label <span class="text-neutral-400 font-normal">(optional)</span></label>
+            <input id="add-inst-label" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="e.g. Front Desk, Reception" />
+          </div>
+          <div id="add-inst-preview" class="hidden mb-4 bg-neutral-50 rounded-2xl p-3 text-xs text-neutral-600">
+            <div>Instance ID: <code id="add-inst-preview-id" class="font-mono text-primary-600"></code></div>
+            <div>Label: <span id="add-inst-preview-label" class="font-medium"></span></div>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('add-instance-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" id="add-inst-submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Create & Connect</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qr-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-sm mx-4 text-center">
+        <h3 class="text-lg font-semibold mb-2">Scan QR Code</h3>
+        <p id="qr-modal-label" class="text-sm text-neutral-500 mb-4"></p>
+        <div id="qr-modal-content" class="mb-4"><div class="spinner mx-auto"></div></div>
+        <p class="text-xs text-neutral-500 mb-4">Open WhatsApp → Linked Devices → Link a Device</p>
+        <button onclick="closeQRModal()" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Close</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Intent Manager Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-intent-manager" class="tab-content hidden">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Classify Intent</h2>
+      <p class="text-sm text-neutral-500">Manage keywords, training examples, and test the 4-tier intent classification system.</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">Total Intents</div>
+        <div id="im-stat-intents" class="text-2xl font-bold text-neutral-800">-</div>
+      </div>
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">Total Keywords</div>
+        <div id="im-stat-keywords" class="text-2xl font-bold text-primary-600">-</div>
+      </div>
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">Total Examples</div>
+        <div id="im-stat-examples" class="text-2xl font-bold text-success-600">-</div>
+      </div>
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">System</div>
+        <div class="text-xs font-mono text-neutral-600">Fuzzy + Semantic + LLM</div>
+      </div>
+    </div>
+
+    <!-- Template Selector -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 class="font-semibold text-neutral-700">⚙️ Configuration Templates</h3>
+          <p class="text-sm text-neutral-500">Pre-optimized settings for different use cases. Based on industry research.</p>
+        </div>
+        <button onclick="toggleTemplateHelp()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+          ℹ️ Template Guide
+        </button>
+      </div>
+
+      <!-- Template Help (Hidden by default) -->
+      <div id="template-help" class="hidden bg-neutral-50 rounded-xl p-4 mb-4 text-sm">
+        <div class="font-semibold text-neutral-700 mb-2">📖 Template Selection Guide</div>
+        <div class="space-y-1 text-neutral-600 text-xs">
+          <div><strong>T1 Maximum Quality:</strong> Best accuracy (95-98%), slowest (2-5s), highest cost. For premium service.</div>
+          <div><strong>T2 High Performance:</strong> Fastest (0.5-1s), lowest cost, good accuracy (88-92%). For high volume.</div>
+          <div><strong>T3 Balanced:</strong> Default. Good balance (92-95%), moderate speed (1-2s), moderate cost.</div>
+          <div><strong>T4 Smart-Fast:</strong> Optimized for WhatsApp real-time chat (90-93%), fast (0.8-1.5s).</div>
+          <div><strong>T5 Tiered-Hybrid:</strong> Research-backed optimal (91-94%), cascading tiers, 95%+ early exit.</div>
+          <div><strong>T6 Emergency-Optimized:</strong> For 24/7 operations, security-critical, theft/complaints.</div>
+          <div><strong>T7 Multi-Language:</strong> For Chinese/Malay heavy, international hostel (89-93%).</div>
+        </div>
+      </div>
+
+      <!-- Template Buttons -->
+      <div class="flex flex-wrap gap-2 mb-4" id="intent-template-buttons">
+        <button onclick="applyIntentTemplate('t1-quality', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T1 Maximum Quality</div>
+          <div class="text-xs text-neutral-500">95-98% · 2-5s · Highest cost</div>
+        </button>
+        <button onclick="applyIntentTemplate('t2-performance', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T2 High Performance</div>
+          <div class="text-xs text-neutral-500">88-92% · 0.5-1s · Lowest cost</div>
+        </button>
+        <button onclick="applyIntentTemplate('t3-balanced', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T3 Balanced ⭐</div>
+          <div class="text-xs text-neutral-500">92-95% · 1-2s · Default</div>
+        </button>
+        <button onclick="applyIntentTemplate('t4-smart-fast', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T4 Smart-Fast</div>
+          <div class="text-xs text-neutral-500">90-93% · 0.8-1.5s · Optimized</div>
+        </button>
+        <button onclick="applyIntentTemplate('t5-tiered-hybrid', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T5 Tiered-Hybrid 🏆</div>
+          <div class="text-xs text-neutral-500">91-94% · 0.5-1.2s · Research-backed</div>
+        </button>
+        <button onclick="applyIntentTemplate('t6-emergency', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T6 Emergency</div>
+          <div class="text-xs text-neutral-500">90-95% · 1.5-3s · 24/7 ops</div>
+        </button>
+        <button onclick="applyIntentTemplate('t7-multilang', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T7 Multi-Language</div>
+          <div class="text-xs text-neutral-500">89-93% · 1.5-2.5s · CJK focus</div>
+        </button>
+      </div>
+
+      <!-- Current Template Indicator -->
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-neutral-500">Current:</span>
+        <span id="current-template-label" class="font-semibold text-primary-600">T3 Balanced</span>
+        <span class="text-neutral-300">·</span>
+        <button onclick="saveCurrentAsCustom()" class="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+          <span>💾</span> Save as Custom
+        </button>
+      </div>
+    </div>
+
+    <!-- Test Console -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">🧪 Test Console</h3>
+      <p class="text-sm text-neutral-500 mb-3">Test intent classification with instant results. Shows which tier matched: <span class="font-mono text-xs">🚨 T1 Regex</span> (~0.1ms), <span class="font-mono text-xs">⚡ T2 Fuzzy</span> (~1ms), <span class="font-mono text-xs">🔬 T3 Semantic</span> (~50ms), or <span class="font-mono text-xs">🧠 T4 LLM</span> (fallback).</p>
+      <div class="flex gap-2 mb-3">
+        <input id="im-test-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="e.g., 'wifi password', 'tq', 'how much is it'" onkeydown="if(event.key==='Enter')testIntentManager()" />
+        <button onclick="testIntentManager()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl transition">Test</button>
+      </div>
+      <div id="im-test-result" class="hidden">
+        <div class="bg-neutral-50 rounded-2xl p-4 text-sm space-y-2">
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Intent:</span>
+            <span id="im-test-intent" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Confidence:</span>
+            <span id="im-test-confidence" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Source:</span>
+            <span id="im-test-source" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Language:</span>
+            <span id="im-test-language" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Matched:</span>
+            <span id="im-test-matched" class="text-neutral-600"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T1: Emergency Regex Patterns -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🚨 T1 Emergency Patterns (Regex)
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>Regex Patterns:</strong> Instant pattern matching (~0.1ms) for critical emergency keywords.
+            <br><br>
+            <strong>Best for:</strong> Emergency detection (fire, ambulance, theft), strict patterns that must trigger immediately.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t1')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t1-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-neutral-500">Enable</span>
+            <input type="checkbox" id="tier1-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+          </label>
+        </div>
+      </div>
+
+      <div id="t1-content" class="hidden space-y-3">
+        <div class="text-sm text-neutral-500 mb-3">
+          Add regex patterns for emergency detection. These patterns are checked first before any other tier.
+        </div>
+
+        <div class="border rounded-2xl p-4">
+          <div class="text-xs font-semibold text-neutral-500 mb-2">EMERGENCY PATTERNS</div>
+          <div id="im-regex-list" class="space-y-2 mb-3">
+            <!-- Regex patterns will be loaded here -->
+          </div>
+          <div class="flex gap-2">
+            <input id="im-regex-pattern" class="flex-1 border rounded-2xl px-3 py-2 text-sm font-mono" placeholder="/pattern/i (e.g., /fire|kebakaran|着火/i)" />
+            <input id="im-regex-description" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Description (e.g., Fire emergency)" />
+            <button onclick="addRegexPattern()" class="text-sm bg-danger-500 hover:bg-danger-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+          </div>
+          <div class="text-xs text-neutral-500 mt-2">
+            ⚠️ Use regex syntax: <code class="bg-neutral-100 px-1">/pattern/flags</code>. Common flags: <code class="bg-neutral-100 px-1">i</code> (case-insensitive), <code class="bg-neutral-100 px-1">g</code> (global).
+          </div>
+
+          <div class="mt-4 pt-4 border-t">
+            <button onclick="saveRegexPatterns()" class="bg-danger-500 hover:bg-danger-600 text-white px-4 py-2 rounded-2xl text-sm">Save Patterns</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T2: Keywords Editor -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          ⚡ T2 Keywords (Fuzzy Matching)
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>Fuzzy Matching:</strong> Fast keyword matching with typo tolerance (~1ms). Matches "wifi", "wfi", "WiFi", "wiifi" as the same.
+            <br><br>
+            <strong>Best for:</strong> Direct keywords, abbreviations (e.g., "tq"), and handling typos.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t2')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t2-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-neutral-500">Enable</span>
+            <input type="checkbox" id="tier2-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+          </label>
+          <div class="flex gap-2">
+            <button onclick="exportIntentData('json')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export JSON</button>
+            <button onclick="exportIntentData('csv')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export CSV</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="t2-content" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Intent List -->
+        <div class="border rounded-2xl p-3 overflow-y-auto max-h-96">
+          <div class="text-xs font-semibold text-neutral-500 mb-2">SELECT INTENT</div>
+          <div id="im-intent-list" class="space-y-1">Loading...</div>
+        </div>
+
+        <!-- Keyword Editor -->
+        <div class="md:col-span-3 border rounded-2xl p-4">
+          <div id="im-keyword-editor" class="hidden">
+            <div class="mb-3">
+              <div class="text-sm font-semibold text-neutral-700 mb-2">Editing: <span id="im-current-intent" class="text-primary-600"></span></div>
+
+              <!-- T2 Threshold Override -->
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-medium text-neutral-700">T2 Fuzzy Threshold Override (Optional)</label>
+                  <button id="im-t2-reset-btn" onclick="resetTierThreshold('t2')" class="text-xs text-primary-600 hover:text-primary-700 font-medium hidden">Reset to Default</button>
+                </div>
+                <div class="flex items-center gap-3">
+                  <input
+                    id="im-t2-threshold"
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    placeholder="Use default (0.80)"
+                    class="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                    onchange="handleTierThresholdChange('t2', this.value)"
+                  />
+                  <span class="text-xs text-neutral-500" id="im-t2-status">Using default: 0.80</span>
+                </div>
+                <div class="text-xs text-neutral-500 mt-2">
+                  Leave empty to use global T2 Fuzzy threshold (0.80). Override only if this intent needs stricter/looser fuzzy matching.
+                </div>
+              </div>
+
+              <!-- Language Tabs -->
+              <div class="flex gap-2 mb-3 border-b">
+                <button class="im-lang-tab px-3 py-2 text-sm border-b-2 border-primary-500 font-medium" data-lang="en">English</button>
+                <button class="im-lang-tab px-3 py-2 text-sm text-neutral-500" data-lang="ms">Malay</button>
+                <button class="im-lang-tab px-3 py-2 text-sm text-neutral-500" data-lang="zh">Chinese</button>
+              </div>
+
+              <!-- Keywords -->
+              <div id="im-keywords-en" class="im-keywords-lang">
+                <div class="text-xs text-neutral-500 mb-2">EN Keywords (<span id="im-count-en">0</span>)</div>
+                <div id="im-keyword-list-en" class="flex flex-wrap gap-2 mb-3"><!-- keywords here --></div>
+                <div class="flex gap-2">
+                  <input id="im-keyword-input-en" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add keyword..." onkeydown="if(event.key==='Enter')addKeyword('en')" />
+                  <button onclick="addKeyword('en')" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+                </div>
+              </div>
+
+              <div id="im-keywords-ms" class="im-keywords-lang hidden">
+                <div class="text-xs text-neutral-500 mb-2">MS Keywords (<span id="im-count-ms">0</span>)</div>
+                <div id="im-keyword-list-ms" class="flex flex-wrap gap-2 mb-3"><!-- keywords here --></div>
+                <div class="flex gap-2">
+                  <input id="im-keyword-input-ms" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add keyword..." onkeydown="if(event.key==='Enter')addKeyword('ms')" />
+                  <button onclick="addKeyword('ms')" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+                </div>
+              </div>
+
+              <div id="im-keywords-zh" class="im-keywords-lang hidden">
+                <div class="text-xs text-neutral-500 mb-2">ZH Keywords (<span id="im-count-zh">0</span>)</div>
+                <div id="im-keyword-list-zh" class="flex flex-wrap gap-2 mb-3"><!-- keywords here --></div>
+                <div class="flex gap-2">
+                  <input id="im-keyword-input-zh" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add keyword..." onkeydown="if(event.key==='Enter')addKeyword('zh')" />
+                  <button onclick="addKeyword('zh')" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t">
+                <button onclick="saveKeywords()" class="bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl text-sm">Save Keywords</button>
+              </div>
+            </div>
+          </div>
+          <div id="im-keyword-empty" class="text-center text-neutral-400 py-8">
+            ← Select an intent to edit keywords
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T3: Training Examples Editor -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🔬 T3 Training Examples (Semantic Matching)
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>Semantic Matching:</strong> AI-powered meaning-based matching (~50ms). Understands paraphrases: "what's the cost" = "how much" = "tell me the price".
+            <br><br>
+            <strong>Best for:</strong> Different phrasings with same meaning, synonyms, and natural language variations.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t3')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t3-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-neutral-500">Enable</span>
+            <input type="checkbox" id="tier3-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+          </label>
+        </div>
+      </div>
+
+      <div id="t3-content" class="hidden">
+        <p class="text-sm text-neutral-500 mb-3">Add example phrases for semantic similarity matching. Server restart required after changes.</p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Intent List -->
+        <div class="border rounded-2xl p-3 overflow-y-auto max-h-96">
+          <div class="text-xs font-semibold text-neutral-500 mb-2">SELECT INTENT</div>
+          <div id="im-example-intent-list" class="space-y-1">Loading...</div>
+        </div>
+
+        <!-- Examples Editor -->
+        <div class="md:col-span-3 border rounded-2xl p-4">
+          <div id="im-examples-editor" class="hidden">
+            <div class="mb-3">
+              <div class="text-sm font-semibold text-neutral-700 mb-3">Training Examples for: <span id="im-current-example-intent" class="text-success-600"></span></div>
+
+              <!-- T3 Threshold Override -->
+              <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-medium text-neutral-700">T3 Semantic Threshold Override (Optional)</label>
+                  <button id="im-t3-reset-btn" onclick="resetTierThreshold('t3')" class="text-xs text-primary-600 hover:text-primary-700 font-medium hidden">Reset to Default</button>
+                </div>
+                <div class="flex items-center gap-3">
+                  <input
+                    id="im-t3-threshold"
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    placeholder="Use default (0.70)"
+                    class="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                    onchange="handleTierThresholdChange('t3', this.value)"
+                  />
+                  <span class="text-xs text-neutral-500" id="im-t3-status">Using default: 0.70</span>
+                </div>
+                <div class="text-xs text-neutral-500 mt-2">
+                  Leave empty to use global T3 Semantic threshold (0.70). Override only if this intent needs stricter/looser semantic matching.
+                </div>
+              </div>
+
+              <div class="text-xs text-neutral-500 mb-2">Examples (<span id="im-example-count">0</span>)</div>
+              <div id="im-example-list" class="flex flex-wrap gap-2 mb-3"><!-- examples here --></div>
+              <div class="flex gap-2">
+                <input id="im-example-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add training example..." onkeydown="if(event.key==='Enter')addExample()" />
+                <button onclick="addExample()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+              </div>
+
+              <div class="mt-4 pt-4 border-t">
+                <button onclick="saveExamples()" class="bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl text-sm">Save Examples</button>
+                <p class="text-xs text-warning-600 mt-2">⚠️ Server restart required to reload semantic matcher</p>
+              </div>
+            </div>
+          </div>
+          <div id="im-examples-empty" class="text-center text-neutral-400 py-8">
+            ← Select an intent to edit examples
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- T4: LLM Settings -->
+    <div class="bg-white border rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🧠 T4 LLM Fallback Settings
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>LLM Fallback:</strong> Full AI classification for complex queries (~100-500ms). Used when other tiers don't match.
+            <br><br>
+            <strong>Best for:</strong> Complex conversational queries, ambiguous intents, and handling edge cases.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t4')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t4-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-not-allowed opacity-70">
+            <span class="text-sm text-neutral-500">Always Enabled</span>
+            <input type="checkbox" id="tier4-enabled" class="tier-toggle w-10 h-6 bg-primary-500 rounded-full relative appearance-none cursor-not-allowed" checked disabled />
+          </label>
+        </div>
+      </div>
+
+      <div id="t4-content" class="hidden">
+        <p class="text-sm text-neutral-500 mb-4">Configure LLM behavior when regex, fuzzy, and semantic tiers don't match.</p>
+        <div class="space-y-4">
+        <!-- Confidence Thresholds -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3">Confidence Thresholds</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">T2 Fuzzy Threshold</label>
+              <input id="llm-threshold-fuzzy" type="number" step="0.05" min="0" max="1" value="0.80" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.80 (80%)</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">T3 Semantic Threshold</label>
+              <input id="llm-threshold-semantic" type="number" step="0.05" min="0" max="1" value="0.70" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.70 (70%)</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">T4 LLM Threshold</label>
+              <input id="llm-threshold-llm" type="number" step="0.05" min="0" max="1" value="0.60" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.60 (60%)</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">Layer 2 Response Quality Threshold</label>
+              <input id="llm-threshold-layer2" type="number" step="0.05" min="0" max="1" value="0.80" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.80 - Triggers smartest LLM + 2x context if below</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T4 Provider Selection -->
+        <div class="border rounded-2xl p-4">
+          <!-- Header with Breadcrumb -->
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold text-neutral-700 mb-1 flex items-center gap-2">
+                T4 LLM Providers (Fallback Order)
+              </h4>
+              <div class="flex items-center gap-1 text-xs text-neutral-400">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Providers configured in</span>
+                <a href="#" onclick="switchTab('settings');scrollToProviders();return false" class="text-primary-500 hover:text-primary-600 underline font-medium">
+                  Settings → AI Providers
+                </a>
+              </div>
+            </div>
+            <button onclick="switchTab('settings');scrollToProviders();return false" class="text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              Manage Providers
+            </button>
+          </div>
+
+          <!-- Provider Status Summary -->
+          <div id="t4-provider-status" class="bg-neutral-50 rounded-lg px-3 py-2 mb-3 text-xs text-neutral-600 flex items-center gap-2">
+            <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span id="t4-provider-status-text">Loading provider status...</span>
+          </div>
+
+          <p class="text-xs text-neutral-400 mb-3">Select which providers to use for T4 classification. If none selected, all enabled providers will be used in priority order.</p>
+          <div id="t4-providers-list" class="space-y-2 mb-4">
+            <p class="text-sm text-neutral-400 italic">Loading providers...</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">Max Tokens</label>
+              <input id="llm-max-tokens" type="number" value="500" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">Temperature</label>
+              <input id="llm-temperature" type="number" step="0.1" min="0" max="2" value="0.3" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Lower = more focused, Higher = more creative</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Prompt -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3">Intent Classification System Prompt</h4>
+          <textarea id="llm-system-prompt" rows="6" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="Enter system prompt for intent classification..."></textarea>
+          <div class="text-xs text-neutral-400 mt-1">
+            This prompt guides the LLM on how to classify intents. Include available intent categories and classification rules.
+          </div>
+        </div>
+
+        <!-- Fallback Behavior -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3">Fallback Behavior</h4>
+          <div class="space-y-3">
+            <div>
+              <label class="flex items-center gap-2">
+                <input id="llm-fallback-unknown" type="checkbox" checked class="rounded" />
+                <span class="text-sm">Return "unknown" intent if confidence is below threshold</span>
+              </label>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input id="llm-log-failures" type="checkbox" checked class="rounded" />
+                <span class="text-sm">Log classification failures for analysis</span>
+              </label>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input id="llm-enable-context" type="checkbox" checked class="rounded" />
+                <span class="text-sm">Include conversation context in LLM classification</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Response Confidence Scoring -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2">
+            🎯 Response Confidence Scoring
+            <span class="text-xs font-normal text-neutral-400">(Hallucination Prevention)</span>
+          </h4>
+          <p class="text-xs text-neutral-500 mb-4">
+            When LLM confidence is low, automatically add disclaimers or escalate to staff. Helps prevent sending wrong information to guests.
+          </p>
+
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">
+                Very Low Confidence Threshold
+                <span class="text-neutral-400">(&lt; value = escalate)</span>
+              </label>
+              <input id="llm-threshold-low-confidence" type="number" step="0.05" min="0" max="1" value="0.5" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Below this: escalate + add disclaimer</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">
+                Low Confidence Threshold
+                <span class="text-neutral-400">(&lt; value = disclaimer)</span>
+              </label>
+              <input id="llm-threshold-medium-confidence" type="number" step="0.05" min="0" max="1" value="0.7" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Below this: add disclaimer only</div>
+            </div>
+          </div>
+
+          <div class="bg-neutral-50 rounded-lg p-3">
+            <p class="text-xs font-medium text-neutral-600 mb-2">📝 Disclaimer Messages</p>
+            <p class="text-xs text-neutral-500">
+              Edit disclaimer messages in <button onclick="switchTab('static-replies');setTimeout(() => scrollToElement('static-warnings'), 300);" class="text-primary-500 hover:text-primary-600 underline font-medium">Static Replies</button> → Search for:
+            </p>
+            <ul class="text-xs text-neutral-600 mt-1 ml-4 space-y-0.5">
+              <li>• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_very_low</code> - For very low confidence (&lt;0.5)</li>
+              <li>• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_low</code> - For low confidence (0.5-0.7)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t">
+          <button onclick="saveLLMSettings()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl text-sm">Save LLM Settings</button>
+        </div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Intents & Routing Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-intents" class="tab-content hidden">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Intents & Routing</h2>
+      <p class="text-sm text-neutral-500">Define intents the LLM classifies into, and control how each one is handled.</p>
+    </div>
+
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">Architecture</h3>
+      <div class="text-sm text-neutral-600 space-y-1">
+        <p>1. <span class="font-mono text-danger-600">Emergency regex</span> — fire, stolen, assault → instant staff escalation</p>
+        <p>2. <span class="font-mono text-primary-600">LLM classifies intent</span> from the defined list below</p>
+        <p>3. <span class="font-mono text-success-600">Routing rule</span> determines handling: static reply, LLM response, or workflow (booking, escalation, payment, etc.)</p>
+      </div>
+    </div>
+
+    <!-- Test Classifier -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">Test Classifier</h3>
+      <p class="text-sm text-neutral-500 mb-3">Send a test message to see how Rainbow classifies it and which routing rule applies.</p>
+      <div class="flex gap-2 mb-3">
+        <input id="test-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Type a guest message, e.g. 'what's the wifi password?'" onkeydown="if(event.key==='Enter')testClassifier()" />
+        <button onclick="testClassifier()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl transition">Test</button>
+      </div>
+      <div id="test-result" class="hidden">
+        <div class="bg-neutral-50 rounded-2xl p-4 text-sm space-y-2">
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Intent:</span>
+            <span id="test-intent" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Detection:</span>
+            <span id="test-source" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Action:</span>
+            <span id="test-action" class="font-mono text-primary-600"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Routed To:</span>
+            <span id="test-routed" class="font-mono text-success-700 font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Confidence:</span>
+            <span id="test-confidence" class="font-medium"></span>
+          </div>
+          <div class="mt-2 pt-2 border-t">
+            <span class="text-neutral-500 block mb-1">Response:</span>
+            <div id="test-response" class="whitespace-pre-wrap text-neutral-800"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Routing Templates -->
+    <div class="bg-white border rounded-2xl p-4 mb-4">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <div>
+          <h3 class="font-semibold text-neutral-700 text-sm">Routing Templates</h3>
+          <p class="text-xs text-neutral-400">Quickly switch all intent routing at once</p>
+        </div>
+        <button onclick="showSaveTemplateModal()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Save New Template</button>
+      </div>
+      <div id="template-buttons-container" class="flex items-center gap-2 flex-wrap">
+        <!-- Templates will be rendered here dynamically -->
+      </div>
+      <div id="template-indicator" class="hidden mt-2 text-xs text-neutral-500"></div>
+    </div>
+
+    <!-- Intent Table -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700">Intent Routing Table</h3>
+        <button onclick="showAddIntent()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Add Intent</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-left text-neutral-500">
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Intent
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    The intent category name used for message classification (e.g., "greeting", "booking", "complaint")
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Enabled
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Whether this intent is active in the classifier. Disabled intents will not be matched against incoming messages.
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Routing
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    How messages with this intent are handled: Static Reply (pre-written response), LLM Reply (AI-generated response), or Workflow (multi-step process)
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Min Confidence
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-72 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Minimum confidence score (0-1) required for the classifier to accept this intent. Lower = easier to trigger (use for safety-critical intents like theft). Higher = stricter matching (use for ambiguous intents).
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Static Reply?
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Shows if a pre-written static reply exists in the knowledge base for this intent. Warnings appear if routing doesn't match availability.
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Actions
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-48 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Delete this intent and its routing configuration
+                  </span>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="intents-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add Intent Modal -->
+    <div id="add-intent-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Add Intent</h3>
+        <form onsubmit="submitAddIntent(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Category (snake_case)</label>
+            <input id="add-i-category" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g. breakfast_info" />
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Routing Action</label>
+            <select id="add-i-routing" class="w-full border rounded-2xl px-3 py-2 text-sm" onchange="onAddIntentRoutingChange(this.value)">
+              <option value="llm_reply">LLM Reply</option>
+              <option value="static_reply">Static Reply</option>
+              <option value="workflow">Workflow</option>
+            </select>
+          </div>
+          <div class="mb-3 hidden" id="add-i-workflow-picker">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Workflow</label>
+            <select id="add-i-workflow-id" class="w-full border rounded-2xl px-3 py-2 text-sm"></select>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Regex Patterns (one per line, optional)</label>
+            <textarea id="add-i-patterns" rows="3" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="\\b(keyword)\\b"></textarea>
+          </div>
+          <div class="mb-3 flex items-center gap-2">
+            <input type="checkbox" id="add-i-enabled" checked />
+            <label for="add-i-enabled" class="text-sm text-neutral-700">Enabled</label>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('add-intent-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Save Template Modal -->
+    <div id="save-template-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Save New Template</h3>
+        <form onsubmit="submitSaveTemplate(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Template Name</label>
+            <input id="save-template-name" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g., My Booking Setup" />
+            <p class="text-xs text-neutral-400 mt-1">Give your template a descriptive name</p>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('save-template-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-success-500 text-white rounded-2xl hover:bg-success-600">Save Template</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Static Messages Tab (merged System Messages + FAQ) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-static-replies" class="tab-content hidden">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Static Messages</h2>
+      <p class="text-sm text-neutral-500">Pre-written messages including intent replies (user-triggered) and system notifications (auto-triggered by events like errors, rate limits, etc.).</p>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="mb-4 space-y-3">
+      <!-- Search Box -->
+      <div class="relative">
+        <input
+          type="text"
+          id="static-search-input"
+          placeholder="Search messages by intent, key, or content..."
+          class="w-full border rounded-2xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          oninput="filterStaticReplies()"
+        />
+        <svg class="absolute left-3 top-3 w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="flex flex-wrap gap-2">
+        <button onclick="filterStaticCategory('all')" data-category="all" class="static-category-btn text-xs px-3 py-1.5 rounded-full border bg-primary-500 text-white border-primary-500 transition">
+          All
+        </button>
+        <button onclick="filterStaticCategory('information')" data-category="information" class="static-category-btn text-xs px-3 py-1.5 rounded-full border border-neutral-300 hover:bg-neutral-50 transition">
+          📚 Information
+        </button>
+        <button onclick="filterStaticCategory('booking')" data-category="booking" class="static-category-btn text-xs px-3 py-1.5 rounded-full border border-neutral-300 hover:bg-neutral-50 transition">
+          📅 Booking
+        </button>
+        <button onclick="filterStaticCategory('facilities')" data-category="facilities" class="static-category-btn text-xs px-3 py-1.5 rounded-full border border-neutral-300 hover:bg-neutral-50 transition">
+          🏠 Facilities
+        </button>
+        <button onclick="filterStaticCategory('payment')" data-category="payment" class="static-category-btn text-xs px-3 py-1.5 rounded-full border border-neutral-300 hover:bg-neutral-50 transition">
+          💳 Payment
+        </button>
+        <button onclick="filterStaticCategory('system')" data-category="system" class="static-category-btn text-xs px-3 py-1.5 rounded-full border border-neutral-300 hover:bg-neutral-50 transition">
+          ⚙️ System
+        </button>
+      </div>
+    </div>
+
+    <!-- Validation Warnings -->
+    <div id="static-warnings" class="mb-4 space-y-2"></div>
+
+    <!-- Intent Replies (from knowledge.json) -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2 group">
+          <h3 class="font-semibold text-neutral-700">Intent Replies</h3>
+          <span class="badge-info">knowledge.json</span>
+          <div class="relative inline-block">
+            <svg class="w-4 h-4 text-neutral-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="absolute left-6 top-0 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 w-72 bg-neutral-900 text-white text-xs rounded-lg p-3 shadow-lg">
+              <div class="font-semibold mb-1">Intent Replies</div>
+              <p>Pre-written responses triggered when Rainbow detects a specific user intent (like "breakfast_info", "check_in_time"). These are fast, consistent answers that don't require AI processing. Used when an intent is routed to "Static Reply" action.</p>
+            </div>
+          </div>
+        </div>
+        <button onclick="showAddKnowledge('static')" class="text-sm bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Add Reply</button>
+      </div>
+      <div id="static-intent-replies" class="space-y-3"></div>
+    </div>
+
+    <!-- System Messages (from templates.json) -->
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2 group">
+          <h3 class="font-semibold text-neutral-700">System Messages</h3>
+          <span class="badge-info">templates.json</span>
+          <div class="relative inline-block">
+            <svg class="w-4 h-4 text-neutral-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+            </svg>
+            <div class="absolute left-6 top-0 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 w-72 bg-neutral-900 text-white text-xs rounded-lg p-3 shadow-lg">
+              <div class="font-semibold mb-1">System Messages</div>
+              <p>Automated messages sent by the system for operational events (errors, rate limits, maintenance notices, etc.). These are templates used internally by Rainbow, not triggered by user intents. Examples: error_general, rate_limit, out_of_office.</p>
+            </div>
+          </div>
+        </div>
+        <button onclick="showAddTemplate()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Add Template</button>
+      </div>
+      <div id="static-templates" class="space-y-3"></div>
+    </div>
+
+    <!-- Add Knowledge Modal -->
+    <div id="add-knowledge-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Add Intent Reply</h3>
+        <form onsubmit="submitAddKnowledge(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Intent</label>
+            <input id="add-k-intent" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g. breakfast_info" />
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Response (EN) *</label>
+            <textarea id="add-k-en" rows="3" class="w-full border rounded-2xl px-3 py-2 text-sm" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Response (MS)</label>
+            <textarea id="add-k-ms" rows="2" class="w-full border rounded-2xl px-3 py-2 text-sm"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Response (ZH)</label>
+            <textarea id="add-k-zh" rows="2" class="w-full border rounded-2xl px-3 py-2 text-sm"></textarea>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('add-knowledge-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Template Modal -->
+    <div id="add-template-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Add System Message</h3>
+        <form onsubmit="submitAddTemplate(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Key</label>
+            <input id="add-t-key" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g. welcome_back" />
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">English *</label>
+            <textarea id="add-t-en" rows="2" class="w-full border rounded-2xl px-3 py-2 text-sm" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Malay</label>
+            <textarea id="add-t-ms" rows="2" class="w-full border rounded-2xl px-3 py-2 text-sm"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Chinese</label>
+            <textarea id="add-t-zh" rows="2" class="w-full border rounded-2xl px-3 py-2 text-sm"></textarea>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('add-template-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Workflow Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-workflow" class="tab-content hidden">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Workflows</h2>
+      <p class="text-sm text-neutral-500">Define step-by-step workflows for booking, escalation, payment, and more. Assign them to intents via the Intents tab.</p>
+    </div>
+
+    <!-- Workflow Builder -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <!-- Left: Workflow List -->
+      <div class="md:col-span-1">
+        <div class="bg-white border rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-neutral-700 text-sm">Workflows</h3>
+            <button onclick="createWorkflow()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-2 py-1 rounded transition">+ New</button>
+          </div>
+          <div id="workflow-list" class="space-y-2">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Right: Step Editor -->
+      <div class="md:col-span-2">
+        <div id="workflow-editor-placeholder" class="bg-white border rounded-2xl p-8 text-center text-neutral-400">
+          <p class="text-lg mb-1">Select a workflow</p>
+          <p class="text-sm">Click a workflow on the left to edit its steps</p>
+        </div>
+        <div id="workflow-editor" class="hidden bg-white border rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3 flex-1">
+              <input id="wf-edit-name" class="text-lg font-semibold border-b border-transparent hover:border-neutral-300 focus:border-primary-500 outline-none px-1 py-0.5 flex-1" />
+              <span id="wf-edit-id" class="text-xs font-mono text-neutral-400"></span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="saveCurrentWorkflow()" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl transition">Save</button>
+              <button onclick="deleteCurrentWorkflow()" class="text-sm text-danger-500 hover:bg-danger-50 px-3 py-1.5 rounded-2xl border transition">Delete</button>
+            </div>
+          </div>
+          <div id="wf-steps-container" class="space-y-0 mb-4"></div>
+          <button onclick="addStep()" class="text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-2 rounded-2xl w-full transition border border-dashed border-neutral-300">+ Add Step</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow Testing Box -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-semibold text-blue-900">Workflow Tester</h3>
+          <p class="text-xs text-blue-600 mt-1">Simulate and test your workflows in real-time</p>
+        </div>
+        <button onclick="resetWorkflowTest()" class="text-xs bg-white hover:bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 transition">Reset</button>
+      </div>
+
+      <!-- Workflow Selection -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-blue-800 mb-2">Select Workflow to Test</label>
+        <select id="test-workflow-select" onchange="loadWorkflowTestSteps()" class="w-full border border-blue-200 rounded-lg px-3 py-2 bg-white text-sm">
+          <option value="">-- Choose a workflow --</option>
+        </select>
+      </div>
+
+      <!-- Workflow Steps Preview -->
+      <div id="test-workflow-steps" class="hidden mb-4 bg-white rounded-lg border border-blue-200 p-4">
+        <h4 class="text-sm font-semibold text-blue-800 mb-3">Workflow Steps:</h4>
+        <div id="test-steps-list" class="space-y-2 text-sm"></div>
+      </div>
+
+      <!-- Test Chat Interface -->
+      <div id="test-workflow-chat" class="hidden">
+        <div class="bg-white rounded-lg border border-blue-200 p-4 mb-3 max-h-80 overflow-y-auto" id="test-chat-messages">
+          <div class="text-center text-blue-400 text-sm py-8">Start testing by clicking "Begin Test" below</div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="flex gap-2">
+          <input type="text" id="test-user-input" placeholder="Type user message..." class="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm" disabled />
+          <button onclick="sendTestMessage()" id="test-send-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition" disabled>Send</button>
+          <button onclick="beginWorkflowTest()" id="test-begin-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition">Begin Test</button>
+        </div>
+
+        <!-- Current Step Indicator -->
+        <div id="test-step-indicator" class="mt-3 text-xs text-blue-600 hidden">
+          <span class="font-semibold">Current Step:</span> <span id="test-current-step-text">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Settings (existing workflow.json) -->
+    <details class="bg-white border rounded-2xl">
+      <summary class="px-5 py-3 cursor-pointer text-sm font-semibold text-neutral-700 hover:bg-neutral-50 rounded-2xl">Advanced Workflow Settings</summary>
+      <div id="workflow-advanced-content" class="px-5 pb-5 space-y-4"></div>
+    </details>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Preview Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-preview" class="tab-content hidden">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">AI Agent Preview</h2>
+      <p class="text-sm text-neutral-500">Test how the AI agent responds to guest messages in real-time</p>
+    </div>
+
+    <!-- Autotest Panel (hidden by default) -->
+    <div id="autotest-panel" class="hidden">
+      <!-- Autotest Header -->
+      <div class="bg-indigo-50 border rounded-2xl p-4 mb-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🧪</span>
+            <div>
+              <h3 class="font-semibold text-neutral-800">Autotest Suite</h3>
+              <p class="text-xs text-neutral-500"><span id="at-scenario-count">0</span> scenarios across 6 guest journey phases</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <!-- View History Button -->
+            <button id="view-history-btn" onclick="showAutotestHistory()" class="hidden text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+              <span>📋</span>
+              <span>History</span>
+            </button>
+            <!-- Export Report Dropdown -->
+            <div id="export-report-dropdown" class="hidden relative">
+              <button onclick="toggleExportDropdown()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+                Export Report
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div id="export-dropdown-menu" class="hidden absolute right-0 mt-1 w-72 bg-white border border-neutral-300 rounded-xl shadow-lg z-50">
+                <button onclick="exportAutotestReport(lastAutotestResults, 'all')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 rounded-t-xl">
+                  <span class="text-lg">📊</span>
+                  <span>Export All Results</span>
+                </button>
+                <button onclick="exportAutotestReport(lastAutotestResults, 'warnings-failed')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-200">
+                  <span class="text-lg">⚠️</span>
+                  <span>Export Warnings & Failed Only</span>
+                </button>
+                <button onclick="exportAutotestReport(lastAutotestResults, 'failed')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-200 rounded-b-xl">
+                  <span class="text-lg">❌</span>
+                  <span>Export Failed Only</span>
+                </button>
+              </div>
+            </div>
+            <button id="run-all-btn" onclick="runAutotest()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-2xl transition">Run All</button>
+            <button onclick="toggleAutotest()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Back to Chat</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div id="autotest-summary" class="grid grid-cols-5 gap-3 mb-4 hidden">
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-neutral-800" id="at-total">0</div>
+          <div class="text-xs text-neutral-500">Total</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-green-600" id="at-passed">0</div>
+          <div class="text-xs text-neutral-500">Passed</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-yellow-600" id="at-warnings">0</div>
+          <div class="text-xs text-neutral-500">Warnings</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-red-600" id="at-failed">0</div>
+          <div class="text-xs text-neutral-500">Failed</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-indigo-600" id="at-time">0s</div>
+          <div class="text-xs text-neutral-500">Time</div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="autotest-progress" class="hidden mb-4">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="animate-spin h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+          <span id="at-progress-text" class="text-sm text-neutral-600">Running...</span>
+        </div>
+        <div class="w-full bg-neutral-200 rounded-full h-2">
+          <div id="at-progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Results Container -->
+      <div id="autotest-results" class="space-y-2" style="max-height: calc(100vh - 420px); overflow-y: auto;">
+        <div class="text-center text-neutral-400 text-sm py-12">
+          <p>Click "Run All" to execute <span id="scenario-count">0</span> test scenarios</p>
+          <p class="text-xs mt-1">Tests check intent detection, multilingual support, edge cases, and more</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Autotest History Modal -->
+    <div id="autotest-history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-semibold text-neutral-800">Autotest History</h2>
+            <p class="text-sm text-neutral-500">View and export previous test reports</p>
+          </div>
+          <button onclick="closeAutotestHistory()" class="text-neutral-400 hover:text-neutral-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- History List -->
+        <div id="autotest-history-list" class="flex-1 overflow-y-auto space-y-2">
+          <!-- Will be populated dynamically -->
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="mt-4 pt-4 border-t flex justify-between items-center">
+          <button onclick="clearAutotestHistory()" class="text-sm text-red-500 hover:text-red-600 transition">
+            Clear All History
+          </button>
+          <button onclick="closeAutotestHistory()" class="text-sm bg-neutral-200 hover:bg-neutral-300 px-4 py-2 rounded-xl transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ChatGPT-style Layout -->
+    <div id="chat-layout" class="bg-white border rounded-2xl overflow-hidden flex" style="height: calc(100vh - 280px); min-height: 600px;">
+
+      <!-- Sidebar: Chat Sessions -->
+      <div class="w-64 border-r bg-neutral-50 flex flex-col">
+        <!-- Sidebar Header -->
+        <div class="px-4 py-3 border-b bg-white">
+          <button onclick="createNewChat()" class="w-full bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded-2xl text-sm transition flex items-center justify-center gap-2">
+            <span>➕</span>
+            <span>New Chat</span>
+          </button>
+        </div>
+
+        <!-- Chat Sessions List -->
+        <div id="chat-sessions" class="flex-1 overflow-y-auto p-2">
+          <!-- Sessions will be populated here -->
+        </div>
+
+        <!-- Info Footer -->
+        <div class="px-3 py-2 border-t text-xs text-neutral-500">
+          <p class="font-medium mb-1">💡 Tips:</p>
+          <p>• Sessions auto-save</p>
+          <p>• Click to switch</p>
+        </div>
+      </div>
+
+      <!-- Main Chat Area -->
+      <div class="flex-1 flex flex-col">
+        <!-- Chat Header -->
+        <div class="bg-primary-50 border-b px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">💬</span>
+            <div>
+              <h3 class="font-semibold text-neutral-800">Guest Simulation</h3>
+              <p class="text-xs text-neutral-500">Messages use current Rainbow config</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button id="view-history-btn-preview" onclick="showAutotestHistory()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+              <span>📋</span>
+              <span>History</span>
+            </button>
+            <button onclick="toggleAutotest()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-2xl transition">Autotest</button>
+            <button onclick="clearCurrentChat()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Clear Chat</button>
+          </div>
+        </div>
+
+        <!-- Chat Input (Right below header) -->
+        <div class="border-b bg-white px-4 py-3">
+          <form onsubmit="sendChatMessage(event)" class="flex gap-2">
+            <input
+              id="chat-input"
+              type="text"
+              class="flex-1 border rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Type a message as a guest..."
+              autocomplete="off"
+            />
+            <button
+              type="submit"
+              id="send-btn"
+              class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-2xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
+          </form>
+          <div id="chat-meta" class="mt-2 text-xs text-neutral-500"></div>
+        </div>
+
+        <!-- Chat Messages (Scrollable, newest at top) -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-neutral-50">
+          <div class="text-center text-neutral-400 text-sm py-8">
+            <p>👋 Start a conversation by typing a message below</p>
+            <p class="text-xs mt-1">Try: "What's the wifi password?" or "I want to book a room"</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Card -->
+    <div id="preview-info-card" class="mt-4 bg-blue-50 border border-blue-200 rounded-2xl p-4">
+      <h3 class="font-semibold text-blue-900 mb-2">How Preview Works</h3>
+      <ul class="text-sm text-blue-800 space-y-1">
+        <li>• Messages are processed by the AI agent using your current configuration</li>
+        <li>• Intent classification, routing rules, and responses are applied in real-time</li>
+        <li>• Each chat session maintains its own conversation history</li>
+        <li>• Switch between sessions to test different scenarios</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Real Chat Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-real-chat" class="tab-content hidden">
+
+    <div class="rc-container">
+      <!-- Sidebar: Conversation List -->
+      <div class="rc-sidebar" id="rc-sidebar">
+        <div class="rc-sidebar-header">
+          <select class="rc-instance-filter" id="rc-instance-filter" onchange="filterConversations()">
+            <option value="">All Instances</option>
+          </select>
+          <input type="text" class="rc-search" id="rc-search" placeholder="Search conversations..." oninput="filterConversations()">
+        </div>
+        <div class="rc-chat-list" id="rc-chat-list">
+          <div class="rc-sidebar-empty" id="rc-sidebar-empty">
+            <p>No conversations yet.</p>
+            <p style="margin-top:4px;font-size:12px;">Real WhatsApp chats will appear here once guests message your AI bot.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main: Chat View -->
+      <div class="rc-main" id="rc-main">
+        <div class="rc-empty-state" id="rc-empty-state">
+          <svg viewBox="0 0 303 172" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M229.565 160.229C262.212 149.245 286.931 118.241 283.39 73.4194C278.009 5.31929 210.79 -13.3636 152.068 7.57783C93.347 28.5765 44.1521 24.4094 20.1704 45.7478C-3.81149 67.0862 -4.63543 121.735 37.3013 148.288C79.2381 174.841 191.585 173.17 229.565 160.229Z" fill="#DAF7E3"/>
+            <rect x="54" y="28" width="195" height="130" rx="10" fill="white" stroke="#E0E0E0" stroke-width="2"/>
+            <rect x="54" y="28" width="65" height="130" rx="10" fill="#F7F8FC"/>
+            <circle cx="86" cy="56" r="8" fill="#CBD5E1"/>
+            <rect x="66" y="70" width="40" height="4" rx="2" fill="#CBD5E1"/>
+            <circle cx="86" cy="88" r="8" fill="#CBD5E1"/>
+            <rect x="66" y="102" width="40" height="4" rx="2" fill="#CBD5E1"/>
+            <rect x="135" y="50" width="90" height="16" rx="6" fill="#E8F5E9"/>
+            <rect x="145" y="76" width="80" height="16" rx="6" fill="#F3F4F6"/>
+            <rect x="135" y="102" width="90" height="16" rx="6" fill="#E8F5E9"/>
+          </svg>
+          <h3>Real Chat Monitor</h3>
+          <p>Select a conversation from the sidebar to view the chat between your AI assistant and guests.</p>
+        </div>
+
+        <!-- Active chat view (hidden until conversation selected) -->
+        <div id="rc-active-chat" style="display:none;flex-direction:column;height:100%;">
+          <div class="rc-main-header">
+            <div class="rc-avatar" id="rc-active-avatar">?</div>
+            <div class="rc-header-info">
+              <div class="rc-header-name" id="rc-active-name">Guest</div>
+              <div class="rc-header-phone" id="rc-active-phone">+60... <span id="rc-active-instance" class="rc-instance-badge" style="margin-left:4px;"></span></div>
+            </div>
+            <div class="rc-header-actions">
+              <button class="rc-dev-toggle" id="rc-dev-toggle" onclick="toggleDevMode()" title="Toggle Developer Mode">
+                🔧 Dev
+              </button>
+              <button class="rc-translate-toggle" id="rc-translate-toggle" onclick="toggleTranslateMode()" title="Toggle Translation Mode">
+                🌐 Translate
+              </button>
+              <select class="rc-lang-selector" id="rc-lang-selector" title="Target Language" style="display:none;" onchange="handleLangChange()">
+                <option value="en">English</option>
+                <option value="ms">Malay</option>
+                <option value="zh">Chinese</option>
+                <option value="id">Indonesian</option>
+                <option value="th">Thai</option>
+                <option value="vi">Vietnamese</option>
+              </select>
+              <button onclick="refreshActiveChat()" title="Refresh">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+              </button>
+              <button onclick="deleteActiveChat()" title="Delete conversation">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="rc-messages" id="rc-messages"></div>
+          <div class="rc-input-area">
+            <textarea class="rc-input-box" id="rc-input-box" placeholder="Type a manual reply..." rows="1" oninput="autoResizeInput(this)" onkeydown="handleInputKeydown(event)"></textarea>
+            <button class="rc-send-btn" id="rc-send-btn" onclick="sendManualReply()" title="Send message">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+          <div class="rc-stats-bar" id="rc-stats-bar">
+            <span id="rc-stat-total">0 messages</span>
+            <span id="rc-stat-started">Started: —</span>
+            <span id="rc-stat-last">Last active: —</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Translation Confirmation Modal -->
+    <div id="rc-translate-modal" class="rc-translate-modal" style="display:none;" onclick="if(event.target===this) closeTranslateModal()">
+      <div class="rc-translate-content">
+        <div class="rc-translate-title">🌐 Confirm Translation</div>
+        <div style="margin-bottom:12px;">
+          <strong style="color:#6b7280;font-size:12px;">Original:</strong>
+          <div class="rc-translate-text" id="rc-translate-original"></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <strong style="color:#6b7280;font-size:12px;">Translated (<span id="rc-translate-lang-name"></span>):</strong>
+          <div class="rc-translate-text" id="rc-translate-translated"></div>
+        </div>
+        <div class="rc-translate-buttons">
+          <button class="rc-translate-btn cancel" onclick="closeTranslateModal()">Cancel</button>
+          <button class="rc-translate-btn send" onclick="confirmTranslation()">Send Translation</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Settings Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-settings" class="tab-content hidden">
+    <h2 class="text-lg font-semibold text-neutral-800 mb-4">Settings</h2>
+    <div id="settings-content" class="space-y-4"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Feedback Stats Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-feedback-stats" class="tab-content hidden">
+    <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-neutral-800">Feedback Analytics</h2>
+        <p class="text-sm text-neutral-500">User satisfaction metrics and feedback statistics</p>
+      </div>
+      <button onclick="refreshFeedbackStats()" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition font-medium">
+        Refresh
+      </button>
+    </div>
+
+    <!-- Overall Stats Cards -->
+    <div id="feedback-overall-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="feedback-total" class="text-2xl font-bold text-neutral-800">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Total Feedback</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="feedback-thumbs-up" class="text-2xl font-bold text-green-600">0</div>
+        <div class="text-xs text-neutral-500 mt-1">👍 Thumbs Up</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="feedback-thumbs-down" class="text-2xl font-bold text-red-500">0</div>
+        <div class="text-xs text-neutral-500 mt-1">👎 Thumbs Down</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="feedback-satisfaction" class="text-2xl font-bold text-primary-500">0%</div>
+        <div class="text-xs text-neutral-500 mt-1">Satisfaction Rate</div>
+      </div>
+    </div>
+
+    <!-- By Intent Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Feedback by Intent</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Intent</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">👍 Positive</th>
+              <th class="px-4 py-2 font-medium text-right">👎 Negative</th>
+              <th class="px-4 py-2 font-medium text-right">Satisfaction</th>
+            </tr>
+          </thead>
+          <tbody id="feedback-by-intent-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- By Tier Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Feedback by Classification Tier</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Tier</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">👍 Positive</th>
+              <th class="px-4 py-2 font-medium text-right">👎 Negative</th>
+              <th class="px-4 py-2 font-medium text-right">Satisfaction</th>
+            </tr>
+          </thead>
+          <tbody id="feedback-by-tier-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Feedback -->
+    <div class="bg-white rounded-2xl border overflow-hidden">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Recent Feedback (Last 20)</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Timestamp</th>
+              <th class="px-4 py-2 font-medium">Phone</th>
+              <th class="px-4 py-2 font-medium">Intent</th>
+              <th class="px-4 py-2 font-medium">Tier</th>
+              <th class="px-4 py-2 font-medium text-center">Rating</th>
+            </tr>
+          </thead>
+          <tbody id="feedback-recent-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="feedback-loading" class="hidden bg-white rounded-2xl border p-8 text-center">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent mb-3"></div>
+      <div class="text-neutral-700 font-medium">Loading feedback data...</div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="feedback-empty" class="hidden bg-white rounded-2xl border p-8 text-center">
+      <div class="text-4xl mb-3">📊</div>
+      <div class="text-neutral-500 font-medium">No feedback data available</div>
+      <div class="text-sm text-neutral-400 mt-1">Feedback will appear here as users interact with the bot</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Intent Accuracy Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-intent-accuracy" class="tab-content hidden">
+    <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-neutral-800">Intent Classification Accuracy</h2>
+        <p class="text-sm text-neutral-500">Track how accurately Rainbow classifies user intents</p>
+      </div>
+      <button onclick="refreshIntentAccuracy()" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition font-medium">
+        Refresh
+      </button>
+    </div>
+
+    <!-- Overall Stats Cards -->
+    <div id="intent-accuracy-overall-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-total" class="text-2xl font-bold text-neutral-800">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Total Predictions</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-correct" class="text-2xl font-bold text-green-600">0</div>
+        <div class="text-xs text-neutral-500 mt-1">✓ Correct</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-incorrect" class="text-2xl font-bold text-red-500">0</div>
+        <div class="text-xs text-neutral-500 mt-1">✗ Incorrect</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-rate" class="text-2xl font-bold text-primary-500">0%</div>
+        <div class="text-xs text-neutral-500 mt-1">Accuracy Rate</div>
+      </div>
+    </div>
+
+    <!-- Accuracy by Intent Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Accuracy by Intent</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Intent</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">✓ Correct</th>
+              <th class="px-4 py-2 font-medium text-right">✗ Incorrect</th>
+              <th class="px-4 py-2 font-medium text-right">Accuracy</th>
+              <th class="px-4 py-2 font-medium text-right">Avg Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="intent-accuracy-by-intent-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Accuracy by Tier Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Accuracy by Classification Tier</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Tier</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">✓ Correct</th>
+              <th class="px-4 py-2 font-medium text-right">✗ Incorrect</th>
+              <th class="px-4 py-2 font-medium text-right">Accuracy</th>
+              <th class="px-4 py-2 font-medium text-right">Avg Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="intent-accuracy-by-tier-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Accuracy by Model Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Accuracy by LLM Model (T4 Tier Only)</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Model</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">✓ Correct</th>
+              <th class="px-4 py-2 font-medium text-right">✗ Incorrect</th>
+              <th class="px-4 py-2 font-medium text-right">Accuracy</th>
+            </tr>
+          </thead>
+          <tbody id="intent-accuracy-by-model-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="intent-accuracy-loading" class="hidden bg-white rounded-2xl border p-8 text-center">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent mb-3"></div>
+      <div class="text-neutral-700 font-medium">Loading intent accuracy data...</div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="intent-accuracy-empty" class="hidden bg-white rounded-2xl border p-8 text-center">
+      <div class="text-4xl mb-3">🎯</div>
+      <div class="text-neutral-500 font-medium">No intent accuracy data available</div>
+      <div class="text-sm text-neutral-400 mt-1">Data will appear here as users validate intent predictions</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Testing Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-testing" class="tab-content hidden">
+    <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-neutral-800">Automated Test Runner</h2>
+        <p class="text-sm text-neutral-500">Run Vitest unit, integration, and semantic tests from the browser</p>
+      </div>
+      <div class="flex gap-2">
+        <select id="test-project-select" class="text-sm border rounded-lg px-3 py-2 bg-white">
+          <option value="unit" selected>Unit Tests</option>
+          <option value="integration">Integration Tests</option>
+          <option value="semantic">Semantic Tests</option>
+        </select>
+        <button id="btn-run-tests" onclick="runTests()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition font-medium">
+          Run Tests
+        </button>
+        <button id="btn-run-coverage" onclick="runCoverage()" class="text-sm bg-neutral-600 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition font-medium">
+          Coverage
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div id="test-summary" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-total" class="text-2xl font-bold text-neutral-800">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Total Tests</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-passed" class="text-2xl font-bold text-green-600">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Passed</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-failed" class="text-2xl font-bold text-red-500">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Failed</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-duration" class="text-2xl font-bold text-indigo-500">0s</div>
+        <div class="text-xs text-neutral-500 mt-1">Duration</div>
+      </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div id="test-status-banner" class="hidden mb-4 rounded-2xl border p-4 flex items-center gap-3">
+      <div id="test-status-icon" class="text-2xl"></div>
+      <div>
+        <div id="test-status-text" class="font-semibold"></div>
+        <div id="test-status-sub" class="text-sm text-neutral-500"></div>
+      </div>
+    </div>
+
+    <!-- Running Indicator -->
+    <div id="test-running" class="hidden mb-4">
+      <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent mb-3"></div>
+        <div class="text-indigo-700 font-medium">Running tests...</div>
+        <div class="text-sm text-indigo-500 mt-1">This may take a few seconds</div>
+      </div>
+    </div>
+
+    <!-- Test Results by File -->
+    <div id="test-results" class="space-y-3"></div>
+
+    <!-- Coverage Results -->
+    <div id="coverage-results" class="hidden">
+      <h3 class="font-semibold text-neutral-700 mb-3">Code Coverage</h3>
+      <div class="bg-white rounded-2xl border overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">File</th>
+              <th class="px-4 py-2 font-medium text-right">Stmts</th>
+              <th class="px-4 py-2 font-medium text-right">Branch</th>
+              <th class="px-4 py-2 font-medium text-right">Funcs</th>
+              <th class="px-4 py-2 font-medium text-right">Lines</th>
+            </tr>
+          </thead>
+          <tbody id="coverage-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="test-empty" class="bg-white rounded-2xl border p-8 text-center">
+      <div class="text-4xl mb-3 text-neutral-300">
+        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+      <div class="text-neutral-500 font-medium">No test results yet</div>
+      <div class="text-sm text-neutral-400 mt-1">Select a test suite and click "Run Tests" to begin</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Help Tab -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-help" class="tab-content hidden">
+    <div class="max-w-4xl">
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-3xl">❓</span>
+          <h2 class="text-2xl font-bold text-neutral-800">Rainbow AI Assistant Guide</h2>
+        </div>
+        <p class="text-neutral-600">Comprehensive guide to setting up and managing your AI-powered WhatsApp chatbot</p>
+      </div>
+
+      <!-- Table of Contents -->
+      <div class="bg-gradient-primary rounded-2xl border p-6 mb-6">
+        <h3 class="font-semibold text-neutral-800 mb-3">📚 Quick Navigation</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+          <a href="#help-getting-started" class="text-primary-600 hover:text-primary-700 hover:underline">→ Getting Started</a>
+          <a href="#help-whatsapp" class="text-primary-600 hover:text-primary-700 hover:underline">→ WhatsApp Setup</a>
+          <a href="#help-intents" class="text-primary-600 hover:text-primary-700 hover:underline">→ 4-Tier Intent System</a>
+          <a href="#help-intent-manager" class="text-primary-600 hover:text-primary-700 hover:underline">→ Intent Manager Guide</a>
+          <a href="#help-kb" class="text-primary-600 hover:text-primary-700 hover:underline">→ Knowledge Base</a>
+          <a href="#help-static-replies" class="text-primary-600 hover:text-primary-700 hover:underline">→ Static Messages</a>
+          <a href="#help-ai-providers" class="text-primary-600 hover:text-primary-700 hover:underline">→ AI Providers</a>
+          <a href="#help-workflow" class="text-primary-600 hover:text-primary-700 hover:underline">→ Workflows</a>
+          <a href="#help-troubleshooting" class="text-primary-600 hover:text-primary-700 hover:underline">→ Troubleshooting</a>
+        </div>
+      </div>
+
+      <!-- Getting Started -->
+      <div id="help-getting-started" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">🚀</span>
+          <h3 class="text-xl font-semibold text-neutral-800">Getting Started</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <p class="leading-relaxed">
+            <strong>Rainbow</strong> is your AI-powered WhatsApp assistant that handles guest inquiries, provides information,
+            and automates conversations 24/7. It combines intent detection, knowledge base search, and AI responses to create
+            natural, helpful interactions.
+          </p>
+          <div class="bg-gradient-success rounded-xl p-4 border border-success-200">
+            <p class="font-semibold text-success-800 mb-2">✅ What Rainbow Can Do:</p>
+            <ul class="space-y-1 ml-4 text-success-700">
+              <li>• Answer guest questions automatically via WhatsApp</li>
+              <li>• Detect user intent and route to appropriate responses</li>
+              <li>• Search knowledge base for accurate information</li>
+              <li>• Provide booking information and availability</li>
+              <li>• Support multiple languages (English, Malay, Chinese)</li>
+              <li>• Learn from new Q&A pairs you add</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- WhatsApp Setup -->
+      <div id="help-whatsapp" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">📱</span>
+          <h3 class="text-xl font-semibold text-neutral-800">WhatsApp Instance Setup</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 text-primary-700 font-bold text-xs">1</div>
+              <div>
+                <p class="font-semibold text-neutral-800 mb-1">Go to Status Tab</p>
+                <p class="text-neutral-600">Click the "Status" tab to see your WhatsApp instances</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 text-primary-700 font-bold text-xs">2</div>
+              <div>
+                <p class="font-semibold text-neutral-800 mb-1">Add WhatsApp Number</p>
+                <p class="text-neutral-600">Click "+ Add Number" and enter your Malaysian phone number (e.g., <code class="bg-neutral-100 px-1 rounded">167052004</code> for 016-705 2004)</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 text-primary-700 font-bold text-xs">3</div>
+              <div>
+                <p class="font-semibold text-neutral-800 mb-1">Scan QR Code</p>
+                <p class="text-neutral-600">Open WhatsApp on your phone → Settings → Linked Devices → Link a Device → Scan the QR code</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 text-primary-700 font-bold text-xs">4</div>
+              <div>
+                <p class="font-semibold text-neutral-800 mb-1">Verify Connection</p>
+                <p class="text-neutral-600">Once connected, status will show <span class="inline-flex items-center gap-1"><span class="status-dot status-online"></span>Connected</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-warning rounded-xl p-4 border border-warning-200 mt-4">
+            <p class="font-semibold text-warning-800 mb-2">⚠️ Important Notes:</p>
+            <ul class="space-y-1 ml-4 text-warning-700 text-xs">
+              <li>• Your phone must stay online (with internet) for the bot to work</li>
+              <li>• QR codes expire after 60 seconds - refresh if needed</li>
+              <li>• You can connect multiple WhatsApp numbers for different locations</li>
+              <li>• Each instance can handle multiple simultaneous conversations</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intent Detection -->
+      <div id="help-intents" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">🎯</span>
+          <h3 class="text-xl font-semibold text-neutral-800">Intent Detection & Routing</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <p class="leading-relaxed">
+            Intent detection helps Rainbow understand <strong>what the user wants</strong> by analyzing their message
+            and matching it to predefined categories (intents). This allows the bot to provide accurate, contextual responses.
+          </p>
+
+          <div class="bg-neutral-50 rounded-xl p-4 border">
+            <p class="font-semibold text-neutral-800 mb-2">🧠 How It Works:</p>
+            <ol class="space-y-2 ml-4 text-neutral-700">
+              <li><strong>1. User sends message:</strong> "What's the WiFi password?"</li>
+              <li><strong>2. Intent detection:</strong> Detects intent = <code class="bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded text-xs">wifi_inquiry</code></li>
+              <li><strong>3. Routing:</strong> Routes to WiFi information response</li>
+              <li><strong>4. Response:</strong> Sends WiFi credentials to user</li>
+            </ol>
+          </div>
+
+          <div class="space-y-2 mt-4">
+            <p class="font-semibold text-neutral-800">📋 Common Intents:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div class="bg-gradient-primary rounded-lg p-3 border border-primary-200">
+                <p class="font-mono text-xs text-primary-700 mb-1">greeting</p>
+                <p class="text-xs text-neutral-600">Hello, hi, good morning</p>
+              </div>
+              <div class="bg-gradient-primary rounded-lg p-3 border border-primary-200">
+                <p class="font-mono text-xs text-primary-700 mb-1">wifi_inquiry</p>
+                <p class="text-xs text-neutral-600">WiFi password, internet access</p>
+              </div>
+              <div class="bg-gradient-primary rounded-lg p-3 border border-primary-200">
+                <p class="font-mono text-xs text-primary-700 mb-1">booking_inquiry</p>
+                <p class="text-xs text-neutral-600">Availability, pricing, booking</p>
+              </div>
+              <div class="bg-gradient-primary rounded-lg p-3 border border-primary-200">
+                <p class="font-mono text-xs text-primary-700 mb-1">checkin_checkout</p>
+                <p class="text-xs text-neutral-600">Check-in time, checkout process</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-success rounded-xl p-4 border border-success-200 mt-4">
+            <p class="font-semibold text-success-800 mb-3">🎯 4-Tier Intent Classification System:</p>
+            <p class="text-success-700 text-xs mb-3">
+              Rainbow uses a sophisticated 4-tier system to classify intents, progressing from fastest to most intelligent:
+            </p>
+            <div class="space-y-3">
+              <div class="bg-white rounded-lg p-3 border border-success-200">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-danger-600 font-bold">🚨 T1: Emergency Patterns (Regex)</span>
+                  <span class="text-xs text-neutral-500">~0.1ms</span>
+                </div>
+                <p class="text-xs text-neutral-600 ml-5">Instant pattern matching for critical emergencies (fire, theft, ambulance). Uses regex for guaranteed detection.</p>
+              </div>
+
+              <div class="bg-white rounded-lg p-3 border border-success-200">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-primary-600 font-bold">⚡ T2: Keywords (Fuzzy Matching)</span>
+                  <span class="text-xs text-neutral-500">~1ms</span>
+                </div>
+                <p class="text-xs text-neutral-600 ml-5">Fast keyword matching with typo tolerance. Matches "wifi", "wfi", "WiFi" as the same. Best for direct keywords and abbreviations.</p>
+              </div>
+
+              <div class="bg-white rounded-lg p-3 border border-success-200">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-success-600 font-bold">🔬 T3: Training Examples (Semantic)</span>
+                  <span class="text-xs text-neutral-500">~50ms</span>
+                </div>
+                <p class="text-xs text-neutral-600 ml-5">AI-powered meaning-based matching. Understands paraphrases: "what's the cost" = "how much" = "tell me the price".</p>
+              </div>
+
+              <div class="bg-white rounded-lg p-3 border border-success-200">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-warning-600 font-bold">🧠 T4: LLM Fallback</span>
+                  <span class="text-xs text-neutral-500">~100-500ms</span>
+                </div>
+                <p class="text-xs text-neutral-600 ml-5">Full AI classification for complex queries. Used when other tiers don't match. Handles edge cases and ambiguous intents.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-primary rounded-xl p-4 border border-primary-200 mt-4">
+            <p class="font-semibold text-primary-800 mb-2">📊 Using the Intent Manager:</p>
+            <div class="space-y-2 text-primary-700 text-xs">
+              <p><strong>1. Access:</strong> Go to <strong>Intent & Routing → Classify Intent</strong> in the navigation menu</p>
+              <p><strong>2. Collapsible Sections:</strong> Each tier (T1-T4) has an <span class="bg-primary-100 px-1.5 py-0.5 rounded">▶ Expand</span> button. Click to expand/collapse sections as needed.</p>
+              <p><strong>3. Test Your Setup:</strong> Use the Test Console at the top to instantly see which tier matches your query</p>
+              <p><strong>4. Progressive Enhancement:</strong> Start with T2 keywords for common queries, add T3 examples for variations, and let T4 handle the rest</p>
+            </div>
+          </div>
+
+          <div class="bg-gradient-warning rounded-xl p-4 border border-warning-200 mt-4">
+            <p class="font-semibold text-warning-800 mb-2">💡 Pro Tips:</p>
+            <ul class="space-y-1 ml-4 text-warning-700 text-xs">
+              <li>• <strong>Keep sections collapsed</strong> when not editing to reduce visual clutter</li>
+              <li>• <strong>Add T2 keywords first</strong> for fast matching on common queries</li>
+              <li>• <strong>Use T3 examples</strong> for natural language variations ("how much", "what's the price", "cost?")</li>
+              <li>• <strong>Reserve T1 regex</strong> for critical emergencies only - it always matches first!</li>
+              <li>• <strong>Monitor T4 usage</strong> in testing - high T4 usage means you need more keywords/examples</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intent Manager Guide -->
+      <div id="help-intent-manager" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">🎛️</span>
+          <h3 class="text-xl font-semibold text-neutral-800">Intent Manager - Step-by-Step Guide</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <p class="leading-relaxed">
+            The Intent Manager lets you configure all four tiers of intent classification. Each tier is <strong>collapsible</strong>
+            to keep the interface clean - click <span class="bg-primary-100 px-1.5 py-0.5 rounded text-xs">▶ Expand</span> to show
+            a tier, and <span class="bg-primary-100 px-1.5 py-0.5 rounded text-xs">▼ Collapse</span> to hide it.
+          </p>
+
+          <!-- T1 Guide -->
+          <div class="bg-gradient-danger rounded-xl p-4 border border-danger-200">
+            <p class="font-semibold text-danger-800 mb-2 flex items-center gap-2">
+              <span>🚨 T1: Emergency Regex Patterns</span>
+              <span class="text-xs font-normal text-danger-600">(~0.1ms)</span>
+            </p>
+            <div class="space-y-2 text-danger-700 text-xs">
+              <p><strong>When to use:</strong> Critical emergencies that must be detected instantly (fire, theft, medical emergency)</p>
+              <p><strong>How to add:</strong></p>
+              <ol class="ml-4 space-y-1">
+                <li>1. Click <strong>▶ Expand</strong> on the T1 section</li>
+                <li>2. Enter regex pattern: <code class="bg-danger-100 px-1">/fire|kebakaran|着火/i</code></li>
+                <li>3. Add description: "Fire emergency"</li>
+                <li>4. Click <strong>Add</strong>, then <strong>Save Patterns</strong></li>
+                <li>5. Restart server to apply changes</li>
+              </ol>
+              <div class="bg-white rounded-lg p-2 mt-2 border border-danger-200">
+                <p class="font-semibold mb-1">⚠️ Regex Flags:</p>
+                <ul class="ml-4">
+                  <li>• <code class="bg-danger-100 px-1">/pattern/i</code> = case-insensitive</li>
+                  <li>• <code class="bg-danger-100 px-1">|</code> = OR operator</li>
+                  <li>• <code class="bg-danger-100 px-1">\b</code> = word boundary</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- T2 Guide -->
+          <div class="bg-gradient-primary rounded-xl p-4 border border-primary-200">
+            <p class="font-semibold text-primary-800 mb-2 flex items-center gap-2">
+              <span>⚡ T2: Keywords (Fuzzy Matching)</span>
+              <span class="text-xs font-normal text-primary-600">(~1ms)</span>
+            </p>
+            <div class="space-y-2 text-primary-700 text-xs">
+              <p><strong>When to use:</strong> Direct keywords, abbreviations, common queries with typo tolerance</p>
+              <p><strong>How to add:</strong></p>
+              <ol class="ml-4 space-y-1">
+                <li>1. Click <strong>▶ Expand</strong> on the T2 section</li>
+                <li>2. Select an intent from the left panel (e.g., "wifi")</li>
+                <li>3. Switch language tab (English, Malay, Chinese)</li>
+                <li>4. Type keyword and press <strong>Enter</strong> or click <strong>Add</strong></li>
+                <li>5. Click <strong>Save Keywords</strong> when done</li>
+              </ol>
+              <div class="bg-white rounded-lg p-2 mt-2 border border-primary-200">
+                <p class="font-semibold mb-1">💡 Keyword Tips:</p>
+                <ul class="ml-4">
+                  <li>• Add abbreviations: "wifi", "wi-fi", "wlan"</li>
+                  <li>• Include common misspellings: "pasword", "passowrd"</li>
+                  <li>• Add multilingual variants: "wifi" (EN), "kata laluan wifi" (MS), "密码" (ZH)</li>
+                  <li>• Fuzzy matching automatically handles minor typos!</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- T3 Guide -->
+          <div class="bg-gradient-success rounded-xl p-4 border border-success-200">
+            <p class="font-semibold text-success-800 mb-2 flex items-center gap-2">
+              <span>🔬 T3: Training Examples (Semantic)</span>
+              <span class="text-xs font-normal text-success-600">(~50ms)</span>
+            </p>
+            <div class="space-y-2 text-success-700 text-xs">
+              <p><strong>When to use:</strong> Natural language variations, paraphrases, different ways to ask the same thing</p>
+              <p><strong>How to add:</strong></p>
+              <ol class="ml-4 space-y-1">
+                <li>1. Click <strong>▶ Expand</strong> on the T3 section</li>
+                <li>2. Select an intent from the left panel</li>
+                <li>3. Type example phrase: "what's the cost?"</li>
+                <li>4. Press <strong>Enter</strong> or click <strong>Add</strong></li>
+                <li>5. Add more variations: "how much is it?", "tell me the price"</li>
+                <li>6. Click <strong>Save Examples</strong></li>
+                <li>7. <strong>⚠️ Restart server</strong> to reload semantic matcher</li>
+              </ol>
+              <div class="bg-white rounded-lg p-2 mt-2 border border-success-200">
+                <p class="font-semibold mb-1">🎯 Example Phrases:</p>
+                <ul class="ml-4">
+                  <li>• Use full sentences: "What's the WiFi password?"</li>
+                  <li>• Include questions: "How much does a bed cost?"</li>
+                  <li>• Add casual language: "yo what's the wifi lol"</li>
+                  <li>• AI understands meaning, not exact words!</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- T4 Guide -->
+          <div class="bg-gradient-warning rounded-xl p-4 border border-warning-200">
+            <p class="font-semibold text-warning-800 mb-2 flex items-center gap-2">
+              <span>🧠 T4: LLM Fallback Settings</span>
+              <span class="text-xs font-normal text-warning-600">(~100-500ms)</span>
+            </p>
+            <div class="space-y-2 text-warning-700 text-xs">
+              <p><strong>When to use:</strong> Automatically handles complex queries when T1-T3 don't match</p>
+              <p><strong>How to configure:</strong></p>
+              <ol class="ml-4 space-y-1">
+                <li>1. Click <strong>▶ Expand</strong> on the T4 section</li>
+                <li>2. Set confidence thresholds (default: Fuzzy 80%, Semantic 70%, LLM 60%)</li>
+                <li>3. Select AI providers and set fallback order</li>
+                <li>4. Customize system prompt for intent classification</li>
+                <li>5. Configure fallback behavior (unknown intent, logging)</li>
+                <li>6. Click <strong>Save LLM Settings</strong></li>
+              </ol>
+              <div class="bg-white rounded-lg p-2 mt-2 border border-warning-200">
+                <p class="font-semibold mb-1">⚙️ Configuration Tips:</p>
+                <ul class="ml-4">
+                  <li>• Lower thresholds = more matches, but less accurate</li>
+                  <li>• Higher thresholds = fewer matches, more fall to T4</li>
+                  <li>• Use T4 as safety net for edge cases</li>
+                  <li>• Monitor T4 usage - high usage means add more T2/T3 data!</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Testing -->
+          <div class="bg-neutral-50 rounded-xl p-4 border mt-4">
+            <p class="font-semibold text-neutral-800 mb-2">🧪 Testing Your Setup:</p>
+            <div class="space-y-2 text-neutral-700 text-xs">
+              <p>Use the <strong>Test Console</strong> at the top of the Intent Manager to verify your configuration:</p>
+              <ol class="ml-4 space-y-1">
+                <li>1. Type a test message (e.g., "what's the wifi password?")</li>
+                <li>2. Click <strong>Test</strong></li>
+                <li>3. See which tier matched: 🚨 T1 Regex, ⚡ T2 Fuzzy, 🔬 T3 Semantic, or 🧠 T4 LLM</li>
+                <li>4. View confidence score and matched intent</li>
+                <li>5. Adjust keywords/examples if wrong tier is matching</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- Best Practices -->
+          <div class="bg-primary-50 rounded-xl p-4 border border-primary-200 mt-4">
+            <p class="font-semibold text-primary-800 mb-2">✨ Best Practices:</p>
+            <ul class="space-y-1 ml-4 text-primary-700 text-xs">
+              <li>• <strong>Start with T2:</strong> Add common keywords first for fast matching</li>
+              <li>• <strong>Expand to T3:</strong> Add natural language examples for variations</li>
+              <li>• <strong>Reserve T1:</strong> Only for critical emergencies (fire, theft, medical)</li>
+              <li>• <strong>Let T4 learn:</strong> Monitor what T4 catches and add to T2/T3</li>
+              <li>• <strong>Collapse when done:</strong> Keep sections collapsed to reduce clutter</li>
+              <li>• <strong>Test frequently:</strong> Use Test Console after every change</li>
+              <li>• <strong>Multilingual support:</strong> Add keywords in all languages your guests use</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Knowledge Base -->
+      <div id="help-kb" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">📚</span>
+          <h3 class="text-xl font-semibold text-neutral-800">Knowledge Base Training</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <p class="leading-relaxed">
+            The Knowledge Base is where you teach Rainbow about your hostel. Add documents with information
+            about facilities, rules, amenities, and local tips. Rainbow will search these documents to answer guest questions.
+          </p>
+
+          <div class="space-y-3 mt-4">
+            <div class="bg-gradient-success rounded-xl p-4 border border-success-200">
+              <p class="font-semibold text-success-800 mb-2">✅ What to Add:</p>
+              <ul class="space-y-1 ml-4 text-success-700 text-xs">
+                <li>• <strong>Facility Information:</strong> WiFi details, amenities, operating hours</li>
+                <li>• <strong>House Rules:</strong> Quiet hours, smoking policy, visitor rules</li>
+                <li>• <strong>Location & Directions:</strong> How to get there, nearby attractions</li>
+                <li>• <strong>Emergency Contacts:</strong> Reception number, emergency services</li>
+                <li>• <strong>Local Tips:</strong> Restaurants, transport, things to do</li>
+                <li>• <strong>FAQ:</strong> Common questions from guests</li>
+              </ul>
+            </div>
+
+            <p class="font-semibold text-neutral-800 mt-4">📝 How to Add Documents:</p>
+            <div class="space-y-2">
+              <div class="flex items-start gap-3">
+                <span class="flex-shrink-0 text-primary-600 font-bold">→</span>
+                <p>Go to <strong>Knowledge Base</strong> tab</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="flex-shrink-0 text-primary-600 font-bold">→</span>
+                <p>Click a document to edit (e.g., <code class="bg-neutral-100 px-1.5 py-0.5 rounded text-xs">soul.md</code> for personality)</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="flex-shrink-0 text-primary-600 font-bold">→</span>
+                <p>Write content in Markdown format</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="flex-shrink-0 text-primary-600 font-bold">→</span>
+                <p>Click <strong>Save</strong> to update the knowledge base</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-primary-50 rounded-xl p-4 border border-primary-200 mt-4">
+            <p class="font-semibold text-primary-800 mb-2">💡 Best Practices:</p>
+            <ul class="space-y-1 ml-4 text-primary-700 text-xs">
+              <li>• Use clear headings (# Heading in Markdown) to organize information</li>
+              <li>• Write in a friendly, conversational tone</li>
+              <li>• Include specific details (times, prices, phone numbers)</li>
+              <li>• Update regularly when information changes</li>
+              <li>• Test responses using the Preview tab</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Static Messages -->
+      <div id="help-static-replies" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">💬</span>
+          <h3 class="text-xl font-semibold text-neutral-800">Static Messages</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <p class="leading-relaxed">
+            Static Messages are pre-written responses for common questions. When Rainbow detects a specific intent,
+            it can send a static reply instantly without using AI, making responses faster and more consistent.
+          </p>
+
+          <div class="bg-neutral-50 rounded-xl p-4 border">
+            <p class="font-semibold text-neutral-800 mb-2">⚡ When to Use Static Messages:</p>
+            <ul class="space-y-1 ml-4 text-neutral-700 text-xs">
+              <li>• <strong>Greetings:</strong> "Hello! Welcome to [Hostel Name]. How can I help you?"</li>
+              <li>• <strong>WiFi Info:</strong> "Our WiFi is [Name], password: [Password]"</li>
+              <li>• <strong>Check-in/out Times:</strong> "Check-in: 2 PM, Check-out: 11 AM"</li>
+              <li>• <strong>Location:</strong> Link to Google Maps with directions</li>
+              <li>• <strong>Emergency Contact:</strong> Reception phone number</li>
+            </ul>
+          </div>
+
+          <div class="space-y-2 mt-4">
+            <p class="font-semibold text-neutral-800">🎨 Formatting Tips:</p>
+            <div class="bg-gradient-primary rounded-xl p-4 border border-primary-200">
+              <ul class="space-y-1 text-primary-700 text-xs">
+                <li>• Use <strong>*bold*</strong> for emphasis (shown as <strong>bold</strong> in WhatsApp)</li>
+                <li>• Use <em>_italic_</em> for subtle emphasis (shown as <em>italic</em>)</li>
+                <li>• Add emojis to make messages friendly: 😊 👋 ✨</li>
+                <li>• Use line breaks for readability</li>
+                <li>• Include links for maps, websites, etc.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Providers -->
+      <div id="help-ai-providers" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">🤖</span>
+          <h3 class="text-xl font-semibold text-neutral-800">AI Provider Settings</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <p class="leading-relaxed">
+            Rainbow can use multiple AI providers (OpenAI, Anthropic, Gemini, etc.) to generate intelligent responses
+            when no static reply or knowledge base match is found. Configure API keys in the <strong>Settings</strong> tab.
+          </p>
+
+          <div class="bg-gradient-warning rounded-xl p-4 border border-warning-200">
+            <p class="font-semibold text-warning-800 mb-2">⚙️ Configuration:</p>
+            <ol class="space-y-1 ml-4 text-warning-700 text-xs">
+              <li>1. Go to <strong>Settings</strong> tab</li>
+              <li>2. Add your API keys for desired providers</li>
+              <li>3. Set a default provider (fallback if others fail)</li>
+              <li>4. Enable/disable providers as needed</li>
+              <li>5. Test AI responses in the <strong>Preview</strong> tab</li>
+            </ol>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <div class="border border-primary-200 rounded-xl p-3">
+              <p class="font-semibold text-neutral-800 text-xs mb-1">🔵 OpenAI (GPT-4)</p>
+              <p class="text-neutral-600 text-xs">Most popular, high quality, moderate cost</p>
+            </div>
+            <div class="border border-purple-200 rounded-xl p-3">
+              <p class="font-semibold text-neutral-800 text-xs mb-1">🟣 Anthropic (Claude)</p>
+              <p class="text-neutral-600 text-xs">Excellent for long conversations, safety-focused</p>
+            </div>
+            <div class="border border-blue-200 rounded-xl p-3">
+              <p class="font-semibold text-neutral-800 text-xs mb-1">🔷 Google (Gemini)</p>
+              <p class="text-neutral-600 text-xs">Fast, cost-effective, good multilingual support</p>
+            </div>
+            <div class="border border-green-200 rounded-xl p-3">
+              <p class="font-semibold text-neutral-800 text-xs mb-1">🟢 Local Models</p>
+              <p class="text-neutral-600 text-xs">Free, private, requires local setup</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workflow -->
+      <div id="help-workflow" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">⚙️</span>
+          <h3 class="text-xl font-semibold text-neutral-800">Workflow Management</h3>
+        </div>
+        <div class="space-y-4 text-sm text-neutral-700">
+          <p class="leading-relaxed">
+            Workflows define how Rainbow processes messages: intent detection → knowledge base search → static replies → AI fallback.
+            You can customize workflows for different scenarios or create multi-step conversations.
+          </p>
+
+          <div class="bg-neutral-50 rounded-xl p-4 border">
+            <p class="font-semibold text-neutral-800 mb-3">🔄 Default Message Flow:</p>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">1</div>
+                <div class="flex-1 text-xs">
+                  <p class="font-semibold text-neutral-800">Message Received</p>
+                  <p class="text-neutral-600">Guest sends message via WhatsApp</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">2</div>
+                <div class="flex-1 text-xs">
+                  <p class="font-semibold text-neutral-800">Intent Detection</p>
+                  <p class="text-neutral-600">Identifies what user wants (greeting, wifi, booking, etc.)</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">3</div>
+                <div class="flex-1 text-xs">
+                  <p class="font-semibold text-neutral-800">Check Static Reply</p>
+                  <p class="text-neutral-600">If intent has static reply, send it immediately</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">4</div>
+                <div class="flex-1 text-xs">
+                  <p class="font-semibold text-neutral-800">Search Knowledge Base</p>
+                  <p class="text-neutral-600">Search documents for relevant information</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center text-xs font-bold">5</div>
+                <div class="flex-1 text-xs">
+                  <p class="font-semibold text-neutral-800">AI Response</p>
+                  <p class="text-neutral-600">Generate contextual response using AI if no match found</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-success-500 text-white flex items-center justify-center text-xs font-bold">✓</div>
+                <div class="flex-1 text-xs">
+                  <p class="font-semibold text-neutral-800">Send Reply</p>
+                  <p class="text-neutral-600">Deliver response to guest via WhatsApp</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Troubleshooting -->
+      <div id="help-troubleshooting" class="bg-white rounded-2xl border p-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">🔧</span>
+          <h3 class="text-xl font-semibold text-neutral-800">Troubleshooting</h3>
+        </div>
+        <div class="space-y-4 text-sm">
+          <div class="space-y-3">
+            <!-- Issue 1 -->
+            <div class="bg-gradient-danger rounded-xl p-4 border border-danger-200">
+              <p class="font-semibold text-danger-800 mb-2">❌ WhatsApp Not Connecting</p>
+              <ul class="space-y-1 ml-4 text-danger-700 text-xs">
+                <li>• <strong>QR code expired:</strong> Click "Reconnect" to generate a new QR code</li>
+                <li>• <strong>Phone offline:</strong> Ensure your phone has internet connection</li>
+                <li>• <strong>Wrong number:</strong> Verify the phone number matches your WhatsApp account</li>
+                <li>• <strong>Already linked:</strong> Unlink from other devices first (max 4 linked devices)</li>
+              </ul>
+            </div>
+
+            <!-- Issue 2 -->
+            <div class="bg-gradient-danger rounded-xl p-4 border border-danger-200">
+              <p class="font-semibold text-danger-800 mb-2">❌ Bot Not Responding</p>
+              <ul class="space-y-1 ml-4 text-danger-700 text-xs">
+                <li>• <strong>Check Status:</strong> Go to Status tab - WhatsApp should show <span class="inline-flex items-center gap-1"><span class="status-dot status-online"></span>Connected</span></li>
+                <li>• <strong>AI Unavailable:</strong> Check Settings tab - ensure at least one AI provider is configured</li>
+                <li>• <strong>Server down:</strong> Contact support if Status shows "Offline"</li>
+                <li>• <strong>Message filtering:</strong> Check if message meets intent detection criteria</li>
+              </ul>
+            </div>
+
+            <!-- Issue 3 -->
+            <div class="bg-gradient-danger rounded-xl p-4 border border-danger-200">
+              <p class="font-semibold text-danger-800 mb-2">❌ Incorrect Responses</p>
+              <ul class="space-y-1 ml-4 text-danger-700 text-xs">
+                <li>• <strong>Update Knowledge Base:</strong> Add more details to relevant documents</li>
+                <li>• <strong>Add Keywords:</strong> Use Intent Manager to add keywords for better intent detection</li>
+                <li>• <strong>Refine Static Messages:</strong> Update pre-written responses to be more accurate</li>
+                <li>• <strong>Test in Preview:</strong> Use Preview tab to test and refine responses before deploying</li>
+              </ul>
+            </div>
+
+            <!-- Issue 4 -->
+            <div class="bg-gradient-danger rounded-xl p-4 border border-danger-200">
+              <p class="font-semibold text-danger-800 mb-2">❌ Slow Responses</p>
+              <ul class="space-y-1 ml-4 text-danger-700 text-xs">
+                <li>• <strong>Use Static Messages:</strong> Pre-written responses are instant (no AI delay)</li>
+                <li>• <strong>Optimize AI Provider:</strong> Try faster providers like Gemini for quick responses</li>
+                <li>• <strong>Reduce KB Size:</strong> Smaller knowledge base = faster search</li>
+                <li>• <strong>Check Server Load:</strong> Heavy traffic can cause delays</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="bg-primary-50 rounded-xl p-4 border border-primary-200 mt-4">
+            <p class="font-semibold text-primary-800 mb-2">💡 Need More Help?</p>
+            <p class="text-primary-700 text-xs">
+              Check the <strong>Status</strong> tab for real-time diagnostics, or use the <strong>Preview</strong> tab
+              to test responses and identify issues. For technical support, contact your system administrator.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Tips -->
+      <div class="bg-gradient-success rounded-2xl border border-success-200 p-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-2xl">✨</span>
+          <h3 class="text-xl font-semibold text-success-800">Quick Tips for Success</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="space-y-2">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 text-success-600">✓</span>
+              <p class="text-success-700"><strong>Start Simple:</strong> Begin with static replies for common questions</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 text-success-600">✓</span>
+              <p class="text-success-700"><strong>Test Regularly:</strong> Use Preview tab to test new changes</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 text-success-600">✓</span>
+              <p class="text-success-700"><strong>Monitor Status:</strong> Check Status tab daily for connection issues</p>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 text-success-600">✓</span>
+              <p class="text-success-700"><strong>Update KB Often:</strong> Keep information current and accurate</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 text-success-600">✓</span>
+              <p class="text-success-700"><strong>Add Keywords:</strong> More keywords = better intent detection</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="flex-shrink-0 text-success-600">✓</span>
+              <p class="text-success-700"><strong>Use Emojis:</strong> Make responses friendly and engaging 😊</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- Core Scripts (Load Order Matters!) -->
+<script src="/public/js/core/state.js"></script>
+<script src="/public/js/core/state-manager.js"></script>
+<script src="/public/js/core/utils.js"></script>
+<script src="/public/js/core/tabs.js"></script>
+
+<!-- Module Scripts -->
+<script type="module" src="/public/js/modules/testing.js"></script>
+<script type="module" src="/public/js/modules/real-chat.js"></script>
+<script type="module" src="/public/js/modules/kb-editor.js"></script>
+
+      }
+    }).catch(() => {

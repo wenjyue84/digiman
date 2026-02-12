@@ -1331,6 +1331,114 @@ export const intentDetectionSettings = pgTable("intent_detection_settings", {
 export type IntentDetectionSettings = typeof intentDetectionSettings.$inferSelect;
 export type InsertIntentDetectionSettings = typeof intentDetectionSettings.$inferInsert;
 
+// Rainbow AI Feedback (User satisfaction tracking)
+export const rainbowFeedback = pgTable("rainbow_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: text("conversation_id").notNull(), // Links to conversation session
+  messageId: text("message_id"), // Optional: specific message ID
+  phoneNumber: text("phone_number").notNull(), // Guest phone number
+  intent: text("intent"), // Detected intent that was responded to
+  confidence: real("confidence"), // Intent detection confidence (0-1)
+  rating: integer("rating").notNull(), // 1 = thumbs up, -1 = thumbs down
+  feedbackText: text("feedback_text"), // Optional written feedback
+  responseModel: text("response_model"), // Which AI model generated the response
+  responseTime: integer("response_time_ms"), // Response time in milliseconds
+  tier: text("tier"), // Which tier detected the intent (T1-T4)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ([
+  index("idx_rainbow_feedback_conversation_id").on(table.conversationId),
+  index("idx_rainbow_feedback_phone_number").on(table.phoneNumber),
+  index("idx_rainbow_feedback_intent").on(table.intent),
+  index("idx_rainbow_feedback_rating").on(table.rating),
+  index("idx_rainbow_feedback_created_at").on(table.createdAt),
+]));
+
+export type RainbowFeedback = typeof rainbowFeedback.$inferSelect;
+export type InsertRainbowFeedback = typeof rainbowFeedback.$inferInsert;
+
+export const insertRainbowFeedbackSchema = createInsertSchema(rainbowFeedback).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  conversationId: z.string().min(1, "Conversation ID is required"),
+  phoneNumber: z.string().min(1, "Phone number is required"),
+  rating: z.number().refine(val => val === 1 || val === -1, "Rating must be 1 (thumbs up) or -1 (thumbs down)"),
+  feedbackText: z.string().max(500, "Feedback text must not exceed 500 characters").optional(),
+});
+
+export type InsertRainbowFeedbackType = z.infer<typeof insertRainbowFeedbackSchema>;
+
+// Feedback Settings Schema
+export const updateFeedbackSettingsSchema = z.object({
+  enabled: z.boolean().default(true),
+
+  frequency_minutes: z.number()
+    .int("Frequency must be a whole number")
+    .min(1, "Frequency must be at least 1 minute")
+    .max(1440, "Frequency cannot exceed 24 hours (1440 minutes)")
+    .default(30),
+
+  timeout_minutes: z.number()
+    .int("Timeout must be a whole number")
+    .min(1, "Timeout must be at least 1 minute")
+    .max(10, "Timeout cannot exceed 10 minutes")
+    .default(2),
+
+  skip_intents: z.array(z.string().min(1))
+    .min(0, "Skip intents array is required")
+    .max(50, "Too many skip intents")
+    .default(["greeting","thanks","acknowledgment","escalate","contact_staff","unknown","general"]),
+
+  prompts: z.object({
+    en: z.string().min(5).max(100).default("Was this helpful? 👍 👎"),
+    ms: z.string().min(5).max(100).default("Adakah ini membantu? 👍 👎"),
+    zh: z.string().min(5).max(100).default("这个回答有帮助吗？👍 👎")
+  })
+});
+
+export type UpdateFeedbackSettings = z.infer<typeof updateFeedbackSettingsSchema>;
+
+// Intent Accuracy Tracking (for ML improvement)
+export const intentPredictions = pgTable("intent_predictions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: text("conversation_id").notNull(), // Links to conversation
+  phoneNumber: text("phone_number").notNull(), // Guest phone
+  messageText: text("message_text").notNull(), // Original message
+  predictedIntent: text("predicted_intent").notNull(), // What bot predicted
+  confidence: real("confidence").notNull(), // Prediction confidence (0-1)
+  tier: text("tier").notNull(), // Which tier detected it (T1-T4)
+  model: text("model"), // Which AI model was used (if T4)
+  actualIntent: text("actual_intent"), // Corrected intent (if available)
+  wasCorrect: boolean("was_correct"), // true/false/null (null = unknown)
+  correctionSource: text("correction_source"), // "feedback", "escalation", "manual", null
+  correctedAt: timestamp("corrected_at"), // When correction was made
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ([
+  index("idx_intent_predictions_conversation_id").on(table.conversationId),
+  index("idx_intent_predictions_phone_number").on(table.phoneNumber),
+  index("idx_intent_predictions_predicted_intent").on(table.predictedIntent),
+  index("idx_intent_predictions_tier").on(table.tier),
+  index("idx_intent_predictions_was_correct").on(table.wasCorrect),
+  index("idx_intent_predictions_created_at").on(table.createdAt),
+]));
+
+export type IntentPrediction = typeof intentPredictions.$inferSelect;
+export type InsertIntentPrediction = typeof intentPredictions.$inferInsert;
+
+export const insertIntentPredictionSchema = createInsertSchema(intentPredictions).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  conversationId: z.string().min(1),
+  phoneNumber: z.string().min(1),
+  messageText: z.string().min(1),
+  predictedIntent: z.string().min(1),
+  confidence: z.number().min(0).max(1),
+  tier: z.string().min(1),
+});
+
+export type InsertIntentPredictionType = z.infer<typeof insertIntentPredictionSchema>;
+
 export const validationUtils = {
   isValidEmail: (email: string): boolean => {
     try {

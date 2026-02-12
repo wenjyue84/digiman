@@ -79,6 +79,46 @@
         "ms": "Terima kasih, semoga hari anda baik",
         "zh": ""
       }
+    },
+    {
+      "intent": "facilities_info",
+      "response": {
+        "en": "We offer cozy capsules, AC, and power outlets. Facilities include hot showers (toiletries provided), a shared kitchen with a water dispenser, free WiFi, and a lounge area. Laundry is available at RM5/load. Let us know if you have more questions!",
+        "ms": "Kami menyediakan kapsul selesa  AC, dan soket pengecas. Kemudahan lain termasuk bilik mandi air panas (sabun disediakan), dapur kongsi, WiFi percuma, dan ruang legar. Dobi layan diri tersedia (RM5). Hubungi kami jika ada sebarang soalan!",
+        "zh": "我们的设施包括配有空调和插座的舒适胶囊。此外，您可以使用24小时热水淋浴（提供洗浴用品）、共享厨房（含饮水机）、免费WiFi和休息区。洗衣服务每次RM5。如有疑问请随时询问！"
+      }
+    },
+    {
+      "intent": "checkout_procedure",
+      "response": {
+        "en": "Check‑out is at 12:00 PM. You can leave your capsule anytime before noon, but please keep it tidy and return any key cards. If you need a late‑checkout, let us know in advance and it’s free (subject to availability).",
+        "ms": "Masa keluar adalah jam 12:00 PM. Anda boleh meninggalkan kapsul sebelum ketika itu, tetapi sila pastikan bersih dan pulangkan kad kunci. Jika memerlukan late check‑out, maklumkan terlebih dahulu dan percuma (bergantung ketersediaan).",
+        "zh": "退房时间为中午12点。请在此之前离开并保持房间整洁，归还钥匙卡。如需延迟退房，请提前告知，免费（视房态而定）。"
+      }
+    },
+    {
+      "intent": "luggage_storage",
+      "response": {
+        "en": "Yes, we offer luggage storage. Space is limited and subject to availability; you can use lockers in the common area (bring your padlock). If you need extra space after check‑out, let us know and we’ll see what’s possible.",
+        "ms": "Ya, kami ada ruang simpanan bagasi. Ruang terhad dan bergantung kepada ketersediaan. Anda boleh guna locker di kawasan umum (bawa padlock anda). Jika perlukan ruang tambahan selepas check‑out, maklumkan kami dan kami akan cuba selesaikan.",
+        "zh": "我们提供行李寄存。空间有限，视实际可用情况而定。可使用公共区的储物箱（请自备挂锁）。如需在退房后继续寄存，请告知我们，我们将尽力安排。"
+      }
+    },
+    {
+      "intent": "payment_info",
+      "response": {
+        "en": "Payments can be made via DuitNow QR, Maybank online transfer (551128652007), or cash. Room rates start at RM45/night, RM267 for 7 nights, RM650 for 30 nights. A RM10 card deposit (refundable) is required for stays >7 nights, and a RM100 security deposit for long‑term bookings.",
+        "ms": "Pembayaran boleh dibuat melalui DuitNow QR, pemindahan Maybank (551128652007), atau tunai. Caj per malam bermula RM45, RM267/7 malam, RM650/30 hari. Deposit kad RM10 (terpulang) diperlukan bagi tempahan >7 malam, dan deposit keselamatan RM100 bagi tempahan jangka panjang.",
+        "zh": "付款可使用 DuitNow QR、马来银行转账（账号 551128652007）或现金。房价从 RM45/晚起，7晚 RM267，30晚 RM650。入住超过7晚需缴纳 RM10 可退还的卡押金，长期住宿需缴纳 RM100 安全押金。"
+      }
+    },
+    {
+      "intent": "rules_policy",
+      "response": {
+        "en": "Our hostel follows a few simple rules for a comfortable stay: Quiet hours 11 PM–9 AM, no smoking indoors, no outside guests, keep shared spaces tidy, and report any damage immediately. Let us know if you need any clarifications!",
+        "ms": "Kami mempunyai beberapa peraturan mudah untuk keselesaan anda: Waktu tenang 11 PM–9 AM, tidak dibenarkan merokok dalam bangunan, tidak dibenarkan tetamu luar, bersihkan ruang bersama, dan laporkan sebarang kerosakan segera. Sila maklumkan jika ada soalan!",
+        "zh": "宿舍遵守简易规则，确保舒适：安静时段 11 PM–9 AM，室内禁止吸烟，禁止外部访客，保持公共区域整洁，若有损坏请及时报告。如有疑问，请随时告知！"
+      }
     }
   ],
   "dynamic": {

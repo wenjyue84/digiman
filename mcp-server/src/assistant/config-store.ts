@@ -19,6 +19,7 @@ export interface IntentEntry {
   patterns: string[];
   flags: string;
   enabled: boolean;
+  min_confidence?: number;
 }
 
 export interface IntentsData {
@@ -69,6 +70,21 @@ export interface SettingsData {
     phones: string[];
     jay_phone: string;
     alston_phone: string;
+  };
+  conversation_management?: {
+    enabled: boolean;
+    summarize_threshold: number;
+    summarize_from_message: number;
+    summarize_to_message: number;
+    keep_verbatim_from: number;
+    keep_verbatim_to: number;
+    description?: string;
+  };
+  sentiment_analysis?: {
+    enabled: boolean;
+    consecutive_threshold: number;
+    cooldown_minutes: number;
+    description?: string;
   };
 }
 

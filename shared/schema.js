@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, date, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, date, index, integer, real, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 export const users = pgTable("users", {
@@ -55,12 +55,14 @@ export const guests = pgTable("guests", {
     profilePhotoUrl: text("profile_photo_url"),
     selfCheckinToken: text("self_checkin_token"), // Link back to the token used for self check-in
     status: text("status"),
+    alertSettings: text("alert_settings"), // JSON string for checkout alert configuration
 }, (table) => ([
     index("idx_guests_capsule_number").on(table.capsuleNumber),
     index("idx_guests_is_checked_in").on(table.isCheckedIn),
     index("idx_guests_checkin_time").on(table.checkinTime),
     index("idx_guests_checkout_time").on(table.checkoutTime),
     index("idx_guests_self_checkin_token").on(table.selfCheckinToken),
+    index("idx_guests_expected_checkout_date").on(table.expectedCheckoutDate),
 ]));
 export const capsules = pgTable("capsules", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
@@ -75,6 +77,7 @@ export const capsules = pgTable("capsules", {
     purchaseDate: date("purchase_date"), // When the capsule was purchased
     position: text("position"), // 'top' or 'bottom' for stacked capsules
     remark: text("remark"), // Additional notes about the capsule
+    branch: text("branch"), // Branch location identifier
 }, (table) => ([
     index("idx_capsules_is_available").on(table.isAvailable),
     index("idx_capsules_section").on(table.section),
@@ -189,12 +192,20 @@ export const insertUserSchema = createInsertSchema(users).omit({
         required_error: "Role must be either 'admin' or 'staff'",
     }).default("staff"),
 });
+// Guest alert settings validation schema
+export const guestAlertSettingsSchema = z.object({
+    enabled: z.boolean().default(false),
+    channels: z.array(z.enum(['whatsapp', 'push'])).default(['whatsapp']),
+    advanceNotice: z.array(z.number().min(0).max(30)).default([0]),
+    lastNotified: z.string().datetime().optional()
+});
 export const insertGuestSchema = createInsertSchema(guests).omit({
     id: true,
     checkinTime: true,
     checkoutTime: true,
     isCheckedIn: true,
     profilePhotoUrl: true, // Omit the auto-generated validation
+    alertSettings: true, // Omit from insert schema
 }).extend({
     name: z.string()
         .min(2, "Please enter the guest's full name (at least 2 characters)")
@@ -1101,6 +1112,20 @@ export const updateGuestSchema = z.object({
         .optional(),
     age: z.string().optional(),
     profilePhotoUrl: z.any().optional(),
+    alertSettings: z.string()
+        .transform(val => {
+        if (!val)
+            return undefined;
+        try {
+            const parsed = JSON.parse(val);
+            const validated = guestAlertSettingsSchema.parse(parsed);
+            return JSON.stringify(validated); // Re-stringify for text column storage
+        }
+        catch {
+            return undefined;
+        }
+    })
+        .optional(),
 });
 // Update user schema for editing
 export const updateUserSchema = insertUserSchema.partial().extend({
@@ -1194,6 +1219,117 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({
 });
 export const updateExpenseSchema = insertExpenseSchema.partial().extend({
     id: z.string().min(1, "Expense ID is required"),
+});
+// Intent Detection Configuration (for Rainbow AI)
+export const intentDetectionSettings = pgTable("intent_detection_settings", {
+    id: serial("id").primaryKey(),
+    // Tier 1: Emergency Detection
+    tier1Enabled: boolean("tier1_enabled").default(true).notNull(),
+    tier1ContextMessages: integer("tier1_context_messages").default(0).notNull(),
+    // Tier 2: Fuzzy Matching
+    tier2Enabled: boolean("tier2_enabled").default(true).notNull(),
+    tier2ContextMessages: integer("tier2_context_messages").default(3).notNull(),
+    tier2Threshold: real("tier2_threshold").default(0.80).notNull(),
+    // Tier 3: Semantic Matching
+    tier3Enabled: boolean("tier3_enabled").default(true).notNull(),
+    tier3ContextMessages: integer("tier3_context_messages").default(5).notNull(),
+    tier3Threshold: real("tier3_threshold").default(0.70).notNull(),
+    // Tier 4: LLM Classification
+    tier4Enabled: boolean("tier4_enabled").default(true).notNull(),
+    tier4ContextMessages: integer("tier4_context_messages").default(5).notNull(),
+    // Conversation State Tracking
+    trackLastIntent: boolean("track_last_intent").default(true).notNull(),
+    trackSlots: boolean("track_slots").default(true).notNull(),
+    maxHistoryMessages: integer("max_history_messages").default(20).notNull(),
+    contextTTL: integer("context_ttl_minutes").default(30).notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+// Rainbow AI Feedback (User satisfaction tracking)
+export const rainbowFeedback = pgTable("rainbow_feedback", {
+    id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
+    conversationId: text("conversation_id").notNull(), // Links to conversation session
+    messageId: text("message_id"), // Optional: specific message ID
+    phoneNumber: text("phone_number").notNull(), // Guest phone number
+    intent: text("intent"), // Detected intent that was responded to
+    confidence: real("confidence"), // Intent detection confidence (0-1)
+    rating: integer("rating").notNull(), // 1 = thumbs up, -1 = thumbs down
+    feedbackText: text("feedback_text"), // Optional written feedback
+    responseModel: text("response_model"), // Which AI model generated the response
+    responseTime: integer("response_time_ms"), // Response time in milliseconds
+    tier: text("tier"), // Which tier detected the intent (T1-T4)
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ([
+    index("idx_rainbow_feedback_conversation_id").on(table.conversationId),
+    index("idx_rainbow_feedback_phone_number").on(table.phoneNumber),
+    index("idx_rainbow_feedback_intent").on(table.intent),
+    index("idx_rainbow_feedback_rating").on(table.rating),
+    index("idx_rainbow_feedback_created_at").on(table.createdAt),
+]));
+export const insertRainbowFeedbackSchema = createInsertSchema(rainbowFeedback).omit({
+    id: true,
+    createdAt: true,
+}).extend({
+    conversationId: z.string().min(1, "Conversation ID is required"),
+    phoneNumber: z.string().min(1, "Phone number is required"),
+    rating: z.number().refine(val => val === 1 || val === -1, "Rating must be 1 (thumbs up) or -1 (thumbs down)"),
+    feedbackText: z.string().max(500, "Feedback text must not exceed 500 characters").optional(),
+});
+// Feedback Settings Schema
+export const updateFeedbackSettingsSchema = z.object({
+    enabled: z.boolean().default(true),
+    frequency_minutes: z.number()
+        .int("Frequency must be a whole number")
+        .min(1, "Frequency must be at least 1 minute")
+        .max(1440, "Frequency cannot exceed 24 hours (1440 minutes)")
+        .default(30),
+    timeout_minutes: z.number()
+        .int("Timeout must be a whole number")
+        .min(1, "Timeout must be at least 1 minute")
+        .max(10, "Timeout cannot exceed 10 minutes")
+        .default(2),
+    skip_intents: z.array(z.string().min(1))
+        .min(0, "Skip intents array is required")
+        .max(50, "Too many skip intents")
+        .default(["greeting", "thanks", "acknowledgment", "escalate", "contact_staff", "unknown", "general"]),
+    prompts: z.object({
+        en: z.string().min(5).max(100).default("Was this helpful? 👍 👎"),
+        ms: z.string().min(5).max(100).default("Adakah ini membantu? 👍 👎"),
+        zh: z.string().min(5).max(100).default("这个回答有帮助吗？👍 👎")
+    })
+});
+// Intent Accuracy Tracking (for ML improvement)
+export const intentPredictions = pgTable("intent_predictions", {
+    id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
+    conversationId: text("conversation_id").notNull(), // Links to conversation
+    phoneNumber: text("phone_number").notNull(), // Guest phone
+    messageText: text("message_text").notNull(), // Original message
+    predictedIntent: text("predicted_intent").notNull(), // What bot predicted
+    confidence: real("confidence").notNull(), // Prediction confidence (0-1)
+    tier: text("tier").notNull(), // Which tier detected it (T1-T4)
+    model: text("model"), // Which AI model was used (if T4)
+    actualIntent: text("actual_intent"), // Corrected intent (if available)
+    wasCorrect: boolean("was_correct"), // true/false/null (null = unknown)
+    correctionSource: text("correction_source"), // "feedback", "escalation", "manual", null
+    correctedAt: timestamp("corrected_at"), // When correction was made
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ([
+    index("idx_intent_predictions_conversation_id").on(table.conversationId),
+    index("idx_intent_predictions_phone_number").on(table.phoneNumber),
+    index("idx_intent_predictions_predicted_intent").on(table.predictedIntent),
+    index("idx_intent_predictions_tier").on(table.tier),
+    index("idx_intent_predictions_was_correct").on(table.wasCorrect),
+    index("idx_intent_predictions_created_at").on(table.createdAt),
+]));
+export const insertIntentPredictionSchema = createInsertSchema(intentPredictions).omit({
+    id: true,
+    createdAt: true,
+}).extend({
+    conversationId: z.string().min(1),
+    phoneNumber: z.string().min(1),
+    messageText: z.string().min(1),
+    predictedIntent: z.string().min(1),
+    confidence: z.number().min(0).max(1),
+    tier: z.string().min(1),
 });
 export const validationUtils = {
     isValidEmail: (email) => {

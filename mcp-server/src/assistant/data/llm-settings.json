@@ -1,10 +1,26 @@
 {
   "thresholds": {
-    "fuzzy": 0.80,
-    "semantic": 0.70,
-    "llm": 0.60
+    "fuzzy": 0.8,
+    "semantic": 0.7,
+    "layer2": 0.8,
+    "llm": 0.6,
+    "lowConfidence": 0.5,
+    "mediumConfidence": 0.7
   },
-  "selectedProviders": [],
+  "selectedProviders": [
+    {
+      "id": "groq-llama",
+      "priority": 0
+    },
+    {
+      "id": "ollama-local",
+      "priority": 1
+    },
+    {
+      "id": "groq-llama-8b",
+      "priority": 2
+    }
+  ],
   "maxTokens": 500,
   "temperature": 0.1,
   "systemPrompt": "You are an intent classifier for a hostel WhatsApp bot. Classify the user's message into one of these categories: greeting, thanks, wifi, check_in, check_out, pricing, location, facilities, complaint, farewell, unknown.\n\nRespond with ONLY the category name, nothing else.\n\nAvailable intents:\n- greeting: greetings, hello, hi\n- thanks: thank you, appreciation\n- wifi: wifi password, internet access\n- check_in: check-in time, early check-in\n- check_out: check-out time, late check-out\n- pricing: room prices, rates, costs\n- location: directions, address, how to get there\n- facilities: amenities, services available\n- complaint: problems, issues, complaints\n- farewell: goodbye, see you\n- unknown: unrelated or unclear messages",

@@ -3,9 +3,10 @@ import { classifyIntent as llmClassify } from './ai-client.js';
 import { FuzzyIntentMatcher, type KeywordIntent } from './fuzzy-matcher.js';
 import { languageRouter, type SupportedLanguage } from './language-router.js';
 import { getSemanticMatcher, type IntentExamples } from './semantic-matcher.js';
-import { getIntentConfig } from './intent-config.js';
+import { getIntentConfig, buildIntentThresholdMap, checkTierThreshold } from './intent-config.js';
 import intentKeywordsData from './data/intent-keywords.json' assert { type: 'json' };
 import intentExamplesData from './data/intent-examples.json' assert { type: 'json' };
+import intentsJsonData from './data/intents.json' assert { type: 'json' };
 
 // ─── Emergency patterns (regex, critical patterns for immediate escalation) ─────────
 
@@ -49,6 +50,9 @@ function initFuzzyMatcher(): void {
 
 export async function initIntents(): Promise<void> {
   initFuzzyMatcher();
+
+  // Build per-intent threshold map (Layer 1)
+  buildIntentThresholdMap(intentsJsonData);
 
   // Initialize semantic matcher (Phase 3 - async, takes 5-10 seconds)
   const semanticMatcher = getSemanticMatcher();
@@ -122,7 +126,12 @@ export async function classifyMessageWithContext(
       languageFilter
     );
 
-    if (fuzzyResult && fuzzyResult.score >= config.tiers.tier2_fuzzy.threshold) {
+    if (fuzzyResult && checkTierThreshold(
+      fuzzyResult.intent,
+      fuzzyResult.score,
+      config.tiers.tier2_fuzzy.threshold,
+      't2'
+    )) {
       console.log(
         `[Intent] ⚡ FUZZY match: ${fuzzyResult.intent} ` +
         `(${(fuzzyResult.score * 100).toFixed(0)}% - keyword: "${fuzzyResult.matchedKeyword}")` +
@@ -154,7 +163,12 @@ export async function classifyMessageWithContext(
     if (semanticMatcher.isReady()) {
       const semanticResult = await semanticMatcher.match(text, config.tiers.tier3_semantic.threshold);
 
-      if (semanticResult && semanticResult.score >= config.tiers.tier3_semantic.threshold) {
+      if (semanticResult && checkTierThreshold(
+        semanticResult.intent,
+        semanticResult.score,
+        config.tiers.tier3_semantic.threshold,
+        't3'
+      )) {
         console.log(
           `[Intent] 🔬 SEMANTIC match: ${semanticResult.intent} ` +
           `(${(semanticResult.score * 100).toFixed(0)}% - similar to: "${semanticResult.matchedExample}")`

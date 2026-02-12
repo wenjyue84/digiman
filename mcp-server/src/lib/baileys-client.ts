@@ -54,6 +54,8 @@ class WhatsAppInstance {
   unlinkedFromWhatsApp: boolean = false;
   lastUnlinkedAt: string | null = null;
   lastConnectedAt: string | null = null;
+  // Track if we've already notified about the current unlink event
+  private unlinkNotificationSent: boolean = false;
 
   constructor(id: string, label: string, authDir: string) {
     this.id = id;
@@ -174,14 +176,18 @@ class WhatsAppInstance {
           // Mark as unlinked from WhatsApp side
           this.unlinkedFromWhatsApp = true;
           this.lastUnlinkedAt = new Date().toISOString();
-          // Trigger notification to user
-          this.notifyUnlinked();
+          // Trigger notification to user (only once per unlink event)
+          if (!this.unlinkNotificationSent) {
+            this.notifyUnlinked();
+            this.unlinkNotificationSent = true;
+          }
         }
       } else if (connection === 'open') {
         this.qr = null;
         // Clear unlinked status when reconnected
         this.unlinkedFromWhatsApp = false;
         this.lastUnlinkedAt = null;
+        this.unlinkNotificationSent = false; // Reset notification flag for future unlink events
         // Update last connected timestamp
         this.lastConnectedAt = new Date().toISOString();
         const user = (this.sock as any)?.user;

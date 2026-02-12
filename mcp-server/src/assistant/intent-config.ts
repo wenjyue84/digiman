@@ -1,7 +1,13 @@
 /**
  * Intent Detection Configuration Store
  * Manages configurable context window sizes per tier
+ * Supports per-intent confidence thresholds (Layer 1)
  */
+
+// ─── Per-Intent Threshold Maps (Layer 1 + Tier Overrides) ───────────────────
+const intentMinConfidenceMap = new Map<string, number>();
+const intentT2FuzzyThresholdMap = new Map<string, number>();
+const intentT3SemanticThresholdMap = new Map<string, number>();
 
 export interface IntentDetectionConfig {
   tiers: {
@@ -122,4 +128,117 @@ export function loadIntentConfigFromDB(dbConfig: any): void {
   };
 
   console.log('[IntentConfig] Loaded from database:', currentConfig);
+}
+
+// ─── Layer 1: Per-Intent Threshold Support ─────────────────────────────────
+
+/**
+ * Build per-intent threshold map from intents.json data.
+ * Call this during initialization to populate the threshold map.
+ */
+export function buildIntentThresholdMap(intentsData: any): void {
+  intentMinConfidenceMap.clear();
+  intentT2FuzzyThresholdMap.clear();
+  intentT3SemanticThresholdMap.clear();
+
+  if (!intentsData?.categories) {
+    console.warn('[IntentConfig] No categories found in intents data');
+    return;
+  }
+
+  for (const phase of intentsData.categories) {
+    if (!phase.intents) continue;
+    for (const intent of phase.intents) {
+      if (!intent.category) continue;
+
+      // Store Layer 1 min_confidence
+      if (typeof intent.min_confidence === 'number') {
+        intentMinConfidenceMap.set(intent.category, intent.min_confidence);
+      }
+
+      // Store tier-specific overrides (if present)
+      if (typeof intent.t2_fuzzy_threshold === 'number') {
+        intentT2FuzzyThresholdMap.set(intent.category, intent.t2_fuzzy_threshold);
+      }
+      if (typeof intent.t3_semantic_threshold === 'number') {
+        intentT3SemanticThresholdMap.set(intent.category, intent.t3_semantic_threshold);
+      }
+    }
+  }
+
+  console.log(
+    `[IntentConfig] Built threshold maps: ${intentMinConfidenceMap.size} intents, ` +
+    `${intentT2FuzzyThresholdMap.size} T2 overrides, ${intentT3SemanticThresholdMap.size} T3 overrides`
+  );
+}
+
+/**
+ * Check if a classification passes BOTH global threshold AND per-intent threshold.
+ *
+ * @param intentName - The classified intent name
+ * @param score - The confidence score from fuzzy/semantic matcher
+ * @param globalThreshold - The tier's global threshold (e.g., 0.80 for fuzzy)
+ * @returns true if score passes both thresholds, false otherwise
+ */
+export function checkIntentThreshold(
+  intentName: string,
+  score: number,
+  globalThreshold: number
+): boolean {
+  const minConfidence = intentMinConfidenceMap.get(intentName) ?? globalThreshold;
+  const passes = score >= Math.max(minConfidence, globalThreshold);
+
+  if (!passes && score >= globalThreshold) {
+    console.log(
+      `[IntentConfig] 🔸 "${intentName}" passed global (${globalThreshold.toFixed(2)}) ` +
+      `but failed per-intent (${minConfidence.toFixed(2)}) with score ${score.toFixed(2)}`
+    );
+  }
+
+  return passes;
+}
+
+/**
+ * Check if a classification passes tier-specific threshold with per-intent overrides.
+ * Checks tier-specific override first, then falls back to checkIntentThreshold().
+ *
+ * @param intentName - The classified intent name
+ * @param score - The confidence score from fuzzy/semantic matcher
+ * @param globalThreshold - The tier's global threshold (e.g., 0.80 for T2 fuzzy)
+ * @param tier - The tier being checked ('t2' or 't3')
+ * @returns true if score passes all thresholds, false otherwise
+ */
+export function checkTierThreshold(
+  intentName: string,
+  score: number,
+  globalThreshold: number,
+  tier: 't2' | 't3'
+): boolean {
+  // Check for tier-specific override first
+  const tierMap = tier === 't2' ? intentT2FuzzyThresholdMap : intentT3SemanticThresholdMap;
+  const tierOverride = tierMap.get(intentName);
+
+  if (tierOverride !== undefined) {
+    // Tier-specific override exists - use it instead of global threshold
+    const minConfidence = intentMinConfidenceMap.get(intentName) ?? globalThreshold;
+    const effectiveThreshold = Math.max(tierOverride, minConfidence);
+    const passes = score >= effectiveThreshold;
+
+    if (!passes && score >= globalThreshold) {
+      console.log(
+        `[IntentConfig] 🔸 "${intentName}" passed global ${tier.toUpperCase()} (${globalThreshold.toFixed(2)}) ` +
+        `but failed per-intent ${tier.toUpperCase()} override (${tierOverride.toFixed(2)}) with score ${score.toFixed(2)}`
+      );
+    } else if (passes && tierOverride !== globalThreshold) {
+      console.log(
+        `[IntentConfig] ✅ "${intentName}" passed with ${tier.toUpperCase()} override ` +
+        `(${tierOverride.toFixed(2)} vs global ${globalThreshold.toFixed(2)}) with score ${score.toFixed(2)}`
+      );
+    }
+
+    return passes;
+  }
+
+  // No tier-specific override - use standard check
+  return checkIntentThreshold(intentName, score, globalThreshold);
 }

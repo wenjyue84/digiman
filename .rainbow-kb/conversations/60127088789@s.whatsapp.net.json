@@ -355,9 +355,85 @@
       ],
       "messageType": "info",
       "routedAction": "llm_reply"
+    },
+    {
+      "role": "user",
+      "content": "How much is a bed ?",
+      "timestamp": 1770870916924
+    },
+    {
+      "role": "assistant",
+      "content": "💰 *Our Rates*\n\n🏷️ Daily: *RM45/night*\n🏷️ 7 nights: *RM267* (~RM38/night)\n🏷️ Monthly: *RM650/month* (~RM22/night)\n\nDeposit: RM10 key-card + RM100 security (long-term stays, refundable)\nPayment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)\n\nWant to book? Just say *\"book\"*!",
+      "timestamp": 1770870918298,
+      "intent": "pricing",
+      "confidence": 1,
+      "action": "static_reply",
+      "source": "tiered-llm-fallback",
+      "model": "Groq Llama 3.3 70B",
+      "responseTime": 1367,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "availability.md",
+        "pricing.md",
+        "facilities-capsules.md"
+      ],
+      "messageType": "info",
+      "routedAction": "static_reply"
+    },
+    {
+      "role": "user",
+      "content": "I want to check jn",
+      "timestamp": 1770871448121
+    },
+    {
+      "role": "assistant",
+      "content": "Hi! I’m Rainbow, your AI assistant.  \nCheck‑in is at 2 PM. The door code changes each Monday morning – it’s sent to your email shortly before you arrive.  \nWhen you get here, just scan your QR‑key card at the front desk, grab your capsule, and you’re set.  \nIf you need any help or have questions while arriving, just let me know! — Rainbow 🌈",
+      "timestamp": 1770871450659,
+      "intent": "general",
+      "confidence": 0.5,
+      "action": "reply",
+      "source": "tiered-llm-fallback",
+      "model": "Ollama GPT-OSS 20B",
+      "responseTime": 2534,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "faq.md"
+      ],
+      "messageType": "info",
+      "routedAction": "reply"
+    },
+    {
+      "role": "user",
+      "content": "How much is a bed ?",
+      "timestamp": 1770871728186
+    },
+    {
+      "role": "assistant",
+      "content": "💰 *Our Rates*\n\n🏷️ Daily: *RM45/night*\n🏷️ 7 nights: *RM267* (~RM38/night)\n🏷️ Monthly: *RM650/month* (~RM22/night)\n\nDeposit: RM10 key-card + RM100 security (long-term stays, refundable)\nPayment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)\n\nWant to book? Just say *\"book\"*!",
+      "timestamp": 1770871730485,
+      "intent": "pricing",
+      "confidence": 0.97,
+      "action": "static_reply",
+      "source": "tiered-llm-fallback",
+      "model": "Ollama GPT-OSS 20B",
+      "responseTime": 2298,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "availability.md",
+        "pricing.md",
+        "facilities-capsules.md"
+      ],
+      "messageType": "info",
+      "routedAction": "static_reply"
     }
   ],
   "createdAt": 1770737635690,
-  "updatedAt": 1770834361733,
+  "updatedAt": 1770871730485,
   "instanceId": "60167052004"
 }

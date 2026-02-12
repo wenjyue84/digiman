@@ -5,16 +5,36 @@ import { getOrCreate, addMessage, updateBookingState, updateWorkflowState, incre
 import { detectMessageType } from './problem-detector.js';
 import { checkRate } from './rate-limiter.js';
 import { detectLanguage, getTemplate, detectFullLanguage } from './formatter.js';
+import { configStore } from './config-store.js';
 import { escalateToStaff, shouldEscalate, handleStaffReply } from './escalation.js';
 import { handleBookingStep, createBookingState } from './booking.js';
-import { isAIAvailable, classifyAndRespond, classifyOnly, generateReplyOnly, translateText } from './ai-client.js';
+import { isAIAvailable, classifyAndRespond, classifyOnly, generateReplyOnly, translateText, classifyAndRespondWithSmartFallback } from './ai-client.js';
 import { buildSystemPrompt, guessTopicFiles } from './knowledge-base.js';
-import { configStore } from './config-store.js';
 import { sendWhatsAppTypingIndicator } from '../lib/baileys-client.js';
 import { initWorkflowExecutor, executeWorkflowStep, createWorkflowState, forwardWorkflowSummary } from './workflow-executor.js';
 import { maybeWriteDiary } from './memory-writer.js';
 import type { ConversationEvent } from './memory-writer.js';
 import { logMessage } from './conversation-logger.js';
+import {
+  shouldAskFeedback,
+  setAwaitingFeedback,
+  isAwaitingFeedback,
+  clearAwaitingFeedback,
+  detectFeedbackResponse,
+  buildFeedbackData,
+  getFeedbackPrompt
+} from './feedback.js';
+import axios from 'axios';
+import { trackIntentPrediction, markIntentCorrection } from './intent-tracker.js';
+import {
+  analyzeSentiment,
+  trackSentiment,
+  shouldEscalateOnSentiment,
+  markSentimentEscalation,
+  resetSentimentTracking,
+  isSentimentAnalysisEnabled
+} from './sentiment-tracker.js';
+import { applyConversationSummarization } from './conversation-summarizer.js';
 
 let sendMessage: SendMessageFn;
 let callAPI: CallAPIFn;
@@ -70,6 +90,9 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       // Clear escalation timers when staff replies
       handleStaffReply(phone);
 
+      // Reset sentiment tracking when staff replies
+      resetSentimentTracking(phone);
+
       if (text.startsWith('!')) {
         await handleStaffCommand(phone, text, msg.instanceId);
         return;
@@ -102,6 +125,64 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
     addMessage(phone, 'user', text);
     logMessage(phone, msg.pushName, 'user', text, { instanceId: msg.instanceId }).catch(() => {});
     const lang = convo.language;
+
+    // ─── SENTIMENT ANALYSIS ─────────────────────────────────────────
+    // Analyze sentiment FIRST (before any early returns)
+    if (isSentimentAnalysisEnabled()) {
+      const messageSentiment = analyzeSentiment(processText);
+      trackSentiment(phone, text, messageSentiment);
+      console.log(`[Sentiment] ${phone}: ${messageSentiment} (${text.slice(0, 50)}...)`);
+    }
+
+    // ─── FEEDBACK DETECTION ─────────────────────────────────────────
+    // Check if user is providing feedback (thumbs up/down, yes/no)
+    if (isAwaitingFeedback(phone)) {
+      const feedbackRating = detectFeedbackResponse(processText);
+      if (feedbackRating !== null) {
+        // User is providing feedback!
+        console.log(`[Feedback] ${feedbackRating === 1 ? '👍' : '👎'} from ${phone}`);
+
+        const feedbackData = buildFeedbackData(phone, feedbackRating, processText);
+        if (feedbackData) {
+          // Save feedback to database via API (post to self)
+          try {
+            const port = process.env.PORT || 3002;
+            await axios.post(`http://localhost:${port}/api/rainbow/feedback`, feedbackData);
+            console.log(`[Feedback] ✅ Saved to database`);
+
+            // If thumbs down, mark intent as incorrect
+            if (feedbackRating === -1 && feedbackData.conversationId) {
+              markIntentCorrection(
+                feedbackData.conversationId,
+                'unknown', // We don't know the actual intent from negative feedback alone
+                'feedback'
+              ).catch(() => {}); // Non-fatal
+            }
+          } catch (error) {
+            console.error(`[Feedback] ❌ Failed to save:`, error);
+          }
+        }
+
+        // Clear awaiting state
+        clearAwaitingFeedback(phone);
+
+        // Send thank you message
+        const thankYouMessages = {
+          en: feedbackRating === 1
+            ? 'Thank you for your feedback! 😊'
+            : 'Thank you for your feedback. I\'ll work on improving! 😊',
+          ms: feedbackRating === 1
+            ? 'Terima kasih atas maklum balas anda! 😊'
+            : 'Terima kasih atas maklum balas anda. Saya akan cuba memperbaiki! 😊',
+          zh: feedbackRating === 1
+            ? '谢谢您的反馈！😊'
+            : '谢谢您的反馈。我会努力改进！😊'
+        };
+        const thankYou = thankYouMessages[lang] || thankYouMessages.en;
+        await sendMessage(phone, thankYou, msg.instanceId);
+        return; // Done processing feedback
+      }
+    }
 
     // If in active workflow, continue workflow execution
     if (convo.workflowState) {
@@ -177,6 +258,18 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       // Send typing indicator immediately (composing bubble in WhatsApp)
       sendWhatsAppTypingIndicator(phone, msg.instanceId).catch(() => {});
 
+      // ─── CONVERSATION SUMMARIZATION ─────────────────────────────────
+      // Apply conversation summarization to reduce context size
+      const summarizationResult = await applyConversationSummarization(convo.messages.slice(0, -1));
+      const contextMessages = summarizationResult.messages;
+
+      if (summarizationResult.wasSummarized) {
+        console.log(
+          `[Router] 📝 Conversation summarized: ${summarizationResult.originalCount} → ${summarizationResult.reducedCount} messages ` +
+          `(${Math.round((1 - summarizationResult.reducedCount / summarizationResult.originalCount) * 100)}% reduction)`
+        );
+      }
+
       const topicFiles = guessTopicFiles(processText);
       _devMetadata.kbFiles = ['AGENTS.md', 'soul.md', 'memory.md', ...topicFiles];
       console.log(`[Router] KB files: [${topicFiles.join(', ')}]`);
@@ -207,7 +300,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         const startTime = Date.now();
         const tierResult = await classifyMessageWithContext(
           processText,
-          convo.messages.slice(0, -1),
+          contextMessages,
           convo.lastIntent
         );
         const classifyTime = Date.now() - startTime;
@@ -238,16 +331,22 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
             // Classified by fast tier but needs LLM for reply
             const replyResult = await generateReplyOnly(
               systemPrompt,
-              convo.messages.slice(0, -1),
+              contextMessages,
               processText,
               tierResult.category
             );
             clearTimeout(ackTimer);
+
+            // Use reply confidence if available, otherwise use classification confidence
+            const finalConfidence = replyResult.confidence !== undefined
+              ? replyResult.confidence
+              : tierResult.confidence;
+
             result = {
               intent: tierResult.category,
               action: routedAction,
               response: replyResult.response,
-              confidence: tierResult.confidence,
+              confidence: finalConfidence,
               model: replyResult.model,
               responseTime: classifyTime + (replyResult.responseTime || 0)
             };
@@ -256,7 +355,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
             // LLM tier — full classify+respond (fallback)
             const llmResult = await classifyAndRespond(
               systemPrompt,
-              convo.messages.slice(0, -1),
+              contextMessages,
               processText
             );
             clearTimeout(ackTimer);
@@ -275,7 +374,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         // ─── T4 SPLIT-MODEL: Fast 8B classify, then conditional 70B reply ───
         const classifyResult = await classifyOnly(
           processText,
-          convo.messages.slice(0, -1),
+          contextMessages,
           routingMode?.classifyProvider
         );
         clearTimeout(ackTimer);
@@ -288,15 +387,21 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         if (routedAction === 'llm_reply' || routedAction === 'reply') {
           const replyResult = await generateReplyOnly(
             systemPrompt,
-            convo.messages.slice(0, -1),
+            contextMessages,
             processText,
             classifyResult.intent
           );
+
+          // Use reply confidence if available, otherwise use classification confidence
+          const finalConfidence = replyResult.confidence !== undefined
+            ? replyResult.confidence
+            : classifyResult.confidence;
+
           result = {
             intent: classifyResult.intent,
             action: routedAction,
             response: replyResult.response,
-            confidence: classifyResult.confidence,
+            confidence: finalConfidence,
             model: `${classifyResult.model} → ${replyResult.model}`,
             responseTime: (classifyResult.responseTime || 0) + (replyResult.responseTime || 0)
           };
@@ -316,7 +421,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         // ─── DEFAULT (T1/T2/T3): Single LLM call for classify + respond ───
         result = await classifyAndRespond(
           systemPrompt,
-          convo.messages.slice(0, -1),
+          contextMessages,
           processText
         );
         clearTimeout(ackTimer);
@@ -326,6 +431,47 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       // Store developer metadata
       _devMetadata.model = result.model;
       _devMetadata.responseTime = result.responseTime;
+
+      // ─── LAYER 2: Response Quality Threshold Check ─────────────────────
+      // If confidence is below threshold, retry with smartest LLM + 2x context
+      const llmSettings = JSON.parse(
+        require('fs').readFileSync(
+          require('path').join(__dirname, 'data/llm-settings.json'),
+          'utf-8'
+        )
+      );
+      const layer2Threshold = llmSettings.thresholds?.layer2 ?? 0.80;
+
+      if (result.confidence < layer2Threshold && isAIAvailable()) {
+        console.log(
+          `[Router] 🔸 Layer 2: confidence ${result.confidence.toFixed(2)} < ${layer2Threshold.toFixed(2)} ` +
+          `→ retrying with smart fallback`
+        );
+
+        const fallbackResult = await classifyAndRespondWithSmartFallback(
+          systemPrompt,
+          contextMessages,
+          processText
+        );
+
+        // Update result if fallback succeeded and improved confidence
+        if (fallbackResult.confidence > result.confidence) {
+          console.log(
+            `[Router] ✅ Layer 2 improved confidence: ` +
+            `${result.confidence.toFixed(2)} → ${fallbackResult.confidence.toFixed(2)} ` +
+            `(${fallbackResult.model})`
+          );
+          result = fallbackResult;
+          _devMetadata.source = (_devMetadata.source || 'llm') + '+layer2';
+          _devMetadata.model = fallbackResult.model;
+          _devMetadata.responseTime = (result.responseTime || 0) + (fallbackResult.responseTime || 0);
+        } else {
+          console.log(
+            `[Router] ⚠️ Layer 2 fallback did not improve confidence ` +
+            `(${fallbackResult.confidence.toFixed(2)})`
+          );
+        }
+      }
 
       // Look up admin-controlled routing for this intent
       const routingConfig = configStore.getRouting();
@@ -345,6 +491,18 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
 
       // Update developer metadata
       _devMetadata.routedAction = routedAction;
+
+      // Track intent prediction for accuracy monitoring
+      const conversationId = `${phone}-${Date.now()}`;
+      trackIntentPrediction(
+        conversationId,
+        phone,
+        text,
+        result.intent,
+        result.confidence,
+        _devMetadata.source || 'unknown',
+        result.model
+      ).catch(() => {}); // Non-fatal
 
       // Track intent for future repeat detection
       updateLastIntent(phone, result.intent, result.confidence);
@@ -504,6 +662,75 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
     }
 
     if (response) {
+      // ─── PRIORITY 3: Low-Confidence Handling ─────────────────────────
+      // Add disclaimer or escalate based on confidence thresholds
+      const llmSettings = JSON.parse(
+        require('fs').readFileSync(
+          require('path').join(__dirname, 'data/llm-settings.json'),
+          'utf-8'
+        )
+      );
+      const lowConfidenceThreshold = llmSettings.thresholds?.lowConfidence ?? 0.5;
+      const mediumConfidenceThreshold = llmSettings.thresholds?.mediumConfidence ?? 0.7;
+
+      if (_diaryEvent.confidence < lowConfidenceThreshold) {
+        // Very low confidence (<0.5) → Escalate to staff
+        console.log(
+          `[Router] 🚨 Very low confidence ${_diaryEvent.confidence.toFixed(2)} → escalating to staff`
+        );
+        _diaryEvent.escalated = true;
+        await escalateToStaff({
+          phone,
+          pushName: msg.pushName,
+          reason: 'low_confidence',
+          recentMessages: convo.messages.map(m => `${m.role}: ${m.content}`),
+          originalMessage: text,
+          instanceId: msg.instanceId
+        });
+
+        // Add disclaimer to response from configurable templates
+        const disclaimer = getTemplate('confidence_very_low', lang);
+        response += disclaimer;
+      } else if (_diaryEvent.confidence < mediumConfidenceThreshold) {
+        // Medium-low confidence (0.5-0.7) → Add disclaimer only
+        console.log(
+          `[Router] ⚠️ Medium-low confidence ${_diaryEvent.confidence.toFixed(2)} → adding disclaimer`
+        );
+
+        // Add disclaimer from configurable templates
+        const disclaimer = getTemplate('confidence_low', lang);
+        response += disclaimer;
+      }
+
+      // ─── SENTIMENT-BASED ESCALATION ─────────────────────────────────
+      // Check if user has sent 2+ consecutive negative messages
+      if (isSentimentAnalysisEnabled()) {
+        const sentimentCheck = shouldEscalateOnSentiment(phone);
+        if (sentimentCheck.shouldEscalate) {
+          console.log(
+            `[Sentiment] 🚨 Escalating: ${sentimentCheck.consecutiveCount} consecutive negative messages from ${phone}`
+          );
+          _diaryEvent.escalated = true;
+          await escalateToStaff({
+            phone,
+            pushName: msg.pushName,
+            reason: sentimentCheck.reason || 'sentiment_negative',
+            recentMessages: convo.messages.map(m => `${m.role}: ${m.content}`),
+            originalMessage: text,
+            instanceId: msg.instanceId
+          });
+          markSentimentEscalation(phone);
+
+          // Add empathetic message to response
+          const sentimentMessages = {
+            en: "\n\nI sense you may be frustrated. I've alerted our team, and someone will reach out to you shortly. 🙏",
+            ms: "\n\nSaya faham anda mungkin kecewa. Saya telah maklumkan pasukan kami, dan seseorang akan menghubungi anda tidak lama lagi. 🙏",
+            zh: "\n\n我感觉到您可能有些不满。我已通知我们的团队,他们会尽快与您联系。🙏"
+          };
+          response += sentimentMessages[lang] || sentimentMessages.en;
+        }
+      }
+
       // If guest speaks a non-template language, translate response back
       if (foreignLang && isAIAvailable()) {
         const translatedResponse = await translateText(response, 'English', foreignLang);
@@ -525,6 +752,29 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         routedAction: _devMetadata.routedAction
       }).catch(() => {});
       await sendMessage(phone, response, msg.instanceId);
+
+      // ─── FEEDBACK PROMPT ─────────────────────────────────────────────
+      // Ask for feedback if conditions are met
+      if (shouldAskFeedback(phone, _diaryEvent.intent, _diaryEvent.action)) {
+        console.log(`[Feedback] Asking for feedback from ${phone}`);
+
+        // Set awaiting feedback state
+        setAwaitingFeedback(
+          phone,
+          `${phone}-${Date.now()}`, // conversationId
+          _diaryEvent.intent,
+          _diaryEvent.confidence,
+          _devMetadata.model || null,
+          _devMetadata.responseTime || null,
+          _devMetadata.source || null
+        );
+
+        // Send feedback prompt (delayed by 1 second for natural feel)
+        setTimeout(async () => {
+          const feedbackPrompt = getFeedbackPrompt(lang);
+          await sendMessage(phone, feedbackPrompt, msg.instanceId);
+        }, 1000);
+      }
     }
 
     // ─── Auto-diary: write noteworthy events to today's memory log ──

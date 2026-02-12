@@ -1,266 +1,136 @@
 {
-  "_comment": "Intent routing organized by guest journey phases",
-
-  "GENERAL_SUPPORT": {
-    "greeting": {
-      "action": "llm_reply",
-      "description": "Warm greeting with personalized response"
-    },
-    "thanks": {
-      "action": "llm_reply",
-      "description": "Acknowledge appreciation"
-    },
-    "contact_staff": {
-      "action": "workflow",
-      "workflow_id": "escalate",
-      "description": "Escalate to human staff"
-    }
+  "greeting": {
+    "action": "static_reply"
   },
-
-  "PRE_ARRIVAL": {
-    "pricing": {
-      "action": "static_reply",
-      "description": "Provide current room rates and packages"
-    },
-    "availability": {
-      "action": "llm_reply",
-      "description": "Check real-time capsule availability"
-    },
-    "booking": {
-      "action": "workflow",
-      "workflow_id": "booking_payment_handler",
-      "description": "Guide through reservation and payment"
-    },
-    "directions": {
-      "action": "static_reply",
-      "description": "Provide location, map, and navigation instructions"
-    },
-    "facilities_info": {
-      "action": "static_reply",
-      "description": "List available amenities and facilities"
-    },
-    "rules_policy": {
-      "action": "static_reply",
-      "description": "Explain house rules, quiet hours, smoking policy"
-    },
-    "payment_info": {
-      "action": "static_reply",
-      "description": "Provide bank details and payment methods"
-    },
-    "payment_made": {
-      "action": "forward_payment",
-      "description": "Forward payment confirmation to staff for verification"
-    },
-    "checkin_info": {
-      "action": "static_reply",
-      "description": "Explain check-in time, procedure, and requirements"
-    },
-    "checkout_info": {
-      "action": "static_reply",
-      "description": "Explain check-out time and late checkout policy"
-    }
+  "thanks": {
+    "action": "static_reply"
   },
-
-  "ARRIVAL_CHECKIN": {
-    "check_in_arrival": {
-      "action": "workflow",
-      "workflow_id": "checkin_full",
-      "description": "Process guest check-in and capsule assignment"
-    },
-    "lower_deck_preference": {
-      "action": "workflow",
-      "workflow_id": "lower_deck_preference",
-      "description": "Handle capsule preference requests"
-    },
-    "wifi": {
-      "action": "static_reply",
-      "description": "Provide WiFi credentials"
-    },
-    "facility_orientation": {
-      "action": "static_reply",
-      "description": "Guide guest to facilities (bathroom, kitchen, locker)"
-    }
+  "contact_staff": {
+    "action": "workflow",
+    "workflow_id": "escalate"
   },
-
-  "DURING_STAY": {
-    "climate_control_complaint": {
-      "action": "workflow",
-      "workflow_id": "climate_control_resolution",
-      "severity": "HIGH",
-      "response_time": "2-4 hours",
-      "immediate_actions": [
-        "Acknowledge discomfort with empathy",
-        "Offer immediate solutions: adjust AC, provide extra blanket/fan",
-        "If unresolved, offer capsule relocation to warmer/cooler area",
-        "Follow up within 2 hours to confirm satisfaction"
-      ],
-      "service_recovery": "Upgrade to premium capsule OR 5% discount if relocation required",
-      "description": "Handle temperature/humidity complaints with immediate resolution"
-    },
-    "noise_complaint": {
-      "action": "workflow",
-      "workflow_id": "noise_mitigation",
-      "severity": "HIGH",
-      "response_time": "2 hours",
-      "immediate_actions": [
-        "Empathize with sleep disruption",
-        "Identify noise source (adjacent guest, AC unit, external)",
-        "Offer relocation to quieter capsule (corner, farther from AC)",
-        "If external noise, explain + provide earplugs if available"
-      ],
-      "service_recovery": "Free breakfast next morning OR 10% discount",
-      "description": "Relocate guest to quieter location immediately"
-    },
-    "cleanliness_complaint": {
-      "action": "workflow",
-      "workflow_id": "housekeeping_escalation",
-      "severity": "CRITICAL",
-      "response_time": "Immediate (<30 min)",
-      "immediate_actions": [
-        "Apologize sincerely and take full ownership",
-        "Offer immediate relocation to pre-cleaned capsule",
-        "OR deep clean within 4 hours if guest prefers to stay",
-        "Escalate to housekeeping manager",
-        "Follow up with senior staff apology"
-      ],
-      "service_recovery": "Room upgrade + 20% discount + complimentary amenity",
-      "description": "Critical issue requiring immediate relocation or deep cleaning"
-    },
-    "facility_malfunction": {
-      "action": "workflow",
-      "workflow_id": "facility_maintenance",
-      "severity": "HIGH",
-      "response_time": "Immediate",
-      "immediate_actions": [
-        "Apologize and relocate to functional capsule immediately",
-        "Report malfunction to maintenance team",
-        "Follow up to ensure new capsule is satisfactory"
-      ],
-      "service_recovery": "5-10% discount depending on inconvenience",
-      "description": "Broken light, ventilation, door lock - immediate relocation"
-    },
-    "card_locked": {
-      "action": "workflow",
-      "workflow_id": "card_locked_troubleshoot",
-      "severity": "CRITICAL",
-      "response_time": "Immediate (<15 min)",
-      "description": "Emergency unlock - staff must respond immediately"
-    },
-    "theft_report": {
-      "action": "workflow",
-      "workflow_id": "theft_emergency",
-      "severity": "CRITICAL",
-      "response_time": "Immediate",
-      "description": "Security incident - escalate to manager + review CCTV"
-    },
-    "general_complaint_in_stay": {
-      "action": "workflow",
-      "workflow_id": "complaint_in_stay",
-      "severity": "MEDIUM",
-      "response_time": "4 hours",
-      "immediate_actions": [
-        "Apply HEARD framework: Hear → Empathize → Apologize → Resolve → Diagnose",
-        "Document complaint details",
-        "Offer appropriate resolution based on severity",
-        "Follow up within 24 hours"
-      ],
-      "service_recovery": "Varies by issue - snacks, WiFi upgrade, or discount",
-      "description": "General mid-stay complaints requiring resolution"
-    },
-    "extra_amenity_request": {
-      "action": "workflow",
-      "workflow_id": "amenity_delivery",
-      "severity": "LOW",
-      "response_time": "30 min - 2 hours",
-      "description": "Deliver extra blanket, pillow, towel, charger within reasonable time"
-    },
-    "tourist_guide": {
-      "action": "workflow",
-      "workflow_id": "tourist_guide",
-      "severity": "LOW",
-      "description": "Provide local recommendations and attractions"
-    }
+  "pricing": {
+    "action": "static_reply"
   },
-
-  "CHECKOUT_DEPARTURE": {
-    "checkout_procedure": {
-      "action": "static_reply",
-      "description": "Explain checkout steps and remind to check locker"
-    },
-    "late_checkout_request": {
-      "action": "workflow",
-      "workflow_id": "late_checkout_approval",
-      "description": "Check availability and approve/deny with pricing"
-    },
-    "luggage_storage": {
-      "action": "static_reply",
-      "description": "Explain luggage storage location, hours, and fees"
-    },
-    "billing_inquiry": {
-      "action": "workflow",
-      "workflow_id": "billing_clarification",
-      "description": "Provide itemized bill and clarify charges"
-    }
+  "availability": {
+    "action": "llm_reply"
   },
-
-  "POST_CHECKOUT": {
-    "forgot_item_post_checkout": {
-      "action": "workflow",
-      "workflow_id": "lost_and_found",
-      "severity": "MEDIUM",
-      "response_time": "24 hours",
-      "immediate_actions": [
-        "Check Lost & Found inventory within 2 hours",
-        "Notify guest same day if item is found",
-        "Offer free shipping OR pickup options",
-        "Provide 10% future stay discount as apology for inconvenience"
-      ],
-      "service_recovery": "Free shipping + 10% voucher",
-      "description": "Search lost items and arrange return or compensation"
-    },
-    "post_checkout_complaint": {
-      "action": "workflow",
-      "workflow_id": "complaint_post_checkout",
-      "severity": "MEDIUM",
-      "response_time": "24 hours",
-      "immediate_actions": [
-        "Apply HEARD framework with sincere apology",
-        "Acknowledge issue cannot be resolved in real-time (already departed)",
-        "Offer service recovery: 25-50% voucher for future stay",
-        "Personalized apology letter from management",
-        "Document for quality improvement"
-      ],
-      "service_recovery": "25-50% future stay voucher + apology letter",
-      "description": "Service recovery for post-checkout complaints - voucher or apology only"
-    },
-    "billing_dispute": {
-      "action": "workflow",
-      "workflow_id": "billing_dispute_resolution",
-      "severity": "HIGH",
-      "response_time": "24 hours",
-      "immediate_actions": [
-        "Review billing records and itemize charges",
-        "Verify with payment gateway if applicable",
-        "If error found: refund within 24 hours + courtesy credit",
-        "If valid charge: explain professionally with documentation"
-      ],
-      "service_recovery": "Full refund if error + 10-20% future stay credit",
-      "description": "Investigate and resolve billing discrepancies"
-    },
-    "review_feedback": {
-      "action": "llm_reply",
-      "description": "Thank guest for feedback and address concerns if any"
-    }
+  "booking": {
+    "action": "workflow",
+    "workflow_id": "booking_payment_handler"
   },
-
-  "FALLBACK": {
-    "general": {
-      "action": "llm_reply",
-      "description": "Handle general queries with LLM"
-    },
-    "unknown": {
-      "action": "llm_reply",
-      "description": "Attempt to understand intent or escalate to staff"
-    }
+  "directions": {
+    "action": "static_reply"
+  },
+  "facilities_info": {
+    "action": "static_reply"
+  },
+  "rules_policy": {
+    "action": "static_reply"
+  },
+  "payment_info": {
+    "action": "static_reply"
+  },
+  "payment_made": {
+    "action": "workflow",
+    "workflow_id": "forward_payment"
+  },
+  "checkin_info": {
+    "action": "workflow",
+    "workflow_id": "checkin_full"
+  },
+  "checkout_info": {
+    "action": "static_reply"
+  },
+  "check_in_arrival": {
+    "action": "workflow",
+    "workflow_id": "checkin_full"
+  },
+  "lower_deck_preference": {
+    "action": "workflow",
+    "workflow_id": "lower_deck_preference"
+  },
+  "wifi": {
+    "action": "static_reply"
+  },
+  "facility_orientation": {
+    "action": "llm_reply"
+  },
+  "climate_control_complaint": {
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
+  },
+  "noise_complaint": {
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
+  },
+  "cleanliness_complaint": {
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
+  },
+  "facility_malfunction": {
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
+  },
+  "card_locked": {
+    "action": "workflow",
+    "workflow_id": "card_locked_troubleshoot"
+  },
+  "theft_report": {
+    "action": "workflow",
+    "workflow_id": "theft_emergency"
+  },
+  "general_complaint_in_stay": {
+    "action": "llm_reply"
+  },
+  "extra_amenity_request": {
+    "action": "llm_reply"
+  },
+  "tourist_guide": {
+    "action": "workflow",
+    "workflow_id": "tourist_guide"
+  },
+  "checkout_procedure": {
+    "action": "static_reply"
+  },
+  "late_checkout_request": {
+    "action": "llm_reply"
+  },
+  "luggage_storage": {
+    "action": "static_reply"
+  },
+  "billing_inquiry": {
+    "action": "llm_reply"
+  },
+  "forgot_item_post_checkout": {
+    "action": "llm_reply"
+  },
+  "post_checkout_complaint": {
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
+  },
+  "billing_dispute": {
+    "action": "workflow",
+    "workflow_id": "escalate"
+  },
+  "review_feedback": {
+    "action": "llm_reply"
+  },
+  "unknown": {
+    "action": "llm_reply"
+  },
+  "complaint": {
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
+  },
+  "theft": {
+    "action": "workflow",
+    "workflow_id": "theft_emergency"
+  },
+  "payment": {
+    "action": "static_reply"
+  },
+  "facilities": {
+    "action": "static_reply"
   }
 }

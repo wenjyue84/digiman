@@ -79,7 +79,13 @@ router.post('/intents', (req: Request, res: Response) => {
 router.put('/intents/:category', (req: Request, res: Response) => {
   const { category } = req.params;
   const data = configStore.getIntents();
-  const entry = data.categories.find(c => c.category === category);
+  // Search through nested phases → intents structure
+  let entry: IntentEntry | undefined;
+  for (const phase of data.categories as any[]) {
+    const intents = phase.intents || [];
+    entry = intents.find((i: IntentEntry) => i.category === category);
+    if (entry) break;
+  }
   if (!entry) {
     res.status(404).json({ error: `Category "${category}" not found` });
     return;
@@ -87,6 +93,24 @@ router.put('/intents/:category', (req: Request, res: Response) => {
   if (req.body.patterns !== undefined) entry.patterns = req.body.patterns;
   if (req.body.flags !== undefined) entry.flags = req.body.flags;
   if (req.body.enabled !== undefined) entry.enabled = req.body.enabled;
+  if (req.body.min_confidence !== undefined) entry.min_confidence = req.body.min_confidence;
+
+  // Per-tier threshold overrides (Layer 1 enhancement)
+  if (req.body.t2_fuzzy_threshold !== undefined) {
+    if (req.body.t2_fuzzy_threshold === null) {
+      delete (entry as any).t2_fuzzy_threshold; // Remove override
+    } else {
+      (entry as any).t2_fuzzy_threshold = req.body.t2_fuzzy_threshold;
+    }
+  }
+  if (req.body.t3_semantic_threshold !== undefined) {
+    if (req.body.t3_semantic_threshold === null) {
+      delete (entry as any).t3_semantic_threshold; // Remove override
+    } else {
+      (entry as any).t3_semantic_threshold = req.body.t3_semantic_threshold;
+    }
+  }
+
   configStore.setIntents(data);
   res.json({ ok: true, category, entry });
 });
@@ -94,12 +118,21 @@ router.put('/intents/:category', (req: Request, res: Response) => {
 router.delete('/intents/:category', (req: Request, res: Response) => {
   const { category } = req.params;
   const data = configStore.getIntents();
-  const idx = data.categories.findIndex(c => c.category === category);
-  if (idx === -1) {
+  // Search through nested phases → intents structure
+  let found = false;
+  for (const phase of data.categories as any[]) {
+    const intents = phase.intents || [];
+    const idx = intents.findIndex((i: IntentEntry) => i.category === category);
+    if (idx !== -1) {
+      intents.splice(idx, 1);
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
     res.status(404).json({ error: `Category "${category}" not found` });
     return;
   }
-  data.categories.splice(idx, 1);
   configStore.setIntents(data);
   res.json({ ok: true, deleted: category });
 });

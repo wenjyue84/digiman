@@ -68,5 +68,15 @@
     "en": "Thank you! I've forwarded your payment info to our staff. They'll confirm your payment shortly. \u2014 Rainbow \ud83c\udf08",
     "ms": "Terima kasih! Saya telah hantar maklumat pembayaran anda kepada staf kami. Mereka akan sahkan bayaran anda sebentar lagi. \u2014 Rainbow \ud83c\udf08",
     "zh": "\u8c22\u8c22\uff01\u6211\u5df2\u5c06\u60a8\u7684\u4ed8\u6b3e\u4fe1\u606f\u8f6c\u53d1\u7ed9\u5de5\u4f5c\u4eba\u5458\u3002\u4ed6\u4eec\u4f1a\u5c3d\u5feb\u786e\u8ba4\u60a8\u7684\u4ed8\u6b3e\u3002\u2014 Rainbow \ud83c\udf08"
+  },
+  "confidence_very_low": {
+    "en": "\n\nℹ️ I'm not entirely sure about this information. Our team will follow up with you shortly to confirm.",
+    "ms": "\n\nℹ️ Saya tidak pasti tentang maklumat ini. Pasukan kami akan menghubungi anda sebentar lagi untuk mengesahkan.",
+    "zh": "\n\nℹ️ 我不太确定这个信息。我们的团队会尽快与您联系以确认。"
+  },
+  "confidence_low": {
+    "en": "\n\nℹ️ Please note: I may not have complete information. Feel free to ask for clarification or request to speak with our team.",
+    "ms": "\n\nℹ️ Sila ambil perhatian: Saya mungkin tidak mempunyai maklumat lengkap. Sila tanya untuk penjelasan atau minta bercakap dengan pasukan kami.",
+    "zh": "\n\nℹ️ 请注意：我可能没有完整的信息。如需澄清或与我们的团队交谈，请随时提出。"
   }
 }

@@ -170,6 +170,143 @@ async function chatWithFallback(
   return { content: null, provider: null };
 }
 
+// ─── Layer 2: Smart Fallback for Low-Confidence Responses ─────────────────
+
+/**
+ * Fallback handler for low-confidence responses (Layer 2).
+ * Uses smartest available models + increased context for full re-classification.
+ *
+ * @param systemPrompt - System prompt for classification
+ * @param history - Conversation history (will be expanded to 20 messages)
+ * @param userMessage - Current user message
+ * @returns AIResponse with improved confidence (or same if fallback failed)
+ */
+export async function classifyAndRespondWithSmartFallback(
+  systemPrompt: string,
+  history: ChatMessage[],
+  userMessage: string
+): Promise<AIResponse> {
+  const startTime = Date.now();
+
+  // 1. Filter to high-capability providers
+  const allProviders = getProviders();
+  const smartProviders = allProviders.filter(p =>
+    // DeepSeek 671B, Kimi K2.5, GPT-OSS 120B, or priority <= 1
+    p.id === 'deepseek-r1-distill-70b' ||
+    p.id === 'kimi-k2.5' ||
+    p.id === 'gpt-oss-120b' ||
+    p.priority <= 1
+  );
+
+  if (smartProviders.length === 0) {
+    console.warn('[AI] No smart providers available for fallback, using all enabled');
+    // Fall back to regular classification
+    return classifyAndRespond(systemPrompt, history, userMessage);
+  }
+
+  // 2. Double context size (10 → 20 messages)
+  const expandedHistory = history.slice(-20);
+
+  console.log(
+    `[AI] 🧠 Smart fallback: ${smartProviders.length} providers, ` +
+    `${expandedHistory.length} context messages`
+  );
+
+  // 3. Build messages with expanded context
+  const messages = [
+    { role: 'system' as const, content: systemPrompt },
+    ...expandedHistory.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    { role: 'user' as const, content: userMessage }
+  ];
+
+  // 4. Try smart providers in priority order
+  const ai = getAISettings();
+  let lastError: Error | null = null;
+
+  for (const provider of smartProviders) {
+    try {
+      const apiKey = resolveApiKey(provider);
+      if (!apiKey && provider.type !== 'ollama') continue;
+
+      let content: string | null = null;
+
+      if (provider.type === 'groq') {
+        const groq = groqInstances.get(provider.id);
+        if (!groq) continue;
+
+        const completion = await groq.chat.completions.create({
+          model: provider.model,
+          messages,
+          max_tokens: Math.floor(ai.max_chat_tokens * 1.5), // 800 → 1200 tokens
+          temperature: ai.chat_temperature,
+          response_format: { type: 'json_object' }
+        });
+
+        content = completion.choices[0]?.message?.content?.trim() || null;
+      } else {
+        // openai-compatible & ollama
+        const body: any = {
+          model: provider.model,
+          messages,
+          max_tokens: Math.floor(ai.max_chat_tokens * 1.5),
+          temperature: ai.chat_temperature,
+          response_format: { type: 'json_object' }
+        };
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (apiKey && provider.type !== 'ollama') {
+          headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+
+        const res = await axios.post(`${provider.base_url}/chat/completions`, body, {
+          headers,
+          timeout: 90000, // 90s timeout for smart models
+          validateStatus: () => true
+        });
+
+        if (res.status === 200) {
+          content = res.data.choices?.[0]?.message?.content?.trim() || null;
+        } else {
+          throw new Error(`${provider.name} ${res.status}: ${JSON.stringify(res.data).slice(0, 200)}`);
+        }
+      }
+
+      if (!content) continue;
+
+      const parsed = JSON.parse(content);
+      const responseTime = Date.now() - startTime;
+
+      console.log(
+        `[AI] ✅ Smart fallback success: ${provider.name} (${responseTime}ms) ` +
+        `confidence: ${parsed.confidence}`
+      );
+
+      return {
+        intent: parsed.intent || 'unknown',
+        action: VALID_ACTIONS.includes(parsed.action) ? parsed.action : 'reply',
+        response: parsed.response || '',
+        confidence: parseFloat(parsed.confidence || 0),
+        model: provider.name,
+        responseTime
+      };
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`[AI] Smart provider ${provider.name} failed: ${error.message}`);
+      continue;
+    }
+  }
+
+  // All smart providers failed - return error result
+  console.error('[AI] ❌ Smart fallback exhausted all providers');
+  return {
+    intent: 'unknown',
+    action: 'reply',
+    response: '',
+    confidence: 0,
+    responseTime: Date.now() - startTime
+  };
+}
+
 /** Read T4 selected provider IDs from llm-settings.json */
 function getT4ProviderIds(): string[] | undefined {
   try {
@@ -509,13 +646,21 @@ export async function generateReplyOnly(
   history: ChatMessage[],
   userMessage: string,
   intent: string
-): Promise<{ response: string; model?: string; responseTime?: number }> {
+): Promise<{ response: string; confidence?: number; model?: string; responseTime?: number }> {
   if (!isAIAvailable()) {
-    return { response: '', model: 'none' };
+    return { response: '', confidence: 0, model: 'none' };
   }
 
-  // Augment the system prompt to skip classification
-  const replyPrompt = systemPrompt + `\n\nThe user's intent has been classified as "${intent}". Generate a helpful response. Reply in the same language as the user. Respond with ONLY valid JSON: {"response":"<your reply>"}`;
+  // Augment the system prompt to skip classification and request confidence
+  const replyPrompt = systemPrompt + `\n\nThe user's intent has been classified as "${intent}". Generate a helpful response. Reply in the same language as the user.
+
+IMPORTANT: Include a confidence score for your response:
+- Set confidence < 0.5 if: answer is partial, information is incomplete, or you're not sure
+- Set confidence < 0.7 if: answer requires interpretation or combines multiple KB sections
+- Set confidence >= 0.7 if: answer is directly stated in KB and complete
+- Set confidence >= 0.9 if: answer is exact quote from KB with no ambiguity
+
+Respond with ONLY valid JSON: {"response":"<your reply>", "confidence": 0.0-1.0}`;
 
   const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
     { role: 'system', content: replyPrompt }
@@ -535,18 +680,28 @@ export async function generateReplyOnly(
   if (content) {
     try {
       const parsed = JSON.parse(content);
+      const confidence = typeof parsed.confidence === 'number'
+        ? Math.min(1, Math.max(0, parsed.confidence))
+        : 0.7; // Default confidence if not provided
+
       return {
         response: typeof parsed.response === 'string' ? parsed.response : content,
+        confidence,
         model: provider?.name || provider?.model || 'unknown',
         responseTime
       };
     } catch {
-      // Raw text response — use as-is
-      return { response: content, model: provider?.name || 'unknown', responseTime };
+      // Raw text response — use as-is with low confidence
+      return {
+        response: content,
+        confidence: 0.5, // Low confidence for unparseable responses
+        model: provider?.name || 'unknown',
+        responseTime
+      };
     }
   }
 
-  return { response: '', model: 'failed', responseTime };
+  return { response: '', confidence: 0, model: 'failed', responseTime };
 }
 
 // ─── Translation ───────────────────────────────────────────────────

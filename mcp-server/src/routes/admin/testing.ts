@@ -77,6 +77,10 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     const { detectMessageType } = await import('../../assistant/problem-detector.js');
     const messageType = detectMessageType(message);
 
+    // Analyze sentiment
+    const { analyzeSentiment, isSentimentAnalysisEnabled } = await import('../../assistant/sentiment-tracker.js');
+    const sentimentScore = isSentimentAnalysisEnabled() ? analyzeSentiment(message) : null;
+
     let finalMessage = '';
     let llmModel = 'none';
     let topicFiles: string[] = [];
@@ -127,7 +131,8 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       detectedLanguage: intentResult.detectedLanguage,
       kbFiles: topicFiles.length > 0 ? ['AGENTS.md', 'soul.md', 'memory.md', ...topicFiles] : [],
       messageType: messageType,
-      problemOverride: problemOverride
+      problemOverride: problemOverride,
+      sentiment: sentimentScore
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

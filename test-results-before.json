@@ -1,0 +1,87 @@
+{
+  "phase": "BEFORE",
+  "results": [
+    {
+      "id": "H1",
+      "question": "Do you have a group discount for 10 people?",
+      "reply": "💰 *Our Rates*\n\n🏷️ Daily: *RM45/night*\n🏷️ 7 nights: *RM267* (~RM38/night)\n🏷️ Monthly: *RM650/month* (~RM22/night)\n\nDeposit: RM10 key-card + RM100 security (long-term stays, refundable)\nPayment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)\n\nWant to book? Just say *\"book\"*!",
+      "confidence": 0.9,
+      "intent": "pricing",
+      "hallucinated": false
+    },
+    {
+      "id": "H2",
+      "question": "Do you have a swimming pool?",
+      "reply": "🏨 *Facilities*\n\n• ~24 capsules across 3 sections (Front, Middle, Back)\n• Each capsule: personal light, USB port, power outlet, privacy curtain\n• Shared kitchen with fridge & microwave\n• Laundry (RM5/load)\n• Living room area\n• Free WiFi\n\n🎥 Video tour: https://www.youtube.com/watch?v=6Ux11oBZaQQ",
+      "confidence": 0.9,
+      "intent": "facilities",
+      "hallucinated": false
+    },
+    {
+      "id": "H3",
+      "question": "Can I check in at 3 AM?",
+      "reply": "Our check-in time is 2:00 PM onwards. For early check-in, please contact our staff to see if it's possible.",
+      "confidence": 0.9,
+      "intent": "checkin_info",
+      "hallucinated": false
+    },
+    {
+      "id": "H4",
+      "question": "How far is it from KLCC?",
+      "reply": "📍 *How to find us*\n26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru\n\nGoogle Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb\n\nWe're in a quiet residential area in Taman Pelangi, walking distance to cafes and shops.",
+      "confidence": 0.8,
+      "intent": "directions",
+      "hallucinated": false
+    },
+    {
+      "id": "H5",
+      "question": "Do you serve breakfast?",
+      "reply": "🏨 *Facilities*\n\n• ~24 capsules across 3 sections (Front, Middle, Back)\n• Each capsule: personal light, USB port, power outlet, privacy curtain\n• Shared kitchen with fridge & microwave\n• Laundry (RM5/load)\n• Living room area\n• Free WiFi\n\n🎥 Video tour: https://www.youtube.com/watch?v=6Ux11oBZaQQ",
+      "confidence": 0.8,
+      "intent": "facilities",
+      "hallucinated": false
+    },
+    {
+      "id": "H6",
+      "question": "Is there a shuttle to the airport?",
+      "reply": "📍 *How to find us*\n26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru\n\nGoogle Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb\n\nWe're in a quiet residential area in Taman Pelangi, walking distance to cafes and shops.",
+      "confidence": 0.8,
+      "intent": "directions",
+      "hallucinated": false
+    },
+    {
+      "id": "H7",
+      "question": "Do you have a student discount?",
+      "reply": "💰 *Our Rates*\n\n🏷️ Daily: *RM45/night*\n🏷️ 7 nights: *RM267* (~RM38/night)\n🏷️ Monthly: *RM650/month* (~RM22/night)\n\nDeposit: RM10 key-card + RM100 security (long-term stays, refundable)\nPayment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)\n\nWant to book? Just say *\"book\"*!",
+      "confidence": 0.8,
+      "intent": "pricing",
+      "hallucinated": false
+    },
+    {
+      "id": "H8",
+      "question": "Can I use the gym?",
+      "reply": "🏨 *Facilities*\n\n• ~24 capsules across 3 sections (Front, Middle, Back)\n• Each capsule: personal light, USB port, power outlet, privacy curtain\n• Shared kitchen with fridge & microwave\n• Laundry (RM5/load)\n• Living room area\n• Free WiFi\n\n🎥 Video tour: https://www.youtube.com/watch?v=6Ux11oBZaQQ",
+      "confidence": 0.9,
+      "intent": "facilities",
+      "hallucinated": false
+    },
+    {
+      "id": "H9",
+      "question": "Can I bring my pet cat?",
+      "reply": "I don't have that information. Let me connect you with our team.",
+      "confidence": 0.8,
+      "intent": "rules",
+      "hallucinated": false
+    },
+    {
+      "id": "H10",
+      "question": "Do you offer laundry service?",
+      "reply": "🏨 *Facilities*\n\n• ~24 capsules across 3 sections (Front, Middle, Back)\n• Each capsule: personal light, USB port, power outlet, privacy curtain\n• Shared kitchen with fridge & microwave\n• Laundry (RM5/load)\n• Living room area\n• Free WiFi\n\n🎥 Video tour: https://www.youtube.com/watch?v=6Ux11oBZaQQ",
+      "confidence": 0.9,
+      "intent": "facilities",
+      "hallucinated": false
+    }
+  ],
+  "rate": 0,
+  "timestamp": "2026-02-12T06:24:18.369Z"
+}

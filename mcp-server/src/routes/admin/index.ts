@@ -9,6 +9,9 @@ import conversationsRoutes from './conversations.js';
 import whatsappRoutes from './whatsapp.js';
 import metricsRoutes from './metrics.js';
 import intentManagerRoutes from './intent-manager.js';
+import feedbackRoutes from './feedback.js';
+import feedbackSettingsRoutes from './feedback-settings.js';
+import intentAnalyticsRoutes from './intent-analytics.js';
 
 const router = Router();
 
@@ -52,5 +55,8 @@ router.use(conversationsRoutes);
 router.use(whatsappRoutes);
 router.use(metricsRoutes);
 router.use(intentManagerRoutes);
+router.use(feedbackRoutes);
+router.use(feedbackSettingsRoutes);
+router.use(intentAnalyticsRoutes);
 
 export default router;

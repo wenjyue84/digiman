@@ -3,10 +3,10 @@
     "nvidia_model": "moonshotai/kimi-k2.5",
     "nvidia_base_url": "https://integrate.api.nvidia.com/v1",
     "groq_model": "llama-3.3-70b-versatile",
-    "max_classify_tokens": 150,
-    "max_chat_tokens": 800,
-    "classify_temperature": 0.1,
-    "chat_temperature": 0.8,
+    "max_classify_tokens": 100,
+    "max_chat_tokens": 500,
+    "classify_temperature": 0.05,
+    "chat_temperature": 0.7,
     "providers": [
       {
         "id": "groq-llama",
@@ -38,7 +38,7 @@
         "api_key_env": "GROQ_API_KEY",
         "base_url": "https://api.groq.com/openai/v1",
         "model": "llama-3.1-8b-instant",
-        "enabled": false,
+        "enabled": true,
         "priority": 2
       },
       {
@@ -173,17 +173,18 @@
         "enabled": false,
         "priority": 14
       }
-    ]
+    ],
+    "intent_classification_models": []
   },
   "system_prompt": "You are Rainbow, a friendly female AI assistant for Pelangi Capsule Hostel in Johor Bahru, Malaysia. You always clarify that you are an AI bot when introducing yourself. You help guests with check-in info, pricing, availability, bookings, and general hostel questions. Be warm, concise, and helpful. Reply in the same language as the guest (English, Malay, or Chinese). Keep responses under 300 characters when possible. Sign off with \"— Rainbow 🌈\" on important messages. If unsure, suggest contacting staff.",
   "routing_mode": {
     "splitModel": false,
     "classifyProvider": "groq-llama-8b",
-    "tieredPipeline": false
+    "tieredPipeline": true
   },
   "rate_limits": {
-    "per_minute": 20,
-    "per_hour": 100
+    "per_minute": 40,
+    "per_hour": 200
   },
   "staff": {
     "phones": [
@@ -193,5 +194,20 @@
     ],
     "jay_phone": "60127088789",
     "alston_phone": "60167620815"
+  },
+  "conversation_management": {
+    "enabled": true,
+    "summarize_threshold": 6,
+    "summarize_from_message": 1,
+    "summarize_to_message": 5,
+    "keep_verbatim_from": 6,
+    "keep_verbatim_to": 20,
+    "description": "After 10 messages, summarize messages 1-5 and keep 6-20 verbatim to reduce context overflow by ~50%"
+  },
+  "sentiment_analysis": {
+    "enabled": true,
+    "consecutive_threshold": 2,
+    "cooldown_minutes": 30,
+    "description": "Automatically detect frustrated users and escalate to staff when they send consecutive negative messages"
   }
 }

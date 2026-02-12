@@ -12,7 +12,8 @@
             "^(assalamualaikum|salam|selamat\\s?(pagi|petang|malam))"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.95
         },
         {
           "category": "thanks",
@@ -22,7 +23,8 @@
             "(谢谢|感谢)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.90
         },
         {
           "category": "contact_staff",
@@ -32,7 +34,8 @@
             "(联系|工作人员|找人|真人)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         }
       ]
     },
@@ -48,7 +51,8 @@
             "(价格|多少钱|费用)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.85
         },
         {
           "category": "availability",
@@ -58,7 +62,8 @@
             "(有没有.*房|空房|还有.*位)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.70
         },
         {
           "category": "booking",
@@ -68,7 +73,8 @@
             "(预[订定]|我要.*[订定])"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "directions",
@@ -78,7 +84,8 @@
             "(地址|位置|怎么走|在哪|路线)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         },
         {
           "category": "facilities_info",
@@ -88,7 +95,8 @@
             "(设施|厨房|洗衣|浴室|毛巾|停车)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "rules_policy",
@@ -98,7 +106,8 @@
             "(规则|规定|可以吗|允许)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         },
         {
           "category": "payment_info",
@@ -108,7 +117,8 @@
             "(付款|银行|转账|怎么付|付钱)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         },
         {
           "category": "payment_made",
@@ -118,7 +128,8 @@
             "(已付|已经付|付了|转了)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "checkin_info",
@@ -128,7 +139,8 @@
             "(入住时间|几点.*入)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         },
         {
           "category": "checkout_info",
@@ -138,7 +150,8 @@
             "(退房时间|几点.*退)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         }
       ]
     },
@@ -154,7 +167,8 @@
             "(我要入住|要.*入住|到了|已经到)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "lower_deck_preference",
@@ -164,7 +178,8 @@
             "(下铺|下层|偶数)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.85
         },
         {
           "category": "wifi",
@@ -174,7 +189,8 @@
             "(网络|密码|无线)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.95
         },
         {
           "category": "facility_orientation",
@@ -184,7 +200,8 @@
             "(哪里|在哪|怎么用)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         }
       ]
     },
@@ -201,7 +218,8 @@
             "(太冷|太热|温度|空调)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "noise_complaint",
@@ -212,7 +230,8 @@
             "(太吵|很吵|睡不着|噪音)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "cleanliness_complaint",
@@ -223,7 +242,8 @@
             "(脏|不干净|有味道|有污渍)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "facility_malfunction",
@@ -234,7 +254,8 @@
             "(坏了|不能用|故障)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "card_locked",
@@ -245,7 +266,8 @@
             "(卡.*锁|钥匙.*在里面|打不开)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.50
         },
         {
           "category": "theft_report",
@@ -256,7 +278,8 @@
             "(被偷|丢了|不见了|被盗)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.50
         },
         {
           "category": "general_complaint_in_stay",
@@ -267,7 +290,8 @@
             "(投诉|有问题|不舒服)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.60
         },
         {
           "category": "extra_amenity_request",
@@ -278,7 +302,8 @@
             "(需要|能给|毯子|枕头|毛巾|充电器)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "tourist_guide",
@@ -289,7 +314,8 @@
             "(景点|旅游|游玩|哪里好玩|附近.*什么)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         }
       ]
     },
@@ -305,7 +331,8 @@
             "(怎么退房|要走了)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         },
         {
           "category": "late_checkout_request",
@@ -315,7 +342,8 @@
             "(延迟退房|晚点走|延长)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.85
         },
         {
           "category": "luggage_storage",
@@ -325,7 +353,8 @@
             "(寄存|行李|存包)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.85
         },
         {
           "category": "billing_inquiry",
@@ -335,7 +364,8 @@
             "(账单|收据|发票)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         }
       ]
     },
@@ -352,7 +382,8 @@
             "(忘了|落下|遗留)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "post_checkout_complaint",
@@ -363,7 +394,8 @@
             "(离开后.*投诉|退房.*问题)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.60
         },
         {
           "category": "billing_dispute",
@@ -374,7 +406,8 @@
             "(多收|账单错误|收费有误)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.67
         },
         {
           "category": "review_feedback",
@@ -385,7 +418,8 @@
             "(评价|反馈|调查)"
           ],
           "flags": "i",
-          "enabled": true
+          "enabled": true,
+          "min_confidence": 0.80
         }
       ]
     }

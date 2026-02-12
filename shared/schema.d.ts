@@ -688,6 +688,23 @@ export declare const guests: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        alertSettings: import("drizzle-orm/pg-core").PgColumn<{
+            name: "alert_settings";
+            tableName: "guests";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
     };
     dialect: "pg";
 }>;
@@ -886,6 +903,23 @@ export declare const capsules: import("drizzle-orm/pg-core").PgTableWithColumns<
         }, {}, {}>;
         remark: import("drizzle-orm/pg-core").PgColumn<{
             name: "remark";
+            tableName: "capsules";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        branch: import("drizzle-orm/pg-core").PgColumn<{
+            name: "branch";
             tableName: "capsules";
             dataType: "string";
             columnType: "PgText";
@@ -1599,21 +1633,37 @@ export declare const insertUserSchema: z.ZodObject<z.objectUtil.extendShape<Omit
 }>, "strip", z.ZodTypeAny, {
     email: string;
     role: "staff" | "admin";
-    username?: string | undefined;
     password?: string | undefined;
+    username?: string | undefined;
     googleId?: string | undefined;
     firstName?: string | undefined;
     lastName?: string | undefined;
     profileImage?: string | undefined;
 }, {
     email: string;
-    username?: string | undefined;
     password?: string | undefined;
+    username?: string | undefined;
     googleId?: string | undefined;
     firstName?: string | undefined;
     lastName?: string | undefined;
     profileImage?: string | undefined;
     role?: "staff" | "admin" | undefined;
+}>;
+export declare const guestAlertSettingsSchema: z.ZodObject<{
+    enabled: z.ZodDefault<z.ZodBoolean>;
+    channels: z.ZodDefault<z.ZodArray<z.ZodEnum<["whatsapp", "push"]>, "many">>;
+    advanceNotice: z.ZodDefault<z.ZodArray<z.ZodNumber, "many">>;
+    lastNotified: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    enabled: boolean;
+    channels: ("push" | "whatsapp")[];
+    advanceNotice: number[];
+    lastNotified?: string | undefined;
+}, {
+    enabled?: boolean | undefined;
+    channels?: ("push" | "whatsapp")[] | undefined;
+    advanceNotice?: number[] | undefined;
+    lastNotified?: string | undefined;
 }>;
 export declare const insertGuestSchema: z.ZodObject<z.objectUtil.extendShape<Omit<{
     id: z.ZodOptional<z.ZodString>;
@@ -1639,7 +1689,8 @@ export declare const insertGuestSchema: z.ZodObject<z.objectUtil.extendShape<Omi
     profilePhotoUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     selfCheckinToken: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     status: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-}, "id" | "checkinTime" | "checkoutTime" | "isCheckedIn" | "profilePhotoUrl">, {
+    alertSettings: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, "id" | "checkinTime" | "checkoutTime" | "isCheckedIn" | "profilePhotoUrl" | "alertSettings">, {
     name: z.ZodEffects<z.ZodString, string, string>;
     capsuleNumber: z.ZodString;
     paymentAmount: z.ZodOptional<z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>>;
@@ -1660,27 +1711,46 @@ export declare const insertGuestSchema: z.ZodObject<z.objectUtil.extendShape<Omi
     age: z.ZodOptional<z.ZodString>;
     profilePhotoUrl: z.ZodOptional<z.ZodAny>;
 }>, "strip", z.ZodTypeAny, {
-    [x: string]: any;
-}, {
     name: string;
     capsuleNumber: string;
+    paymentMethod: "platform" | "cash" | "tng" | "bank";
+    isPaid: boolean;
     paymentCollector: string;
     nationality?: string | undefined;
+    idNumber?: string | undefined;
+    phoneNumber?: string | undefined;
     email?: string | undefined;
     expectedCheckoutDate?: string | undefined;
     paymentAmount?: string | undefined;
-    paymentMethod?: "cash" | "tng" | "bank" | "platform" | undefined;
-    isPaid?: boolean | undefined;
     notes?: string | undefined;
     gender?: "male" | "female" | "other" | "prefer-not-to-say" | undefined;
-    phoneNumber?: string | undefined;
-    idNumber?: string | undefined;
     emergencyContact?: string | undefined;
     emergencyPhone?: string | undefined;
     age?: string | undefined;
     profilePhotoUrl?: any;
     selfCheckinToken?: string | null | undefined;
-    status?: "vip" | "blacklisted" | undefined;
+    status?: "blacklisted" | "vip" | undefined;
+    checkInDate?: string | undefined;
+}, {
+    name: string;
+    capsuleNumber: string;
+    paymentCollector: string;
+    nationality?: string | undefined;
+    idNumber?: string | undefined;
+    phoneNumber?: string | undefined;
+    email?: string | undefined;
+    expectedCheckoutDate?: string | undefined;
+    paymentAmount?: string | undefined;
+    paymentMethod?: "platform" | "cash" | "tng" | "bank" | undefined;
+    isPaid?: boolean | undefined;
+    notes?: string | undefined;
+    gender?: "male" | "female" | "other" | "prefer-not-to-say" | undefined;
+    emergencyContact?: string | undefined;
+    emergencyPhone?: string | undefined;
+    age?: string | undefined;
+    profilePhotoUrl?: any;
+    selfCheckinToken?: string | null | undefined;
+    status?: "blacklisted" | "vip" | undefined;
     checkInDate?: string | undefined;
 }>;
 export declare const insertCapsuleSchema: z.ZodObject<z.objectUtil.extendShape<Omit<{
@@ -1696,6 +1766,7 @@ export declare const insertCapsuleSchema: z.ZodObject<z.objectUtil.extendShape<O
     purchaseDate: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     position: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     remark: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    branch: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, "id">, {
     number: z.ZodEffects<z.ZodString, string, string>;
     section: z.ZodEnum<["back", "middle", "front"]>;
@@ -1711,7 +1782,7 @@ export declare const insertCapsuleSchema: z.ZodObject<z.objectUtil.extendShape<O
     problemDescription: z.ZodOptional<z.ZodEffects<z.ZodString, string, string>>;
 }>, "strip", z.ZodTypeAny, {
     number: string;
-    section: "back" | "middle" | "front";
+    section: "front" | "middle" | "back";
     isAvailable: boolean;
     cleaningStatus: "cleaned" | "to_be_cleaned";
     toRent: boolean;
@@ -1721,10 +1792,11 @@ export declare const insertCapsuleSchema: z.ZodObject<z.objectUtil.extendShape<O
     purchaseDate?: Date | undefined;
     position?: "top" | "bottom" | undefined;
     remark?: string | undefined;
+    branch?: string | null | undefined;
     problemDescription?: string | undefined;
 }, {
     number: string;
-    section: "back" | "middle" | "front";
+    section: "front" | "middle" | "back";
     isAvailable?: boolean | undefined;
     cleaningStatus?: "cleaned" | "to_be_cleaned" | undefined;
     toRent?: boolean | undefined;
@@ -1734,6 +1806,7 @@ export declare const insertCapsuleSchema: z.ZodObject<z.objectUtil.extendShape<O
     purchaseDate?: Date | undefined;
     position?: "top" | "bottom" | undefined;
     remark?: string | undefined;
+    branch?: string | null | undefined;
     problemDescription?: string | undefined;
 }>;
 export declare const updateCapsuleSchema: z.ZodObject<{
@@ -1749,7 +1822,7 @@ export declare const updateCapsuleSchema: z.ZodObject<{
     problemDescription: z.ZodOptional<z.ZodEffects<z.ZodString, string, string>>;
 }, "strip", z.ZodTypeAny, {
     number?: string | undefined;
-    section?: "back" | "middle" | "front" | undefined;
+    section?: "front" | "middle" | "back" | undefined;
     isAvailable?: boolean | undefined;
     cleaningStatus?: "cleaned" | "to_be_cleaned" | undefined;
     toRent?: boolean | undefined;
@@ -1760,7 +1833,7 @@ export declare const updateCapsuleSchema: z.ZodObject<{
     problemDescription?: string | undefined;
 }, {
     number?: string | undefined;
-    section?: "back" | "middle" | "front" | undefined;
+    section?: "front" | "middle" | "back" | undefined;
     isAvailable?: boolean | undefined;
     cleaningStatus?: "cleaned" | "to_be_cleaned" | undefined;
     toRent?: boolean | undefined;
@@ -1851,7 +1924,8 @@ export declare const bulkGuestImportSchema: z.ZodArray<z.ZodObject<z.objectUtil.
     profilePhotoUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     selfCheckinToken: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     status: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-}, "id" | "checkinTime" | "checkoutTime" | "isCheckedIn" | "profilePhotoUrl">, {
+    alertSettings: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+}, "id" | "checkinTime" | "checkoutTime" | "isCheckedIn" | "profilePhotoUrl" | "alertSettings">, {
     name: z.ZodEffects<z.ZodString, string, string>;
     capsuleNumber: z.ZodString;
     paymentAmount: z.ZodOptional<z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>>;
@@ -1876,46 +1950,46 @@ export declare const bulkGuestImportSchema: z.ZodArray<z.ZodObject<z.objectUtil.
 }>, "strip", z.ZodTypeAny, {
     name: string;
     capsuleNumber: string;
-    paymentMethod: "cash" | "tng" | "bank" | "platform";
-    paymentCollector: string;
+    paymentMethod: "platform" | "cash" | "tng" | "bank";
     isPaid: boolean;
+    paymentCollector: string;
     nationality?: string | undefined;
+    idNumber?: string | undefined;
+    phoneNumber?: string | undefined;
     email?: string | undefined;
-    checkinTime?: string | undefined;
     expectedCheckoutDate?: string | undefined;
     paymentAmount?: string | undefined;
+    checkinTime?: string | undefined;
     notes?: string | undefined;
     gender?: "male" | "female" | "other" | "prefer-not-to-say" | undefined;
-    phoneNumber?: string | undefined;
-    idNumber?: string | undefined;
     emergencyContact?: string | undefined;
     emergencyPhone?: string | undefined;
     age?: string | undefined;
     profilePhotoUrl?: any;
     selfCheckinToken?: string | null | undefined;
-    status?: "vip" | "blacklisted" | undefined;
+    status?: "blacklisted" | "vip" | undefined;
     checkInDate?: string | undefined;
 }, {
     name: string;
     capsuleNumber: string;
     paymentCollector: string;
     nationality?: string | undefined;
+    idNumber?: string | undefined;
+    phoneNumber?: string | undefined;
     email?: string | undefined;
-    checkinTime?: string | undefined;
     expectedCheckoutDate?: string | undefined;
     paymentAmount?: string | undefined;
-    paymentMethod?: "cash" | "tng" | "bank" | "platform" | undefined;
+    paymentMethod?: "platform" | "cash" | "tng" | "bank" | undefined;
     isPaid?: boolean | undefined;
+    checkinTime?: string | undefined;
     notes?: string | undefined;
     gender?: "male" | "female" | "other" | "prefer-not-to-say" | undefined;
-    phoneNumber?: string | undefined;
-    idNumber?: string | undefined;
     emergencyContact?: string | undefined;
     emergencyPhone?: string | undefined;
     age?: string | undefined;
     profilePhotoUrl?: any;
     selfCheckinToken?: string | null | undefined;
-    status?: "vip" | "blacklisted" | undefined;
+    status?: "blacklisted" | "vip" | undefined;
     checkInDate?: string | undefined;
 }>, "many">;
 export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodEffects<z.ZodObject<{
@@ -1936,9 +2010,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     notes: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -1952,9 +2026,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -1968,9 +2042,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -1984,9 +2058,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2000,9 +2074,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2016,9 +2090,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2032,9 +2106,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2048,9 +2122,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2064,9 +2138,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2080,9 +2154,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2096,9 +2170,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2112,9 +2186,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2128,9 +2202,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2144,9 +2218,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2160,9 +2234,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2176,9 +2250,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2192,9 +2266,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2208,9 +2282,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2224,9 +2298,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }>, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2240,9 +2314,9 @@ export declare const guestSelfCheckinSchema: z.ZodEffects<z.ZodEffects<z.ZodEffe
     guestPaymentDescription?: string | undefined;
 }, {
     nationality: string;
+    phoneNumber: string;
     paymentMethod: "cash" | "bank" | "online_platform";
     gender: "male" | "female" | "other" | "prefer-not-to-say";
-    phoneNumber: string;
     checkInDate: string;
     nameAsInDocument: string;
     checkOutDate: string;
@@ -2273,10 +2347,10 @@ export declare const createTokenSchema: z.ZodEffects<z.ZodObject<{
     guideShowFaq: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     expiresInHours: number;
-    email?: string | undefined;
-    capsuleNumber?: string | undefined;
-    expectedCheckoutDate?: string | undefined;
     phoneNumber?: string | undefined;
+    email?: string | undefined;
+    expectedCheckoutDate?: string | undefined;
+    capsuleNumber?: string | undefined;
     autoAssign?: boolean | undefined;
     guestName?: string | undefined;
     checkInDate?: string | undefined;
@@ -2288,10 +2362,10 @@ export declare const createTokenSchema: z.ZodEffects<z.ZodObject<{
     guideShowOther?: boolean | undefined;
     guideShowFaq?: boolean | undefined;
 }, {
-    email?: string | undefined;
-    capsuleNumber?: string | undefined;
-    expectedCheckoutDate?: string | undefined;
     phoneNumber?: string | undefined;
+    email?: string | undefined;
+    expectedCheckoutDate?: string | undefined;
+    capsuleNumber?: string | undefined;
     autoAssign?: boolean | undefined;
     guestName?: string | undefined;
     checkInDate?: string | undefined;
@@ -2305,10 +2379,10 @@ export declare const createTokenSchema: z.ZodEffects<z.ZodObject<{
     guideShowFaq?: boolean | undefined;
 }>, {
     expiresInHours: number;
-    email?: string | undefined;
-    capsuleNumber?: string | undefined;
-    expectedCheckoutDate?: string | undefined;
     phoneNumber?: string | undefined;
+    email?: string | undefined;
+    expectedCheckoutDate?: string | undefined;
+    capsuleNumber?: string | undefined;
     autoAssign?: boolean | undefined;
     guestName?: string | undefined;
     checkInDate?: string | undefined;
@@ -2320,10 +2394,10 @@ export declare const createTokenSchema: z.ZodEffects<z.ZodObject<{
     guideShowOther?: boolean | undefined;
     guideShowFaq?: boolean | undefined;
 }, {
-    email?: string | undefined;
-    capsuleNumber?: string | undefined;
-    expectedCheckoutDate?: string | undefined;
     phoneNumber?: string | undefined;
+    email?: string | undefined;
+    expectedCheckoutDate?: string | undefined;
+    capsuleNumber?: string | undefined;
     autoAssign?: boolean | undefined;
     guestName?: string | undefined;
     checkInDate?: string | undefined;
@@ -2391,15 +2465,15 @@ export declare const insertAdminNotificationSchema: z.ZodObject<Omit<{
     createdAt: z.ZodOptional<z.ZodDate>;
 }, "id" | "createdAt">, "strip", z.ZodTypeAny, {
     type: string;
-    title: string;
     message: string;
+    title: string;
     guestId?: string | null | undefined;
     capsuleNumber?: string | null | undefined;
     isRead?: boolean | undefined;
 }, {
     type: string;
-    title: string;
     message: string;
+    title: string;
     guestId?: string | null | undefined;
     capsuleNumber?: string | null | undefined;
     isRead?: boolean | undefined;
@@ -2589,6 +2663,7 @@ export declare const updateSettingsSchema: z.ZodObject<{
     hostelName: z.ZodDefault<z.ZodString>;
     timezone: z.ZodDefault<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
+    timezone: string;
     guideShowIntro: boolean;
     guideShowAddress: boolean;
     guideShowWifi: boolean;
@@ -2617,7 +2692,7 @@ export declare const updateSettingsSchema: z.ZodObject<{
     guideShowGoogleMaps: boolean;
     guideShowCheckinVideo: boolean;
     guideShowTimeAccess: boolean;
-    defaultPaymentMethod: "cash" | "tng" | "bank" | "platform";
+    defaultPaymentMethod: "platform" | "cash" | "tng" | "bank";
     maxPaymentAmount: number;
     totalCapsules: number;
     capsuleSections: string[];
@@ -2634,11 +2709,11 @@ export declare const updateSettingsSchema: z.ZodObject<{
     supportEmail: string;
     supportPhone: string;
     hostelName: string;
-    timezone: string;
     guideHostelPhotosUrl?: string | undefined;
     guideGoogleMapsUrl?: string | undefined;
     guideCheckinVideoUrl?: string | undefined;
 }, {
+    timezone?: string | undefined;
     guideShowIntro?: boolean | undefined;
     guideShowAddress?: boolean | undefined;
     guideShowWifi?: boolean | undefined;
@@ -2670,7 +2745,7 @@ export declare const updateSettingsSchema: z.ZodObject<{
     guideShowGoogleMaps?: boolean | undefined;
     guideShowCheckinVideo?: boolean | undefined;
     guideShowTimeAccess?: boolean | undefined;
-    defaultPaymentMethod?: "cash" | "tng" | "bank" | "platform" | undefined;
+    defaultPaymentMethod?: "platform" | "cash" | "tng" | "bank" | undefined;
     maxPaymentAmount?: number | undefined;
     totalCapsules?: number | undefined;
     capsuleSections?: string[] | undefined;
@@ -2687,7 +2762,6 @@ export declare const updateSettingsSchema: z.ZodObject<{
     supportEmail?: string | undefined;
     supportPhone?: string | undefined;
     hostelName?: string | undefined;
-    timezone?: string | undefined;
 }>;
 export type UpdateSettings = z.infer<typeof updateSettingsSchema>;
 export declare const phoneNumberSchema: z.ZodEffects<z.ZodString, string, string>;
@@ -2720,27 +2794,48 @@ export declare const updateGuestSchema: z.ZodObject<{
     emergencyPhone: z.ZodOptional<z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, string, string>>;
     age: z.ZodOptional<z.ZodString>;
     profilePhotoUrl: z.ZodOptional<z.ZodAny>;
+    alertSettings: z.ZodOptional<z.ZodEffects<z.ZodString, string | undefined, string>>;
 }, "strip", z.ZodTypeAny, {
-    [x: string]: any;
-}, {
     name?: string | undefined;
     nationality?: string | undefined;
+    idNumber?: string | undefined;
+    phoneNumber?: string | undefined;
     email?: string | undefined;
-    capsuleNumber?: string | undefined;
     expectedCheckoutDate?: string | undefined;
+    capsuleNumber?: string | undefined;
     paymentAmount?: string | undefined;
-    paymentMethod?: "cash" | "tng" | "bank" | "platform" | undefined;
-    paymentCollector?: string | undefined;
+    paymentMethod?: "platform" | "cash" | "tng" | "bank" | undefined;
     isPaid?: boolean | undefined;
+    paymentCollector?: string | undefined;
     notes?: string | undefined;
     gender?: string | undefined;
-    phoneNumber?: string | undefined;
-    idNumber?: string | undefined;
     emergencyContact?: string | undefined;
     emergencyPhone?: string | undefined;
     age?: string | undefined;
     profilePhotoUrl?: any;
     status?: string | null | undefined;
+    alertSettings?: string | undefined;
+    checkInDate?: string | undefined;
+}, {
+    name?: string | undefined;
+    nationality?: string | undefined;
+    idNumber?: string | undefined;
+    phoneNumber?: string | undefined;
+    email?: string | undefined;
+    expectedCheckoutDate?: string | undefined;
+    capsuleNumber?: string | undefined;
+    paymentAmount?: string | undefined;
+    paymentMethod?: "platform" | "cash" | "tng" | "bank" | undefined;
+    isPaid?: boolean | undefined;
+    paymentCollector?: string | undefined;
+    notes?: string | undefined;
+    gender?: string | undefined;
+    emergencyContact?: string | undefined;
+    emergencyPhone?: string | undefined;
+    age?: string | undefined;
+    profilePhotoUrl?: any;
+    status?: string | null | undefined;
+    alertSettings?: string | undefined;
     checkInDate?: string | undefined;
 }>;
 export declare const updateUserSchema: z.ZodObject<z.objectUtil.extendShape<{
@@ -2757,8 +2852,8 @@ export declare const updateUserSchema: z.ZodObject<z.objectUtil.extendShape<{
 }>, "strip", z.ZodTypeAny, {
     id: string;
     email?: string | undefined;
-    username?: string | undefined;
     password?: string | undefined;
+    username?: string | undefined;
     googleId?: string | undefined;
     firstName?: string | undefined;
     lastName?: string | undefined;
@@ -2767,8 +2862,8 @@ export declare const updateUserSchema: z.ZodObject<z.objectUtil.extendShape<{
 }, {
     id: string;
     email?: string | undefined;
-    username?: string | undefined;
     password?: string | undefined;
+    username?: string | undefined;
     googleId?: string | undefined;
     firstName?: string | undefined;
     lastName?: string | undefined;
@@ -2779,11 +2874,11 @@ export declare const bulkActionSchema: z.ZodObject<{
     ids: z.ZodArray<z.ZodString, "many">;
     action: z.ZodEnum<["delete", "archive", "activate", "deactivate"]>;
 }, "strip", z.ZodTypeAny, {
-    ids: string[];
     action: "delete" | "archive" | "activate" | "deactivate";
+    ids: string[];
 }, {
-    ids: string[];
     action: "delete" | "archive" | "activate" | "deactivate";
+    ids: string[];
 }>;
 export declare const searchQuerySchema: z.ZodEffects<z.ZodObject<{
     query: z.ZodOptional<z.ZodString>;
@@ -2794,25 +2889,25 @@ export declare const searchQuerySchema: z.ZodEffects<z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     query?: string | undefined;
     capsuleNumber?: string | undefined;
-    status?: "active" | "inactive" | "all" | undefined;
+    status?: "all" | "active" | "inactive" | undefined;
     dateFrom?: string | undefined;
     dateTo?: string | undefined;
 }, {
     query?: string | undefined;
     capsuleNumber?: string | undefined;
-    status?: "active" | "inactive" | "all" | undefined;
+    status?: "all" | "active" | "inactive" | undefined;
     dateFrom?: string | undefined;
     dateTo?: string | undefined;
 }>, {
     query?: string | undefined;
     capsuleNumber?: string | undefined;
-    status?: "active" | "inactive" | "all" | undefined;
+    status?: "all" | "active" | "inactive" | undefined;
     dateFrom?: string | undefined;
     dateTo?: string | undefined;
 }, {
     query?: string | undefined;
     capsuleNumber?: string | undefined;
-    status?: "active" | "inactive" | "all" | undefined;
+    status?: "all" | "active" | "inactive" | undefined;
     dateFrom?: string | undefined;
     dateTo?: string | undefined;
 }>;
@@ -3068,19 +3163,19 @@ export declare const insertExpenseSchema: z.ZodObject<z.objectUtil.extendShape<O
     receiptPhotoUrl: z.ZodOptional<z.ZodString>;
     itemPhotoUrl: z.ZodOptional<z.ZodString>;
 }>, "strip", z.ZodTypeAny, {
+    category: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations";
     date: string;
     description: string;
     amount: string;
-    category: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations";
     notes?: string | undefined;
     subcategory?: string | undefined;
     receiptPhotoUrl?: string | undefined;
     itemPhotoUrl?: string | undefined;
 }, {
+    category: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations";
     date: string;
     description: string;
     amount: string;
-    category: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations";
     notes?: string | undefined;
     subcategory?: string | undefined;
     receiptPhotoUrl?: string | undefined;
@@ -3099,21 +3194,21 @@ export declare const updateExpenseSchema: z.ZodObject<z.objectUtil.extendShape<{
     id: z.ZodString;
 }>, "strip", z.ZodTypeAny, {
     id: string;
+    category?: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations" | undefined;
     date?: string | undefined;
     notes?: string | undefined;
     description?: string | undefined;
     amount?: string | undefined;
-    category?: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations" | undefined;
     subcategory?: string | undefined;
     receiptPhotoUrl?: string | undefined;
     itemPhotoUrl?: string | undefined;
 }, {
     id: string;
+    category?: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations" | undefined;
     date?: string | undefined;
     notes?: string | undefined;
     description?: string | undefined;
     amount?: string | undefined;
-    category?: "other" | "salary" | "utilities" | "consumables" | "maintenance" | "equipment" | "marketing" | "operations" | undefined;
     subcategory?: string | undefined;
     receiptPhotoUrl?: string | undefined;
     itemPhotoUrl?: string | undefined;
@@ -3121,6 +3216,863 @@ export declare const updateExpenseSchema: z.ZodObject<z.objectUtil.extendShape<{
 export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type UpdateExpense = z.infer<typeof updateExpenseSchema>;
+export declare const intentDetectionSettings: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "intent_detection_settings";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgSerial";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier1Enabled: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier1_enabled";
+            tableName: "intent_detection_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier1ContextMessages: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier1_context_messages";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier2Enabled: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier2_enabled";
+            tableName: "intent_detection_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier2ContextMessages: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier2_context_messages";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier2Threshold: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier2_threshold";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier3Enabled: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier3_enabled";
+            tableName: "intent_detection_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier3ContextMessages: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier3_context_messages";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier3Threshold: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier3_threshold";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier4Enabled: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier4_enabled";
+            tableName: "intent_detection_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier4ContextMessages: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier4_context_messages";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        trackLastIntent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "track_last_intent";
+            tableName: "intent_detection_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        trackSlots: import("drizzle-orm/pg-core").PgColumn<{
+            name: "track_slots";
+            tableName: "intent_detection_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        maxHistoryMessages: import("drizzle-orm/pg-core").PgColumn<{
+            name: "max_history_messages";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        contextTTL: import("drizzle-orm/pg-core").PgColumn<{
+            name: "context_ttl_minutes";
+            tableName: "intent_detection_settings";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        updatedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "updated_at";
+            tableName: "intent_detection_settings";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+export type IntentDetectionSettings = typeof intentDetectionSettings.$inferSelect;
+export type InsertIntentDetectionSettings = typeof intentDetectionSettings.$inferInsert;
+export declare const rainbowFeedback: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "rainbow_feedback";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        conversationId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "conversation_id";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        messageId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "message_id";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        phoneNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "phone_number";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        intent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "intent";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        confidence: import("drizzle-orm/pg-core").PgColumn<{
+            name: "confidence";
+            tableName: "rainbow_feedback";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        rating: import("drizzle-orm/pg-core").PgColumn<{
+            name: "rating";
+            tableName: "rainbow_feedback";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        feedbackText: import("drizzle-orm/pg-core").PgColumn<{
+            name: "feedback_text";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        responseModel: import("drizzle-orm/pg-core").PgColumn<{
+            name: "response_model";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        responseTime: import("drizzle-orm/pg-core").PgColumn<{
+            name: "response_time_ms";
+            tableName: "rainbow_feedback";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier";
+            tableName: "rainbow_feedback";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "rainbow_feedback";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+export type RainbowFeedback = typeof rainbowFeedback.$inferSelect;
+export type InsertRainbowFeedback = typeof rainbowFeedback.$inferInsert;
+export declare const insertRainbowFeedbackSchema: z.ZodObject<z.objectUtil.extendShape<Omit<{
+    id: z.ZodOptional<z.ZodString>;
+    conversationId: z.ZodString;
+    messageId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    phoneNumber: z.ZodString;
+    intent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    confidence: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    rating: z.ZodNumber;
+    feedbackText: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    responseModel: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    responseTime: z.ZodOptional<z.ZodNullable<z.ZodNumber>>;
+    tier: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    createdAt: z.ZodOptional<z.ZodDate>;
+}, "id" | "createdAt">, {
+    conversationId: z.ZodString;
+    phoneNumber: z.ZodString;
+    rating: z.ZodEffects<z.ZodNumber, 1 | -1, number>;
+    feedbackText: z.ZodOptional<z.ZodString>;
+}>, "strip", z.ZodTypeAny, {
+    phoneNumber: string;
+    conversationId: string;
+    rating: 1 | -1;
+    responseTime?: number | null | undefined;
+    intent?: string | null | undefined;
+    confidence?: number | null | undefined;
+    messageId?: string | null | undefined;
+    feedbackText?: string | undefined;
+    responseModel?: string | null | undefined;
+    tier?: string | null | undefined;
+}, {
+    phoneNumber: string;
+    conversationId: string;
+    rating: number;
+    responseTime?: number | null | undefined;
+    intent?: string | null | undefined;
+    confidence?: number | null | undefined;
+    messageId?: string | null | undefined;
+    feedbackText?: string | undefined;
+    responseModel?: string | null | undefined;
+    tier?: string | null | undefined;
+}>;
+export type InsertRainbowFeedbackType = z.infer<typeof insertRainbowFeedbackSchema>;
+export declare const updateFeedbackSettingsSchema: z.ZodObject<{
+    enabled: z.ZodDefault<z.ZodBoolean>;
+    frequency_minutes: z.ZodDefault<z.ZodNumber>;
+    timeout_minutes: z.ZodDefault<z.ZodNumber>;
+    skip_intents: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
+    prompts: z.ZodObject<{
+        en: z.ZodDefault<z.ZodString>;
+        ms: z.ZodDefault<z.ZodString>;
+        zh: z.ZodDefault<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        en: string;
+        ms: string;
+        zh: string;
+    }, {
+        en?: string | undefined;
+        ms?: string | undefined;
+        zh?: string | undefined;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    enabled: boolean;
+    frequency_minutes: number;
+    timeout_minutes: number;
+    skip_intents: string[];
+    prompts: {
+        en: string;
+        ms: string;
+        zh: string;
+    };
+}, {
+    prompts: {
+        en?: string | undefined;
+        ms?: string | undefined;
+        zh?: string | undefined;
+    };
+    enabled?: boolean | undefined;
+    frequency_minutes?: number | undefined;
+    timeout_minutes?: number | undefined;
+    skip_intents?: string[] | undefined;
+}>;
+export type UpdateFeedbackSettings = z.infer<typeof updateFeedbackSettingsSchema>;
+export declare const intentPredictions: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "intent_predictions";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        conversationId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "conversation_id";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        phoneNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "phone_number";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        messageText: import("drizzle-orm/pg-core").PgColumn<{
+            name: "message_text";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        predictedIntent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "predicted_intent";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        confidence: import("drizzle-orm/pg-core").PgColumn<{
+            name: "confidence";
+            tableName: "intent_predictions";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        tier: import("drizzle-orm/pg-core").PgColumn<{
+            name: "tier";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        model: import("drizzle-orm/pg-core").PgColumn<{
+            name: "model";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        actualIntent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "actual_intent";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        wasCorrect: import("drizzle-orm/pg-core").PgColumn<{
+            name: "was_correct";
+            tableName: "intent_predictions";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        correctionSource: import("drizzle-orm/pg-core").PgColumn<{
+            name: "correction_source";
+            tableName: "intent_predictions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        correctedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "corrected_at";
+            tableName: "intent_predictions";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "intent_predictions";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+export type IntentPrediction = typeof intentPredictions.$inferSelect;
+export type InsertIntentPrediction = typeof intentPredictions.$inferInsert;
+export declare const insertIntentPredictionSchema: z.ZodObject<z.objectUtil.extendShape<Omit<{
+    id: z.ZodOptional<z.ZodString>;
+    conversationId: z.ZodString;
+    phoneNumber: z.ZodString;
+    messageText: z.ZodString;
+    predictedIntent: z.ZodString;
+    confidence: z.ZodNumber;
+    tier: z.ZodString;
+    model: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    actualIntent: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    wasCorrect: z.ZodOptional<z.ZodNullable<z.ZodBoolean>>;
+    correctionSource: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    correctedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
+    createdAt: z.ZodOptional<z.ZodDate>;
+}, "id" | "createdAt">, {
+    conversationId: z.ZodString;
+    phoneNumber: z.ZodString;
+    messageText: z.ZodString;
+    predictedIntent: z.ZodString;
+    confidence: z.ZodNumber;
+    tier: z.ZodString;
+}>, "strip", z.ZodTypeAny, {
+    phoneNumber: string;
+    confidence: number;
+    conversationId: string;
+    tier: string;
+    messageText: string;
+    predictedIntent: string;
+    model?: string | null | undefined;
+    actualIntent?: string | null | undefined;
+    wasCorrect?: boolean | null | undefined;
+    correctionSource?: string | null | undefined;
+    correctedAt?: Date | null | undefined;
+}, {
+    phoneNumber: string;
+    confidence: number;
+    conversationId: string;
+    tier: string;
+    messageText: string;
+    predictedIntent: string;
+    model?: string | null | undefined;
+    actualIntent?: string | null | undefined;
+    wasCorrect?: boolean | null | undefined;
+    correctionSource?: string | null | undefined;
+    correctedAt?: Date | null | undefined;
+}>;
+export type InsertIntentPredictionType = z.infer<typeof insertIntentPredictionSchema>;
 export declare const validationUtils: {
     isValidEmail: (email: string) => boolean;
     isValidPhone: (phone: string) => boolean;

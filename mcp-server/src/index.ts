@@ -17,6 +17,7 @@ import { apiClient, getApiBaseUrl } from './lib/http-client.js';
 import { getWhatsAppStatus } from './lib/baileys-client.js';
 import { startBaileysWithSupervision } from './lib/baileys-supervisor.js';
 import adminRoutes from './routes/admin/index.js';
+import { initFeedbackSettings } from './lib/init-feedback-settings.js';
 
 const __filename_main = fileURLToPath(import.meta.url);
 const __dirname_main = dirname(__filename_main);
@@ -30,6 +31,9 @@ const PORT = parseInt(process.env.MCP_SERVER_PORT || '3002', 10);
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve static assets for Rainbow dashboard modules
+app.use('/public', express.static(join(__dirname_main, 'public')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -142,6 +146,9 @@ app.listen(PORT, '0.0.0.0', () => {
       console.warn('   MCP tools will fail until the API is reachable.');
       console.warn('');
     }
+
+    // Initialize feedback settings defaults
+    await initFeedbackSettings();
 
     // Initialize WhatsApp (Baileys) with crash isolation supervisor
     await startBaileysWithSupervision();
