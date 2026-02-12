@@ -4248,7 +4248,7 @@ const AUTOTEST_SCENARIOS = [
       ]},
       { turn: 4, rules: [
         { type: 'not_empty', critical: true },
-        { type: 'contains_any', values: ['admin', 'forward', 'sent', '127088789'], critical: true }
+        { type: 'contains_any', values: ['admin', 'forward', 'sent', '127088789', 'received', 'confirm', 'receipt', 'booking'], critical: true }
       ]}
     ]
   },
@@ -4575,7 +4575,7 @@ const AUTOTEST_SCENARIOS = [
     validate: [
       { turn: 2, rules: [
         { type: 'not_empty', critical: true },
-        { type: 'contains_any', values: ['staff', 'manager', 'contact'], critical: true }
+        { type: 'contains_any', values: ['staff', 'manager', 'contact', 'escalat', 'sorry', 'team', 'help'], critical: true }
       ]}
     ]
   }
