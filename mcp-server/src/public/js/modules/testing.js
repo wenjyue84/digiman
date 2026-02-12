@@ -3,9 +3,7 @@
  * @module testing
  */
 
-import { escapeHtml } from '../utils.js';
-import { api } from '../api.js';
-import { toast } from '../toast.js';
+import { escapeHtml, api, toast } from '../core/utils.js';
 
 /**
  * Global flag to prevent concurrent test runs

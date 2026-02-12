@@ -111,3 +111,9 @@ function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) modal.classList.add('hidden');
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Exports
+// ═══════════════════════════════════════════════════════════════════
+
+export { toast, api, escapeHtml, escapeAttr, formatRelativeTime, formatDateTime, closeModal };

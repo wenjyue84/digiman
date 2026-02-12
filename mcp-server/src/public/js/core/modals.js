@@ -75,9 +75,31 @@ function showSaveTemplateModal() {
   document.getElementById('save-template-name').focus();
 }
 
+/**
+ * Toggle dropdown visibility by ID
+ * @param {string} id - Dropdown element ID
+ */
+function toggleDropdown(id) {
+  const dropdown = document.getElementById(id);
+  if (dropdown) {
+    dropdown.classList.toggle('hidden');
+  }
+}
+
+/**
+ * Close all dropdown menus
+ */
+function closeAllDropdowns() {
+  document.querySelectorAll('[id$="-dropdown"]').forEach(dropdown => {
+    dropdown.classList.add('hidden');
+  });
+}
+
 // Export functions to global scope (for HTML onclick handlers)
 window.closeModal = closeModal;
 window.openModal = openModal;
 window.showInstanceQR = showInstanceQR;
 window.closeQRModal = closeQRModal;
 window.showSaveTemplateModal = showSaveTemplateModal;
+window.toggleDropdown = toggleDropdown;
+window.closeAllDropdowns = closeAllDropdowns;

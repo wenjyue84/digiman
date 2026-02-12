@@ -3,6 +3,10 @@
  * Imports all modules and exposes functions to global scope for HTML onclick handlers
  */
 
+// Import utilities
+import { api } from './api.js';
+import { toast } from './toast.js';
+
 // Import module functions
 import { reloadConfig } from './modules/config.js';
 import { initHelp } from './modules/help.js';
@@ -29,6 +33,10 @@ import { loadIntentManagerData } from './modules/intent-classifier.js';
 import { loadFeedbackStats } from './modules/feedback.js';
 import { loadIntentAccuracy } from './modules/intent-analytics.js';
 import { loadPreview, sendPreviewMessage } from './modules/preview.js';
+
+// Expose utilities to global scope
+window.api = api;
+window.toast = toast;
 
 // Expose functions to global scope for HTML onclick handlers
 window.reloadConfig = reloadConfig;

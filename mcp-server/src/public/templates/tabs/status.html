@@ -1,4 +1,85 @@
-<div class="p-8 text-center">
-    <div class="spinner mx-auto"></div>
-    <p class="text-sm text-neutral-500 mt-2">Loading status...</p>
+<!-- WhatsApp Instances (Most Important) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+  <div class="bg-white rounded-2xl border p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-semibold text-neutral-700">WhatsApp Instances</h3>
+      <button onclick="showAddInstance()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-2 py-1 rounded transition">+ Add Number</button>
+    </div>
+    <div id="wa-instances" class="space-y-2 text-sm text-neutral-600">Loading...</div>
   </div>
+  <div class="bg-white rounded-2xl border p-5">
+    <h3 class="font-semibold text-neutral-700 mb-3">AI Availability</h3>
+    <div id="ai-status" class="space-y-2 text-sm text-neutral-600">Loading...</div>
+  </div>
+</div>
+
+<!-- Server Status -->
+<div class="mb-4 bg-white rounded-2xl border p-5">
+  <h3 class="font-semibold text-neutral-700 mb-3">🖥️ Server Status</h3>
+  <div id="server-status" class="grid grid-cols-1 md:grid-cols-3 gap-4">Loading...</div>
+</div>
+
+<div class="bg-white rounded-2xl border p-5">
+  <h3 class="font-semibold text-neutral-700 mb-3">Config Files</h3>
+  <div id="config-files" class="flex flex-wrap gap-2 text-sm"></div>
+</div>
+
+<!-- KB File Edit Modal -->
+<div id="kb-edit-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">Edit <span id="kb-edit-filename" class="text-primary-600"></span></h3>
+      <button onclick="closeKbEditModal()" class="text-neutral-400 hover:text-neutral-600 text-xl">&times;</button>
+    </div>
+    <div class="flex-1 overflow-hidden">
+      <textarea
+        id="kb-edit-content"
+        class="w-full h-full border rounded-lg px-4 py-3 text-sm font-mono resize-none"
+        placeholder="Loading..."
+        style="min-height: 400px;"
+      ></textarea>
+    </div>
+    <div class="flex justify-end gap-2 mt-4">
+      <button onclick="closeKbEditModal()" class="px-4 py-2 text-sm text-neutral-600 border rounded-lg hover:bg-neutral-50">Cancel</button>
+      <button onclick="saveKbFileFromModal()" id="kb-edit-save-btn" class="px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Instance Modal -->
+<div id="add-instance-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+  <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-md mx-4">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold">Add WhatsApp Number</h3>
+      <button onclick="closeModal('add-instance-modal')" class="text-neutral-400 hover:text-neutral-600 text-xl">&times;</button>
+    </div>
+    <form id="add-instance-form" onsubmit="submitAddInstance(); return false;">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-neutral-700 mb-1">Phone Number</label>
+        <input
+          type="tel"
+          id="add-instance-phone"
+          class="w-full border rounded-lg px-4 py-2 text-sm"
+          placeholder="+60XXXXXXXXX"
+          oninput="onPhoneInput(event)"
+          required
+        />
+        <p class="text-xs text-neutral-500 mt-1">Start with country code (e.g., +60 for Malaysia)</p>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-neutral-700 mb-1">Display Label</label>
+        <input
+          type="text"
+          id="add-instance-label"
+          class="w-full border rounded-lg px-4 py-2 text-sm"
+          placeholder="My Business"
+          required
+        />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeModal('add-instance-modal')" class="px-4 py-2 text-sm text-neutral-600 border rounded-lg hover:bg-neutral-50">Cancel</button>
+        <button type="submit" id="add-instance-submit-btn" class="px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50">Add</button>
+      </div>
+    </form>
+  </div>
+</div>

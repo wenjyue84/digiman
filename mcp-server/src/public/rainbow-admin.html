@@ -252,22 +252,11 @@
 
 </main>
 
-<!-- Core Scripts (Load Order Matters!) -->
-<script src="/public/js/core/state.js"></script>
-<script src="/public/js/core/state-manager.js"></script>
-<script src="/public/js/core/utils.js"></script>
-<script src="/public/js/core/tabs.js"></script>
-
-<!-- Module Scripts -->
-<script type="module" src="/public/js/modules/testing.js"></script>
-<script type="module" src="/public/js/modules/real-chat.js"></script>
-<script type="module" src="/public/js/modules/kb-editor.js"></script>
-
 <!-- New Modular Scripts (Refactored 2026-02-12) -->
 <!-- Core Scripts (Load Order Matters!) -->
 <script src="/public/js/core/state.js"></script>
 <script src="/public/js/core/state-manager.js"></script>
-<script src="/public/js/core/utils.js"></script>
+<script type="module" src="/public/js/core/utils.js"></script>
 <script src="/public/js/core/tabs.js"></script>
 <script src="/public/js/core/modals.js"></script>
 <script src="/public/js/core/constants.js"></script>
@@ -277,11 +266,7 @@
 <script type="module" src="/public/js/modules/real-chat.js"></script>
 <script type="module" src="/public/js/modules/kb-editor.js"></script>
 
-<!-- API and Toast utilities -->
-<script src="/public/js/api.js"></script>
-<script src="/public/js/toast.js"></script>
-
-<!-- Main Orchestrator (Loads all new modules) -->
+<!-- Main Orchestrator (Loads all modules and utilities) -->
 <script type="module" src="/public/js/main.js"></script>
 
 </body>
