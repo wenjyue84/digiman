@@ -4674,9 +4674,13 @@ async function runAutotest() {
     if (liveWarnEl) liveWarnEl.textContent = liveWarnings;
     if (liveFailEl) liveFailEl.textContent = liveFailed;
 
-    // Delay between scenarios to prevent overwhelming the system
+    // Delay between scenarios to prevent overwhelming the server/LLM providers
     if (i < AUTOTEST_SCENARIOS.length - 1) {
-      await new Promise(r => setTimeout(r, 1000)); // Increased from 200ms to 1000ms
+      const lastResult = results[results.length - 1];
+      const lastFailed = lastResult && lastResult.status === 'fail';
+      // Longer delay after failures to let the server recover from any stuck LLM calls
+      const delay = lastFailed ? 5000 : 2000;
+      await new Promise(r => setTimeout(r, delay));
     }
   }
 
@@ -4724,31 +4728,58 @@ async function runScenario(scenario) {
   const turns = [];
   const history = [];
   const startTime = Date.now();
+  // Autotest needs longer timeout — LLM calls can take 30-60s
+  const AUTOTEST_TIMEOUT = 90000; // 90 seconds
+  const MAX_RETRIES = 1; // Retry once on transient errors
 
   for (const msg of scenario.messages) {
     history.push({ role: 'user', content: msg.text });
 
-    const turnStart = Date.now();
-    const result = await api('/preview/chat', {
-      method: 'POST',
-      body: { message: msg.text, history: history.slice(0, -1) }
-    });
-    const turnTime = Date.now() - turnStart;
+    let result = null;
+    let lastError = null;
 
-    history.push({ role: 'assistant', content: result.message });
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        if (attempt > 0) {
+          // Wait before retry — give server time to recover
+          await new Promise(r => setTimeout(r, 3000));
+        }
+        const turnStart = Date.now();
+        result = await api('/preview/chat', {
+          method: 'POST',
+          body: { message: msg.text, history: history.slice(0, -1) },
+          timeout: AUTOTEST_TIMEOUT
+        });
+        const turnTime = Date.now() - turnStart;
 
-    turns.push({
-      userMessage: msg.text,
-      response: result.message,
-      intent: result.intent,
-      source: result.source,
-      confidence: result.confidence,
-      messageType: result.messageType || 'info',
-      responseTime: result.responseTime || turnTime,
-      model: result.model,
-      kbFiles: result.kbFiles || [],
-      routedAction: result.routedAction
-    });
+        history.push({ role: 'assistant', content: result.message });
+
+        turns.push({
+          userMessage: msg.text,
+          response: result.message,
+          intent: result.intent,
+          source: result.source,
+          confidence: result.confidence,
+          messageType: result.messageType || 'info',
+          responseTime: result.responseTime || turnTime,
+          model: result.model,
+          kbFiles: result.kbFiles || [],
+          routedAction: result.routedAction
+        });
+        lastError = null;
+        break; // Success — exit retry loop
+      } catch (err) {
+        lastError = err;
+        const isRetryable = err.message.includes('Failed to fetch') ||
+                            err.message.includes('timeout') ||
+                            err.message.includes('AbortError') ||
+                            err.message.includes('NetworkError');
+        if (!isRetryable || attempt >= MAX_RETRIES) {
+          throw err; // Non-retryable or exhausted retries
+        }
+        console.warn(`[Autotest] Retry ${attempt + 1}/${MAX_RETRIES} for "${scenario.name}": ${err.message}`);
+      }
+    }
   }
 
   const totalTime = Date.now() - startTime;

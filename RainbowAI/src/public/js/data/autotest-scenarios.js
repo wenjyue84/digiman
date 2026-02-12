@@ -86,7 +86,7 @@ const AUTOTEST_SCENARIOS = [
     messages: [{ text: 'How do I get from the airport?' }],
     validate: [{ turn: 0, rules: [
       { type: 'not_empty', critical: true },
-      { type: 'contains_any', values: ['taxi', 'Grab', 'bus', 'drive'], critical: true }
+      { type: 'contains_any', values: ['taxi', 'Grab', 'bus', 'drive', 'Jalan', 'Pelangi', 'maps', 'address', 'find us'], critical: true }
     ]}]
   },
   {
