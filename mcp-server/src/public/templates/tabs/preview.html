@@ -1,4 +1,4 @@
-<div class="mb-4">
+    <div class="mb-4">
       <h2 class="text-lg font-semibold text-neutral-800">AI Agent Preview</h2>
       <p class="text-sm text-neutral-500">Test how the AI agent responds to guest messages in real-time</p>
     </div>
@@ -99,11 +99,8 @@
       <div class="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
         <!-- Modal Header -->
         <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="text-xl font-semibold text-neutral-800">Autotest History</h2>
-            <p class="text-sm text-neutral-500">View and export previous test reports</p>
-          </div>
-          <button onclick="closeAutotestHistory()" class="text-neutral-400 hover:text-neutral-600 transition">
+          <h3 class="text-xl font-semibold text-neutral-800">Test History</h3>
+          <button onclick="closeAutotestHistory()" class="text-neutral-500 hover:text-neutral-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -112,17 +109,10 @@
 
         <!-- History List -->
         <div id="autotest-history-list" class="flex-1 overflow-y-auto space-y-2">
-          <!-- Will be populated dynamically -->
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="mt-4 pt-4 border-t flex justify-between items-center">
-          <button onclick="clearAutotestHistory()" class="text-sm text-red-500 hover:text-red-600 transition">
-            Clear All History
-          </button>
-          <button onclick="closeAutotestHistory()" class="text-sm bg-neutral-200 hover:bg-neutral-300 px-4 py-2 rounded-xl transition">
-            Close
-          </button>
+          <div class="text-center text-neutral-400 text-sm py-12">
+            <p>No test history yet</p>
+            <p class="text-xs mt-1">Run tests to see results here</p>
+          </div>
         </div>
       </div>
     </div>
@@ -178,40 +168,27 @@
         <div class="border-b bg-white px-4 py-3">
           <form onsubmit="sendChatMessage(event)" class="flex gap-2">
             <input
-              id="chat-input"
               type="text"
-              class="flex-1 border rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="Type a message as a guest..."
+              id="chat-input"
+              placeholder="Type a guest message to test the AI agent..."
+              class="flex-1 px-4 py-2 border border-neutral-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
               autocomplete="off"
             />
-            <button
-              type="submit"
-              id="send-btn"
-              class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-2xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Send
+            <button type="submit" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl transition flex items-center gap-2">
+              <span>Send</span>
+              <span>➤</span>
             </button>
           </form>
-          <div id="chat-meta" class="mt-2 text-xs text-neutral-500"></div>
         </div>
 
-        <!-- Chat Messages (Scrollable, newest at top) -->
-        <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-neutral-50">
-          <div class="text-center text-neutral-400 text-sm py-8">
-            <p>👋 Start a conversation by typing a message below</p>
-            <p class="text-xs mt-1">Try: "What's the wifi password?" or "I want to book a room"</p>
+        <!-- Chat Messages Container -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-neutral-50">
+          <!-- Welcome message -->
+          <div class="text-center text-neutral-500 text-sm py-8">
+            <p class="text-2xl mb-2">👋</p>
+            <p class="font-medium mb-1">Welcome to AI Agent Preview</p>
+            <p class="text-xs">Type a message to test how the AI responds</p>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Info Card -->
-    <div id="preview-info-card" class="mt-4 bg-blue-50 border border-blue-200 rounded-2xl p-4">
-      <h3 class="font-semibold text-blue-900 mb-2">How Preview Works</h3>
-      <ul class="text-sm text-blue-800 space-y-1">
-        <li>• Messages are processed by the AI agent using your current configuration</li>
-        <li>• Intent classification, routing rules, and responses are applied in real-time</li>
-        <li>• Each chat session maintains its own conversation history</li>
-        <li>• Switch between sessions to test different scenarios</li>
-      </ul>
     </div>
