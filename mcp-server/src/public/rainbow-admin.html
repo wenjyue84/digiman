@@ -3378,8 +3378,7 @@ async function loadIntents() {
     cachedSettings = settingsData;
 
     const el = document.getElementById('intents-table-body');
-    const categories = intentsData.categories || [];
-    const allIntents = new Set([...categories.map(c => c.category), ...Object.keys(routingData)]);
+    const phases = intentsData.categories || [];
     const staticIntentNames = new Set(knowledgeData.static.map(e => e.intent));
     const wfList = workflowsData.workflows || [];
 
@@ -3387,14 +3386,35 @@ async function loadIntents() {
     const ACTION_LABELS = { static_reply: 'Static Reply', llm_reply: 'LLM Reply', workflow: 'Workflow' };
 
     const rows = [];
-    for (const intent of allIntents) {
-      const catEntry = categories.find(c => c.category === intent);
-      const route = routingData[intent]?.action || 'llm_reply';
-      const wfId = routingData[intent]?.workflow_id || '';
-      const enabled = catEntry ? catEntry.enabled : true;
-      const hasStatic = staticIntentNames.has(intent);
-      const needsStatic = route === 'static_reply';
-      const isUnknown = intent === 'unknown';
+
+    // Render intents grouped by phase
+    for (let i = 0; i < phases.length; i++) {
+      const phaseData = phases[i];
+      const phaseName = phaseData.phase || 'Uncategorized';
+      const phaseDesc = phaseData.description || '';
+      const phaseIntents = phaseData.intents || [];
+
+      // Add phase header
+      rows.push('<tr class="bg-gradient-to-r from-primary-50 to-transparent border-b-2 border-primary-200">');
+      rows.push('  <td colspan="5" class="py-3 px-3">');
+      rows.push('    <div class="flex items-center gap-2">');
+      rows.push('      <span class="font-semibold text-primary-700 text-sm uppercase tracking-wide">' + esc(phaseName) + '</span>');
+      rows.push('      <span class="text-xs text-neutral-500">— ' + esc(phaseDesc) + '</span>');
+      rows.push('    </div>');
+      rows.push('  </td>');
+      rows.push('</tr>');
+
+      // Render intents in this phase
+      for (let j = 0; j < phaseIntents.length; j++) {
+        const intentData = phaseIntents[j];
+        const intent = intentData.category;
+        const professionalTerm = intentData.professional_term || intent;
+        const route = routingData[intent]?.action || 'llm_reply';
+        const wfId = routingData[intent]?.workflow_id || '';
+        const enabled = intentData.enabled !== undefined ? intentData.enabled : true;
+        const hasStatic = staticIntentNames.has(intent);
+        const needsStatic = route === 'static_reply';
+        const isUnknown = intent === 'unknown';
 
       let warning = '';
       if (needsStatic && !hasStatic) warning = '<span class="badge-warn">No static reply!</span>';
@@ -3429,32 +3449,32 @@ async function loadIntents() {
           </tr>
         `);
       } else {
-        rows.push(`
-          <tr class="border-b hover:bg-neutral-50" id="intent-row-${css(intent)}">
-            <td class="py-2.5 pr-3 font-mono text-sm">${esc(intent)}</td>
-            <td class="py-2.5 pr-3">
-              <button onclick="toggleIntent('${esc(intent)}', ${!enabled})"
-                class="text-xs px-2 py-0.5 rounded-full ${enabled ? 'bg-success-100 text-success-700' : 'bg-neutral-200 text-neutral-500'} hover:opacity-80">
-                ${enabled ? 'On' : 'Off'}
-              </button>
-            </td>
-            <td class="py-2.5 pr-3">
-              <div class="flex items-center gap-1">
-                <select onchange="changeRouting('${esc(intent)}', this.value, this)" class="text-xs border rounded px-2 py-1">
-                  ${ACTIONS.map(a => `<option value="${a}" ${route === a ? 'selected' : ''}>${ACTION_LABELS[a]}</option>`).join('')}
-                </select>
-                <select onchange="changeWorkflowId('${esc(intent)}', this.value)" class="text-xs border rounded px-2 py-1 ${route === 'workflow' ? '' : 'hidden'}" id="wf-pick-${css(intent)}">
-                  ${wfOptions}
-                </select>
-              </div>
-            </td>
-            <td class="py-2.5 pr-3 text-xs">${warning || (hasStatic ? '<span class="text-success-600">Yes</span>' : '<span class="text-neutral-400">—</span>')}</td>
-            <td class="py-2.5">
-              <button onclick="deleteIntent('${esc(intent)}')" class="text-xs px-2 py-1 text-danger-500 hover:bg-danger-50 rounded">Delete</button>
-            </td>
-          </tr>
-        `);
+        const actionOptions = ACTIONS.map(a => '<option value="' + a + '" ' + (route === a ? 'selected' : '') + '>' + ACTION_LABELS[a] + '</option>').join('');
+        const wfOptions = wfList.map(w => '<option value="' + esc(w.id) + '" ' + (wfId === w.id ? 'selected' : '') + '>' + esc(w.name) + '</option>').join('');
+
+        rows.push('<tr class="border-b hover:bg-neutral-50" id="intent-row-' + css(intent) + '">');
+        rows.push('  <td class="py-2.5 pr-3 pl-6">');
+        rows.push('    <div class="flex flex-col">');
+        rows.push('      <span class="font-mono text-sm">' + esc(intent) + '</span>');
+        rows.push('      <span class="text-xs text-neutral-500 mt-0.5">' + esc(professionalTerm) + '</span>');
+        rows.push('    </div>');
+        rows.push('  </td>');
+        rows.push('  <td class="py-2.5 pr-3">');
+        rows.push('    <button onclick="toggleIntent(\'' + esc(intent) + '\', ' + !enabled + ')" class="text-xs px-2 py-0.5 rounded-full ' + (enabled ? 'bg-success-100 text-success-700' : 'bg-neutral-200 text-neutral-500') + ' hover:opacity-80">' + (enabled ? 'On' : 'Off') + '</button>');
+        rows.push('  </td>');
+        rows.push('  <td class="py-2.5 pr-3">');
+        rows.push('    <div class="flex items-center gap-1">');
+        rows.push('      <select onchange="changeRouting(\'' + esc(intent) + '\', this.value, this)" class="text-xs border rounded px-2 py-1">' + actionOptions + '</select>');
+        rows.push('      <select onchange="changeWorkflowId(\'' + esc(intent) + '\', this.value)" class="text-xs border rounded px-2 py-1 ' + (route === 'workflow' ? '' : 'hidden') + '" id="wf-pick-' + css(intent) + '">' + wfOptions + '</select>');
+        rows.push('    </div>');
+        rows.push('  </td>');
+        rows.push('  <td class="py-2.5 pr-3 text-xs">' + (warning || (hasStatic ? '<span class="text-success-600">Yes</span>' : '<span class="text-neutral-400">—</span>')) + '</td>');
+        rows.push('  <td class="py-2.5">');
+        rows.push('    <button onclick="deleteIntent(\'' + esc(intent) + '\')" class="text-xs px-2 py-1 text-danger-500 hover:bg-danger-50 rounded">Delete</button>');
+        rows.push('  </td>');
+        rows.push('</tr>');
       }
+    }
     }
 
     el.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="5" class="text-neutral-400 py-4 text-center">No intents configured</td></tr>';
