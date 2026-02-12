@@ -104,12 +104,15 @@ async function loadDashboard() {
       aiStatusEl.innerHTML = `
         <div class="space-y-2">
           ${aiProviders.slice(0, 4).map(provider => `
-            <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center justify-between text-sm" data-provider-id="${esc(provider.id)}">
               <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full ${provider.available ? 'bg-success-400' : 'bg-neutral-300'}"></span>
                 <span class="text-neutral-600">${esc(provider.name || 'Unknown')}</span>
               </div>
-              <span class="${provider.available ? 'text-success-600' : 'text-neutral-400'} text-xs">${provider.available ? '✓ Ready' : '✗ Not configured'}</span>
+              <span class="flex items-center gap-2">
+                <span class="${provider.available ? 'text-success-600' : 'text-neutral-400'} text-xs">${provider.available ? '✓ Ready' : '✗ Not configured'}</span>
+                <span id="dashboard-ai-time-${esc(provider.id)}" class="text-neutral-500 font-mono text-xs" data-provider-id="${esc(provider.id)}"></span>
+              </span>
             </div>
           `).join('')}
           ${aiProviders.length > 4 ? `<div class="text-xs text-neutral-400 mt-1">+${aiProviders.length - 4} more providers</div>` : ''}
@@ -227,6 +230,48 @@ function quickActionTestChat() {
 function refreshDashboard() {
   loadDashboard();
   toast('Dashboard refreshed');
+}
+
+/** Run speed test for each enabled AI provider and show response time on dashboard. */
+async function runDashboardProviderSpeedTest() {
+  const btn = document.getElementById('dashboard-ai-test-btn');
+  const aiStatusEl = document.getElementById('dashboard-ai-status');
+  if (!btn || !aiStatusEl) return;
+  let statusData;
+  try {
+    statusData = await api('/status');
+  } catch (e) {
+    toast('Could not load provider list: ' + e.message, 'error');
+    return;
+  }
+  const providers = (statusData.ai?.providers || []).filter(p => p.enabled && p.available);
+  if (providers.length === 0) {
+    toast('No enabled AI providers to test', 'error');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Testing...';
+  for (const p of providers) {
+    const timeEl = document.getElementById('dashboard-ai-time-' + p.id);
+    if (timeEl) timeEl.textContent = '…';
+    try {
+      const result = await api('/test-ai/' + encodeURIComponent(p.id), { method: 'POST' });
+      const timeMs = result.responseTime;
+      const timeStr = timeMs == null ? '—' : (timeMs >= 1000 ? (timeMs / 1000).toFixed(1) + 's' : timeMs + 'ms');
+      if (timeEl) {
+        timeEl.textContent = result.ok ? timeStr : '✗';
+        timeEl.className = result.ok ? 'text-primary-600 font-mono text-xs' : 'text-red-600 font-mono text-xs';
+      }
+    } catch (e) {
+      if (timeEl) {
+        timeEl.textContent = '✗';
+        timeEl.className = 'text-red-600 font-mono text-xs';
+      }
+    }
+  }
+  btn.disabled = false;
+  btn.textContent = 'Test speed';
+  toast('Speed test done');
 }
 
 // ═════════════════════════════════════════════════════════════════════
@@ -5956,14 +6001,20 @@ async function applyIntentTemplate(templateId, event) {
 
     // Highlight selected button
     if (event) {
-      document.querySelectorAll('.template-btn-im').forEach(btn => {
-        btn.classList.remove('border-primary-400', 'bg-primary-100');
-        btn.classList.add('border-2', 'bg-white');
+      document.querySelectorAll('.dashboard-template-btn').forEach(btn => {
+        btn.classList.remove('active');
+        const check = btn.querySelector('.btn-check');
+        if (check) check.remove();
       });
-      const clickedBtn = event.target.closest('.template-btn-im');
+      const clickedBtn = event.target.closest('.dashboard-template-btn');
       if (clickedBtn) {
-        clickedBtn.classList.add('border-primary-400', 'bg-primary-100');
-        clickedBtn.classList.remove('border-2');
+        clickedBtn.classList.add('active');
+        if (!clickedBtn.querySelector('.btn-check')) {
+          const check = document.createElement('span');
+          check.className = 'btn-check';
+          check.textContent = '✓';
+          clickedBtn.appendChild(check);
+        }
       }
     }
 

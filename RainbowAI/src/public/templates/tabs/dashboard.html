@@ -44,7 +44,10 @@
         <span class="text-xl">🤖</span>
         <h3 class="font-semibold text-neutral-700">AI Providers</h3>
       </div>
-      <button onclick="loadTab('settings')" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Settings →</button>
+      <div class="flex items-center gap-2">
+        <button onclick="runDashboardProviderSpeedTest()" class="text-xs px-2 py-1 rounded border border-primary-200 text-primary-600 hover:bg-primary-50 font-medium" id="dashboard-ai-test-btn" title="Run a quick test for each provider and show response time">Test speed</button>
+        <button onclick="loadTab('settings')" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Settings →</button>
+      </div>
     </div>
     <div id="dashboard-ai-status" class="space-y-2">
       <!-- Loading state -->
