@@ -1,6 +1,6 @@
     <div class="mb-4">
-      <h2 class="text-lg font-semibold text-neutral-800">Understanding System</h2>
-      <p class="text-sm text-neutral-500">Configure how Rainbow understands guest messages using 4 layers of intelligence.</p>
+      <h2 class="text-xl font-bold text-neutral-800">Understanding</h2>
+      <p class="text-sm text-neutral-500 mt-1">Configure how Rainbow understands guest messages using 4 layers of intelligence.</p>
     </div>
 
     <!-- Stats Cards -->
@@ -24,14 +24,15 @@
     </div>
 
     <!-- Quick Setup (Configuration Templates) -->
-    <div class="bg-white border rounded-2xl p-5 mb-4">
-      <div class="flex items-center justify-between mb-3">
+    <div class="dashboard-template-card">
+      <div class="dashboard-template-header">
         <div>
-          <h3 class="font-semibold text-neutral-700">⚡ Quick Setup</h3>
-          <p class="text-sm text-neutral-500">Pre-optimized configurations for different use cases. Based on industry research.</p>
+          <h3 class="dashboard-template-title">⚡ Quick Setup</h3>
+          <p class="dashboard-template-subtitle">Pre-optimized configurations for different use cases. Based on industry research.</p>
         </div>
-        <button onclick="toggleTemplateHelp()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
-          ℹ️ Template Guide
+        <button type="button" onclick="toggleTemplateHelp()" class="dashboard-template-guide inline-flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Template Guide
         </button>
       </div>
 
@@ -49,45 +50,45 @@
         </div>
       </div>
 
-      <!-- Template Buttons -->
-      <div class="flex flex-wrap gap-2 mb-4" id="intent-template-buttons">
-        <button onclick="applyIntentTemplate('t1-quality', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
-          <div class="font-semibold">T1 Maximum Quality</div>
-          <div class="text-xs text-neutral-500">95-98% · 2-5s · Highest cost</div>
+      <div class="dashboard-template-buttons" id="intent-template-buttons">
+        <button type="button" onclick="applyIntentTemplate('t1-quality', event)" class="dashboard-template-btn" data-template-id="t1-quality">
+          <span>T1 Maximum Quality</span>
+          <span class="text-neutral-500 font-normal">95-98% · 2-5s · Highest cost</span>
         </button>
-        <button onclick="applyIntentTemplate('t2-performance', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
-          <div class="font-semibold">T2 High Performance</div>
-          <div class="text-xs text-neutral-500">88-92% · 0.5-1s · Lowest cost</div>
+        <button type="button" onclick="applyIntentTemplate('t2-performance', event)" class="dashboard-template-btn" data-template-id="t2-performance">
+          <span>T2 High Performance</span>
+          <span class="text-neutral-500 font-normal">88-92% · 0.5-1s · Lowest cost</span>
         </button>
-        <button onclick="applyIntentTemplate('t3-balanced', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
-          <div class="font-semibold">T3 Balanced ⭐</div>
-          <div class="text-xs text-neutral-500">92-95% · 1-2s · Default</div>
+        <button type="button" onclick="applyIntentTemplate('t3-balanced', event)" class="dashboard-template-btn active" data-template-id="t3-balanced">
+          <span>T3 Balanced ⭐</span>
+          <span class="text-neutral-500 font-normal">92-95% · 1-2s · Default</span>
+          <span class="btn-check">✓</span>
         </button>
-        <button onclick="applyIntentTemplate('t4-smart-fast', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
-          <div class="font-semibold">T4 Smart-Fast</div>
-          <div class="text-xs text-neutral-500">90-93% · 0.8-1.5s · Optimized</div>
+        <button type="button" onclick="applyIntentTemplate('t4-smart-fast', event)" class="dashboard-template-btn" data-template-id="t4-smart-fast">
+          <span>T4 Smart-Fast</span>
+          <span class="text-neutral-500 font-normal">90-93% · 0.8-1.5s · Optimized</span>
         </button>
-        <button onclick="applyIntentTemplate('t5-tiered-hybrid', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
-          <div class="font-semibold">T5 Tiered-Hybrid 🏆</div>
-          <div class="text-xs text-neutral-500">91-94% · 0.5-1.2s · Research-backed</div>
+        <button type="button" onclick="applyIntentTemplate('t5-tiered-hybrid', event)" class="dashboard-template-btn" data-template-id="t5-tiered-hybrid">
+          <span>T5 Tiered-Hybrid 🏆</span>
+          <span class="text-neutral-500 font-normal">91-94% · 0.5-1.2s · Research-backed</span>
         </button>
-        <button onclick="applyIntentTemplate('t6-emergency', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
-          <div class="font-semibold">T6 Emergency</div>
-          <div class="text-xs text-neutral-500">90-95% · 1.5-3s · 24/7 ops</div>
+        <button type="button" onclick="applyIntentTemplate('t6-emergency', event)" class="dashboard-template-btn" data-template-id="t6-emergency">
+          <span>T6 Emergency</span>
+          <span class="text-neutral-500 font-normal">90-95% · 1.5-3s · 24/7 ops</span>
         </button>
-        <button onclick="applyIntentTemplate('t7-multilang', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
-          <div class="font-semibold">T7 Multi-Language</div>
-          <div class="text-xs text-neutral-500">89-93% · 1.5-2.5s · CJK focus</div>
+        <button type="button" onclick="applyIntentTemplate('t7-multilang', event)" class="dashboard-template-btn" data-template-id="t7-multilang">
+          <span>T7 Multi-Language</span>
+          <span class="text-neutral-500 font-normal">89-93% · 1.5-2.5s · CJK focus</span>
         </button>
       </div>
 
-      <!-- Current Template Indicator -->
-      <div class="flex items-center gap-2 text-sm">
-        <span class="text-neutral-500">Current:</span>
-        <span id="current-template-label" class="font-semibold text-primary-600">T3 Balanced</span>
+      <div class="dashboard-template-footer">
+        <span class="current-label">Current:</span>
+        <span id="current-template-label" class="current-value">T3 Balanced</span>
         <span class="text-neutral-300">·</span>
-        <button onclick="saveCurrentAsCustom()" class="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
-          <span>💾</span> Save as Custom
+        <button type="button" onclick="saveCurrentAsCustom()" class="save-custom">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+          Save as Custom
         </button>
       </div>
     </div>
