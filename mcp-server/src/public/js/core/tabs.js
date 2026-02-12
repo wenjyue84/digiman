@@ -110,6 +110,14 @@ function initTabs() {
   const initialTab = hash || 'status';
   loadTab(initialTab);
 
+  // Listen for hash changes to support direct URL navigation
+  window.addEventListener('hashchange', () => {
+    const newHash = window.location.hash.slice(1);
+    if (newHash) {
+      loadTab(newHash);
+    }
+  });
+
   console.log('[Tabs] Initialized');
 }
 
