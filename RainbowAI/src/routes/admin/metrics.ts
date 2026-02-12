@@ -25,6 +25,7 @@ router.get('/status', async (_req: Request, res: Response) => {
     checkServerHealth('http://localhost:3000')
   ]);
 
+  const lastCheckedAt = new Date().toISOString();
   const settings = configStore.getSettings();
   const configuredProviders = settings.ai.providers || [];
   const aiProviders = configuredProviders.map(p => {
@@ -49,7 +50,8 @@ router.get('/status', async (_req: Request, res: Response) => {
         name: 'MCP Server',
         port: 3001,
         online: true,
-        responseTime: 0
+        responseTime: 0,
+        lastCheckedAt
       },
       backend: {
         name: 'Backend API',
@@ -57,7 +59,8 @@ router.get('/status', async (_req: Request, res: Response) => {
         online: backendHealth.online,
         responseTime: backendHealth.responseTime,
         url: 'http://localhost:5000',
-        error: backendHealth.error
+        error: backendHealth.error,
+        lastCheckedAt
       },
       frontend: {
         name: 'Frontend (Vite)',
@@ -65,7 +68,8 @@ router.get('/status', async (_req: Request, res: Response) => {
         online: frontendHealth.online,
         responseTime: frontendHealth.responseTime,
         url: 'http://localhost:3000',
-        error: frontendHealth.error
+        error: frontendHealth.error,
+        lastCheckedAt
       }
     },
     whatsapp: {

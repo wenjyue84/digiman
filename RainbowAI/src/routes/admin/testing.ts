@@ -20,7 +20,7 @@ router.post('/intents/test', async (req: Request, res: Response) => {
     const { classifyMessage } = await import('../../assistant/intents.js');
     const intentResult = await classifyMessage(message, []);
 
-    const routingConfig = configStore.getRouting();
+    const routingConfig = configStore.getRouting() || {};
     const route = routingConfig[intentResult.category];
     const routedAction: string = route?.action || 'llm_reply';
 
@@ -70,7 +70,7 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     const { classifyMessage } = await import('../../assistant/intents.js');
     const intentResult = await classifyMessage(message, conversationHistory);
 
-    const routingConfig = configStore.getRouting();
+    const routingConfig = configStore.getRouting() || {};
     const route = routingConfig[intentResult.category];
     const routedAction: string = route?.action || 'llm_reply';
 
@@ -98,8 +98,8 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     } | null = null;
 
     if (routedAction === 'static_reply') {
-      const knowledge = configStore.getKnowledge();
-      const staticEntry = knowledge.static.find(e => e.intent === intentResult.category);
+      const knowledge = configStore.getKnowledge() || { static: [], dynamic: {} };
+      const staticEntry = (knowledge.static || []).find(e => e.intent === intentResult.category);
       const staticText = staticEntry?.response?.en || '(no static reply configured)';
 
       if (messageType === 'info') {
@@ -127,7 +127,7 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       }
 
       // Check if this intent also has a System Message template
-      const templates = configStore.getTemplates();
+      const templates = configStore.getTemplates() || {};
       const tmpl = templates[intentResult.category];
       if (tmpl && editMeta) {
         editMeta.alsoTemplate = {
@@ -140,8 +140,8 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       // Workflow routing — show the first step message
       const workflowId = route?.workflow_id;
       if (workflowId) {
-        const workflowsData = configStore.getWorkflows();
-        const workflow = workflowsData.workflows.find(w => w.id === workflowId);
+        const workflowsData = configStore.getWorkflows() || { workflows: [] };
+        const workflow = (workflowsData.workflows || []).find(w => w.id === workflowId);
         if (workflow && workflow.steps.length > 0) {
           // Show all non-waitForReply intro messages, then the first waitForReply step
           const introMessages: string[] = [];

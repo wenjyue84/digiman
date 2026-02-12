@@ -7327,10 +7327,18 @@ async function loadSystemStatus() {
     const serverStatusEl = document.getElementById('server-status');
     if (serverStatusEl) {
       const servers = d.servers || {};
+      const formatLastChecked = (iso) => {
+        if (!iso) return 'N/A';
+        try {
+          const d = new Date(iso);
+          return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' });
+        } catch (_) { return iso; }
+      };
       serverStatusEl.innerHTML = Object.values(servers).map(server => {
         const statusColor = server.online ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700';
         const statusIcon = server.online ? '✓' : '✗';
         const responseTime = server.responseTime !== undefined ? `${server.responseTime}ms` : 'N/A';
+        const lastChecked = formatLastChecked(server.lastCheckedAt);
         return `
           <div class="border rounded-2xl p-4 ${server.online ? 'border-success-200' : 'border-danger-200'}">
             <div class="flex items-center justify-between mb-2">
@@ -7353,6 +7361,10 @@ async function loadSystemStatus() {
                   <span class="font-mono text-danger-600 text-xs">${esc(server.error || 'Unknown')}</span>
                 </div>
               `}
+              <div class="flex justify-between">
+                <span class="text-neutral-500">Last checked:</span>
+                <span class="font-mono text-neutral-600 text-xs" title="${esc(lastChecked)}">${esc(lastChecked)}</span>
+              </div>
               ${server.url ? `
                 <div class="mt-2">
                   <a href="${server.url}" target="_blank" class="text-xs text-primary-600 hover:text-primary-700 underline">Open →</a>
