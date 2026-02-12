@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responses Tab Test</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .test { padding: 10px; margin: 10px 0; border-left: 4px solid #ccc; }
+    .test.pass { border-color: green; background: #e8f5e9; }
+    .test.fail { border-color: red; background: #ffebee; }
+    .test h3 { margin: 0 0 5px 0; }
+    .test p { margin: 5px 0; font-size: 14px; }
+    .code { font-family: monospace; background: #f5f5f5; padding: 2px 4px; }
+  </style>
+</head>
+<body>
+  <h1>Responses Tab Test Report</h1>
+  <div id="results"></div>
+
+  <script>
+    const results = [];
+
+    function test(name, fn) {
+      try {
+        const result = fn();
+        results.push({ name, status: result ? 'pass' : 'fail', message: result || 'Check failed' });
+      } catch (e) {
+        results.push({ name, status: 'fail', message: e.message });
+      }
+    }
+
+    function checkAPI(url) {
+      return fetch(`http://localhost:3002${url}`)
+        .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+        .then(() => `✓ API ${url} returns valid JSON`)
+        .catch(e => { throw new Error(`✗ API ${url} failed: ${e.message}`); });
+    }
+
+    async function runTests() {
+      // Test 1: Check APIs
+      try {
+        await checkAPI('/api/rainbow/knowledge');
+        results.push({ name: 'Knowledge API', status: 'pass', message: '✓ /api/rainbow/knowledge returns valid JSON' });
+      } catch (e) {
+        results.push({ name: 'Knowledge API', status: 'fail', message: e.message });
+      }
+
+      try {
+        await checkAPI('/api/rainbow/workflows');
+        results.push({ name: 'Workflows API', status: 'pass', message: '✓ /api/rainbow/workflows returns valid JSON' });
+      } catch (e) {
+        results.push({ name: 'Workflows API', status: 'fail', message: e.message });
+      }
+
+      try {
+        await checkAPI('/api/rainbow/templates');
+        results.push({ name: 'Templates API', status: 'pass', message: '✓ /api/rainbow/templates returns valid JSON' });
+      } catch (e) {
+        results.push({ name: 'Templates API', status: 'fail', message: e.message });
+      }
+
+      // Test 2: Check page loads
+      try {
+        const html = await fetch('http://localhost:3002').then(r => r.text());
+        results.push({
+          name: 'Page HTML',
+          status: 'pass',
+          message: `✓ Page loads (${(html.length / 1024).toFixed(1)} KB)`
+        });
+
+        // Test 3: Check if Responses tab HTML exists
+        if (html.includes('id="quick-replies-tab"')) {
+          results.push({ name: 'Quick Replies Tab HTML', status: 'pass', message: '✓ Quick Replies sub-tab HTML found' });
+        } else {
+          results.push({ name: 'Quick Replies Tab HTML', status: 'fail', message: '✗ Quick Replies sub-tab HTML not found' });
+        }
+
+        if (html.includes('id="workflows-tab"')) {
+          results.push({ name: 'Workflows Tab HTML', status: 'pass', message: '✓ Smart Workflows sub-tab HTML found' });
+        } else {
+          results.push({ name: 'Workflows Tab HTML', status: 'fail', message: '✗ Smart Workflows sub-tab HTML not found' });
+        }
+
+        if (html.includes('id="system-messages-tab"')) {
+          results.push({ name: 'System Messages Tab HTML', status: 'pass', message: '✓ System Messages sub-tab HTML found' });
+        } else {
+          results.push({ name: 'System Messages Tab HTML', status: 'fail', message: '✗ System Messages sub-tab HTML not found' });
+        }
+
+        // Test 4: Check if JavaScript functions exist
+        if (html.includes('function switchResponseTab')) {
+          results.push({ name: 'switchResponseTab Function', status: 'pass', message: '✓ switchResponseTab() function found' });
+        } else {
+          results.push({ name: 'switchResponseTab Function', status: 'fail', message: '✗ switchResponseTab() function not found' });
+        }
+
+        if (html.includes('function loadStaticReplies') || html.includes('async function loadStaticReplies')) {
+          results.push({ name: 'loadStaticReplies Function', status: 'pass', message: '✓ loadStaticReplies() function found' });
+        } else {
+          results.push({ name: 'loadStaticReplies Function', status: 'fail', message: '✗ loadStaticReplies() function not found' });
+        }
+
+        if (html.includes('function loadWorkflow') || html.includes('async function loadWorkflow')) {
+          results.push({ name: 'loadWorkflow Function', status: 'pass', message: '✓ loadWorkflow() function found' });
+        } else {
+          results.push({ name: 'loadWorkflow Function', status: 'fail', message: '✗ loadWorkflow() function not found' });
+        }
+
+      } catch (e) {
+        results.push({ name: 'Page HTML', status: 'fail', message: `✗ Failed to load page: ${e.message}` });
+      }
+
+      // Render results
+      const container = document.getElementById('results');
+      const passCount = results.filter(r => r.status === 'pass').length;
+      const failCount = results.filter(r => r.status === 'fail').length;
+
+      container.innerHTML = `
+        <div style="background: #f5f5f5; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+          <h2 style="margin: 0;">Summary: ${passCount} passed, ${failCount} failed</h2>
+        </div>
+        ${results.map(r => `
+          <div class="test ${r.status}">
+            <h3>${r.name}</h3>
+            <p>${r.message}</p>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    runTests();
+  </script>
+</body>
+</html>
