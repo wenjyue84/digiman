@@ -1,4 +1,204 @@
-<div class="p-8 text-center">
-    <div class="spinner mx-auto"></div>
-    <p class="text-sm text-neutral-500 mt-2">Loading intents...</p>
-  </div>
+<div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Intents & Routing</h2>
+      <p class="text-sm text-neutral-500">Define intents the LLM classifies into, and control how each one is handled.</p>
+    </div>
+
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">Architecture</h3>
+      <div class="text-sm text-neutral-600 space-y-1">
+        <p>1. <span class="font-mono text-danger-600">Emergency regex</span> — fire, stolen, assault → instant staff escalation</p>
+        <p>2. <span class="font-mono text-primary-600">LLM classifies intent</span> from the defined list below</p>
+        <p>3. <span class="font-mono text-success-600">Routing rule</span> determines handling: static reply, LLM response, or workflow (booking, escalation, payment, etc.)</p>
+      </div>
+    </div>
+
+    <!-- Test Classifier -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">Test Classifier</h3>
+      <p class="text-sm text-neutral-500 mb-3">Send a test message to see how Rainbow classifies it and which routing rule applies.</p>
+      <div class="flex gap-2 mb-3">
+        <input id="test-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Type a guest message, e.g. 'what's the wifi password?'" onkeydown="if(event.key==='Enter')testClassifier()" />
+        <button onclick="testClassifier()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl transition">Test</button>
+      </div>
+      <div id="test-result" class="hidden">
+        <div class="bg-neutral-50 rounded-2xl p-4 text-sm space-y-2">
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Intent:</span>
+            <span id="test-intent" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Detection:</span>
+            <span id="test-source" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Action:</span>
+            <span id="test-action" class="font-mono text-primary-600"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Routed To:</span>
+            <span id="test-routed" class="font-mono text-success-700 font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-24">Confidence:</span>
+            <span id="test-confidence" class="font-medium"></span>
+          </div>
+          <div class="mt-2 pt-2 border-t">
+            <span class="text-neutral-500 block mb-1">Response:</span>
+            <div id="test-response" class="whitespace-pre-wrap text-neutral-800"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Routing Templates -->
+    <div class="bg-white border rounded-2xl p-4 mb-4">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+        <div>
+          <h3 class="font-semibold text-neutral-700 text-sm">Routing Templates</h3>
+          <p class="text-xs text-neutral-400">Quickly switch all intent routing at once</p>
+        </div>
+        <button onclick="showSaveTemplateModal()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Save New Template</button>
+      </div>
+      <div id="template-buttons-container" class="flex items-center gap-2 flex-wrap">
+        <!-- Templates will be rendered here dynamically -->
+      </div>
+      <div id="template-indicator" class="hidden mt-2 text-xs text-neutral-500"></div>
+    </div>
+
+    <!-- Intent Table -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700">Intent Routing Table</h3>
+        <button onclick="showAddIntent()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Add Intent</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b text-left text-neutral-500">
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Intent
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    The intent category name used for message classification (e.g., "greeting", "booking", "complaint")
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Enabled
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Whether this intent is active in the classifier. Disabled intents will not be matched against incoming messages.
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Routing
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    How messages with this intent are handled: Static Reply (pre-written response), LLM Reply (AI-generated response), or Workflow (multi-step process)
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Min Confidence
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-72 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Minimum confidence score (0-1) required for the classifier to accept this intent. Lower = easier to trigger (use for safety-critical intents like theft). Higher = stricter matching (use for ambiguous intents).
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 pr-3 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Static Reply?
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-64 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Shows if a pre-written static reply exists in the knowledge base for this intent. Warnings appear if routing doesn't match availability.
+                  </span>
+                </span>
+              </th>
+              <th class="py-2 font-medium">
+                <span class="relative group cursor-help inline-flex items-center gap-1">
+                  Actions
+                  <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span class="pointer-events-none absolute left-0 bottom-full mb-2 w-48 px-3 py-2 text-xs font-normal text-white bg-neutral-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    Delete this intent and its routing configuration
+                  </span>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="intents-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Add Intent Modal -->
+    <div id="add-intent-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Add Intent</h3>
+        <form onsubmit="submitAddIntent(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Category (snake_case)</label>
+            <input id="add-i-category" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g. breakfast_info" />
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Routing Action</label>
+            <select id="add-i-routing" class="w-full border rounded-2xl px-3 py-2 text-sm" onchange="onAddIntentRoutingChange(this.value)">
+              <option value="llm_reply">LLM Reply</option>
+              <option value="static_reply">Static Reply</option>
+              <option value="workflow">Workflow</option>
+            </select>
+          </div>
+          <div class="mb-3 hidden" id="add-i-workflow-picker">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Workflow</label>
+            <select id="add-i-workflow-id" class="w-full border rounded-2xl px-3 py-2 text-sm"></select>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Regex Patterns (one per line, optional)</label>
+            <textarea id="add-i-patterns" rows="3" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="\\b(keyword)\\b"></textarea>
+          </div>
+          <div class="mb-3 flex items-center gap-2">
+            <input type="checkbox" id="add-i-enabled" checked />
+            <label for="add-i-enabled" class="text-sm text-neutral-700">Enabled</label>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('add-intent-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Save Template Modal -->
+    <div id="save-template-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+      <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-lg mx-4">
+        <h3 class="text-lg font-semibold mb-4">Save New Template</h3>
+        <form onsubmit="submitSaveTemplate(event)">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-neutral-700 mb-1">Template Name</label>
+            <input id="save-template-name" class="w-full border rounded-2xl px-3 py-2 text-sm" required placeholder="e.g., My Booking Setup" />
+            <p class="text-xs text-neutral-400 mt-1">Give your template a descriptive name</p>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal('save-template-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 text-sm bg-success-500 text-white rounded-2xl hover:bg-success-600">Save Template</button>
+          </div>
+        </form>
+      </div>
+    </div>

@@ -1,4 +1,217 @@
-<div class="p-8 text-center">
-    <div class="spinner mx-auto"></div>
-    <p class="text-sm text-neutral-500 mt-2">Loading preview...</p>
-  </div>
+<div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">AI Agent Preview</h2>
+      <p class="text-sm text-neutral-500">Test how the AI agent responds to guest messages in real-time</p>
+    </div>
+
+    <!-- Autotest Panel (hidden by default) -->
+    <div id="autotest-panel" class="hidden">
+      <!-- Autotest Header -->
+      <div class="bg-indigo-50 border rounded-2xl p-4 mb-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🧪</span>
+            <div>
+              <h3 class="font-semibold text-neutral-800">Autotest Suite</h3>
+              <p class="text-xs text-neutral-500">58 scenarios across 6 guest journey phases</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <!-- View History Button -->
+            <button id="view-history-btn" onclick="showAutotestHistory()" class="hidden text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+              <span>📋</span>
+              <span>History</span>
+            </button>
+            <!-- Export Report Dropdown -->
+            <div id="export-report-dropdown" class="hidden relative">
+              <button onclick="toggleExportDropdown()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+                Export Report
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div id="export-dropdown-menu" class="hidden absolute right-0 mt-1 w-72 bg-white border border-neutral-300 rounded-xl shadow-lg z-50">
+                <button onclick="exportAutotestReport(lastAutotestResults, 'all')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 rounded-t-xl">
+                  <span class="text-lg">📊</span>
+                  <span>Export All Results</span>
+                </button>
+                <button onclick="exportAutotestReport(lastAutotestResults, 'warnings-failed')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-200">
+                  <span class="text-lg">⚠️</span>
+                  <span>Export Warnings & Failed Only</span>
+                </button>
+                <button onclick="exportAutotestReport(lastAutotestResults, 'failed')" class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-200 rounded-b-xl">
+                  <span class="text-lg">❌</span>
+                  <span>Export Failed Only</span>
+                </button>
+              </div>
+            </div>
+            <button id="run-all-btn" onclick="runAutotest()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-2xl transition">Run All</button>
+            <button onclick="toggleAutotest()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Back to Chat</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div id="autotest-summary" class="grid grid-cols-5 gap-3 mb-4 hidden">
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-neutral-800" id="at-total">0</div>
+          <div class="text-xs text-neutral-500">Total</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-green-600" id="at-passed">0</div>
+          <div class="text-xs text-neutral-500">Passed</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-yellow-600" id="at-warnings">0</div>
+          <div class="text-xs text-neutral-500">Warnings</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-red-600" id="at-failed">0</div>
+          <div class="text-xs text-neutral-500">Failed</div>
+        </div>
+        <div class="bg-white border rounded-2xl p-3 text-center">
+          <div class="text-2xl font-bold text-indigo-600" id="at-time">0s</div>
+          <div class="text-xs text-neutral-500">Time</div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="autotest-progress" class="hidden mb-4">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="animate-spin h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
+          <span id="at-progress-text" class="text-sm text-neutral-600">Running...</span>
+        </div>
+        <div class="w-full bg-neutral-200 rounded-full h-2">
+          <div id="at-progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Results Container -->
+      <div id="autotest-results" class="space-y-2" style="max-height: calc(100vh - 420px); overflow-y: auto;">
+        <div class="text-center text-neutral-400 text-sm py-12">
+          <p>Click "Run All" to execute <span id="scenario-count">0</span> test scenarios</p>
+          <p class="text-xs mt-1">Tests check intent detection, multilingual support, edge cases, and more</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Autotest History Modal -->
+    <div id="autotest-history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-semibold text-neutral-800">Autotest History</h2>
+            <p class="text-sm text-neutral-500">View and export previous test reports</p>
+          </div>
+          <button onclick="closeAutotestHistory()" class="text-neutral-400 hover:text-neutral-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- History List -->
+        <div id="autotest-history-list" class="flex-1 overflow-y-auto space-y-2">
+          <!-- Will be populated dynamically -->
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="mt-4 pt-4 border-t flex justify-between items-center">
+          <button onclick="clearAutotestHistory()" class="text-sm text-red-500 hover:text-red-600 transition">
+            Clear All History
+          </button>
+          <button onclick="closeAutotestHistory()" class="text-sm bg-neutral-200 hover:bg-neutral-300 px-4 py-2 rounded-xl transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ChatGPT-style Layout -->
+    <div id="chat-layout" class="bg-white border rounded-2xl overflow-hidden flex" style="height: calc(100vh - 280px); min-height: 600px;">
+
+      <!-- Sidebar: Chat Sessions -->
+      <div class="w-64 border-r bg-neutral-50 flex flex-col">
+        <!-- Sidebar Header -->
+        <div class="px-4 py-3 border-b bg-white">
+          <button onclick="createNewChat()" class="w-full bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded-2xl text-sm transition flex items-center justify-center gap-2">
+            <span>➕</span>
+            <span>New Chat</span>
+          </button>
+        </div>
+
+        <!-- Chat Sessions List -->
+        <div id="chat-sessions" class="flex-1 overflow-y-auto p-2">
+          <!-- Sessions will be populated here -->
+        </div>
+
+        <!-- Info Footer -->
+        <div class="px-3 py-2 border-t text-xs text-neutral-500">
+          <p class="font-medium mb-1">💡 Tips:</p>
+          <p>• Sessions auto-save</p>
+          <p>• Click to switch</p>
+        </div>
+      </div>
+
+      <!-- Main Chat Area -->
+      <div class="flex-1 flex flex-col">
+        <!-- Chat Header -->
+        <div class="bg-primary-50 border-b px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">💬</span>
+            <div>
+              <h3 class="font-semibold text-neutral-800">Guest Simulation</h3>
+              <p class="text-xs text-neutral-500">Messages use current Rainbow config</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button id="view-history-btn-preview" onclick="showAutotestHistory()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
+              <span>📋</span>
+              <span>History</span>
+            </button>
+            <button onclick="toggleAutotest()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-2xl transition">Autotest</button>
+            <button onclick="clearCurrentChat()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Clear Chat</button>
+          </div>
+        </div>
+
+        <!-- Chat Input (Right below header) -->
+        <div class="border-b bg-white px-4 py-3">
+          <form onsubmit="sendChatMessage(event)" class="flex gap-2">
+            <input
+              id="chat-input"
+              type="text"
+              class="flex-1 border rounded-2xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Type a message as a guest..."
+              autocomplete="off"
+            />
+            <button
+              type="submit"
+              id="send-btn"
+              class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-2xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
+          </form>
+          <div id="chat-meta" class="mt-2 text-xs text-neutral-500"></div>
+        </div>
+
+        <!-- Chat Messages (Scrollable, newest at top) -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-neutral-50">
+          <div class="text-center text-neutral-400 text-sm py-8">
+            <p>👋 Start a conversation by typing a message below</p>
+            <p class="text-xs mt-1">Try: "What's the wifi password?" or "I want to book a room"</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Card -->
+    <div id="preview-info-card" class="mt-4 bg-blue-50 border border-blue-200 rounded-2xl p-4">
+      <h3 class="font-semibold text-blue-900 mb-2">How Preview Works</h3>
+      <ul class="text-sm text-blue-800 space-y-1">
+        <li>• Messages are processed by the AI agent using your current configuration</li>
+        <li>• Intent classification, routing rules, and responses are applied in real-time</li>
+        <li>• Each chat session maintains its own conversation history</li>
+        <li>• Switch between sessions to test different scenarios</li>
+      </ul>
+    </div>

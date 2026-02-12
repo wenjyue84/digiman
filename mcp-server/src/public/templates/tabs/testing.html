@@ -1,4 +1,88 @@
-<div class="p-8 text-center">
-    <div class="spinner mx-auto"></div>
-    <p class="text-sm text-neutral-500 mt-2">Loading testing...</p>
-  </div>
+<div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-neutral-800">Automated Test Runner</h2>
+        <p class="text-sm text-neutral-500">Run Vitest unit, integration, and semantic tests from the browser</p>
+      </div>
+      <div class="flex gap-2">
+        <select id="test-project-select" class="text-sm border rounded-lg px-3 py-2 bg-white">
+          <option value="unit" selected>Unit Tests</option>
+          <option value="integration">Integration Tests</option>
+          <option value="semantic">Semantic Tests</option>
+        </select>
+        <button id="btn-run-tests" onclick="runTests()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition font-medium">
+          Run Tests
+        </button>
+        <button id="btn-run-coverage" onclick="runCoverage()" class="text-sm bg-neutral-600 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition font-medium">
+          Coverage
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div id="test-summary" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-total" class="text-2xl font-bold text-neutral-800">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Total Tests</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-passed" class="text-2xl font-bold text-green-600">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Passed</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-failed" class="text-2xl font-bold text-red-500">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Failed</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="test-duration" class="text-2xl font-bold text-indigo-500">0s</div>
+        <div class="text-xs text-neutral-500 mt-1">Duration</div>
+      </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div id="test-status-banner" class="hidden mb-4 rounded-2xl border p-4 flex items-center gap-3">
+      <div id="test-status-icon" class="text-2xl"></div>
+      <div>
+        <div id="test-status-text" class="font-semibold"></div>
+        <div id="test-status-sub" class="text-sm text-neutral-500"></div>
+      </div>
+    </div>
+
+    <!-- Running Indicator -->
+    <div id="test-running" class="hidden mb-4">
+      <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent mb-3"></div>
+        <div class="text-indigo-700 font-medium">Running tests...</div>
+        <div class="text-sm text-indigo-500 mt-1">This may take a few seconds</div>
+      </div>
+    </div>
+
+    <!-- Test Results by File -->
+    <div id="test-results" class="space-y-3"></div>
+
+    <!-- Coverage Results -->
+    <div id="coverage-results" class="hidden">
+      <h3 class="font-semibold text-neutral-700 mb-3">Code Coverage</h3>
+      <div class="bg-white rounded-2xl border overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">File</th>
+              <th class="px-4 py-2 font-medium text-right">Stmts</th>
+              <th class="px-4 py-2 font-medium text-right">Branch</th>
+              <th class="px-4 py-2 font-medium text-right">Funcs</th>
+              <th class="px-4 py-2 font-medium text-right">Lines</th>
+            </tr>
+          </thead>
+          <tbody id="coverage-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="test-empty" class="bg-white rounded-2xl border p-8 text-center">
+      <div class="text-4xl mb-3 text-neutral-300">
+        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+      <div class="text-neutral-500 font-medium">No test results yet</div>
+      <div class="text-sm text-neutral-400 mt-1">Select a test suite and click "Run Tests" to begin</div>
+    </div>

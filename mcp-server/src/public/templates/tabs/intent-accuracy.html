@@ -1,4 +1,107 @@
-<div class="p-8 text-center">
-    <div class="spinner mx-auto"></div>
-    <p class="text-sm text-neutral-500 mt-2">Loading intent-accuracy...</p>
-  </div>
+<div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-neutral-800">Intent Classification Accuracy</h2>
+        <p class="text-sm text-neutral-500">Track how accurately Rainbow classifies user intents</p>
+      </div>
+      <button onclick="refreshIntentAccuracy()" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition font-medium">
+        Refresh
+      </button>
+    </div>
+
+    <!-- Overall Stats Cards -->
+    <div id="intent-accuracy-overall-stats" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-total" class="text-2xl font-bold text-neutral-800">0</div>
+        <div class="text-xs text-neutral-500 mt-1">Total Predictions</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-correct" class="text-2xl font-bold text-green-600">0</div>
+        <div class="text-xs text-neutral-500 mt-1">✓ Correct</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-incorrect" class="text-2xl font-bold text-red-500">0</div>
+        <div class="text-xs text-neutral-500 mt-1">✗ Incorrect</div>
+      </div>
+      <div class="bg-white rounded-2xl border p-4 text-center">
+        <div id="intent-accuracy-rate" class="text-2xl font-bold text-primary-500">0%</div>
+        <div class="text-xs text-neutral-500 mt-1">Accuracy Rate</div>
+      </div>
+    </div>
+
+    <!-- Accuracy by Intent Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Accuracy by Intent</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Intent</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">✓ Correct</th>
+              <th class="px-4 py-2 font-medium text-right">✗ Incorrect</th>
+              <th class="px-4 py-2 font-medium text-right">Accuracy</th>
+              <th class="px-4 py-2 font-medium text-right">Avg Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="intent-accuracy-by-intent-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Accuracy by Tier Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Accuracy by Classification Tier</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Tier</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">✓ Correct</th>
+              <th class="px-4 py-2 font-medium text-right">✗ Incorrect</th>
+              <th class="px-4 py-2 font-medium text-right">Accuracy</th>
+              <th class="px-4 py-2 font-medium text-right">Avg Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="intent-accuracy-by-tier-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Accuracy by Model Table -->
+    <div class="bg-white rounded-2xl border overflow-hidden mb-4">
+      <div class="bg-neutral-50 px-4 py-3 border-b">
+        <h3 class="font-semibold text-neutral-700">Accuracy by LLM Model (T4 Tier Only)</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-neutral-50 text-left text-neutral-600">
+              <th class="px-4 py-2 font-medium">Model</th>
+              <th class="px-4 py-2 font-medium text-right">Total</th>
+              <th class="px-4 py-2 font-medium text-right">✓ Correct</th>
+              <th class="px-4 py-2 font-medium text-right">✗ Incorrect</th>
+              <th class="px-4 py-2 font-medium text-right">Accuracy</th>
+            </tr>
+          </thead>
+          <tbody id="intent-accuracy-by-model-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="intent-accuracy-loading" class="hidden bg-white rounded-2xl border p-8 text-center">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-500 border-t-transparent mb-3"></div>
+      <div class="text-neutral-700 font-medium">Loading intent accuracy data...</div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="intent-accuracy-empty" class="hidden bg-white rounded-2xl border p-8 text-center">
+      <div class="text-4xl mb-3">🎯</div>
+      <div class="text-neutral-500 font-medium">No intent accuracy data available</div>
+      <div class="text-sm text-neutral-400 mt-1">Data will appear here as users validate intent predictions</div>
+    </div>

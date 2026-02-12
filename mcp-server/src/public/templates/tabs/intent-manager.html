@@ -1,4 +1,550 @@
-<div class="p-8 text-center">
-    <div class="spinner mx-auto"></div>
-    <p class="text-sm text-neutral-500 mt-2">Loading intent-manager...</p>
-  </div>
+<div class="mb-4">
+      <h2 class="text-lg font-semibold text-neutral-800">Classify Intent</h2>
+      <p class="text-sm text-neutral-500">Manage keywords, training examples, and test the 4-tier intent classification system.</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">Total Intents</div>
+        <div id="im-stat-intents" class="text-2xl font-bold text-neutral-800">-</div>
+      </div>
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">Total Keywords</div>
+        <div id="im-stat-keywords" class="text-2xl font-bold text-primary-600">-</div>
+      </div>
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">Total Examples</div>
+        <div id="im-stat-examples" class="text-2xl font-bold text-success-600">-</div>
+      </div>
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="text-sm text-neutral-500 mb-1">System</div>
+        <div class="text-xs font-mono text-neutral-600">Fuzzy + Semantic + LLM</div>
+      </div>
+    </div>
+
+    <!-- Template Selector -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 class="font-semibold text-neutral-700">⚙️ Configuration Templates</h3>
+          <p class="text-sm text-neutral-500">Pre-optimized settings for different use cases. Based on industry research.</p>
+        </div>
+        <button onclick="toggleTemplateHelp()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+          ℹ️ Template Guide
+        </button>
+      </div>
+
+      <!-- Template Help (Hidden by default) -->
+      <div id="template-help" class="hidden bg-neutral-50 rounded-xl p-4 mb-4 text-sm">
+        <div class="font-semibold text-neutral-700 mb-2">📖 Template Selection Guide</div>
+        <div class="space-y-1 text-neutral-600 text-xs">
+          <div><strong>T1 Maximum Quality:</strong> Best accuracy (95-98%), slowest (2-5s), highest cost. For premium service.</div>
+          <div><strong>T2 High Performance:</strong> Fastest (0.5-1s), lowest cost, good accuracy (88-92%). For high volume.</div>
+          <div><strong>T3 Balanced:</strong> Default. Good balance (92-95%), moderate speed (1-2s), moderate cost.</div>
+          <div><strong>T4 Smart-Fast:</strong> Optimized for WhatsApp real-time chat (90-93%), fast (0.8-1.5s).</div>
+          <div><strong>T5 Tiered-Hybrid:</strong> Research-backed optimal (91-94%), cascading tiers, 95%+ early exit.</div>
+          <div><strong>T6 Emergency-Optimized:</strong> For 24/7 operations, security-critical, theft/complaints.</div>
+          <div><strong>T7 Multi-Language:</strong> For Chinese/Malay heavy, international hostel (89-93%).</div>
+        </div>
+      </div>
+
+      <!-- Template Buttons -->
+      <div class="flex flex-wrap gap-2 mb-4" id="intent-template-buttons">
+        <button onclick="applyIntentTemplate('t1-quality', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T1 Maximum Quality</div>
+          <div class="text-xs text-neutral-500">95-98% · 2-5s · Highest cost</div>
+        </button>
+        <button onclick="applyIntentTemplate('t2-performance', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T2 High Performance</div>
+          <div class="text-xs text-neutral-500">88-92% · 0.5-1s · Lowest cost</div>
+        </button>
+        <button onclick="applyIntentTemplate('t3-balanced', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T3 Balanced ⭐</div>
+          <div class="text-xs text-neutral-500">92-95% · 1-2s · Default</div>
+        </button>
+        <button onclick="applyIntentTemplate('t4-smart-fast', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T4 Smart-Fast</div>
+          <div class="text-xs text-neutral-500">90-93% · 0.8-1.5s · Optimized</div>
+        </button>
+        <button onclick="applyIntentTemplate('t5-tiered-hybrid', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T5 Tiered-Hybrid 🏆</div>
+          <div class="text-xs text-neutral-500">91-94% · 0.5-1.2s · Research-backed</div>
+        </button>
+        <button onclick="applyIntentTemplate('t6-emergency', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T6 Emergency</div>
+          <div class="text-xs text-neutral-500">90-95% · 1.5-3s · 24/7 ops</div>
+        </button>
+        <button onclick="applyIntentTemplate('t7-multilang', event)" class="template-btn-im text-xs px-4 py-2 rounded-2xl border bg-white hover:bg-neutral-50 transition">
+          <div class="font-semibold">T7 Multi-Language</div>
+          <div class="text-xs text-neutral-500">89-93% · 1.5-2.5s · CJK focus</div>
+        </button>
+      </div>
+
+      <!-- Current Template Indicator -->
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-neutral-500">Current:</span>
+        <span id="current-template-label" class="font-semibold text-primary-600">T3 Balanced</span>
+        <span class="text-neutral-300">·</span>
+        <button onclick="saveCurrentAsCustom()" class="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
+          <span>💾</span> Save as Custom
+        </button>
+      </div>
+    </div>
+
+    <!-- Test Console -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <h3 class="font-semibold text-neutral-700 mb-3">🧪 Test Console</h3>
+      <p class="text-sm text-neutral-500 mb-3">Test intent classification with instant results. Shows which tier matched: <span class="font-mono text-xs">🚨 T1 Regex</span> (~0.1ms), <span class="font-mono text-xs">⚡ T2 Fuzzy</span> (~1ms), <span class="font-mono text-xs">🔬 T3 Semantic</span> (~50ms), or <span class="font-mono text-xs">🧠 T4 LLM</span> (fallback).</p>
+      <div class="flex gap-2 mb-3">
+        <input id="im-test-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="e.g., 'wifi password', 'tq', 'how much is it'" onkeydown="if(event.key==='Enter')testIntentManager()" />
+        <button onclick="testIntentManager()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl transition">Test</button>
+      </div>
+      <div id="im-test-result" class="hidden">
+        <div class="bg-neutral-50 rounded-2xl p-4 text-sm space-y-2">
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Intent:</span>
+            <span id="im-test-intent" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Confidence:</span>
+            <span id="im-test-confidence" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Source:</span>
+            <span id="im-test-source" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Language:</span>
+            <span id="im-test-language" class="font-medium"></span>
+          </div>
+          <div class="flex gap-4">
+            <span class="text-neutral-500 w-32">Matched:</span>
+            <span id="im-test-matched" class="text-neutral-600"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T1: Emergency Regex Patterns -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🚨 T1 Emergency Patterns (Regex)
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>Regex Patterns:</strong> Instant pattern matching (~0.1ms) for critical emergency keywords.
+            <br><br>
+            <strong>Best for:</strong> Emergency detection (fire, ambulance, theft), strict patterns that must trigger immediately.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t1')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t1-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-neutral-500">Enable</span>
+            <input type="checkbox" id="tier1-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+          </label>
+        </div>
+      </div>
+
+      <div id="t1-content" class="hidden space-y-3">
+        <div class="text-sm text-neutral-500 mb-3">
+          Add regex patterns for emergency detection. These patterns are checked first before any other tier.
+        </div>
+
+        <div class="border rounded-2xl p-4">
+          <div class="text-xs font-semibold text-neutral-500 mb-2">EMERGENCY PATTERNS</div>
+          <div id="im-regex-list" class="space-y-2 mb-3">
+            <!-- Regex patterns will be loaded here -->
+          </div>
+          <div class="flex gap-2">
+            <input id="im-regex-pattern" class="flex-1 border rounded-2xl px-3 py-2 text-sm font-mono" placeholder="/pattern/i (e.g., /fire|kebakaran|着火/i)" />
+            <input id="im-regex-description" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Description (e.g., Fire emergency)" />
+            <button onclick="addRegexPattern()" class="text-sm bg-danger-500 hover:bg-danger-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+          </div>
+          <div class="text-xs text-neutral-500 mt-2">
+            ⚠️ Use regex syntax: <code class="bg-neutral-100 px-1">/pattern/flags</code>. Common flags: <code class="bg-neutral-100 px-1">i</code> (case-insensitive), <code class="bg-neutral-100 px-1">g</code> (global).
+          </div>
+
+          <div class="mt-4 pt-4 border-t">
+            <button onclick="saveRegexPatterns()" class="bg-danger-500 hover:bg-danger-600 text-white px-4 py-2 rounded-2xl text-sm">Save Patterns</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T2: Keywords Editor -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          ⚡ T2 Keywords (Fuzzy Matching)
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>Fuzzy Matching:</strong> Fast keyword matching with typo tolerance (~1ms). Matches "wifi", "wfi", "WiFi", "wiifi" as the same.
+            <br><br>
+            <strong>Best for:</strong> Direct keywords, abbreviations (e.g., "tq"), and handling typos.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t2')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t2-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-neutral-500">Enable</span>
+            <input type="checkbox" id="tier2-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+          </label>
+          <div class="flex gap-2">
+            <button onclick="exportIntentData('json')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export JSON</button>
+            <button onclick="exportIntentData('csv')" class="text-xs bg-neutral-500 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-2xl transition">Export CSV</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="t2-content" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Intent List -->
+        <div class="border rounded-2xl p-3 overflow-y-auto max-h-96">
+          <div class="text-xs font-semibold text-neutral-500 mb-2">SELECT INTENT</div>
+          <div id="im-intent-list" class="space-y-1">Loading...</div>
+        </div>
+
+        <!-- Keyword Editor -->
+        <div class="md:col-span-3 border rounded-2xl p-4">
+          <div id="im-keyword-editor" class="hidden">
+            <div class="mb-3">
+              <div class="text-sm font-semibold text-neutral-700 mb-2">Editing: <span id="im-current-intent" class="text-primary-600"></span></div>
+
+              <!-- T2 Threshold Override -->
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-medium text-neutral-700">T2 Fuzzy Threshold Override (Optional)</label>
+                  <button id="im-t2-reset-btn" onclick="resetTierThreshold('t2')" class="text-xs text-primary-600 hover:text-primary-700 font-medium hidden">Reset to Default</button>
+                </div>
+                <div class="flex items-center gap-3">
+                  <input
+                    id="im-t2-threshold"
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    placeholder="Use default (0.80)"
+                    class="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                    onchange="handleTierThresholdChange('t2', this.value)"
+                  />
+                  <span class="text-xs text-neutral-500" id="im-t2-status">Using default: 0.80</span>
+                </div>
+                <div class="text-xs text-neutral-500 mt-2">
+                  Leave empty to use global T2 Fuzzy threshold (0.80). Override only if this intent needs stricter/looser fuzzy matching.
+                </div>
+              </div>
+
+              <!-- Language Tabs -->
+              <div class="flex gap-2 mb-3 border-b">
+                <button class="im-lang-tab px-3 py-2 text-sm border-b-2 border-primary-500 font-medium" data-lang="en">English</button>
+                <button class="im-lang-tab px-3 py-2 text-sm text-neutral-500" data-lang="ms">Malay</button>
+                <button class="im-lang-tab px-3 py-2 text-sm text-neutral-500" data-lang="zh">Chinese</button>
+              </div>
+
+              <!-- Keywords -->
+              <div id="im-keywords-en" class="im-keywords-lang">
+                <div class="text-xs text-neutral-500 mb-2">EN Keywords (<span id="im-count-en">0</span>)</div>
+                <div id="im-keyword-list-en" class="flex flex-wrap gap-2 mb-3"><!-- keywords here --></div>
+                <div class="flex gap-2">
+                  <input id="im-keyword-input-en" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add keyword..." onkeydown="if(event.key==='Enter')addKeyword('en')" />
+                  <button onclick="addKeyword('en')" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+                </div>
+              </div>
+
+              <div id="im-keywords-ms" class="im-keywords-lang hidden">
+                <div class="text-xs text-neutral-500 mb-2">MS Keywords (<span id="im-count-ms">0</span>)</div>
+                <div id="im-keyword-list-ms" class="flex flex-wrap gap-2 mb-3"><!-- keywords here --></div>
+                <div class="flex gap-2">
+                  <input id="im-keyword-input-ms" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add keyword..." onkeydown="if(event.key==='Enter')addKeyword('ms')" />
+                  <button onclick="addKeyword('ms')" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+                </div>
+              </div>
+
+              <div id="im-keywords-zh" class="im-keywords-lang hidden">
+                <div class="text-xs text-neutral-500 mb-2">ZH Keywords (<span id="im-count-zh">0</span>)</div>
+                <div id="im-keyword-list-zh" class="flex flex-wrap gap-2 mb-3"><!-- keywords here --></div>
+                <div class="flex gap-2">
+                  <input id="im-keyword-input-zh" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add keyword..." onkeydown="if(event.key==='Enter')addKeyword('zh')" />
+                  <button onclick="addKeyword('zh')" class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t">
+                <button onclick="saveKeywords()" class="bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl text-sm">Save Keywords</button>
+              </div>
+            </div>
+          </div>
+          <div id="im-keyword-empty" class="text-center text-neutral-400 py-8">
+            ← Select an intent to edit keywords
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T3: Training Examples Editor -->
+    <div class="bg-white border rounded-2xl p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🔬 T3 Training Examples (Semantic Matching)
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>Semantic Matching:</strong> AI-powered meaning-based matching (~50ms). Understands paraphrases: "what's the cost" = "how much" = "tell me the price".
+            <br><br>
+            <strong>Best for:</strong> Different phrasings with same meaning, synonyms, and natural language variations.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t3')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t3-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <span class="text-sm text-neutral-500">Enable</span>
+            <input type="checkbox" id="tier3-enabled" class="tier-toggle w-10 h-6 bg-neutral-200 rounded-full relative appearance-none cursor-pointer checked:bg-primary-500 transition" checked />
+          </label>
+        </div>
+      </div>
+
+      <div id="t3-content" class="hidden">
+        <p class="text-sm text-neutral-500 mb-3">Add example phrases for semantic similarity matching. Server restart required after changes.</p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Intent List -->
+        <div class="border rounded-2xl p-3 overflow-y-auto max-h-96">
+          <div class="text-xs font-semibold text-neutral-500 mb-2">SELECT INTENT</div>
+          <div id="im-example-intent-list" class="space-y-1">Loading...</div>
+        </div>
+
+        <!-- Examples Editor -->
+        <div class="md:col-span-3 border rounded-2xl p-4">
+          <div id="im-examples-editor" class="hidden">
+            <div class="mb-3">
+              <div class="text-sm font-semibold text-neutral-700 mb-3">Training Examples for: <span id="im-current-example-intent" class="text-success-600"></span></div>
+
+              <!-- T3 Threshold Override -->
+              <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-medium text-neutral-700">T3 Semantic Threshold Override (Optional)</label>
+                  <button id="im-t3-reset-btn" onclick="resetTierThreshold('t3')" class="text-xs text-primary-600 hover:text-primary-700 font-medium hidden">Reset to Default</button>
+                </div>
+                <div class="flex items-center gap-3">
+                  <input
+                    id="im-t3-threshold"
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    placeholder="Use default (0.70)"
+                    class="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                    onchange="handleTierThresholdChange('t3', this.value)"
+                  />
+                  <span class="text-xs text-neutral-500" id="im-t3-status">Using default: 0.70</span>
+                </div>
+                <div class="text-xs text-neutral-500 mt-2">
+                  Leave empty to use global T3 Semantic threshold (0.70). Override only if this intent needs stricter/looser semantic matching.
+                </div>
+              </div>
+
+              <div class="text-xs text-neutral-500 mb-2">Examples (<span id="im-example-count">0</span>)</div>
+              <div id="im-example-list" class="flex flex-wrap gap-2 mb-3"><!-- examples here --></div>
+              <div class="flex gap-2">
+                <input id="im-example-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="Add training example..." onkeydown="if(event.key==='Enter')addExample()" />
+                <button onclick="addExample()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl">Add</button>
+              </div>
+
+              <div class="mt-4 pt-4 border-t">
+                <button onclick="saveExamples()" class="bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl text-sm">Save Examples</button>
+                <p class="text-xs text-warning-600 mt-2">⚠️ Server restart required to reload semantic matcher</p>
+              </div>
+            </div>
+          </div>
+          <div id="im-examples-empty" class="text-center text-neutral-400 py-8">
+            ← Select an intent to edit examples
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+    <!-- T4: LLM Settings -->
+    <div class="bg-white border rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-neutral-700 group relative">
+          🧠 T4 LLM Fallback Settings
+          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+            <strong>LLM Fallback:</strong> Full AI classification for complex queries (~100-500ms). Used when other tiers don't match.
+            <br><br>
+            <strong>Best for:</strong> Complex conversational queries, ambiguous intents, and handling edge cases.
+          </span>
+        </h3>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTier('t4')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+            <span id="t4-toggle-text">▶ Expand</span>
+          </button>
+          <label class="flex items-center gap-2 cursor-not-allowed opacity-70">
+            <span class="text-sm text-neutral-500">Always Enabled</span>
+            <input type="checkbox" id="tier4-enabled" class="tier-toggle w-10 h-6 bg-primary-500 rounded-full relative appearance-none cursor-not-allowed" checked disabled />
+          </label>
+        </div>
+      </div>
+
+      <div id="t4-content" class="hidden">
+        <p class="text-sm text-neutral-500 mb-4">Configure LLM behavior when regex, fuzzy, and semantic tiers don't match.</p>
+        <div class="space-y-4">
+        <!-- Confidence Thresholds -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3">Confidence Thresholds</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">T2 Fuzzy Threshold</label>
+              <input id="llm-threshold-fuzzy" type="number" step="0.05" min="0" max="1" value="0.80" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.80 (80%)</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">T3 Semantic Threshold</label>
+              <input id="llm-threshold-semantic" type="number" step="0.05" min="0" max="1" value="0.70" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.70 (70%)</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">T4 LLM Threshold</label>
+              <input id="llm-threshold-llm" type="number" step="0.05" min="0" max="1" value="0.60" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.60 (60%)</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">Layer 2 Response Quality Threshold</label>
+              <input id="llm-threshold-layer2" type="number" step="0.05" min="0" max="1" value="0.80" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Default: 0.80 - Triggers smartest LLM + 2x context if below</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T4 Provider Selection -->
+        <div class="border rounded-2xl p-4">
+          <!-- Header with Breadcrumb -->
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold text-neutral-700 mb-1 flex items-center gap-2">
+                T4 LLM Providers (Fallback Order)
+              </h4>
+              <div class="flex items-center gap-1 text-xs text-neutral-400">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Providers configured in</span>
+                <a href="#" onclick="switchTab('settings');scrollToProviders();return false" class="text-primary-500 hover:text-primary-600 underline font-medium">
+                  Settings → AI Providers
+                </a>
+              </div>
+            </div>
+            <button onclick="switchTab('settings');scrollToProviders();return false" class="text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              Manage Providers
+            </button>
+          </div>
+
+          <!-- Provider Status Summary -->
+          <div id="t4-provider-status" class="bg-neutral-50 rounded-lg px-3 py-2 mb-3 text-xs text-neutral-600 flex items-center gap-2">
+            <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span id="t4-provider-status-text">Loading provider status...</span>
+          </div>
+
+          <p class="text-xs text-neutral-400 mb-3">Select which providers to use for T4 classification. If none selected, all enabled providers will be used in priority order.</p>
+          <div id="t4-providers-list" class="space-y-2 mb-4">
+            <p class="text-sm text-neutral-400 italic">Loading providers...</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">Max Tokens</label>
+              <input id="llm-max-tokens" type="number" value="500" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">Temperature</label>
+              <input id="llm-temperature" type="number" step="0.1" min="0" max="2" value="0.3" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Lower = more focused, Higher = more creative</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Prompt -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3">Intent Classification System Prompt</h4>
+          <textarea id="llm-system-prompt" rows="6" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="Enter system prompt for intent classification..."></textarea>
+          <div class="text-xs text-neutral-400 mt-1">
+            This prompt guides the LLM on how to classify intents. Include available intent categories and classification rules.
+          </div>
+        </div>
+
+        <!-- Fallback Behavior -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3">Fallback Behavior</h4>
+          <div class="space-y-3">
+            <div>
+              <label class="flex items-center gap-2">
+                <input id="llm-fallback-unknown" type="checkbox" checked class="rounded" />
+                <span class="text-sm">Return "unknown" intent if confidence is below threshold</span>
+              </label>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input id="llm-log-failures" type="checkbox" checked class="rounded" />
+                <span class="text-sm">Log classification failures for analysis</span>
+              </label>
+            </div>
+            <div>
+              <label class="flex items-center gap-2">
+                <input id="llm-enable-context" type="checkbox" checked class="rounded" />
+                <span class="text-sm">Include conversation context in LLM classification</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Response Confidence Scoring -->
+        <div class="border rounded-2xl p-4">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2">
+            🎯 Response Confidence Scoring
+            <span class="text-xs font-normal text-neutral-400">(Hallucination Prevention)</span>
+          </h4>
+          <p class="text-xs text-neutral-500 mb-4">
+            When LLM confidence is low, automatically add disclaimers or escalate to staff. Helps prevent sending wrong information to guests.
+          </p>
+
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">
+                Very Low Confidence Threshold
+                <span class="text-neutral-400">(&lt; value = escalate)</span>
+              </label>
+              <input id="llm-threshold-low-confidence" type="number" step="0.05" min="0" max="1" value="0.5" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Below this: escalate + add disclaimer</div>
+            </div>
+            <div>
+              <label class="block text-xs text-neutral-500 mb-1">
+                Low Confidence Threshold
+                <span class="text-neutral-400">(&lt; value = disclaimer)</span>
+              </label>
+              <input id="llm-threshold-medium-confidence" type="number" step="0.05" min="0" max="1" value="0.7" class="w-full border rounded-2xl px-3 py-2 text-sm" />
+              <div class="text-xs text-neutral-400 mt-1">Below this: add disclaimer only</div>
+            </div>
+          </div>
+
+          <div class="bg-neutral-50 rounded-lg p-3">
+            <p class="text-xs font-medium text-neutral-600 mb-2">📝 Disclaimer Messages</p>
+            <p class="text-xs text-neutral-500">
+              Edit disclaimer messages in <button onclick="switchTab('static-replies');setTimeout(() => scrollToElement('static-warnings'), 300);" class="text-primary-500 hover:text-primary-600 underline font-medium">Static Replies</button> → Search for:
+            </p>
+            <ul class="text-xs text-neutral-600 mt-1 ml-4 space-y-0.5">
+              <li>• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_very_low</code> - For very low confidence (&lt;0.5)</li>
+              <li>• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_low</code> - For low confidence (0.5-0.7)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t">
+          <button onclick="saveLLMSettings()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl text-sm">Save LLM Settings</button>
+        </div>
+      </div>
+      </div>
+    </div>
