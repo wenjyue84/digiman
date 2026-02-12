@@ -113,7 +113,19 @@ function closeModal(id) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Exports
+// Expose to global scope for non-module scripts and inline handlers
+// ═══════════════════════════════════════════════════════════════════
+
+window.toast = toast;
+window.api = api;
+window.escapeHtml = escapeHtml;
+window.escapeAttr = escapeAttr;
+window.formatRelativeTime = formatRelativeTime;
+window.formatDateTime = formatDateTime;
+window.closeModal = closeModal;
+
+// ═══════════════════════════════════════════════════════════════════
+// Exports for ES6 module consumers
 // ═══════════════════════════════════════════════════════════════════
 
 export { toast, api, escapeHtml, escapeAttr, formatRelativeTime, formatDateTime, closeModal };
