@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+import cors from 'cors';
 // Force rebuild: 2026-02-13 - Updated DATABASE_URL in Zeabur
 import { registerRoutes } from "./routes";
 import { registerObjectRoutes } from "./routes/index";
@@ -12,6 +13,44 @@ const app = express();
 // Staff check-in may include a profile photo string. Keep reasonable cap.
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+
+// CORS configuration - allow local Rainbow AI to connect to Vercel deployment
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (mobile apps, curl, Postman, same-origin)
+    if (!origin) return callback(null, true);
+
+    // Allow localhost (local Rainbow AI)
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+
+    // Allow production Vercel URL (same origin for frontend)
+    const allowedOrigins = [
+      'https://pelangi-manager.vercel.app',
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+      process.env.PRODUCTION_URL || ''
+    ].filter(Boolean);
+
+    // Log for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('CORS check:', { origin, allowedOrigins });
+    }
+
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed) || origin.includes(allowed))) {
+      return callback(null, true);
+    }
+
+    // Log blocked origins for debugging
+    console.warn('CORS blocked origin:', origin);
+    callback(new Error('CORS policy violation'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Key']
+};
+
+app.use(cors(corsOptions));
 
 app.use((req, res, next) => {
   const start = Date.now();
