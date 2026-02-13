@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
+// Force rebuild: 2026-02-13 - Updated DATABASE_URL in Zeabur
 import { registerRoutes } from "./routes";
 import { registerObjectRoutes } from "./routes/index";
 import { setupVite, serveStatic, log } from "./vite";
@@ -63,10 +64,10 @@ app.use((req, res, next) => {
     };
     // Add admin user first
     const ensureAdminUser = async (username: string, password: string) => {
-      const found = existing.find(u => u.username === username || u.email === username);
+      const found = existing.find(u => u.username === username || u.email === "admin@pelangi.com" || u.email === username);
       if (!found) {
         await storage.createUser({
-          email: username, // Use username as email for admin
+          email: "admin@pelangi.com",
           username,
           password,
           role: "admin",
@@ -80,7 +81,13 @@ app.use((req, res, next) => {
     await ensureUser("Le", "Le123");
     await ensureUser("Alston", "Alston123");
   } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const isSchemaOrConnection = /relation ".*" does not exist|connection|ECONNREFUSED|ETIMEDOUT|database/i.test(msg);
     console.warn("Warning: could not seed default users:", e);
+    if (process.env.DATABASE_URL && isSchemaOrConnection) {
+      console.warn("\n  → Database may be missing schema or unreachable. Run: npm run db:push");
+      console.warn("  → Then restart the server so the admin user (admin / admin123) can be created.\n");
+    }
   }
 
   // Initialize capsules if none exist
