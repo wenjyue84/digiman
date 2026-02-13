@@ -1,3 +1,4 @@
+import { eq, desc } from 'drizzle-orm';
 import { db } from '../lib/db.js';
 import { intentPredictions } from '../../../shared/schema.js';
 
@@ -82,5 +83,34 @@ export async function markIntentCorrection(
   }
 }
 
-// Missing import statement fix
-import { eq, desc } from 'drizzle-orm';
+/**
+ * Mark the most recent intent prediction as correct (e.g. when user gives thumbs up).
+ * Used so Intent Accuracy on the dashboard can include positive feedback.
+ */
+export async function markIntentCorrect(conversationId: string): Promise<void> {
+  try {
+    const prediction = await db
+      .select()
+      .from(intentPredictions)
+      .where(eq(intentPredictions.conversationId, conversationId))
+      .orderBy(desc(intentPredictions.createdAt))
+      .limit(1);
+
+    if (prediction.length === 0) return;
+
+    const row = prediction[0];
+    await db
+      .update(intentPredictions)
+      .set({
+        actualIntent: row.predictedIntent,
+        wasCorrect: true,
+        correctionSource: 'feedback',
+        correctedAt: new Date(),
+      })
+      .where(eq(intentPredictions.id, row.id));
+
+    console.log(`[Intent Tracker] ✅ Marked correct: ${row.predictedIntent} (feedback)`);
+  } catch (error) {
+    console.error('[Intent Tracker] ❌ Failed to mark correct:', error);
+  }
+}

@@ -54,9 +54,78 @@
       ],
       "messageType": "info",
       "routedAction": "static_reply"
+    },
+    {
+      "role": "assistant",
+      "content": "how are you?",
+      "timestamp": 1770967296484,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "how are yoU?",
+      "timestamp": 1770967316404,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "how are you?",
+      "timestamp": 1770967324523,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "how ar eyou?",
+      "timestamp": 1770967330654,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "hello?",
+      "timestamp": 1770967554339,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "Apa nama anda?",
+      "timestamp": 1770967577123,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "where are you?",
+      "timestamp": 1770967580883,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "Di mana kamu?",
+      "timestamp": 1770967589690,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "where are you?",
+      "timestamp": 1770967605162,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "Di mana kamu?",
+      "timestamp": 1770967605196,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "where are you?",
+      "timestamp": 1770967610314,
+      "manual": true
     }
   ],
   "createdAt": 1770818094458,
-  "updatedAt": 1770818095402,
-  "instanceId": "default"
+  "updatedAt": 1770967658639,
+  "instanceId": "default",
+  "lastReadAt": 1770967610314,
+  "favourite": false,
+  "pinned": false
 }

@@ -24,6 +24,8 @@ export interface WorkflowExecutionResult {
   newState: WorkflowState | null; // null when workflow complete
   shouldForward?: boolean; // true on final step
   conversationSummary?: string;
+  workflowId?: string;  // For conversation log edit support
+  stepId?: string;      // For conversation log edit support
 }
 
 let sendMessageFn: SendMessageFn | null = null;
@@ -74,11 +76,14 @@ export async function executeWorkflowStep(
     const summary = buildConversationSummary(workflow, state);
     const adminPhone = configStore.getWorkflow().payment.forward_to || '+60127088789';
 
+    const lastStep = workflow.steps[workflow.steps.length - 1];
     return {
-      response: getStepMessage(workflow.steps[workflow.steps.length - 1], language),
+      response: getStepMessage(lastStep, language),
       newState: null,
       shouldForward: true,
-      conversationSummary: summary
+      conversationSummary: summary,
+      workflowId: state.workflowId,
+      stepId: lastStep.id
     };
   }
 
@@ -139,7 +144,9 @@ export async function executeWorkflowStep(
   return {
     response,
     newState,
-    shouldForward: false
+    shouldForward: false,
+    workflowId: state.workflowId,
+    stepId: currentStep.id
   };
 }
 

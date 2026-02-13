@@ -43,8 +43,13 @@
                   <span>Export Failed Only</span>
                 </button>
               </div>
+              </div>
+            <div class="flex items-center gap-1.5" title="Number of scenarios run at the same time. Higher = faster but may cause timeouts or rate limits. Default 6. Lower to 3–4 if you see many failures.">
+              <label for="autotest-concurrency" class="text-xs text-neutral-500 whitespace-nowrap">Concurrent:</label>
+              <input type="number" id="autotest-concurrency" min="1" max="20" value="6" class="w-12 text-sm text-center border border-neutral-300 rounded-lg px-1 py-1.5 bg-white" aria-label="Concurrent tests">
             </div>
             <button id="run-all-btn" onclick="runAutotest()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-2xl transition">Run All</button>
+            <button id="stop-autotest-btn" onclick="stopAutotest()" class="hidden text-sm bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-2xl transition">Stop</button>
             <button onclick="toggleAutotest()" class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Back to Chat</button>
           </div>
         </div>

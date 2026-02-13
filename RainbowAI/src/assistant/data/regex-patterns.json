@@ -1,22 +1,8 @@
 [
-  {
-    "pattern": "/\\b(fire|kebakaran|着火|火灾)\\b/i",
-    "description": "Fire emergency"
-  },
-  {
-    "pattern": "/\\b(ambulan[cs]e|hospital|emergency|kecemasan|darurat|急救|紧急)\\b/i",
-    "description": "Medical emergency"
-  },
-  {
-    "pattern": "/\\b(stol[ea]n|theft|rob(?:bed|bery)|dicuri|dirompak|被偷|被抢)\\b/i",
-    "description": "Theft or robbery"
-  },
-  {
-    "pattern": "/\\b(assault|attack|violen[ct]|fight|serang|pukul|袭击|打架)\\b/i",
-    "description": "Assault or violence"
-  },
-  {
-    "pattern": "/\\b(police|polis|cops?|警察|报警)\\b/i",
-    "description": "Police emergency"
-  }
+  { "pattern": "/\\b(fire|kebakaran|着火|火灾)\\b/i", "description": "Fire emergency" },
+  { "pattern": "/\\b(ambulan[cs]e|hospital|emergency|kecemasan|darurat|急救|紧急)\\b/i", "description": "Medical emergency" },
+  { "pattern": "/\\b(stol[ea]n|theft|rob(?:bed|bery)|dicuri|dirompak|kecurian|被偷|被抢|失窃)\\b/i", "description": "Theft or robbery" },
+  { "pattern": "/\\b(assault|attack|violen[ct]|fight|serang|pukul|袭击|打架)\\b/i", "description": "Assault or violence" },
+  { "pattern": "/\\b(police|polis|cops?|警察|报警)\\b/i", "description": "Police emergency" },
+  { "pattern": "/\\b(locked.*card|card.*locked|terkunci|锁在里面|出不去)\\b/i", "description": "Card locked / trapped in capsule" }
 ]

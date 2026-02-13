@@ -63,4 +63,16 @@ router.use(intentAnalyticsRoutes);
 router.use('/templates', templatesRoutes);
 router.use(activityRoutes);
 
+// Ensure unmatched /api/rainbow/* returns JSON 404 (never HTML)
+router.use((_req: Request, res: Response) => {
+  res.status(404).json({ error: 'Not found', path: _req.path });
+});
+
+// API error handler: always respond with JSON (never HTML)
+router.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  if (res.headersSent) return;
+  const message = err?.message || String(err);
+  res.status(500).json({ error: message });
+});
+
 export default router;

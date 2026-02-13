@@ -52,33 +52,26 @@
 
       <div class="dashboard-template-buttons" id="intent-template-buttons">
         <button type="button" onclick="applyIntentTemplate('t1-quality', event)" class="dashboard-template-btn" data-template-id="t1-quality">
-          <span>T1 Maximum Quality</span>
-          <span class="text-neutral-500 font-normal">95-98% · 2-5s · Highest cost</span>
+          <span class="dashboard-template-btn-content"><span>T1 Maximum Quality</span><span class="text-neutral-500 font-normal text-xs">95-98% · 2-5s · Highest cost</span></span>
         </button>
         <button type="button" onclick="applyIntentTemplate('t2-performance', event)" class="dashboard-template-btn" data-template-id="t2-performance">
-          <span>T2 High Performance</span>
-          <span class="text-neutral-500 font-normal">88-92% · 0.5-1s · Lowest cost</span>
+          <span class="dashboard-template-btn-content"><span>T2 High Performance</span><span class="text-neutral-500 font-normal text-xs">88-92% · 0.5-1s · Lowest cost</span></span>
         </button>
         <button type="button" onclick="applyIntentTemplate('t3-balanced', event)" class="dashboard-template-btn active" data-template-id="t3-balanced">
-          <span>T3 Balanced ⭐</span>
-          <span class="text-neutral-500 font-normal">92-95% · 1-2s · Default</span>
+          <span class="dashboard-template-btn-content"><span>T3 Balanced ⭐</span><span class="text-neutral-500 font-normal text-xs">92-95% · 1-2s · Default</span></span>
           <span class="btn-check">✓</span>
         </button>
         <button type="button" onclick="applyIntentTemplate('t4-smart-fast', event)" class="dashboard-template-btn" data-template-id="t4-smart-fast">
-          <span>T4 Smart-Fast</span>
-          <span class="text-neutral-500 font-normal">90-93% · 0.8-1.5s · Optimized</span>
+          <span class="dashboard-template-btn-content"><span>T4 Smart-Fast</span><span class="text-neutral-500 font-normal text-xs">90-93% · 0.8-1.5s · Optimized</span></span>
         </button>
         <button type="button" onclick="applyIntentTemplate('t5-tiered-hybrid', event)" class="dashboard-template-btn" data-template-id="t5-tiered-hybrid">
-          <span>T5 Tiered-Hybrid 🏆</span>
-          <span class="text-neutral-500 font-normal">91-94% · 0.5-1.2s · Research-backed</span>
+          <span class="dashboard-template-btn-content"><span>T5 Tiered-Hybrid 🏆</span><span class="text-neutral-500 font-normal text-xs">91-94% · 0.5-1.2s · Research-backed</span></span>
         </button>
         <button type="button" onclick="applyIntentTemplate('t6-emergency', event)" class="dashboard-template-btn" data-template-id="t6-emergency">
-          <span>T6 Emergency</span>
-          <span class="text-neutral-500 font-normal">90-95% · 1.5-3s · 24/7 ops</span>
+          <span class="dashboard-template-btn-content"><span>T6 Emergency</span><span class="text-neutral-500 font-normal text-xs">90-95% · 1.5-3s · 24/7 ops</span></span>
         </button>
         <button type="button" onclick="applyIntentTemplate('t7-multilang', event)" class="dashboard-template-btn" data-template-id="t7-multilang">
-          <span>T7 Multi-Language</span>
-          <span class="text-neutral-500 font-normal">89-93% · 1.5-2.5s · CJK focus</span>
+          <span class="dashboard-template-btn-content"><span>T7 Multi-Language</span><span class="text-neutral-500 font-normal text-xs">89-93% · 1.5-2.5s · CJK focus</span></span>
         </button>
       </div>
 
@@ -96,7 +89,7 @@
     <!-- Test Console -->
     <div class="bg-white border rounded-2xl p-5 mb-4">
       <h3 class="font-semibold text-neutral-700 mb-3">🧪 Test Console</h3>
-      <p class="text-sm text-neutral-500 mb-3">Test intent classification with instant results. Shows which tier matched: <span class="font-mono text-xs">🚨 T1 Regex</span> (~0.1ms), <span class="font-mono text-xs">⚡ T2 Fuzzy</span> (~1ms), <span class="font-mono text-xs">🔬 T3 Semantic</span> (~50ms), or <span class="font-mono text-xs">🧠 T4 LLM</span> (fallback).</p>
+      <p class="text-sm text-neutral-500 mb-3">Test intent classification with instant results. Shows which source matched: <span class="font-mono text-xs">🚨 Priority Keywords</span> (~0.1ms), <span class="font-mono text-xs">⚡ Smart Matching</span> (~1ms), <span class="font-mono text-xs">📚 Learning Examples</span> (~50ms), or <span class="font-mono text-xs">🤖 AI Fallback</span> (fallback).</p>
       <div class="flex gap-2 mb-3">
         <input id="im-test-input" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="e.g., 'wifi password', 'tq', 'how much is it'" onkeydown="if(event.key==='Enter')testIntentManager()" />
         <button onclick="testIntentManager()" class="text-sm bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-2xl transition">Test</button>
@@ -130,9 +123,9 @@
     <!-- T1: Priority Keywords (Emergency Patterns) -->
     <div class="bg-white border rounded-2xl p-5 mb-4">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-neutral-700 group relative">
+        <h3 role="button" tabindex="0" class="font-semibold text-neutral-700 group relative cursor-pointer hover:text-primary-600" onclick="toggleTier('t1')" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); toggleTier('t1'); }" aria-expanded="false" aria-controls="t1-content" aria-label="Expand or collapse Priority Keywords section">
           🚨 Priority Keywords
-          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="ml-1 text-xs text-neutral-400 cursor-help" onclick="event.stopPropagation()">ⓘ</span>
           <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
             <strong>Priority Keywords:</strong> Lightning-fast pattern matching (~0.1ms) for critical emergency situations.
             <br><br>
@@ -142,8 +135,8 @@
           </span>
         </h3>
         <div class="flex items-center gap-3">
-          <button onclick="toggleTier('t1')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
-            <span id="t1-toggle-text">▶ Expand</span>
+          <button type="button" onclick="toggleTier('t1')" id="t1-toggle-btn" class="tier-disclosure-btn inline-flex items-center justify-center w-9 h-9 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" aria-expanded="false" aria-controls="t1-content" aria-label="Expand section">
+            <svg class="tier-chevron w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
           </button>
           <label class="flex items-center gap-2 cursor-pointer">
             <span class="text-sm text-neutral-500">Enable</span>
@@ -181,9 +174,9 @@
     <!-- T2: Smart Matching (Keywords Editor) -->
     <div class="bg-white border rounded-2xl p-5 mb-4">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-neutral-700 group relative">
+        <h3 role="button" tabindex="0" class="font-semibold text-neutral-700 group relative cursor-pointer hover:text-primary-600" onclick="toggleTier('t2')" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); toggleTier('t2'); }" aria-expanded="false" aria-controls="t2-content" aria-label="Expand or collapse Smart Matching section">
           🔍 Smart Matching
-          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="ml-1 text-xs text-neutral-400 cursor-help" onclick="event.stopPropagation()">ⓘ</span>
           <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
             <strong>Smart Matching:</strong> Blazing-fast keyword matching with automatic typo tolerance (~1ms). Intelligently matches "wifi", "wfi", "WiFi", "wiifi" as the same word.
             <br><br>
@@ -193,8 +186,8 @@
           </span>
         </h3>
         <div class="flex items-center gap-3">
-          <button onclick="toggleTier('t2')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
-            <span id="t2-toggle-text">▶ Expand</span>
+          <button type="button" onclick="toggleTier('t2')" id="t2-toggle-btn" class="tier-disclosure-btn inline-flex items-center justify-center w-9 h-9 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" aria-expanded="false" aria-controls="t2-content" aria-label="Expand section">
+            <svg class="tier-chevron w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
           </button>
           <label class="flex items-center gap-2 cursor-pointer">
             <span class="text-sm text-neutral-500">Enable</span>
@@ -294,9 +287,9 @@
     <!-- T3: Learning Examples (Training Examples Editor) -->
     <div class="bg-white border rounded-2xl p-5 mb-4">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-neutral-700 group relative">
+        <h3 role="button" tabindex="0" class="font-semibold text-neutral-700 group relative cursor-pointer hover:text-primary-600" onclick="toggleTier('t3')" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); toggleTier('t3'); }" aria-expanded="false" aria-controls="t3-content" aria-label="Expand or collapse Learning Examples section">
           📚 Learning Examples
-          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+          <span class="ml-1 text-xs text-neutral-400 cursor-help" onclick="event.stopPropagation()">ⓘ</span>
           <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
             <strong>Learning Examples:</strong> AI-powered understanding that grasps meaning, not just words (~50ms). Intelligently recognizes that "what's the cost", "how much", and "tell me the price" all mean the same thing.
             <br><br>
@@ -306,8 +299,8 @@
           </span>
         </h3>
         <div class="flex items-center gap-3">
-          <button onclick="toggleTier('t3')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
-            <span id="t3-toggle-text">▶ Expand</span>
+          <button type="button" onclick="toggleTier('t3')" id="t3-toggle-btn" class="tier-disclosure-btn inline-flex items-center justify-center w-9 h-9 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" aria-expanded="false" aria-controls="t3-content" aria-label="Expand section">
+            <svg class="tier-chevron w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
           </button>
           <label class="flex items-center gap-2 cursor-pointer">
             <span class="text-sm text-neutral-500">Enable</span>
@@ -376,14 +369,14 @@
       </div>
     </div>
 
-    <!-- T4: AI Backup (LLM Settings) -->
+    <!-- T4: AI Fallback (LLM Settings) -->
     <div class="bg-white border rounded-2xl p-5">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-neutral-700 group relative">
-          🤖 AI Backup
-          <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+        <h3 role="button" tabindex="0" class="font-semibold text-neutral-700 group relative cursor-pointer hover:text-primary-600" onclick="toggleTier('t4')" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); toggleTier('t4'); }" aria-expanded="false" aria-controls="t4-content" aria-label="Expand or collapse AI Fallback section">
+          🤖 AI Fallback
+          <span class="ml-1 text-xs text-neutral-400 cursor-help" onclick="event.stopPropagation()">ⓘ</span>
           <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
-            <strong>AI Backup:</strong> Full AI-powered classification for complex and unusual queries (~100-500ms). Activated automatically when simpler methods don't find a match.
+            <strong>AI Fallback:</strong> Full AI-powered classification for complex and unusual queries (~100-500ms). Activated automatically when simpler methods don't find a match.
             <br><br>
             <strong>Perfect for:</strong> Complex conversational questions, ambiguous or unusual intents, and intelligently handling unexpected edge cases that weren't anticipated in training.
             <br><br>
@@ -391,8 +384,8 @@
           </span>
         </h3>
         <div class="flex items-center gap-3">
-          <button onclick="toggleTier('t4')" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
-            <span id="t4-toggle-text">▶ Expand</span>
+          <button type="button" onclick="toggleTier('t4')" id="t4-toggle-btn" class="tier-disclosure-btn inline-flex items-center justify-center w-9 h-9 rounded-lg text-neutral-500 hover:text-primary-600 hover:bg-primary-50 transition-colors" aria-expanded="false" aria-controls="t4-content" aria-label="Expand section">
+            <svg class="tier-chevron w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
           </button>
           <label class="flex items-center gap-2 cursor-not-allowed opacity-70">
             <span class="text-sm text-neutral-500">Always Enabled</span>
@@ -487,24 +480,30 @@
 
         <!-- Fallback Behavior -->
         <div class="border rounded-2xl p-4">
-          <h4 class="text-sm font-semibold text-neutral-700 mb-3">Fallback Behavior</h4>
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3 group relative inline-flex items-center">
+            Fallback Behavior
+            <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+            <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+              <strong>Fallback Behavior:</strong> Rules and actions Rainbow takes when intent classification doesn’t meet the confidence threshold or hits an error. Ensures safety nets so guests don’t get wrong or unhelpful replies.
+            </span>
+          </h4>
           <div class="space-y-3">
             <div>
               <label class="flex items-center gap-2">
                 <input id="llm-fallback-unknown" type="checkbox" checked class="rounded" />
-                <span class="text-sm">Return "unknown" intent if confidence is below threshold</span>
+                <span class="text-sm" title="When intent confidence is below the system threshold, Rainbow classifies the message as &quot;unknown&quot; and triggers the response for unclassified queries, avoiding misinterpretation.">Return "unknown" intent if confidence is below threshold</span>
               </label>
             </div>
             <div>
               <label class="flex items-center gap-2">
                 <input id="llm-log-failures" type="checkbox" checked class="rounded" />
-                <span class="text-sm">Log classification failures for analysis</span>
+                <span class="text-sm" title="Records when Rainbow fails to classify intent or confidence is too low. Use these logs to improve intent models and training data.">Log classification failures for analysis</span>
               </label>
             </div>
             <div>
               <label class="flex items-center gap-2">
                 <input id="llm-enable-context" type="checkbox" checked class="rounded" />
-                <span class="text-sm">Include conversation context in LLM classification</span>
+                <span class="text-sm" title="When enabled, the LLM classification tier (T4/T5) uses the full conversation history, not just the last message, so it can handle follow-ups and multi-turn questions better.">Include conversation context in LLM classification</span>
               </label>
             </div>
           </div>
@@ -512,47 +511,51 @@
 
         <!-- Response Confidence Scoring -->
         <div class="border rounded-2xl p-4">
-          <h4 class="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2">
+          <h4 class="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2 group relative">
             🎯 Response Confidence Scoring
-            <span class="text-xs font-normal text-neutral-400">(Hallucination Prevention)</span>
+            <span class="text-xs font-normal text-neutral-400 cursor-help" title="Evaluates how confident the AI is in its generated reply (not just intent). Low confidence can trigger a disclaimer or escalation to staff.">(Hallucination Prevention)</span>
+            <span class="ml-1 text-xs text-neutral-400 cursor-help">ⓘ</span>
+            <span class="invisible group-hover:visible absolute left-0 top-full mt-2 w-80 bg-neutral-800 text-white text-xs rounded-2xl p-3 z-50 shadow-strong">
+              <strong>Response Confidence Scoring:</strong> Checks how sure the AI is about its reply before sending. If confidence is low, Rainbow can add a disclaimer or hand the conversation to staff. This reduces &quot;hallucinations&quot; (plausible but wrong answers).
+            </span>
           </h4>
           <p class="text-xs text-neutral-500 mb-4">
-            When LLM confidence is low, automatically add disclaimers or escalate to staff. Helps prevent sending wrong information to guests.
+            When <span class="cursor-help border-b border-dotted border-neutral-400" title="The AI’s own estimate of how accurate and correct its reply is. High = more certain; low = uncertain.">LLM confidence</span> is low, automatically add <span class="cursor-help border-b border-dotted border-neutral-400" title="Short phrases added to the reply when confidence is low, e.g. “Please confirm with staff if unsure.”">disclaimers</span> or <span class="cursor-help border-b border-dotted border-neutral-400" title="Forward the conversation to a human staff member when the AI is too uncertain or the query is sensitive.">escalate to staff</span>. Helps prevent sending wrong information to guests.
           </p>
 
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-xs text-neutral-500 mb-1">
+              <label class="block text-xs text-neutral-500 mb-1 cursor-help" title="If response confidence is below this number (e.g. 0.5), Rainbow will escalate to staff and add a disclaimer.">
                 Very Low Confidence Threshold
                 <span class="text-neutral-400">(&lt; value = escalate)</span>
               </label>
               <input id="llm-threshold-low-confidence" type="number" step="0.05" min="0" max="1" value="0.5" class="w-full border rounded-2xl px-3 py-2 text-sm" />
-              <div class="text-xs text-neutral-400 mt-1">Below this: escalate + add disclaimer</div>
+              <div class="text-xs text-neutral-400 mt-1 cursor-help" title="When confidence is below the very low threshold: hand off to staff and append a warning to the message.">Below this: escalate + add disclaimer</div>
             </div>
             <div>
-              <label class="block text-xs text-neutral-500 mb-1">
+              <label class="block text-xs text-neutral-500 mb-1 cursor-help" title="If response confidence is below this value but above the very low threshold, Rainbow adds a disclaimer only (no escalation).">
                 Low Confidence Threshold
                 <span class="text-neutral-400">(&lt; value = disclaimer)</span>
               </label>
               <input id="llm-threshold-medium-confidence" type="number" step="0.05" min="0" max="1" value="0.7" class="w-full border rounded-2xl px-3 py-2 text-sm" />
-              <div class="text-xs text-neutral-400 mt-1">Below this: add disclaimer only</div>
+              <div class="text-xs text-neutral-400 mt-1 cursor-help" title="When confidence is below this threshold but not below 0.5: only add a disclaimer, no staff escalation.">Below this: add disclaimer only</div>
             </div>
           </div>
 
           <div class="bg-neutral-50 rounded-lg p-3">
-            <p class="text-xs font-medium text-neutral-600 mb-2">📝 Disclaimer Messages</p>
+            <p class="text-xs font-medium text-neutral-600 mb-2 cursor-help" title="The exact text shown to guests when confidence is low. Edit these in Static Replies (knowledge.json).">📝 Disclaimer Messages</p>
             <p class="text-xs text-neutral-500">
-              Edit disclaimer messages in <button onclick="switchTab('static-replies');setTimeout(() => scrollToElement('static-warnings'), 300);" class="text-primary-500 hover:text-primary-600 underline font-medium">Static Replies</button> → Search for:
+              Edit disclaimer messages in <button onclick="switchTab('static-replies');setTimeout(() => scrollToElement('static-warnings'), 300);" class="text-primary-500 hover:text-primary-600 underline font-medium" title="Pre-written responses in knowledge.json; disclaimer text is stored under keys confidence_very_low and confidence_low.">Static Replies</button> → Search for:
             </p>
             <ul class="text-xs text-neutral-600 mt-1 ml-4 space-y-0.5">
-              <li>• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_very_low</code> - For very low confidence (&lt;0.5)</li>
-              <li>• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_low</code> - For low confidence (0.5-0.7)</li>
+              <li class="cursor-help" title="Static reply key for when confidence is below 0.5 (escalate + disclaimer).">• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_very_low</code> - For very low confidence (&lt;0.5)</li>
+              <li class="cursor-help" title="Static reply key for when confidence is between 0.5 and 0.7 (disclaimer only).">• <code class="bg-white px-1 py-0.5 rounded text-xs">confidence_low</code> - For low confidence (0.5-0.7)</li>
             </ul>
           </div>
         </div>
 
         <div class="pt-4 border-t">
-          <button onclick="saveLLMSettings()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl text-sm">Save LLM Settings</button>
+          <button onclick="saveLLMSettings()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl text-sm" title="Save Fallback Behavior and Response Confidence settings to llm-settings.json (atomic write).">Save LLM Settings</button>
         </div>
       </div>
       </div>

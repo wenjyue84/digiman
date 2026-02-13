@@ -85,7 +85,7 @@
           ],
           "flags": "i",
           "enabled": true,
-          "min_confidence": 0.80
+          "min_confidence": 0.85
         },
         {
           "category": "facilities_info",

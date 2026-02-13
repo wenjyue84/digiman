@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import axios from 'axios';
+import { readFile } from 'fs/promises';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = join(__dirname, '../../assistant/data');
 
 const router = Router();
 
@@ -10,8 +16,13 @@ router.get('/intent-manager/keywords', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get('http://localhost:5000/api/intent-manager/keywords');
     res.json(response.data);
-  } catch (e: any) {
-    res.status(e.response?.status || 500).json({ error: e.message });
+  } catch (_e: any) {
+    try {
+      const raw = await readFile(join(DATA_DIR, 'intent-keywords.json'), 'utf-8');
+      res.json(JSON.parse(raw));
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to read keywords' });
+    }
   }
 });
 
@@ -19,8 +30,13 @@ router.get('/intent-manager/examples', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get('http://localhost:5000/api/intent-manager/examples');
     res.json(response.data);
-  } catch (e: any) {
-    res.status(e.response?.status || 500).json({ error: e.message });
+  } catch (_e: any) {
+    try {
+      const raw = await readFile(join(DATA_DIR, 'intent-examples.json'), 'utf-8');
+      res.json(JSON.parse(raw));
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to read examples' });
+    }
   }
 });
 
@@ -55,8 +71,22 @@ router.get('/intent-manager/stats', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get('http://localhost:5000/api/intent-manager/stats');
     res.json(response.data);
-  } catch (e: any) {
-    res.status(e.response?.status || 500).json({ error: e.message });
+  } catch (_e: any) {
+    // Fallback: compute stats from Rainbow's local data so dashboard works without backend (5000)
+    try {
+      const [kwRaw, exRaw] = await Promise.all([
+        readFile(join(DATA_DIR, 'intent-keywords.json'), 'utf-8'),
+        readFile(join(DATA_DIR, 'intent-examples.json'), 'utf-8')
+      ]);
+      const keywordsData = JSON.parse(kwRaw) as { intents: Array<{ intent: string; keywords: Record<string, string[]> }> };
+      const examplesData = JSON.parse(exRaw) as { intents: Array<{ intent: string; examples: string[] }> };
+      const totalIntents = keywordsData.intents?.length ?? 0;
+      const totalKeywords = (keywordsData.intents ?? []).reduce((sum, i) => sum + (Object.values(i.keywords ?? {}).flat().length), 0);
+      const totalExamples = (examplesData.intents ?? []).reduce((sum, i) => sum + (i.examples?.length ?? 0), 0);
+      res.json({ totalIntents, totalKeywords, totalExamples });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to get stats' });
+    }
   }
 });
 
@@ -83,9 +113,24 @@ router.get('/intent-manager/export', async (req: Request, res: Response) => {
 router.get('/intent-manager/regex', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get('http://localhost:5000/api/intent-manager/regex');
-    res.json(response.data);
+    const data = response.data;
+    // If backend returned empty array, fall back to local preset file so dashboard shows presets
+    if (Array.isArray(data) && data.length === 0) {
+      try {
+        const raw = await readFile(join(DATA_DIR, 'regex-patterns.json'), 'utf-8');
+        const local = JSON.parse(raw);
+        if (Array.isArray(local) && local.length > 0) return res.json(local);
+      } catch (_) { /* ignore */ }
+    }
+    res.json(data);
   } catch (e: any) {
-    res.status(e.response?.status || 500).json({ error: e.message });
+    // Fallback: read from Rainbow's local data so dashboard works without backend (5000)
+    try {
+      const raw = await readFile(join(DATA_DIR, 'regex-patterns.json'), 'utf-8');
+      res.json(JSON.parse(raw));
+    } catch (err: any) {
+      res.status(e.response?.status || 500).json({ error: e.message });
+    }
   }
 });
 

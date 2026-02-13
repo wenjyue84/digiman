@@ -51,9 +51,9 @@
     {
       "intent": "rules",
       "response": {
-        "en": "📋 *House Rules*\n\n1. No smoking indoors (RM300 penalty)\n2. Quiet hours: 11 PM – 9 AM\n3. No outside guests in sleeping area\n4. Keep common areas clean\n5. No illegal substances\n6. Check-out by 12:00 PM\n7. Report any damage immediately\n\n_Adults only hostel_",
-        "ms": "📋 *Peraturan Rumah*\n\n1. Dilarang merokok di dalam (penalti RM300)\n2. Waktu senyap: 11 PM – 9 AM\n3. Tiada tetamu luar di kawasan tidur\n4. Jaga kebersihan kawasan berkongsi\n5. Tiada bahan terlarang\n6. Daftar keluar sebelum 12:00 PM\n7. Laporkan kerosakan segera\n\n_Hostel untuk dewasa sahaja_",
-        "zh": "📋 *住宿规则*\n\n1. 室内禁止吸烟（罚款RM300）\n2. 安静时间：晚上11点至早上9点\n3. 睡眠区域不允许外来访客\n4. 请保持公共区域整洁\n5. 禁止违禁品\n6. 中午12:00前退房\n7. 如有损坏请立即报告\n\n_仅限成人旅馆_"
+        "en": "📋 *House Rules*\n\n1. No smoking indoors (RM300 penalty)\n2. Quiet hours: 11 PM – 9 AM\n3. No outside guests in sleeping area\n4. Keep common areas clean\n5. No illegal substances\n6. Check-out by 12:00 PM\n7. Report any damage immediately\n8. **Pets are not allowed** (adults-only hostel)\n\n_Adults only hostel_",
+        "ms": "📋 *Peraturan Rumah*\n\n1. Dilarang merokok di dalam (penalti RM300)\n2. Waktu senyap: 11 PM – 9 AM\n3. Tiada tetamu luar di kawasan tidur\n4. Jaga kebersihan kawasan berkongsi\n5. Tiada bahan terlarang\n6. Daftar keluar sebelum 12:00 PM\n7. Laporkan kerosakan segera\n8. **Haiwan peliharaan tidak dibenarkan** (hostel dewasa sahaja)\n\n_Hostel untuk dewasa sahaja_",
+        "zh": "📋 *住宿规则*\n\n1. 室内禁止吸烟（罚款RM300）\n2. 安静时间：晚上11点至早上9点\n3. 睡眠区域不允许外来访客\n4. 请保持公共区域整洁\n5. 禁止违禁品\n6. 中午12:00前退房\n7. 如有损坏请立即报告\n8. **不允许携带宠物**（仅限成人旅馆）\n\n_仅限成人旅馆_"
       }
     },
     {
@@ -91,9 +91,9 @@
     {
       "intent": "checkout_procedure",
       "response": {
-        "en": "Check‑out is at 12:00 PM. You can leave your capsule anytime before noon, but please keep it tidy and return any key cards. If you need a late‑checkout, let us know in advance and it’s free (subject to availability).",
-        "ms": "Masa keluar adalah jam 12:00 PM. Anda boleh meninggalkan kapsul sebelum ketika itu, tetapi sila pastikan bersih dan pulangkan kad kunci. Jika memerlukan late check‑out, maklumkan terlebih dahulu dan percuma (bergantung ketersediaan).",
-        "zh": "退房时间为中午12点。请在此之前离开并保持房间整洁，归还钥匙卡。如需延迟退房，请提前告知，免费（视房态而定）。"
+        "en": "Check-out is at 12:00 PM. Please settle any **bill** at the **front desk** before you leave, and return your key cards. **Payment** options: cash, card, or transfer. Late check-out is free (subject to availability) — let us know in advance.",
+        "ms": "Masa keluar jam 12:00 PM. Sila selesaikan **bil** di **kaunter hadapan** sebelum keluar, dan pulangkan kad kunci. **Pembayaran**: tunai, kad, atau transfer. Late check-out percuma (bergantung ketersediaan) — maklumkan awal.",
+        "zh": "退房时间为中午12点。请离开前到**前台**结清**账单**并归还钥匙卡。**付款方式**：现金、卡、或转账。延迟退房免费（视房态而定），请提前告知。"
       }
     },
     {
@@ -115,9 +115,25 @@
     {
       "intent": "rules_policy",
       "response": {
-        "en": "Our hostel follows a few simple rules for a comfortable stay: Quiet hours 11 PM–9 AM, no smoking indoors, no outside guests, keep shared spaces tidy, and report any damage immediately. Let us know if you need any clarifications!",
-        "ms": "Kami mempunyai beberapa peraturan mudah untuk keselesaan anda: Waktu tenang 11 PM–9 AM, tidak dibenarkan merokok dalam bangunan, tidak dibenarkan tetamu luar, bersihkan ruang bersama, dan laporkan sebarang kerosakan segera. Sila maklumkan jika ada soalan!",
-        "zh": "宿舍遵守简易规则，确保舒适：安静时段 11 PM–9 AM，室内禁止吸烟，禁止外部访客，保持公共区域整洁，若有损坏请及时报告。如有疑问，请随时告知！"
+        "en": "Our hostel follows a few simple rules for a comfortable stay: Quiet hours 11 PM–9 AM, no smoking indoors, no outside guests, **pets are not allowed**, keep shared spaces tidy, and report any damage immediately. Let us know if you need any clarifications!",
+        "ms": "Kami mempunyai beberapa peraturan mudah: Waktu tenang 11 PM–9 AM, tidak merokok dalam bangunan, tiada tetamu luar, **haiwan peliharaan tidak dibenarkan**, bersihkan ruang bersama, laporkan kerosakan segera. Sila maklumkan jika ada soalan!",
+        "zh": "宿舍遵守简易规则：安静时段 11 PM–9 AM，室内禁烟，禁止外部访客，**不允许宠物**，保持公共区域整洁，损坏请及时报告。如有疑问请告知！"
+      }
+    },
+    {
+      "intent": "extra_amenity_request",
+      "response": {
+        "en": "We can provide extra towels or pillows. Please ask our on-site staff Maya — she can deliver them to your capsule.",
+        "ms": "Kami boleh sediakan tuala atau bantal tambahan. Sila minta dari staf kami Maya yang bertugas — dia boleh hantar ke kapsul anda.",
+        "zh": "我们可以提供额外毛巾或枕头。请向我们的现场工作人员 Maya 索取，她会送到您的胶囊房。"
+      }
+    },
+    {
+      "intent": "facility_orientation",
+      "response": {
+        "en": "The **bathroom** and **shower** are at the **back** of our capsule area. **Toilets** and hot water are in that shared space — follow the corridor past the capsules. The **location** is clearly marked!",
+        "ms": "**Bilik air** dan **pancuran mandi** berada di **belakang** kawasan kapsul kami. **Tandas** dan pancuran air panas ada di ruang kongsi itu — ikut koridor melepasi kapsul. **Lokasi** jelas ditandakan!",
+        "zh": "**浴室**和**淋浴间**在胶囊区的**后面**。**厕所**和热水淋浴都在那边的共享区域，沿走廊经过胶囊房即可。**位置**有明确标示！"
       }
     }
   ],

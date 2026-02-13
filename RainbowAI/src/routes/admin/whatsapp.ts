@@ -46,6 +46,20 @@ router.post('/whatsapp/instances', async (req: Request, res: Response) => {
   }
 });
 
+router.patch('/whatsapp/instances/:id', (req: Request, res: Response) => {
+  const { label } = req.body;
+  if (label === undefined || typeof label !== 'string') {
+    res.status(400).json({ error: 'label (string) is required' });
+    return;
+  }
+  try {
+    const status = whatsappManager.updateInstanceLabel(req.params.id, label.trim());
+    res.json({ ok: true, instance: status });
+  } catch (e: any) {
+    res.status(e.message?.includes('not found') ? 404 : 400).json({ error: e.message });
+  }
+});
+
 router.delete('/whatsapp/instances/:id', async (req: Request, res: Response) => {
   try {
     await whatsappManager.removeInstance(req.params.id);

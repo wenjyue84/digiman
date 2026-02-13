@@ -21,9 +21,12 @@ import {
   BarChart,
   Wrench,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Code
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { startTour } from "@/components/OnboardingWizard";
+
 
 interface TutorialStep {
   id: number;
@@ -31,7 +34,7 @@ interface TutorialStep {
   description: string;
   icon: React.ReactNode;
   content: React.ReactNode;
-  category: "overview" | "features" | "ai-assistant" | "management" | "tips";
+  category: "overview" | "features" | "ai-assistant" | "management" | "tips" | "development";
 }
 
 const tutorialSteps: TutorialStep[] = [
@@ -605,6 +608,63 @@ const tutorialSteps: TutorialStep[] = [
       </div>
     ),
   },
+  {
+    id: 11,
+    title: "Developer Guide",
+    description: "Technical documentation for developers",
+    icon: <Code className="h-8 w-8 text-slate-600" />,
+    category: "development",
+    content: (
+      <div className="space-y-4">
+        <div className="bg-gradient-to-r from-slate-50 to-gray-50 p-6 rounded-lg border border-slate-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Developer Resources</h3>
+          <p className="text-gray-700 leading-relaxed">
+            Welcome to the developer section. Here you'll find information about the technical stack,
+            project structure, and how to extend the application's functionality.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-5 bg-white border border-gray-200 rounded-lg">
+            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Code className="h-5 w-5 text-blue-600" />
+              Tech Stack
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• <strong>Frontend:</strong> React 18, TypeScript, TailwindCSS</li>
+              <li>• <strong>UI Components:</strong> shadcn/ui (Radix UI)</li>
+              <li>• <strong>State Management:</strong> TanStack Query</li>
+              <li>• <strong>Backend:</strong> Node.js (Express)</li>
+              <li>• <strong>Database:</strong> PostgreSQL / SQLite (Dev)</li>
+            </ul>
+          </div>
+
+          <div className="p-5 bg-white border border-gray-200 rounded-lg">
+            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-purple-600" />
+              Key Commands
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• <code>npm run dev</code> - Start development server</li>
+              <li>• <code>npm run build</code> - Build for production</li>
+              <li>• <code>npm run lint</code> - Run code linter</li>
+              <li>• <code>npm test</code> - Run test suite</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+          <h4 className="font-semibold text-gray-900 mb-2">Project Structure</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600">
+            <div><code>/client</code> - Frontend application code</div>
+            <div><code>/server</code> - Backend API and logic</div>
+            <div><code>/shared</code> - Shared types and utilities</div>
+            <div><code>/migrations</code> - Database migrations</div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
 ];
 
 export default function HelpPage() {
@@ -640,6 +700,7 @@ export default function HelpPage() {
       case "ai-assistant": return "bg-indigo-100 text-indigo-700";
       case "management": return "bg-green-100 text-green-700";
       case "tips": return "bg-yellow-100 text-yellow-700";
+      case "development": return "bg-slate-100 text-slate-700";
       default: return "bg-gray-100 text-gray-700";
     }
   };
@@ -666,6 +727,13 @@ export default function HelpPage() {
               <h1 className="text-3xl font-bold text-gray-900">Interactive Help Guide</h1>
               <p className="text-gray-600">Learn how to use PelangiManager effectively</p>
             </div>
+            <Button
+              onClick={startTour}
+              className="ml-auto bg-gradient-to-r from-orange-400 to-pink-500 hover:from-orange-500 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Start Guided Tour
+            </Button>
           </div>
 
           {/* Progress Bar */}
@@ -718,13 +786,12 @@ export default function HelpPage() {
               <button
                 key={idx}
                 onClick={() => handleStepClick(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  idx === currentStep
-                    ? 'bg-indigo-600 w-8'
-                    : idx < currentStep
+                className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentStep
+                  ? 'bg-indigo-600 w-8'
+                  : idx < currentStep
                     ? 'bg-indigo-400'
                     : 'bg-gray-300'
-                }`}
+                  }`}
                 aria-label={`Go to step ${idx + 1}`}
               />
             ))}

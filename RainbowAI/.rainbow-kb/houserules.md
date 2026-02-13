@@ -16,6 +16,7 @@
 | Key Card | Don't share/lose | RM20 replacement |
 | Damage | Report immediately | Actual cost + RM100 |
 | Zero Tolerance | Theft, violence, drugs, harassment | Immediate eviction |
+| **Pets** | Not allowed | Adults-only hostel |
 
 ## Key Times
 - **Quiet Hours:** 11 PM – 9 AM

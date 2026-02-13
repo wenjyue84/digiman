@@ -18,7 +18,7 @@
   </div>
 </div>
 
-<!-- Status Cards Grid -->
+<!-- Status Cards Grid (WhatsApp Instances + AI Providers at top) -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
   <!-- WhatsApp Instances Status -->
   <div class="bg-white rounded-2xl border p-5">
@@ -27,7 +27,10 @@
         <span class="text-xl">💬</span>
         <h3 class="font-semibold text-neutral-700">WhatsApp Instances</h3>
       </div>
-      <a href="/admin/whatsapp-qr" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Pair QR →</a>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="showAddInstance()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-2 py-1.5 rounded-lg transition">+ Add Number</button>
+        <a href="/admin/whatsapp-qr" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Pair QR →</a>
+      </div>
     </div>
     <div id="dashboard-wa-status" class="space-y-3">
       <!-- Loading state -->
@@ -42,12 +45,9 @@
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
         <span class="text-xl">🤖</span>
-        <h3 class="font-semibold text-neutral-700">AI Providers</h3>
+        <h3 class="font-semibold text-neutral-700">AI Models</h3>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="runDashboardProviderSpeedTest()" class="text-xs px-2 py-1 rounded border border-primary-200 text-primary-600 hover:bg-primary-50 font-medium" id="dashboard-ai-test-btn" title="Run a quick test for each provider and show response time">Test speed</button>
-        <button onclick="loadTab('settings')" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Settings →</button>
-      </div>
+      <button onclick="loadTab('settings')" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Settings →</button>
     </div>
     <div id="dashboard-ai-status" class="space-y-2">
       <!-- Loading state -->
@@ -65,7 +65,7 @@
     <div id="dashboard-stat-messages" class="text-2xl font-bold text-neutral-800">-</div>
     <div class="text-xs text-neutral-500 mt-1">Messages Handled</div>
   </div>
-  <div class="bg-white rounded-2xl border p-4 text-center">
+  <div class="bg-white rounded-2xl border p-4 text-center" title="Correct / (correct + incorrect) from guest 👍/👎 feedback. See Monitor → Performance for details.">
     <div class="text-3xl mb-2">🎯</div>
     <div id="dashboard-stat-accuracy" class="text-2xl font-bold text-green-600">-</div>
     <div class="text-xs text-neutral-500 mt-1">Intent Accuracy</div>
@@ -104,8 +104,16 @@
   </div>
 </div>
 
-<!-- Recent Activity -->
-<div class="bg-white rounded-2xl border overflow-hidden">
+<!-- Server connection (ports 3000, 5000, 3002) -->
+<div class="bg-white rounded-2xl border p-5 mb-4">
+  <h3 class="font-semibold text-neutral-700 mb-3">🖥️ Server connection</h3>
+  <div id="server-status" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="text-center py-4 text-neutral-400 text-sm">Loading...</div>
+  </div>
+</div>
+
+<!-- Recent Activity (default: 3 items; chevron to show more) -->
+<div id="recent-activity-card" class="bg-white rounded-2xl border overflow-hidden recent-activity-card">
   <div class="bg-neutral-50 px-4 py-3 border-b flex items-center justify-between">
     <div class="flex items-center gap-2">
       <h3 class="font-semibold text-neutral-700">📊 Recent Activity</h3>
@@ -120,11 +128,53 @@
     </div>
     <button onclick="refreshDashboard()" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Refresh</button>
   </div>
-  <div id="dashboard-recent-activity" class="p-4 max-h-96 overflow-y-auto">
+  <div id="dashboard-recent-activity" class="p-4 overflow-y-auto recent-activity-list">
     <!-- Loading state -->
     <div class="text-center py-6">
       <div class="inline-block animate-spin rounded-full h-6 w-6 border-3 border-primary-500 border-t-transparent mb-2"></div>
       <div class="text-sm text-neutral-500">Connecting to live feed...</div>
     </div>
+  </div>
+</div>
+
+<!-- Add Instance Modal (recovered from previous design) -->
+<div id="add-instance-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+  <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-sm mx-4">
+    <h3 class="text-lg font-semibold mb-4">Add WhatsApp Number</h3>
+    <form id="add-instance-form" onsubmit="submitAddInstance(event)">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-neutral-700 mb-1">Phone Number</label>
+        <div class="flex items-center gap-1">
+          <span class="text-sm text-neutral-500 font-medium">+60</span>
+          <input id="add-inst-phone" class="flex-1 border rounded-2xl px-3 py-2 text-sm" placeholder="167052004" inputmode="numeric" required
+            title="Malaysian phone number without leading 0 or country code" oninput="onPhoneInput(this)" />
+        </div>
+        <p id="add-inst-phone-hint" class="text-xs text-neutral-400 mt-1">Enter the number without leading 0. Example: <b>167052004</b> for 016-705 2004</p>
+        <p id="add-inst-phone-error" class="text-xs text-danger-500 mt-1 hidden"></p>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-neutral-700 mb-1">Label <span class="text-neutral-400 font-normal">(optional)</span></label>
+        <input id="add-inst-label" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="e.g. Front Desk, Reception" />
+      </div>
+      <div id="add-inst-preview" class="hidden mb-4 bg-neutral-50 rounded-2xl p-3 text-xs text-neutral-600">
+        <div>Instance ID: <code id="add-inst-preview-id" class="font-mono text-primary-600"></code></div>
+        <div>Label: <span id="add-inst-preview-label" class="font-medium"></span></div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeModal('add-instance-modal')" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Cancel</button>
+        <button type="submit" id="add-inst-submit" class="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-2xl hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Create & Connect</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QR Code Modal -->
+<div id="qr-modal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-40">
+  <div class="bg-white rounded-2xl shadow-strong p-6 w-full max-w-sm mx-4 text-center">
+    <h3 class="text-lg font-semibold mb-2">Scan QR Code</h3>
+    <p id="qr-modal-label" class="text-sm text-neutral-500 mb-4"></p>
+    <div id="qr-modal-content" class="mb-4"><div class="spinner mx-auto"></div></div>
+    <p class="text-xs text-neutral-500 mb-4">Open WhatsApp → Linked Devices → Link a Device</p>
+    <button type="button" onclick="closeQRModal()" class="px-3 py-1.5 text-sm text-neutral-600 border rounded-2xl hover:bg-neutral-50">Close</button>
   </div>
 </div>

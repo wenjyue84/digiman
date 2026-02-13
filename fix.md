@@ -1,4 +1,21 @@
-# Rainbow Dashboard "Loading..." Issue - Fix Guide
+# PelangiManager Fix Guide
+
+## Login Failed (Database)
+
+**When:** Login with admin / admin123 shows "Login Failed" or "Database unavailable".
+
+**Cause:** Backend is using PostgreSQL (`DATABASE_URL` set) but schema was never applied, or DB is unreachable (Neon suspended, wrong URL).
+
+**Fix:**
+1. Ensure `.env` has a valid `DATABASE_URL` (e.g. Neon connection string).
+2. Apply schema: `npm run db:push`
+3. Restart the backend so the default admin user is seeded: stop the server, then `npm run dev` or `start-all.bat`.
+
+If you prefer to run without a database, unset or remove `DATABASE_URL` and restart; the app will use in-memory storage and the demo admin (admin / admin123) will work.
+
+---
+
+## Rainbow Dashboard "Loading..." Issue
 
 **Date:** 2026-02-12
 **Issue:** Dashboard stuck on "Loading dashboard..." spinner
@@ -247,3 +264,73 @@ curl http://localhost:3002/health
 ---
 
 **Resolution:** Issue resolved by ensuring all 3 servers are running and instructing user to hard refresh browser to clear cache.
+
+---
+
+## Issue: Rainbow Dashboard Stuck on "Loading dashboard..." (Auth Error) - 2026-02-13
+
+### Symptom
+- Navigate to `http://localhost:3002/dashboard` → Shows "Loading dashboard..." indefinitely
+- All 3 servers running (ports 3000, 5000, 3002 all LISTENING)
+- Hard refresh doesn't help
+
+### Root Cause
+**MCP server not sending API token to backend!**
+
+Backend logs show:
+```
+Auth middleware - token: missing
+GET /api/settings 401 :: {"message":"No token provided"}
+```
+
+The MCP server's `http-client.ts` is configured to send `Authorization: Bearer ${PELANGI_API_TOKEN}`, but the **server process wasn't restarted after `.env` was configured**, so it's running without the token.
+
+### Solution: Restart MCP Server
+
+```bash
+# 1. Kill MCP server
+npx kill-port 3002
+
+# 2. Restart with .env loaded
+cd RainbowAI && npm run dev
+
+# 3. Wait 5-8 seconds for startup
+sleep 8
+
+# 4. Verify health
+curl http://localhost:3002/health
+# Should return: {"status":"ok","service":"pelangi-mcp-server",...}
+
+# 5. Test dashboard
+# Navigate to http://localhost:3002/dashboard
+# Should load within 2-3 seconds with full content
+```
+
+### Prevention
+
+**Always restart MCP server after:**
+- Changing `RainbowAI/.env` file
+- Modifying `PELANGI_API_TOKEN` or `PELANGI_API_URL`
+- Updating authentication configuration
+
+**Quick diagnostic:**
+```bash
+# Check backend logs for 401 errors
+tail -30 [backend-output-file] | grep "401\|token: missing"
+
+# If you see "token: missing" → restart MCP server!
+```
+
+### Verification
+Dashboard is working when you see:
+- ✅ "Rainbow AI Dashboard" header
+- ✅ WhatsApp Instances section (with connection status)
+- ✅ AI Providers list (with response times)
+- ✅ Statistics (Messages Handled, Intent Accuracy)
+- ✅ Quick Actions and Recent Activity sections
+
+**NOT working:** Just "Loading dashboard..." text with spinner
+
+### Key Lesson
+**Environment variables require server restart!** Unlike React hot-reload, Node.js servers must be restarted to pick up `.env` changes. Always restart after modifying environment configuration.
+

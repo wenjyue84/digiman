@@ -9,10 +9,13 @@
  */
 
 import { runTests, runCoverage } from './modules/testing.js';
+import { initHelp } from './modules/help.js';
 
 // Expose testing functions (not in legacy-functions.js)
 window.runTests = runTests;
 window.runCoverage = runCoverage;
+// Help tab: User vs Developer panels
+window.loadHelp = initHelp;
 
 // real-chat.js exposes its own window.* exports via the IIFE pattern
 // kb-editor.js exposes its own window.* exports directly

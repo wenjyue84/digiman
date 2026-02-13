@@ -35,7 +35,22 @@ async function api(path, opts = {}) {
       signal: controller.signal
     });
     clearTimeout(timeoutId);
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      const t = (text || '').trim();
+      if (t.startsWith('<!DOCTYPE') || t.startsWith('<html')) {
+        const on3002 = (typeof window !== 'undefined' && window.location.port === '3002');
+        throw new Error(
+          on3002
+            ? 'Rainbow server returned a page instead of JSON. Restart the server: run start-all.bat or "cd RainbowAI && npm run dev". Then hard refresh (Ctrl+Shift+R).'
+            : 'Server returned a page instead of data. Open the Rainbow dashboard at http://localhost:3002 (and ensure the Rainbow server is running: start-all.bat or "cd RainbowAI && npm run dev").'
+        );
+      }
+      throw new Error('Server returned invalid JSON. Is the Rainbow server (port 3002) running? Run start-all.bat or "cd RainbowAI && npm run dev".');
+    }
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     return data;
   } catch (error) {

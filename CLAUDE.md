@@ -13,14 +13,18 @@ Three modules: web app (`client/` + `server/`), MCP server (`RainbowAI/`), share
 
 ## Quick Commands
 
-| Task             | Command                                           |
-| ---------------- | ------------------------------------------------- |
-| Start dev        | `npm run dev:clean` (kills ports 3000/5000 first) |
-| Build            | `npm run build`                                   |
-| Test             | `npm test`                                        |
-| Clear cache      | `rm -rf node_modules/.vite && npm run dev`        |
-| Start MCP server | `cd RainbowAI && npm run dev`                     |
-| Push DB schema   | `npm run db:push`                                 |
+| Task              | Command                                           |
+| ----------------- | ------------------------------------------------- |
+| **Start all servers** | `start-all.bat` ⭐ (recommended - starts all 3 servers automatically) |
+| **Check health**  | `check-health.bat` (verify all servers running)   |
+| Start dev         | `npm run dev:clean` (kills ports 3000/5000 first) |
+| Start MCP server  | `cd RainbowAI && npm run dev`                     |
+| Build             | `npm run build`                                   |
+| Test              | `npm test`                                        |
+| Clear cache       | `rm -rf node_modules/.vite && npm run dev`        |
+| Push DB schema    | `npm run db:push`                                 |
+
+**🚀 Daily Startup:** Run `start-all.bat` to start all 3 servers with one command!
 
 **⚠️ CRITICAL:** Rainbow dashboard (`http://localhost:3002`) requires **ALL 3 servers running**:
 - Port 3000: Frontend (Vite)
@@ -280,7 +284,7 @@ Entry: `rainbow-admin.html` → loads tab templates from `templates/tabs/` → J
 | DB schema mismatch | `npm run db:push` |
 | Import errors | Check `@` and `@shared` aliases in `vite.config.ts` |
 | MCP server white page | Check port 3002 is running, port matches `.env` |
-| **Dashboard "Loading..." stuck** | **Verify ALL 3 servers running (3000, 5000, 3002), then hard refresh browser (`Ctrl+Shift+R`). See `fix.md`** |
+| **Dashboard "Loading..." stuck** | **Run `check-health.bat` to verify servers, or `start-all.bat` to restart all. Then hard refresh (`Ctrl+Shift+R`). See `docs/fix.md`** |
 | Rainbow AI not replying | Check AI providers in `settings.json`, verify API keys in `.env` |
 | Intent misclassified | Check `intent-keywords.json` (T2) and `intent-examples.json` (T3), test in Chat Simulator |
 | Wrong routing action | Check `routing.json` intent→action mapping |
@@ -314,6 +318,7 @@ Entry: `rainbow-admin.html` → loads tab templates from `templates/tabs/` → J
 
 | Issue Type | Read First |
 | --- | --- |
+| **Doc map (progressive disclosure)** | `docs/INDEX.md` — read first to choose which doc to load |
 | Port conflicts, caching | `docs/MASTER_TROUBLESHOOTING_GUIDE.md` |
 | Storage/DB errors | `docs/Storage_System_Guide.md` |
 | Import/export errors | `docs/REFACTORING_TROUBLESHOOTING.md` |

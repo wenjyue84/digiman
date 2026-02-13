@@ -126,3 +126,4 @@ reports/
 
 # Root-level screenshots
 /*.png
+.vercel

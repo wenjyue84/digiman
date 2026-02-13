@@ -171,7 +171,10 @@ router.delete('/knowledge/:intent', (req: Request, res: Response) => {
   res.json({ ok: true, type: 'static', deleted: intent });
 });
 
-// ─── Generate Static Reply via AI ────────────────────────────────────
+// Valid guest journey phases (for generate-draft category suggestion)
+const GUEST_PHASES = ['GENERAL_SUPPORT', 'PRE_ARRIVAL', 'ARRIVAL_CHECKIN', 'DURING_STAY', 'CHECKOUT_DEPARTURE', 'POST_CHECKOUT'];
+
+// ─── Generate Static Reply via AI (for a given intent) ─────────────────
 
 router.post('/knowledge/generate', async (req: Request, res: Response) => {
   const { intent } = req.body;
@@ -214,6 +217,110 @@ Return ONLY valid JSON (no markdown fences):
     res.json({ ok: true, intent, response });
   } catch (err: any) {
     res.status(500).json({ error: `AI generation failed: ${err.message}` });
+  }
+});
+
+// ─── Translate one language to the other two (same model as LLM reply) ───
+
+const LANG_ORDER: Array<'en' | 'ms' | 'zh'> = ['en', 'ms', 'zh'];
+const LANG_NAMES = { en: 'English', ms: 'Malay', zh: 'Chinese' };
+
+router.post('/knowledge/translate', async (req: Request, res: Response) => {
+  const { en, ms, zh } = req.body || {};
+  const current = {
+    en: typeof en === 'string' ? en.trim() : '',
+    ms: typeof ms === 'string' ? ms.trim() : '',
+    zh: typeof zh === 'string' ? zh.trim() : '',
+  };
+  const sourceLang = LANG_ORDER.find(l => current[l].length > 0);
+  if (!sourceLang) {
+    res.status(400).json({ error: 'At least one of en, ms, or zh must be non-empty' });
+    return;
+  }
+  const sourceText = current[sourceLang];
+  if (!isAIAvailable()) {
+    res.status(503).json({ error: 'AI not available — configure an AI provider for LLM reply' });
+    return;
+  }
+
+  const targetLangs = LANG_ORDER.filter(l => l !== sourceLang);
+  const prompt = `You are a translator for a hostel WhatsApp bot. The following message is in ${LANG_NAMES[sourceLang]}.
+
+Translate it to ${targetLangs.map(l => LANG_NAMES[l]).join(' and ')}. Keep the same tone (warm, concise). Suitable for guest messages. No emoji unless the original has them.
+
+Return ONLY valid JSON (no markdown, no code fence) with exactly three keys: "en", "ms", "zh". Use the EXACT original text for the "${sourceLang}" key. For the other two keys, provide your translation.
+
+Original (${LANG_NAMES[sourceLang]}):
+${sourceText}
+
+JSON:`;
+
+  try {
+    const raw = await chat(prompt, [], 'Translate quick reply to EN/MS/ZH');
+    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+    // Keep existing non-empty; fill missing from LLM
+    const result = {
+      en: current.en || (typeof parsed.en === 'string' ? parsed.en.trim() : ''),
+      ms: current.ms || (typeof parsed.ms === 'string' ? parsed.ms.trim() : ''),
+      zh: current.zh || (typeof parsed.zh === 'string' ? parsed.zh.trim() : ''),
+    };
+    res.json({ ok: true, en: result.en, ms: result.ms, zh: result.zh });
+  } catch (err: any) {
+    res.status(500).json({ error: `Translation failed: ${err.message}` });
+  }
+});
+
+// ─── Generate draft reply + suggested intent & category (for approval) ──
+
+router.post('/knowledge/generate-draft', async (req: Request, res: Response) => {
+  try {
+    const topic = typeof req.body?.topic === 'string' ? req.body.topic.trim() : '';
+    if (!isAIAvailable()) {
+      res.status(503).json({ error: 'AI not available — configure NVIDIA or Groq API key' });
+      return;
+    }
+
+    const kb = getKnowledgeMarkdown();
+    const topicHint = topic
+      ? `The user wants a reply for: "${topic}". `
+      : 'The user wants a new static reply. Choose a useful topic that fits the knowledge base (e.g. breakfast, parking, luggage storage). ';
+
+    const prompt = `You are a helpful assistant for Pelangi Capsule Hostel (capsule hostel in Johor Bahru). Your task is to propose ONE new intent reply for their WhatsApp bot, based ONLY on the knowledge base below.
+
+${topicHint}
+
+Rules:
+1. Suggest an "intent" in snake_case (e.g. breakfast_info, luggage_storage, parking_info). It must be a new intent key, not a duplicate of common ones like greeting, thanks, pricing, wifi, directions, checkin_info, checkout_info, facilities, rules, payment.
+2. Suggest a "phase" — the guest journey category this reply belongs to. Use exactly one of: GENERAL_SUPPORT, PRE_ARRIVAL, ARRIVAL_CHECKIN, DURING_STAY, CHECKOUT_DEPARTURE, POST_CHECKOUT.
+3. Generate "response" with three keys: "en" (English), "ms" (Malay), "zh" (Chinese). Use ONLY information from the knowledge base. Keep each under 300 characters. Be warm and concise; suitable for WhatsApp. Do not sign as Rainbow or overuse emojis.
+
+<knowledge_base>
+${kb}
+</knowledge_base>
+
+Return ONLY valid JSON (no markdown fences, no code block):
+{"intent":"snake_case_key","phase":"ONE_OF_THE_PHASES_ABOVE","response":{"en":"English text","ms":"Malay text","zh":"Chinese text"}}`;
+
+    const raw = await chat(prompt, [], 'Generate draft intent reply with category');
+    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    const intent = (typeof parsed.intent === 'string' ? parsed.intent.replace(/\s+/g, '_').replace(/[^a-z0-9_]/gi, '').toLowerCase() : '') || 'custom_reply';
+    let phase = typeof parsed.phase === 'string' ? parsed.phase.toUpperCase() : 'GENERAL_SUPPORT';
+    if (!GUEST_PHASES.includes(phase)) phase = 'GENERAL_SUPPORT';
+
+    const response = {
+      en: typeof parsed.response?.en === 'string' ? parsed.response.en : '',
+      ms: typeof parsed.response?.ms === 'string' ? parsed.response.ms : '',
+      zh: typeof parsed.response?.zh === 'string' ? parsed.response.zh : '',
+    };
+    if (!response.en) response.en = (parsed as any).en || '';
+
+    res.json({ ok: true, intent, phase, response });
+  } catch (err: any) {
+    if (res.headersSent) return;
+    res.status(500).json({ error: err?.message ? `AI generation failed: ${err.message}` : 'AI generation failed' });
   }
 });
 

@@ -1,0 +1,15 @@
+node_modules
+RainbowAI
+.git
+.env
+.env.local
+*.log
+test-results
+playwright-report
+archive
+attached_assets
+scripts
+__tests__
+docs
+*.md
+!README.md

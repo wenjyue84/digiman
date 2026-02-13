@@ -1,9 +1,12 @@
 # PelangiManager Documentation
 
+**AI agents:** For progressive disclosure, read **[INDEX.md](INDEX.md)** first. It defines a hierarchical reading order and when to load each doc; do not load all of `docs/` at once.
+
 ## Quick Navigation
 
 | When you need... | Read this |
 |------------------|-----------|
+| **Doc map (AI agents)** | [INDEX.md](INDEX.md) — hierarchical index, read first |
 | Something's broken | [MASTER_TROUBLESHOOTING_GUIDE.md](MASTER_TROUBLESHOOTING_GUIDE.md) |
 | Development setup / architecture | [DEVELOPMENT_REFERENCE.md](DEVELOPMENT_REFERENCE.md) |
 | Deployment / operations | [DEPLOYMENT_OPERATIONS.md](DEPLOYMENT_OPERATIONS.md) |

@@ -65,6 +65,16 @@
           <button type="button" onclick="showSaveTemplateModal()" class="text-xs bg-success-500 hover:bg-success-600 text-white px-3 py-1.5 rounded-2xl transition">+ Save New Template</button>
         </div>
       </div>
+      <div id="intents-template-help" class="hidden bg-neutral-50 rounded-xl p-4 mb-4 text-sm">
+        <div class="font-semibold text-neutral-700 mb-2">📖 Routing Template Guide</div>
+        <div class="space-y-1 text-neutral-600 text-xs">
+          <div><strong>T1 Smartest:</strong> Maximum quality — Workflow for structured processes, LLM for everything else. Slowest, highest cost.</div>
+          <div><strong>T2 Performance:</strong> Maximum speed — Static + Workflow + minimal LLM. Lowest cost.</div>
+          <div><strong>T3 Balanced:</strong> Research-optimal mix of Static, Workflow, and LLM.</div>
+          <div><strong>T4 Smart-Fast:</strong> Split-model: fast 8B classifies, 70B replies for LLM intents only.</div>
+          <div><strong>T5 Tiered-Hybrid:</strong> Zero-LLM classification cascade (Regex → Fuzzy → Semantic → LLM fallback). Best cost efficiency.</div>
+        </div>
+      </div>
       <div id="template-buttons-container" class="dashboard-template-buttons">
         <!-- Templates will be rendered here dynamically -->
       </div>

@@ -95,7 +95,7 @@ export async function whatsappQrcode(args: any): Promise<MCPToolResult> {
       type: 'text',
       text: JSON.stringify({
         message: 'Visit the Rainbow Admin dashboard to scan QR codes for disconnected instances.',
-        url: '/admin/rainbow/status',
+        url: '/admin/rainbow/dashboard',
         disconnected: needsQR.map(s => ({ id: s.id, label: s.label, state: s.state, hasQR: !!s.qr })),
         connected: connected.map(s => ({ id: s.id, label: s.label, user: s.user }))
       }, null, 2)

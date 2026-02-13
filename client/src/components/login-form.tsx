@@ -15,6 +15,18 @@ declare global {
   }
 }
 
+const DB_MESSAGE_KEY = "pelangi-login-db-message";
+
+function isDatabaseError(message: string | undefined): boolean {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("database unavailable") ||
+    lower.includes("db:push") ||
+    (lower.includes("neon") && (lower.includes("limit") || lower.includes("exceed") || lower.includes("suspended")))
+  );
+}
+
 export function LoginForm() {
   const [email, setEmail] = useState("admin");
   const [password, setPassword] = useState("admin123");
@@ -25,6 +37,16 @@ export function LoginForm() {
 
   const [isStartingBackend, setIsStartingBackend] = useState(false);
   const [backendStartError, setBackendStartError] = useState<string | null>(null);
+
+  // Persistent database-error message (bottom right); restored from sessionStorage on load
+  const [databaseMessage, setDatabaseMessage] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return sessionStorage.getItem(DB_MESSAGE_KEY);
+    } catch {
+      return null;
+    }
+  });
 
   // Get storage info to determine if we should auto-fill credentials
   const { data: storageInfo, isLoading: isStorageLoading, error: storageError, refetch: refetchStorageInfo } = useQuery<{type: string; isDatabase: boolean; label: string}>({
@@ -147,9 +169,24 @@ export function LoginForm() {
         description: result.error || "An unexpected error occurred",
         variant: "destructive"
       });
+      // If it's a database problem, show persistent message at bottom right
+      if (result.error && isDatabaseError(result.error)) {
+        const msg = result.error;
+        setDatabaseMessage(msg);
+        try {
+          sessionStorage.setItem(DB_MESSAGE_KEY, msg);
+        } catch {}
+      }
     }
     
     setIsLoading(false);
+  };
+
+  const dismissDatabaseMessage = () => {
+    setDatabaseMessage(null);
+    try {
+      sessionStorage.removeItem(DB_MESSAGE_KEY);
+    } catch {}
   };
 
   const handleGoogleSignIn = async (response: any) => {
@@ -348,6 +385,36 @@ export function LoginForm() {
             )}
         </CardContent>
       </Card>
+
+      {/* Persistent database-error message at bottom right */}
+      {databaseMessage && (
+        <div
+          className="fixed bottom-4 right-4 z-50 max-w-md rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-lg"
+          role="alert"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-200 text-amber-800" aria-hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-900">Database issue</p>
+              <p className="mt-1 text-sm text-amber-800">{databaseMessage}</p>
+            </div>
+            <button
+              type="button"
+              onClick={dismissDatabaseMessage}
+              className="shrink-0 rounded p-1 text-amber-600 hover:bg-amber-200 hover:text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              aria-label="Dismiss"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

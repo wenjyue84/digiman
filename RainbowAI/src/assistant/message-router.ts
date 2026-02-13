@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import type { IncomingMessage, SendMessageFn, CallAPIFn } from './types.js';
+import type { IncomingMessage, SendMessageFn, CallAPIFn, MessageType } from './types.js';
 import { isEmergency, classifyMessageWithContext } from './intents.js';
 import { setDynamicKnowledge, deleteDynamicKnowledge, listDynamicKnowledge, getStaticReply } from './knowledge.js';
 import { getOrCreate, addMessage, updateBookingState, updateWorkflowState, incrementUnknown, resetUnknown, updateLastIntent, checkRepeatIntent } from './conversation.js';
@@ -17,7 +17,7 @@ import { sendWhatsAppTypingIndicator } from '../lib/baileys-client.js';
 import { initWorkflowExecutor, executeWorkflowStep, createWorkflowState, forwardWorkflowSummary } from './workflow-executor.js';
 import { maybeWriteDiary } from './memory-writer.js';
 import type { ConversationEvent } from './memory-writer.js';
-import { logMessage } from './conversation-logger.js';
+import { logMessage, logNonTextExchange } from './conversation-logger.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 import {
@@ -30,7 +30,7 @@ import {
   getFeedbackPrompt
 } from './feedback.js';
 import axios from 'axios';
-import { trackIntentPrediction, markIntentCorrection } from './intent-tracker.js';
+import { trackIntentPrediction, markIntentCorrection, markIntentCorrect } from './intent-tracker.js';
 import {
   analyzeSentiment,
   trackSentiment,
@@ -50,6 +50,21 @@ let sendMessage: SendMessageFn;
 let callAPI: CallAPIFn;
 
 let jayLID: string | null = null; // Stored after first staff command
+
+/** Placeholder content for non-text messages so live chat shows "Voice message", "[Image]", etc. */
+function getNonTextPlaceholder(messageType: MessageType): string {
+  const labels: Record<MessageType, string> = {
+    text: '',
+    image: '[Image]',
+    audio: '[Voice message]',
+    video: '[Video]',
+    sticker: '[Sticker]',
+    document: '[Document]',
+    contact: '[Contact]',
+    location: '[Location]'
+  };
+  return labels[messageType] || `[${messageType}]`;
+}
 
 function loadRouterConfig(): void {
   // Config reload hook — currently used for workflow/settings changes
@@ -78,7 +93,10 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
   if (msg.messageType !== 'text') {
     console.log(`[Router] ${phone} (${msg.pushName}): [${msg.messageType}]`);
     const lang = msg.text ? detectLanguage(msg.text) : 'en';
-    await sendMessage(phone, getTemplate('non_text', lang), msg.instanceId);
+    const nonTextLabel = getNonTextPlaceholder(msg.messageType);
+    const replyText = getTemplate('non_text', lang);
+    await sendMessage(phone, replyText, msg.instanceId);
+    await logNonTextExchange(phone, msg.pushName, nonTextLabel, replyText, msg.instanceId);
     return;
   }
 
@@ -165,13 +183,17 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
             await axios.post(`http://localhost:${port}/api/rainbow/feedback`, feedbackData);
             console.log(`[Feedback] ✅ Saved to database`);
 
-            // If thumbs down, mark intent as incorrect
-            if (feedbackRating === -1 && feedbackData.conversationId) {
-              markIntentCorrection(
-                feedbackData.conversationId,
-                'unknown', // We don't know the actual intent from negative feedback alone
-                'feedback'
-              ).catch(() => {}); // Non-fatal
+            // Update intent accuracy: thumbs down → incorrect, thumbs up → correct
+            if (feedbackData.conversationId) {
+              if (feedbackRating === -1) {
+                markIntentCorrection(
+                  feedbackData.conversationId,
+                  'unknown', // We don't know the actual intent from negative feedback alone
+                  'feedback'
+                ).catch(() => {});
+              } else {
+                markIntentCorrect(feedbackData.conversationId).catch(() => {});
+              }
             }
           } catch (error) {
             console.error(`[Feedback] ❌ Failed to save:`, error);
@@ -262,7 +284,15 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
     };
 
     // Track developer mode metadata
-    let _devMetadata = {
+    let _devMetadata: {
+      source?: string;
+      model?: string;
+      responseTime?: number;
+      kbFiles: string[];
+      routedAction?: string;
+      workflowId?: string;
+      stepId?: string;
+    } = {
       source: 'unknown' as string,
       model: undefined as string | undefined,
       responseTime: undefined as number | undefined,
@@ -309,7 +339,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       const isSplitModel = routingMode?.splitModel === true;
       const isTiered = routingMode?.tieredPipeline === true;
 
-      let result: { intent: string; action: string; response: string; confidence: number; model?: string; responseTime?: number };
+      let result: { intent: string; action: string; response: string; confidence: number; model?: string; responseTime?: number; detectedLanguage?: string };
 
       if (isTiered) {
         // ─── T5 TIERED-HYBRID: Fuzzy→Semantic→LLM pipeline ───
@@ -337,7 +367,8 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
             response: '', // Static/workflow handler below will fill this
             confidence: tierResult.confidence,
             model: 'none (tiered)',
-            responseTime: classifyTime
+            responseTime: classifyTime,
+            detectedLanguage: tierResult.detectedLanguage
           };
           _devMetadata.source = tierResult.source;
           console.log(`[Router] T5 fast path: ${tierResult.source} → ${tierResult.category} (${classifyTime}ms, zero LLM)`);
@@ -364,7 +395,8 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
               response: replyResult.response,
               confidence: finalConfidence,
               model: replyResult.model,
-              responseTime: classifyTime + (replyResult.responseTime || 0)
+              responseTime: classifyTime + (replyResult.responseTime || 0),
+              detectedLanguage: tierResult.detectedLanguage
             };
             _devMetadata.source = `${tierResult.source}+llm-reply`;
           } else {
@@ -381,7 +413,8 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
               response: llmResult.response,
               confidence: llmResult.confidence,
               model: llmResult.model,
-              responseTime: classifyTime + (llmResult.responseTime || 0)
+              responseTime: classifyTime + (llmResult.responseTime || 0),
+              detectedLanguage: tierResult.detectedLanguage
             };
             _devMetadata.source = 'tiered-llm-fallback';
           }
@@ -526,6 +559,43 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
       // Track intent for future repeat detection
       updateLastIntent(phone, result.intent, result.confidence);
 
+      // Update conversation language with tier result if more confident
+      if (result.detectedLanguage &&
+          result.detectedLanguage !== 'unknown' &&
+          result.confidence >= 0.8 &&
+          result.detectedLanguage !== lang) {
+        const updatedConvo = getOrCreate(phone, msg.pushName);
+        if (updatedConvo && (result.detectedLanguage === 'en' ||
+                    result.detectedLanguage === 'ms' ||
+                    result.detectedLanguage === 'zh')) {
+          updatedConvo.language = result.detectedLanguage as 'en' | 'ms' | 'zh';
+          console.log(
+            `[Router] 🔄 Updated conversation language: ${lang} → ${result.detectedLanguage}`
+          );
+        }
+      }
+
+      /**
+       * Resolve the best language for response selection.
+       * Priority: tier result (high confidence) > conversation state > default 'en'
+       */
+      function resolveResponseLanguage(
+        tierResultLang: string | undefined,
+        conversationLang: 'en' | 'ms' | 'zh',
+        confidence: number
+      ): 'en' | 'ms' | 'zh' {
+        // If tier result has high-confidence language detection, use it
+        if (tierResultLang &&
+            tierResultLang !== 'unknown' &&
+            confidence >= 0.7 &&
+            (tierResultLang === 'en' || tierResultLang === 'ms' || tierResultLang === 'zh')) {
+          return tierResultLang as 'en' | 'ms' | 'zh';
+        }
+
+        // Otherwise use conversation state language
+        return conversationLang;
+      }
+
       // Route by admin-controlled action (overrides LLM's action)
       switch (routedAction) {
         case 'static_reply': {
@@ -534,7 +604,11 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
           // Problem Override: if guest has a PROBLEM or COMPLAINT, static reply won't help
           if (messageType === 'complaint') {
             // Complaint about this topic → LLM response + escalate
-            response = result.response || getStaticReply(result.intent, lang);
+            const replyLang = resolveResponseLanguage(result.detectedLanguage, lang, result.confidence);
+            if (replyLang !== lang && result.detectedLanguage !== 'unknown') {
+              console.log(`[Router] 🌍 Language resolved (complaint): '${lang}' → '${replyLang}'`);
+            }
+            response = result.response || getStaticReply(result.intent, replyLang);
             await escalateToStaff({
               phone, pushName: msg.pushName, reason: 'complaint',
               recentMessages: convo.messages.map(m => `${m.role}: ${m.content}`),
@@ -544,11 +618,19 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
             console.log(`[Router] Complaint override: ${result.intent} → LLM + escalate`);
           } else if (messageType === 'problem') {
             // Problem report → use LLM response (context-aware help)
-            response = result.response || getStaticReply(result.intent, lang);
+            const replyLang = resolveResponseLanguage(result.detectedLanguage, lang, result.confidence);
+            if (replyLang !== lang && result.detectedLanguage !== 'unknown') {
+              console.log(`[Router] 🌍 Language resolved (problem): '${lang}' → '${replyLang}'`);
+            }
+            response = result.response || getStaticReply(result.intent, replyLang);
             console.log(`[Router] Problem override: ${result.intent} → LLM response`);
           } else if (repeatCheck.isRepeat && repeatCheck.count >= 2) {
             // 3rd+ repeat of same intent → escalate
-            response = result.response || getStaticReply(result.intent, lang);
+            const replyLang = resolveResponseLanguage(result.detectedLanguage, lang, result.confidence);
+            if (replyLang !== lang && result.detectedLanguage !== 'unknown') {
+              console.log(`[Router] 🌍 Language resolved (3rd+ repeat): '${lang}' → '${replyLang}'`);
+            }
+            response = result.response || getStaticReply(result.intent, replyLang);
             await escalateToStaff({
               phone, pushName: msg.pushName, reason: 'unknown_repeated',
               recentMessages: convo.messages.map(m => `${m.role}: ${m.content}`),
@@ -557,11 +639,30 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
             console.log(`[Router] Repeat escalation: ${result.intent} (${repeatCheck.count + 1}x)`);
           } else if (repeatCheck.isRepeat) {
             // 2nd repeat → LLM response (static clearly didn't help)
-            response = result.response || getStaticReply(result.intent, lang);
+            const replyLang = resolveResponseLanguage(result.detectedLanguage, lang, result.confidence);
+            if (replyLang !== lang && result.detectedLanguage !== 'unknown') {
+              console.log(`[Router] 🌍 Language resolved (2nd repeat): '${lang}' → '${replyLang}'`);
+            }
+            response = result.response || getStaticReply(result.intent, replyLang);
             console.log(`[Router] Repeat override: ${result.intent} → LLM response (2nd time)`);
           } else {
             // Normal info request → serve static reply as before
-            const staticResponse = getStaticReply(result.intent, lang);
+            // Resolve best language using tier result + conversation state
+            const replyLang = resolveResponseLanguage(
+              result.detectedLanguage,
+              lang,
+              result.confidence
+            );
+
+            // Log language mismatch for monitoring
+            if (replyLang !== lang && result.detectedLanguage !== 'unknown') {
+              console.log(
+                `[Router] 🌍 Language resolved: state='${lang}' → tier='${replyLang}' ` +
+                `(confidence ${(result.confidence * 100).toFixed(0)}%)`
+              );
+            }
+
+            const staticResponse = getStaticReply(result.intent, replyLang);
             if (staticResponse) {
               response = staticResponse;
             } else {
@@ -649,6 +750,8 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
           }
 
           response = workflowResult.response;
+          if (workflowResult.workflowId) _devMetadata.workflowId = workflowResult.workflowId;
+          if (workflowResult.stepId) _devMetadata.stepId = workflowResult.stepId;
           break;
         }
 
@@ -771,7 +874,9 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
         responseTime: _devMetadata.responseTime,
         kbFiles: _devMetadata.kbFiles.length > 0 ? _devMetadata.kbFiles : undefined,
         messageType: _diaryEvent.messageType,
-        routedAction: _devMetadata.routedAction
+        routedAction: _devMetadata.routedAction,
+        workflowId: _devMetadata.workflowId,
+        stepId: _devMetadata.stepId
       }).catch(() => {});
       await sendMessage(phone, response, msg.instanceId);
 

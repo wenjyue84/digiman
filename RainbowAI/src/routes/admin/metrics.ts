@@ -16,6 +16,12 @@ router.post('/reload', (_req: Request, res: Response) => {
   res.json({ ok: true, message: 'All config reloaded from disk' });
 });
 
+/** POST /restart — exit process so a process manager (e.g. start-all.bat, PM2) can restart the MCP server. */
+router.post('/restart', (_req: Request, res: Response) => {
+  res.json({ ok: true, message: 'Restarting MCP server...' });
+  setTimeout(() => process.exit(0), 1500);
+});
+
 router.get('/status', async (_req: Request, res: Response) => {
   const wa = getWhatsAppStatus();
   const instances = whatsappManager.getAllStatuses();
@@ -83,7 +89,8 @@ router.get('/status', async (_req: Request, res: Response) => {
       user: i.user,
       unlinkedFromWhatsApp: i.unlinkedFromWhatsApp,
       lastUnlinkedAt: i.lastUnlinkedAt,
-      lastConnectedAt: i.lastConnectedAt
+      lastConnectedAt: i.lastConnectedAt,
+      firstConnectedAt: i.firstConnectedAt ?? null
     })),
     ai: {
       available: isAIAvailable(),

@@ -49,6 +49,12 @@ router.post("/login",
     if (error instanceof z.ZodError) {
       return res.status(400).json({ message: "Invalid data", errors: error.errors });
     }
+    // Database/storage errors (e.g. connection failed, relation does not exist)
+    const msg = error instanceof Error ? error.message : String(error);
+    const isDbError = /relation ".*" does not exist|connection|ECONNREFUSED|ETIMEDOUT|connect ECONNREFUSED|database|timeout|Connection terminated/i.test(msg);
+    if (isDbError) {
+      return res.status(503).json({ message: "Database unavailable. Run 'npm run db:push' if the schema was never applied, then restart the server." });
+    }
     res.status(500).json({ message: "Login failed" });
   }
 });

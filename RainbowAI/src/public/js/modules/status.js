@@ -150,6 +150,9 @@ export async function loadStatus() {
         } else {
           lastConnectedText = i.state === 'open' ? '<span class="text-success-600">● Online</span>' : 'Never';
         }
+        const firstConnectedStr = i.firstConnectedAt
+          ? new Date(i.firstConnectedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+          : '—';
 
         return `
         <div class="flex items-center justify-between py-2 border-b last:border-0 ${i.unlinkedFromWhatsApp ? 'bg-orange-50' : ''}">
@@ -162,12 +165,13 @@ export async function loadStatus() {
               </div>
               <div class="text-xs text-neutral-400">${esc(i.id)} ${i.user ? '— ' + esc(i.user.name || '') + ' (' + esc(i.user.phone || '') + ')' : ''}</div>
               <div class="text-xs text-neutral-500">Last: ${lastConnectedText}</div>
+              <div class="text-xs text-neutral-500">First connected: ${firstConnectedStr}</div>
             </div>
           </div>
           <div class="flex gap-1 flex-shrink-0">
             ${i.state !== 'open' ? `<button onclick="showInstanceQR('${esc(i.id)}', '${esc(i.label)}')" class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded transition">QR</button>` : ''}
             ${i.state === 'open' ? `<button onclick="logoutInstance('${esc(i.id)}')" class="text-xs bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded transition">Logout</button>` : ''}
-            <button onclick="removeInstance('${esc(i.id)}')" class="text-xs bg-danger-500 hover:bg-danger-600 text-white px-2 py-1 rounded transition">Remove</button>
+            <button onclick="removeInstance('${esc(i.id)}', ${instances.length})" class="text-xs bg-danger-500 hover:bg-danger-600 text-white px-2 py-1 rounded transition">Remove</button>
           </div>
         </div>
       `;

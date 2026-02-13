@@ -4,253 +4,72 @@
   "messages": [
     {
       "role": "user",
-      "content": "Hi",
-      "timestamp": 1770737635690
+      "content": "Give me now",
+      "timestamp": 1770921800697
     },
     {
       "role": "assistant",
-      "content": "Hi! I'm Rainbow, your AI assistant here at Pelangi Hostel 🌈 How can I help you today?",
-      "timestamp": 1770737636325,
-      "intent": "greeting",
-      "confidence": 1,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "hi",
-      "timestamp": 1770737815147
-    },
-    {
-      "role": "assistant",
-      "content": "Hi! I'm Rainbow, your AI assistant here at Pelangi Hostel 🌈 How can I help you today?",
-      "timestamp": 1770737815771,
-      "intent": "greeting",
-      "confidence": 0.99,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "I am nearby already. Can I have ur address?",
-      "timestamp": 1770738313537
-    },
-    {
-      "role": "assistant",
-      "content": "Pelangi Capsule Hostel is at 26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia. Let me know if you need directions from your location! — Rainbow 🌈",
-      "timestamp": 1770738317304,
-      "intent": "directions",
-      "confidence": 0.98,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "How far is it from Senai airport?",
-      "timestamp": 1770738418095
-    },
-    {
-      "role": "assistant",
-      "content": "From Senai Airport, a Grab or taxi takes about 30‑40 minutes, depending on traffic. There’s also an airport shuttle bus to JB Sentral, which takes roughly 45 minutes in good traffic. — Rainbow 🌈",
-      "timestamp": 1770738422427,
-      "intent": "directions",
-      "confidence": 0.98,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "Great later I check in after midnight is it OK?",
-      "timestamp": 1770738455796
-    },
-    {
-      "role": "assistant",
-      "content": "Great! I'll help you with the check-in process. 🎉 Let me collect some information.",
-      "timestamp": 1770738463549,
-      "intent": "checkin_info",
-      "confidence": 0.5,
+      "content": "Forwarding your check-in details to admin now...",
+      "timestamp": 1770921800713,
       "action": "workflow"
     },
     {
-      "role": "user",
-      "content": "What information?",
-      "timestamp": 1770738478925
-    },
-    {
-      "role": "user",
-      "content": "Later about 1am I will arrive",
-      "timestamp": 1770738494033
-    },
-    {
-      "role": "user",
-      "content": "Lew Wen Jyue",
-      "timestamp": 1770738500310
-    },
-    {
-      "role": "user",
-      "content": "Sorry I can't give but my ic is 840816015291",
-      "timestamp": 1770738515773
-    },
-    {
-      "role": "user",
-      "content": "Tonight",
-      "timestamp": 1770738520627
-    },
-    {
-      "role": "user",
-      "content": "Tmr",
-      "timestamp": 1770738524145
-    },
-    {
-      "role": "user",
-      "content": "how to check in?",
-      "timestamp": 1770738893597
+      "role": "assistant",
+      "content": "Hai",
+      "timestamp": 1770951926803,
+      "manual": true
     },
     {
       "role": "assistant",
-      "content": "Great! I'll help you with the check-in process. 🎉 Let me collect some information.",
-      "timestamp": 1770738901085,
-      "intent": "checkin_info",
-      "confidence": 0.98,
-      "action": "workflow"
+      "content": "test 123",
+      "timestamp": 1770961777219,
+      "manual": true
     },
     {
       "role": "user",
-      "content": "Hi",
-      "timestamp": 1770739435600
+      "content": "WiFi?",
+      "timestamp": 1770963935630
     },
     {
       "role": "assistant",
-      "content": "Hi! I'm Rainbow, your AI assistant here at Pelangi Hostel 🌈 How can I help you today?\n— Rainbow 🌈",
-      "timestamp": 1770739439003,
-      "intent": "greeting",
-      "confidence": 0.98,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "What is the wifi password?",
-      "timestamp": 1770739483204
-    },
-    {
-      "role": "assistant",
-      "content": "I don't have that information. Let me connect you with our team.",
-      "timestamp": 1770739485690,
+      "content": "📶 *WiFi Info*\nNetwork: *pelangi capsule*\nPassword: *ilovestaycapsule*",
+      "timestamp": 1770963940086,
       "intent": "wifi",
       "confidence": 0.95,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "What is the wifi?",
-      "timestamp": 1770769904096
-    },
-    {
-      "role": "assistant",
-      "content": "The WiFi network name is 'pelangi capsule' and the password is 'ilovestaycapsule'. — Rainbow ",
-      "timestamp": 1770769904726,
-      "intent": "wifi",
-      "confidence": 1,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "Ur address?",
-      "timestamp": 1770769930262
-    },
-    {
-      "role": "assistant",
-      "content": "Our address is 26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia.",
-      "timestamp": 1770769930861,
-      "intent": "directions",
-      "confidence": 1,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "How far from KL ?",
-      "timestamp": 1770769937349
-    },
-    {
-      "role": "assistant",
-      "content": "We're about 340km from Kuala Lumpur. The drive typically takes around 3-4 hours depending on traffic.",
-      "timestamp": 1770769938008,
-      "intent": "directions",
-      "confidence": 0.8,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "How to check in ?",
-      "timestamp": 1770769947589
-    },
-    {
-      "role": "assistant",
-      "content": "Great! I'll help you with the check-in process. 🎉 Let me collect some information.",
-      "timestamp": 1770769948306,
-      "intent": "checkin_info",
-      "confidence": 0.8,
-      "action": "workflow"
-    },
-    {
-      "role": "assistant",
-      "content": "Have you already arrived at Pelangi Capsule Hostel, or are you planning to come?",
-      "timestamp": 1770769967456,
-      "action": "workflow"
-    },
-    {
-      "role": "assistant",
-      "content": "Perfect! What is your full name as per your passport or IC?",
-      "timestamp": 1770769974418,
-      "action": "workflow"
-    },
-    {
-      "role": "assistant",
-      "content": "Thank you! Please upload a photo of your passport or IC for registration.",
-      "timestamp": 1770769980339,
-      "action": "workflow"
-    },
-    {
-      "role": "assistant",
-      "content": "What is your check-in date? (e.g., 15 Feb 2026)",
-      "timestamp": 1770769985669,
-      "action": "workflow"
-    },
-    {
-      "role": "assistant",
-      "content": "What is your check-out date? (e.g., 17 Feb 2026)",
-      "timestamp": 1770769989778,
-      "action": "workflow"
-    },
-    {
-      "role": "user",
-      "content": "Tmr",
-      "timestamp": 1770769994419
-    },
-    {
-      "role": "user",
-      "content": "Jojo",
-      "timestamp": 1770778606613
-    },
-    {
-      "role": "assistant",
-      "content": "Hi! I'm Rainbow, your AI assistant here at Pelangi Hostel ✨ How can I help you today?",
-      "timestamp": 1770778607419,
-      "intent": "greeting",
-      "confidence": 0.8,
-      "action": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "Hi  I wan check out",
-      "timestamp": 1770780990265
-    },
-    {
-      "role": "assistant",
-      "content": "Hi! I'm Rainbow, your AI assistant at Pelangi Hostel. Check‑out is at 12:00 PM (noon). If you need an earlier or later departure, let us know and we’ll help. Let me know anything else!\n— Rainbow 🌈",
-      "timestamp": 1770780994294,
-      "intent": "checkout_info",
-      "confidence": 0.95,
-      "action": "llm_reply",
-      "source": "llm",
+      "action": "static_reply",
+      "source": "tiered-llm-fallback",
       "model": "Ollama GPT-OSS 20B",
-      "responseTime": 4025,
+      "responseTime": 4451,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "checkin-wifi.md"
+      ],
+      "messageType": "info",
+      "routedAction": "static_reply"
+    },
+    {
+      "role": "assistant",
+      "content": "hi",
+      "timestamp": 1770965674192,
+      "manual": true
+    },
+    {
+      "role": "user",
+      "content": "Cxc",
+      "timestamp": 1770966377410
+    },
+    {
+      "role": "assistant",
+      "content": "I don't have that information. Let me connect you with our team.\n\nℹ️ I'm not entirely sure about this information. Our team will follow up with you shortly to confirm.",
+      "timestamp": 1770966380909,
+      "intent": "unknown",
+      "confidence": 0.3,
+      "action": "llm_reply",
+      "source": "tiered-llm-fallback",
+      "model": "Ollama GPT-OSS 20B",
+      "responseTime": 2838,
       "kbFiles": [
         "AGENTS.md",
         "soul.md",
@@ -263,177 +82,38 @@
     {
       "role": "assistant",
       "content": "ddd",
-      "timestamp": 1770781218261,
+      "timestamp": 1770966799678,
       "manual": true
     },
     {
       "role": "assistant",
-      "content": "Bagaimana keadaan anda?",
-      "timestamp": 1770784997891,
+      "content": "hello how are you ?",
+      "timestamp": 1770967111203,
       "manual": true
     },
     {
-      "role": "user",
-      "content": "I wan to check in",
-      "timestamp": 1770790490171
+      "role": "assistant",
+      "content": "hello how are you ?",
+      "timestamp": 1770967126137,
+      "manual": true
     },
     {
       "role": "assistant",
-      "content": "Great! I'll help you with the check-in process. 🎉 Let me collect some information.",
-      "timestamp": 1770790513997,
-      "intent": "checkin_info",
-      "confidence": 0.95,
-      "action": "workflow",
-      "source": "llm",
-      "model": "Ollama GPT-OSS 20B",
-      "responseTime": 23825,
-      "kbFiles": [
-        "AGENTS.md",
-        "soul.md",
-        "memory.md",
-        "checkin-procedure.md"
-      ],
-      "messageType": "info",
-      "routedAction": "workflow"
+      "content": "how are u?",
+      "timestamp": 1770967181268,
+      "manual": true
     },
     {
       "role": "assistant",
-      "content": "Have you already arrived at Pelangi Capsule Hostel, or are you planning to come?",
-      "timestamp": 1770790521587,
-      "action": "workflow"
-    },
-    {
-      "role": "assistant",
-      "content": "Perfect! What is your full name as per your passport or IC?",
-      "timestamp": 1770790538487,
-      "action": "workflow"
-    },
-    {
-      "role": "user",
-      "content": "+18002428478",
-      "timestamp": 1770814642333
-    },
-    {
-      "role": "assistant",
-      "content": "I don't have that information. Let me connect you with our team.",
-      "timestamp": 1770814664388,
-      "intent": "unknown",
-      "confidence": 0,
-      "action": "llm_reply",
-      "source": "llm",
-      "model": "Groq Llama 3.3 70B",
-      "responseTime": 22045,
-      "kbFiles": [
-        "AGENTS.md",
-        "soul.md",
-        "memory.md",
-        "faq.md"
-      ],
-      "messageType": "info",
-      "routedAction": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "Hi",
-      "timestamp": 1770834361032
-    },
-    {
-      "role": "assistant",
-      "content": "Hi, I'm Rainbow, your AI assistant here at Pelangi Hostel. How can I help you today? — Rainbow ",
-      "timestamp": 1770834361733,
-      "intent": "greeting",
-      "confidence": 1,
-      "action": "llm_reply",
-      "source": "llm",
-      "model": "Groq Llama 3.3 70B",
-      "responseTime": 692,
-      "kbFiles": [
-        "AGENTS.md",
-        "soul.md",
-        "memory.md",
-        "faq.md"
-      ],
-      "messageType": "info",
-      "routedAction": "llm_reply"
-    },
-    {
-      "role": "user",
-      "content": "How much is a bed ?",
-      "timestamp": 1770870916924
-    },
-    {
-      "role": "assistant",
-      "content": "💰 *Our Rates*\n\n🏷️ Daily: *RM45/night*\n🏷️ 7 nights: *RM267* (~RM38/night)\n🏷️ Monthly: *RM650/month* (~RM22/night)\n\nDeposit: RM10 key-card + RM100 security (long-term stays, refundable)\nPayment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)\n\nWant to book? Just say *\"book\"*!",
-      "timestamp": 1770870918298,
-      "intent": "pricing",
-      "confidence": 1,
-      "action": "static_reply",
-      "source": "tiered-llm-fallback",
-      "model": "Groq Llama 3.3 70B",
-      "responseTime": 1367,
-      "kbFiles": [
-        "AGENTS.md",
-        "soul.md",
-        "memory.md",
-        "availability.md",
-        "pricing.md",
-        "facilities-capsules.md"
-      ],
-      "messageType": "info",
-      "routedAction": "static_reply"
-    },
-    {
-      "role": "user",
-      "content": "I want to check jn",
-      "timestamp": 1770871448121
-    },
-    {
-      "role": "assistant",
-      "content": "Hi! I’m Rainbow, your AI assistant.  \nCheck‑in is at 2 PM. The door code changes each Monday morning – it’s sent to your email shortly before you arrive.  \nWhen you get here, just scan your QR‑key card at the front desk, grab your capsule, and you’re set.  \nIf you need any help or have questions while arriving, just let me know! — Rainbow 🌈",
-      "timestamp": 1770871450659,
-      "intent": "general",
-      "confidence": 0.5,
-      "action": "reply",
-      "source": "tiered-llm-fallback",
-      "model": "Ollama GPT-OSS 20B",
-      "responseTime": 2534,
-      "kbFiles": [
-        "AGENTS.md",
-        "soul.md",
-        "memory.md",
-        "faq.md"
-      ],
-      "messageType": "info",
-      "routedAction": "reply"
-    },
-    {
-      "role": "user",
-      "content": "How much is a bed ?",
-      "timestamp": 1770871728186
-    },
-    {
-      "role": "assistant",
-      "content": "💰 *Our Rates*\n\n🏷️ Daily: *RM45/night*\n🏷️ 7 nights: *RM267* (~RM38/night)\n🏷️ Monthly: *RM650/month* (~RM22/night)\n\nDeposit: RM10 key-card + RM100 security (long-term stays, refundable)\nPayment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)\n\nWant to book? Just say *\"book\"*!",
-      "timestamp": 1770871730485,
-      "intent": "pricing",
-      "confidence": 0.97,
-      "action": "static_reply",
-      "source": "tiered-llm-fallback",
-      "model": "Ollama GPT-OSS 20B",
-      "responseTime": 2298,
-      "kbFiles": [
-        "AGENTS.md",
-        "soul.md",
-        "memory.md",
-        "availability.md",
-        "pricing.md",
-        "facilities-capsules.md"
-      ],
-      "messageType": "info",
-      "routedAction": "static_reply"
+      "content": "how",
+      "timestamp": 1770967188945,
+      "manual": true
     }
   ],
-  "createdAt": 1770737635690,
-  "updatedAt": 1770871730485,
-  "instanceId": "60167052004"
+  "createdAt": 1770921800697,
+  "updatedAt": 1770967637990,
+  "instanceId": "default",
+  "lastReadAt": 1770967188945,
+  "favourite": true,
+  "pinned": false
 }

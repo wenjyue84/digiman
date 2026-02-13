@@ -19,8 +19,35 @@ const EMERGENCY_PATTERNS: RegExp[] = [
   /\b(locked.*card|card.*locked|terkunci|锁在里面|出不去)\b/i,
 ];
 
+/**
+ * Benign overrides: if the message matches an emergency pattern BUT also matches
+ * one of these context patterns, do NOT treat as emergency (avoids false positives
+ * like "i need fire for my cake" or "birthday candle").
+ * Index corresponds to EMERGENCY_PATTERNS (only indices with overrides are present).
+ */
+const BENIGN_OVERRIDES: RegExp[][] = [
+  [
+    /\bfire\s+for\s+(my\s+)?(cake|candle|birthday)/i,
+    /\bneed\s+fire\s+for\b/i,
+    /\b(fire\s+for|for\s+fire)\s+(the\s+)?(cake|candle)/i,
+    /\bbirthday\s+(cake\s+)?(fire|candle)/i,
+    /\b(candle|lighter|match)\s+.*\s+fire\b/i,
+  ],
+  // medical: no overrides
+  // theft: no overrides
+  // assault: no overrides
+  // police: no overrides
+  // card locked: no overrides
+];
+
 export function isEmergency(text: string): boolean {
-  return EMERGENCY_PATTERNS.some(p => p.test(text));
+  for (let i = 0; i < EMERGENCY_PATTERNS.length; i++) {
+    if (!EMERGENCY_PATTERNS[i].test(text)) continue;
+    const overrides = BENIGN_OVERRIDES[i];
+    if (overrides?.some(b => b.test(text))) continue;
+    return true;
+  }
+  return false;
 }
 
 // ─── Fuzzy Keyword Matcher (NEW! - Phase 1 Enhancement) ────────────

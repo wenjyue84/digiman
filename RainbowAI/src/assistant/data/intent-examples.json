@@ -290,6 +290,81 @@
         "lower capsule please",
         "bottom bunk preference"
       ]
+    },
+    {
+      "intent": "extra_amenity_request",
+      "examples": [
+        "can I get more towels",
+        "need an extra pillow",
+        "can I have another blanket",
+        "extra towel please",
+        "do you have spare pillows",
+        "I need more towels",
+        "can I get an extra blanket",
+        "request for extra pillow",
+        "more towels needed",
+        "additional amenities"
+      ]
+    },
+    {
+      "intent": "luggage_storage",
+      "examples": [
+        "can I leave my bags after checkout",
+        "luggage storage available",
+        "store my suitcase",
+        "keep my bags here",
+        "can I leave my luggage",
+        "bag storage after checkout",
+        "where can I store bags",
+        "hold my luggage",
+        "leave bags after check out",
+        "storage for bags"
+      ]
+    },
+    {
+      "intent": "billing_inquiry",
+      "examples": [
+        "extra charge on my bill",
+        "why is my bill high",
+        "question about invoice",
+        "billing inquiry",
+        "check my charges",
+        "explain my bill",
+        "bill has extra fees",
+        "invoice question",
+        "billing issue",
+        "wrong amount charged"
+      ]
+    },
+    {
+      "intent": "billing_dispute",
+      "examples": [
+        "I was overcharged",
+        "billing error",
+        "wrong amount on bill",
+        "dispute my charges",
+        "refund for overcharge",
+        "billing discrepancy",
+        "charged too much",
+        "invoice has mistake",
+        "incorrect billing",
+        "small error in bill"
+      ]
+    },
+    {
+      "intent": "forgot_item_post_checkout",
+      "examples": [
+        "I left my charger in the room",
+        "forgot my phone charger",
+        "left my passport behind",
+        "I think I left something",
+        "forgot item in capsule",
+        "left clothes in room",
+        "missing my charger",
+        "left belongings",
+        "forgot my stuff",
+        "left item after checkout"
+      ]
     }
   ]
 }

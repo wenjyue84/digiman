@@ -66,6 +66,9 @@ const POSITIVE_PATTERNS = [
 ];
 
 const NEGATIVE_PATTERNS = [
+  // English negative - expletives & strong language (checked first for short messages)
+  'shit', 'crap', 'damn', 'hell', 'bloody', 'bullshit', 'bs',
+
   // English negative - complaints & frustration
   'bad', 'terrible', 'awful', 'worst', 'horrible', 'useless',
   'stupid', 'idiot', 'hate', 'angry', 'frustrated', 'annoying',

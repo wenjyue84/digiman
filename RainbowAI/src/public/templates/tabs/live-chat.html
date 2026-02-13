@@ -1,0 +1,389 @@
+<div class="lc-container">
+  <!-- Sidebar: Conversation List -->
+  <div class="lc-sidebar" id="lc-sidebar">
+    <div class="lc-sidebar-header">
+      <div class="lc-search-wrap">
+        <svg class="lc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="lc-search" id="lc-search" placeholder="Search or start new chat" oninput="lcFilterConversations()">
+      </div>
+      <div class="lc-sidebar-menu-wrap">
+        <button type="button" class="lc-sidebar-menu-btn" onclick="lcToggleSidebarMenu()" title="Menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
+        </button>
+        <div class="lc-sidebar-dropdown" id="lc-sidebar-dropdown" style="display:none;">
+          <button type="button" class="lc-sidebar-dropdown-item" onclick="lcShowStarredMessages()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>Starred messages</span>
+          </button>
+          <button type="button" class="lc-sidebar-dropdown-item" onclick="lcMarkAllAsRead()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Mark all as read</span>
+          </button>
+        </div>
+      </div>
+      <select class="lc-instance-filter" id="lc-instance-filter" onchange="lcFilterConversations()">
+        <option value="">All Instances</option>
+      </select>
+    </div>
+    <div class="lc-filter-chips" id="lc-filter-chips">
+      <button class="lc-chip active" data-filter="all" onclick="lcSetFilter('all')">All</button>
+      <button class="lc-chip" data-filter="unread" onclick="lcSetFilter('unread')">Unread</button>
+      <button class="lc-chip" data-filter="favourites" onclick="lcSetFilter('favourites')">Favourites</button>
+      <button class="lc-chip" data-filter="groups" onclick="lcSetFilter('groups')">Groups</button>
+    </div>
+    <div class="lc-chat-list" id="lc-chat-list">
+      <div class="lc-sidebar-empty" id="lc-sidebar-empty">
+        <p>No conversations yet</p>
+        <p class="lc-sidebar-hint">Chats will appear here when guests message your WhatsApp.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main: Chat View -->
+  <div class="lc-main" id="lc-main">
+    <!-- Empty state -->
+    <div class="lc-empty-state" id="lc-empty-state">
+      <div class="lc-empty-icon">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="#00a884" opacity="0.08"/>
+          <path d="M50 20C33.4 20 20 32.5 20 47.8c0 5.3 1.6 10.2 4.3 14.4L20 80l18.4-4.8C42.2 77 46 78 50 78c16.6 0 30-12.5 30-27.8S66.6 20 50 20z" fill="#00a884" opacity="0.15"/>
+          <path d="M65 45H45c-1.1 0-2 .9-2 2s.9 2 2 2h20c1.1 0 2-.9 2-2s-.9-2-2-2zm-5 8H45c-1.1 0-2 .9-2 2s.9 2 2 2h15c1.1 0 2-.9 2-2s-.9-2-2-2zm5-16H45c-1.1 0-2 .9-2 2s.9 2 2 2h20c1.1 0 2-.9 2-2s-.9-2-2-2z" fill="#00a884" opacity="0.4"/>
+        </svg>
+      </div>
+      <h3>Guest Support Chat</h3>
+      <p>Select a conversation from the sidebar to start chatting with guests.</p>
+    </div>
+
+    <!-- Active chat view (hidden until conversation selected) -->
+    <div id="lc-active-chat" style="display:none;flex-direction:column;height:100%;">
+      <!-- Green WhatsApp header -->
+      <div class="lc-chat-header">
+        <div class="lc-header-avatar" id="lc-header-avatar">?</div>
+        <div class="lc-header-info">
+          <div class="lc-header-name" id="lc-header-name">Guest</div>
+          <div class="lc-header-phone" id="lc-header-phone">+60...</div>
+        </div>
+        <div class="lc-header-actions">
+          <button class="lc-translate-toggle" id="lc-translate-toggle" onclick="lcToggleTranslate()" title="Translation mode">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          </button>
+          <select class="lc-lang-selector" id="lc-lang-selector" title="Target Language" style="display:none;" onchange="lcHandleLangChange()">
+            <option value="en">English</option>
+            <option value="ms">Malay</option>
+            <option value="zh">Chinese</option>
+            <option value="id">Indonesian</option>
+            <option value="th">Thai</option>
+            <option value="vi">Vietnamese</option>
+          </select>
+          <button onclick="lcToggleMaximize()" title="Focus mode (maximize)" id="lc-maximize-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="lc-maximize-icon"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="lc-minimize-icon" style="display:none;"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>
+          </button>
+          <button onclick="lcRefreshChat()" title="Refresh">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+          </button>
+          <button onclick="lcDeleteChat()" title="Delete conversation">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+          <div class="lc-header-menu-wrap">
+            <button type="button" onclick="lcToggleHeaderMenu()" title="Menu" id="lc-header-menu-btn" aria-haspopup="true" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>
+            </button>
+            <div class="lc-header-dropdown" id="lc-header-dropdown" role="menu">
+              <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuContactInfo()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Contact Details</span>
+              </button>
+              <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuSearch()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span>Search messages</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message search bar (hidden until toggled) -->
+      <div class="lc-msg-search-bar" id="lc-msg-search-bar" style="display:none;">
+        <div class="lc-msg-search-input-wrap">
+          <svg class="lc-msg-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="lc-msg-search-input" id="lc-msg-search-input" placeholder="Search messages" oninput="lcMsgSearchInput()" onkeydown="lcMsgSearchKeydown(event)">
+        </div>
+        <span class="lc-msg-search-count" id="lc-msg-search-count"></span>
+        <button class="lc-msg-search-nav" onclick="lcMsgSearchNav(-1)" title="Previous match">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+        </button>
+        <button class="lc-msg-search-nav" onclick="lcMsgSearchNav(1)" title="Next match">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <button class="lc-msg-search-close" onclick="lcToggleSearch()" title="Close search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Messages area -->
+      <div class="lc-messages" id="lc-messages"></div>
+
+      <!-- Message context menu: vertical pop-up (opened by chevron on message) -->
+      <div id="lc-msg-context-menu" class="lc-msg-context-menu" style="display:none;">
+        <div class="lc-msg-menu-list">
+          <button type="button" class="lc-msg-action" data-action="emoji" data-emoji="👍"><span class="lc-msg-action-emoji">👍</span><span>Like</span></button>
+          <button type="button" class="lc-msg-action" data-action="emoji" data-emoji="❤️"><span class="lc-msg-action-emoji">❤️</span><span>Love</span></button>
+          <button type="button" class="lc-msg-action" data-action="emoji" data-emoji="😂"><span class="lc-msg-action-emoji">😂</span><span>Haha</span></button>
+          <button type="button" class="lc-msg-action" data-action="emoji" data-emoji="😮"><span class="lc-msg-action-emoji">😮</span><span>Wow</span></button>
+          <button type="button" class="lc-msg-action" data-action="emoji" data-emoji="😢"><span class="lc-msg-action-emoji">😢</span><span>Sad</span></button>
+          <button type="button" class="lc-msg-action" data-action="emoji" data-emoji="🙏"><span class="lc-msg-action-emoji">🙏</span><span>Thanks</span></button>
+          <button type="button" class="lc-msg-action" data-action="reply">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a8 8 0 018 8v2M3 10l6 6M3 10l6-6"/></svg>
+            <span>Reply</span>
+          </button>
+          <button type="button" class="lc-msg-action" data-action="copy">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <span>Copy</span>
+          </button>
+          <button type="button" class="lc-msg-action" data-action="forward">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11l-6-6M21 11l-6 6M21 11H9a5 5 0 000 10h3"/></svg>
+            <span>Forward</span>
+          </button>
+          <button type="button" class="lc-msg-action" data-action="pin">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4v6l-2 4h10l-2-4V4"/><line x1="12" y1="14" x2="12" y2="21"/><line x1="8" y1="4" x2="16" y2="4"/></svg>
+            <span>Pin</span>
+          </button>
+          <button type="button" class="lc-msg-action" data-action="star">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>Star</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Reply preview bar (shown when replying to a message) -->
+      <div class="lc-reply-preview" id="lc-reply-preview" style="display:none;">
+        <div class="lc-reply-preview-content">
+          <span class="lc-reply-preview-label">Replying to:</span>
+          <span class="lc-reply-preview-text" id="lc-reply-preview-text"></span>
+        </div>
+        <button type="button" class="lc-reply-preview-close" onclick="lcCancelReply()" title="Cancel reply">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- File preview bar (shown when file selected) -->
+      <div class="lc-file-preview" id="lc-file-preview" style="display:none;">
+        <div class="lc-file-preview-inner">
+          <div class="lc-file-preview-thumb" id="lc-file-preview-thumb"></div>
+          <div class="lc-file-preview-info">
+            <div class="lc-file-preview-name" id="lc-file-preview-name"></div>
+            <div class="lc-file-preview-size" id="lc-file-preview-size"></div>
+          </div>
+          <button class="lc-file-preview-remove" onclick="lcClearFile()" title="Remove file">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <input type="text" class="lc-file-caption" id="lc-file-caption" placeholder="Add a caption...">
+      </div>
+
+      <!-- Input area -->
+      <div class="lc-input-area">
+        <!-- Attachment button + popup -->
+        <div class="lc-attach-wrap">
+          <button class="lc-attach-btn" id="lc-attach-btn" onclick="lcToggleAttachMenu()" title="Attach">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <div class="lc-attach-menu" id="lc-attach-menu" style="display:none;">
+            <button class="lc-attach-option" onclick="lcPickFile('photo')">
+              <span class="lc-attach-icon lc-attach-photo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+              </span>
+              <span>Photos & videos</span>
+            </button>
+            <button class="lc-attach-option" onclick="lcPickFile('document')">
+              <span class="lc-attach-icon lc-attach-doc">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+              </span>
+              <span>Document</span>
+            </button>
+          </div>
+        </div>
+        <!-- Hidden file inputs -->
+        <input type="file" id="lc-file-photo" accept="image/*,video/*" style="display:none;" onchange="lcFileSelected(this, 'photo')">
+        <input type="file" id="lc-file-doc" accept="*/*" style="display:none;" onchange="lcFileSelected(this, 'document')">
+
+        <textarea class="lc-input-box" id="lc-input-box" placeholder="Type a message" rows="1" oninput="lcAutoResize(this); lcOnInputTranslate()" onkeydown="lcHandleKeydown(event)"></textarea>
+        <button class="lc-send-btn" id="lc-send-btn" onclick="lcSendReply()" title="Send">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+      <!-- Translation preview: shown below typing box when translate mode + target language selected -->
+      <div class="lc-translate-preview" id="lc-translate-preview" style="display:none;">
+        <div class="lc-translate-preview-label"><span id="lc-translate-preview-lang"></span>:</div>
+        <div class="lc-translate-preview-text" id="lc-translate-preview-text"></div>
+        <div class="lc-translate-preview-hint"><kbd>Enter</kbd> send translation · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> send original</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Details Panel (slides from right) -->
+  <div class="lc-contact-panel" id="lc-contact-panel" style="display:none;">
+    <div class="lc-contact-header">
+      <span class="lc-contact-title">Contact Details</span>
+      <button class="lc-contact-close" onclick="lcToggleContactPanel()" title="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="lc-contact-body">
+      <!-- Profile section -->
+      <div class="lc-contact-profile">
+        <div class="lc-contact-avatar" id="lc-contact-avatar">?</div>
+        <div class="lc-contact-phone" id="lc-contact-phone-display">+60...</div>
+      </div>
+
+      <div class="lc-field-divider"></div>
+
+      <!-- Fields -->
+      <div class="lc-field">
+        <label class="lc-field-label">Name</label>
+        <input type="text" class="lc-field-input" id="lc-cd-name" placeholder="Guest name" oninput="lcContactFieldChanged()">
+      </div>
+
+      <div class="lc-field">
+        <label class="lc-field-label">Email</label>
+        <input type="email" class="lc-field-input" id="lc-cd-email" placeholder="guest@email.com" oninput="lcContactFieldChanged()">
+      </div>
+
+      <div class="lc-field-row">
+        <div class="lc-field">
+          <label class="lc-field-label">Country</label>
+          <select class="lc-field-select" id="lc-cd-country" onchange="lcContactFieldChanged()">
+            <option value="">--</option>
+            <option value="MY">MY</option>
+            <option value="SG">SG</option>
+            <option value="ID">ID</option>
+            <option value="CN">CN</option>
+            <option value="TW">TW</option>
+            <option value="HK">HK</option>
+            <option value="JP">JP</option>
+            <option value="KR">KR</option>
+            <option value="TH">TH</option>
+            <option value="VN">VN</option>
+            <option value="PH">PH</option>
+            <option value="IN">IN</option>
+            <option value="AU">AU</option>
+            <option value="GB">GB</option>
+            <option value="US">US</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div class="lc-field">
+          <label class="lc-field-label">Language</label>
+          <select class="lc-field-select" id="lc-cd-language" onchange="lcContactFieldChanged()">
+            <option value="">--</option>
+            <option value="en">English</option>
+            <option value="ms">Malay</option>
+            <option value="zh">Chinese</option>
+            <option value="id">Indonesian</option>
+            <option value="th">Thai</option>
+            <option value="vi">Vietnamese</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="lc-field-divider"></div>
+
+      <div class="lc-field-row">
+        <div class="lc-field">
+          <label class="lc-field-label">Check-in</label>
+          <input type="date" class="lc-field-input" id="lc-cd-checkin" onchange="lcContactFieldChanged()">
+        </div>
+        <div class="lc-field">
+          <label class="lc-field-label">Check-out</label>
+          <input type="date" class="lc-field-input" id="lc-cd-checkout" onchange="lcContactFieldChanged()">
+        </div>
+      </div>
+
+      <div class="lc-field">
+        <label class="lc-field-label">Unit / Capsule</label>
+        <input type="text" class="lc-field-input" id="lc-cd-unit" placeholder="e.g. Capsule A12" oninput="lcContactFieldChanged()">
+      </div>
+
+      <div class="lc-field-divider"></div>
+
+      <div class="lc-field-row">
+        <div class="lc-field">
+          <label class="lc-field-label">Contact Status</label>
+          <select class="lc-field-select" id="lc-cd-contact-status" onchange="lcContactFieldChanged()">
+            <option value="">--</option>
+            <option value="new_lead">New Lead</option>
+            <option value="active">Active</option>
+            <option value="checked_in">Checked In</option>
+            <option value="checked_out">Checked Out</option>
+            <option value="refunded">Refunded</option>
+            <option value="blocked">Blocked</option>
+          </select>
+        </div>
+        <div class="lc-field">
+          <label class="lc-field-label">Payment</label>
+          <select class="lc-field-select" id="lc-cd-payment-status" onchange="lcContactFieldChanged()">
+            <option value="">--</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="partial">Partial</option>
+            <option value="refunded">Refunded</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="lc-field-divider"></div>
+
+      <!-- Tags -->
+      <div class="lc-field">
+        <label class="lc-field-label">Tags</label>
+        <div class="lc-tag-container" id="lc-cd-tags"></div>
+        <input type="text" class="lc-field-input lc-tag-input" id="lc-cd-tag-input" placeholder="Add tag + Enter" onkeydown="lcTagKeydown(event)">
+      </div>
+
+      <!-- Notes -->
+      <div class="lc-field">
+        <label class="lc-field-label">Notes</label>
+        <textarea class="lc-field-textarea" id="lc-cd-notes" placeholder="Internal notes about this guest..." rows="3" oninput="lcContactFieldChanged()"></textarea>
+      </div>
+    </div>
+
+    <!-- Save indicator -->
+    <div class="lc-contact-footer">
+      <span class="lc-contact-save-indicator" id="lc-contact-save-indicator"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Forward message modal: pick conversation -->
+<div id="lc-forward-modal" class="lc-modal-overlay" style="display:none;" onclick="if(event.target===this) lcCloseForwardModal()">
+  <div class="lc-modal-content lc-forward-modal">
+    <div class="lc-modal-title">Forward to</div>
+    <div class="lc-forward-list" id="lc-forward-list"></div>
+    <div class="lc-modal-buttons">
+      <button class="lc-modal-btn lc-modal-btn-cancel" onclick="lcCloseForwardModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Translation Confirmation Modal -->
+<div id="lc-translate-modal" class="lc-modal-overlay" style="display:none;" onclick="if(event.target===this) lcCloseTranslateModal()">
+  <div class="lc-modal-content">
+    <div class="lc-modal-title">Confirm Translation</div>
+    <div style="margin-bottom:12px;">
+      <div class="text-xs text-neutral-500 font-medium mb-1">Original:</div>
+      <div class="lc-modal-text" id="lc-translate-original"></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div class="text-xs text-neutral-500 font-medium mb-1">Translated (<span id="lc-translate-lang-label"></span>):</div>
+      <div class="lc-modal-text" id="lc-translate-translated"></div>
+    </div>
+    <div class="lc-modal-buttons">
+      <button class="lc-modal-btn lc-modal-btn-cancel" onclick="lcCloseTranslateModal()">Cancel</button>
+      <button class="lc-modal-btn lc-modal-btn-send" onclick="lcConfirmTranslation()">Send Translation</button>
+    </div>
+  </div>
+</div>

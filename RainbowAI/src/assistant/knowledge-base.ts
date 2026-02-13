@@ -71,6 +71,12 @@ const TOPIC_FILE_MAP: Record<string, string[]> = {
   // General rules (loads quick reference)
   'rule|allow|prohibit|peraturan':
     ['houserules.md'],
+  // Pets policy
+  'pet|pets|animal|allowed.*pet':
+    ['rules-pets.md'],
+  // Extra amenities (towel, pillow, Maya)
+  'towel|pillow|extra.*(towel|pillow)|maya':
+    ['amenities-extra.md'],
   // Location & directions
   'where|direction|map|location|address|nearby|food|restaurant|transport|grab|alamat|dimana|地址|怎么走':
     ['location.md'],

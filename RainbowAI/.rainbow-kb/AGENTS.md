@@ -101,6 +101,8 @@ See **soul.md** for full identity and values.
 | Facilities (general) | facilities.md | "What facilities do you have?" |
 | Availability / booking | availability.md | "Do you have rooms?" |
 | Location / directions | location.md | "Where are you located?" |
+| Lost & found items | lost-found.md | "I left my charger behind" |
+| Billing & checkout charges | checkout-billing.md, refunds.md | "Extra charge on bill?" |
 | General questions | faq.md | "Is it good for solo travelers?" |
 | Operational context | memory.md + memory/today.md | (always loaded automatically) |
 
@@ -140,6 +142,8 @@ See **soul.md** for full identity and values.
 | **facilities.md** | Amenity questions | What we offer |
 | **availability.md** | Booking questions | Availability & booking |
 | **location.md** | Direction/address questions | How to get here |
+| **lost-found.md** | Lost/forgotten items | Lost & found process |
+| **checkout-billing.md** | Billing questions | Billing & disputes |
 | **faq.md** | General questions | Common unique questions |
 
 **Default pattern:**

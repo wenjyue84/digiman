@@ -176,6 +176,7 @@
     }
   ],
   "createdAt": 1770775545540,
-  "updatedAt": 1770790968232,
-  "instanceId": "default"
+  "updatedAt": 1770966931184,
+  "instanceId": "default",
+  "lastReadAt": 1770790968232
 }

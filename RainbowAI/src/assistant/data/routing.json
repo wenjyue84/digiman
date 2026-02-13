@@ -36,8 +36,7 @@
     "workflow_id": "forward_payment"
   },
   "checkin_info": {
-    "action": "workflow",
-    "workflow_id": "checkin_full"
+    "action": "static_reply"
   },
   "checkout_info": {
     "action": "static_reply"

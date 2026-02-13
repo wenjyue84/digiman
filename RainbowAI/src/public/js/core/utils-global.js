@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Global Utility Functions (loaded as regular script)
 // These MUST be available globally before legacy-functions.js
-// Module consumers should import from core/utils.js instead
+// Module consumers (e.g. live-chat.js) rely on window.api and window.API
 // ═══════════════════════════════════════════════════════════════════
 
 function toast(msg, type) {
@@ -27,7 +27,22 @@ function api(path, opts) {
     signal: controller.signal
   }).then(function(res) {
     clearTimeout(timeoutId);
-    return res.json().then(function(data) {
+    return res.text().then(function(text) {
+      var data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        var t = (text || '').trim();
+        if (t.substring(0, 9) === '<!DOCTYPE' || t.substring(0, 5) === '<html') {
+          var on3002 = (typeof window !== 'undefined' && window.location.port === '3002');
+          throw new Error(
+            on3002
+              ? 'Rainbow server returned a page instead of JSON. Restart the server: run start-all.bat or "cd RainbowAI && npm run dev". Then hard refresh (Ctrl+Shift+R).'
+              : 'Server returned a page instead of data. Open the Rainbow dashboard at http://localhost:3002 (and ensure the Rainbow server is running: start-all.bat or "cd RainbowAI && npm run dev").'
+          );
+        }
+        throw new Error('Server returned invalid JSON. Is the Rainbow server (port 3002) running? Run start-all.bat or "cd RainbowAI && npm run dev".');
+      }
       if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
       return data;
     });
@@ -39,6 +54,7 @@ function api(path, opts) {
     throw error;
   });
 }
+if (typeof window !== 'undefined') { window.api = api; }
 
 function escapeHtml(s) {
   if (!s) return '';

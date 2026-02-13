@@ -4,11 +4,13 @@ import { join } from 'path';
 
 const router = express.Router();
 
-// Paths to data files
-const KEYWORDS_PATH = join(process.cwd(), 'mcp-server/src/assistant/data/intent-keywords.json');
-const EXAMPLES_PATH = join(process.cwd(), 'mcp-server/src/assistant/data/intent-examples.json');
-const REGEX_PATH = join(process.cwd(), 'mcp-server/src/assistant/data/regex-patterns.json');
-const LLM_SETTINGS_PATH = join(process.cwd(), 'mcp-server/src/assistant/data/llm-settings.json');
+// Paths to data files (RainbowAI in this repo; fallback to mcp-server for compatibility)
+const DATA_DIR = join(process.cwd(), 'RainbowAI/src/assistant/data');
+const MCP_DATA_DIR = join(process.cwd(), 'mcp-server/src/assistant/data');
+const KEYWORDS_PATH = join(DATA_DIR, 'intent-keywords.json');
+const EXAMPLES_PATH = join(DATA_DIR, 'intent-examples.json');
+const REGEX_PATH = join(DATA_DIR, 'regex-patterns.json');
+const LLM_SETTINGS_PATH = join(DATA_DIR, 'llm-settings.json');
 
 // ─── Get All Keywords ─────────────────────────────────────────────────
 

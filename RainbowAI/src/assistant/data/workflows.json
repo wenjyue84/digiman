@@ -214,9 +214,9 @@
         {
           "id": "s1",
           "message": {
-            "en": "I sincerely apologize for the inconvenience you're experiencing. 😔 Your comfort is our top priority. Let me help resolve this immediately.",
-            "ms": "Saya mohon maaf atas kesulitan yang anda alami. 😔 Keselesaan anda adalah keutamaan kami. Biar saya selesaikan masalah ini segera.",
-            "zh": "非常抱歉给您带来不便。😔 您的舒适是我们的首要任务。让我立即为您解决这个问题。"
+            "en": "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)",
+            "ms": "Saya **faham** dan mohon maaf atas kesulitan. 😔 Keselesaan anda keutamaan kami. Kami boleh urus **penyelenggaraan** (**teknisi**), **pindah** ke **bilik**/kapsul lain, atau bantuan staf terus. Boleh terangkan masalah dengan lebih terperinci? (contoh: bunyi bising, kebersihan, kemudahan)",
+            "zh": "我们**理解**并深表歉意。😔 您的舒适是我们的首要任务。我们可以安排**维修**（**技术人员**）、换到另一间**房间**/胶囊或工作人员直接协助。能否详细描述一下问题？（例如：噪音、清洁、设施问题）"
           },
           "waitForReply": false
         },

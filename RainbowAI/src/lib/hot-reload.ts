@@ -94,32 +94,66 @@ export const HOT_RELOAD_SCRIPT = `
   let ws;
   let reconnectAttempts = 0;
   const maxReconnectAttempts = 10;
+  let expanded = false;
+  let currentStatus = 'connecting';
+  let currentMessage = 'Connecting...';
 
-  // Create visual indicator
+  const TOOLTIP = 'Hot Reload: When you edit files (HTML, JS, config in RainbowAI), this page will automatically refresh so you see changes without restarting the server. Click to see connection status.';
+
+  // Create visual indicator — small by default, icon only
   const indicator = document.createElement('div');
   indicator.id = 'hot-reload-indicator';
-  indicator.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#f59e0b;color:white;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;font-family:system-ui,sans-serif;z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,0.15);cursor:pointer;transition:all 0.3s;';
-  indicator.innerHTML = '🔥 Hot Reload <span style="font-size:10px;opacity:0.8;">● Connecting...</span>';
-  indicator.title = 'Hot reload is active - changes will auto-refresh';
+  indicator.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#f59e0b;color:white;padding:6px 8px;border-radius:20px;font-size:14px;font-weight:600;font-family:system-ui,sans-serif;z-index:999999;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;transition:all 0.2s ease;min-width:32px;height:32px;display:flex;align-items:center;justify-content:center;';
+  indicator.innerHTML = '🔥';
+  indicator.title = TOOLTIP;
 
-  // Add hover effect
-  indicator.onmouseover = function() {
-    this.style.transform = 'scale(1.05)';
-    this.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-  };
-  indicator.onmouseout = function() {
-    this.style.transform = 'scale(1)';
-    this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-  };
-
-  function updateIndicator(status, message) {
+  function renderIndicator() {
     const colors = {
       connected: '#22c55e',
       connecting: '#f59e0b',
       disconnected: '#ef4444'
     };
-    indicator.style.background = colors[status];
-    indicator.innerHTML = '🔥 Hot Reload <span style="font-size:10px;opacity:0.8;">● ' + message + '</span>';
+    indicator.style.background = colors[currentStatus];
+    if (expanded) {
+      indicator.style.minWidth = 'auto';
+      indicator.style.padding = '6px 10px';
+      indicator.style.borderRadius = '8px';
+      indicator.innerHTML = '🔥 Hot Reload <span style="font-size:10px;opacity:0.9;">● ' + currentMessage + '</span>';
+    } else {
+      indicator.style.minWidth = '32px';
+      indicator.style.padding = '6px 8px';
+      indicator.style.borderRadius = '20px';
+      indicator.innerHTML = '🔥';
+    }
+  }
+
+  indicator.onclick = function(e) {
+    e.stopPropagation();
+    expanded = !expanded;
+    renderIndicator();
+  };
+
+  document.addEventListener('click', function() {
+    if (expanded) {
+      expanded = false;
+      renderIndicator();
+    }
+  });
+
+  // Add hover effect
+  indicator.onmouseover = function() {
+    this.style.transform = 'scale(1.08)';
+    this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+  };
+  indicator.onmouseout = function() {
+    this.style.transform = 'scale(1)';
+    this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+  };
+
+  function updateIndicator(status, message) {
+    currentStatus = status;
+    currentMessage = message;
+    renderIndicator();
   }
 
   function connect() {
@@ -136,7 +170,11 @@ export const HOT_RELOAD_SCRIPT = `
         const data = JSON.parse(event.data);
         if (data.type === 'reload') {
           console.log('[Hot Reload] Reloading page due to file change:', data.path);
-          window.location.reload();
+          // Cache-bust so browser fetches fresh HTML/JS (avoids needing hard refresh)
+          var origin = window.location.origin;
+          var path = window.location.pathname || '/';
+          var hash = window.location.hash || '';
+          window.location.href = origin + path + '?_=' + Date.now() + hash;
         }
       } catch (err) {
         console.error('[Hot Reload] Error parsing message:', err);

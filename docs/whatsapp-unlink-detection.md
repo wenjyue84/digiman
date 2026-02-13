@@ -16,7 +16,7 @@ When a user unlinks a WhatsApp instance from their WhatsApp app:
 ### 2. Notification
 
 When an unlink is detected:
-1. **Primary**: System tries to send notification via **Southern Homestay mainline** (`60103084289`)
+1. **Primary**: System tries to send notification via **Pelangi Capsule Hostel mainline** (`60103084289`)
 2. **Fallback**: If mainline is unavailable, uses the next available connected instance
 3. **Message**: Sends a notification to the unlinked phone number informing them of the unlink
 
@@ -107,11 +107,11 @@ When a previously unlinked instance reconnects:
 
 ### Mainline Instance
 
-Currently hardcoded: `60103084289` (Southern Homestay)
+Currently hardcoded: `60103084289` (Pelangi Capsule Hostel)
 
 To change, edit in `baileys-client.ts`:
 ```typescript
-const MAINLINE_ID = '60103084289'; // Change here
+const MAINLINE_ID = '60103084289'; // Pelangi Capsule Hostel mainline — change here if needed
 ```
 
 ## Files Modified

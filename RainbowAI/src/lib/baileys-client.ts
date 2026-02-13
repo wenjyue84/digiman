@@ -18,6 +18,7 @@ interface InstanceConfig {
   authDir: string;
   autoStart: boolean;
   createdAt: string;
+  firstConnectedAt?: string; // ISO timestamp of first successful WhatsApp connection (persisted)
 }
 
 interface InstancesFile {
@@ -36,6 +37,7 @@ export interface WhatsAppInstanceStatus {
   unlinkedFromWhatsApp: boolean; // User unlinked from WhatsApp side (not from our system)
   lastUnlinkedAt: string | null; // ISO timestamp of when unlink was detected
   lastConnectedAt: string | null; // ISO timestamp of last successful connection
+  firstConnectedAt: string | null; // ISO timestamp of first ever successful connection (persisted)
 }
 
 // ─── WhatsAppInstance Class ─────────────────────────────────────────
@@ -48,6 +50,8 @@ class WhatsAppInstance {
   state: string = 'close';
   qr: string | null = null;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private reconnectAttempts: number = 0;
+  private static readonly MAX_RECONNECT_ATTEMPTS = 3;
   private messageHandler: ((msg: IncomingMessage) => Promise<void>) | null = null;
   // LID → phone JID mapping (Baileys v7 uses @lid format for incoming messages)
   private lidToPhone = new Map<string, string>();
@@ -57,6 +61,8 @@ class WhatsAppInstance {
   lastConnectedAt: string | null = null;
   // Track if we've already notified about the current unlink event
   private unlinkNotificationSent: boolean = false;
+  /** Called when connection opens; manager uses it to persist firstConnectedAt if not set */
+  private onFirstConnect: (() => void) | null = null;
 
   constructor(id: string, label: string, authDir: string) {
     this.id = id;
@@ -157,7 +163,7 @@ class WhatsAppInstance {
 
       if (qr) {
         this.qr = qr;
-        console.log(`[Baileys:${this.id}] QR code available. Visit /admin/rainbow/status to scan.`);
+        console.log(`[Baileys:${this.id}] QR code available. Visit /admin/rainbow/dashboard to scan.`);
       }
 
       if (connection) this.state = connection;
@@ -165,9 +171,19 @@ class WhatsAppInstance {
       if (connection === 'close') {
         const statusCode = lastDisconnect?.error?.output?.statusCode;
         if (statusCode !== DisconnectReason.loggedOut) {
-          const delay = this.reconnectTimeout ? 5000 : 2000;
-          console.log(`[Baileys:${this.id}] Disconnected (code: ${statusCode}), reconnecting in ${delay}ms...`);
-          trackWhatsAppDisconnected(this.id, `code ${statusCode}, reconnecting`);
+          this.reconnectAttempts++;
+          if (this.reconnectAttempts > WhatsAppInstance.MAX_RECONNECT_ATTEMPTS) {
+            console.log(`[Baileys:${this.id}] Stopped reconnecting after ${WhatsAppInstance.MAX_RECONNECT_ATTEMPTS} attempts (last code: ${statusCode}). Open dashboard to restart/scan QR.`);
+            trackWhatsAppDisconnected(this.id, `code ${statusCode}, stopped after ${WhatsAppInstance.MAX_RECONNECT_ATTEMPTS} attempts`);
+            this.reconnectTimeout = null;
+            return;
+          }
+          // 408 = request timeout — use longer delay to avoid rapid retry spam
+          const is408 = statusCode === 408;
+          const baseDelay = this.reconnectTimeout ? 5000 : (is408 ? 30000 : 2000);
+          const delay = Math.min(baseDelay * this.reconnectAttempts, 60000);
+          console.log(`[Baileys:${this.id}] Disconnected (code: ${statusCode}), reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${WhatsAppInstance.MAX_RECONNECT_ATTEMPTS})...`);
+          trackWhatsAppDisconnected(this.id, `code ${statusCode}, reconnecting (${this.reconnectAttempts}/${WhatsAppInstance.MAX_RECONNECT_ATTEMPTS})`);
           if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
           this.reconnectTimeout = setTimeout(() => {
             this.reconnectTimeout = null;
@@ -187,12 +203,14 @@ class WhatsAppInstance {
         }
       } else if (connection === 'open') {
         this.qr = null;
+        this.reconnectAttempts = 0;
         // Clear unlinked status when reconnected
         this.unlinkedFromWhatsApp = false;
         this.lastUnlinkedAt = null;
         this.unlinkNotificationSent = false; // Reset notification flag for future unlink events
         // Update last connected timestamp
         this.lastConnectedAt = new Date().toISOString();
+        this.onFirstConnect?.(); // Persist firstConnectedAt in config if not yet set
         const user = (this.sock as any)?.user;
         console.log(`[Baileys:${this.id}] Connected: ${user?.name || 'Unknown'} (${user?.id?.split(':')[0] || '?'})`);
         trackWhatsAppConnected(this.id, user?.name, user?.id?.split(':')[0]);
@@ -304,6 +322,7 @@ class WhatsAppInstance {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+    this.reconnectAttempts = 0;
     if (this.sock) {
       this.sock.ev.removeAllListeners('connection.update');
       this.sock.ev.removeAllListeners('messages.upsert');
@@ -357,7 +376,37 @@ class WhatsAppInstance {
     }
   }
 
-  getStatus(): WhatsAppInstanceStatus {
+  async sendMedia(jid: string, buffer: Buffer, mimetype: string, fileName: string, caption?: string): Promise<any> {
+    if (!this.sock || this.state !== 'open') {
+      throw new Error(`Instance "${this.id}" not connected`);
+    }
+    const resolvedJid = this.resolveToPhoneJid(jid);
+
+    let content: any;
+    if (mimetype.startsWith('image/')) {
+      content = { image: buffer, caption: caption || undefined, mimetype };
+    } else if (mimetype.startsWith('video/')) {
+      content = { video: buffer, caption: caption || undefined, mimetype };
+    } else {
+      content = { document: buffer, fileName, mimetype };
+    }
+
+    try {
+      const result = await this.sock.sendMessage(resolvedJid, content);
+      const type = mimetype.startsWith('image/') ? 'image' : mimetype.startsWith('video/') ? 'video' : 'document';
+      console.log(`[Baileys:${this.id}] Sent ${type} to ${resolvedJid}: ${fileName}`);
+      return result;
+    } catch (err: any) {
+      console.error(`[Baileys:${this.id}] SEND MEDIA FAILED to ${resolvedJid}: ${err.message}`);
+      throw err;
+    }
+  }
+
+  setOnFirstConnect(cb: () => void): void {
+    this.onFirstConnect = cb;
+  }
+
+  getStatus(): Omit<WhatsAppInstanceStatus, 'firstConnectedAt'> {
     const user = (this.sock as any)?.user;
     return {
       id: this.id,
@@ -423,6 +472,14 @@ class WhatsAppManager {
 
   private async startInstanceFromConfig(cfg: InstanceConfig): Promise<void> {
     const instance = new WhatsAppInstance(cfg.id, cfg.label, cfg.authDir);
+    instance.setOnFirstConnect(() => {
+      const config = this.loadConfig();
+      const inst = config?.instances.find(i => i.id === cfg.id);
+      if (inst && !inst.firstConnectedAt) {
+        inst.firstConnectedAt = new Date().toISOString();
+        this.saveConfig(config!);
+      }
+    });
     if (this.messageHandler) {
       instance.setMessageHandler(this.messageHandler);
     }
@@ -472,6 +529,21 @@ class WhatsAppManager {
       this.saveConfig(config);
     }
     console.log(`[WhatsAppManager] Removed instance "${id}" (auth dir preserved)`);
+  }
+
+  /** Update display label for an instance (persisted + in-memory). No restart needed. */
+  updateInstanceLabel(id: string, label: string): WhatsAppInstanceStatus {
+    const instance = this.instances.get(id);
+    if (!instance) throw new Error(`Instance "${id}" not found`);
+    const config = this.loadConfig();
+    const entry = config?.instances.find(i => i.id === id);
+    if (!entry) throw new Error(`Instance "${id}" not found in config`);
+    const trimLabel = label.trim();
+    if (!trimLabel) throw new Error('Label cannot be empty');
+    entry.label = trimLabel;
+    instance.label = trimLabel;
+    if (config) this.saveConfig(config);
+    return instance.getStatus();
   }
 
   async logoutInstance(id: string): Promise<void> {
@@ -541,12 +613,41 @@ class WhatsAppManager {
     throw new Error('No WhatsApp instance connected. Check status with pelangi_whatsapp_status.');
   }
 
+  async sendMedia(phone: string, buffer: Buffer, mimetype: string, fileName: string, caption?: string, instanceId?: string): Promise<any> {
+    const jid = phone.includes('@')
+      ? phone
+      : `${formatPhoneNumber(phone)}@s.whatsapp.net`;
+
+    if (instanceId) {
+      const instance = this.instances.get(instanceId);
+      if (!instance) throw new Error(`Instance "${instanceId}" not found`);
+      return instance.sendMedia(jid, buffer, mimetype, fileName, caption);
+    }
+
+    for (const instance of this.instances.values()) {
+      if (instance.state === 'open') {
+        return instance.sendMedia(jid, buffer, mimetype, fileName, caption);
+      }
+    }
+    throw new Error('No WhatsApp instance connected.');
+  }
+
   getAllStatuses(): WhatsAppInstanceStatus[] {
-    return Array.from(this.instances.values()).map(i => i.getStatus());
+    const config = this.loadConfig();
+    return Array.from(this.instances.values()).map(i => {
+      const s = i.getStatus();
+      const firstConnectedAt = config?.instances.find(inst => inst.id === i.id)?.firstConnectedAt ?? null;
+      return { ...s, firstConnectedAt };
+    });
   }
 
   getInstanceStatus(id: string): WhatsAppInstanceStatus | null {
-    return this.instances.get(id)?.getStatus() || null;
+    const instance = this.instances.get(id);
+    if (!instance) return null;
+    const s = instance.getStatus();
+    const config = this.loadConfig();
+    const firstConnectedAt = config?.instances.find(inst => inst.id === id)?.firstConnectedAt ?? null;
+    return { ...s, firstConnectedAt };
   }
 
   registerMessageHandler(handler: (msg: IncomingMessage) => Promise<void>): void {
@@ -559,7 +660,7 @@ class WhatsAppManager {
   }
 
   async notifyUnlinkedInstance(unlinkedId: string, unlinkedLabel: string): Promise<void> {
-    const MAINLINE_ID = '60103084289'; // Southern Homestay mainline
+    const MAINLINE_ID = '60103084289'; // Pelangi Capsule Hostel mainline
     const unlinkedInstance = this.instances.get(unlinkedId);
     if (!unlinkedInstance) return;
 
@@ -592,7 +693,7 @@ class WhatsAppManager {
     const message = `⚠️ *WhatsApp Instance Unlinked*\n\n` +
       `Your WhatsApp instance *"${unlinkedLabel}"* (${unlinkedPhone}) has been unlinked from PelangiManager.\n\n` +
       `This may have been accidental. If you need to reconnect, please visit the admin panel and scan the QR code again.\n\n` +
-      `🔗 Admin Panel: http://localhost:3002/admin/rainbow/status\n\n` +
+      `🔗 Admin Panel: http://localhost:3002/admin/rainbow/dashboard\n\n` +
       `If this was intentional, you can safely ignore this message.`;
 
     try {
@@ -649,6 +750,10 @@ export function getWhatsAppStatus(): { state: string; user: any; authDir: string
 
 export async function sendWhatsAppMessage(phone: string, text: string, instanceId?: string): Promise<any> {
   return whatsappManager.sendMessage(phone, text, instanceId);
+}
+
+export async function sendWhatsAppMedia(phone: string, buffer: Buffer, mimetype: string, fileName: string, caption?: string, instanceId?: string): Promise<any> {
+  return whatsappManager.sendMedia(phone, buffer, mimetype, fileName, caption, instanceId);
 }
 
 export async function sendWhatsAppTypingIndicator(phone: string, instanceId?: string): Promise<void> {

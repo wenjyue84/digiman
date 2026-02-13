@@ -300,6 +300,21 @@
           "下面的", "偶数", "下面一层"
         ]
       }
+    },
+    {
+      "intent": "facility_orientation",
+      "keywords": {
+        "en": [
+          "where is bathroom", "where is toilet", "where is shower", "where is kitchen",
+          "bathroom location", "toilet location", "shower location", "kitchen location"
+        ],
+        "ms": [
+          "di mana bilik air", "di mana tandas", "kemana bilik air", "di mana dapur"
+        ],
+        "zh": [
+          "浴室在哪", "厕所在哪", "淋浴在哪", "厨房在哪"
+        ]
+      }
     }
   ]
 }

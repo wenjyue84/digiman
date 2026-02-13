@@ -24,7 +24,7 @@
 - T1 Emergency Patterns (🚨 Priority Keywords)
 - T2 Fuzzy Keywords (🔍 Smart Matching) - 464 keywords
 - T3 Training Examples (📚 Learning Examples) - 196 examples
-- T4 LLM Settings (🤖 AI Backup)
+- T4 LLM Settings (🤖 AI Fallback)
 - Test Console
 - Configuration Templates (7 presets)
 

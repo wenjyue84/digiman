@@ -4,6 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rainbow Admin Dashboard</title>
+  <!-- Run first: normalize URL so /dashboard#x works on first paste; strip hot-reload cache-bust param -->
+  <script>
+  (function(){
+    var loc = window.location;
+    var path = loc.pathname || '/';
+    var hash = loc.hash || '';
+    var search = loc.search || '';
+    if (path !== '/') {
+      history.replaceState(null, '', loc.origin + '/' + hash);
+    } else if (search.indexOf('_=') !== -1) {
+      history.replaceState(null, '', loc.origin + path + hash);
+    }
+  })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -48,19 +62,12 @@
 
 <!-- Tabs -->
 <nav class="bg-white border-b">
-  <div class="max-w-6xl mx-auto px-4 flex gap-2 items-center py-2">
+  <div class="max-w-6xl mx-auto px-4 flex gap-20 items-center py-2">
 
-    <!-- 📱 Connect Section -->
-    <div class="relative">
-      <button onclick="toggleDropdown('connect-dropdown')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-primary-600 hover:bg-primary-50 rounded-lg transition">
-        📱 Connect
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-      </button>
-      <div id="connect-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 z-50 min-w-[200px]">
-        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition" data-tab="dashboard" onclick="closeAllDropdowns()">🏠 Dashboard</button>
-        <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition" data-tab="system-status" onclick="closeAllDropdowns()">🔧 System Status</button>
-      </div>
-    </div>
+    <!-- 📱 Connect (single choice → goes straight to dashboard) -->
+    <button class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-semibold text-primary-600 hover:bg-primary-50 rounded-lg transition" data-tab="dashboard">
+      📱 Connect
+    </button>
 
     <!-- 🧠 Train Section -->
     <div class="relative">
@@ -86,6 +93,11 @@
         <button class="tab-btn w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-warning-50 hover:text-warning-600 transition" data-tab="testing" onclick="closeAllDropdowns()">🧪 Automated Tests</button>
       </div>
     </div>
+
+    <!-- 💬 Chat (Standalone — customer support) -->
+    <button class="tab-btn flex items-center gap-2 px-4 py-3 text-sm font-semibold text-teal-600 hover:bg-teal-50 rounded-lg transition" data-tab="live-chat">
+      💬 Chat
+    </button>
 
     <!-- 📊 Monitor Section -->
     <div class="relative">
@@ -135,16 +147,6 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- System Status Tab (Split from Status) -->
-  <!-- ═══════════════════════════════════════════════════════════════ -->
-  <section id="tab-system-status" class="tab-content hidden" data-template="system-status">
-<div class="p-8 text-center">
-    <div class="spinner mx-auto"></div>
-    <p class="text-sm text-neutral-500 mt-2">Loading system status...</p>
-  </div>
-</section>
-
-  <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- Understanding Tab (Renamed from Intent Manager) -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <section id="tab-understanding" class="tab-content hidden" data-template="understanding">
@@ -181,6 +183,16 @@
 <div class="p-8 text-center">
     <div class="spinner mx-auto"></div>
     <p class="text-sm text-neutral-500 mt-2">Loading chat simulator...</p>
+  </div>
+</section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Live Chat Tab (Customer Support — WhatsApp Web style) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section id="tab-live-chat" class="tab-content hidden" data-template="live-chat">
+<div class="p-8 text-center">
+    <div class="spinner mx-auto"></div>
+    <p class="text-sm text-neutral-500 mt-2">Loading chat...</p>
   </div>
 </section>
 
@@ -242,6 +254,7 @@
 <!-- ES6 Module Scripts (deferred - run after all regular scripts) -->
 <script type="module" src="/public/js/modules/testing.js"></script>
 <script type="module" src="/public/js/modules/real-chat.js"></script>
+<script type="module" src="/public/js/modules/live-chat.js"></script>
 <script type="module" src="/public/js/modules/kb-editor.js"></script>
 <script type="module" src="/public/js/main.js"></script>
 

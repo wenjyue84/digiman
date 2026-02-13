@@ -3732,22 +3732,22 @@ export declare const insertRainbowFeedbackSchema: z.ZodObject<z.objectUtil.exten
     feedbackText: z.ZodOptional<z.ZodString>;
 }>, "strip", z.ZodTypeAny, {
     phoneNumber: string;
-    conversationId: string;
     rating: 1 | -1;
-    responseTime?: number | null | undefined;
+    conversationId: string;
     intent?: string | null | undefined;
     confidence?: number | null | undefined;
+    responseTime?: number | null | undefined;
     messageId?: string | null | undefined;
     feedbackText?: string | undefined;
     responseModel?: string | null | undefined;
     tier?: string | null | undefined;
 }, {
     phoneNumber: string;
-    conversationId: string;
     rating: number;
-    responseTime?: number | null | undefined;
+    conversationId: string;
     intent?: string | null | undefined;
     confidence?: number | null | undefined;
+    responseTime?: number | null | undefined;
     messageId?: string | null | undefined;
     feedbackText?: string | undefined;
     responseModel?: string | null | undefined;

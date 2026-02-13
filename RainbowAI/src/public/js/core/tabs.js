@@ -94,13 +94,15 @@ async function loadTab(tabName) {
  * Map old tab names to new ones for backward compatibility
  */
 const tabNameMapping = {
-  'status': 'dashboard',               // Old Status → new Dashboard (default)
+  'status': 'dashboard',               // Removed; redirect to Dashboard
+  'system-status': 'dashboard',        // Removed; redirect to Dashboard
   'intent-manager': 'understanding',   // Old Classify Intent → new Understanding
   'kb': 'responses',                   // Old Knowledge Base → new Responses (KB sub-tab)
   'static-replies': 'responses',       // Old Static Messages → new Responses
   'workflow': 'responses',             // Old Workflow → new Responses
   'preview': 'chat-simulator',         // Old Preview → new Chat Simulator
   'real-chat': 'chat-simulator',       // Old Real Chat → new Chat Simulator
+  'chat': 'live-chat',                 // Short alias → Live Chat
   'feedback-stats': 'performance',     // Old Feedback Stats → new Performance
   'intent-accuracy': 'performance'     // Old Intent Accuracy → new Performance
 };
@@ -116,6 +118,14 @@ function normalizeTabName(tabName) {
  * Initialize tabs on page load
  */
 function initTabs() {
+  // Normalize URL so the app always runs at origin + hash (avoids white screen when
+  // opening e.g. /dashboard#chat-simulator in a new tab — pathname is normalized to /)
+  const path = window.location.pathname || '/';
+  if (path !== '/') {
+    const hash = window.location.hash || '';
+    window.history.replaceState(null, '', window.location.origin + '/' + hash);
+  }
+
   // Add click handlers to all tab buttons
   document.querySelectorAll('[data-tab]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -128,17 +138,19 @@ function initTabs() {
     });
   });
 
-  // Load tab from URL hash or default to 'dashboard'
+  // Load tab from URL hash or default to 'dashboard' (hash may include ?audience=developer for help)
   const hash = window.location.hash.slice(1);
-  const initialTab = normalizeTabName(hash) || 'dashboard';
+  const hashTab = hash.includes('?') ? hash.split('?')[0] : hash;
+  const initialTab = normalizeTabName(hashTab) || 'dashboard';
 
   loadTab(initialTab);
 
   // Listen for hash changes to support direct URL navigation
   window.addEventListener('hashchange', () => {
     const newHash = window.location.hash.slice(1);
-    if (newHash) {
-      loadTab(normalizeTabName(newHash));
+    const newHashTab = newHash.includes('?') ? newHash.split('?')[0] : newHash;
+    if (newHashTab) {
+      loadTab(normalizeTabName(newHashTab));
     }
   });
 

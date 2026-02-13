@@ -40,7 +40,8 @@ function showInstanceQR(id, label) {
       if (d.state === 'open') {
         el.innerHTML = '<p class="text-success-600 font-medium py-4">Connected!</p>';
         clearInterval(qrRefreshInterval);
-        loadStatus();
+        if (typeof window.refreshWhatsAppList === 'function') window.refreshWhatsAppList();
+        else if (typeof loadStatus === 'function') loadStatus();
       } else if (d.qrDataUrl) {
         el.innerHTML = `<img src="${d.qrDataUrl}" class="w-64 h-64 mx-auto" />`;
       } else {
@@ -93,6 +94,7 @@ function closeAllDropdowns() {
   document.querySelectorAll('[id$="-dropdown"]').forEach(dropdown => {
     dropdown.classList.add('hidden');
   });
+  document.getElementById('run-all-dropdown-menu')?.classList.add('hidden');
 }
 
 // Export functions to global scope (for HTML onclick handlers)

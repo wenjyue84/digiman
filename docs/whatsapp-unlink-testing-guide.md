@@ -18,7 +18,7 @@ Expected output:
 ```json
 {
   "id": "60103084289",
-  "label": "Southern Homestay (60103084289) - Mainline",
+  "label": "Pelangi Capsule Hostel (60103084289) - Mainline",
   "state": "open",
   "unlinkedFromWhatsApp": false
 }

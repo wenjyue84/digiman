@@ -18,6 +18,7 @@ import { getWhatsAppStatus } from './lib/baileys-client.js';
 import { startBaileysWithSupervision } from './lib/baileys-supervisor.js';
 import adminRoutes from './routes/admin/index.js';
 import { initFeedbackSettings } from './lib/init-feedback-settings.js';
+import { setupHotReload, HOT_RELOAD_SCRIPT } from './lib/hot-reload.js';
 
 const __filename_main = fileURLToPath(import.meta.url);
 const __dirname_main = dirname(__filename_main);
@@ -32,8 +33,17 @@ const PORT = parseInt(process.env.MCP_SERVER_PORT || '3002', 10);
 app.use(cors());
 app.use(express.json());
 
-// Serve static assets for Rainbow dashboard modules
-app.use('/public', express.static(join(__dirname_main, 'public')));
+// Serve static assets for Rainbow dashboard modules with no-cache headers for development
+app.use(
+  '/public',
+  express.static(join(__dirname_main, 'public'), {
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    },
+  })
+);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -46,17 +56,22 @@ app.get('/health', (req, res) => {
   });
 });
 
+function getDashboardHtml(): string {
+  let html = readFileSync(join(__dirname_main, 'public', 'rainbow-admin.html'), 'utf-8');
+  if (process.env.NODE_ENV !== 'production') {
+    html = html.replace('</body>', HOT_RELOAD_SCRIPT + '\n</body>');
+  }
+  return html;
+}
+
 // Rainbow Admin Dashboard - Root path only
 app.get('/', (_req, res) => {
   try {
-    // Disable caching for better development experience
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
-
-    const html = readFileSync(join(__dirname_main, 'public', 'rainbow-admin.html'), 'utf-8');
-    res.type('html').send(html);
+    res.type('html').send(getDashboardHtml());
   } catch {
     res.status(500).send('Dashboard file not found');
   }
@@ -102,7 +117,7 @@ app.use('/api/rainbow', adminRoutes);
 // Dashboard tab routes (SPA client-side routing)
 const dashboardTabs = [
   // Connect
-  'dashboard', 'system-status',
+  'dashboard',
   // Train
   'understanding', 'responses', 'intents',
   // Test
@@ -112,7 +127,7 @@ const dashboardTabs = [
   // Standalone
   'help',
   // Legacy (keep for old bookmarks — they show deprecation notices in the SPA)
-  'status', 'intent-manager', 'static-replies', 'kb', 'preview', 'real-chat', 'workflow',
+  'intent-manager', 'static-replies', 'kb', 'preview', 'real-chat', 'workflow',
   'whatsapp-accounts', // removed from nav but URL still works (shows "Page Removed" notice)
 ];
 app.get(`/:tab(${dashboardTabs.join('|')})`, (_req, res) => {
@@ -121,9 +136,7 @@ app.get(`/:tab(${dashboardTabs.join('|')})`, (_req, res) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
-
-    const html = readFileSync(join(__dirname_main, 'public', 'rainbow-admin.html'), 'utf-8');
-    res.type('html').send(html);
+    res.type('html').send(getDashboardHtml());
   } catch {
     res.status(500).send('Dashboard file not found');
   }
@@ -133,8 +146,9 @@ app.get(`/:tab(${dashboardTabs.join('|')})`, (_req, res) => {
 app.post('/mcp', createMCPHandler());
 
 // Start server - listen on 0.0.0.0 for Docker containers
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   const apiUrl = getApiBaseUrl();
+  setupHotReload(server);
   console.log(`Pelangi MCP Server running on http://0.0.0.0:${PORT}`);
   console.log(`MCP endpoint: http://0.0.0.0:${PORT}/mcp`);
   console.log(`Health check: http://0.0.0.0:${PORT}/health`);
