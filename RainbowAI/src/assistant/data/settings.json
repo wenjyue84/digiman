@@ -209,5 +209,20 @@
     "consecutive_threshold": 2,
     "cooldown_minutes": 30,
     "description": "Automatically detect frustrated users and escalate to staff when they send consecutive negative messages"
+  },
+  "response_modes": {
+    "default_mode": "copilot",
+    "description": "Global default response mode: autopilot (AI auto-sends), copilot (AI suggests, staff approves), or manual (staff writes, AI helps on request)",
+    "copilot": {
+      "auto_approve_confidence": 0.95,
+      "auto_approve_intents": ["greeting", "thanks", "wifi"],
+      "queue_timeout_minutes": 30,
+      "description": "Auto-approve high-confidence responses for simple intents"
+    },
+    "manual": {
+      "show_ai_suggestions": true,
+      "ai_help_provider": "groq-llama",
+      "description": "Show AI suggestions when 'Help me' clicked"
+    }
   }
 }
