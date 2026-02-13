@@ -56,7 +56,7 @@ Thumbs.db
 
 # User uploads and attached files
 uploads/
-attached_assets/
+# attached_assets/ - Commented out to allow QR code image for deployment
 
 # Test coverage
 coverage/
