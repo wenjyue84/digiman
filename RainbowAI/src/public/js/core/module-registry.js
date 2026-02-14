@@ -36,7 +36,9 @@ import {
   quickActionTestChat,
   refreshDashboard,
   startStatusPolling,
-  stopStatusPolling
+  stopStatusPolling,
+  startEditingLabel,
+  finishEditingLabel
 } from '/public/js/modules/dashboard.js';
 
 // Phase 5: Intents & Routing Tab
@@ -330,8 +332,20 @@ import {
   resetTierThreshold,
   testIntentManager,
   exportIntentData,
-  updateTierUI
+  updateTierUI,
+  resetToDefaults
 } from '/public/js/modules/intent-manager.js';
+
+// Phase 35: Dashboard Templates Module (Intent + Settings Templates)
+import {
+  toggleTemplateHelp,
+  applyIntentTemplate,
+  saveCurrentAsCustom as saveIntentTemplateAsCustom,
+  renderSettingsTemplateButtons,
+  applySettingsTemplate,
+  detectActiveSettingsTemplate,
+  settingsMatchTemplate
+} from '/public/js/modules/dashboard-templates.js';
 
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
@@ -359,6 +373,8 @@ window.quickActionTestChat = quickActionTestChat;
 window.refreshDashboard = refreshDashboard;
 window.startStatusPolling = startStatusPolling;
 window.stopStatusPolling = stopStatusPolling;
+window.startEditingLabel = startEditingLabel;
+window.finishEditingLabel = finishEditingLabel;
 window.loadIntents = loadIntents;
 window.changeRouting = changeRouting;
 window.changeWorkflowId = changeWorkflowId;
@@ -554,3 +570,12 @@ window.resetTierThreshold = resetTierThreshold;
 window.testIntentManager = testIntentManager;
 window.exportIntentData = exportIntentData;
 window.updateTierUI = updateTierUI;
+window.resetToDefaults = resetToDefaults;
+// Phase 35: Dashboard Templates
+window.toggleTemplateHelp = toggleTemplateHelp;
+window.applyIntentTemplate = applyIntentTemplate;
+window.saveCurrentAsCustom = saveIntentTemplateAsCustom; // Intent template version (overrides routing-templates, matches original behavior)
+window.renderSettingsTemplateButtons = renderSettingsTemplateButtons;
+window.applySettingsTemplate = applySettingsTemplate;
+window.detectActiveSettingsTemplate = detectActiveSettingsTemplate;
+window.settingsMatchTemplate = settingsMatchTemplate;
