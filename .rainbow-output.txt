@@ -1,0 +1,3520 @@
+
+> pelangi-mcp-server@1.0.0 dev
+> tsx watch src/index.ts
+
+[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:17844) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3256ms)
+[Feedback] ✅ Settings loaded from database
+6:42:42 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:42:46 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:42:47 pm [tsx] change in ./src\routes\admin\knowledge-base.ts Restarting...
+c6:42:48 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:43924) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3633ms)
+[Feedback] ✅ Settings loaded from database
+6:43:12 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:43:17 pm [tsx] change in ./src\routes\admin\knowledge-base.ts Restarting...
+c6:43:17 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:46088) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3276ms)
+[Feedback] ✅ Settings loaded from database
+6:43:36 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:43:38 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c6:43:42 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:43:43 pm [tsx] change in ./src\routes\admin\knowledge-base.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44252) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[DB] ✅ Database connection established (5160ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+[Hot Reload] File changed: C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\admin\conversations.ts
+6:44:03 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:44:07 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c6:44:15 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:5220) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[DB] ✅ Database connection established (4624ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+[Hot Reload] File changed: C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\admin\conversations.ts
+6:44:35 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:44:41 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c6:44:48 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+6:45:01 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:45:10 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c6:45:19 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:45:29 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:32168) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3069ms)
+[Feedback] ✅ Settings loaded from database
+6:45:47 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c6:45:51 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:45:55 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:36920) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (5077ms)
+[Feedback] ✅ Settings loaded from database
+6:46:18 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:46:20 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:46:20 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:40372) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[DB] ✅ Database connection established (4458ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+[Admin Notifications] ✅ Initialized defaults
+[Baileys:default] Loaded 7 LID→phone mappings from auth state
+[BaileysSupervisor] WhatsApp (Baileys) initializing...
+[AdminNotifier] ✅ Initialized
+[Assistant] WhatsApp not connected yet — handler will be registered for when it connects
+[ConfigStore] All config files loaded
+[AI] Provider "Ollama GPT-OSS 20B" (priority 0) — ready
+[AI] Provider "Groq Llama 3.3 70B" (priority 1) — ready
+[AI] Provider "Groq Llama 3.1 8B Instant" (priority 2) — ready
+[AI] Provider "Ollama Gemini 3 Flash" (priority 8) — ready
+[KnowledgeBase] Loaded 34 KB files from .rainbow-kb/
+[KnowledgeBase] Watching .rainbow-kb/ for changes
+[KnowledgeBase] Watching .rainbow-kb/memory/ for changes
+[WhatsAppManager] Message handler registered
+[Assistant] WhatsApp AI Assistant ready
+[BaileysSupervisor] Pelangi Assistant initialized — WhatsApp auto-reply active
+Daily report scheduled for 11:30 AM MYT
+[Intents] Loaded 18 emergency patterns from regex-patterns.json (by language)
+[Intents] Fuzzy matcher initialized with 81 keyword groups
+[IntentConfig] Built threshold maps: 35 intents, 0 T2 overrides, 0 T3 overrides
+[Semantic] Initializing embedding model...
+[Intents] Hybrid mode: Emergency → Fuzzy → Semantic → LLM
+API call failed: GET /api/settings Request failed with status code 401
+[Knowledge] Failed to refresh settings cache: API Error: No token provided (http://localhost:5000/api/settings → 401 Unauthorized)
+{"level":30,"time":"2026-02-14T10:46:40.856Z","pid":40372,"hostname":"DESKTOP-I3D1826","class":"baileys","browser":["PelangiManager","Chrome","1.0.0"],"helloMsg":{"clientHello":{"ephemeral":"7+DMFsEb2JmZUIwiox/DExaiP9G2WUliEIGGJ4VBgmQ="}},"msg":"connected to WA"}
+[Semantic] Model loaded in 777ms
+[Semantic] Computing intent embeddings...
+6:46:42 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:46:45 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:46:47 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:42732) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3608ms)
+[Feedback] ✅ Settings loaded from database
+6:47:03 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:47:07 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:47:12 pm [tsx] change in ./src\routes\admin\intent-manager.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:36408) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (4008ms)
+6:47:26 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:47:38 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:30784) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (4186ms)
+[Feedback] ✅ Settings loaded from database
+6:47:56 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:48:03 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44608) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3361ms)
+[Feedback] ✅ Settings loaded from database
+6:48:20 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:48:26 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:10748) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3629ms)
+[Feedback] ✅ Settings loaded from database
+6:48:41 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:38796) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:48:52 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:32080) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:49:04 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:6788) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:49:17 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c6:49:23 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:25532) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:49:39 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c6:49:43 pm [tsx] change in ./src\routes\admin\config.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:26616) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3294ms)
+6:49:56 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:41308) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2759ms)
+[Feedback] ✅ Settings loaded from database
+6:50:13 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:36436) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3762ms)
+[Feedback] ✅ Settings loaded from database
+6:50:30 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44264) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3570ms)
+[Feedback] ✅ Settings loaded from database
+6:50:47 pm [tsx] change in ./src\routes\admin\conversations.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:34480) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (4024ms)
+[Feedback] ✅ Settings loaded from database
+6:51:12 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:29940) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3292ms)
+[Feedback] ✅ Settings loaded from database
+6:51:28 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:25832) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3328ms)
+[Feedback] ✅ Settings loaded from database
+6:51:44 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:46736) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3218ms)
+[Feedback] ✅ Settings loaded from database
+6:52:02 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:7792) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3436ms)
+[Feedback] ✅ Settings loaded from database
+6:52:20 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44304) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3052ms)
+[Feedback] ✅ Settings loaded from database
+6:52:38 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:32476) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3099ms)
+[Feedback] ✅ Settings loaded from database
+6:52:55 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:41068) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3258ms)
+[Feedback] ✅ Settings loaded from database
+6:53:09 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44964) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3623ms)
+[Feedback] ✅ Settings loaded from database
+6:53:22 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:8324) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+
+PelangiManager API not reachable.
+   URL: http://localhost:5000/api/health
+   Set PELANGI_API_URL in Zeabur to your deployed PelangiManager URL.
+   MCP tools will fail until the API is reachable.
+
+[Hot Reload] Client connected
+[DB] ✅ Database connection established (3608ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+6:53:37 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:45992) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2867ms)
+[Feedback] ✅ Settings loaded from database
+6:53:51 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:24088) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3202ms)
+[Feedback] ✅ Settings loaded from database
+6:54:07 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:45188) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3221ms)
+[Feedback] ✅ Settings loaded from database
+6:54:22 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:12360) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3309ms)
+[Feedback] ✅ Settings loaded from database
+6:54:38 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:33004) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2921ms)
+[Feedback] ✅ Settings loaded from database
+6:54:56 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:39584) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3456ms)
+[Feedback] ✅ Settings loaded from database
+6:55:19 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:35476) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3373ms)
+[Feedback] ✅ Settings loaded from database
+6:55:34 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:28700) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (5239ms)
+[Feedback] ✅ Settings loaded from database
+6:55:50 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:6952) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3869ms)
+[Feedback] ✅ Settings loaded from database
+6:56:06 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:30632) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2994ms)
+[Feedback] ✅ Settings loaded from database
+6:56:17 pm [tsx] change in ./src\routes\admin\templates.ts Restarting...
+c6:56:21 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:36852) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3251ms)
+[Feedback] ✅ Settings loaded from database
+6:56:36 pm [tsx] change in ./src\routes\admin\templates.ts Restarting...
+c6:56:39 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:20856) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3472ms)
+[Feedback] ✅ Settings loaded from database
+6:56:52 pm [tsx] change in ./src\routes\admin\templates.ts Restarting...
+c6:56:55 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:5964) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3112ms)
+6:57:06 pm [tsx] change in ./src\routes\admin\intent-analytics.ts Restarting...
+c6:57:11 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:36740) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:57:23 pm [tsx] change in ./src\routes\admin\intent-analytics.ts Restarting...
+c6:57:25 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:45456) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2695ms)
+[Feedback] ✅ Settings loaded from database
+6:57:37 pm [tsx] change in ./src\routes\admin\intent-analytics.ts Restarting...
+c6:57:40 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:27828) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3913ms)
+[Feedback] ✅ Settings loaded from database
+6:57:52 pm [tsx] change in ./src\routes\admin\intent-analytics.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+6:58:01 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+6:58:09 pm [tsx] change in ./src\routes\admin\metrics.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:22712) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:58:19 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:34928) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:58:28 pm [tsx] change in ./src\routes\admin\metrics.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:29256) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+6:58:39 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c6:58:44 pm [tsx] change in ./src\routes\admin\metrics.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:32584) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3613ms)
+[Feedback] ✅ Settings loaded from database
+6:58:56 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:7164) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+
+PelangiManager API not reachable.
+   URL: http://localhost:5000/api/health
+   Set PELANGI_API_URL in Zeabur to your deployed PelangiManager URL.
+   MCP tools will fail until the API is reachable.
+
+[Hot Reload] Client connected
+[DB] ✅ Database connection established (3722ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+6:59:11 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:45400) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3270ms)
+[Feedback] ✅ Settings loaded from database
+6:59:26 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44492) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3430ms)
+[Feedback] ✅ Settings loaded from database
+6:59:42 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:22944) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (4536ms)
+[Feedback] ✅ Settings loaded from database
+6:59:56 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:22472) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (4443ms)
+[Feedback] ✅ Settings loaded from database
+7:00:09 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:42268) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3230ms)
+[Feedback] ✅ Settings loaded from database
+7:00:29 pm [tsx] change in ./src\routes\admin\feedback-settings.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:5088) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2748ms)
+[Feedback] ✅ Settings loaded from database
+7:00:46 pm [tsx] change in ./src\routes\admin\feedback-settings.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:20312) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2580ms)
+[Feedback] ✅ Settings loaded from database
+7:01:04 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:34232) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3965ms)
+[Feedback] ✅ Settings loaded from database
+7:01:20 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:35580) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2833ms)
+[Feedback] ✅ Settings loaded from database
+7:01:34 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:13100) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3415ms)
+[Feedback] ✅ Settings loaded from database
+7:01:50 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:45188) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+
+PelangiManager API not reachable.
+   URL: http://localhost:5000/api/health
+   Set PELANGI_API_URL in Zeabur to your deployed PelangiManager URL.
+   MCP tools will fail until the API is reachable.
+
+[DB] ✅ Database connection established (3888ms)
+[Feedback] ✅ Settings loaded from database
+7:02:05 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:42464) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+
+PelangiManager API not reachable.
+   URL: http://localhost:5000/api/health
+   Set PELANGI_API_URL in Zeabur to your deployed PelangiManager URL.
+   MCP tools will fail until the API is reachable.
+
+[DB] ✅ Database connection established (3298ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+7:02:20 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:43464) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[DB] ✅ Database connection established (3451ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+7:02:35 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:9408) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3039ms)
+[Feedback] ✅ Settings loaded from database
+7:02:52 pm [tsx] change in ./src\routes\admin\admin-notifications.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:32984) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3703ms)
+[Feedback] ✅ Settings loaded from database
+7:03:09 pm [tsx] change in ./src\routes\admin\feedback.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:9980) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3018ms)
+[Feedback] ✅ Settings loaded from database
+7:03:22 pm [tsx] change in ./src\routes\admin\feedback.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:34764) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3653ms)
+[Feedback] ✅ Settings loaded from database
+7:03:36 pm [tsx] change in ./src\routes\admin\feedback.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44948) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[DB] ✅ Database connection established (3540ms)
+[Feedback] ✅ Settings loaded from database
+[Hot Reload] Client connected
+7:03:50 pm [tsx] change in ./src\routes\admin\feedback.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:26444) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2999ms)
+[Feedback] ✅ Settings loaded from database
+7:04:34 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:44260) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3248ms)
+[Feedback] ✅ Settings loaded from database
+7:04:48 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:46288) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (5277ms)
+[Feedback] ✅ Settings loaded from database
+7:05:04 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:24360) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2982ms)
+[Feedback] ✅ Settings loaded from database
+7:05:16 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:42556) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[Hot Reload] Client connected
+[DB] ✅ Database connection established (3671ms)
+[Feedback] ✅ Settings loaded from database
+7:05:30 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:32480) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3251ms)
+[Feedback] ✅ Settings loaded from database
+7:05:43 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:30724) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[DB] ✅ Database connection established (3208ms)
+[Feedback] ✅ Settings loaded from database
+7:05:56 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:39188) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+PelangiManager API reachable
+[Hot Reload] Client connected
+[DB] ✅ Database connection established (3541ms)
+[Feedback] ✅ Settings loaded from database
+[Hot Reload] File changed: C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\admin\memory.ts
+7:06:10 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:10244) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3941ms)
+[Feedback] ✅ Settings loaded from database
+7:06:25 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:34272) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2951ms)
+[Feedback] ✅ Settings loaded from database
+7:06:38 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:28208) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2815ms)
+[Feedback] ✅ Settings loaded from database
+7:06:56 pm [tsx] change in ./src\routes\admin\testing.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:7096) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2788ms)
+[Feedback] ✅ Settings loaded from database
+7:07:08 pm [tsx] change in ./src\routes\admin\whatsapp.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:36752) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2820ms)
+[Feedback] ✅ Settings loaded from database
+7:07:21 pm [tsx] change in ./src\routes\admin\memory.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: true, contextMessages: 0 },
+    tier2_fuzzy: { enabled: true, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: true, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded
+[Startup] ConfigStore initialized successfully
+(node:34420) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[Hot Reload] Enabled - watching for changes...
+Pelangi MCP Server running on http://0.0.0.0:3002
+MCP endpoint: http://0.0.0.0:3002/mcp
+Health check: http://0.0.0.0:3002/health
+API URL: http://localhost:5000
+[Hot Reload] Client connected
+PelangiManager API reachable
+[DB] ✅ Database connection established (3602ms)
+[Feedback] ✅ Settings loaded from database
+[Feedback Settings] ✅ Initialized defaults
+[Admin Notifications] ✅ Initialized defaults
+[Baileys:default] Loaded 7 LID→phone mappings from auth state
+[BaileysSupervisor] WhatsApp (Baileys) initializing...
+[AdminNotifier] ✅ Initialized
+[Assistant] WhatsApp not connected yet — handler will be registered for when it connects
+[ConfigStore] All config files loaded
+[AI] Provider "Ollama GPT-OSS 20B" (priority 0) — ready
+[AI] Provider "Groq Llama 3.3 70B" (priority 1) — ready
+[AI] Provider "Groq Llama 3.1 8B Instant" (priority 2) — ready
+[AI] Provider "Ollama Gemini 3 Flash" (priority 8) — ready
+[KnowledgeBase] Loaded 34 KB files from .rainbow-kb/
+[KnowledgeBase] Watching .rainbow-kb/ for changes
+[KnowledgeBase] Watching .rainbow-kb/memory/ for changes
+[WhatsAppManager] Message handler registered
+[Assistant] WhatsApp AI Assistant ready
+[BaileysSupervisor] Pelangi Assistant initialized — WhatsApp auto-reply active
+Daily report scheduled for 11:30 AM MYT
+[Intents] Loaded 18 emergency patterns from regex-patterns.json (by language)
+[Intents] Fuzzy matcher initialized with 81 keyword groups
+[IntentConfig] Built threshold maps: 35 intents, 0 T2 overrides, 0 T3 overrides
+[Semantic] Initializing embedding model...
+[Intents] Hybrid mode: Emergency → Fuzzy → Semantic → LLM
+API call failed: GET /api/settings Request failed with status code 401
+[Knowledge] Failed to refresh settings cache: API Error: No token provided (http://localhost:5000/api/settings → 401 Unauthorized)
+[Semantic] Model loaded in 230ms
+[Semantic] Computing intent embeddings...
+[Semantic] Computed 27 intent embeddings in 4038ms
+[Intents] Semantic matcher ready: 27 intents, 838 examples
+{"level":30,"time":"2026-02-14T11:07:41.774Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","browser":["PelangiManager","Chrome","1.0.0"],"helloMsg":{"clientHello":{"ephemeral":"bQgt8HKDz6JOaz7XuQP7cuKsAB33nvepgKPJbH3CFHc="}},"msg":"connected to WA"}
+{"level":30,"time":"2026-02-14T11:07:41.970Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","node":{"username":"60103084289","passive":true,"userAgent":{"platform":"WEB","appVersion":{"primary":2,"secondary":3000,"tertiary":1027934701},"mcc":"000","mnc":"000","osVersion":"0.1","device":"Desktop","osBuildNumber":"0.1","releaseChannel":"RELEASE","localeLanguageIso6391":"en","localeCountryIso31661Alpha2":"US"},"webInfo":{"webSubPlatform":"WEB_BROWSER"},"connectType":"WIFI_UNKNOWN","connectReason":"USER_ACTIVATED","device":2,"pull":true,"lidDbMigrated":false},"msg":"logging in..."}
+{"level":30,"time":"2026-02-14T11:07:42.595Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"808 pre-keys found on server"}
+{"level":30,"time":"2026-02-14T11:07:42.595Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"Current prekey ID: 812, exists in storage: true"}
+{"level":30,"time":"2026-02-14T11:07:42.595Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"PreKey validation passed - Server: 808, Current prekey 812 exists"}
+[AdminNotifier] Failed to send startup notification: No WhatsApp instance connected. Check status with pelangi_whatsapp_status.
+{"level":30,"time":"2026-02-14T11:07:42.805Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"handled 0 offline messages/notifications"}
+{"level":30,"time":"2026-02-14T11:07:42.806Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"Connection is now AwaitingInitialSync, buffering events"}
+{"level":30,"time":"2026-02-14T11:07:42.806Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"History sync is enabled, awaiting notification with a 20s timeout."}
+{"level":30,"time":"2026-02-14T11:07:43.139Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"opened connection to WA"}
+[Baileys:default] Connected: Pelangi Capsule Hostel (60103084289)
+{"level":30,"time":"2026-02-14T11:07:43.151Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","myPN":"60103084289:2@s.whatsapp.net","myLID":"223008241221697:2@lid","msg":"Own LID session created successfully"}
+{"level":40,"time":"2026-02-14T11:08:02.808Z","pid":34420,"hostname":"DESKTOP-I3D1826","class":"baileys","msg":"Timeout in AwaitingInitialSync, forcing state to Online and flushing buffer"}
+[Hot Reload] Client disconnected
+[Hot Reload] Client connected
+API call failed: GET /api/settings Request failed with status code 401
+[Knowledge] Failed to refresh settings cache: API Error: No token provided (http://localhost:5000/api/settings → 401 Unauthorized)
+API call failed: GET /api/settings Request failed with status code 401
+[Knowledge] Failed to refresh settings cache: API Error: No token provided (http://localhost:5000/api/settings → 401 Unauthorized)
+API call failed: GET /api/settings Request failed with status code 401
+[Knowledge] Failed to refresh settings cache: API Error: No token provided (http://localhost:5000/api/settings → 401 Unauthorized)
+[Hot Reload] File changed: C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\public\js\legacy-functions.js
+[Hot Reload] Client disconnected
+[Hot Reload] Client connected
