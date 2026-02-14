@@ -62,8 +62,7 @@ import {
   applyTemplate,
   showSaveTemplateModal,
   submitSaveTemplate,
-  deleteTemplate as deleteRoutingTemplate,
-  saveCurrentAsCustom
+  deleteTemplate as deleteRoutingTemplate
 } from '/public/js/modules/routing-templates.js';
 
 // Phase 7: Responses CRUD Module
@@ -230,6 +229,11 @@ import {
   loadPreview
 } from '/public/js/modules/chat-preview.js';
 
+// Phase 25: Chat Message Handler Module
+import {
+  sendChatMessage
+} from '/public/js/modules/chat-message-handler.js';
+
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
 
@@ -268,7 +272,6 @@ window.applyTemplate = applyTemplate;
 window.showSaveTemplateModal = showSaveTemplateModal;
 window.submitSaveTemplate = submitSaveTemplate;
 window.deleteTemplate = deleteRoutingTemplate;
-window.saveCurrentAsCustom = saveCurrentAsCustom;
 window.editKnowledgeStatic = editKnowledgeStatic;
 window.cancelEditKnowledge = cancelEditKnowledge;
 window.saveKnowledgeStatic = saveKnowledgeStatic;
@@ -371,3 +374,5 @@ window.clearCurrentChat = clearCurrentChat;
 window.clearChat = clearChat;
 window.renderChatMessages = renderChatMessages;
 window.loadPreview = loadPreview;
+// Phase 25: Chat Message Handler
+window.sendChatMessage = sendChatMessage;
