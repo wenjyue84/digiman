@@ -302,16 +302,31 @@
   <!-- Tab System (needs functions above to be defined) -->
   <script src="/public/js/core/tabs.js"></script>
 
-  <!-- Extracted modules (Phase 1: Trivial Loaders) -->
+  <!-- Extracted modules (Phase 1-2) -->
   <script type="module">
+    // Phase 1: Trivial Loaders
     import { loadWhatsappAccounts } from '/public/js/modules/whatsapp-accounts.js';
     import { loadUnderstanding } from '/public/js/modules/understanding.js';
     import { loadPerformance } from '/public/js/modules/performance.js';
+
+    // Phase 2: Dashboard Helpers
+    import {
+      restartServer,
+      runDashboardProviderSpeedTest,
+      initActivityStream,
+      disconnectActivityStream,
+      toggleActivityExpand
+    } from '/public/js/modules/dashboard-helpers.js';
 
     // Expose to global scope (required by tabs.js and onclick handlers)
     window.loadWhatsappAccounts = loadWhatsappAccounts;
     window.loadUnderstanding = loadUnderstanding;
     window.loadPerformance = loadPerformance;
+    window.restartServer = restartServer;
+    window.runDashboardProviderSpeedTest = runDashboardProviderSpeedTest;
+    window.initActivityStream = initActivityStream;
+    window.disconnectActivityStream = disconnectActivityStream;
+    window.toggleActivityExpand = toggleActivityExpand;
   </script>
 
   <!-- ES6 Module Scripts (deferred - run after all regular scripts) -->
