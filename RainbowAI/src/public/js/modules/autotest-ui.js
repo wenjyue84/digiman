@@ -343,3 +343,14 @@ document.addEventListener('click', function (event) {
     closeAutotestHistory();
   }
 });
+
+// ─── Auto-Init ───────────────────────────────────────────────────────────
+// ES6 modules execute after DOMContentLoaded, so DOM is ready
+if (window.loadAutotestHistory) window.loadAutotestHistory();
+if (window.updateHistoryButtonVisibility) window.updateHistoryButtonVisibility();
+
+// Update dynamic scenario count
+const scenarioCountEl = document.getElementById('scenario-count');
+if (scenarioCountEl && window.AUTOTEST_SCENARIOS) {
+  scenarioCountEl.textContent = window.AUTOTEST_SCENARIOS.length;
+}

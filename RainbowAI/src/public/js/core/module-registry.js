@@ -303,6 +303,36 @@ import {
   exportAutotestReport
 } from '/public/js/modules/autotest-ui.js';
 
+// Phase 34: Intent Manager Module
+import {
+  loadIntentManagerData,
+  toggleTier,
+  loadTierStates,
+  updateTier4StatusLabel,
+  setupTierToggles,
+  saveTierState,
+  renderIntentList,
+  getExampleCount,
+  getExamplesList,
+  renderExampleIntentList,
+  selectIntent,
+  selectExampleIntent,
+  renderKeywords,
+  renderExamples,
+  addKeyword,
+  removeKeyword,
+  addExample,
+  removeExample,
+  saveKeywords,
+  saveExamples,
+  loadTierThresholds,
+  handleTierThresholdChange,
+  resetTierThreshold,
+  testIntentManager,
+  exportIntentData,
+  updateTierUI
+} from '/public/js/modules/intent-manager.js';
+
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
 
@@ -497,3 +527,30 @@ window.exportHistoricalReport = exportHistoricalReport;
 window.clearAutotestHistory = clearAutotestHistoryUI; // Override Phase 30's clearAutotestHistory
 window.toggleExportDropdown = toggleExportDropdown;
 window.exportAutotestReport = exportAutotestReport;
+// Phase 34: Intent Manager
+window.loadIntentManagerData = loadIntentManagerData;
+window.toggleTier = toggleTier;
+window.loadTierStates = loadTierStates;
+window.updateTier4StatusLabel = updateTier4StatusLabel;
+window.setupTierToggles = setupTierToggles;
+window.saveTierState = saveTierState;
+window.renderIntentList = renderIntentList;
+window.getExampleCount = getExampleCount;
+window.getExamplesList = getExamplesList;
+window.renderExampleIntentList = renderExampleIntentList;
+window.selectIntent = selectIntent;
+window.selectExampleIntent = selectExampleIntent;
+window.renderKeywords = renderKeywords;
+window.renderExamples = renderExamples;
+window.addKeyword = addKeyword;
+window.removeKeyword = removeKeyword;
+window.addExample = addExample;
+window.removeExample = removeExample;
+window.saveKeywords = saveKeywords;
+window.saveExamples = saveExamples;
+window.loadTierThresholds = loadTierThresholds;
+window.handleTierThresholdChange = handleTierThresholdChange;
+window.resetTierThreshold = resetTierThreshold;
+window.testIntentManager = testIntentManager;
+window.exportIntentData = exportIntentData;
+window.updateTierUI = updateTierUI;
