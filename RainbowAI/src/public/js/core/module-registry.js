@@ -284,6 +284,9 @@ import {
   SCENARIO_ID_TO_INTENT
 } from '/public/js/modules/autotest-execution.js';
 
+// Phase 32: Autotest Scenarios Data Module
+import { AUTOTEST_SCENARIOS } from '/public/js/modules/autotest-scenarios.js';
+
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
 
@@ -465,3 +468,5 @@ window.runScenario = runScenario;
 window.validateScenario = validateScenario;
 window.evaluateRule = evaluateRule;
 window.SCENARIO_ID_TO_INTENT = SCENARIO_ID_TO_INTENT;
+// Phase 32: Autotest Scenarios Data
+window.AUTOTEST_SCENARIOS = AUTOTEST_SCENARIOS;

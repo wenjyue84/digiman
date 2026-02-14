@@ -120,6 +120,45 @@ export async function providerChat(
     return response.choices[0]?.message?.content?.trim() || null;
   }
 
+  // google-gemini uses native Gemini API format
+  if (provider.type === 'google-gemini') {
+    // Convert OpenAI-style messages to Gemini format
+    const contents = messages.map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+
+    const body = {
+      contents,
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        temperature
+      }
+    };
+
+    // Add JSON response format if requested
+    if (jsonMode) {
+      body.generationConfig.responseMimeType = 'application/json';
+    }
+
+    const url = `${provider.base_url}/models/${provider.model}:generateContent?key=${apiKey}`;
+    const res = await axios.post(url, body, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 60000,
+      validateStatus: () => true
+    });
+
+    if (res.status !== 200) {
+      const errText = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+      if (res.status === 429) {
+        console.error(`[AI] ⚠️  RATE LIMIT HIT - ${provider.name}`);
+      }
+      throw new Error(`${provider.name} ${res.status}: ${errText.slice(0, 200)}`);
+    }
+
+    return res.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+  }
+
   // openai-compatible & ollama both use axios
   const body: any = {
     model: provider.model,

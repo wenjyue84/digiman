@@ -246,6 +246,61 @@ export async function notifyAdminConfigCorruption(corruptedFiles: string[]): Pro
 }
 
 /**
+ * Send general configuration error alert to system admin.
+ *
+ * Use this for runtime config validation failures (missing routes, invalid workflows, etc.).
+ * Implements 5-minute cooldown per unique message to prevent spam.
+ *
+ * @param message - Error description to send to admin
+ * @returns Promise that resolves when notification sent (or skipped due to cooldown)
+ *
+ * @example
+ * ```typescript
+ * notifyAdminConfigError(
+ *   'Intent "pricing" classified but missing from routing.json.\n\n' +
+ *   'Add this intent to routing.json with appropriate action.'
+ * ).catch(() => {}); // Fire-and-forget to avoid blocking guest responses
+ * ```
+ */
+export async function notifyAdminConfigError(message: string): Promise<void> {
+  if (!notificationContext) {
+    logger.warn('Not initialized — cannot send config error notification');
+    return;
+  }
+
+  // Deduplicate rapid notifications (same message within 5 minutes)
+  const COOLDOWN_MS = 5 * 60 * 1000;
+  const now = Date.now();
+  const cacheKey = `config_error:${message}`;
+  const lastTime = lastReconnectNotifyAt.get(cacheKey) || 0;
+
+  if (now - lastTime < COOLDOWN_MS) {
+    logger.info('Config error notification skipped (cooldown)', { messageHash: message.slice(0, 50) });
+    return;
+  }
+  lastReconnectNotifyAt.set(cacheKey, now);
+
+  const settings = await loadAdminNotificationSettings();
+  if (!settings.enabled) {
+    logger.info('Config error notifications disabled in settings');
+    return;
+  }
+
+  const notification =
+    `🔧 *Rainbow Config Error*\n\n${message}\n\n` +
+    `📊 Check dashboard: http://localhost:3002/admin/rainbow\n\n` +
+    `🕐 Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}`;
+
+  try {
+    await notificationContext.sendMessage(settings.systemAdminPhone, notification);
+    logger.info('Sent config error notification', { toPhone: settings.systemAdminPhone });
+  } catch (err: any) {
+    logger.error('Failed to send config error notification', { error: err.message });
+    // Don't throw - notification failure should not block guest responses
+  }
+}
+
+/**
  * Send AI provider rate limit alert to system admin
  * Notifies when a provider hits too many consecutive 429 errors
  */

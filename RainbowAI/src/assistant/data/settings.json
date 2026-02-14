@@ -9,6 +9,18 @@
     "chat_temperature": 0.7,
     "providers": [
       {
+        "id": "google-gemini-flash",
+        "name": "Google Gemini 2.5 Flash",
+        "description": "Google's latest Gemini 2.5 Flash model (stable, June 2025). Ultra-fast, multimodal, 1M token context, and excellent at multilingual understanding. Native Google Translate integration for superior casual/slang comprehension. Best for real-time WhatsApp chat.",
+        "type": "google-gemini",
+        "api_key_env": "GEMINI_API_KEY",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta",
+        "model": "gemini-2.5-flash",
+        "enabled": true,
+        "priority": 0,
+        "available": true
+      },
+      {
         "id": "ollama-local",
         "name": "Ollama GPT-OSS 20B",
         "description": "Fastest cloud model via Ollama (~3s). GPT-4 class quality with visible chain-of-thought. No rate limits, no API key needed. Best default for all tasks.",
@@ -17,7 +29,7 @@
         "base_url": "http://localhost:11434/v1",
         "model": "gpt-oss:20b-cloud",
         "enabled": true,
-        "priority": 0,
+        "priority": 1,
         "available": true
       },
       {
@@ -29,7 +41,7 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "llama-3.3-70b-versatile",
         "enabled": true,
-        "priority": 1,
+        "priority": 2,
         "available": true
       },
       {
@@ -41,7 +53,7 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "llama-3.1-8b-instant",
         "enabled": true,
-        "priority": 2,
+        "priority": 3,
         "available": true
       },
       {
@@ -53,7 +65,7 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "qwen3-32b",
         "enabled": false,
-        "priority": 3,
+        "priority": 4,
         "available": true
       },
       {
@@ -65,7 +77,7 @@
         "base_url": "http://localhost:11434/v1",
         "model": "deepseek-v3.2:cloud",
         "enabled": false,
-        "priority": 4,
+        "priority": 5,
         "available": true
       },
       {
@@ -77,7 +89,7 @@
         "base_url": "http://localhost:11434/v1",
         "model": "qwen3-next:80b-cloud",
         "enabled": false,
-        "priority": 5,
+        "priority": 6,
         "available": true
       },
       {
@@ -89,7 +101,7 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "llama-4-scout-17b",
         "enabled": false,
-        "priority": 6,
+        "priority": 7,
         "available": true
       },
       {
@@ -101,7 +113,7 @@
         "base_url": "https://api.groq.com/openai/v1",
         "model": "deepseek-r1-distill-llama-70b",
         "enabled": false,
-        "priority": 7,
+        "priority": 8,
         "available": true
       },
       {
@@ -113,7 +125,7 @@
         "base_url": "http://localhost:11434/v1",
         "model": "gemini-3-flash-preview:cloud",
         "enabled": true,
-        "priority": 8,
+        "priority": 9,
         "available": true
       },
       {
@@ -125,7 +137,7 @@
         "base_url": "https://api.moonshot.ai/v1",
         "model": "kimi-k2.5",
         "enabled": false,
-        "priority": 9,
+        "priority": 10,
         "available": true
       },
       {
@@ -137,7 +149,7 @@
         "base_url": "https://openrouter.ai/api/v1",
         "model": "qwen/qwen-2.5-32b-instruct",
         "enabled": false,
-        "priority": 10,
+        "priority": 11,
         "available": true
       },
       {
@@ -149,7 +161,7 @@
         "base_url": "https://openrouter.ai/api/v1",
         "model": "google/gemma-2-9b-it:free",
         "enabled": false,
-        "priority": 11,
+        "priority": 12,
         "available": true
       },
       {
@@ -161,7 +173,7 @@
         "base_url": "https://openrouter.ai/api/v1",
         "model": "meta-llama/llama-3.1-8b-instruct:free",
         "enabled": false,
-        "priority": 12,
+        "priority": 13,
         "available": true
       },
       {
@@ -173,7 +185,7 @@
         "base_url": "https://openrouter.ai/api/v1",
         "model": "mistralai/mistral-7b-instruct:free",
         "enabled": false,
-        "priority": 13,
+        "priority": 14,
         "available": true
       },
       {
@@ -185,7 +197,7 @@
         "base_url": "https://openrouter.ai/api/v1",
         "model": "microsoft/phi-3-medium-128k-instruct:free",
         "enabled": false,
-        "priority": 14,
+        "priority": 15,
         "available": true
       }
     ],

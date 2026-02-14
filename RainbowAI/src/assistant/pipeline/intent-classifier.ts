@@ -23,6 +23,7 @@ import { buildSystemPrompt, getTimeContext, guessTopicFiles } from '../knowledge
 import { detectLanguage, getTemplate } from '../formatter.js';
 import { sendWhatsAppTypingIndicator } from '../../lib/baileys-client.js';
 import { applyConversationSummarization } from '../conversation-summarizer.js';
+import { notifyAdminConfigError } from '../../lib/admin-notifier.js';
 import { detectMessageType } from '../problem-detector.js';
 import {
   getOrCreate, addMessage, updateBookingState, updateWorkflowState,
@@ -250,7 +251,26 @@ export async function classifyAndRoute(
   // ─── Route resolution & action dispatch ─────────────────────────
   const routingConfig = configStore.getRouting();
   const route = routingConfig[result.intent];
-  const routedAction: string = route?.action || result.action;
+
+  let routedAction: string;
+  if (!route) {
+    // FAIL-FAST: Missing routing config is critical misconfiguration
+    console.error(`[Router] ❌ CRITICAL: Intent "${result.intent}" not in routing.json`);
+    console.error(`[Router] Available routes: ${Object.keys(routingConfig).slice(0, 10).join(', ')}...`);
+
+    // Notify admin (async, don't block)
+    notifyAdminConfigError(
+      `Intent "${result.intent}" classified but missing from routing.json.\n\n` +
+      `Add this intent to routing.json with appropriate action.`
+    ).catch(() => {});
+
+    // Graceful degradation: Use LLM reply as safe fallback
+    routedAction = 'llm_reply';
+    diaryEvent.configError = `missing_route:${result.intent}`;
+    console.warn(`[Router] ⚠️ Using llm_reply fallback for missing route`);
+  } else {
+    routedAction = route.action;
+  }
 
   const messageType = detectMessageType(processText);
   const repeatCheck = checkRepeatIntent(phone, result.intent);
