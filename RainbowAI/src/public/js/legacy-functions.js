@@ -1247,147 +1247,9 @@ async function saveSettings() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ─── Admin Notification Settings ────────────────────────────────────
-async function updateSystemAdminPhone() {
-  try {
-    const input = document.getElementById('system-admin-phone-input');
-    const phone = input.value.trim();
-    if (!phone) {
-      toast('Please enter a phone number', 'error');
-      return;
-    }
-    await api('/admin-notifications/system-admin-phone', { method: 'PUT', body: { phone } });
-    toast('System admin phone updated successfully');
-  } catch (e) {
-    toast(e.message, 'error');
-  }
-}
-
-async function updateAdminNotifPrefs() {
-  try {
-    const enabled = document.getElementById('notify-enabled').checked;
-    const notifyDisconnect = document.getElementById('notify-disconnect').checked;
-    const notifyUnlink = document.getElementById('notify-unlink').checked;
-    const notifyReconnect = document.getElementById('notify-reconnect').checked;
-
-    await api('/admin-notifications/preferences', {
-      method: 'PUT',
-      body: { enabled, notifyDisconnect, notifyUnlink, notifyReconnect }
-    });
-    toast('Notification preferences updated');
-  } catch (e) {
-    toast(e.message, 'error');
-  }
-}
-
-function renderOperatorsList() {
-  const container = document.getElementById('operators-list');
-  if (!container || !window.currentOperators) return;
-
-  if (window.currentOperators.length === 0) {
-    container.innerHTML = `
-      <div class="text-center text-neutral-500 py-4 text-sm">
-        No operators configured. Click "Add Operator" to get started.
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = window.currentOperators.map((op, index) => `
-    <div class="bg-white border rounded-lg p-3 flex items-center gap-3">
-      <div class="flex-shrink-0 w-8 h-8 bg-green-100 text-green-700 rounded-full flex items-center justify-center font-bold">
-        ${index + 1}
-      </div>
-      <div class="flex-1 grid grid-cols-3 gap-2">
-        <div>
-          <input
-            type="text"
-            value="${esc(op.label)}"
-            placeholder="Label (e.g., Operator 1)"
-            onchange="updateOperatorField(${index}, 'label', this.value)"
-            class="w-full px-2 py-1 border rounded text-sm"
-          />
-        </div>
-        <div>
-          <input
-            type="tel"
-            value="${esc(op.phone)}"
-            placeholder="60127088789"
-            onchange="updateOperatorField(${index}, 'phone', this.value)"
-            class="w-full px-2 py-1 border rounded text-sm"
-          />
-        </div>
-        <div class="flex items-center gap-1">
-          <input
-            type="number"
-            value="${op.fallbackMinutes}"
-            min="1"
-            onchange="updateOperatorField(${index}, 'fallbackMinutes', parseInt(this.value))"
-            class="w-16 px-2 py-1 border rounded text-sm"
-          />
-          <span class="text-xs text-neutral-500">min</span>
-        </div>
-      </div>
-      <button
-        onclick="removeOperator(${index})"
-        class="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-        title="Remove operator"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </button>
-    </div>
-  `).join('');
-}
-
-function addOperator() {
-  if (!window.currentOperators) window.currentOperators = [];
-
-  const newOperator = {
-    phone: '',
-    label: `Operator ${window.currentOperators.length + 1}`,
-    fallbackMinutes: 5
-  };
-
-  window.currentOperators.push(newOperator);
-  renderOperatorsList();
-  saveOperators();
-}
-
-function removeOperator(index) {
-  if (!window.currentOperators) return;
-
-  if (window.currentOperators.length === 1) {
-    toast('You must have at least one operator', 'error');
-    return;
-  }
-
-  if (confirm(`Remove ${window.currentOperators[index].label}?`)) {
-    window.currentOperators.splice(index, 1);
-    renderOperatorsList();
-    saveOperators();
-  }
-}
-
-function updateOperatorField(index, field, value) {
-  if (!window.currentOperators || !window.currentOperators[index]) return;
-
-  window.currentOperators[index][field] = value;
-  saveOperators();
-}
-
-async function saveOperators() {
-  try {
-    await api('/admin-notifications/operators', {
-      method: 'PUT',
-      body: { operators: window.currentOperators }
-    });
-    toast('Operators saved');
-  } catch (e) {
-    toast(e.message, 'error');
-  }
-}
+// ═════════════════════════════════════════════════════════════════════
+// Admin Notification Settings — EXTRACTED to modules/admin-notifications.js (Phase 16)
+// ═════════════════════════════════════════════════════════════════════
 
 // ═════════════════════════════════════════════════════════════════════
 // Workflow Tab
@@ -5964,6 +5826,12 @@ async function saveLLMSettings() {
     logFailures: document.getElementById('llm-log-failures').checked,
     enableContext: document.getElementById('llm-enable-context').checked
   };
+
+  // Preserve contextWindows from server (managed by Settings tab)
+  try {
+    const current = await fetch('/api/rainbow/intent-manager/llm-settings').then(r => r.json());
+    if (current && current.contextWindows) settings.contextWindows = current.contextWindows;
+  } catch (_) { /* contextWindows will use defaults if missing */ }
 
   try {
     const res = await fetch('/api/rainbow/intent-manager/llm-settings', {

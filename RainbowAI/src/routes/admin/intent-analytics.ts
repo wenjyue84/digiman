@@ -2,8 +2,8 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { db } from '../../lib/db.js';
 import { intentPredictions } from '../../../../shared/schema.js';
-import { desc, eq, sql, isNotNull } from 'drizzle-orm';
-import { serverError } from './http-utils.js';
+import { desc, eq, sql, isNull, isNotNull } from 'drizzle-orm';
+import { serverError, badRequest, notFound } from './http-utils.js';
 
 const router = Router();
 
@@ -183,6 +183,89 @@ router.get('/intent/low-confidence', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[Intent Analytics] ❌ Error fetching low confidence:', error);
     serverError(res, 'Failed to fetch low confidence predictions');
+  }
+});
+
+// ─── GET /api/rainbow/intent/predictions/pending ────────────────────
+// List unvalidated predictions for staff review
+router.get('/intent/predictions/pending', async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+
+    const pending = await db
+      .select({
+        id: intentPredictions.id,
+        messageText: intentPredictions.messageText,
+        predictedIntent: intentPredictions.predictedIntent,
+        confidence: intentPredictions.confidence,
+        tier: intentPredictions.tier,
+        model: intentPredictions.model,
+        phoneNumber: intentPredictions.phoneNumber,
+        createdAt: intentPredictions.createdAt,
+      })
+      .from(intentPredictions)
+      .where(isNull(intentPredictions.wasCorrect))
+      .orderBy(desc(intentPredictions.createdAt))
+      .limit(limit);
+
+    // Count total unvalidated
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(intentPredictions)
+      .where(isNull(intentPredictions.wasCorrect));
+
+    res.json({
+      success: true,
+      predictions: pending,
+      total: totalResult[0].count,
+    });
+  } catch (error) {
+    console.error('[Intent Analytics] Error fetching pending predictions:', error);
+    serverError(res, 'Failed to fetch pending predictions');
+  }
+});
+
+// ─── PATCH /api/rainbow/intent/predictions/:id ──────────────────────
+// Validate a single prediction (staff marks correct or provides actual intent)
+router.patch('/intent/predictions/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { actualIntent } = req.body;
+
+    if (!actualIntent) {
+      return badRequest(res, 'actualIntent is required');
+    }
+
+    // Fetch the prediction to compare
+    const existing = await db
+      .select({ predictedIntent: intentPredictions.predictedIntent })
+      .from(intentPredictions)
+      .where(eq(intentPredictions.id, id))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return notFound(res, 'Prediction');
+    }
+
+    const wasCorrect = existing[0].predictedIntent === actualIntent;
+
+    await db
+      .update(intentPredictions)
+      .set({
+        actualIntent,
+        wasCorrect,
+        correctionSource: 'manual',
+        correctedAt: new Date(),
+      })
+      .where(eq(intentPredictions.id, id));
+
+    res.json({
+      success: true,
+      updated: { id, wasCorrect, actualIntent },
+    });
+  } catch (error) {
+    console.error('[Intent Analytics] Error validating prediction:', error);
+    serverError(res, 'Failed to validate prediction');
   }
 });
 

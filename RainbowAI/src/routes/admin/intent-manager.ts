@@ -165,7 +165,8 @@ const defaultLLMSettings = {
   systemPrompt: '',
   fallbackUnknown: true,
   logFailures: true,
-  enableContext: true
+  enableContext: true,
+  contextWindows: { classify: 5, reply: 10, combined: 20 }
 };
 
 // Local-first: always read from RainbowAI data so Understanding tab works without port 5000 and save never fails due to proxy
@@ -262,6 +263,19 @@ router.put('/intent-manager/llm-settings', async (req: Request, res: Response) =
       }
       if (typeof sp.priority !== 'number') {
         return badRequest(res, 'Each selectedProvider must have a priority number');
+      }
+    }
+  }
+  if (settings.contextWindows !== undefined) {
+    if (typeof settings.contextWindows !== 'object' || settings.contextWindows === null) {
+      return badRequest(res, 'contextWindows must be an object');
+    }
+    for (const key of ['classify', 'reply', 'combined'] as const) {
+      const v = settings.contextWindows[key];
+      if (v !== undefined) {
+        if (typeof v !== 'number' || !Number.isInteger(v) || v < 1 || v > 50) {
+          return badRequest(res, `contextWindows.${key} must be an integer between 1 and 50`);
+        }
       }
     }
   }

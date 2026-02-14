@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { toast } from '../toast.js';
 import { escapeHtml as esc } from '../core/utils.js';
+import { renderContextWindowsCard } from './context-windows-ui.js';
 
 /**
  * Global state for settings
@@ -204,6 +205,13 @@ function renderAiModelsTab(container) {
       </div>
     </div>
   `;
+
+  // Append Context Windows card (loads current values from API)
+  api('/intent-manager/llm-settings').then(llm => {
+    container.insertAdjacentHTML('beforeend', renderContextWindowsCard(llm.contextWindows));
+  }).catch(() => {
+    container.insertAdjacentHTML('beforeend', renderContextWindowsCard(null));
+  });
 
   // Stagger auto speed tests (one every 600ms) so providers aren't hit concurrently.
   const available = providers.filter(p => p.available);
