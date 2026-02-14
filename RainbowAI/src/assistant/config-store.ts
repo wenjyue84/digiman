@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from '
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { ZodType } from 'zod';
+import { getDefaultConfig } from './default-configs.js';
 
 // Types are now defined via Zod schemas in schemas.ts
 // Re-export so existing consumers don't break
@@ -39,15 +40,31 @@ class ConfigStore extends EventEmitter {
   private workflow!: WorkflowData;
   private workflows!: WorkflowsData;
   private routing!: RoutingData;
+  private corruptedFiles: string[] = []; // Track corrupted files for admin notification
 
   constructor() {
     super();
+  }
+
+  /** Get list of files that failed to load (used for admin notification) */
+  getCorruptedFiles(): string[] {
+    return [...this.corruptedFiles];
+  }
+
+  /** Clear corrupted files list (after admin fixes) */
+  clearCorruptedFiles(): void {
+    this.corruptedFiles = [];
   }
 
   init(): void {
     if (!existsSync(DATA_DIR)) {
       mkdirSync(DATA_DIR, { recursive: true });
     }
+
+    // Clear corrupted files list from previous init
+    this.corruptedFiles = [];
+
+    // Load all configs (may use defaults if corrupted)
     this.knowledge = this.loadJSON<KnowledgeData>('knowledge.json', knowledgeDataSchema);
     this.intents = this.loadJSON<IntentsData>('intents.json', intentsDataSchema);
     this.templates = this.loadJSON<TemplatesData>('templates.json', templatesDataSchema);
@@ -55,7 +72,15 @@ class ConfigStore extends EventEmitter {
     this.workflow = this.loadJSON<WorkflowData>('workflow.json', workflowDataSchema);
     this.workflows = this.loadJSON<WorkflowsData>('workflows.json', workflowsDataSchema);
     this.routing = this.loadJSON<RoutingData>('routing.json', routingDataSchema);
-    console.log('[ConfigStore] All config files loaded and validated');
+
+    if (this.corruptedFiles.length > 0) {
+      console.warn(`[ConfigStore] ⚠️ ${this.corruptedFiles.length} config file(s) failed to load — using defaults`);
+      console.warn(`[ConfigStore] Corrupted files: ${this.corruptedFiles.join(', ')}`);
+      console.warn(`[ConfigStore] Admin will be notified via WhatsApp`);
+      // Notification will be sent later by the caller (after WhatsApp is initialized)
+    } else {
+      console.log('[ConfigStore] ✅ All config files loaded and validated');
+    }
   }
 
   // ─── Getters ────────────────────────────────────────────────────
@@ -171,30 +196,64 @@ class ConfigStore extends EventEmitter {
 
   /**
    * Load and optionally validate a JSON config file.
-   * On validation failure: logs warning but returns unvalidated data (don't crash startup).
+   * On any failure (missing file, malformed JSON, validation error):
+   * - Logs error details
+   * - Returns safe default config
+   * - Tracks corrupted file for admin notification
+   * - NEVER crashes startup
    */
   private loadJSON<T>(filename: string, schema?: ZodType<T>): T {
     const filepath = join(DATA_DIR, filename);
-    if (!existsSync(filepath)) {
-      throw new Error(`[ConfigStore] Missing config file: ${filepath}`);
-    }
-    const raw = readFileSync(filepath, 'utf-8');
-    const parsed = JSON.parse(raw);
 
-    if (schema) {
-      const result = schema.safeParse(parsed);
-      if (!result.success) {
-        const issues = result.error.issues
-          .slice(0, 5) // Show max 5 issues
-          .map(i => `  ${i.path.join('.')}: ${i.message}`)
-          .join('\n');
-        console.warn(`[ConfigStore] ⚠️ Validation warnings for ${filename}:\n${issues}`);
-        console.warn(`[ConfigStore] Using data as-is for ${filename} (${result.error.issues.length} issue(s))`);
-        return parsed as T;
+    try {
+      // Check file exists
+      if (!existsSync(filepath)) {
+        console.error(`[ConfigStore] ❌ Missing config file: ${filename}`);
+        console.error(`[ConfigStore] Using default config for ${filename}`);
+        this.corruptedFiles.push(filename);
+        return getDefaultConfig(filename) as T;
       }
-      return result.data;
+
+      // Read file
+      const raw = readFileSync(filepath, 'utf-8');
+
+      // Parse JSON (throws on malformed JSON)
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (parseErr: any) {
+        console.error(`[ConfigStore] ❌ Malformed JSON in ${filename}:`);
+        console.error(`[ConfigStore] ${parseErr.message}`);
+        console.error(`[ConfigStore] Using default config for ${filename}`);
+        this.corruptedFiles.push(filename);
+        return getDefaultConfig(filename) as T;
+      }
+
+      // Validate schema if provided
+      if (schema) {
+        const result = schema.safeParse(parsed);
+        if (!result.success) {
+          const issues = result.error.issues
+            .slice(0, 5) // Show max 5 issues
+            .map(i => `  ${i.path.join('.')}: ${i.message}`)
+            .join('\n');
+          console.error(`[ConfigStore] ❌ Schema validation failed for ${filename}:`);
+          console.error(issues);
+          console.error(`[ConfigStore] Using default config for ${filename}`);
+          this.corruptedFiles.push(filename);
+          return getDefaultConfig(filename) as T;
+        }
+        return result.data;
+      }
+
+      return parsed as T;
+    } catch (err: any) {
+      // Catch-all for unexpected errors (permissions, disk I/O, etc.)
+      console.error(`[ConfigStore] ❌ Unexpected error loading ${filename}:`, err.message);
+      console.error(`[ConfigStore] Using default config for ${filename}`);
+      this.corruptedFiles.push(filename);
+      return getDefaultConfig(filename) as T;
     }
-    return parsed as T;
   }
 
   private saveJSON(filename: string, data: unknown): void {

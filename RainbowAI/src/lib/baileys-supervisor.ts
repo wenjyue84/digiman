@@ -15,7 +15,8 @@ import { initBaileys, registerMessageHandler, sendWhatsAppMessage, getWhatsAppSt
 import { initAssistant } from '../assistant/index.js';
 import { callAPI } from './http-client.js';
 import { startDailyReportScheduler } from './daily-report.js';
-import { initAdminNotifier, notifyAdminServerStartup } from './admin-notifier.js';
+import { initAdminNotifier, notifyAdminServerStartup, notifyAdminConfigCorruption } from './admin-notifier.js';
+import { configStore } from '../assistant/config-store.js';
 
 interface SupervisorConfig {
   maxRetries: number;
@@ -93,6 +94,16 @@ async function attemptStart(config: SupervisorConfig): Promise<void> {
         console.warn(`[BaileysSupervisor] Failed to send server startup notification:`, err.message);
       });
     }, 5000); // 5 second delay to allow WhatsApp instances to connect
+
+    // Notify system admin of config corruption (if any files failed to load)
+    setTimeout(() => {
+      const corruptedFiles = configStore.getCorruptedFiles();
+      if (corruptedFiles.length > 0) {
+        notifyAdminConfigCorruption(corruptedFiles).catch(err => {
+          console.warn(`[BaileysSupervisor] Failed to send config corruption notification:`, err.message);
+        });
+      }
+    }, 5000); // Same 5 second delay to allow WhatsApp instances to connect
 
   } catch (err: any) {
     console.error(`[BaileysSupervisor] Baileys crashed: ${err.message}`);

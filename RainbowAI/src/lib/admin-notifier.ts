@@ -198,3 +198,46 @@ export async function notifyAdminServerStartup(): Promise<void> {
     console.error(`[AdminNotifier] Failed to send startup notification:`, err.message);
   }
 }
+
+/**
+ * Send config corruption alert to system admin
+ * Notifies when JSON config files fail to load and system falls back to defaults
+ */
+export async function notifyAdminConfigCorruption(corruptedFiles: string[]): Promise<void> {
+  if (!notificationContext) {
+    console.warn('[AdminNotifier] Not initialized — cannot send config corruption notification');
+    return;
+  }
+
+  if (corruptedFiles.length === 0) {
+    return; // Nothing to notify
+  }
+
+  const settings = await loadAdminNotificationSettings();
+  if (!settings.enabled) {
+    console.log('[AdminNotifier] Admin notifications disabled in settings');
+    return;
+  }
+
+  const fileList = corruptedFiles.map(f => `  • ${f}`).join('\n');
+  const message = `⚠️ *Configuration Error Detected*\n\n` +
+    `The following config files failed to load:\n${fileList}\n\n` +
+    `**Action Taken:**\n` +
+    `✅ Server started with safe default configs\n` +
+    `✅ Rainbow AI is operational in safe mode\n` +
+    `⚠️ Some features may be limited\n\n` +
+    `**What You Need to Do:**\n` +
+    `1. Check the config files for JSON syntax errors\n` +
+    `2. Fix any malformed JSON or missing required fields\n` +
+    `3. Restart the server to reload configs\n\n` +
+    `💡 *Tip:* Use the Rainbow Admin dashboard to edit configs:\n` +
+    `http://localhost:3002/dashboard\n\n` +
+    `Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}`;
+
+  try {
+    await notificationContext.sendMessage(settings.systemAdminPhone, message);
+    console.log(`[AdminNotifier] ✅ Sent config corruption notification to +${settings.systemAdminPhone}`);
+  } catch (err: any) {
+    console.error(`[AdminNotifier] Failed to send config corruption notification:`, err.message);
+  }
+}
