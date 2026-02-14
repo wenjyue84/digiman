@@ -8,12 +8,24 @@
  * api() and toast() are global from legacy-functions.js via esc/api/toast definitions.
  */
 
-import { runTests, runCoverage } from './modules/testing.js';
+import {
+  runTests, runCoverage,
+  showVitestHistory, closeVitestHistory, clearVitestHistory,
+  loadHistoricalVitestRun, exportHistoricalVitestRun,
+  exportVitestReport, toggleVitestExportDropdown
+} from './modules/testing.js';
 import { initHelp } from './modules/help.js';
 
 // Expose testing functions (not in legacy-functions.js)
 window.runTests = runTests;
 window.runCoverage = runCoverage;
+window.showVitestHistory = showVitestHistory;
+window.closeVitestHistory = closeVitestHistory;
+window.clearVitestHistory = clearVitestHistory;
+window.loadHistoricalVitestRun = loadHistoricalVitestRun;
+window.exportHistoricalVitestRun = exportHistoricalVitestRun;
+window.exportVitestReport = exportVitestReport;
+window.toggleVitestExportDropdown = toggleVitestExportDropdown;
 // Help tab: User vs Developer panels
 window.loadHelp = initHelp;
 

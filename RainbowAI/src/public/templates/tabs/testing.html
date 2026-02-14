@@ -3,7 +3,7 @@
         <h2 class="text-lg font-semibold text-neutral-800">Automated Test Runner</h2>
         <p class="text-sm text-neutral-500">Run Vitest unit, integration, and semantic tests from the browser</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-wrap">
         <select id="test-project-select" class="text-sm border rounded-lg px-3 py-2 bg-white">
           <option value="unit" selected>Unit Tests</option>
           <option value="integration">Integration Tests</option>
@@ -15,6 +15,34 @@
         <button id="btn-run-coverage" onclick="runCoverage()" class="text-sm bg-neutral-600 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition font-medium">
           Coverage
         </button>
+        <!-- History Button -->
+        <button id="btn-vitest-history" onclick="showVitestHistory()"
+          class="hidden text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-2 rounded-lg transition flex items-center gap-1"
+          title="View past test runs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>History</span>
+        </button>
+        <!-- Export Report Dropdown -->
+        <div id="vitest-export-dropdown" class="hidden relative">
+          <button onclick="toggleVitestExportDropdown()"
+            class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-2 rounded-lg transition flex items-center gap-1">
+            Export Report
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div id="vitest-export-menu"
+            class="hidden absolute right-0 mt-1 w-64 bg-white border border-neutral-300 rounded-xl shadow-lg z-50">
+            <button onclick="exportVitestReport('all')"
+              class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 rounded-t-xl">
+              <span>Export All Results</span>
+            </button>
+            <button onclick="exportVitestReport('failed')"
+              class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-200 rounded-b-xl">
+              <span>Export Failed Only</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -85,4 +113,30 @@
       </div>
       <div class="text-neutral-500 font-medium">No test results yet</div>
       <div class="text-sm text-neutral-400 mt-1">Select a test suite and click "Run Tests" to begin</div>
+    </div>
+
+    <!-- Vitest History Modal -->
+    <div id="vitest-history-modal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-semibold text-neutral-800">Test Run History</h3>
+          <div class="flex items-center gap-2">
+            <button onclick="clearVitestHistory()" class="text-xs text-red-500 hover:text-red-600 transition">Clear All</button>
+            <button onclick="closeVitestHistory()" class="text-neutral-500 hover:text-neutral-700">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <!-- History List -->
+        <div id="vitest-history-list" class="flex-1 overflow-y-auto space-y-2">
+          <div class="text-center text-neutral-400 text-sm py-12">
+            <p>No test history yet</p>
+            <p class="text-xs mt-1">Run tests to see results here</p>
+          </div>
+        </div>
+      </div>
     </div>

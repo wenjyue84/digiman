@@ -1,0 +1,8 @@
+Static KB Fallback - Quick Re-implementation Guide
+
+Files to modify:
+1. knowledge-base.ts - Add health tracking (3 variables, 2 functions in reloadAllKB, 4 helper functions, buildSystemPrompt check)
+2. admin-notifier.ts - Add notifyAdminKBFailure function
+3. config.ts - Add import and GET /kb/health endpoint
+
+All code already designed earlier in conversation. Apply systematically.

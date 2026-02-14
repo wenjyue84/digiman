@@ -111,10 +111,10 @@ async function loadTab(tabName, subTab = null) {
   // Normalize tab name
   const effectiveTabName = tabNameMapping[tabName] || tabName;
 
-  // Update URL hash if we are effectively changing the view but URL doesn't match
-  // This logic is tricky: if we called loadTab('settings', 'operators'), we expect URL to be #settings/operators
-  // If we called from hashchange, URL is already correct.
-  // We'll trust the caller (initTabs/hashchange) to handle hash, or we update it if it's vastly different.
+  // Stop dashboard status polling when navigating away from dashboard
+  if (typeof window.stopStatusPolling === 'function') {
+    window.stopStatusPolling();
+  }
 
   // Hide all tabs
   document.querySelectorAll('.tab-content').forEach(tab => {

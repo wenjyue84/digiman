@@ -30,7 +30,8 @@ export async function initConversations(): Promise<void> {
 
   const savedStates = await loadActiveStates(TTL_MS);
   for (const { phone, state } of savedStates) {
-    conversationManager.set(phone, state);
+    // Add empty messages array since messages are stored separately in conversation log
+    conversationManager.set(phone, { ...state, messages: [] });
   }
 
   if (savedStates.length > 0) {

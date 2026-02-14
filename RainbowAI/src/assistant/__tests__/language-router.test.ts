@@ -1,4 +1,4 @@
-import { LanguageRouter } from '../language-router';
+import { LanguageRouter } from '../language-router.js';
 
 describe('LanguageRouter', () => {
   const router = new LanguageRouter();

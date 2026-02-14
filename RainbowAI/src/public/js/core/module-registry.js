@@ -34,7 +34,9 @@ import {
   quickActionAddWhatsApp,
   quickActionTrainIntent,
   quickActionTestChat,
-  refreshDashboard
+  refreshDashboard,
+  startStatusPolling,
+  stopStatusPolling
 } from '/public/js/modules/dashboard.js';
 
 // Phase 5: Intents & Routing Tab
@@ -298,6 +300,8 @@ window.quickActionAddWhatsApp = quickActionAddWhatsApp;
 window.quickActionTrainIntent = quickActionTrainIntent;
 window.quickActionTestChat = quickActionTestChat;
 window.refreshDashboard = refreshDashboard;
+window.startStatusPolling = startStatusPolling;
+window.stopStatusPolling = stopStatusPolling;
 window.loadIntents = loadIntents;
 window.changeRouting = changeRouting;
 window.changeWorkflowId = changeWorkflowId;

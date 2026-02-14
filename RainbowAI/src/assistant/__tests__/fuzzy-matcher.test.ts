@@ -1,4 +1,4 @@
-import { FuzzyIntentMatcher, type KeywordIntent } from '../fuzzy-matcher';
+import { FuzzyIntentMatcher, type KeywordIntent } from '../fuzzy-matcher.js';
 
 describe('FuzzyIntentMatcher', () => {
   const testIntents: KeywordIntent[] = [

@@ -137,6 +137,15 @@ function closeModal(id) {
   if (modal) modal.classList.add('hidden');
 }
 
+/**
+ * Sanitize string for use as CSS class name
+ * @param {string} s - String to sanitize
+ * @returns {string} CSS-safe string
+ */
+function css(s) {
+  return String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Content Processing Utilities (merged from utils-global.js)
 // ═══════════════════════════════════════════════════════════════════
@@ -207,6 +216,7 @@ window.closeModal = closeModal;
 window.hasSystemContent = hasSystemContent;
 window.getUserMessage = getUserMessage;
 window.formatSystemContent = formatSystemContent;
+window.css = css;
 
 // ═══════════════════════════════════════════════════════════════════
 // Exports for ES6 module consumers
@@ -214,5 +224,5 @@ window.formatSystemContent = formatSystemContent;
 
 export {
   toast, api, escapeHtml, escapeAttr, formatRelativeTime, formatDateTime,
-  closeModal, hasSystemContent, getUserMessage, formatSystemContent
+  closeModal, hasSystemContent, getUserMessage, formatSystemContent, css
 };
