@@ -386,6 +386,16 @@
       submitAddTemplate
     } from '/public/js/modules/responses-crud.js';
 
+    // Phase 8: WhatsApp Instance Management Module
+    import {
+      showAddInstance,
+      onPhoneInput,
+      refreshWhatsAppList,
+      submitAddInstance,
+      logoutInstance,
+      removeInstance
+    } from '/public/js/modules/whatsapp-instances.js';
+
     // Expose to global scope (required by tabs.js and onclick handlers)
     window.loadWhatsappAccounts = loadWhatsappAccounts;
     window.loadUnderstanding = loadUnderstanding;
@@ -442,6 +452,13 @@
     window.deleteMessageTemplate = deleteMessageTemplate;
     window.showAddTemplate = showAddTemplate;
     window.submitAddTemplate = submitAddTemplate;
+    // Phase 8: WhatsApp Instance Management
+    window.showAddInstance = showAddInstance;
+    window.onPhoneInput = onPhoneInput;
+    window.refreshWhatsAppList = refreshWhatsAppList;
+    window.submitAddInstance = submitAddInstance;
+    window.logoutInstance = logoutInstance;
+    window.removeInstance = removeInstance;
   </script>
 
   <!-- ES6 Module Scripts (deferred - run after all regular scripts) -->
