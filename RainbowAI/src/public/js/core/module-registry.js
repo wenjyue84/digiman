@@ -233,47 +233,18 @@ import {
 } from '/public/js/modules/chat-preview.js';
 
 // Phase 27: Workflow Management Module
+// NOTE: workflows.js self-registers loadWorkflow on window. Only import actual exports.
 import {
   loadWorkflow,
-  renderWorkflowList,
-  selectWorkflow,
-  renderStepsList,
-  showAddWorkflowModal,
-  submitAddWorkflow,
-  showEditWorkflowModal,
-  submitEditWorkflow,
-  deleteWorkflow,
-  showAddStepModal,
-  submitAddStep,
-  showEditStepModal,
-  submitEditStep,
-  deleteStep,
-  saveWorkflowOrder
+  editWorkflow
 } from '/public/js/modules/workflows.js';
 
 // Phase 28: Settings Tab Module
+// NOTE: Many settings functions were moved to settings-ai-models.js and other sub-modules
+// that self-register on window. Only import what settings.js still exports.
 import {
   loadSettings,
-  setupConversationManagementListeners,
-  renderProvidersList,
-  toggleInactiveProviders,
-  toggleProvider,
-  moveProvider,
-  autoSaveProviders,
-  testProvider,
-  saveSettings,
-  saveRateLimitSettings,
-  saveStaffPhoneSettings,
-  saveSystemPromptSettings,
-  renderIntentClassificationModelsList,
-  saveIntentClassificationModels,
-  selectAllIntentModels,
-  deselectAllIntentModels,
-  moveIntentModel,
-  onAIProviderCheckbox,
-  toggleAdvancedSettings,
-  saveWorkflowSettings,
-  saveAutoEscalateThreshold
+  switchSettingsTab
 } from '/public/js/modules/settings.js';
 
 // ─── Expose to global scope ────────────────────────────────────────
@@ -419,41 +390,9 @@ window.clearCurrentChat = clearCurrentChat;
 window.clearChat = clearChat;
 window.renderChatMessages = renderChatMessages;
 window.loadPreview = loadPreview;
-// Phase 27: Workflow Management
+// Phase 27: Workflow Management (workflows.js also self-registers loadWorkflow)
 window.loadWorkflow = loadWorkflow;
-window.renderWorkflowList = renderWorkflowList;
-window.selectWorkflow = selectWorkflow;
-window.renderStepsList = renderStepsList;
-window.showAddWorkflowModal = showAddWorkflowModal;
-window.submitAddWorkflow = submitAddWorkflow;
-window.showEditWorkflowModal = showEditWorkflowModal;
-window.submitEditWorkflow = submitEditWorkflow;
-window.deleteWorkflow = deleteWorkflow;
-window.showAddStepModal = showAddStepModal;
-window.submitAddStep = submitAddStep;
-window.showEditStepModal = showEditStepModal;
-window.submitEditStep = submitEditStep;
-window.deleteStep = deleteStep;
-window.saveWorkflowOrder = saveWorkflowOrder;
-// Phase 28: Settings Tab
+window.editWorkflow = editWorkflow;
+// Phase 28: Settings Tab (other settings functions self-register from sub-modules)
 window.loadSettings = loadSettings;
-window.setupConversationManagementListeners = setupConversationManagementListeners;
-window.renderProvidersList = renderProvidersList;
-window.toggleInactiveProviders = toggleInactiveProviders;
-window.toggleProvider = toggleProvider;
-window.moveProvider = moveProvider;
-window.autoSaveProviders = autoSaveProviders;
-window.testProvider = testProvider;
-window.saveSettings = saveSettings;
-window.saveRateLimitSettings = saveRateLimitSettings;
-window.saveStaffPhoneSettings = saveStaffPhoneSettings;
-window.saveSystemPromptSettings = saveSystemPromptSettings;
-window.renderIntentClassificationModelsList = renderIntentClassificationModelsList;
-window.saveIntentClassificationModels = saveIntentClassificationModels;
-window.selectAllIntentModels = selectAllIntentModels;
-window.deselectAllIntentModels = deselectAllIntentModels;
-window.moveIntentModel = moveIntentModel;
-window.onAIProviderCheckbox = onAIProviderCheckbox;
-window.toggleAdvancedSettings = toggleAdvancedSettings;
-window.saveWorkflowSettings = saveWorkflowSettings;
-window.saveAutoEscalateThreshold = saveAutoEscalateThreshold;
+window.switchSettingsTab = switchSettingsTab;

@@ -1577,12 +1577,60 @@
       ],
       "messageType": "info",
       "routedAction": "static_reply"
+    },
+    {
+      "role": "assistant",
+      "content": "dd",
+      "timestamp": 1771087675509,
+      "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "ddd",
+      "timestamp": 1771087981564,
+      "manual": true
+    },
+    {
+      "role": "user",
+      "content": "Hi",
+      "timestamp": 1771087987044
+    },
+    {
+      "role": "assistant",
+      "content": "Let me check that for you... 💭",
+      "timestamp": 1771087990089,
+      "action": "thinking"
+    },
+    {
+      "role": "assistant",
+      "content": "Hello, welcome to Pelangi Capsule Hostel",
+      "timestamp": 1771087993747,
+      "intent": "greeting",
+      "confidence": 0.95,
+      "action": "static_reply",
+      "source": "tiered-llm-fallback",
+      "model": "Ollama GPT-OSS 20B",
+      "responseTime": 6685,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "faq.md"
+      ],
+      "messageType": "info",
+      "routedAction": "static_reply"
+    },
+    {
+      "role": "assistant",
+      "content": "ddd",
+      "timestamp": 1771088227790,
+      "manual": true
     }
   ],
   "createdAt": 1770921800697,
-  "updatedAt": 1771077165572,
+  "updatedAt": 1771088227790,
   "instanceId": "default",
-  "lastReadAt": 1771076897388,
+  "lastReadAt": 1771087993747,
   "favourite": true,
   "pinned": false,
   "responseMode": "autopilot"

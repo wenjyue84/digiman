@@ -30,6 +30,8 @@ export type IntentCategory =
   | 'card_locked'
   | 'theft'
   | 'card_locked'
+  | 'theft'
+  | 'card_locked'
   | 'contact_staff'
   | 'facilities'
   | 'rules'

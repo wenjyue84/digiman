@@ -1,4 +1,4 @@
-import { SemanticMatcher, type IntentExamples } from '../semantic-matcher';
+import { SemanticMatcher, type IntentExamples } from '../semantic-matcher.js';
 
 describe('SemanticMatcher', () => {
   let matcher: SemanticMatcher;

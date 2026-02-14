@@ -47,5 +47,11 @@ $langTest = "src/assistant/__tests__/language-router.test.ts"
 } | Set-Content $langTest
 Write-Host "  - Fixed language-router.test.ts" -ForegroundColor Green
 
+$semanticTest = "src/assistant/__tests__/semantic-matcher.test.ts"
+(Get-Content $semanticTest) | ForEach-Object {
+    $_ -replace "from '../semantic-matcher'", "from '../semantic-matcher.js'"
+} | Set-Content $semanticTest
+Write-Host "  - Fixed semantic-matcher.test.ts" -ForegroundColor Green
+
 Write-Host "`nAll fixes applied successfully!" -ForegroundColor Green
 Write-Host "`nRun 'npx tsc --noEmit' to verify the fixes reduced TypeScript errors." -ForegroundColor Cyan
