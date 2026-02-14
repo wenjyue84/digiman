@@ -200,6 +200,21 @@ import {
   updateWorkflowTestSelect
 } from '/public/js/modules/workflow-testing.js';
 
+// Phase 23: T4 LLM Settings Module
+import {
+  updateT4ProviderStatus,
+  scrollToElement,
+  scrollToProviders,
+  loadLLMSettings,
+  renderT4ProvidersList,
+  toggleT4InactiveProviders,
+  toggleT4Provider,
+  moveT4Provider,
+  autoSaveT4Providers,
+  testT4Provider,
+  saveLLMSettings
+} from '/public/js/modules/llm-settings.js';
+
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
 
@@ -317,3 +332,15 @@ window.executeWorkflowStep = executeWorkflowStep;
 window.sendTestMessage = sendTestMessage;
 window.appendTestMessage = appendTestMessage;
 window.updateWorkflowTestSelect = updateWorkflowTestSelect;
+// Phase 23: T4 LLM Settings
+window.updateT4ProviderStatus = updateT4ProviderStatus;
+window.scrollToElement = scrollToElement;
+window.scrollToProviders = scrollToProviders;
+window.loadLLMSettings = loadLLMSettings;
+window.renderT4ProvidersList = renderT4ProvidersList;
+window.toggleT4InactiveProviders = toggleT4InactiveProviders;
+window.toggleT4Provider = toggleT4Provider;
+window.moveT4Provider = moveT4Provider;
+window.autoSaveT4Providers = autoSaveT4Providers;
+window.testT4Provider = testT4Provider;
+window.saveLLMSettings = saveLLMSettings;
