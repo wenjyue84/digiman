@@ -232,6 +232,9 @@ import {
   loadPreview
 } from '/public/js/modules/chat-preview.js';
 
+// Phase 24b: Chat Send Module (Guest Simulation)
+import { sendChatMessage } from '/public/js/modules/chat-send.js';
+
 // Phase 27: Workflow Management Module
 import {
   loadWorkflow,
@@ -286,6 +289,19 @@ import {
 
 // Phase 32: Autotest Scenarios Data Module
 import { AUTOTEST_SCENARIOS } from '/public/js/modules/autotest-scenarios.js';
+
+// Phase 33: Autotest UI Module
+import {
+  renderScenarioCard,
+  showAutotestHistory,
+  closeAutotestHistory,
+  openImportedReport,
+  loadHistoricalReport,
+  exportHistoricalReport,
+  clearAutotestHistoryUI,
+  toggleExportDropdown,
+  exportAutotestReport
+} from '/public/js/modules/autotest-ui.js';
 
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
@@ -430,6 +446,7 @@ window.clearCurrentChat = clearCurrentChat;
 window.clearChat = clearChat;
 window.renderChatMessages = renderChatMessages;
 window.loadPreview = loadPreview;
+window.sendChatMessage = sendChatMessage;
 // Phase 27: Workflow Management
 window.loadWorkflow = loadWorkflow;
 window.renderWorkflowList = renderWorkflowList;
@@ -470,3 +487,13 @@ window.evaluateRule = evaluateRule;
 window.SCENARIO_ID_TO_INTENT = SCENARIO_ID_TO_INTENT;
 // Phase 32: Autotest Scenarios Data
 window.AUTOTEST_SCENARIOS = AUTOTEST_SCENARIOS;
+// Phase 33: Autotest UI
+window.renderScenarioCard = renderScenarioCard;
+window.showAutotestHistory = showAutotestHistory;
+window.closeAutotestHistory = closeAutotestHistory;
+window.openImportedReport = openImportedReport;
+window.loadHistoricalReport = loadHistoricalReport;
+window.exportHistoricalReport = exportHistoricalReport;
+window.clearAutotestHistory = clearAutotestHistoryUI; // Override Phase 30's clearAutotestHistory
+window.toggleExportDropdown = toggleExportDropdown;
+window.exportAutotestReport = exportAutotestReport;
