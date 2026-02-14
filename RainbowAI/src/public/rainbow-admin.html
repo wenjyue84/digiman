@@ -346,6 +346,24 @@
       deleteIntent
     } from '/public/js/modules/intents.js';
 
+    // Phase 6: Routing Templates Module
+    import {
+      buildSmartestRouting,
+      buildPerformanceRouting,
+      buildBalancedRouting,
+      routingMatchesTemplate,
+      getSavedTemplates,
+      saveTemplates,
+      renderTemplateButtons,
+      showIntentsTemplateHelp,
+      detectActiveTemplate,
+      applyTemplate,
+      showSaveTemplateModal,
+      submitSaveTemplate,
+      deleteTemplate,
+      saveCurrentAsCustom
+    } from '/public/js/modules/routing-templates.js';
+
     // Expose to global scope (required by tabs.js and onclick handlers)
     window.loadWhatsappAccounts = loadWhatsappAccounts;
     window.loadUnderstanding = loadUnderstanding;
@@ -375,6 +393,14 @@
     window.toggleTimeSensitive = toggleTimeSensitive;
     window.changeConfidence = changeConfidence;
     window.deleteIntent = deleteIntent;
+    window.renderTemplateButtons = renderTemplateButtons;
+    window.showIntentsTemplateHelp = showIntentsTemplateHelp;
+    window.detectActiveTemplate = detectActiveTemplate;
+    window.applyTemplate = applyTemplate;
+    window.showSaveTemplateModal = showSaveTemplateModal;
+    window.submitSaveTemplate = submitSaveTemplate;
+    window.deleteTemplate = deleteTemplate;
+    window.saveCurrentAsCustom = saveCurrentAsCustom;
   </script>
 
   <!-- ES6 Module Scripts (deferred - run after all regular scripts) -->

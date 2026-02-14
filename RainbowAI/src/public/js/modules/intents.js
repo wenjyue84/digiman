@@ -270,3 +270,22 @@ export async function deleteIntent(category) {
     loadIntents();
   } catch (e) { toast(e.message, 'error'); }
 }
+
+/**
+ * Getter functions for shared state (used by routing-templates.js)
+ */
+export function getCachedRouting() {
+  return cachedRouting;
+}
+
+export function getCachedKnowledge() {
+  return cachedKnowledge;
+}
+
+export function getCachedIntentNames() {
+  return cachedIntentNames;
+}
+
+export function getCachedWorkflows() {
+  return cachedWorkflows;
+}
