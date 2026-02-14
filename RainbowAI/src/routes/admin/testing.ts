@@ -6,6 +6,7 @@ import axios from 'axios';
 import { configStore } from '../../assistant/config-store.js';
 import { isAIAvailable, classifyAndRespond, testProvider } from '../../assistant/ai-client.js';
 import { buildSystemPrompt, guessTopicFiles } from '../../assistant/knowledge-base.js';
+import { ok, badRequest, notFound, serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ const router = Router();
 router.post('/intents/test', async (req: Request, res: Response) => {
   const { message } = req.body;
   if (!message || typeof message !== 'string') {
-    res.status(400).json({ error: 'message (string) required' });
+    badRequest(res, 'message (string) required');
     return;
   }
   try {
@@ -46,7 +47,7 @@ router.post('/intents/test', async (req: Request, res: Response) => {
       detectedLanguage: intentResult.detectedLanguage
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -143,7 +144,7 @@ function validateInputSafety(text: string): string | null {
 router.post('/preview/chat', async (req: Request, res: Response) => {
   const { message, history, sessionId } = req.body;
   if (!message || typeof message !== 'string') {
-    res.status(400).json({ error: 'message (string) required' });
+    badRequest(res, 'message (string) required');
     return;
   }
 
@@ -152,13 +153,7 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
 
   // If sanitization removed everything, return error
   if (!sanitizedMessage) {
-    res.status(400).json({
-      error: 'Invalid input',
-      message: 'Your message appears to be empty or contains only invalid characters.',
-      intent: 'unknown',
-      confidence: 0,
-      source: 'validation'
-    });
+    badRequest(res, 'Invalid input');
     return;
   }
 
@@ -459,13 +454,13 @@ router.post('/test-ai/:provider', async (req: Request, res: Response) => {
 router.post('/troubleshoot-provider', async (req: Request, res: Response) => {
   const { providerId } = req.body;
   if (!providerId || typeof providerId !== 'string') {
-    res.status(400).json({ ok: false, message: 'providerId required' });
+    badRequest(res, 'providerId required');
     return;
   }
   const settings = configStore.getSettings();
   const provider = settings.ai?.providers?.find((p: { id: string }) => p.id === providerId);
   if (!provider) {
-    res.status(404).json({ ok: false, message: `Provider "${providerId}" not found` });
+    notFound(res, `Provider "${providerId}"`);
     return;
   }
 
@@ -531,7 +526,7 @@ router.post('/troubleshoot-provider', async (req: Request, res: Response) => {
 router.post('/test-workflow/send-summary', async (req: Request, res: Response) => {
   const { workflowId, collectedData, phone } = req.body;
   if (!workflowId || !phone) {
-    res.status(400).json({ error: 'workflowId and phone required' });
+    badRequest(res, 'workflowId and phone required');
     return;
   }
 
@@ -539,7 +534,7 @@ router.post('/test-workflow/send-summary', async (req: Request, res: Response) =
     const workflows = configStore.getWorkflows();
     const workflow = workflows.workflows.find(w => w.id === workflowId);
     if (!workflow) {
-      res.status(404).json({ error: `Workflow "${workflowId}" not found` });
+      notFound(res, `Workflow "${workflowId}"`);
       return;
     }
 
@@ -570,10 +565,10 @@ router.post('/test-workflow/send-summary', async (req: Request, res: Response) =
     await sendWhatsAppMessage(phone, summary);
     console.log(`[Admin] Workflow test summary sent to ${phone}`);
 
-    res.json({ ok: true, message: 'Summary sent successfully', summary });
+    ok(res, { message: 'Summary sent successfully', summary });
   } catch (err: any) {
     console.error('[Admin] Failed to send workflow test summary:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -583,7 +578,7 @@ router.post('/tests/run', async (_req: Request, res: Response) => {
   const projectArg = (_req.body?.project as string) || 'unit';
   const allowed = ['unit', 'integration', 'semantic'];
   if (!allowed.includes(projectArg)) {
-    res.status(400).json({ error: `Invalid project: ${projectArg}. Allowed: ${allowed.join(', ')}` });
+    badRequest(res, `Invalid project: ${projectArg}. Allowed: ${allowed.join(', ')}`);
     return;
   }
 
@@ -658,7 +653,7 @@ router.post('/tests/run', async (_req: Request, res: Response) => {
       });
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -700,7 +695,7 @@ router.post('/tests/coverage', async (_req: Request, res: Response) => {
       raw: result.stderr.slice(0, 5000),
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -712,7 +707,7 @@ router.post('/tests/register-result', async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!filename || !timestamp || total === undefined) {
-      res.status(400).json({ error: 'Missing required fields: filename, timestamp, total' });
+      badRequest(res, 'Missing required fields: filename, timestamp, total');
       return;
     }
 
@@ -738,7 +733,7 @@ router.post('/tests/register-result', async (req: Request, res: Response) => {
       message: 'Test result registered successfully. Open the dashboard to see it in Test History.'
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -803,7 +798,7 @@ router.get('/tests/scan-reports', async (_req: Request, res: Response) => {
 
     res.json({ reports: validReports });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 

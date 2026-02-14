@@ -302,7 +302,7 @@
   <!-- Tab System (needs functions above to be defined) -->
   <script src="/public/js/core/tabs.js"></script>
 
-  <!-- Extracted modules (Phase 1-3) -->
+  <!-- Extracted modules (Phase 1-4 Complete) -->
   <script type="module">
     // Phase 1: Trivial Loaders
     import { loadWhatsappAccounts } from '/public/js/modules/whatsapp-accounts.js';
@@ -324,6 +324,17 @@
     import { loadResponses } from '/public/js/modules/responses.js';
     import { loadChatSimulator } from '/public/js/modules/chat-simulator.js';
 
+    // Phase 4: Complex Loaders (Final Phase)
+    import { loadSystemStatus, testAIProvider } from '/public/js/modules/system-status.js';
+    import {
+      loadDashboard,
+      dismissChecklist,
+      quickActionAddWhatsApp,
+      quickActionTrainIntent,
+      quickActionTestChat,
+      refreshDashboard
+    } from '/public/js/modules/dashboard.js';
+
     // Expose to global scope (required by tabs.js and onclick handlers)
     window.loadWhatsappAccounts = loadWhatsappAccounts;
     window.loadUnderstanding = loadUnderstanding;
@@ -338,6 +349,14 @@
     window.switchSimulatorTab = switchSimulatorTab;
     window.loadResponses = loadResponses;
     window.loadChatSimulator = loadChatSimulator;
+    window.loadSystemStatus = loadSystemStatus;
+    window.testAIProvider = testAIProvider;
+    window.loadDashboard = loadDashboard;
+    window.dismissChecklist = dismissChecklist;
+    window.quickActionAddWhatsApp = quickActionAddWhatsApp;
+    window.quickActionTrainIntent = quickActionTrainIntent;
+    window.quickActionTestChat = quickActionTestChat;
+    window.refreshDashboard = refreshDashboard;
   </script>
 
   <!-- ES6 Module Scripts (deferred - run after all regular scripts) -->

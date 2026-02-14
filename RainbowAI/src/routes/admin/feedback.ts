@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { db } from '../../lib/db.js';
 import { rainbowFeedback, insertRainbowFeedbackSchema } from '../../../../shared/schema.js';
 import { desc, eq, and, gte, lte, sql } from 'drizzle-orm';
+import { badRequest, serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -21,9 +22,9 @@ router.post('/feedback', async (req: Request, res: Response) => {
     console.error('[Feedback] ❌ Error saving feedback:', error);
     if (error instanceof Error && 'issues' in error) {
       // Zod validation error
-      res.status(400).json({ error: 'Validation error', details: (error as any).issues });
+      badRequest(res, 'Validation error');
     } else {
-      res.status(500).json({ error: 'Failed to save feedback' });
+      serverError(res, 'Failed to save feedback');
     }
   }
 });
@@ -133,7 +134,7 @@ router.get('/feedback/stats', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Feedback Stats] ❌ Error fetching stats:', error);
-    res.status(500).json({ error: 'Failed to fetch feedback stats' });
+    serverError(res, 'Failed to fetch feedback stats');
   }
 });
 
@@ -174,7 +175,7 @@ router.get('/feedback/recent', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Feedback Recent] ❌ Error fetching recent feedback:', error);
-    res.status(500).json({ error: 'Failed to fetch recent feedback' });
+    serverError(res, 'Failed to fetch recent feedback');
   }
 });
 
@@ -201,7 +202,7 @@ router.get('/feedback/low-rated', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Feedback Low-Rated] ❌ Error fetching low-rated feedback:', error);
-    res.status(500).json({ error: 'Failed to fetch low-rated feedback' });
+    serverError(res, 'Failed to fetch low-rated feedback');
   }
 });
 

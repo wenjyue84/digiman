@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import QRCode from 'qrcode';
 import { logoutWhatsApp, whatsappManager } from '../../lib/baileys-client.js';
+import { ok, badRequest, notFound, serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -10,9 +11,9 @@ const router = Router();
 router.post('/whatsapp/logout', async (_req: Request, res: Response) => {
   try {
     await logoutWhatsApp();
-    res.json({ ok: true, message: 'WhatsApp session logged out' });
+    ok(res, { message: 'WhatsApp session logged out' });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
@@ -25,56 +26,60 @@ router.get('/whatsapp/instances', (_req: Request, res: Response) => {
 router.post('/whatsapp/instances', async (req: Request, res: Response) => {
   const { id, label } = req.body;
   if (!id || typeof id !== 'string') {
-    res.status(400).json({ error: 'id (phone number or slug) is required' });
+    badRequest(res, 'id (phone number or slug) is required');
     return;
   }
   if (!label || typeof label !== 'string') {
-    res.status(400).json({ error: 'label is required' });
+    badRequest(res, 'label is required');
     return;
   }
   const trimId = id.trim();
   const trimLabel = label.trim();
   if (trimId.length < 2 || trimId.length > 20) {
-    res.status(400).json({ error: 'Instance ID must be 2-20 characters' });
+    badRequest(res, 'Instance ID must be 2-20 characters');
     return;
   }
   try {
     const status = await whatsappManager.addInstance(trimId, trimLabel);
-    res.json({ ok: true, instance: status });
+    ok(res, { instance: status });
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    badRequest(res, e.message);
   }
 });
 
 router.patch('/whatsapp/instances/:id', (req: Request, res: Response) => {
   const { label } = req.body;
   if (label === undefined || typeof label !== 'string') {
-    res.status(400).json({ error: 'label (string) is required' });
+    badRequest(res, 'label (string) is required');
     return;
   }
   try {
     const status = whatsappManager.updateInstanceLabel(req.params.id, label.trim());
-    res.json({ ok: true, instance: status });
+    ok(res, { instance: status });
   } catch (e: any) {
-    res.status(e.message?.includes('not found') ? 404 : 400).json({ error: e.message });
+    if (e.message?.includes('not found')) {
+      notFound(res, 'Instance');
+    } else {
+      badRequest(res, e.message);
+    }
   }
 });
 
 router.delete('/whatsapp/instances/:id', async (req: Request, res: Response) => {
   try {
     await whatsappManager.removeInstance(req.params.id);
-    res.json({ ok: true, message: `Instance "${req.params.id}" removed` });
+    ok(res, { message: `Instance "${req.params.id}" removed` });
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    badRequest(res, e.message);
   }
 });
 
 router.post('/whatsapp/instances/:id/logout', async (req: Request, res: Response) => {
   try {
     await whatsappManager.logoutInstance(req.params.id);
-    res.json({ ok: true, message: `Instance "${req.params.id}" logged out` });
+    ok(res, { message: `Instance "${req.params.id}" logged out` });
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    badRequest(res, e.message);
   }
 });
 
@@ -82,7 +87,7 @@ router.get('/whatsapp/instances/:id/qr', async (req: Request, res: Response) => 
   try {
     const status = whatsappManager.getInstanceStatus(req.params.id);
     if (!status) {
-      res.status(404).json({ error: `Instance "${req.params.id}" not found` });
+      notFound(res, `Instance "${req.params.id}"`);
       return;
     }
     let qrDataUrl: string | null = null;
@@ -96,7 +101,7 @@ router.get('/whatsapp/instances/:id/qr', async (req: Request, res: Response) => 
       qrDataUrl
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 

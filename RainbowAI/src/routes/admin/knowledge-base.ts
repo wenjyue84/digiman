@@ -6,6 +6,7 @@ import { configStore } from '../../assistant/config-store.js';
 import { getKnowledgeMarkdown, setKnowledgeMarkdown, buildSystemPrompt, guessTopicFiles } from '../../assistant/knowledge-base.js';
 import { isAIAvailable, classifyAndRespond, chat } from '../../assistant/ai-client.js';
 import { KB_FILES_DIR } from './utils.js';
+import { ok, badRequest, notFound, conflict, serverError, validateFilename } from './http-utils.js';
 
 const router = Router();
 
@@ -18,11 +19,11 @@ router.get('/knowledge-base', (_req: Request, res: Response) => {
 router.put('/knowledge-base', (req: Request, res: Response) => {
   const { content } = req.body;
   if (typeof content !== 'string') {
-    res.status(400).json({ error: 'content (string) required' });
+    badRequest(res, 'content (string) required');
     return;
   }
   setKnowledgeMarkdown(content);
-  res.json({ ok: true, length: content.length });
+  ok(res, { length: content.length });
 });
 
 // ─── KB Files (Progressive Disclosure Multi-File System) ─────────
@@ -39,34 +40,36 @@ router.get('/kb-files', async (_req: Request, res: Response) => {
     );
     res.json({ files: fileList });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
 router.get('/kb-files/:filename', async (req: Request, res: Response) => {
   const { filename } = req.params;
-  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-    res.status(400).json({ error: 'Invalid filename' });
+  const fnErr = validateFilename(filename);
+  if (fnErr) {
+    badRequest(res, fnErr);
     return;
   }
   try {
     const content = await fsPromises.readFile(path.join(KB_FILES_DIR, filename), 'utf-8');
     res.json({ filename, content });
   } catch (e: any) {
-    if (e.code === 'ENOENT') res.status(404).json({ error: 'File not found' });
-    else res.status(500).json({ error: e.message });
+    if (e.code === 'ENOENT') notFound(res, 'File');
+    else serverError(res, e);
   }
 });
 
 router.put('/kb-files/:filename', async (req: Request, res: Response) => {
   const { filename } = req.params;
   const { content } = req.body;
-  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-    res.status(400).json({ error: 'Invalid filename' });
+  const fnErr = validateFilename(filename);
+  if (fnErr) {
+    badRequest(res, fnErr);
     return;
   }
   if (content === undefined) {
-    res.status(400).json({ error: 'content required' });
+    badRequest(res, 'content required');
     return;
   }
   try {
@@ -75,10 +78,10 @@ router.put('/kb-files/:filename', async (req: Request, res: Response) => {
     const original = await fsPromises.readFile(filePath, 'utf-8');
     await fsPromises.writeFile(path.join(KB_FILES_DIR, `.${filename}.backup`), original, 'utf-8');
     await fsPromises.writeFile(filePath, content, 'utf-8');
-    res.json({ ok: true, filename, backup: `.${filename}.backup` });
+    ok(res, { filename, backup: `.${filename}.backup` });
   } catch (e: any) {
-    if (e.code === 'ENOENT') res.status(404).json({ error: 'File not found' });
-    else res.status(500).json({ error: e.message });
+    if (e.code === 'ENOENT') notFound(res, 'File');
+    else serverError(res, e);
   }
 });
 
@@ -94,27 +97,27 @@ router.post('/knowledge', (req: Request, res: Response) => {
 
   if (dynamic) {
     if (!intent || typeof intent !== 'string') {
-      res.status(400).json({ error: 'intent (string) required' });
+      badRequest(res, 'intent (string) required');
       return;
     }
     data.dynamic[intent.toLowerCase()] = typeof response === 'string' ? response : JSON.stringify(response);
     configStore.setKnowledge(data);
-    res.json({ ok: true, type: 'dynamic', intent });
+    ok(res, { type: 'dynamic', intent });
     return;
   }
 
   if (!intent || !response?.en) {
-    res.status(400).json({ error: 'intent and response.en required' });
+    badRequest(res, 'intent and response.en required');
     return;
   }
   const exists = data.static.find(e => e.intent === intent);
   if (exists) {
-    res.status(409).json({ error: `Intent "${intent}" already exists. Use PUT to update.` });
+    conflict(res, `Intent "${intent}" already exists. Use PUT to update.`);
     return;
   }
   data.static.push({ intent, response: { en: response.en, ms: response.ms || '', zh: response.zh || '' } });
   configStore.setKnowledge(data);
-  res.json({ ok: true, type: 'static', intent });
+  ok(res, { type: 'static', intent });
 });
 
 router.put('/knowledge/:intent', (req: Request, res: Response) => {
@@ -124,25 +127,25 @@ router.put('/knowledge/:intent', (req: Request, res: Response) => {
 
   if (req.query.dynamic === 'true') {
     if (!response) {
-      res.status(400).json({ error: 'response required' });
+      badRequest(res, 'response required');
       return;
     }
     data.dynamic[intent.toLowerCase()] = typeof response === 'string' ? response : JSON.stringify(response);
     configStore.setKnowledge(data);
-    res.json({ ok: true, type: 'dynamic', intent });
+    ok(res, { type: 'dynamic', intent });
     return;
   }
 
   const entry = data.static.find(e => e.intent === intent);
   if (!entry) {
-    res.status(404).json({ error: `Intent "${intent}" not found` });
+    notFound(res, `Intent "${intent}"`);
     return;
   }
   if (response?.en !== undefined) entry.response.en = response.en;
   if (response?.ms !== undefined) entry.response.ms = response.ms;
   if (response?.zh !== undefined) entry.response.zh = response.zh;
   configStore.setKnowledge(data);
-  res.json({ ok: true, type: 'static', intent, entry });
+  ok(res, { type: 'static', intent, entry });
 });
 
 router.delete('/knowledge/:intent', (req: Request, res: Response) => {
@@ -152,23 +155,23 @@ router.delete('/knowledge/:intent', (req: Request, res: Response) => {
   if (req.query.dynamic === 'true') {
     const key = intent.toLowerCase();
     if (!(key in data.dynamic)) {
-      res.status(404).json({ error: `Dynamic intent "${intent}" not found` });
+      notFound(res, `Dynamic intent "${intent}"`);
       return;
     }
     delete data.dynamic[key];
     configStore.setKnowledge(data);
-    res.json({ ok: true, type: 'dynamic', deleted: intent });
+    ok(res, { type: 'dynamic', deleted: intent });
     return;
   }
 
   const idx = data.static.findIndex(e => e.intent === intent);
   if (idx === -1) {
-    res.status(404).json({ error: `Static intent "${intent}" not found` });
+    notFound(res, `Static intent "${intent}"`);
     return;
   }
   data.static.splice(idx, 1);
   configStore.setKnowledge(data);
-  res.json({ ok: true, type: 'static', deleted: intent });
+  ok(res, { type: 'static', deleted: intent });
 });
 
 // Valid guest journey phases (for generate-draft category suggestion)
@@ -179,7 +182,7 @@ const GUEST_PHASES = ['GENERAL_SUPPORT', 'PRE_ARRIVAL', 'ARRIVAL_CHECKIN', 'DURI
 router.post('/knowledge/generate', async (req: Request, res: Response) => {
   const { intent } = req.body;
   if (!intent || typeof intent !== 'string') {
-    res.status(400).json({ error: 'intent (string) required' });
+    badRequest(res, 'intent (string) required');
     return;
   }
   if (!isAIAvailable()) {
@@ -214,9 +217,9 @@ Return ONLY valid JSON (no markdown fences):
       ms: typeof parsed.ms === 'string' ? parsed.ms : '',
       zh: typeof parsed.zh === 'string' ? parsed.zh : '',
     };
-    res.json({ ok: true, intent, response });
+    ok(res, { intent, response });
   } catch (err: any) {
-    res.status(500).json({ error: `AI generation failed: ${err.message}` });
+    serverError(res, `AI generation failed: ${err.message}`);
   }
 });
 
@@ -306,7 +309,7 @@ router.post('/knowledge/translate', async (req: Request, res: Response) => {
   };
   const sourceLang = LANG_ORDER.find(l => current[l].length > 0);
   if (!sourceLang) {
-    res.status(400).json({ error: 'At least one of en, ms, or zh must be non-empty' });
+    badRequest(res, 'At least one of en, ms, or zh must be non-empty');
     return;
   }
   const sourceText = current[sourceLang];
@@ -337,9 +340,9 @@ JSON:`;
       ms: current.ms || (typeof parsed.ms === 'string' ? parsed.ms.trim() : ''),
       zh: current.zh || (typeof parsed.zh === 'string' ? parsed.zh.trim() : ''),
     };
-    res.json({ ok: true, en: result.en, ms: result.ms, zh: result.zh });
+    ok(res, { en: result.en, ms: result.ms, zh: result.zh });
   } catch (err: any) {
-    res.status(500).json({ error: `Translation failed: ${err.message}` });
+    serverError(res, `Translation failed: ${err.message}`);
   }
 });
 
@@ -389,10 +392,10 @@ Return ONLY valid JSON (no markdown fences, no code block):
     };
     if (!response.en) response.en = (parsed as any).en || '';
 
-    res.json({ ok: true, intent, phase, response });
+    ok(res, { intent, phase, response });
   } catch (err: any) {
     if (res.headersSent) return;
-    res.status(500).json({ error: err?.message ? `AI generation failed: ${err.message}` : 'AI generation failed' });
+    serverError(res, err?.message ? `AI generation failed: ${err.message}` : 'AI generation failed');
   }
 });
 

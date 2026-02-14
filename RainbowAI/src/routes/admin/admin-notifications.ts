@@ -7,6 +7,7 @@ import {
   updateAdminNotificationPreferences,
   type OperatorContact
 } from '../../lib/admin-notification-settings.js';
+import { badRequest, serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.get('/', async (req, res) => {
     const settings = await loadAdminNotificationSettings();
     res.json(settings);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -31,13 +32,14 @@ router.put('/system-admin-phone', async (req, res) => {
   try {
     const { phone } = req.body;
     if (!phone) {
-      return res.status(400).json({ error: 'Phone number is required' });
+      badRequest(res, 'Phone number is required');
+      return;
     }
     await updateSystemAdminPhone(phone);
     const updated = await loadAdminNotificationSettings();
     res.json({ success: true, settings: updated });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -49,13 +51,14 @@ router.put('/operators', async (req, res) => {
   try {
     const { operators } = req.body;
     if (!Array.isArray(operators)) {
-      return res.status(400).json({ error: 'Operators must be an array' });
+      badRequest(res, 'Operators must be an array');
+      return;
     }
     await updateOperators(operators as OperatorContact[]);
     const updated = await loadAdminNotificationSettings();
     res.json({ success: true, settings: updated });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -67,13 +70,14 @@ router.put('/default-fallback', async (req, res) => {
   try {
     const { minutes } = req.body;
     if (typeof minutes !== 'number') {
-      return res.status(400).json({ error: 'Minutes must be a number' });
+      badRequest(res, 'Minutes must be a number');
+      return;
     }
     await updateDefaultFallbackMinutes(minutes);
     const updated = await loadAdminNotificationSettings();
     res.json({ success: true, settings: updated });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -93,7 +97,7 @@ router.put('/preferences', async (req, res) => {
     const updated = await loadAdminNotificationSettings();
     res.json({ success: true, settings: updated });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 });
 

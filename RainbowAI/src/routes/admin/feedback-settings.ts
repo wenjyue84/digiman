@@ -4,6 +4,7 @@ import { db } from '../../lib/db.js';
 import { appSettings, updateFeedbackSettingsSchema } from '../../../../shared/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import { configStore } from '../../assistant/config-store.js';
+import { badRequest, serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get('/feedback/settings', async (_req: Request, res: Response) => {
     res.json({ success: true, settings: config });
   } catch (error) {
     console.error('[Feedback Settings] ❌ Error loading settings:', error);
-    res.status(500).json({ error: 'Failed to load feedback settings' });
+    serverError(res, 'Failed to load feedback settings');
   }
 });
 
@@ -111,9 +112,9 @@ router.patch('/feedback/settings', async (req: Request, res: Response) => {
     console.error('[Feedback Settings] ❌ Error updating settings:', error);
     if (error instanceof Error && 'issues' in error) {
       // Zod validation error
-      res.status(400).json({ error: 'Validation error', details: (error as any).issues });
+      badRequest(res, 'Validation error');
     } else {
-      res.status(500).json({ error: 'Failed to update feedback settings' });
+      serverError(res, 'Failed to update feedback settings');
     }
   }
 });

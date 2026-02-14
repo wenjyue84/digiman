@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import axios from 'axios';
-import { readFile, writeFile } from 'fs/promises';
-import { renameSync } from 'fs';
+import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { configStore } from '../../assistant/config-store.js';
 import { getIntentConfig, updateIntentConfig, getIntentTiersFilePath } from '../../assistant/intent-config.js';
+import { badRequest, serverError } from './http-utils.js';
+import { atomicWriteJSON } from './file-utils.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '../../assistant/data');
@@ -26,7 +27,7 @@ router.get('/intent-manager/keywords', async (_req: Request, res: Response) => {
       const raw = await readFile(join(DATA_DIR, 'intent-keywords.json'), 'utf-8');
       res.json(JSON.parse(raw));
     } catch (err: any) {
-      res.status(500).json({ error: err?.message || 'Failed to read keywords' });
+      serverError(res, err?.message || 'Failed to read keywords');
     }
   }
 });
@@ -40,7 +41,7 @@ router.get('/intent-manager/examples', async (_req: Request, res: Response) => {
       const raw = await readFile(join(DATA_DIR, 'intent-examples.json'), 'utf-8');
       res.json(JSON.parse(raw));
     } catch (err: any) {
-      res.status(500).json({ error: err?.message || 'Failed to read examples' });
+      serverError(res, err?.message || 'Failed to read examples');
     }
   }
 });
@@ -95,7 +96,7 @@ router.get('/intent-manager/stats', async (_req: Request, res: Response) => {
       }, 0);
       res.json({ totalIntents, totalKeywords, totalExamples });
     } catch (err: any) {
-      res.status(500).json({ error: err?.message || 'Failed to get stats' });
+      serverError(res, err?.message || 'Failed to get stats');
     }
   }
 });
@@ -183,7 +184,7 @@ router.get('/intent-manager/llm-settings/available-providers', async (_req: Requ
     }));
     res.json(providers);
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || 'Failed to read providers' });
+    serverError(res, err?.message || 'Failed to read providers');
   }
 });
 
@@ -193,14 +194,14 @@ router.get('/intent-manager/tiers', async (_req: Request, res: Response) => {
     const tiers = getIntentConfig().tiers;
     res.json(tiers);
   } catch (err: any) {
-    res.status(500).json({ error: (err as Error).message || 'Failed to get tiers' });
+    serverError(res, (err as Error).message || 'Failed to get tiers');
   }
 });
 
 router.put('/intent-manager/tiers', async (req: Request, res: Response) => {
   const body = req.body as { tiers?: Partial<Record<string, { enabled?: boolean; contextMessages?: number; threshold?: number }>> };
   if (!body || typeof body.tiers !== 'object') {
-    return res.status(400).json({ error: 'tiers object required' });
+    return badRequest(res, 'tiers object required');
   }
   try {
     const current = getIntentConfig().tiers;
@@ -212,12 +213,10 @@ router.put('/intent-manager/tiers', async (req: Request, res: Response) => {
     };
     updateIntentConfig({ tiers: next });
     const tiersPath = getIntentTiersFilePath();
-    const tmpPath = tiersPath + '.tmp';
-    await writeFile(tmpPath, JSON.stringify({ tiers: next }, null, 2), 'utf-8');
-    renameSync(tmpPath, tiersPath);
+    await atomicWriteJSON(tiersPath, { tiers: next });
     res.json(next);
   } catch (err: any) {
-    res.status(500).json({ error: (err as Error).message || 'Failed to save tiers' });
+    serverError(res, (err as Error).message || 'Failed to save tiers');
   }
 });
 
@@ -229,7 +228,7 @@ router.get('/intent-manager/llm-settings', async (_req: Request, res: Response) 
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       res.json({ ...defaultLLMSettings });
     } else {
-      res.status(500).json({ error: (err as Error).message || 'Failed to read LLM settings' });
+      serverError(res, (err as Error).message || 'Failed to read LLM settings');
     }
   }
 });
@@ -237,42 +236,40 @@ router.get('/intent-manager/llm-settings', async (_req: Request, res: Response) 
 router.put('/intent-manager/llm-settings', async (req: Request, res: Response) => {
   const settings = req.body;
   if (!settings || typeof settings.thresholds !== 'object') {
-    return res.status(400).json({ error: 'thresholds object required' });
+    return badRequest(res, 'thresholds object required');
   }
   const thresholds = ['fuzzy', 'semantic', 'layer2', 'llm', 'lowConfidence', 'mediumConfidence'];
   for (const key of thresholds) {
     if (settings.thresholds[key] !== undefined) {
       const value = settings.thresholds[key];
       if (typeof value !== 'number' || value < 0 || value > 1) {
-        return res.status(400).json({ error: `thresholds.${key} must be a number between 0 and 1` });
+        return badRequest(res, `thresholds.${key} must be a number between 0 and 1`);
       }
     }
   }
   if (settings.defaultProviderId !== undefined && settings.defaultProviderId !== null) {
     if (typeof settings.defaultProviderId !== 'string') {
-      return res.status(400).json({ error: 'defaultProviderId must be a string' });
+      return badRequest(res, 'defaultProviderId must be a string');
     }
   }
   if (settings.selectedProviders !== undefined) {
     if (!Array.isArray(settings.selectedProviders)) {
-      return res.status(400).json({ error: 'selectedProviders must be an array' });
+      return badRequest(res, 'selectedProviders must be an array');
     }
     for (const sp of settings.selectedProviders) {
       if (!sp.id || typeof sp.id !== 'string') {
-        return res.status(400).json({ error: 'Each selectedProvider must have an id string' });
+        return badRequest(res, 'Each selectedProvider must have an id string');
       }
       if (typeof sp.priority !== 'number') {
-        return res.status(400).json({ error: 'Each selectedProvider must have a priority number' });
+        return badRequest(res, 'Each selectedProvider must have a priority number');
       }
     }
   }
   try {
-    const tmpPath = LLM_SETTINGS_PATH + '.tmp';
-    await writeFile(tmpPath, JSON.stringify(settings, null, 2), 'utf-8');
-    renameSync(tmpPath, LLM_SETTINGS_PATH);
+    await atomicWriteJSON(LLM_SETTINGS_PATH, settings);
     res.json({ success: true, settings });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || 'Failed to save LLM settings' });
+    serverError(res, err?.message || 'Failed to save LLM settings');
   }
 });
 
@@ -292,7 +289,7 @@ router.post('/intent-manager/apply-template', async (req: Request, res: Response
     const { templateId, config } = req.body;
 
     if (!config || !config.tiers) {
-      return res.status(400).json({ error: 'Invalid template configuration' });
+      return badRequest(res, 'Invalid template configuration');
     }
 
     // Import intent-config module
@@ -356,9 +353,7 @@ router.post('/intent-manager/apply-template', async (req: Request, res: Response
       }
       if (typeof config.llm.maxTokens === 'number') current.maxTokens = config.llm.maxTokens;
       if (typeof config.llm.temperature === 'number') current.temperature = config.llm.temperature;
-      const tmpPath = LLM_SETTINGS_PATH + '.tmp';
-      await writeFile(tmpPath, JSON.stringify(current, null, 2), 'utf-8');
-      renameSync(tmpPath, LLM_SETTINGS_PATH);
+      await atomicWriteJSON(LLM_SETTINGS_PATH, current);
       // Sync master classifyProvider in settings.json so T4 and Settings stay aligned
       if (config.llm.defaultProviderId && typeof config.llm.defaultProviderId === 'string') {
         const settings = configStore.getSettings();
@@ -378,7 +373,7 @@ router.post('/intent-manager/apply-template', async (req: Request, res: Response
     });
   } catch (e: any) {
     console.error('[IntentManager] Failed to apply template:', e);
-    res.status(500).json({ error: e.message });
+    serverError(res, e.message);
   }
 });
 

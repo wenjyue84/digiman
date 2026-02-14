@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { notFound, serverError } from './http-utils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,14 +26,14 @@ router.get('/:name', (req, res) => {
   const templatePath = join(__dirname, '../../public/templates/tabs', `${safeName}.html`);
 
   if (!existsSync(templatePath)) {
-    return res.status(404).json({ error: 'Template not found' });
+    return notFound(res, 'Template');
   }
 
   try {
     const template = readFileSync(templatePath, 'utf-8');
     res.type('html').send(template);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to load template' });
+    serverError(res, 'Failed to load template');
   }
 });
 

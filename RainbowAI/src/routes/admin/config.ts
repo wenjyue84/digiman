@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { configStore } from '../../assistant/config-store.js';
 import type { IntentEntry, RoutingAction, RoutingData, WorkflowDefinition, AIProvider } from '../../assistant/config-store.js';
 import { deepMerge } from './utils.js';
+import { ok, badRequest, notFound, conflict, serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -15,18 +16,18 @@ router.get('/routing', (_req: Request, res: Response) => {
 router.put('/routing', (req: Request, res: Response) => {
   const data = req.body;
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    res.status(400).json({ error: 'routing object required' });
+    badRequest(res, 'routing object required');
     return;
   }
   const validActions: RoutingAction[] = ['static_reply', 'llm_reply', 'workflow'];
   for (const [intent, cfg] of Object.entries(data)) {
     if (!cfg || typeof (cfg as any).action !== 'string' || !validActions.includes((cfg as any).action)) {
-      res.status(400).json({ error: `Invalid action for intent "${intent}". Must be one of: ${validActions.join(', ')}` });
+      badRequest(res, `Invalid action for intent "${intent}". Must be one of: ${validActions.join(', ')}`);
       return;
     }
   }
   configStore.setRouting(data as RoutingData);
-  res.json({ ok: true, routing: data });
+  ok(res, { routing: data });
 });
 
 router.patch('/routing/:intent', (req: Request, res: Response) => {
@@ -34,7 +35,7 @@ router.patch('/routing/:intent', (req: Request, res: Response) => {
   const { action, workflow_id } = req.body;
   const validActions: RoutingAction[] = ['static_reply', 'llm_reply', 'workflow'];
   if (!action || !validActions.includes(action)) {
-    res.status(400).json({ error: `action must be one of: ${validActions.join(', ')}` });
+    badRequest(res, `action must be one of: ${validActions.join(', ')}`);
     return;
   }
   const data = { ...configStore.getRouting() };
@@ -44,7 +45,7 @@ router.patch('/routing/:intent', (req: Request, res: Response) => {
   }
   data[intent] = entry;
   configStore.setRouting(data);
-  res.json({ ok: true, intent, action, workflow_id: entry.workflow_id });
+  ok(res, { intent, action, workflow_id: entry.workflow_id });
 });
 
 // ─── Intents (Skills) ───────────────────────────────────────────────
@@ -56,13 +57,13 @@ router.get('/intents', (_req: Request, res: Response) => {
 router.post('/intents', (req: Request, res: Response) => {
   const { category, patterns, flags, enabled, time_sensitive } = req.body;
   if (!category || !Array.isArray(patterns)) {
-    res.status(400).json({ error: 'category and patterns[] required' });
+    badRequest(res, 'category and patterns[] required');
     return;
   }
   const data = configStore.getIntents();
   const exists = data.categories.find((c: any) => c.category === category);
   if (exists) {
-    res.status(409).json({ error: `Category "${category}" already exists. Use PUT to update.` });
+    conflict(res, `Category "${category}" already exists. Use PUT to update.`);
     return;
   }
   const entry: IntentEntry = {
@@ -74,7 +75,7 @@ router.post('/intents', (req: Request, res: Response) => {
   };
   data.categories.push(entry);
   configStore.setIntents(data);
-  res.json({ ok: true, category, entry });
+  ok(res, { category, entry });
 });
 
 router.put('/intents/:category', (req: Request, res: Response) => {
@@ -88,7 +89,7 @@ router.put('/intents/:category', (req: Request, res: Response) => {
     if (entry) break;
   }
   if (!entry) {
-    res.status(404).json({ error: `Category "${category}" not found` });
+    notFound(res, `Category "${category}"`);
     return;
   }
   if (req.body.patterns !== undefined) entry.patterns = req.body.patterns;
@@ -114,7 +115,7 @@ router.put('/intents/:category', (req: Request, res: Response) => {
   }
 
   configStore.setIntents(data);
-  res.json({ ok: true, category, entry });
+  ok(res, { category, entry });
 });
 
 router.delete('/intents/:category', (req: Request, res: Response) => {
@@ -132,11 +133,11 @@ router.delete('/intents/:category', (req: Request, res: Response) => {
     }
   }
   if (!found) {
-    res.status(404).json({ error: `Category "${category}" not found` });
+    notFound(res, `Category "${category}"`);
     return;
   }
   configStore.setIntents(data);
-  res.json({ ok: true, deleted: category });
+  ok(res, { deleted: category });
 });
 
 // ─── Templates ──────────────────────────────────────────────────────
@@ -148,43 +149,43 @@ router.get('/templates', (_req: Request, res: Response) => {
 router.post('/templates', (req: Request, res: Response) => {
   const { key, en, ms, zh } = req.body;
   if (!key || !en) {
-    res.status(400).json({ error: 'key and en required' });
+    badRequest(res, 'key and en required');
     return;
   }
   const data = configStore.getTemplates();
   if (data[key]) {
-    res.status(409).json({ error: `Template "${key}" already exists. Use PUT to update.` });
+    conflict(res, `Template "${key}" already exists. Use PUT to update.`);
     return;
   }
   data[key] = { en, ms: ms || '', zh: zh || '' };
   configStore.setTemplates(data);
-  res.json({ ok: true, key });
+  ok(res, { key });
 });
 
 router.put('/templates/:key', (req: Request, res: Response) => {
   const { key } = req.params;
   const data = configStore.getTemplates();
   if (!data[key]) {
-    res.status(404).json({ error: `Template "${key}" not found` });
+    notFound(res, `Template "${key}"`);
     return;
   }
   if (req.body.en !== undefined) data[key].en = req.body.en;
   if (req.body.ms !== undefined) data[key].ms = req.body.ms;
   if (req.body.zh !== undefined) data[key].zh = req.body.zh;
   configStore.setTemplates(data);
-  res.json({ ok: true, key, template: data[key] });
+  ok(res, { key, template: data[key] });
 });
 
 router.delete('/templates/:key', (req: Request, res: Response) => {
   const { key } = req.params;
   const data = configStore.getTemplates();
   if (!data[key]) {
-    res.status(404).json({ error: `Template "${key}" not found` });
+    notFound(res, `Template "${key}"`);
     return;
   }
   delete data[key];
   configStore.setTemplates(data);
-  res.json({ ok: true, deleted: key });
+  ok(res, { deleted: key });
 });
 
 // ─── Settings ───────────────────────────────────────────────────────
@@ -211,7 +212,7 @@ router.patch('/settings', (req: Request, res: Response) => {
   const current = configStore.getSettings();
   const merged = deepMerge(current, req.body);
   configStore.setSettings(merged);
-  res.json({ ok: true, settings: merged });
+  ok(res, { settings: merged });
 });
 
 // ─── AI Providers Management ─────────────────────────────────────────
@@ -219,30 +220,30 @@ router.patch('/settings', (req: Request, res: Response) => {
 router.put('/settings/providers', (req: Request, res: Response) => {
   const providers = req.body;
   if (!Array.isArray(providers)) {
-    res.status(400).json({ error: 'providers array required' });
+    badRequest(res, 'providers array required');
     return;
   }
   const settings = configStore.getSettings();
   settings.ai.providers = providers;
   configStore.setSettings(settings);
-  res.json({ ok: true, providers: settings.ai.providers });
+  ok(res, { providers: settings.ai.providers });
 });
 
 router.post('/settings/providers', (req: Request, res: Response) => {
   const { id, name, description, type, api_key_env, api_key, base_url, model, enabled } = req.body;
   if (!id || !name || !type || !base_url || !model) {
-    res.status(400).json({ error: 'id, name, type, base_url, and model required' });
+    badRequest(res, 'id, name, type, base_url, and model required');
     return;
   }
   const validTypes = ['openai-compatible', 'groq', 'ollama'];
   if (!validTypes.includes(type)) {
-    res.status(400).json({ error: `type must be one of: ${validTypes.join(', ')}` });
+    badRequest(res, `type must be one of: ${validTypes.join(', ')}`);
     return;
   }
   const settings = configStore.getSettings();
   if (!settings.ai.providers) settings.ai.providers = [];
   if (settings.ai.providers.find(p => p.id === id)) {
-    res.status(409).json({ error: `Provider "${id}" already exists` });
+    conflict(res, `Provider "${id}" already exists`);
     return;
   }
   const maxPriority = settings.ai.providers.reduce((max, p) => Math.max(max, p.priority), -1);
@@ -260,36 +261,36 @@ router.post('/settings/providers', (req: Request, res: Response) => {
   if (description) newProvider.description = description;
   settings.ai.providers.push(newProvider);
   configStore.setSettings(settings);
-  res.json({ ok: true, provider: newProvider });
+  ok(res, { provider: newProvider });
 });
 
 router.delete('/settings/providers/:id', (req: Request, res: Response) => {
   const { id } = req.params;
   const settings = configStore.getSettings();
   if (!settings.ai.providers) {
-    res.status(404).json({ error: `Provider "${id}" not found` });
+    notFound(res, `Provider "${id}"`);
     return;
   }
   const idx = settings.ai.providers.findIndex(p => p.id === id);
   if (idx === -1) {
-    res.status(404).json({ error: `Provider "${id}" not found` });
+    notFound(res, `Provider "${id}"`);
     return;
   }
   settings.ai.providers.splice(idx, 1);
   configStore.setSettings(settings);
-  res.json({ ok: true, deleted: id });
+  ok(res, { deleted: id });
 });
 
 router.patch('/settings/providers/:id', (req: Request, res: Response) => {
   const { id } = req.params;
   const settings = configStore.getSettings();
   if (!settings.ai.providers) {
-    res.status(404).json({ error: `Provider "${id}" not found` });
+    notFound(res, `Provider "${id}"`);
     return;
   }
   const provider = settings.ai.providers.find(p => p.id === id);
   if (!provider) {
-    res.status(404).json({ error: `Provider "${id}" not found` });
+    notFound(res, `Provider "${id}"`);
     return;
   }
 
@@ -299,7 +300,7 @@ router.patch('/settings/providers/:id', (req: Request, res: Response) => {
   if (req.body.model !== undefined) provider.model = req.body.model;
 
   configStore.setSettings(settings);
-  res.json({ ok: true, provider });
+  ok(res, { provider });
 });
 
 // ─── Workflow ───────────────────────────────────────────────────────
@@ -312,7 +313,7 @@ router.patch('/workflow', (req: Request, res: Response) => {
   const current = configStore.getWorkflow();
   const merged = deepMerge(current, req.body);
   configStore.setWorkflow(merged);
-  res.json({ ok: true, workflow: merged });
+  ok(res, { workflow: merged });
 });
 
 // ─── Workflows (Step Definitions) ────────────────────────────────
@@ -326,7 +327,7 @@ router.get('/workflows/:id', (req: Request, res: Response) => {
   const data = configStore.getWorkflows();
   const wf = data.workflows.find(w => w.id === id);
   if (!wf) {
-    res.status(404).json({ error: `Workflow "${id}" not found` });
+    notFound(res, `Workflow "${id}"`);
     return;
   }
   res.json(wf);
@@ -335,12 +336,12 @@ router.get('/workflows/:id', (req: Request, res: Response) => {
 router.post('/workflows', (req: Request, res: Response) => {
   const { id, name, steps } = req.body;
   if (!id || typeof id !== 'string' || !name || typeof name !== 'string') {
-    res.status(400).json({ error: 'id and name required' });
+    badRequest(res, 'id and name required');
     return;
   }
   const data = configStore.getWorkflows();
   if (data.workflows.find(w => w.id === id)) {
-    res.status(409).json({ error: `Workflow "${id}" already exists` });
+    conflict(res, `Workflow "${id}" already exists`);
     return;
   }
   const newWf: WorkflowDefinition = {
@@ -350,7 +351,7 @@ router.post('/workflows', (req: Request, res: Response) => {
   };
   data.workflows.push(newWf);
   configStore.setWorkflows(data);
-  res.json({ ok: true, workflow: newWf });
+  ok(res, { workflow: newWf });
 });
 
 router.put('/workflows/:id', (req: Request, res: Response) => {
@@ -358,13 +359,13 @@ router.put('/workflows/:id', (req: Request, res: Response) => {
   const data = configStore.getWorkflows();
   const idx = data.workflows.findIndex(w => w.id === id);
   if (idx === -1) {
-    res.status(404).json({ error: `Workflow "${id}" not found` });
+    notFound(res, `Workflow "${id}"`);
     return;
   }
   if (req.body.name !== undefined) data.workflows[idx].name = req.body.name;
   if (req.body.steps !== undefined) data.workflows[idx].steps = req.body.steps;
   configStore.setWorkflows(data);
-  res.json({ ok: true, workflow: data.workflows[idx] });
+  ok(res, { workflow: data.workflows[idx] });
 });
 
 // Update a single workflow step's message (inline edit from simulator)
@@ -372,25 +373,25 @@ router.patch('/workflows/:id/steps/:stepId', (req: Request, res: Response) => {
   const { id, stepId } = req.params;
   const { message } = req.body;
   if (!message || typeof message !== 'object') {
-    res.status(400).json({ error: 'message object with en/ms/zh required' });
+    badRequest(res, 'message object with en/ms/zh required');
     return;
   }
   const data = configStore.getWorkflows();
   const workflow = data.workflows.find(w => w.id === id);
   if (!workflow) {
-    res.status(404).json({ error: `Workflow "${id}" not found` });
+    notFound(res, `Workflow "${id}"`);
     return;
   }
   const step = workflow.steps.find(s => s.id === stepId);
   if (!step) {
-    res.status(404).json({ error: `Step "${stepId}" not found in workflow "${id}"` });
+    notFound(res, `Step "${stepId}" in workflow "${id}"`);
     return;
   }
   if (message.en !== undefined) step.message.en = message.en;
   if (message.ms !== undefined) step.message.ms = message.ms;
   if (message.zh !== undefined) step.message.zh = message.zh;
   configStore.setWorkflows(data);
-  res.json({ ok: true, workflowId: id, stepId, message: step.message });
+  ok(res, { workflowId: id, stepId, message: step.message });
 });
 
 router.delete('/workflows/:id', (req: Request, res: Response) => {
@@ -399,18 +400,18 @@ router.delete('/workflows/:id', (req: Request, res: Response) => {
   const refs = Object.entries(routing).filter(([, cfg]) => cfg.action === 'workflow' && cfg.workflow_id === id);
   if (refs.length > 0) {
     const intentNames = refs.map(([intent]) => intent).join(', ');
-    res.status(409).json({ error: `Cannot delete: workflow "${id}" is referenced by intents: ${intentNames}` });
+    conflict(res, `Cannot delete: workflow "${id}" is referenced by intents: ${intentNames}`);
     return;
   }
   const data = configStore.getWorkflows();
   const idx = data.workflows.findIndex(w => w.id === id);
   if (idx === -1) {
-    res.status(404).json({ error: `Workflow "${id}" not found` });
+    notFound(res, `Workflow "${id}"`);
     return;
   }
   data.workflows.splice(idx, 1);
   configStore.setWorkflows(data);
-  res.json({ ok: true, deleted: id });
+  ok(res, { deleted: id });
 });
 
 export default router;

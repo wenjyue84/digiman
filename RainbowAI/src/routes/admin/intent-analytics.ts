@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { db } from '../../lib/db.js';
 import { intentPredictions } from '../../../../shared/schema.js';
 import { desc, eq, sql, isNotNull } from 'drizzle-orm';
+import { serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -128,7 +129,7 @@ router.get('/intent/accuracy', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Intent Analytics] ❌ Error fetching accuracy:', error);
-    res.status(500).json({ error: 'Failed to fetch intent accuracy' });
+    serverError(res, 'Failed to fetch intent accuracy');
   }
 });
 
@@ -156,7 +157,7 @@ router.get('/intent/misclassified', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Intent Analytics] ❌ Error fetching misclassified:', error);
-    res.status(500).json({ error: 'Failed to fetch misclassified intents' });
+    serverError(res, 'Failed to fetch misclassified intents');
   }
 });
 
@@ -181,7 +182,7 @@ router.get('/intent/low-confidence', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Intent Analytics] ❌ Error fetching low confidence:', error);
-    res.status(500).json({ error: 'Failed to fetch low confidence predictions' });
+    serverError(res, 'Failed to fetch low confidence predictions');
   }
 });
 

@@ -138,6 +138,62 @@ function closeModal(id) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Content Processing Utilities (merged from utils-global.js)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Check if content contains system debug info (JSON intent data or disclaimers)
+ * @param {string} content - Message content
+ * @returns {boolean} True if system content detected
+ */
+function hasSystemContent(content) {
+  if (!content || typeof content !== 'string') return false;
+  return content.indexOf('\n\n{"intent":') > 0 || content.indexOf('Please note: I may not have complete information') > 0;
+}
+
+/**
+ * Extract user-facing message from content (strip system debug info)
+ * @param {string} content - Message content with possible system data
+ * @returns {string} Clean user message
+ */
+function getUserMessage(content) {
+  if (!content || typeof content !== 'string') return content;
+  let s = content;
+  const jsonStart = s.indexOf('\n\n{"intent":');
+  if (jsonStart > 0) s = s.slice(0, jsonStart).trim();
+  const disclaimerIdx = s.indexOf('Please note: I may not have complete information');
+  if (disclaimerIdx > 0) s = s.slice(0, disclaimerIdx).replace(/\n+$/, '').trim();
+  return s;
+}
+
+/**
+ * Format content with system debug data as collapsible HTML
+ * @param {string} content - Message content with possible system data
+ * @returns {string} HTML-formatted content
+ */
+function formatSystemContent(content) {
+  if (!content || typeof content !== 'string') return escapeHtml(content);
+
+  const parts = content.split('\n\n{"intent":');
+  if (parts.length === 1) return escapeHtml(content);
+
+  const userMsg = parts[0].trim();
+  const jsonPart = '{"intent":' + parts[1];
+
+  let prettyJson = jsonPart;
+  try {
+    const parsed = JSON.parse(jsonPart);
+    prettyJson = JSON.stringify(parsed, null, 2);
+  } catch (e) { }
+
+  return '<div class="lc-user-msg">' + escapeHtml(userMsg) + '</div>' +
+    '<div class="lc-system-data">' +
+    '<div class="lc-system-label">System Debug Info:</div>' +
+    '<pre class="lc-system-json">' + escapeHtml(prettyJson) + '</pre>' +
+    '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // Expose to global scope for non-module scripts and inline handlers
 // ═══════════════════════════════════════════════════════════════════
 
@@ -148,9 +204,15 @@ window.escapeAttr = escapeAttr;
 window.formatRelativeTime = formatRelativeTime;
 window.formatDateTime = formatDateTime;
 window.closeModal = closeModal;
+window.hasSystemContent = hasSystemContent;
+window.getUserMessage = getUserMessage;
+window.formatSystemContent = formatSystemContent;
 
 // ═══════════════════════════════════════════════════════════════════
 // Exports for ES6 module consumers
 // ═══════════════════════════════════════════════════════════════════
 
-export { toast, api, escapeHtml, escapeAttr, formatRelativeTime, formatDateTime, closeModal };
+export {
+  toast, api, escapeHtml, escapeAttr, formatRelativeTime, formatDateTime,
+  closeModal, hasSystemContent, getUserMessage, formatSystemContent
+};

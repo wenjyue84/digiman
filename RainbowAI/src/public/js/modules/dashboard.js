@@ -1,0 +1,337 @@
+/**
+ * Dashboard Tab Loader
+ *
+ * Main landing page showing:
+ * - WhatsApp instance status with phone numbers and connection states
+ * - Server connection status (Frontend, Backend, MCP)
+ * - AI provider status with speed testing
+ * - Quick stats (messages, accuracy, response time, satisfaction)
+ * - Real-time activity stream (SSE)
+ * - Setup checklist for first-time users
+ */
+
+import { api, toast, escapeHtml as esc } from '../core/utils.js';
+import {
+  runDashboardProviderSpeedTest,
+  initActivityStream
+} from './dashboard-helpers.js';
+
+/**
+ * Main Dashboard tab loader
+ */
+export async function loadDashboard() {
+  try {
+    // Load dashboard data
+    const statusData = await api('/status');
+
+    // Update WhatsApp Status — show each instance with phone, label, last connected
+    const waInstances = statusData.whatsappInstances || [];
+    const connectedCount = waInstances.filter(i => i.state === 'open').length;
+    const totalCount = waInstances.length;
+
+    // Update header badge
+    const badge = document.getElementById('wa-badge');
+    if (badge) {
+      if (totalCount === 0) {
+        badge.textContent = 'no instances';
+        badge.className = 'text-xs px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600';
+      } else {
+        badge.textContent = `${connectedCount}/${totalCount} connected`;
+        badge.className = 'text-xs px-2 py-0.5 rounded-full ' +
+          (connectedCount === totalCount ? 'bg-success-100 text-success-700' :
+            connectedCount > 0 ? 'bg-warning-100 text-warning-700' : 'bg-danger-100 text-danger-700');
+      }
+    }
+
+    // Update Server connection (ports 3000, 5000, 3002)
+    const serverStatusEl = document.getElementById('server-status');
+    if (serverStatusEl) {
+      const servers = statusData.servers || {};
+      const formatLastChecked = (iso) => {
+        if (!iso) return 'N/A';
+        try {
+          const d = new Date(iso);
+          return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium' });
+        } catch (_) { return iso; }
+      };
+      serverStatusEl.innerHTML = Object.keys(servers).length === 0
+        ? '<div class="col-span-full text-center py-4 text-neutral-400 text-sm">No server data</div>'
+        : Object.entries(servers).map(([serverKey, server]) => {
+          const statusColor = server.online ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700';
+          const statusIcon = server.online ? '✓' : '✗';
+          const responseTime = server.responseTime !== undefined ? `${server.responseTime}ms` : 'N/A';
+          const lastChecked = formatLastChecked(server.lastCheckedAt);
+          return `
+            <div class="border rounded-2xl p-4 ${server.online ? 'border-success-200' : 'border-danger-200'}">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-medium text-neutral-800">${esc(server.name)}</h4>
+                <span class="${statusColor} px-2 py-1 rounded-full text-xs font-medium">${statusIcon} ${server.online ? 'Online' : 'Offline'}</span>
+              </div>
+              <div class="text-sm text-neutral-600 space-y-1">
+                <div class="flex justify-between">
+                  <span class="text-neutral-500">Port:</span>
+                  <span class="font-mono font-medium">${server.port}</span>
+                </div>
+                ${server.online ? `
+                  <div class="flex justify-between">
+                    <span class="text-neutral-500">Response:</span>
+                    <span class="font-mono text-success-600">${responseTime}</span>
+                  </div>
+                ` : `
+                  <div class="flex justify-between">
+                    <span class="text-neutral-500">Error:</span>
+                    <span class="font-mono text-danger-600 text-xs">${esc(server.error || 'Unknown')}</span>
+                  </div>
+                `}
+                <div class="flex justify-between">
+                  <span class="text-neutral-500">Last checked:</span>
+                  <span class="font-mono text-neutral-600 text-xs" title="${esc(lastChecked)}">${esc(lastChecked)}</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  ${server.url ? `<a href="${server.url}" target="_blank" class="text-xs text-primary-600 hover:text-primary-700 underline">Open →</a>` : ''}
+                  <button type="button" onclick="restartServer('${esc(serverKey)}')" class="text-xs px-2 py-1 rounded-lg border border-neutral-300 hover:bg-neutral-50 text-neutral-700 transition">Restart</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+    }
+
+    const waStatusEl = document.getElementById('dashboard-wa-status');
+    if (totalCount === 0) {
+      waStatusEl.innerHTML = `
+        <div class="text-center py-4">
+          <p class="text-sm text-neutral-400 mb-2">No WhatsApp instances connected</p>
+          <a href="/admin/whatsapp-qr" class="text-xs bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-lg transition inline-block">Pair WhatsApp (QR)</a>
+        </div>`;
+    } else {
+      waStatusEl.innerHTML = waInstances.map(inst => {
+        // Format phone number
+        const phone = inst.user?.phone || inst.id || '';
+        const formattedPhone = phone ? '+' + phone.replace(/(\d{2})(\d{2})(\d{3,4})(\d{4})/, '$1 $2-$3 $4') : 'Not linked';
+
+        // Format last connected time
+        let lastConnectedText = '';
+        if (inst.lastConnectedAt) {
+          const lastConnected = new Date(inst.lastConnectedAt);
+          const now = new Date();
+          const diffMs = now.getTime() - lastConnected.getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMs / 3600000);
+          const diffDays = Math.floor(diffMs / 86400000);
+          if (inst.state === 'open') {
+            lastConnectedText = '<span class="text-success-600 font-medium">Online now</span>';
+          } else if (diffMins < 1) {
+            lastConnectedText = 'Just now';
+          } else if (diffMins < 60) {
+            lastConnectedText = `${diffMins}m ago`;
+          } else if (diffHours < 24) {
+            lastConnectedText = `${diffHours}h ago`;
+          } else {
+            lastConnectedText = `${diffDays}d ago`;
+          }
+        } else {
+          lastConnectedText = inst.state === 'open' ? '<span class="text-success-600 font-medium">Online now</span>' : 'Never connected';
+        }
+
+        const statusDot = inst.state === 'open' ? 'bg-success-400' : inst.unlinkedFromWhatsApp ? 'bg-orange-500' : 'bg-neutral-300';
+        const statusText = inst.state === 'open' ? 'Connected' : inst.unlinkedFromWhatsApp ? 'Unlinked' : 'Disconnected';
+        const statusColor = inst.state === 'open' ? 'text-success-600' : inst.unlinkedFromWhatsApp ? 'text-orange-600' : 'text-neutral-500';
+        const firstConnectedStr = inst.firstConnectedAt
+          ? new Date(inst.firstConnectedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+          : '—';
+
+        return `
+          <div class="flex items-center justify-between py-2.5 border-b last:border-0">
+            <div class="flex items-center gap-3">
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusDot}"></span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-neutral-800 text-sm">${esc(inst.label || inst.id)}</span>
+                  <span class="text-xs ${statusColor}">${statusText}</span>
+                </div>
+                <div class="text-xs text-neutral-500">${esc(formattedPhone)}${inst.user?.name ? ' — ' + esc(inst.user.name) : ''}</div>
+                <div class="text-xs text-neutral-400">Last: ${lastConnectedText}</div>
+                <div class="text-xs text-neutral-400">First connected: ${firstConnectedStr}</div>
+              </div>
+            </div>
+            <div class="flex gap-1 flex-shrink-0">
+              ${inst.state !== 'open' ? `<button type="button" onclick="showInstanceQR('${esc(inst.id)}', '${esc(inst.label || inst.id)}')" class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded transition">QR</button>` : ''}
+              ${inst.state === 'open' ? `<button onclick="logoutInstance('${esc(inst.id)}')" class="text-xs bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded transition">Logout</button>` : ''}
+              <button type="button" onclick="removeInstance('${esc(inst.id)}', ${totalCount})" class="text-xs bg-danger-500 hover:bg-danger-600 text-white px-2 py-1 rounded transition">Remove</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // Update AI Model Status (providers are under statusData.ai.providers)
+    const aiProviders = (statusData.ai?.providers || [])
+      .filter(p => p.enabled)
+      .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+
+    const aiStatusEl = document.getElementById('dashboard-ai-status');
+
+    if (aiProviders.length === 0) {
+      aiStatusEl.innerHTML = '<p class="text-sm text-neutral-400 py-2">No AI models configured</p>';
+    } else {
+      aiStatusEl.innerHTML = `
+        <div class="space-y-2">
+          ${aiProviders.slice(0, 4).map(provider => {
+        const isDefault = provider.priority === 0;
+        const defaultBadge = isDefault
+          ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded ml-1 font-bold uppercase tracking-wide border border-amber-200">Default</span>'
+          : '';
+
+        return `
+            <div class="flex items-center justify-between text-sm" data-provider-id="${esc(provider.id)}">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <span class="w-2 h-2 rounded-full flex-shrink-0 ${provider.available ? 'bg-success-400' : 'bg-neutral-300'}"></span>
+                <span class="text-neutral-700 truncate ${isDefault ? 'font-semibold' : ''}">${esc(provider.name || 'Unknown')}</span>
+                ${defaultBadge}
+              </div>
+              <span class="flex items-center gap-2 flex-shrink-0 ml-2">
+                <span class="${provider.available ? 'text-success-600' : 'text-neutral-400'} text-xs whitespace-nowrap">${provider.available ? '✓ Ready' : '✗ Not configured'}</span>
+                <span id="dashboard-ai-time-${esc(provider.id)}" class="text-neutral-500 font-mono text-xs w-10 text-right" data-provider-id="${esc(provider.id)}"></span>
+              </span>
+            </div>
+          `}).join('')}
+          ${aiProviders.length > 4 ? `<div class="text-xs text-neutral-400 mt-1 pl-4">+${aiProviders.length - 4} more models</div>` : ''}
+        </div>
+      `;
+    }
+    // Run speed test in background and fill response times (no user click needed)
+    runDashboardProviderSpeedTest(true);
+
+    // Fetch real Quick Stats from API endpoints (parallel)
+    const statsEls = {
+      messages: document.getElementById('dashboard-stat-messages'),
+      accuracy: document.getElementById('dashboard-stat-accuracy'),
+      response: document.getElementById('dashboard-stat-response'),
+      satisfaction: document.getElementById('dashboard-stat-satisfaction'),
+    };
+
+    // Show loading state
+    Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
+
+    // Fetch all three endpoints in parallel, each with independent error handling
+    const [conversationsResult, accuracyResult, feedbackResult] = await Promise.allSettled([
+      api('/conversations'),
+      api('/intent/accuracy'),
+      api('/feedback/stats'),
+    ]);
+
+    // Messages Handled — sum messageCount from all conversations
+    if (conversationsResult.status === 'fulfilled' && Array.isArray(conversationsResult.value)) {
+      const totalMessages = conversationsResult.value.reduce((sum, c) => sum + (c.messageCount || 0), 0);
+      statsEls.messages.textContent = totalMessages.toLocaleString();
+    } else {
+      statsEls.messages.textContent = connectedCount > 0 ? '-' : '0';
+    }
+
+    // Intent Accuracy — from intent/accuracy API
+    if (accuracyResult.status === 'fulfilled' && accuracyResult.value?.accuracy?.overall) {
+      const rate = accuracyResult.value.accuracy.overall.accuracyRate;
+      statsEls.accuracy.textContent = rate != null ? `${Math.round(rate)}%` : '-';
+    } else {
+      statsEls.accuracy.textContent = '-';
+    }
+
+    // Avg Response Time — from conversation logs only (all assistant replies with responseTime)
+    try {
+      const res = await api('/conversations/stats/response-time');
+      statsEls.response.textContent = res?.avgResponseTimeMs != null ? `${Math.round(res.avgResponseTimeMs)}ms` : '-';
+    } catch (_) {
+      statsEls.response.textContent = '-';
+    }
+
+    // Satisfaction Rate — from feedback/stats API
+    if (feedbackResult.status === 'fulfilled' && feedbackResult.value?.stats?.overall) {
+      const satRate = parseFloat(feedbackResult.value.stats.overall.satisfactionRate);
+      statsEls.satisfaction.textContent = !isNaN(satRate) ? `${Math.round(satRate)}%` : '-';
+    } else {
+      statsEls.satisfaction.textContent = '-';
+    }
+
+    // Initialize real-time activity feed via SSE
+    initActivityStream();
+
+    // Load setup checklist items (respect persisted dismiss)
+    const setupEl = document.getElementById('setup-items');
+    const setupDismissed = localStorage.getItem('rainbow-setup-dismissed') === 'true';
+    if (setupDismissed) {
+      document.getElementById('setup-checklist')?.classList.add('hidden');
+    }
+
+    const setupChecklist = [
+      { id: 'connect-wa', icon: '📱', text: 'Connect WhatsApp instance', done: totalCount > 0 },
+      { id: 'train-intent', icon: '🎓', text: 'Train at least one intent', done: false }, // TODO: Check if intents exist
+      { id: 'test-chat', icon: '💬', text: 'Test the AI assistant', done: false }
+    ];
+
+    const allDone = setupChecklist.every(item => item.done);
+    if (allDone) {
+      document.getElementById('setup-checklist')?.classList.add('hidden');
+    } else if (!setupDismissed) {
+      setupEl.innerHTML = setupChecklist.map(item => `
+        <div class="flex items-center gap-2 text-sm">
+          <span class="${item.done ? 'text-success-600' : 'text-neutral-400'}">${item.done ? '✓' : '○'}</span>
+          <span class="${item.done ? 'text-neutral-500 line-through' : 'text-neutral-700'}">${item.icon} ${item.text}</span>
+        </div>
+      `).join('');
+    }
+
+  } catch (err) {
+    console.error('[Dashboard] Failed to load:', err);
+    toast(err.message, 'error');
+
+    // Clear loading spinners with error fallback so users don't see infinite loading
+    const errorHtml = `
+      <div class="text-center py-4 text-neutral-500">
+        <p class="text-sm mb-2">Failed to load — <button onclick="loadDashboard()" class="text-primary-500 hover:underline">retry</button></p>
+      </div>`;
+    const waEl = document.getElementById('dashboard-wa-status');
+    const aiEl = document.getElementById('dashboard-ai-status');
+    const actEl = document.getElementById('dashboard-recent-activity');
+    if (waEl && waEl.querySelector('.animate-spin')) waEl.innerHTML = errorHtml;
+    if (aiEl && aiEl.querySelector('.animate-spin')) aiEl.innerHTML = errorHtml;
+    if (actEl && actEl.querySelector('.animate-spin')) actEl.innerHTML = errorHtml;
+  }
+}
+
+/**
+ * Dismiss the setup checklist permanently
+ */
+export function dismissChecklist() {
+  document.getElementById('setup-checklist')?.classList.add('hidden');
+  localStorage.setItem('rainbow-setup-dismissed', 'true');
+}
+
+/**
+ * Quick action: Navigate to WhatsApp pairing
+ */
+export function quickActionAddWhatsApp() {
+  // WhatsApp Accounts page removed — redirect to QR pairing
+  window.location.href = '/admin/whatsapp-qr';
+}
+
+/**
+ * Quick action: Navigate to Understanding tab to train intents
+ */
+export function quickActionTrainIntent() {
+  if (window.loadTab) window.loadTab('understanding');
+}
+
+/**
+ * Quick action: Navigate to Chat Simulator tab to test
+ */
+export function quickActionTestChat() {
+  if (window.loadTab) window.loadTab('chat-simulator');
+}
+
+/**
+ * Refresh the dashboard (reload all data)
+ */
+export function refreshDashboard() {
+  loadDashboard();
+  toast('Dashboard refreshed');
+}

@@ -4,6 +4,7 @@ import multer from 'multer';
 import { listConversations, getConversation, deleteConversation, getResponseTimeStats, getContactDetails, updateContactDetails, togglePin, toggleFavourite, markConversationAsRead, updateConversationMode } from '../../assistant/conversation-logger.js';
 import { whatsappManager } from '../../lib/baileys-client.js';
 import { translateText } from '../../assistant/ai-client.js';
+import { ok, badRequest, notFound, serverError } from './http-utils.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
@@ -12,9 +13,9 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 
 router.get('/conversations/stats/response-time', async (_req: Request, res: Response) => {
   try {
     const stats = await getResponseTimeStats();
-    res.json({ ok: true, avgResponseTimeMs: stats.avgMs, count: stats.count });
+    ok(res, { avgResponseTimeMs: stats.avgMs, count: stats.count });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -25,7 +26,7 @@ router.get('/conversations', async (_req: Request, res: Response) => {
     const conversations = await listConversations();
     res.json(conversations);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -35,9 +36,9 @@ router.patch('/conversations/:phone/pin', async (req: Request, res: Response) =>
   try {
     const phone = decodeURIComponent(req.params.phone);
     const pinned = await togglePin(phone);
-    res.json({ ok: true, pinned });
+    ok(res, { pinned });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -45,9 +46,9 @@ router.patch('/conversations/:phone/favourite', async (req: Request, res: Respon
   try {
     const phone = decodeURIComponent(req.params.phone);
     const favourite = await toggleFavourite(phone);
-    res.json({ ok: true, favourite });
+    ok(res, { favourite });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -55,9 +56,9 @@ router.patch('/conversations/:phone/read', async (req: Request, res: Response) =
   try {
     const phone = decodeURIComponent(req.params.phone);
     await markConversationAsRead(phone);
-    res.json({ ok: true });
+    ok(res);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -69,7 +70,7 @@ router.get('/conversations/:phone/contact', async (req: Request, res: Response) 
     const details = await getContactDetails(phone);
     res.json(details);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -86,7 +87,7 @@ router.patch('/conversations/:phone/contact', async (req: Request, res: Response
     const updated = await updateContactDetails(phone, partial);
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -95,12 +96,12 @@ router.get('/conversations/:phone', async (req: Request, res: Response) => {
     const phone = decodeURIComponent(req.params.phone);
     const log = await getConversation(phone);
     if (!log) {
-      res.status(404).json({ error: 'Conversation not found' });
+      notFound(res, 'Conversation');
       return;
     }
     res.json(log);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -110,7 +111,7 @@ router.delete('/conversations/:phone', async (req: Request, res: Response) => {
     const deleted = await deleteConversation(phone);
     res.json({ ok: deleted });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -121,7 +122,7 @@ router.post('/conversations/:phone/send', async (req: Request, res: Response) =>
     const { message, instanceId } = req.body;
 
     if (!message || typeof message !== 'string') {
-      res.status(400).json({ error: 'message (string) required' });
+      badRequest(res, 'message (string) required');
       return;
     }
 
@@ -152,10 +153,10 @@ router.post('/conversations/:phone/send', async (req: Request, res: Response) =>
     await logMessage(phone, pushName, 'assistant', message, { manual: true, instanceId: targetInstanceId });
 
     console.log(`[Admin] Manual message sent to ${phone} via ${targetInstanceId || 'default'}: ${message.substring(0, 50)}...`);
-    res.json({ ok: true, message: 'Message sent successfully', usedInstance: targetInstanceId });
+    ok(res, { message: 'Message sent successfully', usedInstance: targetInstanceId });
   } catch (err: any) {
     console.error('[Admin] Failed to send manual message:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -168,7 +169,7 @@ router.post('/conversations/:phone/send-media', upload.single('file'), async (re
     const instanceId = req.body.instanceId;
 
     if (!file) {
-      res.status(400).json({ error: 'file required (multipart/form-data)' });
+      badRequest(res, 'file required (multipart/form-data)');
       return;
     }
 
@@ -204,10 +205,10 @@ router.post('/conversations/:phone/send-media', upload.single('file'), async (re
     await logMessage(phone, pushName, 'assistant', logText, { manual: true, instanceId: targetInstanceId });
 
     console.log(`[Admin] Sent ${mediaType} to ${phone}: ${file.originalname} (${(file.size / 1024).toFixed(1)} KB)`);
-    res.json({ ok: true, mediaType, fileName: file.originalname, size: file.size });
+    ok(res, { mediaType, fileName: file.originalname, size: file.size });
   } catch (err: any) {
     console.error('[Admin] Failed to send media:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -217,12 +218,12 @@ router.post('/translate', async (req: Request, res: Response) => {
     const { text, targetLang } = req.body;
 
     if (!text || typeof text !== 'string') {
-      res.status(400).json({ error: 'text (string) required' });
+      badRequest(res, 'text (string) required');
       return;
     }
 
     if (!targetLang || typeof targetLang !== 'string') {
-      res.status(400).json({ error: 'targetLang (string) required' });
+      badRequest(res, 'targetLang (string) required');
       return;
     }
 
@@ -241,7 +242,7 @@ router.post('/translate', async (req: Request, res: Response) => {
     const translated = await translateText(text, sourceLang, targetLangName);
 
     if (!translated) {
-      res.status(500).json({ error: 'Translation failed' });
+      serverError(res, 'Translation failed');
       return;
     }
 
@@ -249,7 +250,7 @@ router.post('/translate', async (req: Request, res: Response) => {
     res.json({ translated, targetLang });
   } catch (err: any) {
     console.error('[Admin] Translation error:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -263,7 +264,7 @@ router.get('/conversations/:phone/approvals', async (req: Request, res: Response
     const approvals = getApprovalsByPhone(phone);
     res.json({ approvals });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -278,7 +279,7 @@ router.post('/conversations/:phone/approvals/:id/approve', async (req: Request, 
     const approval = getApproval(id);
 
     if (!approval) {
-      res.status(404).json({ error: 'Approval not found or expired' });
+      notFound(res, 'Approval');
       return;
     }
 
@@ -304,10 +305,10 @@ router.post('/conversations/:phone/approvals/:id/approve', async (req: Request, 
     approveAndSend(id, editedResponse);
 
     console.log(`[Copilot] Approved and sent response for ${phone} (approval: ${id})`);
-    res.json({ ok: true, sent: finalResponse });
+    ok(res, { sent: finalResponse });
   } catch (err: any) {
     console.error('[Copilot] Approval failed:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -318,14 +319,14 @@ router.post('/conversations/:phone/approvals/:id/reject', async (req: Request, r
     const { rejectApproval } = await import('../../assistant/approval-queue.js');
 
     if (!rejectApproval(id)) {
-      res.status(404).json({ error: 'Approval not found or expired' });
+      notFound(res, 'Approval');
       return;
     }
 
     console.log(`[Copilot] Rejected approval: ${id}`);
-    res.json({ ok: true });
+    ok(res);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -337,7 +338,7 @@ router.post('/conversations/:phone/suggest', async (req: Request, res: Response)
 
     const log = await getConversation(phone);
     if (!log) {
-      res.status(404).json({ error: 'Conversation not found' });
+      notFound(res, 'Conversation');
       return;
     }
 
@@ -349,7 +350,7 @@ router.post('/conversations/:phone/suggest', async (req: Request, res: Response)
     // Get last user message
     const lastUserMsg = messages.filter((m) => m.role === 'user').pop();
     if (!lastUserMsg) {
-      res.status(400).json({ error: 'No user message to respond to' });
+      badRequest(res, 'No user message to respond to');
       return;
     }
 
@@ -386,7 +387,7 @@ router.post('/conversations/:phone/suggest', async (req: Request, res: Response)
     });
   } catch (err: any) {
     console.error('[Manual Mode] Suggestion failed:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 
@@ -397,7 +398,7 @@ router.post('/conversations/:phone/mode', async (req: Request, res: Response) =>
     const { mode, setAsGlobalDefault } = req.body;
 
     if (!['autopilot', 'copilot', 'manual'].includes(mode)) {
-      res.status(400).json({ error: 'Invalid mode. Must be: autopilot, copilot, or manual' });
+      badRequest(res, 'Invalid mode. Must be: autopilot, copilot, or manual');
       return;
     }
 
@@ -408,7 +409,7 @@ router.post('/conversations/:phone/mode', async (req: Request, res: Response) =>
 
       // Ensure settings object exists
       if (!settings) {
-        res.status(500).json({ error: 'Settings not loaded' });
+        serverError(res, 'Settings not loaded');
         return;
       }
 
@@ -447,9 +448,9 @@ router.post('/conversations/:phone/mode', async (req: Request, res: Response) =>
     await updateConversationMode(phone, mode);
 
     console.log(`[Mode Change] Set ${phone} to ${mode} mode${setAsGlobalDefault ? ' (and global default)' : ''}`);
-    res.json({ ok: true, mode, globalDefaultUpdated: !!setAsGlobalDefault });
+    ok(res, { mode, globalDefaultUpdated: !!setAsGlobalDefault });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 });
 

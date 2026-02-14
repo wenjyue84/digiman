@@ -4,6 +4,7 @@ import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { getTodayDate, getMYTTimestamp, listMemoryDays, getDurableMemory, getMemoryDir } from '../../assistant/knowledge-base.js';
 import { resolveKBDir } from './utils.js';
+import { ok, badRequest, notFound, serverError } from './http-utils.js';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get('/memory/durable', async (_req: Request, res: Response) => {
     } catch {}
     res.json({ content, size });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
@@ -30,7 +31,7 @@ router.get('/memory/durable', async (_req: Request, res: Response) => {
 router.put('/memory/durable', async (req: Request, res: Response) => {
   const { content } = req.body;
   if (content === undefined) {
-    res.status(400).json({ error: 'content required' });
+    badRequest(res, 'content required');
     return;
   }
   try {
@@ -41,9 +42,9 @@ router.put('/memory/durable', async (req: Request, res: Response) => {
       await fsPromises.writeFile(path.join(kbDir, '.memory.md.backup'), original, 'utf-8');
     } catch {}
     await fsPromises.writeFile(filePath, content, 'utf-8');
-    res.json({ ok: true, size: content.length });
+    ok(res, { size: content.length });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
@@ -51,7 +52,7 @@ router.put('/memory/durable', async (req: Request, res: Response) => {
 router.post('/memory/flush', async (_req: Request, res: Response) => {
   const today = getTodayDate();
   const timestamp = getMYTTimestamp();
-  res.json({ ok: true, message: `Flush triggered at ${timestamp} on ${today}` });
+  ok(res, { message: `Flush triggered at ${timestamp} on ${today}` });
 });
 
 // GET /memory — List all daily log files + stats
@@ -78,7 +79,7 @@ router.get('/memory', async (_req: Request, res: Response) => {
       durableMemorySize: durableContent.length
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
@@ -86,7 +87,7 @@ router.get('/memory', async (_req: Request, res: Response) => {
 router.get('/memory/:date', async (req: Request, res: Response) => {
   const { date } = req.params;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+    badRequest(res, 'Invalid date format. Use YYYY-MM-DD');
     return;
   }
   try {
@@ -97,9 +98,9 @@ router.get('/memory/:date', async (req: Request, res: Response) => {
     res.json({ date, content, size: stats.size, modified: stats.mtime });
   } catch (e: any) {
     if (e.code === 'ENOENT') {
-      res.status(404).json({ error: `No log for ${date}` });
+      notFound(res, `Log for ${date}`);
     } else {
-      res.status(500).json({ error: e.message });
+      serverError(res, e);
     }
   }
 });
@@ -109,11 +110,11 @@ router.put('/memory/:date', async (req: Request, res: Response) => {
   const { date } = req.params;
   const { content } = req.body;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+    badRequest(res, 'Invalid date format. Use YYYY-MM-DD');
     return;
   }
   if (content === undefined) {
-    res.status(400).json({ error: 'content required' });
+    badRequest(res, 'content required');
     return;
   }
   try {
@@ -125,9 +126,9 @@ router.put('/memory/:date', async (req: Request, res: Response) => {
       await fsPromises.writeFile(path.join(memDir, `.${date}.md.backup`), original, 'utf-8');
     } catch {}
     await fsPromises.writeFile(filePath, content, 'utf-8');
-    res.json({ ok: true, date, size: content.length });
+    ok(res, { date, size: content.length });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
@@ -136,11 +137,11 @@ router.post('/memory/:date/append', async (req: Request, res: Response) => {
   const { date } = req.params;
   const { section, entry } = req.body;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+    badRequest(res, 'Invalid date format. Use YYYY-MM-DD');
     return;
   }
   if (!section || !entry) {
-    res.status(400).json({ error: 'section and entry required' });
+    badRequest(res, 'section and entry required');
     return;
   }
 
@@ -187,9 +188,9 @@ router.post('/memory/:date/append', async (req: Request, res: Response) => {
     }
 
     await fsPromises.writeFile(filePath, content, 'utf-8');
-    res.json({ ok: true, date, section, timestamp, entry });
+    ok(res, { date, section, timestamp, entry });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    serverError(res, e);
   }
 });
 
