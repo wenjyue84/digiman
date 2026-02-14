@@ -410,6 +410,15 @@
       testClassifier
     } from '/public/js/modules/intent-helpers.js';
 
+    // Phase 11: Regex Patterns Module
+    import {
+      loadRegexPatterns,
+      renderRegexPatterns,
+      addRegexPattern,
+      removeRegexPattern,
+      saveRegexPatterns
+    } from '/public/js/modules/regex-patterns.js';
+
     // Expose to global scope (required by tabs.js and onclick handlers)
     window.loadWhatsappAccounts = loadWhatsappAccounts;
     window.loadUnderstanding = loadUnderstanding;
@@ -481,6 +490,12 @@
     window.onAddIntentRoutingChange = onAddIntentRoutingChange;
     window.submitAddIntent = submitAddIntent;
     window.testClassifier = testClassifier;
+    // Phase 11: Regex Patterns
+    window.loadRegexPatterns = loadRegexPatterns;
+    window.renderRegexPatterns = renderRegexPatterns;
+    window.addRegexPattern = addRegexPattern;
+    window.removeRegexPattern = removeRegexPattern;
+    window.saveRegexPatterns = saveRegexPatterns;
   </script>
 
   <!-- ES6 Module Scripts (deferred - run after all regular scripts) -->

@@ -1541,12 +1541,48 @@
       "content": "hello",
       "timestamp": 1771062767318,
       "manual": true
+    },
+    {
+      "role": "assistant",
+      "content": "hi",
+      "timestamp": 1771076881738,
+      "manual": true
+    },
+    {
+      "role": "user",
+      "content": "WiFi?",
+      "timestamp": 1771076890418
+    },
+    {
+      "role": "assistant",
+      "content": "Let me check that for you... 💭",
+      "timestamp": 1771076893453,
+      "action": "thinking"
+    },
+    {
+      "role": "assistant",
+      "content": "📶 *WiFi Info*\nNetwork: *pelangi capsule*\nPassword: *ilovestaycapsule*",
+      "timestamp": 1771076897388,
+      "intent": "wifi",
+      "confidence": 0.95,
+      "action": "static_reply",
+      "source": "tiered-llm-fallback",
+      "model": "Ollama GPT-OSS 20B",
+      "responseTime": 6961,
+      "kbFiles": [
+        "AGENTS.md",
+        "soul.md",
+        "memory.md",
+        "checkin-wifi.md"
+      ],
+      "messageType": "info",
+      "routedAction": "static_reply"
     }
   ],
   "createdAt": 1770921800697,
-  "updatedAt": 1771076382984,
+  "updatedAt": 1771077031839,
   "instanceId": "default",
-  "lastReadAt": 1771062767318,
+  "lastReadAt": 1771076897388,
   "favourite": true,
   "pinned": false,
   "responseMode": "autopilot"
