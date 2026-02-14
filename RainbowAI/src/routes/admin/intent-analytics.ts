@@ -269,4 +269,74 @@ router.patch('/intent/predictions/:id', async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /api/rainbow/intent/predictions/bulk-validate ─────────────
+// Bulk validate multiple predictions at once (approve all, reject all, etc.)
+router.post('/intent/predictions/bulk-validate', async (req: Request, res: Response) => {
+  try {
+    const { ids, wasCorrect, actualIntent } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return badRequest(res, 'ids array is required');
+    }
+
+    if (typeof wasCorrect !== 'boolean') {
+      return badRequest(res, 'wasCorrect (boolean) is required');
+    }
+
+    // If wasCorrect is false and no actualIntent provided, we can't update
+    // (staff needs to specify what the correct intent was)
+    if (!wasCorrect && !actualIntent) {
+      return badRequest(res, 'actualIntent is required when wasCorrect is false');
+    }
+
+    // Fetch all predictions to determine actualIntent if wasCorrect=true
+    const predictions = await db
+      .select({ id: intentPredictions.id, predictedIntent: intentPredictions.predictedIntent })
+      .from(intentPredictions)
+      .where(
+        ids.length === 1
+          ? eq(intentPredictions.id, ids[0])
+          : sql`${intentPredictions.id} IN (${sql.join(
+              ids.map((id) => sql`${id}`),
+              sql`, `
+            )})`
+      );
+
+    if (predictions.length === 0) {
+      return notFound(res, 'Predictions');
+    }
+
+    // Build update values for each prediction
+    const updates = predictions.map((p) => ({
+      id: p.id,
+      actualIntent: wasCorrect ? p.predictedIntent : actualIntent,
+      wasCorrect,
+      correctionSource: 'manual' as const,
+      correctedAt: new Date(),
+    }));
+
+    // Bulk update all predictions
+    for (const update of updates) {
+      await db
+        .update(intentPredictions)
+        .set({
+          actualIntent: update.actualIntent,
+          wasCorrect: update.wasCorrect,
+          correctionSource: update.correctionSource,
+          correctedAt: update.correctedAt,
+        })
+        .where(eq(intentPredictions.id, update.id));
+    }
+
+    res.json({
+      success: true,
+      updated: updates.length,
+      ids: predictions.map((p) => p.id),
+    });
+  } catch (error) {
+    console.error('[Intent Analytics] Error bulk validating predictions:', error);
+    serverError(res, 'Failed to bulk validate predictions');
+  }
+});
+
 export default router;

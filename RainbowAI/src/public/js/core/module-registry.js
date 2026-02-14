@@ -273,6 +273,17 @@ import {
   clearImportedReports
 } from '/public/js/modules/autotest-history.js';
 
+// Phase 31: Autotest Execution Core Module
+import {
+  getRoutingForAutotest,
+  getAutotestScenariosByAction,
+  runAutotest,
+  runScenario,
+  validateScenario,
+  evaluateRule,
+  SCENARIO_ID_TO_INTENT
+} from '/public/js/modules/autotest-execution.js';
+
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
 
@@ -446,3 +457,11 @@ window.getImportedReports = getImportedReports;
 window.addToAutotestHistory = addToAutotestHistory;
 window.clearAutotestHistory = clearAutotestHistory;
 window.clearImportedReports = clearImportedReports;
+// Phase 31: Autotest Execution Core
+window.getRoutingForAutotest = getRoutingForAutotest;
+window.getAutotestScenariosByAction = getAutotestScenariosByAction;
+window.runAutotest = runAutotest;
+window.runScenario = runScenario;
+window.validateScenario = validateScenario;
+window.evaluateRule = evaluateRule;
+window.SCENARIO_ID_TO_INTENT = SCENARIO_ID_TO_INTENT;
