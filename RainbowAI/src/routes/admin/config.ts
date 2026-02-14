@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { configStore } from '../../assistant/config-store.js';
 import { circuitBreakerRegistry } from '../../assistant/circuit-breaker.js';
+import { rateLimitManager } from '../../assistant/rate-limit-manager.js';
 import type { IntentEntry, RoutingAction, RoutingData, WorkflowDefinition, AIProvider } from '../../assistant/config-store.js';
 import { deepMerge } from './utils.js';
 import { ok, badRequest, notFound, conflict, serverError } from './http-utils.js';
@@ -451,6 +452,60 @@ router.post('/circuit-breaker/reset/:providerId', (req: Request, res: Response) 
 router.post('/circuit-breaker/reset-all', (_req: Request, res: Response) => {
   circuitBreakerRegistry.resetAll();
   ok(res, { status: 'all circuit breakers reset' });
+});
+
+// ─── Rate Limit Status (Health Check) ─────────────────────────────────
+
+/**
+ * GET /api/rainbow/rate-limit/status
+ * Returns rate limit status of all AI providers
+ */
+router.get('/rate-limit/status', (_req: Request, res: Response) => {
+  const states = rateLimitManager.getAllStates();
+  const now = Date.now();
+
+  const providersStatus = Array.from(states.entries()).map(([providerId, state]) => ({
+    providerId,
+    errorCount: state.errorCount,
+    successCount: state.successCount,
+    totalErrors: state.totalErrors,
+    inCooldown: now < state.cooldownUntil,
+    cooldownRemaining: Math.max(0, state.cooldownUntil - now),
+    lastErrorAt: state.lastErrorAt,
+    notifiedAt: state.notifiedAt
+  }));
+
+  const inCooldown = providersStatus.filter(p => p.inCooldown);
+  const hasErrors = providersStatus.filter(p => p.errorCount > 0);
+
+  res.json({
+    providers: providersStatus,
+    summary: {
+      total: providersStatus.length,
+      inCooldown: inCooldown.length,
+      withErrors: hasErrors.length,
+      healthy: providersStatus.length - hasErrors.length
+    }
+  });
+});
+
+/**
+ * POST /api/rainbow/rate-limit/reset/:providerId
+ * Manually reset a specific provider's rate limit state
+ */
+router.post('/rate-limit/reset/:providerId', (req: Request, res: Response) => {
+  const { providerId } = req.params;
+  rateLimitManager.resetProvider(providerId);
+  ok(res, { providerId, status: 'rate limit reset' });
+});
+
+/**
+ * POST /api/rainbow/rate-limit/reset-all
+ * Reset all rate limit states (admin intervention)
+ */
+router.post('/rate-limit/reset-all', (_req: Request, res: Response) => {
+  rateLimitManager.resetAll();
+  ok(res, { status: 'all rate limits reset' });
 });
 
 export default router;

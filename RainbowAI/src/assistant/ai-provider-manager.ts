@@ -7,6 +7,8 @@ import axios from 'axios';
 import type { AIProvider } from './config-store.js';
 import { configStore } from './config-store.js';
 import { circuitBreakerRegistry } from './circuit-breaker.js';
+import { rateLimitManager } from './rate-limit-manager.js';
+import { notifyAdminRateLimit } from '../lib/admin-notifier.js';
 
 // ─── Provider Configuration ──────────────────────────────────────────
 
@@ -192,10 +194,19 @@ export async function chatWithFallback(
       continue;
     }
 
+    // Check rate limit cooldown
+    if (rateLimitManager.isInCooldown(provider.id)) {
+      const cooldownMs = rateLimitManager.getCooldownRemaining(provider.id);
+      const cooldownSec = (cooldownMs / 1000).toFixed(1);
+      console.log(`[AI] ⏱️  Rate limit cooldown active for ${provider.name}, skipping (${cooldownSec}s remaining)`);
+      continue;
+    }
+
     try {
       const content = await providerChat(provider, messages, maxTokens, temperature, jsonMode);
       if (content) {
         breaker.recordSuccess();
+        rateLimitManager.recordSuccess(provider.id);
         console.log(`[AI] ✅ Success using: ${provider.name} (${provider.id})`);
         return { content, provider };
       }
@@ -204,7 +215,18 @@ export async function chatWithFallback(
 
       const isRateLimit = err.message?.includes('429') || err.message?.toLowerCase().includes('rate limit');
       if (isRateLimit) {
+        rateLimitManager.recordRateLimit(provider.id);
         console.warn(`[AI] ⚠️  ${provider.name} RATE LIMITED — falling back to next provider`);
+
+        // Check if we should notify admin
+        if (rateLimitManager.shouldNotifyAdmin(provider.id)) {
+          const state = rateLimitManager.getState(provider.id);
+          if (state) {
+            notifyAdminRateLimit(provider.id, provider.name, state.errorCount, state.totalErrors).catch(notifyErr => {
+              console.warn(`[AI] Failed to send rate limit notification:`, notifyErr.message);
+            });
+          }
+        }
       } else {
         console.warn(`[AI] ${provider.name} failed, trying next:`, err.message);
       }

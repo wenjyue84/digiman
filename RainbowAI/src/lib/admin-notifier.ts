@@ -1,4 +1,7 @@
 import { loadAdminNotificationSettings } from './admin-notification-settings.js';
+import { createModuleLogger } from './logger.js';
+
+const logger = createModuleLogger('AdminNotifications');
 
 /**
  * Admin Notifier
@@ -20,7 +23,7 @@ let notificationContext: NotificationContext | null = null;
  */
 export function initAdminNotifier(context: NotificationContext): void {
   notificationContext = context;
-  console.log('[AdminNotifier] ✅ Initialized');
+  logger.info('✅ Initialized');
 }
 
 /**
@@ -32,13 +35,13 @@ export async function notifyAdminDisconnection(
   reason: string
 ): Promise<void> {
   if (!notificationContext) {
-    console.warn('[AdminNotifier] Not initialized — cannot send disconnect notification');
+    logger.warn('Not initialized — cannot send disconnect notification');
     return;
   }
 
   const settings = await loadAdminNotificationSettings();
   if (!settings.enabled || !settings.notifyOnDisconnect) {
-    console.log('[AdminNotifier] Disconnect notifications disabled in settings');
+    logger.info('Disconnect notifications disabled in settings');
     return;
   }
 
@@ -52,9 +55,9 @@ export async function notifyAdminDisconnection(
 
   try {
     await notificationContext.sendMessage(settings.systemAdminPhone, message);
-    console.log(`[AdminNotifier] Sent disconnect notification to +${settings.systemAdminPhone}`);
+    logger.info('Sent disconnect notification', { toPhone: settings.systemAdminPhone });
   } catch (err: any) {
-    console.error(`[AdminNotifier] Failed to send disconnect notification:`, err.message);
+    logger.error('Failed to send disconnect notification', { error: err.message, stack: err.stack });
   }
 }
 
@@ -67,13 +70,13 @@ export async function notifyAdminUnlink(
   instancePhone: string
 ): Promise<void> {
   if (!notificationContext) {
-    console.warn('[AdminNotifier] Not initialized — cannot send unlink notification');
+    logger.warn('Not initialized — cannot send unlink notification');
     return;
   }
 
   const settings = await loadAdminNotificationSettings();
   if (!settings.enabled || !settings.notifyOnUnlink) {
-    console.log('[AdminNotifier] Unlink notifications disabled in settings');
+    logger.info('Unlink notifications disabled in settings');
     return;
   }
 
@@ -88,9 +91,9 @@ export async function notifyAdminUnlink(
 
   try {
     await notificationContext.sendMessage(settings.systemAdminPhone, message);
-    console.log(`[AdminNotifier] Sent unlink notification to +${settings.systemAdminPhone}`);
+    logger.info('Sent unlink notification', { toPhone: settings.systemAdminPhone });
   } catch (err: any) {
-    console.error(`[AdminNotifier] Failed to send unlink notification:`, err.message);
+    logger.error('Failed to send unlink notification', { error: err.message, stack: err.stack });
   }
 }
 
@@ -116,20 +119,20 @@ export async function notifyAdminReconnect(
   instancePhone: string
 ): Promise<void> {
   if (!notificationContext) {
-    console.warn('[AdminNotifier] Not initialized — cannot send reconnect notification');
+    logger.warn('Not initialized — cannot send reconnect notification');
     return;
   }
 
   const settings = await loadAdminNotificationSettings();
   if (!settings.enabled || !settings.notifyOnReconnect) {
-    console.log('[AdminNotifier] Reconnect notifications disabled in settings');
+    logger.info('Reconnect notifications disabled in settings');
     return;
   }
 
   const now = Date.now();
   const lastAt = lastReconnectNotifyAt.get(instanceId) ?? 0;
   if (now - lastAt < RECONNECT_NOTIFY_COOLDOWN_MS) {
-    console.log(`[AdminNotifier] Reconnect notification skipped (cooldown for ${instanceId})`);
+    logger.info('Reconnect notification skipped (cooldown)', { instanceId });
     return;
   }
   lastReconnectNotifyAt.set(instanceId, now);
@@ -142,9 +145,9 @@ export async function notifyAdminReconnect(
 
   try {
     await notificationContext.sendMessage(settings.systemAdminPhone, message);
-    console.log(`[AdminNotifier] Sent reconnect notification to +${settings.systemAdminPhone}`);
+    logger.info('Sent reconnect notification', { toPhone: settings.systemAdminPhone });
   } catch (err: any) {
-    console.error(`[AdminNotifier] Failed to send reconnect notification:`, err.message);
+    logger.error('Failed to send reconnect notification', { error: err.message, stack: err.stack });
   }
 }
 
@@ -155,7 +158,7 @@ export async function notifyAdminReconnect(
  */
 export async function notifyAdminServerStartup(): Promise<void> {
   if (!notificationContext) {
-    console.warn('[AdminNotifier] Not initialized — cannot send startup notification');
+    logger.warn('Not initialized — cannot send startup notification');
     return;
   }
 
@@ -239,5 +242,54 @@ export async function notifyAdminConfigCorruption(corruptedFiles: string[]): Pro
     console.log(`[AdminNotifier] ✅ Sent config corruption notification to +${settings.systemAdminPhone}`);
   } catch (err: any) {
     console.error(`[AdminNotifier] Failed to send config corruption notification:`, err.message);
+  }
+}
+
+/**
+ * Send AI provider rate limit alert to system admin
+ * Notifies when a provider hits too many consecutive 429 errors
+ */
+export async function notifyAdminRateLimit(
+  providerId: string,
+  providerName: string,
+  errorCount: number,
+  totalErrors: number
+): Promise<void> {
+  if (!notificationContext) {
+    console.warn('[AdminNotifier] Not initialized — cannot send rate limit notification');
+    return;
+  }
+
+  const settings = await loadAdminNotificationSettings();
+  if (!settings.enabled) {
+    console.log('[AdminNotifier] Admin notifications disabled in settings');
+    return;
+  }
+
+  const message = `⚠️ *AI Provider Rate Limit Alert*\n\n` +
+    `Provider: *${providerName}*\n` +
+    `ID: ${providerId}\n` +
+    `Consecutive errors: ${errorCount}\n` +
+    `Total errors (lifetime): ${totalErrors}\n` +
+    `Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}\n\n` +
+    `**What This Means:**\n` +
+    `This AI provider has hit its rate limit (429 errors) multiple times. ` +
+    `The system is using exponential backoff and will automatically retry after cooldown.\n\n` +
+    `**Impact:**\n` +
+    `✅ Other providers are still working\n` +
+    `⚠️ Responses may be slower if all providers are limited\n\n` +
+    `**What You Can Do:**\n` +
+    `1. Check if you have API quota remaining for this provider\n` +
+    `2. Consider disabling this provider temporarily\n` +
+    `3. Upgrade your API plan if needed\n` +
+    `4. Monitor via Rainbow Admin dashboard:\n` +
+    `   http://localhost:3002/dashboard#settings\n\n` +
+    `_This is an automated alert. You'll receive at most 1 per hour per provider._`;
+
+  try {
+    await notificationContext.sendMessage(settings.systemAdminPhone, message);
+    console.log(`[AdminNotifier] ✅ Sent rate limit notification to +${settings.systemAdminPhone}`);
+  } catch (err: any) {
+    console.error(`[AdminNotifier] Failed to send rate limit notification:`, err.message);
   }
 }
