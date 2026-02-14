@@ -233,10 +233,22 @@ import {
 } from '/public/js/modules/chat-preview.js';
 
 // Phase 27: Workflow Management Module
-// NOTE: workflows.js self-registers loadWorkflow on window. Only import actual exports.
 import {
   loadWorkflow,
-  editWorkflow
+  renderWorkflowList,
+  hideWorkflowEditor,
+  selectWorkflow,
+  renderSteps,
+  updateStepMessage,
+  updateStepWait,
+  addStep,
+  removeStep,
+  moveStep,
+  saveCurrentWorkflow,
+  createWorkflow,
+  deleteCurrentWorkflow,
+  renderAdvancedSettings,
+  saveAdvancedWorkflow
 } from '/public/js/modules/workflows.js';
 
 // Phase 28: Settings Tab Module
@@ -390,9 +402,22 @@ window.clearCurrentChat = clearCurrentChat;
 window.clearChat = clearChat;
 window.renderChatMessages = renderChatMessages;
 window.loadPreview = loadPreview;
-// Phase 27: Workflow Management (workflows.js also self-registers loadWorkflow)
+// Phase 27: Workflow Management
 window.loadWorkflow = loadWorkflow;
-window.editWorkflow = editWorkflow;
+window.renderWorkflowList = renderWorkflowList;
+window.hideWorkflowEditor = hideWorkflowEditor;
+window.selectWorkflow = selectWorkflow;
+window.renderSteps = renderSteps;
+window.updateStepMessage = updateStepMessage;
+window.updateStepWait = updateStepWait;
+window.addStep = addStep;
+window.removeStep = removeStep;
+window.moveStep = moveStep;
+window.saveCurrentWorkflow = saveCurrentWorkflow;
+window.createWorkflow = createWorkflow;
+window.deleteCurrentWorkflow = deleteCurrentWorkflow;
+window.renderAdvancedSettings = renderAdvancedSettings;
+window.saveAdvancedWorkflow = saveAdvancedWorkflow;
 // Phase 28: Settings Tab (other settings functions self-register from sub-modules)
 window.loadSettings = loadSettings;
 window.switchSettingsTab = switchSettingsTab;
