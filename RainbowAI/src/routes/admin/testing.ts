@@ -586,10 +586,8 @@ router.post('/tests/run', async (_req: Request, res: Response) => {
   const npxPath = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
   try {
-    // Vitest config has no named projects; only pass --project for integration/semantic when workspace is used
-    const args = projectArg === 'unit'
-      ? ['vitest', 'run', '--reporter=json']
-      : ['vitest', 'run', '--project', projectArg, '--reporter=json'];
+    // vitest.workspace.ts defines named projects: unit, semantic, integration
+    const args = ['vitest', 'run', '--project', projectArg, '--reporter=json'];
     const result = await new Promise<{ stdout: string; stderr: string; code: number }>((resolve) => {
       let stdout = '';
       let stderr = '';

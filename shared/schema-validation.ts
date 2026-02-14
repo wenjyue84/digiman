@@ -10,7 +10,7 @@ import {
   users, guests, capsules, capsuleProblems, guestTokens,
   adminNotifications, pushSubscriptions, expenses,
   rainbowFeedback, intentPredictions,
-} from "./schema-tables";
+} from "./schema-tables.js";
 
 // ─── User Schemas ────────────────────────────────────────────────────
 

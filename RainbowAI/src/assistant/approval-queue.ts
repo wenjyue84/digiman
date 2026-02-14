@@ -1,5 +1,8 @@
 import { EventEmitter } from 'events';
 import { configStore } from './config-store.js';
+import { createModuleLogger } from '../lib/logger.js';
+
+const logger = createModuleLogger('ApprovalQueue');
 
 export interface PendingApproval {
   id: string;
@@ -42,8 +45,8 @@ export function addApproval(
   const id = generateUUID();
   const now = Date.now();
   const settings = configStore.getSettings();
-  const timeoutMs =
-    (settings.response_modes?.copilot?.queue_timeout_minutes || 30) * 60 * 1000;
+  const timeoutMinutes = (settings as any).response_modes?.copilot?.queue_timeout_minutes ?? 30;
+  const timeoutMs = timeoutMinutes * 60 * 1000;
 
   queue.set(id, {
     ...approval,
@@ -53,7 +56,12 @@ export function addApproval(
   });
 
   emitter.emit('approval:added', id);
-  console.log(`[ApprovalQueue] Added approval ${id} for ${approval.phone} (intent: ${approval.intent}, confidence: ${approval.confidence})`);
+  logger.info('Added approval', {
+    approvalId: id,
+    phone: approval.phone,
+    intent: approval.intent,
+    confidence: approval.confidence
+  });
   return id;
 }
 
@@ -90,7 +98,7 @@ export function approveAndSend(id: string, editedResponse?: string): boolean {
   const finalResponse = editedResponse || approval.suggestedResponse;
   queue.delete(id);
   emitter.emit('approval:approved', id, finalResponse);
-  console.log(`[ApprovalQueue] Approved ${id} for ${approval.phone}`);
+  logger.info('Approved', { approvalId: id, phone: approval.phone });
   return true;
 }
 
@@ -103,7 +111,7 @@ export function rejectApproval(id: string): boolean {
 
   queue.delete(id);
   emitter.emit('approval:rejected', id);
-  console.log(`[ApprovalQueue] Rejected ${id} for ${approval.phone}`);
+  logger.info('Rejected', { approvalId: id, phone: approval.phone });
   return true;
 }
 
@@ -117,12 +125,12 @@ export function cleanupExpired(): number {
     if (now > approval.expiresAt) {
       queue.delete(id);
       emitter.emit('approval:expired', id);
-      console.log(`[ApprovalQueue] Expired ${id} for ${approval.phone}`);
+      logger.info('Expired', { approvalId: id, phone: approval.phone });
       count++;
     }
   }
   if (count > 0) {
-    console.log(`[ApprovalQueue] Cleaned up ${count} expired approvals`);
+    logger.info('Cleaned up expired approvals', { count });
   }
   return count;
 }

@@ -237,6 +237,25 @@ import {
   sendChatMessage
 } from '/public/js/modules/chat-message-handler.js';
 
+// Phase 27: Workflows Management Module
+import {
+  loadWorkflow,
+  renderWorkflowList,
+  hideWorkflowEditor,
+  selectWorkflow,
+  renderSteps,
+  updateStepMessage,
+  updateStepWait,
+  addStep,
+  removeStep,
+  moveStep,
+  saveCurrentWorkflow,
+  createWorkflow,
+  deleteCurrentWorkflow,
+  renderAdvancedSettings,
+  saveAdvancedWorkflow
+} from '/public/js/modules/workflows.js';
+
 // ─── Expose to global scope ────────────────────────────────────────
 // Required by tabs.js and onclick handlers in HTML templates
 
@@ -382,3 +401,19 @@ window.renderChatMessages = renderChatMessages;
 window.loadPreview = loadPreview;
 // Phase 25: Chat Message Handler
 window.sendChatMessage = sendChatMessage;
+// Phase 27: Workflows Management
+window.loadWorkflow = loadWorkflow;
+window.renderWorkflowList = renderWorkflowList;
+window.hideWorkflowEditor = hideWorkflowEditor;
+window.selectWorkflow = selectWorkflow;
+window.renderSteps = renderSteps;
+window.updateStepMessage = updateStepMessage;
+window.updateStepWait = updateStepWait;
+window.addStep = addStep;
+window.removeStep = removeStep;
+window.moveStep = moveStep;
+window.saveCurrentWorkflow = saveCurrentWorkflow;
+window.createWorkflow = createWorkflow;
+window.deleteCurrentWorkflow = deleteCurrentWorkflow;
+window.renderAdvancedSettings = renderAdvancedSettings;
+window.saveAdvancedWorkflow = saveAdvancedWorkflow;

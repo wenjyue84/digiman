@@ -24,6 +24,7 @@
   ],
   "maxTokens": 100,
   "temperature": 0.05,
+  "systemPrompt": "test",
   "fallbackUnknown": true,
   "logFailures": true,
   "enableContext": true,
