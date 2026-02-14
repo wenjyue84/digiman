@@ -47,10 +47,5 @@ export async function loadStaticTemplates() {
   }
 }
 
-/**
- * Edit a system message template (placeholder)
- * @param {string} key - Template key to edit
- */
-export function editTemplate(key) {
-  toast(`Edit template "${key}" - to be implemented`, 'info');
-}
+// Note: editTemplate, cancelEditTemplate, saveTemplate, deleteTemplate
+// are now in responses-crud.js (Phase 7)

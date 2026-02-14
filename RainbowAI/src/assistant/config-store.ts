@@ -2,147 +2,26 @@ import { EventEmitter } from 'events';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import type { IntentCategory } from './types.js';
+import type { ZodType } from 'zod';
 
-// ─── Types ──────────────────────────────────────────────────────────
+// Types are now defined via Zod schemas in schemas.ts
+// Re-export so existing consumers don't break
+export type {
+  KnowledgeData, IntentEntry, IntentsData, TemplatesData,
+  AIProvider, RoutingMode, SettingsData, RoutingAction, RoutingData,
+  WorkflowStep, WorkflowDefinition, WorkflowsData, WorkflowData
+} from './schemas.js';
 
-export interface KnowledgeData {
-  static: Array<{
-    intent: string;
-    response: { en: string; ms: string; zh: string };
-  }>;
-  dynamic: Record<string, string>;
-}
+import type {
+  KnowledgeData, IntentsData, TemplatesData, SettingsData,
+  WorkflowData, WorkflowsData, RoutingData, IntentEntry
+} from './schemas.js';
 
-export interface IntentEntry {
-  category: string;
-  patterns: string[];
-  flags: string;
-  enabled: boolean;
-  min_confidence?: number;
-  /** When true, current date/time is injected into LLM context when replying to this intent (e.g. early check-in, late checkout). */
-  time_sensitive?: boolean;
-}
-
-export interface IntentsData {
-  categories: IntentEntry[];
-}
-
-export interface TemplatesData {
-  [key: string]: { en: string; ms: string; zh: string };
-}
-
-export interface AIProvider {
-  id: string;
-  name: string;
-  description?: string;
-  type: 'openai-compatible' | 'groq' | 'ollama';
-  api_key_env: string;
-  api_key?: string;
-  base_url: string;
-  model: string;
-  enabled: boolean;
-  priority: number;
-}
-
-export interface RoutingMode {
-  splitModel: boolean;
-  classifyProvider: string;
-  tieredPipeline: boolean;
-}
-
-export interface SettingsData {
-  ai: {
-    nvidia_model: string;
-    nvidia_base_url: string;
-    groq_model: string;
-    max_classify_tokens: number;
-    max_chat_tokens: number;
-    classify_temperature: number;
-    chat_temperature: number;
-    providers?: AIProvider[];
-  };
-  routing_mode?: RoutingMode;
-  system_prompt: string;
-  rate_limits: {
-    per_minute: number;
-    per_hour: number;
-  };
-  staff: {
-    phones: string[];
-    jay_phone: string;
-    alston_phone: string;
-  };
-  conversation_management?: {
-    enabled: boolean;
-    summarize_threshold: number;
-    summarize_from_message: number;
-    summarize_to_message: number;
-    keep_verbatim_from: number;
-    keep_verbatim_to: number;
-    description?: string;
-  };
-  sentiment_analysis?: {
-    enabled: boolean;
-    consecutive_threshold: number;
-    cooldown_minutes: number;
-    description?: string;
-  };
-}
-
-export type RoutingAction = 'static_reply' | 'llm_reply' | 'workflow';
-
-export type RoutingData = Record<string, { action: RoutingAction; workflow_id?: string }>;
-
-export interface WorkflowStep {
-  id: string;
-  message: { en: string; ms: string; zh: string };
-  waitForReply: boolean;
-
-  // Optional action to execute before/after sending message
-  action?: {
-    type: 'send_to_staff' | 'escalate' | 'forward_payment' |
-    'check_availability' | 'check_lower_deck' | 'get_police_gps';
-    params?: Record<string, any>;
-  };
-
-  // NEW: AI Evaluation for smart branching
-  evaluation?: {
-    prompt: string;
-    outcomes: Record<string, string>; // "yes" -> "step_id"
-    defaultNextId: string;
-  };
-}
-
-export interface WorkflowDefinition {
-  id: string;
-  name: string;
-  steps: WorkflowStep[];
-}
-
-export interface WorkflowsData {
-  workflows: WorkflowDefinition[];
-}
-
-export interface WorkflowData {
-  escalation: {
-    timeout_ms: number;
-    unknown_threshold: number;
-    primary_phone: string;
-    secondary_phone: string;
-  };
-  payment: {
-    forward_to: string;
-    receipt_patterns: string[];
-  };
-  booking: {
-    enabled: boolean;
-    max_guests_auto: number;
-  };
-  non_text_handling: {
-    enabled: boolean;
-  };
-}
+import {
+  knowledgeDataSchema, intentsDataSchema, templatesDataSchema,
+  settingsDataSchema, workflowDataSchema, workflowsDataSchema,
+  routingDataSchema
+} from './schemas.js';
 
 // ─── Resolve data directory ─────────────────────────────────────────
 
@@ -169,14 +48,14 @@ class ConfigStore extends EventEmitter {
     if (!existsSync(DATA_DIR)) {
       mkdirSync(DATA_DIR, { recursive: true });
     }
-    this.knowledge = this.loadJSON<KnowledgeData>('knowledge.json');
-    this.intents = this.loadJSON<IntentsData>('intents.json');
-    this.templates = this.loadJSON<TemplatesData>('templates.json');
-    this.settings = this.loadJSON<SettingsData>('settings.json');
-    this.workflow = this.loadJSON<WorkflowData>('workflow.json');
-    this.workflows = this.loadJSON<WorkflowsData>('workflows.json');
-    this.routing = this.loadJSON<RoutingData>('routing.json');
-    console.log('[ConfigStore] All config files loaded');
+    this.knowledge = this.loadJSON<KnowledgeData>('knowledge.json', knowledgeDataSchema);
+    this.intents = this.loadJSON<IntentsData>('intents.json', intentsDataSchema);
+    this.templates = this.loadJSON<TemplatesData>('templates.json', templatesDataSchema);
+    this.settings = this.loadJSON<SettingsData>('settings.json', settingsDataSchema);
+    this.workflow = this.loadJSON<WorkflowData>('workflow.json', workflowDataSchema);
+    this.workflows = this.loadJSON<WorkflowsData>('workflows.json', workflowsDataSchema);
+    this.routing = this.loadJSON<RoutingData>('routing.json', routingDataSchema);
+    console.log('[ConfigStore] All config files loaded and validated');
   }
 
   // ─── Getters ────────────────────────────────────────────────────
@@ -223,45 +102,52 @@ class ConfigStore extends EventEmitter {
     return set;
   }
 
-  // ─── Setters (save + emit reload) ───────────────────────────────
+  // ─── Setters (validate + save + emit reload) ─────────────────────
 
   setKnowledge(data: KnowledgeData): void {
+    this.validateOrThrow(data, knowledgeDataSchema, 'knowledge');
     this.knowledge = data;
     this.saveJSON('knowledge.json', data);
     this.emit('reload', 'knowledge');
   }
 
   setIntents(data: IntentsData): void {
+    this.validateOrThrow(data, intentsDataSchema, 'intents');
     this.intents = data;
     this.saveJSON('intents.json', data);
     this.emit('reload', 'intents');
   }
 
   setTemplates(data: TemplatesData): void {
+    this.validateOrThrow(data, templatesDataSchema, 'templates');
     this.templates = data;
     this.saveJSON('templates.json', data);
     this.emit('reload', 'templates');
   }
 
   setSettings(data: SettingsData): void {
+    this.validateOrThrow(data, settingsDataSchema, 'settings');
     this.settings = data;
     this.saveJSON('settings.json', data);
     this.emit('reload', 'settings');
   }
 
   setWorkflow(data: WorkflowData): void {
+    this.validateOrThrow(data, workflowDataSchema, 'workflow');
     this.workflow = data;
     this.saveJSON('workflow.json', data);
     this.emit('reload', 'workflow');
   }
 
   setWorkflows(data: WorkflowsData): void {
+    this.validateOrThrow(data, workflowsDataSchema, 'workflows');
     this.workflows = data;
     this.saveJSON('workflows.json', data);
     this.emit('reload', 'workflows');
   }
 
   setRouting(data: RoutingData): void {
+    this.validateOrThrow(data, routingDataSchema, 'routing');
     this.routing = data;
     this.saveJSON('routing.json', data);
     this.emit('reload', 'routing');
@@ -270,26 +156,45 @@ class ConfigStore extends EventEmitter {
   // ─── Force reload all from disk ────────────────────────────────
 
   forceReload(): void {
-    this.knowledge = this.loadJSON<KnowledgeData>('knowledge.json');
-    this.intents = this.loadJSON<IntentsData>('intents.json');
-    this.templates = this.loadJSON<TemplatesData>('templates.json');
-    this.settings = this.loadJSON<SettingsData>('settings.json');
-    this.workflow = this.loadJSON<WorkflowData>('workflow.json');
-    this.workflows = this.loadJSON<WorkflowsData>('workflows.json');
-    this.routing = this.loadJSON<RoutingData>('routing.json');
+    this.knowledge = this.loadJSON<KnowledgeData>('knowledge.json', knowledgeDataSchema);
+    this.intents = this.loadJSON<IntentsData>('intents.json', intentsDataSchema);
+    this.templates = this.loadJSON<TemplatesData>('templates.json', templatesDataSchema);
+    this.settings = this.loadJSON<SettingsData>('settings.json', settingsDataSchema);
+    this.workflow = this.loadJSON<WorkflowData>('workflow.json', workflowDataSchema);
+    this.workflows = this.loadJSON<WorkflowsData>('workflows.json', workflowsDataSchema);
+    this.routing = this.loadJSON<RoutingData>('routing.json', routingDataSchema);
     this.emit('reload', 'all');
     console.log('[ConfigStore] Force reloaded all config files');
   }
 
   // ─── File I/O helpers ──────────────────────────────────────────
 
-  private loadJSON<T>(filename: string): T {
+  /**
+   * Load and optionally validate a JSON config file.
+   * On validation failure: logs warning but returns unvalidated data (don't crash startup).
+   */
+  private loadJSON<T>(filename: string, schema?: ZodType<T>): T {
     const filepath = join(DATA_DIR, filename);
     if (!existsSync(filepath)) {
       throw new Error(`[ConfigStore] Missing config file: ${filepath}`);
     }
     const raw = readFileSync(filepath, 'utf-8');
-    return JSON.parse(raw) as T;
+    const parsed = JSON.parse(raw);
+
+    if (schema) {
+      const result = schema.safeParse(parsed);
+      if (!result.success) {
+        const issues = result.error.issues
+          .slice(0, 5) // Show max 5 issues
+          .map(i => `  ${i.path.join('.')}: ${i.message}`)
+          .join('\n');
+        console.warn(`[ConfigStore] ⚠️ Validation warnings for ${filename}:\n${issues}`);
+        console.warn(`[ConfigStore] Using data as-is for ${filename} (${result.error.issues.length} issue(s))`);
+        return parsed as T;
+      }
+      return result.data;
+    }
+    return parsed as T;
   }
 
   private saveJSON(filename: string, data: unknown): void {
@@ -297,6 +202,19 @@ class ConfigStore extends EventEmitter {
     const tmpPath = filepath + '.tmp';
     writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
     renameSync(tmpPath, filepath);
+  }
+
+  /**
+   * Validate data against schema. Throws on failure (for admin write operations).
+   */
+  private validateOrThrow<T>(data: unknown, schema: ZodType<T>, name: string): void {
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      const issues = result.error.issues
+        .map(i => `${i.path.join('.')}: ${i.message}`)
+        .join('; ');
+      throw new Error(`[ConfigStore] Invalid ${name} data: ${issues}`);
+    }
   }
 }
 

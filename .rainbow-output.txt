@@ -3518,3 +3518,473 @@ API call failed: GET /api/settings Request failed with status code 401
 [Hot Reload] File changed: C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\public\js\legacy-functions.js
 [Hot Reload] Client disconnected
 [Hot Reload] Client connected
+[Hot Reload] File changed: C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\public\rainbow-admin.html
+[Hot Reload] Client disconnected
+[Hot Reload] Client connected
+[Hot Reload] Client connected
+[LatencyTest] Failed for openrouter-qwen-32b: Error: Qwen 2.5 32B (Free) 400: {"error":{"message":"qwen/qwen-2.5-32b-instruct is not a valid model ID","code":400},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-gemma-9b: Error: Google Gemma 2 9B (Free) 404: {"error":{"message":"No endpoints found for google/gemma-2-9b-it:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-llama-8b: Error: Meta Llama 3.1 8B (Free) 404: {"error":{"message":"No endpoints found for meta-llama/llama-3.1-8b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-llama-8b: Error: Meta Llama 3.1 8B (Free) 404: {"error":{"message":"No endpoints found for meta-llama/llama-3.1-8b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-mistral-7b: Error: Mistral 7B (Free) 404: {"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-mistral-7b: Error: Mistral 7B (Free) 404: {"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-qwen-32b: Error: Qwen 2.5 32B (Free) 400: {"error":{"message":"qwen/qwen-2.5-32b-instruct is not a valid model ID","code":400},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-phi-3: Error: Microsoft Phi-3 Medium (Free) 404: {"error":{"message":"No endpoints found for microsoft/phi-3-medium-128k-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-phi-3: Error: Microsoft Phi-3 Medium (Free) 404: {"error":{"message":"No endpoints found for microsoft/phi-3-medium-128k-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-gemma-9b: Error: Google Gemma 2 9B (Free) 404: {"error":{"message":"No endpoints found for google/gemma-2-9b-it:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[Hot Reload] File changed: C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\public\js\modules\intents.js
+[Hot Reload] Client disconnected
+[Hot Reload] Client disconnected
+[Hot Reload] Client connected
+[Hot Reload] Client connected
+[LatencyTest] Failed for openrouter-qwen-32b: Error: Qwen 2.5 32B (Free) 400: {"error":{"message":"qwen/qwen-2.5-32b-instruct is not a valid model ID","code":400},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-llama-8b: Error: Meta Llama 3.1 8B (Free) 404: {"error":{"message":"No endpoints found for meta-llama/llama-3.1-8b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-llama-8b: Error: Meta Llama 3.1 8B (Free) 404: {"error":{"message":"No endpoints found for meta-llama/llama-3.1-8b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-mistral-7b: Error: Mistral 7B (Free) 404: {"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-mistral-7b: Error: Mistral 7B (Free) 404: {"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-qwen-32b: Error: Qwen 2.5 32B (Free) 400: {"error":{"message":"qwen/qwen-2.5-32b-instruct is not a valid model ID","code":400},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-phi-3: Error: Microsoft Phi-3 Medium (Free) 404: {"error":{"message":"No endpoints found for microsoft/phi-3-medium-128k-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-gemma-9b: Error: Google Gemma 2 9B (Free) 404: {"error":{"message":"No endpoints found for google/gemma-2-9b-it:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-gemma-9b: Error: Google Gemma 2 9B (Free) 404: {"error":{"message":"No endpoints found for google/gemma-2-9b-it:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-phi-3: Error: Microsoft Phi-3 Medium (Free) 404: {"error":{"message":"No endpoints found for microsoft/phi-3-medium-128k-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[Hot Reload] Client disconnected
+[Hot Reload] Client connected
+[LatencyTest] Failed for openrouter-qwen-32b: Error: Qwen 2.5 32B (Free) 400: {"error":{"message":"qwen/qwen-2.5-32b-instruct is not a valid model ID","code":400},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-gemma-9b: Error: Google Gemma 2 9B (Free) 404: {"error":{"message":"No endpoints found for google/gemma-2-9b-it:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-gemma-9b: Error: Google Gemma 2 9B (Free) 404: {"error":{"message":"No endpoints found for google/gemma-2-9b-it:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-llama-8b: Error: Meta Llama 3.1 8B (Free) 404: {"error":{"message":"No endpoints found for meta-llama/llama-3.1-8b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-llama-8b: Error: Meta Llama 3.1 8B (Free) 404: {"error":{"message":"No endpoints found for meta-llama/llama-3.1-8b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-qwen-32b: Error: Qwen 2.5 32B (Free) 400: {"error":{"message":"qwen/qwen-2.5-32b-instruct is not a valid model ID","code":400},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-mistral-7b: Error: Mistral 7B (Free) 404: {"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-mistral-7b: Error: Mistral 7B (Free) 404: {"error":{"message":"No endpoints found for mistralai/mistral-7b-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-phi-3: Error: Microsoft Phi-3 Medium (Free) 404: {"error":{"message":"No endpoints found for microsoft/phi-3-medium-128k-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[LatencyTest] Failed for openrouter-phi-3: Error: Microsoft Phi-3 Medium (Free) 404: {"error":{"message":"No endpoints found for microsoft/phi-3-medium-128k-instruct:free.","code":404},"user_id":"user_2UjjPyZtfAYE72tgp0t78xF2M4v"}
+    at <anonymous> (C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\routes\test\latency.ts:44:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+8:35:59 pm [tsx] change in ./src\assistant\config-store.ts Rerunning...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:26728) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (4375ms)
+[Feedback] ✅ Settings loaded from database
+8:44:07 pm [tsx] change in ./src\assistant\message-router.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:40280) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3591ms)
+[Feedback] ✅ Settings loaded from database
+8:46:20 pm [tsx] change in ./src\assistant\pipeline\response-processor.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:27520) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2918ms)
+[Feedback] ✅ Settings loaded from database
+8:46:40 pm [tsx] change in ./src\assistant\pipeline\response-processor.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:42332) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3421ms)
+[Feedback] ✅ Settings loaded from database
+8:47:06 pm [tsx] change in ./src\assistant\pipeline\response-processor.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:46180) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (2921ms)
+[Feedback] ✅ Settings loaded from database
+8:47:27 pm [tsx] change in ./src\assistant\pipeline\response-processor.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:25704) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3506ms)
+[Feedback] ✅ Settings loaded from database
+8:47:48 pm [tsx] change in ./src\assistant\pipeline\response-processor.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:7932) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3499ms)
+[Feedback] ✅ Settings loaded from database
+8:48:09 pm [tsx] change in ./src\assistant\pipeline\response-processor.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:10676) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3156ms)
+[Feedback] ✅ Settings loaded from database
+8:48:27 pm [tsx] change in ./src\assistant\pipeline\state-executor.ts Restarting...
+c[DB] Connection string loaded: postgresql://neondb_owner:***@ep-ancient-forest-aeh28zhu-poo...
+[IntentConfig] Configuration updated: {
+  tiers: {
+    tier1_emergency: { enabled: false, contextMessages: 0 },
+    tier2_fuzzy: { enabled: false, contextMessages: 3, threshold: 0.8 },
+    tier3_semantic: { enabled: false, contextMessages: 5, threshold: 0.67 },
+    tier4_llm: { enabled: true, contextMessages: 5 }
+  },
+  conversationState: {
+    trackLastIntent: true,
+    trackSlots: true,
+    maxHistoryMessages: 20,
+    contextTTL: 30
+  }
+}
+[IntentConfig] Loaded tiers from C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data\intent-tiers.json
+[ConfigStore] All config files loaded and validated
+[Startup] ConfigStore initialized successfully
+(node:24688) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[CRASH] Uncaught exception: Error: listen EADDRINUSE: address already in use 0.0.0.0:3002
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3002
+}
+[DB] ✅ Database connection established (3260ms)
+[Feedback] ✅ Settings loaded from database
