@@ -127,3 +127,10 @@ reports/
 # Root-level screenshots
 /*.png
 .vercel
+
+# Server runtime output logs
+.rainbow-output.txt
+.rainbow-restart-output.txt
+
+# Knowledge base backups (generated, not source)
+RainbowAI/.rainbow-kb/conversations_backup/
