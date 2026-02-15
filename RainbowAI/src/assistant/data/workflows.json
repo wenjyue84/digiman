@@ -79,9 +79,9 @@
         {
           "id": "s2",
           "message": {
-            "en": "Thank you! Please upload a photo of your passport or IC for registration. 📸",
-            "ms": "Terima kasih! Sila upload gambar pasport atau IC anda untuk pendaftaran. 📸",
-            "zh": "谢谢！请上传您的护照或身份证照片以便登记。📸"
+            "en": "Thank you! What is your phone number? (We'll send you a check-in link) 📱",
+            "ms": "Terima kasih! Apakah nombor telefon anda? (Kami akan hantar link check-in) 📱",
+            "zh": "谢谢！请问您的手机号码是？（我们会发送入住链接给您）📱"
           },
           "waitForReply": true
         },
@@ -109,21 +109,21 @@
         {
           "id": "s5",
           "message": {
-            "en": "Available capsules: {{availableCapsules}} 🎊\n\nI'm forwarding your details to our admin who will assign you a capsule and send the door password. You'll receive confirmation shortly!",
-            "ms": "Capsule tersedia: {{availableCapsules}} 🎊\n\nSaya hantar maklumat anda ke admin untuk assign capsule dan hantar password pintu. Anda akan terima konfirmasi tidak lama lagi!",
-            "zh": "可用胶囊房: {{availableCapsules}} 🎊\n\n我正在将您的信息转发给管理员，他们会为您分配胶囊房并发送门禁密码。您很快就会收到确认！"
+            "en": "We have {{availableCount}} capsules available ({{availableCapsules}}) 🎊\n\nI've assigned capsule *{{assignedCapsule}}* for you and sent a self-check-in link to your WhatsApp.\n\nPlease fill in the form to complete your check-in! Our admin will be notified automatically once you're done.",
+            "ms": "Kami ada {{availableCount}} capsule tersedia ({{availableCapsules}}) 🎊\n\nSaya telah assign capsule *{{assignedCapsule}}* untuk anda dan hantar link self-check-in ke WhatsApp anda.\n\nSila isi borang untuk lengkapkan check-in anda! Admin kami akan diberitahu secara automatik selepas selesai.",
+            "zh": "我们有 {{availableCount}} 个胶囊房可用 ({{availableCapsules}}) 🎊\n\n我已为您分配了胶囊房 *{{assignedCapsule}}* 并发送了自助入住链接到您的WhatsApp。\n\n请填写表格以完成入住！完成后我们的管理员会自动收到通知。"
           },
           "waitForReply": false,
           "action": {
-            "type": "forward_payment"
+            "type": "create_checkin_link"
           }
         },
         {
           "id": "s6",
           "message": {
-            "en": "✅ Check-in details sent to admin! They will confirm your capsule assignment shortly.\n\n📋 While you wait:\n• Check-in time: *2:00 PM*\n• Door password: *1270#*\n• WiFi: *PelangiHostel*\n\nNeed anything else? Just ask! 😊",
-            "ms": "✅ Butiran check-in dihantar ke admin! Mereka akan confirm capsule anda tidak lama lagi.\n\n📋 Sementara anda menunggu:\n• Masa check-in: *2:00 PM*\n• Password pintu: *1270#*\n• WiFi: *PelangiHostel*\n\nPerlukan apa-apa lagi? Tanya sahaja! 😊",
-            "zh": "✅ 入住详情已发送给管理员！他们会很快确认您的胶囊房。\n\n📋 等待期间：\n• 入住时间: *下午2:00*\n• 门密码: *1270#*\n• WiFi: *PelangiHostel*\n\n还需要其他帮助吗？随时问我！😊"
+            "en": "✅ You're all set! Here's some useful info:\n\n📋 *Quick Reference:*\n• Check-in time: *2:00 PM*\n• Check-out time: *12:00 PM*\n• Door password: *1270#*\n• WiFi: *PelangiHostel*\n• Address: Jalan Dato Haji Hassan, JB\n\n🎥 First time? Watch our video guide: https://youtu.be/bYj1M37xJiE\n\nNeed anything else? Just ask! 😊",
+            "ms": "✅ Semua siap! Ini maklumat berguna:\n\n📋 *Rujukan Pantas:*\n• Masa check-in: *2:00 PM*\n• Masa check-out: *12:00 PM*\n• Password pintu: *1270#*\n• WiFi: *PelangiHostel*\n• Alamat: Jalan Dato Haji Hassan, JB\n\n🎥 Pertama kali? Tonton video panduan: https://youtu.be/bYj1M37xJiE\n\nPerlukan apa-apa lagi? Tanya sahaja! 😊",
+            "zh": "✅ 一切就绪！以下是一些有用信息：\n\n📋 *快速参考：*\n• 入住时间: *下午2:00*\n• 退房时间: *中午12:00*\n• 门密码: *1270#*\n• WiFi: *PelangiHostel*\n• 地址: Jalan Dato Haji Hassan, JB\n\n🎥 第一次来？观看视频指南: https://youtu.be/bYj1M37xJiE\n\n还需要其他帮助吗？随时问我！😊"
           },
           "waitForReply": false
         }

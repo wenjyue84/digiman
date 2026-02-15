@@ -119,6 +119,9 @@ async function executeAction(
     case 'check_lower_deck':
       return handleCheckLowerDeck(context, callAPI);
 
+    case 'create_checkin_link':
+      return handleCreateCheckinLink(context, callAPI, sendMessage);
+
     case 'get_police_gps':
       return handleGetPoliceGPS(context);
 
@@ -253,7 +256,7 @@ async function handleForwardPayment(
 }
 
 /**
- * Check capsule availability (C1-C24) via Pelangi MCP API
+ * Check capsule availability via Pelangi Manager API
  */
 async function handleCheckAvailability(
   context: WorkflowEnhancerContext,
@@ -261,45 +264,112 @@ async function handleCheckAvailability(
 ): Promise<ActionResult> {
 
   try {
-    // Call Pelangi MCP API with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    const response = await callAPI('/api/capsules/available', {});
+    const capsules = Array.isArray(response) ? response : (response.capsules || []);
 
-    const response = await callAPI('http://localhost:5000/api/capsules', {
-      signal: controller.signal
-    });
+    if (capsules.length === 0) {
+      console.log('[Workflow Enhancer] No available capsules');
+      return {
+        data: {
+          availableCapsules: 'No capsules currently available',
+          availableCount: 0
+        }
+      };
+    }
 
-    clearTimeout(timeoutId);
+    // Format: show capsule numbers grouped by section
+    const capsuleList = capsules
+      .map((c: any) => c.number || c.capsuleNumber)
+      .filter(Boolean)
+      .join(', ');
 
-    // Parse response
-    const capsules = response.capsules || response || [];
-
-    // Filter for available capsules
-    const available = capsules.filter((c: any) =>
-      c.status === 'available' || c.status === 'vacant'
-    );
-
-    // Format capsule list
-    const capsuleList = available
-      .map((c: any) => `${c.capsuleNumber} (${c.status})`)
-      .join(', ') || 'None available';
-
-    console.log(`[Workflow Enhancer] Found ${available.length} available capsules`);
+    console.log(`[Workflow Enhancer] Found ${capsules.length} available capsules: ${capsuleList}`);
 
     return {
       data: {
         availableCapsules: capsuleList,
-        availableCount: available.length
+        availableCount: capsules.length
       }
     };
   } catch (error) {
     console.error('[Workflow Enhancer] Failed to check availability:', error);
 
-    // Return fallback data
+    // Fallback: assume capsules are available (almost never full house)
     return {
       data: {
-        availableCapsules: 'System temporarily unavailable',
-        availableCount: 0
+        availableCapsules: 'Capsules are available! We will confirm your assignment shortly.',
+        availableCount: -1
+      }
+    };
+  }
+}
+
+/**
+ * Create a self-check-in link and send it to the guest via WhatsApp
+ */
+async function handleCreateCheckinLink(
+  context: WorkflowEnhancerContext,
+  callAPI: CallAPIFn,
+  sendMessage: SendMessageFn
+): Promise<ActionResult> {
+
+  try {
+    // Extract guest data from collected workflow steps
+    const guestName = context.collectedData['s1'] || context.pushName;
+    const phoneNumber = context.collectedData['s2'] || context.phone;
+
+    // Call internal guest token creation endpoint (no auth required)
+    const tokenResult = await callAPI('/api/guest-tokens/internal', {
+      method: 'POST',
+      body: JSON.stringify({
+        guestName,
+        phoneNumber,
+      })
+    });
+
+    if (!tokenResult.success) {
+      console.error('[Workflow Enhancer] Token creation failed:', tokenResult.message);
+      return {
+        data: {
+          checkinLink: '',
+          assignedCapsule: 'N/A',
+          linkMessage: 'Our staff will assist you with check-in directly.'
+        }
+      };
+    }
+
+    const checkinLink = tokenResult.link;
+    const assignedCapsule = tokenResult.capsuleNumber;
+
+    // Build the link message in guest's language
+    const linkMessages: Record<string, string> = {
+      en: `🔗 *Your Self-Check-in Link:*\n${checkinLink}\n\nPlease fill in your details using this link to complete check-in.`,
+      ms: `🔗 *Link Self-Check-in Anda:*\n${checkinLink}\n\nSila isi butiran anda menggunakan link ini untuk lengkapkan check-in.`,
+      zh: `🔗 *自助入住链接:*\n${checkinLink}\n\n请使用此链接填写您的详细信息以完成入住。`
+    };
+
+    const linkMessage = linkMessages[context.language] || linkMessages.en;
+
+    // Send the check-in link to the guest via WhatsApp
+    await sendMessage(context.phone, linkMessage, context.instanceId);
+
+    console.log(`[Workflow Enhancer] Sent check-in link to ${context.phone}: ${checkinLink} (capsule ${assignedCapsule})`);
+
+    return {
+      data: {
+        checkinLink,
+        assignedCapsule,
+        linkMessage: 'Link sent!'
+      }
+    };
+  } catch (error) {
+    console.error('[Workflow Enhancer] Failed to create check-in link:', error);
+
+    return {
+      data: {
+        checkinLink: '',
+        assignedCapsule: 'N/A',
+        linkMessage: 'Unable to generate link. Staff will assist you directly.'
       }
     };
   }
@@ -480,6 +550,11 @@ function getFallbackMessage(actionType: string, language: string): string {
       en: '⚠️ Unable to check availability. Please ask staff.',
       ms: '⚠️ Tidak dapat semak. Sila tanya kakitangan.',
       zh: '⚠️ 无法检查可用性。请询问工作人员。'
+    },
+    create_checkin_link: {
+      en: '⚠️ Unable to generate check-in link. Please contact staff at +60127088789.',
+      ms: '⚠️ Tidak dapat buat link check-in. Sila hubungi staf di +60127088789.',
+      zh: '⚠️ 无法生成入住链接。请联系工作人员 +60127088789。'
     }
   };
 

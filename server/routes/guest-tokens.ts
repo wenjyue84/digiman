@@ -81,8 +81,90 @@ router.get("/health", async (req, res) => {
   }
 });
 
+// Internal guest token creation (for Rainbow AI — no auth, localhost only)
+router.post("/internal",
+  async (req: any, res) => {
+    // Restrict to localhost only
+    const ip = req.ip || req.socket.remoteAddress || '';
+    const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    if (!isLocal) {
+      return res.status(403).json({ message: 'Internal endpoint — localhost only' });
+    }
+
+    try {
+      const { guestName, phoneNumber, expectedCheckoutDate } = req.body;
+
+      // Auto-assign a capsule
+      const availableCapsules = await storage.getAvailableCapsules();
+
+      if (availableCapsules.length === 0) {
+        return res.status(200).json({
+          success: false,
+          message: 'No capsules available',
+          availableCount: 0
+        });
+      }
+
+      // Sort by priority: back (1-6) > middle (25-26) > front (11-24), prefer even (bottom bunk)
+      const sorted = availableCapsules.sort((a, b) => {
+        const aNum = parseInt(a.number.replace('C', ''));
+        const bNum = parseInt(b.number.replace('C', ''));
+        const section = (n: number) => n >= 1 && n <= 6 ? 1 : n >= 25 && n <= 26 ? 2 : 3;
+        if (section(aNum) !== section(bNum)) return section(aNum) - section(bNum);
+        if (aNum % 2 === 0 && bNum % 2 !== 0) return -1;
+        if (aNum % 2 !== 0 && bNum % 2 === 0) return 1;
+        return aNum - bNum;
+      });
+
+      const assignedCapsule = sorted[0].number;
+      const token = randomUUID();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      // Use first admin user as createdBy (FK constraint requires valid user ID)
+      const users = await storage.getAllUsers();
+      const adminUser = users[0];
+      if (!adminUser) {
+        return res.status(500).json({ success: false, message: 'No admin user found in system' });
+      }
+
+      const createdToken = await storage.createGuestToken({
+        token,
+        createdBy: adminUser.id,
+        expiresAt,
+        capsuleNumber: assignedCapsule,
+        autoAssign: true,
+        guestName: guestName || null,
+        phoneNumber: phoneNumber || null,
+        email: null,
+        expectedCheckoutDate: expectedCheckoutDate || null,
+        createdAt: new Date(),
+      });
+
+      // Build check-in link
+      const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+      const link = `${baseUrl}/guest-checkin?token=${token}`;
+
+      console.log(`[Internal Token] Created for ${guestName || 'Guest'} → ${assignedCapsule} | ${link}`);
+
+      res.json({
+        success: true,
+        token: createdToken.token,
+        link,
+        capsuleNumber: assignedCapsule,
+        guestName: guestName || 'Guest',
+        availableCount: availableCapsules.length,
+        expiresAt: createdToken.expiresAt,
+      });
+    } catch (error: any) {
+      console.error('[Internal Token] Error:', error.message);
+      res.status(500).json({ success: false, message: error.message || 'Failed to create token' });
+    }
+  }
+);
+
 // Create guest token (for Instant Create and Create Link functionality)
-router.post("/", 
+router.post("/",
   securityValidationMiddleware,
   authenticateToken,
   validateData(createTokenSchema, 'body'),
@@ -453,11 +535,36 @@ router.post("/checkin/:token",
         guest.name,
         `Capsule ${guest.capsuleNumber}`
       );
-      
+
       await pushNotificationService.sendToAdmins(notificationPayload);
       console.log(`Push notification sent for self-checkin: ${guest.name}`);
     } catch (error) {
       console.error('Failed to send push notification for self-checkin:', error);
+      // Don't fail the request if notification fails
+    }
+
+    // Notify Rainbow AI to send WhatsApp message to admin
+    try {
+      const rainbowPort = process.env.RAINBOW_PORT || 3002;
+      await fetch(`http://localhost:${rainbowPort}/api/rainbow/notify-checkin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guestName: guest.name,
+          phoneNumber: guest.phoneNumber || validatedData.phoneNumber,
+          capsuleNumber: guest.capsuleNumber,
+          checkInDate: guest.checkinTime?.toISOString(),
+          checkOutDate: guest.expectedCheckoutDate,
+          idNumber: guest.idNumber,
+          email: guest.email,
+          nationality: validatedData.nationality,
+          gender: validatedData.gender,
+          age: validatedData.age,
+        }),
+      });
+      console.log(`[Self-Checkin] Rainbow AI notified for ${guest.name}`);
+    } catch (error) {
+      console.error('[Self-Checkin] Failed to notify Rainbow AI:', error);
       // Don't fail the request if notification fails
     }
     

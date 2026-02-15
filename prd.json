@@ -173,12 +173,41 @@
       "estimatedComplexity": "large",
       "passes": true
     }
+    ,
+    {
+      "id": "US-009",
+      "title": "Advanced check-in workflow with real capsule availability",
+      "priority": 9,
+      "description": "Upgrade checkin_full workflow to actually check capsule availability from Pelangi Manager (port 5000), create self-check-in links via guest token API, send link to guest via WhatsApp, and notify admin after guest completes self-check-in.",
+      "acceptanceCriteria": [
+        "Workflow checks real capsule availability via GET /api/capsules/available",
+        "Internal guest token endpoint (POST /api/guest-tokens/internal) creates tokens without auth",
+        "Check-in link is sent to guest via WhatsApp during workflow",
+        "After guest completes self-check-in, WhatsApp notification sent to admin (+60127088789)",
+        "Admin notification includes guest name, phone, capsule, dates, ID",
+        "Server starts and dashboard loads without errors",
+        "50-scenario accuracy test maintains 100%"
+      ],
+      "technicalNotes": [
+        "Internal endpoint restricted to localhost only (no auth needed)",
+        "Uses first admin user ID for createdBy FK constraint",
+        "Workflow enhancer has new create_checkin_link action handler",
+        "Post-check-in webhook: web server calls Rainbow AI /api/rainbow/notify-checkin"
+      ],
+      "dependencies": ["US-008"],
+      "estimatedComplexity": "large",
+      "passes": true
+    }
   ],
   "technicalContext": {
     "affectedAreas": [
       "RainbowAI/src/assistant/pipeline/intent-classifier.ts",
       "RainbowAI/src/assistant/pipeline/pipeline-context.ts",
-      "RainbowAI/src/assistant/pipeline/stages/"
+      "RainbowAI/src/assistant/pipeline/stages/",
+      "RainbowAI/src/assistant/workflow-enhancer.ts",
+      "RainbowAI/src/assistant/data/workflows.json",
+      "RainbowAI/src/routes/admin/checkin-notify.ts",
+      "server/routes/guest-tokens.ts"
     ],
     "testingStrategy": "TypeScript compilation + agent-browser dashboard verification after each story",
     "rollbackPlan": "git checkout HEAD -- RainbowAI/src/assistant/pipeline/ && rm -rf RainbowAI/src/assistant/pipeline/stages/"
