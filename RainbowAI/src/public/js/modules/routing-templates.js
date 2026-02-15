@@ -162,7 +162,7 @@ export function saveTemplates(templates) {
  * Displays built-in templates (T1-T5) and custom saved templates
  */
 export function renderTemplateButtons() {
-  const container = document.getElementById('routing-template-buttons');
+  const container = document.getElementById('template-buttons-container');
   if (!container) return;
 
   const customTemplates = getSavedTemplates();
@@ -348,17 +348,17 @@ export function showSaveTemplateModal() {
  * Submit save template form
  * Saves current routing configuration as a custom template
  */
-export async function submitSaveTemplate() {
-  const nameInput = document.getElementById('new-template-name');
-  const descInput = document.getElementById('new-template-desc');
+export async function submitSaveTemplate(event) {
+  if (event) event.preventDefault();
+  const nameInput = document.getElementById('save-template-name');
 
-  if (!nameInput || !descInput) {
+  if (!nameInput) {
     toast('Form elements not found', 'error');
     return;
   }
 
   const name = nameInput.value.trim();
-  const description = descInput.value.trim();
+  const description = '';
 
   if (!name) {
     toast('Template name is required', 'error');
