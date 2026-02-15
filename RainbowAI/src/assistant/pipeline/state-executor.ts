@@ -44,10 +44,11 @@ export async function handleActiveStates(
           console.log(`[Feedback] ✅ Saved to database`);
 
           if (feedbackData.conversationId) {
+            const convId = feedbackData.conversationId as string;
             if (feedbackRating === -1) {
-              markIntentCorrection(feedbackData.conversationId, 'unknown', 'feedback').catch(() => { });
+              markIntentCorrection(convId, 'unknown', 'feedback').catch(() => { });
             } else {
-              markIntentCorrect(feedbackData.conversationId).catch(() => { });
+              markIntentCorrect(convId).catch(() => { });
             }
           }
         } catch (error) {
@@ -119,7 +120,7 @@ export async function handleActiveStates(
     trackEmergency(phone, msg.pushName);
     await escalateToStaff({
       phone, pushName: msg.pushName,
-      reason: (emergencyIntent === 'theft' ? 'theft' : 'complaint') as any,
+      reason: (emergencyIntent === 'theft_report' ? 'theft' : 'complaint') as any,
       recentMessages: convo.messages.map(m => `${m.role}: ${m.content}`),
       originalMessage: text, instanceId: msg.instanceId
     });

@@ -1,0 +1,186 @@
+{
+  "productName": "Intent Classifier Pipeline Refactoring",
+  "branchName": "refactor/intent-classifier-pipeline",
+  "overview": "Refactor the monolithic intent-classifier.ts (501 lines, 19 imports) into a modular pipeline with dependency injection. Each stage becomes independently testable.",
+  "goals": [
+    "Reduce intent-classifier.ts from 501 to ~100 lines",
+    "Reduce imports from 19 to ~8",
+    "Enable independent testing of each pipeline stage",
+    "Maintain full backward compatibility"
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create IPipelineContext dependency injection interface",
+      "priority": 1,
+      "description": "Create pipeline-context.ts with IPipelineContext interface and createPipelineContext() factory function that wires all 19 dependencies.",
+      "acceptanceCriteria": [
+        "pipeline-context.ts compiles with zero TypeScript errors",
+        "IPipelineContext interface covers all 19 current imports",
+        "createPipelineContext() factory wires real implementations",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Use dynamic imports in factory to avoid circular dependencies",
+        "Interface methods should match existing function signatures exactly"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Extract summarization stage",
+      "priority": 2,
+      "description": "Extract conversation summarization logic (lines 76-85) into stages/summarization.ts",
+      "acceptanceCriteria": [
+        "stages/summarization.ts compiles with zero errors",
+        "applySummarization() function accepts PipelineState and IPipelineContext",
+        "Returns SummarizationResult with contextMessages and metrics",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Excludes last message (current user message) from summarization",
+        "Logs reduction percentage when summarization occurs"
+      ],
+      "dependencies": ["US-001"],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Extract KB loading stage",
+      "priority": 3,
+      "description": "Extract knowledge base topic loading (lines 87-90) into stages/kb-loading.ts",
+      "acceptanceCriteria": [
+        "stages/kb-loading.ts compiles with zero errors",
+        "loadKnowledgeBase() function accepts PipelineState and IPipelineContext",
+        "Returns KBLoadingResult with systemPrompt, topicFiles, kbFiles",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Always includes core files: AGENTS.md, soul.md, memory.md",
+        "Updates state.devMetadata.kbFiles"
+      ],
+      "dependencies": ["US-001"],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Extract tier classification stage",
+      "priority": 4,
+      "description": "Extract T1-T5 classification routing (lines 105-220) into stages/tier-classification.ts. Handles tiered, split-model, and default routing modes.",
+      "acceptanceCriteria": [
+        "stages/tier-classification.ts compiles with zero errors",
+        "classifyWithTiers() handles all 3 routing modes: tiered, split, default",
+        "Returns ClassificationResult with intent, action, confidence, source",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser: Chat Simulator tab can classify test messages"
+      ],
+      "technicalNotes": [
+        "Most complex stage - handles 3 different classification paths",
+        "Receives ackTimer callback to clear thinking message timer",
+        "Must handle time-sensitive intents (add time context to prompt)"
+      ],
+      "dependencies": ["US-001"],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-005",
+      "title": "Extract Layer 2 fallback stage",
+      "priority": 5,
+      "description": "Extract Layer 2 smart fallback retry (lines 225-249) into stages/layer2-fallback.ts",
+      "acceptanceCriteria": [
+        "stages/layer2-fallback.ts compiles with zero errors",
+        "applyLayer2Fallback() skips when confidence >= threshold",
+        "Retries with smart fallback when confidence < threshold",
+        "Keeps original result when fallback doesn't improve",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Reads threshold from llm-settings.json (default 0.80)",
+        "Logs improvement or failure of fallback attempt"
+      ],
+      "dependencies": ["US-004"],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Extract routing stage",
+      "priority": 6,
+      "description": "Extract route resolution and language handling (lines 251-306) into stages/routing.ts",
+      "acceptanceCriteria": [
+        "stages/routing.ts compiles with zero errors",
+        "resolveRouting() returns routedAction, responseLang, messageType, repeatCheck",
+        "Handles missing routing config gracefully with admin notification",
+        "Updates conversation language when tier detects different language",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Contains resolveResponseLanguage helper function",
+        "Tracks intent classification and predictions",
+        "Handles config errors with admin notifications"
+      ],
+      "dependencies": ["US-004"],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "Extract action dispatch stage",
+      "priority": 7,
+      "description": "Extract action dispatch switch (lines 309-500) into stages/action-dispatch.ts. Handles static_reply, workflow, escalate, forward_payment, booking, llm_reply.",
+      "acceptanceCriteria": [
+        "stages/action-dispatch.ts compiles with zero errors",
+        "dispatchAction() handles all 6 action types correctly",
+        "Complaint override works (LLM + escalate)",
+        "Repeat intent escalation works (3x threshold)",
+        "Workflow start/execution works with config error handling",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser: Chat Simulator can trigger different actions"
+      ],
+      "technicalNotes": [
+        "Most complex action handlers: workflow (validates workflow_id exists), static_reply (complaint/problem/repeat overrides)",
+        "Must handle config errors gracefully (missing workflow_id, missing route)"
+      ],
+      "dependencies": ["US-006"],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-008",
+      "title": "Integrate all stages into intent-classifier orchestrator",
+      "priority": 8,
+      "description": "Rewrite intent-classifier.ts to use extracted stages. Replace 501 lines with ~100-line orchestrator that calls stages in sequence.",
+      "acceptanceCriteria": [
+        "intent-classifier.ts reduced to <150 lines",
+        "Imports reduced from 19 to <10",
+        "classifyAndRoute() public API unchanged",
+        "All pipeline stages called in correct order",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser: Full classification pipeline works end-to-end",
+        "Verify in browser: Chat Simulator classifies messages correctly"
+      ],
+      "technicalNotes": [
+        "This is the final integration step - replace inline code with stage calls",
+        "Must preserve ackTimer (thinking message) behavior",
+        "Must keep ensureResponseText as post-processing step"
+      ],
+      "dependencies": ["US-004", "US-005", "US-006", "US-007"],
+      "estimatedComplexity": "large",
+      "passes": true
+    }
+  ],
+  "technicalContext": {
+    "affectedAreas": [
+      "RainbowAI/src/assistant/pipeline/intent-classifier.ts",
+      "RainbowAI/src/assistant/pipeline/pipeline-context.ts",
+      "RainbowAI/src/assistant/pipeline/stages/"
+    ],
+    "testingStrategy": "TypeScript compilation + agent-browser dashboard verification after each story",
+    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/assistant/pipeline/ && rm -rf RainbowAI/src/assistant/pipeline/stages/"
+  }
+}

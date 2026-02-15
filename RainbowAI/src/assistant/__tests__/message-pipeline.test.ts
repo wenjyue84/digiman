@@ -297,7 +297,7 @@ function createMessage(overrides: Partial<IncomingMessage> = {}): IncomingMessag
 function createContext(): RouterContext {
   return {
     sendMessage: vi.fn(async () => {}),
-    callAPI: vi.fn(async () => {}),
+    callAPI: vi.fn(async () => ({} as any)),
     jayLID: null,
   };
 }
