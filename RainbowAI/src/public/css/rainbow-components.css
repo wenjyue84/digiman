@@ -1,0 +1,182 @@
+/* ═══════════════════════════════════════════════════════════════ */
+/* Rainbow Components — KB Preview, Status, Buttons, Cards       */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* KB Preview styles */
+.kb-preview {
+  font-family: system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.kb-preview h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+}
+
+.kb-preview h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.8rem 0 0.4rem;
+}
+
+.kb-preview h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.6rem 0 0.3rem;
+}
+
+.kb-preview p {
+  margin: 0.4rem 0;
+}
+
+.kb-preview ul,
+.kb-preview ol {
+  margin: 0.4rem 0 0.4rem 1.5rem;
+}
+
+.kb-preview li {
+  margin: 0.2rem 0;
+}
+
+.kb-preview code {
+  background: #f3f4f6;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+
+.kb-preview strong {
+  font-weight: 600;
+}
+
+.kb-preview em {
+  font-style: italic;
+}
+
+/* Status indicators */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-online {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.status-offline {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.status-pending {
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Button hover states */
+.btn-primary {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px 0 rgba(14, 165, 233, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.gradient-danger {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+/* Card hover effects */
+.card-hover {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+}
+
+/* Tier toggle switches */
+.tier-toggle {
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.tier-toggle::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.tier-toggle:checked::before {
+  transform: translateX(16px);
+}
+
+.tier-toggle:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+/* Tier disclosure (expand/collapse) — chevron icon */
+.tier-disclosure-btn {
+  flex-shrink: 0;
+}
+
+.tier-disclosure-btn .tier-chevron {
+  transform: rotate(0deg);
+}
+
+.tier-disclosure-btn.is-expanded .tier-chevron {
+  transform: rotate(90deg);
+}

@@ -1,0 +1,207 @@
+/* ═══════════════════════════════════════════════════════════════ */
+/* Rainbow Layout — App Sidebar, Main Content, Navigation        */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* Real Chat Tab Container */
+.rc-container {
+  display: flex;
+  height: calc(100vh - 120px);
+  /* Adjusted for layout */
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.rc-sidebar {
+  width: 320px;
+  min-width: 260px;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* App Layout (Sidebar + Main)                                   */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-main {
+  margin-left: 260px;
+  /* Width of sidebar */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+  /* Neutral-50 */
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar Collapsed State */
+.app-sidebar.collapsed {
+  width: 72px;
+}
+
+.app-main.collapsed {
+  margin-left: 72px;
+}
+
+.app-sidebar.collapsed .sidebar-header h1,
+.app-sidebar.collapsed .sidebar-group-label,
+.app-sidebar.collapsed .nav-label,
+.app-sidebar.collapsed .sidebar-footer {
+  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.app-sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+  gap: 0;
+  border-radius: 0;
+}
+
+.app-sidebar.collapsed .sidebar-header {
+  padding: 1rem 0;
+  justify-content: center;
+  flex-direction: column;
+  height: auto;
+  gap: 0.75rem;
+}
+
+.app-sidebar.collapsed .sidebar-header .flex {
+  gap: 0;
+}
+
+.app-sidebar.collapsed #sidebar-toggle {
+  margin: 0;
+}
+
+.app-sidebar.collapsed .nav-item svg {
+  margin: 0;
+  width: 24px;
+  height: 24px;
+}
+
+/* Sidebar Layout */
+.sidebar-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1rem 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sidebar-group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 0.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.35rem;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.sidebar-group-label:first-child {
+  margin-top: 0.5rem;
+}
+
+/* Navigation Items */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+  /* Neutral-500 */
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+  position: relative;
+}
+
+.nav-label {
+  white-space: nowrap;
+  transition: opacity 0.3s ease;
+}
+
+.nav-item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.nav-item.bg-primary-50 {
+  background-color: #eff6ff !important;
+  color: #0369a1 !important;
+  /* Primary-700 */
+}
+
+.nav-item svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.nav-item.bg-primary-50 svg {
+  opacity: 1;
+  color: #0ea5e9;
+}
+
+/* Status Badge in Sidebar */
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid #f3f4f6;
+  background: #f9fafb;
+}
+
+/* Top Bar in Main Content */
+.app-topbar {
+  height: 64px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}

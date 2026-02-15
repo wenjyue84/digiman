@@ -1,0 +1,397 @@
+/* ═══════════════════════════════════════════════════════════════ */
+/* Rainbow Tooltips — Intent, Template, Settings, Section Tips   */
+/* ═══════════════════════════════════════════════════════════════ */
+
+/* Message Router (Intents) table header tooltips — plain CSS so they work when tab is loaded dynamically (Tailwind group-hover is not generated for fetched HTML) */
+.intent-th-tooltip-trigger {
+  position: relative;
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.intent-th-tooltip-trigger .intent-th-tooltip {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 0.35rem;
+  min-width: 16rem;
+  max-width: 20rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: #fff;
+  background: #262626;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: normal;
+  transition: opacity 0.15s ease;
+  line-height: 1.35;
+}
+
+.intent-th-tooltip-trigger:hover .intent-th-tooltip {
+  opacity: 1;
+}
+
+/* ═══ Dashboard template sections (Understanding, Intents, Settings) ═══ */
+.dashboard-template-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.25rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-template-card .dashboard-template-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-template-card .dashboard-template-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-template-card .dashboard-template-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.dashboard-template-card .dashboard-template-guide {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6366f1;
+}
+
+.dashboard-template-card .dashboard-template-guide:hover {
+  color: #4f46e5;
+}
+
+.dashboard-template-card .dashboard-template-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-template-card .dashboard-template-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.dashboard-template-card .dashboard-template-footer .current-label {
+  color: #6b7280;
+}
+
+.dashboard-template-card .dashboard-template-footer .current-value {
+  font-weight: 600;
+  color: #6366f1;
+}
+
+.dashboard-template-card .dashboard-template-footer .save-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 500;
+  color: #6366f1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+}
+
+.dashboard-template-card .dashboard-template-footer .save-custom:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+/* Unified template button (selectable preset) */
+.dashboard-template-btn {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 1rem;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  min-width: 0;
+}
+
+.dashboard-template-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-template-btn.dashboard-template-btn-inline {
+  flex-direction: row;
+}
+
+.dashboard-template-btn.dashboard-template-btn-inline .dashboard-template-btn-content {
+  flex: 0 1 auto;
+}
+
+.dashboard-template-btn:hover {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.dashboard-template-btn.active {
+  border-color: #6366f1;
+  background: #fff;
+  color: #4338ca;
+  box-shadow: 0 0 0 1px #6366f1;
+}
+
+.dashboard-template-btn .btn-check {
+  margin-left: auto;
+  color: #6366f1;
+  font-weight: 700;
+}
+
+/* Template rich tooltips */
+.tpl-tip-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.tpl-tip-wrap .tpl-tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  padding: 12px 14px;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  z-index: 999;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+  pointer-events: none;
+  text-align: left;
+}
+
+.tpl-tip-wrap .tpl-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.tpl-tip-wrap:hover .tpl-tip {
+  display: block;
+}
+
+.tpl-tip .tip-title {
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+.tpl-tip .tip-row {
+  display: flex;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.tpl-tip .tip-label {
+  color: #94a3b8;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.tpl-tip .tip-val {
+  color: #e2e8f0;
+}
+
+.tpl-tip .tip-divider {
+  border-top: 1px solid #334155;
+  margin: 6px 0;
+}
+
+.tpl-tip .tip-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  margin: 1px 2px;
+}
+
+.tpl-tip .tip-static {
+  background: #065f46;
+  color: #6ee7b7;
+}
+
+.tpl-tip .tip-llm {
+  background: #7c2d12;
+  color: #fed7aa;
+}
+
+.tpl-tip .tip-best {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+/* Settings label tooltips */
+[data-tip] {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+[data-tip]:hover {
+  border-bottom-color: #6366f1;
+  color: #6366f1;
+}
+
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+  width: 280px;
+  z-index: 999;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .22);
+  pointer-events: none;
+}
+
+[data-tip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 14px;
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
+/* Right-aligned tooltip for right-column fields */
+[data-tip-right] {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+[data-tip-right]:hover {
+  border-bottom-color: #6366f1;
+  color: #6366f1;
+}
+
+[data-tip-right]:hover::after {
+  content: attr(data-tip-right);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+  width: 280px;
+  z-index: 999;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .22);
+  pointer-events: none;
+}
+
+[data-tip-right]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  right: 14px;
+  left: auto;
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+  z-index: 999;
+}
+
+/* Section header tooltips (inline info icon) */
+.section-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+  position: relative;
+}
+
+.section-tip .tip-icon {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+  transition: color 0.15s;
+}
+
+.section-tip:hover .tip-icon {
+  color: #6366f1;
+  font-weight: bold;
+}
+
+.section-tip:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+  width: 300px;
+  z-index: 999;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .22);
+  pointer-events: none;
+}
+
+.section-tip:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 14px;
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+  z-index: 999;
+}
