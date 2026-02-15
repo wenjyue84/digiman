@@ -512,6 +512,16 @@
 }
 
 /* System Message Style */
+/* Clickable links in messages */
+.lc-link {
+  color: #027eb5;
+  text-decoration: underline;
+  word-break: break-all;
+}
+.lc-link:hover {
+  color: #025a82;
+}
+
 .lc-system-msg .lc-bubble-text {
   font-family: 'Consolas', monospace;
   font-size: 12px;

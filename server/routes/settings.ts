@@ -157,4 +157,68 @@ router.post("/import",
   }
 });
 
+// ─── Capsule Assignment Rules ────────────────────────────────────────
+
+const CAPSULE_RULES_KEY = 'capsuleAssignmentRules';
+
+const DEFAULT_CAPSULE_RULES = {
+  deckPriority: true,              // Prefer even-numbered capsules (lower deck)
+  excludedCapsules: ['J1','J2','J3','J4','R1','R2','R3','R4','R5','R6'],
+  genderRules: {
+    female: { preferred: ['C1','C2','C3','C4','C5','C6'], fallbackToOther: true },
+    male: { preferred: [] as string[], fallbackToOther: true },
+  },
+  maintenanceDeprioritize: true,
+  deprioritizedCapsules: [] as string[],
+};
+
+// GET /api/settings/capsule-rules — No auth required (MCP tool + frontend both read this)
+router.get("/capsule-rules", async (_req, res) => {
+  try {
+    const setting = await storage.getSetting(CAPSULE_RULES_KEY);
+    if (setting) {
+      try {
+        res.json(JSON.parse(setting.value));
+      } catch {
+        res.json(DEFAULT_CAPSULE_RULES);
+      }
+    } else {
+      // First access: persist defaults and return them
+      await storage.setSetting(CAPSULE_RULES_KEY, JSON.stringify(DEFAULT_CAPSULE_RULES), 'Default capsule assignment rules');
+      res.json(DEFAULT_CAPSULE_RULES);
+    }
+  } catch (error) {
+    console.error("Error fetching capsule rules:", error);
+    res.status(500).json({ message: "Failed to fetch capsule rules" });
+  }
+});
+
+// PUT /api/settings/capsule-rules — Auth required to modify
+router.put("/capsule-rules",
+  authenticateToken,
+  async (req: any, res) => {
+  try {
+    const rules = req.body;
+
+    // Basic validation
+    if (typeof rules !== 'object' || rules === null) {
+      return res.status(400).json({ message: 'Rules must be a JSON object' });
+    }
+    if (rules.excludedCapsules && !Array.isArray(rules.excludedCapsules)) {
+      return res.status(400).json({ message: 'excludedCapsules must be an array' });
+    }
+    if (rules.deprioritizedCapsules && !Array.isArray(rules.deprioritizedCapsules)) {
+      return res.status(400).json({ message: 'deprioritizedCapsules must be an array' });
+    }
+
+    const updatedBy = req.user?.username || req.user?.email || 'Unknown';
+    await storage.setSetting(CAPSULE_RULES_KEY, JSON.stringify(rules), 'Capsule assignment rules', updatedBy);
+
+    res.json({ success: true, rules });
+  } catch (error: any) {
+    console.error("Error saving capsule rules:", error);
+    res.status(500).json({ message: error.message || "Failed to save capsule rules" });
+  }
+});
+
 export default router;

@@ -517,8 +517,15 @@ function scrollToMatch(msgIdx) {
   }
 }
 
+/** Convert plain URLs in text to clickable <a> tags */
+function linkifyUrls(html) {
+  return html.replace(/(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="lc-link">$1</a>');
+}
+
 export function highlightText(text, query, isFocused) {
   var escaped = escapeHtml(text);
+  // Linkify URLs before highlight wrapping
+  escaped = linkifyUrls(escaped);
   if (!query) return escaped;
   var escapedQuery = escapeHtml(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   var re = new RegExp('(' + escapedQuery + ')', 'gi');

@@ -1562,19 +1562,15 @@ export default function SortableGuestTable() {
                         )}
                         {/* Actions column */}
                         <td className="px-2 py-3 whitespace-nowrap">
-                          {isAuthenticated ? (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleCancelToken(pendingData.id)}
-                              disabled={cancelTokenMutation.isPending}
-                              className="text-orange-600 hover:text-orange-800 font-medium p-1 text-xs"
-                            >
-                              {cancelTokenMutation.isPending ? 'Cancelling...' : 'Cancel'}
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-orange-600">Pending</span>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCancelToken(pendingData.id)}
+                            disabled={cancelTokenMutation.isPending}
+                            className="text-orange-600 hover:text-orange-800 font-medium p-1 text-xs"
+                          >
+                            {cancelTokenMutation.isPending ? 'Cancelling...' : 'Cancel'}
+                          </Button>
                         </td>
                       </tr>
                     );
@@ -1833,17 +1829,14 @@ export default function SortableGuestTable() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        {isAuthenticated ? (
-                          <Button
-                            variant="outline"
-                            className="h-11 px-4 rounded-full"
-                            onClick={() => cancelTokenMutation.mutate(pendingData.id)}
-                          >
-                            Cancel
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-orange-600">Pending</span>
-                        )}
+                        <Button
+                          variant="outline"
+                          className="h-11 px-4 rounded-full"
+                          onClick={() => cancelTokenMutation.mutate(pendingData.id)}
+                          disabled={cancelTokenMutation.isPending}
+                        >
+                          {cancelTokenMutation.isPending ? 'Cancelling...' : 'Cancel'}
+                        </Button>
                       </div>
                     </div>
                   </Card>

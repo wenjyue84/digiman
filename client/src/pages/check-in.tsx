@@ -31,7 +31,8 @@ import {
   getNextDayDate,
   getNextGuestNumber,
   getDefaultCollector,
-  getRecommendedCapsule
+  getRecommendedCapsule,
+  type CapsuleAssignmentRules
 } from "@/components/check-in/utils";
 import { getClientEnvironment } from "@shared/utils";
 import PaymentInformationSection from "@/components/check-in/PaymentInformationSection";
@@ -87,6 +88,17 @@ export default function CheckIn() {
   const { data: availableCapsules = [], isLoading: capsulesLoading } = useVisibilityQuery<(Capsule & { canAssign: boolean })[]>({
     queryKey: ["/api/capsules/available-with-status"],
     // Uses smart config: nearRealtime (30s stale, 60s refetch)
+  });
+
+  // Fetch capsule assignment rules from settings API
+  const { data: capsuleRules } = useQuery<CapsuleAssignmentRules>({
+    queryKey: ["/api/settings/capsule-rules"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/capsule-rules");
+      if (!res.ok) throw new Error("Failed to fetch capsule rules");
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000, // Rules change rarely, 5 min stale
   });
 
   // Get the default collector name
@@ -201,7 +213,7 @@ export default function CheckIn() {
       const assignableCapsules = availableCapsules.filter(capsule => capsule.canAssign);
       console.log('✅ Assignable capsules for smart assignment:', assignableCapsules.length);
       
-      const recommendedCapsule = getRecommendedCapsule(currentGender, assignableCapsules);
+      const recommendedCapsule = getRecommendedCapsule(currentGender, assignableCapsules, capsuleRules);
       if (recommendedCapsule) {
         console.log('🎯 Smart assignment result:', recommendedCapsule);
         form.setValue("capsuleNumber", recommendedCapsule);
@@ -209,7 +221,7 @@ export default function CheckIn() {
         console.warn('⚠️ No capsule recommended by smart assignment');
       }
     }
-  }, [availableCapsules, form, preSelectedCapsule]);
+  }, [availableCapsules, form, preSelectedCapsule, capsuleRules]);
 
   // Auto-assign capsule based on gender changes
   useEffect(() => {
@@ -225,8 +237,8 @@ export default function CheckIn() {
         const assignableCapsules = availableCapsules.filter(capsule => capsule.canAssign);
         console.log('✅ Available capsules for gender change assignment:', assignableCapsules.length);
         
-        const recommendedCapsule = getRecommendedCapsule(value.gender, assignableCapsules);
-        
+        const recommendedCapsule = getRecommendedCapsule(value.gender, assignableCapsules, capsuleRules);
+
         if (recommendedCapsule && recommendedCapsule !== form.getValues("capsuleNumber")) {
           console.log('🎯 Gender-based assignment result:', recommendedCapsule);
           form.setValue("capsuleNumber", recommendedCapsule);
@@ -236,7 +248,7 @@ export default function CheckIn() {
       }
     });
     return () => subscription.unsubscribe();
-  }, [availableCapsules, form, isCapsuleLocked]);
+  }, [availableCapsules, form, isCapsuleLocked, capsuleRules]);
 
   const checkinMutation = useMutation({
     mutationFn: async (data: InsertGuest) => {

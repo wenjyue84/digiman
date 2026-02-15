@@ -156,20 +156,6 @@
               "zh": "请问您的全名是什么（护照或身份证上的）？"
             }
           },
-          "next": "wait_phone"
-        },
-        {
-          "id": "wait_phone",
-          "type": "wait_reply",
-          "label": "Ask phone number",
-          "config": {
-            "storeAs": "guest_phone",
-            "prompt": {
-              "en": "Thank you, {{workflow.data.guest_name}}! What is your phone number? (We'll send you a check-in link) 📱",
-              "ms": "Terima kasih, {{workflow.data.guest_name}}! Apakah nombor telefon anda? (Kami akan hantar link check-in) 📱",
-              "zh": "谢谢，{{workflow.data.guest_name}}！请问您的手机号码是？（我们会发送入住链接给您）📱"
-            }
-          },
           "next": "wait_dates"
         },
         {
@@ -179,9 +165,9 @@
           "config": {
             "storeAs": "stay_dates",
             "prompt": {
-              "en": "Got it! What are your check-in and check-out dates?\n(e.g., Check-in: 15 Feb, Check-out: 17 Feb)",
-              "ms": "Baik! Apakah tarikh check-in dan check-out anda?\n(contoh: Check-in: 15 Feb, Check-out: 17 Feb)",
-              "zh": "好的！您的入住和退房日期是？\n（例如：入住：2月15日，退房：2月17日）"
+              "en": "Thank you, {{workflow.data.guest_name}}! What are your check-in and check-out dates?\n(e.g., Check-in: 15 Feb, Check-out: 17 Feb)",
+              "ms": "Terima kasih, {{workflow.data.guest_name}}! Apakah tarikh check-in dan check-out anda?\n(contoh: Check-in: 15 Feb, Check-out: 17 Feb)",
+              "zh": "谢谢，{{workflow.data.guest_name}}！您的入住和退房日期是？\n（例如：入住：2月15日，退房：2月17日）"
             }
           },
           "next": "check_avail"
@@ -234,9 +220,9 @@
           "config": {
             "receiver": "{{system.admin_phone}}",
             "content": {
-              "en": "📋 *Waitlist Request*\nGuest: {{workflow.data.guest_name}}\nPhone: {{workflow.data.guest_phone}}\nDates: {{workflow.data.stay_dates}}\nNo capsules available — please follow up.",
-              "ms": "📋 *Permintaan Senarai Tunggu*\nTetamu: {{workflow.data.guest_name}}\nTelefon: {{workflow.data.guest_phone}}\nTarikh: {{workflow.data.stay_dates}}\nTiada capsule — sila follow up.",
-              "zh": "📋 *等候名单*\n客人：{{workflow.data.guest_name}}\n电话：{{workflow.data.guest_phone}}\n日期：{{workflow.data.stay_dates}}\n无可用胶囊房——请跟进。"
+              "en": "📋 *Waitlist Request*\nGuest: {{workflow.data.guest_name}}\nPhone: {{guest.phone}}\nDates: {{workflow.data.stay_dates}}\nNo capsules available — please follow up.",
+              "ms": "📋 *Permintaan Senarai Tunggu*\nTetamu: {{workflow.data.guest_name}}\nTelefon: {{guest.phone}}\nTarikh: {{workflow.data.stay_dates}}\nTiada capsule — sila follow up.",
+              "zh": "📋 *等候名单*\n客人：{{workflow.data.guest_name}}\n电话：{{guest.phone}}\n日期：{{workflow.data.stay_dates}}\n无可用胶囊房——请跟进。"
             },
             "urgency": "normal"
           }
@@ -262,7 +248,7 @@
             "action": "create_checkin_link",
             "params": {
               "guestName": "{{workflow.data.guest_name}}",
-              "phoneNumber": "{{workflow.data.guest_phone}}"
+              "phoneNumber": "{{guest.phone}}"
             }
           },
           "next": {
@@ -280,9 +266,9 @@
           "label": "Confirm link sent",
           "config": {
             "message": {
-              "en": "We have {{pelangi.availableCount}} capsules available ({{pelangi.availableCapsules}}) 🎊\n\nI've assigned capsule *{{pelangi.assignedCapsule}}* for you and sent a self-check-in link to your WhatsApp.\n\nPlease fill in the form to complete your check-in! Our admin will be notified automatically once you're done.",
-              "ms": "Kami ada {{pelangi.availableCount}} capsule tersedia ({{pelangi.availableCapsules}}) 🎊\n\nSaya telah assign capsule *{{pelangi.assignedCapsule}}* untuk anda dan hantar link self-check-in ke WhatsApp anda.\n\nSila isi borang untuk lengkapkan check-in anda! Admin kami akan diberitahu secara automatik selepas selesai.",
-              "zh": "我们有 {{pelangi.availableCount}} 个胶囊房可用 ({{pelangi.availableCapsules}}) 🎊\n\n我已为您分配了胶囊房 *{{pelangi.assignedCapsule}}* 并发送了自助入住链接到您的WhatsApp。\n\n请填写表格以完成入住！完成后我们的管理员会自动收到通知。"
+              "en": "Great news — we have capsules available! 🎊\n\nI've assigned capsule *{{pelangi.assignedCapsule}}* for you and sent a self-check-in link to your WhatsApp.\n\nPlease fill in the form to complete your check-in! Our admin will be notified automatically once you're done.",
+              "ms": "Berita baik — kami ada capsule tersedia! 🎊\n\nSaya telah assign capsule *{{pelangi.assignedCapsule}}* untuk anda dan hantar link self-check-in ke WhatsApp anda.\n\nSila isi borang untuk lengkapkan check-in anda! Admin kami akan diberitahu secara automatik selepas selesai.",
+              "zh": "好消息——我们有胶囊房可用！🎊\n\n我已为您分配了胶囊房 *{{pelangi.assignedCapsule}}* 并发送了自助入住链接到您的WhatsApp。\n\n请填写表格以完成入住！完成后我们的管理员会自动收到通知。"
             }
           },
           "next": "info_msg"

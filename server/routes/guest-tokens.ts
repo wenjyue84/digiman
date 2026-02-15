@@ -94,7 +94,7 @@ router.post("/internal",
     try {
       const { guestName, phoneNumber, expectedCheckoutDate } = req.body;
 
-      // Auto-assign a capsule
+      // Auto-assign a capsule using rules from settings
       const availableCapsules = await storage.getAvailableCapsules();
 
       if (availableCapsules.length === 0) {
@@ -105,14 +105,39 @@ router.post("/internal",
         });
       }
 
+      // Fetch capsule assignment rules from settings
+      let rules: any = null;
+      try {
+        const rulesSetting = await storage.getSetting('capsuleAssignmentRules');
+        if (rulesSetting) rules = JSON.parse(rulesSetting.value);
+      } catch { /* use defaults below */ }
+
+      const excludedList: string[] = rules?.excludedCapsules || [];
+      const deckPriority: boolean = rules?.deckPriority !== false; // default true
+      const maintenanceDeprioritize: boolean = rules?.maintenanceDeprioritize !== false;
+      const deprioritizedList: string[] = rules?.deprioritizedCapsules || [];
+
+      // Filter out excluded capsules
+      let candidates = availableCapsules.filter(c => !excludedList.includes(c.number));
+      if (candidates.length === 0) candidates = availableCapsules; // fallback if all excluded
+
       // Sort by priority: back (1-6) > middle (25-26) > front (11-24), prefer even (bottom bunk)
-      const sorted = availableCapsules.sort((a, b) => {
-        const aNum = parseInt(a.number.replace('C', ''));
-        const bNum = parseInt(b.number.replace('C', ''));
+      const sorted = candidates.sort((a, b) => {
+        const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
+        const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
+        // Deprioritize maintenance capsules
+        if (maintenanceDeprioritize) {
+          const aDepri = deprioritizedList.includes(a.number) ? 1 : 0;
+          const bDepri = deprioritizedList.includes(b.number) ? 1 : 0;
+          if (aDepri !== bDepri) return aDepri - bDepri;
+        }
         const section = (n: number) => n >= 1 && n <= 6 ? 1 : n >= 25 && n <= 26 ? 2 : 3;
         if (section(aNum) !== section(bNum)) return section(aNum) - section(bNum);
-        if (aNum % 2 === 0 && bNum % 2 !== 0) return -1;
-        if (aNum % 2 !== 0 && bNum % 2 === 0) return 1;
+        // Deck priority: even (lower/bottom) first
+        if (deckPriority) {
+          if (aNum % 2 === 0 && bNum % 2 !== 0) return -1;
+          if (aNum % 2 !== 0 && bNum % 2 === 0) return 1;
+        }
         return aNum - bNum;
       });
 
@@ -202,37 +227,38 @@ router.post("/",
         return res.status(400).json({ message: "No capsules available for assignment" });
       }
       
-      // Sort by priority: C1-C6 (back), then C25-C26 (middle), then C11-C24 (front)
-      // Within each section, prefer even numbers (bottom bunks)
-      const sortedCapsules = availableCapsules.sort((a, b) => {
-        const aNum = parseInt(a.number.replace('C', ''));
-        const bNum = parseInt(b.number.replace('C', ''));
-        
-        // Section priority: back (1-6) > middle (25-26) > front (11-24)
-        const getSectionPriority = (num: number) => {
-          if (num >= 1 && num <= 6) return 1; // back
-          if (num >= 25 && num <= 26) return 2; // middle
-          return 3; // front
-        };
-        
-        const aSectionPriority = getSectionPriority(aNum);
-        const bSectionPriority = getSectionPriority(bNum);
-        
-        if (aSectionPriority !== bSectionPriority) {
-          return aSectionPriority - bSectionPriority;
+      // Apply capsule assignment rules from settings
+      let rules: any = null;
+      try {
+        const rulesSetting = await storage.getSetting('capsuleAssignmentRules');
+        if (rulesSetting) rules = JSON.parse(rulesSetting.value);
+      } catch { /* use defaults */ }
+
+      const excludedList: string[] = rules?.excludedCapsules || [];
+      const deckPriority: boolean = rules?.deckPriority !== false;
+      const maintenanceDeprioritize: boolean = rules?.maintenanceDeprioritize !== false;
+      const deprioritizedList: string[] = rules?.deprioritizedCapsules || [];
+
+      let candidates = availableCapsules.filter(c => !excludedList.includes(c.number));
+      if (candidates.length === 0) candidates = availableCapsules;
+
+      const sortedCapsules = candidates.sort((a, b) => {
+        const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
+        const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
+        if (maintenanceDeprioritize) {
+          const aDepri = deprioritizedList.includes(a.number) ? 1 : 0;
+          const bDepri = deprioritizedList.includes(b.number) ? 1 : 0;
+          if (aDepri !== bDepri) return aDepri - bDepri;
         }
-        
-        // Within same section, prefer even numbers (bottom bunks)
-        const aIsEven = aNum % 2 === 0;
-        const bIsEven = bNum % 2 === 0;
-        
-        if (aIsEven && !bIsEven) return -1;
-        if (!aIsEven && bIsEven) return 1;
-        
-        // Same parity, sort by number
+        const section = (n: number) => n >= 1 && n <= 6 ? 1 : n >= 25 && n <= 26 ? 2 : 3;
+        if (section(aNum) !== section(bNum)) return section(aNum) - section(bNum);
+        if (deckPriority) {
+          if (aNum % 2 === 0 && bNum % 2 !== 0) return -1;
+          if (aNum % 2 !== 0 && bNum % 2 === 0) return 1;
+        }
         return aNum - bNum;
       });
-      
+
       assignedCapsule = sortedCapsules[0].number;
     } else if (validatedData.capsuleNumber) {
       // Verify specific capsule is available

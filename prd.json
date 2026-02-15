@@ -1,7 +1,7 @@
 {
   "productName": "Rainbow AI System Enhancements",
   "branchName": "main",
-  "overview": "Comprehensive Rainbow AI improvements: pipeline refactoring (US-001–008), advanced check-in workflow (US-009), Ralph infrastructure upgrades (US-010), checkout workflow (US-011–012), complaint routing fixes (US-013), node-based workflows (US-014–017), dashboard UX polish (US-018–026).",
+  "overview": "Comprehensive Rainbow AI improvements: pipeline refactoring (US-001–008), advanced check-in workflow (US-009), Ralph infrastructure upgrades (US-010), checkout workflow (US-011–012), complaint routing fixes (US-013), node-based workflows (US-014–017), dashboard UX polish (US-018–026), intent accuracy tuning (US-027–032), capsule assignment rules system (US-033–040).",
   "goals": [
     "Reduce intent-classifier.ts from 501 to ~100 lines",
     "Reduce imports from 19 to ~8",
@@ -19,7 +19,13 @@
     "Improve intent accuracy from 92% to 96%+ and autotest pass rate from 66% to 85%+",
     "Add missing static replies for unrouted/LLM-only intents",
     "Improve complaint workflow and escalate responses with empathy keywords",
-    "Add Johor tourist attraction knowledge to KB"
+    "Add Johor tourist attraction knowledge to KB",
+    "Remove redundant phone number step from check-in workflow (WhatsApp already provides it)",
+    "Fix self-check-in link clickability in WhatsApp messages and dashboard display",
+    "Hide available capsule list from guests for privacy/confidentiality",
+    "Create configurable capsule assignment rules system in Settings page",
+    "Expose capsule rules via MCP tool for Rainbow AI access (no direct web system access)",
+    "Update KB with capsule deck numbering (even=lower, odd=upper) and answer capsule queries correctly"
   ],
   "userStories": [
     {
@@ -848,8 +854,224 @@
         "US-031"
       ],
       "estimatedComplexity": "medium",
-      "passes": false,
+      "passes": true,
       "completed": true
+    },
+    {
+      "id": "US-033",
+      "title": "Remove phone number step from check-in workflow",
+      "priority": 33,
+      "description": "The checkin_full workflow step 2 (wait_phone) asks the guest for their phone number. This is redundant because the guest is already messaging via WhatsApp — we already have their phone number from the conversation context. Remove or skip this step and use the WhatsApp phone number directly.",
+      "acceptanceCriteria": [
+        "checkin_full workflow no longer asks 'What is your phone number?' as a separate step",
+        "The guest's WhatsApp phone number is automatically used from the conversation context (context.phone)",
+        "workflow-enhancer.ts passes the WhatsApp phone to the self-check-in link API instead of collected guest_phone",
+        "The check-in link is still generated correctly using the WhatsApp phone",
+        "Test via Chat Simulator: say 'I want to check in', confirm it asks for name but NOT phone number",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Workflow definition: RainbowAI/src/assistant/data/workflows.json — checkin_full workflow",
+        "Step 2 (wait_phone node) should be removed or skipped",
+        "workflow-enhancer.ts line ~329: uses collectedData.guest_phone — change to use context.phone (WhatsApp sender)",
+        "The guest_phone field in collectedData is set by the wait_phone node storeAs — if removed, ensure downstream code uses context.phone instead",
+        "Test: after name is collected, workflow should proceed directly to asking check-in/check-out dates"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-034",
+      "title": "Fix self-check-in link clickability",
+      "priority": 34,
+      "description": "The self-check-in link sent to guests via WhatsApp is not clickable. Two issues: (1) The link uses http://localhost:5000 which doesn't resolve on guest phones — need to use BASE_URL env var or the server's accessible URL, (2) In the Rainbow dashboard live chat/conversation view, URLs in messages should be rendered as clickable <a> tags. Fix both the link URL generation and the dashboard URL rendering.",
+      "acceptanceCriteria": [
+        "Self-check-in link uses BASE_URL from environment when available, falls back to server host from request headers",
+        "Links generated in development use the machine's accessible URL (not localhost if possible)",
+        "In Rainbow dashboard conversations/live chat view, URLs in messages are rendered as clickable hyperlinks",
+        "URL regex detects http/https links and wraps them in <a> tags with target='_blank'",
+        "Verify with agent-browser: open live chat, confirm any URL in message text is clickable",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "Link generation: server/routes/guest-tokens.ts line ~145-146: const baseUrl = process.env.BASE_URL || 'http://localhost:5000'",
+        "Also in workflow-enhancer.ts where the link message is composed",
+        "Dashboard message rendering: check conversation/live chat template for message display",
+        "URL linkification regex: /(https?:\\/\\/[^\\s<]+)/g → replace with <a href='$1' target='_blank'>$1</a>",
+        "For WhatsApp: the URL itself needs to be valid and resolvable on the guest's device",
+        "Consider using req.headers.host or req.protocol to construct URLs dynamically"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-035",
+      "title": "Ensure delete button works for self-check-in tokens on dashboard",
+      "priority": 35,
+      "description": "On the main dashboard at http://localhost:3000/, the user reports they cannot delete rows created for self-check-in links. A Cancel button exists in sortable-guest-table.tsx but may not be visible or functional in all views. Verify the delete/cancel button is visible, properly styled, and functional. Ensure the row is removed from the table after successful deletion.",
+      "acceptanceCriteria": [
+        "Cancel/Delete button is clearly visible on every self-check-in token row in the dashboard",
+        "Button is visible in both card view (mobile) and table view (desktop)",
+        "Clicking the button triggers DELETE /api/guest-tokens/:id API call",
+        "After successful deletion, the row is removed from the table without page refresh",
+        "Toast notification confirms successful deletion",
+        "If API returns error, show error toast and keep row visible",
+        "Verify with agent-browser: navigate to http://localhost:3000/, find a pending token row, verify cancel button exists"
+      ],
+      "technicalNotes": [
+        "Component: client/src/components/sortable-guest-table.tsx",
+        "Cancel mutation: cancelTokenMutation at line ~523-551",
+        "Handler: handleCancelToken() at line ~722",
+        "API endpoint: DELETE /api/guest-tokens/:id (server/routes/guest-tokens.ts line ~595)",
+        "The button may be conditionally rendered — check rendering conditions",
+        "Query invalidation after delete: invalidateQueries(['guest-tokens']) should refresh the list",
+        "Check if authenticateToken middleware is blocking the request — the user must be logged in"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-036",
+      "title": "Hide available capsule list from guest messages",
+      "priority": 36,
+      "description": "Currently Rainbow AI tells guests all available capsules (e.g., 'Available capsules: C1, C2, C3...') which is a privacy and confidentiality issue. Guests should only be told their assigned capsule number, not the full availability list. Remove or hide the {{availableCapsules}} template variable from guest-facing workflow messages.",
+      "acceptanceCriteria": [
+        "Check-in workflow messages do NOT list all available capsules to the guest",
+        "Guest only sees their assigned capsule number (e.g., 'Your capsule is C4')",
+        "The available count can still be shown (e.g., 'We have capsules available') but not the specific numbers",
+        "Internal admin notifications can still show the full list",
+        "Workflow-enhancer.ts still fetches availability for assignment logic but doesn't expose the list",
+        "Test via Chat Simulator: complete check-in flow, confirm no capsule list shown",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "Check-in workflow: RainbowAI/src/assistant/data/workflows.json — checkin_full steps 4-5",
+        "Template variables: {{availableCapsules}}, {{availableCount}}, {{assignedCapsule}}",
+        "Keep {{assignedCapsule}} — remove {{availableCapsules}} from guest-facing step messages",
+        "workflow-enhancer.ts still needs to call availability API internally for capsule assignment",
+        "The lower_deck_preference workflow may also expose capsule lists — check and fix",
+        "Admin-side logs and notifications can retain the full list for operational use"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-037",
+      "title": "Create capsule assignment rules backend and API",
+      "priority": 37,
+      "description": "Create a configurable capsule assignment rules system stored in the database. Rules include: (a) Deck priority — prefer even-numbered capsules (lower deck) first, (b) Excluded capsules — exclude J1-J4 and R1-R6 from assignment (different branch, not available), (c) Gender assignment — C1-C6 preferred for female guests unless other capsules are occupied, (d) Maintenance deprioritization — reduce priority for capsules with active maintenance issues. Provide CRUD API endpoints for managing rules.",
+      "acceptanceCriteria": [
+        "New capsule_assignment_rules table or JSON column in settings stores all rule configurations",
+        "Rules schema supports: deckPriority (boolean), excludedCapsules (string[]), genderRules ({female: {preferred: string[], fallbackToOther: boolean}}), maintenanceDeprioritize (boolean)",
+        "GET /api/settings/capsule-rules returns current rules",
+        "PUT /api/settings/capsule-rules updates rules with validation",
+        "Default rules on first load: deckPriority=true, excludedCapsules=['J1','J2','J3','J4','R1','R2','R3','R4','R5','R6'], genderRules.female.preferred=['C1','C2','C3','C4','C5','C6'], maintenanceDeprioritize=true",
+        "guest-tokens.ts capsule assignment logic uses rules from DB instead of hardcoded values",
+        "check-in.tsx getRecommendedCapsule() uses rules from API instead of hardcoded gender logic",
+        "TypeScript compiles with zero errors",
+        "API returns proper validation errors for invalid input"
+      ],
+      "technicalNotes": [
+        "Storage option: add capsuleAssignmentRules JSON column to settings table, or create new table",
+        "Current hardcoded logic: server/routes/guest-tokens.ts (priority ranking), client/src/components/check-in/utils.ts (gender sections)",
+        "Rules JSON schema: {deckPriority: boolean, excludedCapsules: string[], genderRules: {female: {preferred: string[], fallbackToOther: boolean}, male: {preferred: string[], fallbackToOther: boolean}}, maintenanceDeprioritize: boolean, deprioritizedCapsules: string[]}",
+        "The assignment algorithm should: 1) filter out excluded capsules, 2) filter out occupied, 3) apply gender rules, 4) sort by deck priority (even first), 5) deprioritize maintenance capsules, 6) return best match",
+        "API routes: add to server/routes/ (new file or extend settings routes)",
+        "Drizzle schema: add to shared/schema-tables.ts if using a new table"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-038",
+      "title": "Create capsule assignment rules UI in Settings page",
+      "priority": 38,
+      "description": "Add a 'Rules' tab to the Settings page at http://localhost:3000/settings. The tab provides a UI for managing capsule assignment rules: toggle deck priority (even=lower first), manage excluded capsule list, set gender-specific capsule preferences, and mark capsules for maintenance deprioritization. All changes save via PUT /api/settings/capsule-rules.",
+      "acceptanceCriteria": [
+        "New 'Rules' tab visible in Settings page navigation alongside existing tabs (General, Capsules, etc.)",
+        "Deck Priority section: toggle switch for 'Prefer even-numbered capsules (lower deck)'",
+        "Excluded Capsules section: multi-select or chip input to add/remove capsules from exclusion list, pre-populated with J1-J4 and R1-R6",
+        "Gender Assignment section: for each gender (Male, Female), a multi-select to choose preferred capsules, plus a 'fallback to other available' toggle",
+        "Maintenance section: toggle for 'Deprioritize capsules with active maintenance issues', plus optional manual list of deprioritized capsules",
+        "Save button persists rules to backend via PUT /api/settings/capsule-rules",
+        "Toast notification on save success/failure",
+        "Rules load from GET /api/settings/capsule-rules on tab open",
+        "Verify with agent-browser: navigate to Settings, click Rules tab, confirm all sections render"
+      ],
+      "technicalNotes": [
+        "Settings page: client/src/pages/settings.tsx — add new tab to the 6 existing tabs",
+        "Use existing shadcn/ui components: Switch (toggles), Badge (chips for capsule list), Select (dropdown)",
+        "For capsule selection, fetch /api/capsules to get full capsule list for multi-select options",
+        "API: GET /api/settings/capsule-rules and PUT /api/settings/capsule-rules (from US-037)",
+        "Use TanStack Query for data fetching, React Hook Form + Zod for validation",
+        "Tab icon suggestion: Scale or Sliders icon from lucide-react"
+      ],
+      "dependencies": [
+        "US-037"
+      ],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-039",
+      "title": "Add MCP tool for capsule assignment rules",
+      "priority": 39,
+      "description": "Create a new MCP tool pelangi_get_capsule_rules that Rainbow AI can use to access capsule assignment rules. Rainbow must NOT access the pelangi-manager web system directly — all access goes through MCP tools. The tool calls GET /api/settings/capsule-rules on the backend (port 5000) and returns the rules configuration. Also update the check-in workflow enhancer to use this tool for rule-aware capsule assignment.",
+      "acceptanceCriteria": [
+        "New MCP tool pelangi_get_capsule_rules registered in RainbowAI/src/tools/registry.ts",
+        "Tool calls GET http://localhost:5000/api/settings/capsule-rules and returns the rules JSON",
+        "Tool description clearly states: 'Get capsule assignment rules including deck priority, excluded capsules, gender preferences, and maintenance deprioritization'",
+        "workflow-enhancer.ts uses the MCP tool (or the same API call) to fetch rules before assigning capsules",
+        "Rainbow AI can answer questions about capsule rules by calling this tool",
+        "Tool is listed in phase 1 (read-only) tools",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "MCP tools: RainbowAI/src/tools/registry.ts — follow existing tool patterns (e.g., pelangi_check_availability)",
+        "Tool implementation: call axios.get('http://localhost:5000/api/settings/capsule-rules')",
+        "workflow-enhancer.ts line ~329: currently calls /api/guest-tokens/internal — update to also fetch rules and apply them",
+        "The tool should return structured JSON that Rainbow can interpret in responses",
+        "Do NOT import from server/ or shared/ directly — use HTTP API calls only (architectural boundary)",
+        "Consider adding a pelangi_assign_capsule tool that takes guest gender + preferences and returns the best capsule based on rules"
+      ],
+      "dependencies": [
+        "US-037"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-040",
+      "title": "Update KB with capsule deck numbering and fix capsule queries",
+      "priority": 40,
+      "description": "Rainbow AI doesn't correctly answer 'Is C5 lower deck?' because the knowledge base lacks capsule deck/numbering information. Add detailed capsule numbering knowledge: even numbers (C2, C4, C6...) are lower deck (bottom bunk), odd numbers (C1, C3, C5...) are upper deck (top bunk). Also add knowledge about capsule sections (back=C1-C6, middle=C25-C26, front=C11-C24) and the fact that most guests prefer lower deck. Update the lower_deck_preference intent handling to use this knowledge.",
+      "acceptanceCriteria": [
+        "KB file (availability.md or new capsule-layout.md) contains capsule numbering rules: even=lower, odd=upper",
+        "KB explains capsule sections: back (C1-C6), middle (C25-C26), front (C11-C24)",
+        "KB notes that J1-J4 and R1-R6 are in a new branch and not yet available",
+        "KB mentions most guests prefer lower deck (bottom bunk)",
+        "'Is C5 lower deck?' correctly answered: 'No, C5 is upper deck (top bunk). Even numbers like C4 and C6 are lower deck.'",
+        "lower_deck_preference intent response includes correct deck assignment info from KB",
+        "intent-keywords.json has keywords for capsule deck queries: 'is X lower deck', 'which capsule is bottom bunk'",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "KB files: RainbowAI/.rainbow-kb/ — create capsule-layout.md or update availability.md",
+        "knowledge-base.ts guessTopicFiles(): ensure 'capsule', 'deck', 'bunk', 'lower', 'upper' trigger the new KB file",
+        "Current lower_deck_preference workflow may need its template updated with correct deck info",
+        "Capsule numbering convention: even=lower/bottom, odd=upper/top in ALL sections",
+        "Consider adding a facilities_info or lower_deck_preference static reply that explains the numbering",
+        "Test: curl the intent test endpoint with 'is c5 lower deck?' and verify correct response"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
     }
   ],
   "technicalContext": {
@@ -874,12 +1096,19 @@
       "RainbowAI/src/public/templates/tabs/intent-manager.html",
       "RainbowAI/src/public/templates/tabs/conversations.html",
       "RainbowAI/src/public/css/rainbow-livechat-ui.css",
+      "RainbowAI/src/tools/registry.ts",
+      "RainbowAI/.rainbow-kb/",
       "server/routes/guest-tokens.ts",
+      "server/routes/settings.ts",
+      "client/src/pages/settings.tsx",
+      "client/src/components/check-in/utils.ts",
+      "client/src/components/sortable-guest-table.tsx",
+      "shared/schema-tables.ts",
       "scripts/ralph/ralph.sh",
       "scripts/ralph/CLAUDE.md",
       "progress.txt"
     ],
-    "testingStrategy": "TypeScript compilation + 53-scenario intent accuracy test + agent-browser dashboard verification (mandatory for UI stories)",
+    "testingStrategy": "TypeScript compilation + 53-scenario intent accuracy test + agent-browser dashboard verification (mandatory for UI stories) + MCP tool testing for capsule rules",
     "rollbackPlan": "git checkout HEAD -- RainbowAI/src/assistant/ && rm -f RainbowAI/src/assistant/workflow-nodes.ts"
   }
 }

@@ -32,6 +32,11 @@ import {
   exportGuestsCSV
 } from './analytics.js';
 
+import {
+  settingsTools,
+  getCapsuleRules
+} from './settings-tools.js';
+
 // Phase 3: WhatsApp integration tools
 import {
   whatsappTools,
@@ -82,6 +87,9 @@ class ToolRegistry {
     this.register(analyticsTools[1], guestStatistics);
     this.register(analyticsTools[2], exportGuestsCSV);
 
+    // Phase 2: Settings tools (1 tool)
+    this.register(settingsTools[0], getCapsuleRules);
+
     // Phase 3: WhatsApp integration (4 tools)
     this.register(whatsappTools[0], whatsappStatus);
     this.register(whatsappTools[1], whatsappQrcode);
@@ -127,7 +135,7 @@ class ToolRegistry {
     return {
       total: this.tools.size,
       phase1: 10,
-      phase2: 9,
+      phase2: 10,
       phase3: 4
     };
   }

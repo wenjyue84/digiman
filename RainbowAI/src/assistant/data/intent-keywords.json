@@ -908,7 +908,17 @@
           "even capsule",
           "bottom bed",
           "not upper",
-          "ground floor"
+          "ground floor",
+          "is c5 lower deck",
+          "is it lower deck",
+          "is it upper deck",
+          "which capsule is lower",
+          "which capsule is upper",
+          "upper deck",
+          "top bunk",
+          "is c5 upper",
+          "is c3 lower",
+          "lower or upper"
         ],
         "ms": [
           "lower deck",

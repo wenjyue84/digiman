@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle, MoreHorizontal } from "lucide-react";
+import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle, MoreHorizontal, Scale } from "lucide-react";
 import { useLocation } from "wouter";
 import MaintenanceTab from "../components/settings/MaintenanceTab";
 import UsersTab from "../components/settings/UsersTab";
@@ -20,6 +20,7 @@ import MessagesTab from "../components/settings/MessagesTab";
 import GeneralSettingsTab from "../components/settings/GeneralSettingsTab";
 import TestsTab from "../components/settings/TestsTab";
 import GuestGuideTab from "../components/settings/GuestGuideTab";
+import CapsuleRulesTab from "../components/settings/CapsuleRulesTab";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TimeSelect } from "@/components/ui/time-select";
@@ -193,8 +194,8 @@ export default function SettingsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TooltipProvider>
-          {/* Desktop: Show all 6 tabs directly */}
-          <TabsList className="hidden md:grid w-full grid-cols-6">
+          {/* Desktop: Show all 7 tabs directly */}
+          <TabsList className="hidden md:grid w-full grid-cols-7">
             <TabsTrigger value="general" className="flex items-center justify-start gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -250,6 +251,17 @@ export default function SettingsPage() {
               </Tooltip>
               <span>Users</span>
             </TabsTrigger>
+            <TabsTrigger value="rules" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-amber-100">
+                    <Scale className="h-3 w-3 text-amber-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Capsule assignment rules for auto-assignment</TooltipContent>
+              </Tooltip>
+              <span>Rules</span>
+            </TabsTrigger>
             <TabsTrigger value="tests" className="flex items-center justify-start gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -261,8 +273,6 @@ export default function SettingsPage() {
               </Tooltip>
               <span>Tests</span>
             </TabsTrigger>
-            {/* REMOVED: Chatbot button - NO redirects from port 3000 to port 3002! */}
-            {/* Chatbot settings are ONLY in http://localhost:3002/admin/rainbow */}
           </TabsList>
 
           {/* Mobile: Show 4 main tabs + More dropdown */}
@@ -329,14 +339,18 @@ export default function SettingsPage() {
                     </div>
                     <span>Users</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setActiveTab("rules")} className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-100">
+                      <Scale className="h-2.5 w-2.5 text-amber-600" />
+                    </div>
+                    <span>Rules</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setActiveTab("tests")} className="flex items-center gap-2">
                     <div className="flex items-center justify-center h-4 w-4 rounded-full bg-pink-100">
                       <TestTube className="h-2.5 w-2.5 text-pink-600" />
                     </div>
                     <span>Tests</span>
                   </DropdownMenuItem>
-                  {/* REMOVED: Chatbot menu item - NO redirects from port 3000 to port 3002! */}
-                  {/* Chatbot settings are ONLY in http://localhost:3002/admin/rainbow */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -394,6 +408,10 @@ export default function SettingsPage() {
           />
         </TabsContent>
 
+
+        <TabsContent value="rules" className="space-y-6">
+          <CapsuleRulesTab />
+        </TabsContent>
 
         <TabsContent value="tests" className="space-y-6">
           <TestsTab />

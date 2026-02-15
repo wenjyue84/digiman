@@ -53,8 +53,7 @@
     "workflow_id": "checkin_full"
   },
   "lower_deck_preference": {
-    "action": "workflow",
-    "workflow_id": "lower_deck_preference"
+    "action": "static_reply"
   },
   "wifi": {
     "action": "static_reply"

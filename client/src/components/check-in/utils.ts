@@ -47,32 +47,78 @@ export function getDefaultCollector(user: any): string {
   return user.email || "";
 }
 
-// Gender-based capsule assignment logic - SIMPLIFIED!
-export function getRecommendedCapsule(gender: string, availableCapsules: any[]): string {
+// Capsule assignment rules type (mirrors server/routes/settings.ts)
+export interface CapsuleAssignmentRules {
+  deckPriority: boolean;
+  excludedCapsules: string[];
+  genderRules: {
+    female: { preferred: string[]; fallbackToOther: boolean };
+    male: { preferred: string[]; fallbackToOther: boolean };
+  };
+  maintenanceDeprioritize: boolean;
+  deprioritizedCapsules: string[];
+}
+
+// Rules-driven capsule assignment logic
+export function getRecommendedCapsule(gender: string, availableCapsules: any[], rules?: CapsuleAssignmentRules | null): string {
   if (!availableCapsules || availableCapsules.length === 0) {
     return "";
   }
-  
-  // SIMPLE: Just filter for available capsules (ignore cleaning/maintenance)
-  const assignableCapsules = availableCapsules.filter(capsule => 
+
+  const assignableCapsules = availableCapsules.filter(capsule =>
     capsule.isAvailable && capsule.toRent !== false
   );
-  
+
   if (assignableCapsules.length === 0) {
     return "";
   }
-  
-  // SIMPLE: Just assign based on gender and section
-  if (gender === "female") {
-    // For females: find first available back capsule
-    const backCapsule = assignableCapsules.find(c => c.section === "back");
-    if (backCapsule) return backCapsule.number;
-  } else {
-    // For males: find first available front capsule
-    const frontCapsule = assignableCapsules.find(c => c.section === "front");
-    if (frontCapsule) return frontCapsule.number;
+
+  // Apply rules-based assignment
+  const excludedList = rules?.excludedCapsules || [];
+  const deckPriority = rules?.deckPriority !== false;
+  const maintenanceDeprioritize = rules?.maintenanceDeprioritize !== false;
+  const deprioritizedList = rules?.deprioritizedCapsules || [];
+  const genderPreferred = rules?.genderRules?.[gender as 'male' | 'female']?.preferred || [];
+  const fallbackToOther = rules?.genderRules?.[gender as 'male' | 'female']?.fallbackToOther !== false;
+
+  // Filter out excluded capsules
+  let candidates = assignableCapsules.filter(c => !excludedList.includes(c.number));
+  if (candidates.length === 0) candidates = assignableCapsules;
+
+  // Gender preference: try preferred capsules first
+  if (genderPreferred.length > 0) {
+    const preferred = candidates.filter(c => genderPreferred.includes(c.number));
+    if (preferred.length > 0) {
+      candidates = preferred;
+    } else if (!fallbackToOther) {
+      return "";
+    }
   }
-  
-  // SIMPLE: Fallback to any available capsule
-  return assignableCapsules[0]?.number || "";
+
+  // Sort by priority: maintenance deprioritized → section → deck → number
+  const sorted = [...candidates].sort((a, b) => {
+    const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
+    const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
+
+    // Deprioritize maintenance capsules
+    if (maintenanceDeprioritize) {
+      const aDepri = deprioritizedList.includes(a.number) ? 1 : 0;
+      const bDepri = deprioritizedList.includes(b.number) ? 1 : 0;
+      if (aDepri !== bDepri) return aDepri - bDepri;
+    }
+
+    // Section priority: back(1-6) > front(25-26) > middle
+    const section = (n: number) => n >= 1 && n <= 6 ? 1 : n >= 25 && n <= 26 ? 2 : 3;
+    if (section(aNum) !== section(bNum)) return section(aNum) - section(bNum);
+
+    // Deck priority: even numbers first (lower deck)
+    if (deckPriority) {
+      if (aNum % 2 === 0 && bNum % 2 !== 0) return -1;
+      if (aNum % 2 !== 0 && bNum % 2 === 0) return 1;
+    }
+
+    return aNum - bNum;
+  });
+
+  return sorted[0]?.number || "";
 }

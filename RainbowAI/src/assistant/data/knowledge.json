@@ -185,6 +185,14 @@
       }
     },
     {
+      "intent": "lower_deck_preference",
+      "response": {
+        "en": "🛏️ *Capsule Deck Info*\n\nOur capsule numbering works like this:\n• **Even numbers** (C2, C4, C6, C12, C14...) = **Lower deck (bottom bunk)**\n• **Odd numbers** (C1, C3, C5, C11, C13...) = **Upper deck (top bunk)**\n\nFor example: C5 is *upper deck* (top bunk), C4 is *lower deck* (bottom bunk).\n\nMost guests prefer lower deck — we try to assign even-numbered capsules first! If you'd like a specific deck, just let us know. 😊\n\n— Rainbow 🌈",
+        "ms": "🛏️ *Info Dek Kapsul*\n\nSistem nombor kapsul kami:\n• **Nombor genap** (C2, C4, C6, C12, C14...) = **Dek bawah**\n• **Nombor ganjil** (C1, C3, C5, C11, C13...) = **Dek atas**\n\nContoh: C5 ialah *dek atas*, C4 ialah *dek bawah*.\n\nKebanyakan tetamu prefer dek bawah — kami cuba assign nombor genap dahulu! Jika anda nak dek tertentu, beritahu kami. 😊\n\n— Rainbow 🌈",
+        "zh": "🛏️ *胶囊房层信息*\n\n我们的胶囊编号规则：\n• **偶数** (C2, C4, C6, C12, C14...) = **下层（下铺）**\n• **奇数** (C1, C3, C5, C11, C13...) = **上层（上铺）**\n\n例如：C5是*上层*，C4是*下层*。\n\n大多数客人更喜欢下层——我们会优先分配偶数胶囊房！如果您有偏好，请告诉我们。😊\n\n— Rainbow 🌈"
+      }
+    },
+    {
       "intent": "climate_control_complaint",
       "response": {
         "en": "We're sorry about the temperature issue! Each capsule has an individual fan you can adjust. If the AC is too cold or too hot, please let our staff know and we can cool or warm up the area. Contact Maya at +60127088789 for immediate help. — Rainbow 🌈",

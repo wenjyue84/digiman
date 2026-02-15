@@ -48,6 +48,9 @@ const TOPIC_FILE_MAP: Record<string, string[]> = {
   // Capsule facilities & features
   'capsule|pod|bed|sleep|mattress|curtain|privacy|reading.?light|outlet|usb|charging':
     ['facilities-capsules.md'],
+  // Capsule layout, deck, bunk assignment
+  'lower.?deck|upper.?deck|bottom.?bunk|top.?bunk|deck|bunk|even.?number|odd.?number|which.?capsule|capsule.?layout|assign':
+    ['capsule-layout.md'],
   // Bathrooms & showers
   'bathroom|shower|hot.?water|toiletries|shampoo|soap|hair.?dryer|toilet':
     ['facilities-bathrooms.md'],
