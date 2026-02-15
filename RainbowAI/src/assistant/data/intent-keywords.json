@@ -142,8 +142,15 @@
         "en": [
           "i want to check in",
           "want to check in",
+          "i wan to check in",
+          "i wan check in",
+          "i wanna check in",
+          "wanna check in",
+          "i want check in",
           "i am checking in",
           "checking in",
+          "checkin",
+          "check-in",
           "i have arrived",
           "i arrived",
           "i'm here",
@@ -153,19 +160,37 @@
           "at your hostel",
           "ready to check in",
           "here to check in",
+          "here for check in",
           "need to check in",
           "check in now",
           "checking in now",
           "arrived now",
+          "just arrived",
+          "i just arrived",
           "how to check in",
-          "how do i check in"
+          "how do i check in",
+          "can i check in",
+          "i need check in",
+          "i need to checkin",
+          "check in please",
+          "checkin please",
+          "check in pls",
+          "checkin pls",
+          "check-in please",
+          "do check in",
+          "i wanna checkin",
+          "wanna checkin"
         ],
         "ms": [
           "saya nak check in",
           "nak check in",
+          "nak checkin",
           "saya check in",
+          "saya nak checkin",
           "saya dah sampai",
           "dah sampai",
+          "dah tiba",
+          "saya dah tiba",
           "saya kat hostel",
           "kat hostel",
           "ready check in",
@@ -174,7 +199,12 @@
           "check in sekarang",
           "dah sampai sekarang",
           "macam mana check in",
-          "cara check in"
+          "cara check in",
+          "nak daftar masuk",
+          "daftar masuk",
+          "saya nak daftar masuk",
+          "boleh check in",
+          "check in boleh"
         ],
         "zh": [
           "我要办理入住",
@@ -191,7 +221,11 @@
           "现在入住",
           "现在办理入住",
           "怎么入住",
-          "如何办理入住"
+          "如何办理入住",
+          "我要入住",
+          "可以入住吗",
+          "我来了",
+          "到了要入住"
         ]
       }
     },
@@ -1024,18 +1058,542 @@
           "not comfortable",
           "not happy",
           "dissatisfied",
-          "unhappy"
+          "unhappy",
+          "terrible service",
+          "bad service",
+          "poor service"
         ],
         "ms": [
           "tak selesa",
           "tidak selesa",
           "tak puas hati",
-          "tidak senang"
+          "tidak senang",
+          "servis teruk",
+          "servis tak baik"
         ],
         "zh": [
           "不舒服",
           "不满意",
-          "不高兴"
+          "不高兴",
+          "服务不好",
+          "很差的服务"
+        ]
+      }
+    },
+    {
+      "intent": "climate_control_complaint",
+      "keywords": {
+        "en": [
+          "too cold",
+          "too hot",
+          "too warm",
+          "freezing",
+          "boiling",
+          "temperature",
+          "ac too cold",
+          "ac too strong",
+          "room too cold",
+          "room too hot",
+          "air conditioning",
+          "heater",
+          "thermostat"
+        ],
+        "ms": [
+          "terlalu sejuk",
+          "terlalu panas",
+          "sangat sejuk",
+          "sangat panas",
+          "suhu",
+          "ac sejuk sangat",
+          "bilik sejuk",
+          "bilik panas",
+          "aircond",
+          "penghawa dingin"
+        ],
+        "zh": [
+          "太冷",
+          "太热",
+          "很冷",
+          "很热",
+          "温度",
+          "空调太冷",
+          "房间太冷",
+          "房间太热",
+          "空调",
+          "暖气"
+        ]
+      }
+    },
+    {
+      "intent": "noise_complaint",
+      "keywords": {
+        "en": [
+          "too noisy",
+          "too loud",
+          "very loud",
+          "very noisy",
+          "noise",
+          "noisy neighbors",
+          "loud neighbors",
+          "cant sleep",
+          "can't sleep",
+          "cannot sleep",
+          "people too loud",
+          "construction noise",
+          "baby crying",
+          "quiet hours"
+        ],
+        "ms": [
+          "terlalu bising",
+          "sangat bising",
+          "kuat",
+          "bunyi bising",
+          "jiran bising",
+          "tak boleh tidur",
+          "susah tidur",
+          "orang bising",
+          "bunyi pembinaan",
+          "baby menangis"
+        ],
+        "zh": [
+          "太吵",
+          "很吵",
+          "噪音",
+          "吵闹",
+          "邻居吵",
+          "睡不着",
+          "不能睡",
+          "人太吵",
+          "施工噪音",
+          "婴儿哭"
+        ]
+      }
+    },
+    {
+      "intent": "cleanliness_complaint",
+      "keywords": {
+        "en": [
+          "dirty room",
+          "room dirty",
+          "unclean",
+          "not clean",
+          "smell bad",
+          "smells terrible",
+          "stain",
+          "stained",
+          "bathroom dirty",
+          "bathroom smell",
+          "toilet dirty",
+          "filthy",
+          "unhygienic"
+        ],
+        "ms": [
+          "bilik kotor",
+          "kotor",
+          "tak bersih",
+          "tidak bersih",
+          "berbau",
+          "bau busuk",
+          "comot",
+          "bilik air kotor",
+          "tandas kotor",
+          "tidak higienik"
+        ],
+        "zh": [
+          "房间脏",
+          "很脏",
+          "不干净",
+          "有味道",
+          "臭",
+          "有污渍",
+          "浴室脏",
+          "厕所脏",
+          "不卫生"
+        ]
+      }
+    },
+    {
+      "intent": "facility_malfunction",
+      "keywords": {
+        "en": [
+          "broken",
+          "not working",
+          "doesn't work",
+          "malfunction",
+          "damaged",
+          "ac broken",
+          "ac not working",
+          "wifi not working",
+          "door broken",
+          "lock broken",
+          "shower broken",
+          "toilet broken",
+          "out of order"
+        ],
+        "ms": [
+          "rosak",
+          "tak jalan",
+          "tidak berfungsi",
+          "bermasalah",
+          "ac rosak",
+          "wifi tak jalan",
+          "pintu rosak",
+          "kunci rosak",
+          "shower rosak",
+          "tandas rosak",
+          "tak boleh guna"
+        ],
+        "zh": [
+          "坏了",
+          "不能用",
+          "故障",
+          "损坏",
+          "空调坏了",
+          "wifi不能用",
+          "门坏了",
+          "锁坏了",
+          "淋浴坏了",
+          "厕所坏了"
+        ]
+      }
+    },
+    {
+      "intent": "extra_amenity_request",
+      "keywords": {
+        "en": [
+          "need more",
+          "can i get more",
+          "extra towel",
+          "more towels",
+          "extra pillow",
+          "more pillows",
+          "extra blanket",
+          "more blankets",
+          "need charger",
+          "need adapter",
+          "can i have",
+          "can i get"
+        ],
+        "ms": [
+          "perlukan lebih",
+          "boleh dapat",
+          "tuala tambahan",
+          "bantal tambahan",
+          "selimut tambahan",
+          "perlu charger",
+          "perlu adapter",
+          "boleh minta"
+        ],
+        "zh": [
+          "需要多一点",
+          "能给",
+          "额外毛巾",
+          "多几条毛巾",
+          "额外枕头",
+          "多几个枕头",
+          "需要充电器",
+          "需要转接器",
+          "可以给我"
+        ]
+      }
+    },
+    {
+      "intent": "forgot_item_post_checkout",
+      "keywords": {
+        "en": [
+          "forgot",
+          "left behind",
+          "left my",
+          "left something",
+          "forgot my",
+          "left charger",
+          "forgot passport",
+          "left clothes",
+          "left items",
+          "left in room"
+        ],
+        "ms": [
+          "terlupa",
+          "tertinggal",
+          "lupa barang",
+          "tertinggal charger",
+          "lupa passport",
+          "tertinggal baju",
+          "tertinggal dalam bilik"
+        ],
+        "zh": [
+          "忘了",
+          "落下",
+          "遗留",
+          "忘了带",
+          "落在房间",
+          "忘了充电器",
+          "忘了护照",
+          "落了衣服"
+        ]
+      }
+    },
+    {
+      "intent": "luggage_storage",
+      "keywords": {
+        "en": [
+          "luggage storage",
+          "store luggage",
+          "keep luggage",
+          "store bags",
+          "keep bags",
+          "leave bags",
+          "baggage storage",
+          "can i leave my bags",
+          "after checkout bags"
+        ],
+        "ms": [
+          "simpan beg",
+          "simpan luggage",
+          "letak beg",
+          "storage beg",
+          "boleh simpan beg",
+          "lepas checkout beg"
+        ],
+        "zh": [
+          "行李寄存",
+          "存放行李",
+          "存包",
+          "寄存包",
+          "可以存行李吗",
+          "退房后行李"
+        ]
+      }
+    },
+    {
+      "intent": "checkout_procedure",
+      "keywords": {
+        "en": [
+          "how to checkout",
+          "how to check out",
+          "checkout process",
+          "checkout procedure",
+          "how do i checkout",
+          "what to do checkout",
+          "leaving process"
+        ],
+        "ms": [
+          "macam mana checkout",
+          "cara checkout",
+          "proses checkout",
+          "bagaimana checkout",
+          "cara check out"
+        ],
+        "zh": [
+          "怎么退房",
+          "如何退房",
+          "退房流程",
+          "退房步骤",
+          "要怎么退房"
+        ]
+      }
+    },
+    {
+      "intent": "billing_inquiry",
+      "keywords": {
+        "en": [
+          "bill",
+          "invoice",
+          "charge on bill",
+          "extra charge",
+          "billing",
+          "receipt",
+          "my bill",
+          "the bill",
+          "charges"
+        ],
+        "ms": [
+          "bil",
+          "invoice",
+          "caj tambahan",
+          "billing",
+          "resit",
+          "bil saya",
+          "caj"
+        ],
+        "zh": [
+          "账单",
+          "发票",
+          "额外收费",
+          "收据",
+          "我的账单",
+          "费用"
+        ]
+      }
+    },
+    {
+      "intent": "review_feedback",
+      "keywords": {
+        "en": [
+          "review",
+          "rating",
+          "feedback",
+          "great experience",
+          "highly recommend",
+          "worst hotel",
+          "terrible",
+          "amazing stay",
+          "love it",
+          "hate it"
+        ],
+        "ms": [
+          "review",
+          "rating",
+          "maklum balas",
+          "pengalaman bagus",
+          "sangat syorkan",
+          "hotel terburuk",
+          "teruk",
+          "menginap yang bagus"
+        ],
+        "zh": [
+          "评价",
+          "评分",
+          "反馈",
+          "很棒的体验",
+          "强烈推荐",
+          "最差的酒店",
+          "很糟糕",
+          "很好",
+          "很喜欢",
+          "很讨厌"
+        ]
+      }
+    },
+    {
+      "intent": "payment_made",
+      "keywords": {
+        "en": [
+          "already paid",
+          "i paid",
+          "just paid",
+          "payment done",
+          "transferred",
+          "sent payment",
+          "made payment",
+          "completed payment",
+          "paid via transfer",
+          "paid via bank"
+        ],
+        "ms": [
+          "sudah bayar",
+          "dah bayar",
+          "baru bayar",
+          "bayaran selesai",
+          "dah transfer",
+          "hantar bayaran",
+          "bayar melalui transfer"
+        ],
+        "zh": [
+          "已付",
+          "已经付了",
+          "刚付了",
+          "付款完成",
+          "转了账",
+          "付过了",
+          "通过转账付"
+        ]
+      }
+    },
+    {
+      "intent": "payment_info",
+      "keywords": {
+        "en": [
+          "how to pay",
+          "payment method",
+          "payment methods",
+          "what payment",
+          "accept payment",
+          "bank details",
+          "bank account",
+          "transfer details",
+          "payment info"
+        ],
+        "ms": [
+          "macam mana bayar",
+          "cara bayar",
+          "kaedah bayaran",
+          "apa payment",
+          "terima bayaran",
+          "akaun bank",
+          "details bank",
+          "info bayaran"
+        ],
+        "zh": [
+          "怎么付款",
+          "付款方式",
+          "支付方法",
+          "什么付款",
+          "接受付款",
+          "银行账户",
+          "转账详情",
+          "付款信息"
+        ]
+      }
+    },
+    {
+      "intent": "facilities_info",
+      "keywords": {
+        "en": [
+          "what facilities",
+          "what amenities",
+          "facilities available",
+          "amenities available",
+          "what do you have",
+          "facilities list",
+          "what services"
+        ],
+        "ms": [
+          "apa kemudahan",
+          "kemudahan apa",
+          "ada apa",
+          "kemudahan tersedia",
+          "apa servis"
+        ],
+        "zh": [
+          "什么设施",
+          "有什么设施",
+          "设施列表",
+          "有哪些设施",
+          "什么服务"
+        ]
+      }
+    },
+    {
+      "intent": "rules_policy",
+      "keywords": {
+        "en": [
+          "what are the rules",
+          "house rules",
+          "rules and policy",
+          "policy",
+          "regulations",
+          "are pets allowed",
+          "smoking allowed",
+          "quiet hours"
+        ],
+        "ms": [
+          "apa peraturan",
+          "peraturan rumah",
+          "dasar",
+          "regulasi",
+          "boleh bawa haiwan",
+          "boleh merokok",
+          "jam senyap"
+        ],
+        "zh": [
+          "什么规则",
+          "房屋规则",
+          "规定",
+          "政策",
+          "可以带宠物吗",
+          "可以吸烟吗",
+          "安静时间"
         ]
       }
     }

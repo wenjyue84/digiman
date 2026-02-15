@@ -170,6 +170,8 @@
       "examples": {
         "en": [
           "I want to check in",
+          "I wan to check in",
+          "I wanna check in",
           "I'm checking in",
           "I have arrived",
           "I arrived at the hostel",
@@ -178,7 +180,17 @@
           "I need to check in",
           "checking in now",
           "I'm here at your hostel",
-          "arrived and ready to check in"
+          "arrived and ready to check in",
+          "can I check in now",
+          "I just arrived",
+          "just got here need to check in",
+          "hi I want to do check in",
+          "check in please",
+          "checkin please",
+          "check in pls",
+          "checkin pls",
+          "here for check in",
+          "I'm outside your hostel"
         ],
         "ms": [
           "saya nak check in",
@@ -190,7 +202,12 @@
           "check in sekarang",
           "saya dah sampai sekarang",
           "saya kat hostel dah",
-          "sampai dan ready check in"
+          "sampai dan ready check in",
+          "dah tiba nak check in",
+          "saya dah tiba",
+          "boleh check in tak",
+          "nak daftar masuk",
+          "saya nak masuk bilik"
         ],
         "zh": [
           "我要入住",
@@ -202,7 +219,10 @@
           "需要入住",
           "现在入住",
           "我在你们旅舍",
-          "到了准备入住"
+          "到了准备入住",
+          "我来了要入住",
+          "可以办理入住了吗",
+          "我到了怎么入住"
         ]
       }
     },

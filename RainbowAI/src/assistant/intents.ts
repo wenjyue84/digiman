@@ -235,9 +235,9 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
   }
 
   // Map "checkin" variations
-  if (llmIntent === 'checkin' || llmIntent === 'check_in') {
-    // Check if guest has arrived vs asking about info
-    if (/\b(i\s?want\s?to\s?check\s?in|want\s?to\s?check\s?in|checking\s?in|i\s?have\s?arrived|i'?m\s?here|dah\s?sampai|nak\s?check\s?in|要入住|已经到)\b/i.test(messageText)) {
+  if (llmIntent === 'checkin' || llmIntent === 'check_in' || llmIntent === 'checkin_info') {
+    // Check if guest has arrived or wants to check in (not just asking about times)
+    if (/\b(i\s?(want|wan|wanna)\s?(to\s?)?check\s?in|want\s?to\s?check\s?in|checking\s?in|i\s?have\s?arrived|i'?m\s?here|i\s?arrived|just\s?arrived|dah\s?sampai|dah\s?tiba|nak\s?(check\s?in|checkin|daftar\s?masuk)|要入住|已经到|我来了|我到了)\b/i.test(messageText)) {
       return 'check_in_arrival';
     }
     return 'checkin_info';
@@ -270,6 +270,10 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
 
   // Map "unknown" to more specific intents if possible
   if (llmIntent === 'unknown') {
+    // Check for check-in arrival (especially Chinese/Malay short messages)
+    if (/(?:我要入住|要入住|办理入住|我来了|我到了|可以入住|入住登记|check\s?in|checkin|nak\s?check\s?in|nak\s?checkin|daftar\s?masuk)/i.test(messageText)) {
+      return 'check_in_arrival';
+    }
     // Check for tourist guide requests
     if (/\b(tourist|attraction|visit|sightseeing|what\s?to\s?(do|see)|where\s?to\s?go|tempat\s?menarik|景点|旅游)\b/i.test(messageText)) {
       return 'tourist_guide';

@@ -19,9 +19,9 @@
     {
       "intent": "checkin_info",
       "response": {
-        "en": "⏰ *Check-in Info*\n\nCheck-in time: *2:00 PM*\nDoor password: *1270#*\n\nEarly check-in is subject to approval.",
-        "ms": "⏰ *Info Daftar Masuk*\n\nMasa daftar masuk: *2:00 PM*\nKata laluan pintu: *1270#*\n\nDaftar masuk awal tertakluk kepada kelulusan.",
-        "zh": "⏰ *入住信息*\n\n入住时间: *下午2:00*\n门密码: *1270#*\n\n提前入住需经批准。"
+        "en": "⏰ *Check-in Info*\n\n🕑 Check-in: *2:00 PM* (early check-in available, free!)\n🕛 Check-out: *12:00 PM*\n🔑 Door password: *1270#*\n📶 WiFi: *pelangi capsule* / pw: *ilovestaycapsule*\n📍 Address: 26A Jalan Perang, Taman Pelangi, JB\n\n📹 First time? Watch our capsule guide: youtube.com/watch?v=6Ux11oBZaQQ\n\nReady to check in? Just say *\"I want to check in\"*! 😊\n\n— Rainbow 🌈",
+        "ms": "⏰ *Info Daftar Masuk*\n\n🕑 Daftar masuk: *2:00 PM* (awal boleh, percuma!)\n🕛 Daftar keluar: *12:00 PM*\n🔑 Password pintu: *1270#*\n📶 WiFi: *pelangi capsule* / pw: *ilovestaycapsule*\n📍 Alamat: 26A Jalan Perang, Taman Pelangi, JB\n\n📹 Pertama kali? Tonton video capsule: youtube.com/watch?v=6Ux11oBZaQQ\n\nReady check in? Cakap *\"nak check in\"*! 😊\n\n— Rainbow 🌈",
+        "zh": "⏰ *入住信息*\n\n🕑 入住时间: *下午2:00*（可提前入住，免费！）\n🕛 退房时间: *中午12:00*\n🔑 门密码: *1270#*\n📶 WiFi: *pelangi capsule* / 密码: *ilovestaycapsule*\n📍 地址: 26A Jalan Perang, Taman Pelangi, JB\n\n📹 第一次来？看看我们的胶囊房指南: youtube.com/watch?v=6Ux11oBZaQQ\n\n准备入住？直接说 *\"我要入住\"*！😊\n\n— Rainbow 🌈"
       }
     },
     {

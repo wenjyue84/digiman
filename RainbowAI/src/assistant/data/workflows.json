@@ -70,54 +70,36 @@
         {
           "id": "s1",
           "message": {
-            "en": "Great! I'll help you with the check-in process. Welcome! 🎉 Have you already arrived at Pelangi Capsule Hostel?",
-            "ms": "Baik! Saya akan bantu anda dengan proses check-in. Selamat datang! 🎉 Anda sudah sampai di hostel kami?",
-            "zh": "太好了！我会帮您办理入住手续。欢迎！🎉 您已经到达我们的旅舍了吗？"
+            "en": "Welcome to Pelangi Capsule Hostel! 🎉 I'll help you with check-in.\n\nWhat is your full name (as on your passport or IC)?",
+            "ms": "Selamat datang ke Pelangi Capsule Hostel! 🎉 Saya akan bantu anda check-in.\n\nApakah nama penuh anda (seperti dalam pasport atau IC)?",
+            "zh": "欢迎来到Pelangi胶囊旅舍！🎉 我来帮您办理入住。\n\n请问您的全名是什么（护照或身份证上的）？"
           },
           "waitForReply": true
         },
         {
           "id": "s2",
           "message": {
-            "en": "Perfect! What is your full name as per your passport or IC?",
-            "ms": "Baik! Apakah nama penuh anda seperti dalam pasport atau IC?",
-            "zh": "好的！您的全名（护照或身份证上的）是什么？"
+            "en": "Thank you! Please upload a photo of your passport or IC for registration. 📸",
+            "ms": "Terima kasih! Sila upload gambar pasport atau IC anda untuk pendaftaran. 📸",
+            "zh": "谢谢！请上传您的护照或身份证照片以便登记。📸"
           },
           "waitForReply": true
         },
         {
           "id": "s3",
           "message": {
-            "en": "Thank you! Please upload a photo of your passport or IC for registration.",
-            "ms": "Terima kasih! Sila upload gambar pasport atau IC anda untuk pendaftaran.",
-            "zh": "谢谢！请上传您的护照或身份证照片以便登记。"
+            "en": "Got it! What are your check-in and check-out dates?\n(e.g., Check-in: 15 Feb, Check-out: 17 Feb)",
+            "ms": "Baik! Apakah tarikh check-in dan check-out anda?\n(contoh: Check-in: 15 Feb, Check-out: 17 Feb)",
+            "zh": "好的！您的入住和退房日期是？\n（例如：入住：2月15日，退房：2月17日）"
           },
           "waitForReply": true
         },
         {
           "id": "s4",
           "message": {
-            "en": "What is your check-in date? (e.g., 15 Feb 2026)",
-            "ms": "Apakah tarikh check-in anda? (contoh: 15 Feb 2026)",
-            "zh": "您的入住日期是？（例如：2026年2月15日）"
-          },
-          "waitForReply": true
-        },
-        {
-          "id": "s5",
-          "message": {
-            "en": "What is your check-out date? (e.g., 17 Feb 2026)",
-            "ms": "Apakah tarikh check-out anda? (contoh: 17 Feb 2026)",
-            "zh": "您的退房日期是？（例如：2026年2月17日）"
-          },
-          "waitForReply": true
-        },
-        {
-          "id": "s6",
-          "message": {
-            "en": "Great! Let me check available capsules for you... Checking our system now. 🔍",
-            "ms": "Baik! Biar saya check capsule yang ada untuk anda... Sedang semak sistem. 🔍",
-            "zh": "好的！让我为您查询可用的胶囊房... 正在查询系统。🔍"
+            "en": "Let me check available capsules for you... 🔍",
+            "ms": "Biar saya check capsule yang ada untuk anda... 🔍",
+            "zh": "让我为您查询可用的胶囊房... 🔍"
           },
           "waitForReply": false,
           "action": {
@@ -125,20 +107,11 @@
           }
         },
         {
-          "id": "s7",
+          "id": "s5",
           "message": {
-            "en": "Good news! Available capsules: {{availableCapsules}} 🎊\n\nI'm forwarding your details to our admin at +60127088789 who will assign you a capsule and send you the door password. You'll receive confirmation shortly!",
-            "ms": "Berita baik! Capsule tersedia: {{availableCapsules}} 🎊\n\nSaya hantar maklumat anda ke admin +60127088789 untuk assign capsule dan hantar password pintu. Anda akan terima konfirmasi tidak lama lagi!",
-            "zh": "好消息！可用胶囊房: {{availableCapsules}} 🎊\n\n我正在将您的信息转发给管理员 +60127088789，他们会为您分配胶囊房并发送门禁密码。您很快就会收到确认信息！"
-          },
-          "waitForReply": false
-        },
-        {
-          "id": "s8",
-          "message": {
-            "en": "Forwarding your check-in details to admin now...",
-            "ms": "Menghantar butiran check-in anda ke admin sekarang...",
-            "zh": "正在将您的入住详情转发给管理员..."
+            "en": "Available capsules: {{availableCapsules}} 🎊\n\nI'm forwarding your details to our admin who will assign you a capsule and send the door password. You'll receive confirmation shortly!",
+            "ms": "Capsule tersedia: {{availableCapsules}} 🎊\n\nSaya hantar maklumat anda ke admin untuk assign capsule dan hantar password pintu. Anda akan terima konfirmasi tidak lama lagi!",
+            "zh": "可用胶囊房: {{availableCapsules}} 🎊\n\n我正在将您的信息转发给管理员，他们会为您分配胶囊房并发送门禁密码。您很快就会收到确认！"
           },
           "waitForReply": false,
           "action": {
@@ -146,11 +119,11 @@
           }
         },
         {
-          "id": "s9",
+          "id": "s6",
           "message": {
-            "en": "✅ Check-in details sent to admin! They will confirm your capsule assignment shortly.",
-            "ms": "✅ Butiran check-in dihantar ke admin! Mereka akan confirm capsule anda tidak lama lagi.",
-            "zh": "✅ 入住详情已发送给管理员！他们会很快确认您的胶囊房分配。"
+            "en": "✅ Check-in details sent to admin! They will confirm your capsule assignment shortly.\n\n📋 While you wait:\n• Check-in time: *2:00 PM*\n• Door password: *1270#*\n• WiFi: *PelangiHostel*\n\nNeed anything else? Just ask! 😊",
+            "ms": "✅ Butiran check-in dihantar ke admin! Mereka akan confirm capsule anda tidak lama lagi.\n\n📋 Sementara anda menunggu:\n• Masa check-in: *2:00 PM*\n• Password pintu: *1270#*\n• WiFi: *PelangiHostel*\n\nPerlukan apa-apa lagi? Tanya sahaja! 😊",
+            "zh": "✅ 入住详情已发送给管理员！他们会很快确认您的胶囊房。\n\n📋 等待期间：\n• 入住时间: *下午2:00*\n• 门密码: *1270#*\n• WiFi: *PelangiHostel*\n\n还需要其他帮助吗？随时问我！😊"
           },
           "waitForReply": false
         }
