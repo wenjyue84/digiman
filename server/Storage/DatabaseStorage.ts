@@ -20,17 +20,20 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Check if we're using Neon (cloud) or local PostgreSQL
-    const isNeon = process.env.DATABASE_URL.includes('neon.tech') || 
-                    process.env.DATABASE_URL.includes('neon.tech') ||
+    const isNeon = process.env.DATABASE_URL.includes('neon.tech') ||
                     process.env.DATABASE_URL.includes('neon');
 
     if (isNeon) {
-      // Neon database connection
+      // Neon database connection (HTTP-based, no pool needed)
       const sql = neon(process.env.DATABASE_URL);
       this.db = drizzle(sql);
     } else {
-      // Local PostgreSQL connection
-      const sql = postgres(process.env.DATABASE_URL, { max: 1 });
+      // Local PostgreSQL connection with proper pool sizing
+      const sql = postgres(process.env.DATABASE_URL, {
+        max: 10,
+        idle_timeout: 30,
+        connect_timeout: 5,
+      });
       this.db = drizzlePostgres(sql);
     }
   }
