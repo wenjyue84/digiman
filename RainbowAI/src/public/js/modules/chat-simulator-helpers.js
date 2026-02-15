@@ -16,8 +16,7 @@ export function switchSimulatorTab(tabName, updateHash = true) {
   if (updateHash) {
     const newHash = `chat-simulator/${tabName}`;
     if (window.location.hash.slice(1) !== newHash) {
-      window.location.hash = newHash;
-      return; // Let the hashchange event handle the actual UI switch
+      history.replaceState(null, '', '#' + newHash);
     }
   }
 

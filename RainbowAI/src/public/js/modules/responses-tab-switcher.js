@@ -14,8 +14,7 @@ export function switchResponseTab(tabName, updateHash = true) {
   if (updateHash) {
     const newHash = `responses/${tabName}`;
     if (window.location.hash.slice(1) !== newHash) {
-      window.location.hash = newHash;
-      return; // Let route handler take over
+      history.replaceState(null, '', '#' + newHash);
     }
   }
 

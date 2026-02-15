@@ -57,12 +57,11 @@ window.loadSettings = loadSettings;
 export function switchSettingsTab(tabId, updateHash = true) {
   window.activeSettingsTab = tabId;
 
-  // Update URL hash if requested
+  // Update URL hash if requested (replaceState avoids triggering hashchange)
   if (updateHash) {
     const newHash = `settings/${tabId}`;
     if (window.location.hash.slice(1) !== newHash) {
-      window.location.hash = newHash;
-      return; // Let route handler take over
+      history.replaceState(null, '', '#' + newHash);
     }
   }
 
