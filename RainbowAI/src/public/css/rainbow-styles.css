@@ -1386,53 +1386,120 @@ textarea {
 
 /* Input Area */
 .lc-input-area {
-  min-height: 62px;
+  padding: 8px 12px;
   background: #f0f2f5;
-  padding: 8px 16px;
   display: flex;
   align-items: flex-end;
-  /* Align to bottom for multiline */
   gap: 8px;
-  z-index: 10;
 }
 
-.lc-attach-btn,
-.lc-send-btn {
-  padding: 8px;
-  color: #54656f;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.2s;
-  flex-shrink: 0;
-  margin-bottom: 4px;
-  /* Align with input text base */
-  background: transparent;
+.lc-attach-btn {
+  background: none;
   border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: #54656f;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.lc-attach-btn:hover,
-.lc-send-btn:hover {
-  background: #d9dce0;
+.lc-attach-btn:hover {
+  background: #e9edef;
+  color: #00a884;
+}
+
+.lc-send-btn {
+  background: #00a884;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+
+.lc-send-btn:hover:not(:disabled) {
+  background: #008f72;
+}
+
+.lc-send-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.lc-send-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Help Me Button (Manual Mode) */
+.lc-help-me-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  flex-shrink: 0;
+}
+
+.lc-help-me-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.lc-help-me-btn:active {
+  transform: translateY(0);
+}
+
+.lc-help-me-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.lc-help-me-btn.loading svg {
+  animation: lc-spin 1s linear infinite;
+}
+
+@keyframes lc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .lc-input-box {
   flex: 1;
-  padding: 9px 12px;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 15px;
+  border: none;
   outline: none;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
   resize: none;
   max-height: 120px;
-  overflow-y: auto;
-  font-family: inherit;
+  min-height: 42px;
   line-height: 1.4;
+  overflow-y: auto;
 }
 
 .lc-input-box:focus {
-  border-color: #fff;
-  /* Keep white */
+  outline: none;
 }
 
 /* Empty State */
@@ -2280,91 +2347,6 @@ textarea {
 
 .lc-bubble:hover .lc-bubble-chevron {
   opacity: 1;
-}
-
-/* System Message Style */
-.lc-system-msg .lc-bubble-text {
-  font-family: 'Consolas', monospace;
-  font-size: 12px;
-  background: #f0f2f5;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  color: #54656f;
-  white-space: pre-wrap;
-}
-
-.lc-system-data {
-  margin-top: 8px;
-  border-top: 1px dashed #d1d7db;
-  padding-top: 4px;
-}
-
-.lc-system-label {
-  font-weight: 600;
-  font-size: 11px;
-  color: #8696a0;
-  margin-bottom: 2px;
-}
-
-.lc-system-json {
-  font-size: 11px;
-  color: #0d6efd;
-  background: #f8f9fa;
-  padding: 4px;
-  border-radius: 4px;
-  overflow-x: auto;
-}
-
-/* Input Area */
-.lc-input-area {
-  min-height: 62px;
-  background: #f0f2f5;
-  padding: 8px 16px;
-  display: flex;
-  align-items: flex-end;
-  /* Align to bottom for multiline */
-  gap: 8px;
-  z-index: 10;
-}
-
-.lc-attach-btn,
-.lc-send-btn {
-  padding: 8px;
-  color: #54656f;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.2s;
-  flex-shrink: 0;
-  margin-bottom: 4px;
-  /* Align with input text base */
-  background: transparent;
-  border: none;
-}
-
-.lc-attach-btn:hover,
-.lc-send-btn:hover {
-  background: #d9dce0;
-}
-
-.lc-input-box {
-  flex: 1;
-  padding: 9px 12px;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 15px;
-  outline: none;
-  resize: none;
-  max-height: 120px;
-  overflow-y: auto;
-  font-family: inherit;
-  line-height: 1.4;
-}
-
-.lc-input-box:focus {
-  border-color: #fff;
-  /* Keep white */
 }
 
 /* Empty State */
