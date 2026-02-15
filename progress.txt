@@ -174,3 +174,35 @@ Incomplete: Fix live simulation display in Chat Simulator (ID: US-018)
 FAILED quality gates: Fix live simulation display in Chat Simulator (ID: US-018)
 Story reverted to passes: false
 
+
+## Iteration 10 - Story: US-026 — Add agent-browser verification to Ralph testing workflow
+
+### What was implemented
+- Added comprehensive "Mandatory Agent-Browser Testing" section to scripts/ralph/CLAUDE.md
+- Section placed after "Verify in Browser" (section 5), before "Update prd.json" (section 6)
+- Documented 12 agent-browser commands: open, goto, snapshot, screenshot, get text/value, click, fill, select, hover, eval
+- Created 4 common test pattern examples: tab navigation, form submission, modal testing, data loading
+- Added 2 complete example test sequences: Chat Simulator and Workflow Editor
+- Included tab hash reference table for Rainbow dashboard (#understanding, #settings, #conversations, #help, #responses)
+- Added agent-browser session best practices section
+
+### Patterns discovered
+- Agent-browser testing is more reliable than screenshots for UI verification
+- Tab navigation in Rainbow dashboard uses hash-based routing
+- Interactive element references (@ref) require snapshot -i before use
+- JavaScript eval can verify navigation state (window.location.hash) and DOM state
+
+### Gotchas
+- Must use unique session names (absession ralph-us-026) before first agent-browser command
+- Screenshots are inefficient for API/health checks — use eval or get text instead
+- Need to wait for DOM updates — use eval to check element state after interactions
+- Always verify navigation by checking window.location.hash after tab clicks
+
+### Useful context for future iterations
+- File location: scripts/ralph/CLAUDE.md
+- Section added after line 56 (after "Verify in Browser")
+- Total addition: ~150 lines of documentation
+- Dashboard URL: http://localhost:3002/admin/rainbow
+- Tab hashes: #understanding, #settings, #conversations, #help, #responses
+- Agent-browser commands work with @refs from snapshot -i output
+
