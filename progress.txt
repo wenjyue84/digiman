@@ -1,0 +1,172 @@
+## Codebase Patterns
+
+- **3-server architecture**: Port 3000 (Vite), 5000 (Express API), 3002 (Rainbow MCP). All 3 must run for dashboard.
+- **Import boundaries**: RainbowAI/ has ZERO imports from server/, client/, or shared/. They communicate via HTTP.
+- **Config is atomic**: config-store.ts writes .tmp then renameSync to prevent corruption.
+- **Intent classification is 4-tier**: T1 (Emergency regex ~0.1ms) → T2 (Fuzzy keywords ~1ms) → T3 (Semantic similarity ~50ms) → T4 (LLM fallback ~2s).
+- **Routing is separate from classification**: intents.ts classifies; routing.json decides the action.
+- **Multi-language always**: Any new template/response needs en, ms, zh variants.
+- **Localhost-only internal endpoints**: Use IP check (127.0.0.1, ::1, ::ffff:127.0.0.1) instead of auth for inter-service endpoints.
+- **FK constraints matter**: guest_tokens.created_by references users.id — must be a valid UUID, not a string like 'rainbow-ai'. Query first admin user.
+- **Pipeline DI pattern**: Pipeline stages receive IPipelineContext (dependency injection) — never import dependencies directly.
+- **Workflow enhancer pattern**: Strategy pattern with switch/case in executeAction(). Add new actions as case branches.
+- **Node-based workflows**: Use format: 'nodes' + startNodeId + nodes[] array. Executor auto-detects and dispatches. Keep legacy steps[] as fallback.
+- **Template variables in nodes**: {{guest.name}}, {{workflow.data.varName}}, {{system.admin_phone}}, {{pelangi.field}} — resolved at execution time via resolveTemplateVars().
+- **Zod .passthrough()**: Add to schemas when extra JSON fields needed (e.g., node workflow fields on workflowDefinitionSchema).
+- **Test with Chat Simulator**: Use /admin/rainbow#understanding Test Console for quick intent verification.
+- **agent-browser for UI testing**: Use `agent-browser open <url>` then `agent-browser snapshot -i` for interactive elements.
+- **No nested template literals**: In HTML generation, use string concatenation instead of nested backtick templates.
+
+---
+
+# Ralph Progress Log
+
+## Session 1 — 2026-02-14 (Manual, pre-Ralph)
+
+### US-001: Create IPipelineContext dependency injection interface
+- Created `RainbowAI/src/assistant/pipeline/pipeline-context.ts` (205 lines)
+- IPipelineContext interface covers all 19 dependencies from monolithic intent-classifier.ts
+- Used dynamic imports in createPipelineContext() factory to avoid circular dependencies
+- **Learnings:** Interface methods must match existing function signatures exactly; async factory needed for dynamic imports
+
+### US-002: Extract summarization stage
+- Created `RainbowAI/src/assistant/pipeline/stages/summarization.ts`
+- applySummarization() excludes last message (current user input) from summarization
+- Logs reduction percentage when summarization occurs
+
+### US-003: Extract KB loading stage
+- Created `RainbowAI/src/assistant/pipeline/stages/kb-loading.ts`
+- loadKnowledgeBase() always includes core files: AGENTS.md, soul.md, memory.md
+- Updates state.devMetadata.kbFiles for dashboard visibility
+
+### US-004: Extract tier classification stage
+- Created `RainbowAI/src/assistant/pipeline/stages/tier-classification.ts`
+- Most complex stage — handles 3 routing modes: tiered, split-model, default
+- Receives ackTimer callback to clear "thinking" message timer
+- Handles time-sensitive intents by adding time context to prompt
+- **Gotcha:** Must pass ackTimer through the pipeline state, not as a direct parameter
+
+### US-005: Extract Layer 2 fallback stage
+- Created `RainbowAI/src/assistant/pipeline/stages/layer2-fallback.ts`
+- Reads confidence threshold from llm-settings.json (default 0.80)
+- Keeps original result when fallback doesn't improve confidence
+
+### US-006: Extract routing stage
+- Created `RainbowAI/src/assistant/pipeline/stages/routing.ts`
+- resolveRouting() returns routedAction, responseLang, messageType, repeatCheck
+- Contains resolveResponseLanguage helper function
+- Handles missing routing config gracefully with admin WhatsApp notification
+- **Gotcha:** Must update conversation language when tier detects different language than stored
+
+### US-007: Extract action dispatch stage
+- Created `RainbowAI/src/assistant/pipeline/stages/action-dispatch.ts`
+- Handles all 6 action types: static_reply, workflow, escalate, forward_payment, booking, llm_reply
+- Complaint override: complaint intents get LLM reply + escalation to admin
+- Repeat intent escalation: triggers at 3x threshold
+- **Gotcha:** workflow action must validate workflow_id exists in workflows.json before executing
+
+### US-008: Integrate all stages into orchestrator
+- Rewrote `RainbowAI/src/assistant/pipeline/intent-classifier.ts` from 501 → 88 lines
+- Reduced imports from 19 → 8
+- classifyAndRoute() public API unchanged — full backward compatibility
+- ensureResponseText kept as post-processing step
+- **Gotcha:** ackTimer (thinking message timeout) behavior must be preserved across stage boundaries
+
+## Session 2 — 2026-02-15 (Manual, pre-Ralph)
+
+### US-009: Advanced check-in workflow with real system integration
+- Redesigned checkin_full workflow: 6 steps with real system integration
+- Added `POST /api/guest-tokens/internal` endpoint (localhost-only, no auth)
+- Added `create_checkin_link` action handler in workflow-enhancer.ts
+- Added `POST /api/rainbow/notify-checkin` endpoint for admin WhatsApp notification
+- Added post-check-in webhook in guest-tokens.ts (web server → Rainbow AI)
+- **Key learnings:**
+  - securityValidationMiddleware (CSRF) blocks machine-to-machine requests — remove for internal endpoints
+  - guest_tokens.created_by has FK to users.id — use `storage.getAllUsers()[0].id` for system-created tokens
+  - Capsule availability: GET /api/capsules/available returns real data (no auth needed)
+  - Intent test endpoint: /api/rainbow/intents/test (NOT /api/rainbow/classify)
+  - All 50 intent accuracy scenarios maintained at 100% after workflow changes
+
+### Intent Quality Improvements (pre-PRD work)
+- Improved accuracy from 41.9% → 100% (50/50 scenarios)
+- Enabled all 4 classification tiers (T1-T4) — were all disabled, only LLM active
+- Fixed emergency regex: added "stole" to theft detection, fixed theft → theft_report naming
+- Enhanced LLM intent mapper: complaint → post_checkout_complaint/review_feedback/contact_staff
+- Business logic: baby noise → escalation (babies not allowed in hostel)
+- Check-in coverage: 20+ fuzzy keywords (typos, informal, 3 languages), 15+ semantic examples
+- Optimized check-in workflow from 9 → 6 steps
+- Enhanced checkin_info static reply with comprehensive info card
+
+### US-011: Add checkout_now intent
+- Added checkout_now to intent-keywords.json (30 keywords across en/ms/zh)
+- Added 23 semantic examples to intent-examples.json
+- Added LLM mapper for departure signals in intents.ts
+- Routed to checkout_full workflow in routing.json
+- Added 3 test cases to run-intent-test.mjs (53 total)
+
+### US-012: Create checkout_full workflow
+- 4-step workflow: confirm capsule → belongings checklist → admin notify → farewell with review link
+- All steps in en/ms/zh
+
+### US-013: Fix complaint routing
+- One-line routing.json change: general_complaint_in_stay from llm_reply to workflow
+
+## Session 3 — 2026-02-15 (Node-based workflow system)
+
+### US-014: Node-based workflow schema and adapter
+- Created `RainbowAI/src/assistant/workflow-nodes.ts` (~300 lines)
+- 5 node types: message, wait_reply, whatsapp_send, pelangi_api, condition
+- WorkflowNode interface with typed configs, next pointers, output mappings
+- Template variable resolution: {{guest.*}}, {{system.*}}, {{workflow.data.*}}, {{pelangi.*}}, {{node.*}}
+- convertNodesToSteps() adapter for backward compatibility
+- HybridWorkflowDefinition type supports both formats
+- **Gotcha:** Trilingual schema requires all 3 fields (en, ms, zh) — no optional. Must always provide all 3.
+
+### US-015: WhatsApp sender node
+- Added handleWhatsAppSend() to workflow-enhancer.ts
+- Configurable sender/receiver/content with template variable resolution
+- Supports both multilang content objects and plain string templates
+- Receiver resolves from {{guest.phone}}, {{system.admin_phone}}, or literal number
+- **Pattern:** Reuses resolveTemplateVars() and resolveVariableRef() from workflow-nodes.ts
+
+### US-016: Pelangi Manager connector node
+- Added handleBookCapsule() to workflow-enhancer.ts (3rd Pelangi API action)
+- pelangi_api node executor in workflow-executor.ts delegates to enhanceWorkflowStep() via synthetic steps
+- Node outputs stored in nodeOutputs map, prefixed with pelangi.* for template access
+- Error edges: if API fails, follows {error: nodeId} path
+- **Pattern:** Synthetic WorkflowStep pattern — build a step from node config to reuse existing enhancer handlers
+
+### US-017: Redesign checkin_full as node-based workflow
+- 13-node graph: welcome_msg → wait_name → wait_phone → wait_dates → check_avail → condition → create_link → send_link_msg → info_msg
+- Added condition node for availability check (branches to no_capsules_msg when count = 0)
+- Added whatsapp_send node for waitlist admin notification
+- Added error fallback paths for both API calls
+- Node executor in workflow-executor.ts: walks graph until wait_reply or end, chains non-blocking nodes
+- WorkflowState extended with optional currentNodeId, nodeOutputs, isNodeBased
+- createWorkflowState() auto-detects node format from workflow definition
+- Schema: added .passthrough() to workflowDefinitionSchema for extra fields
+- **Key design:** Legacy steps[] kept as fallback alongside nodes[] array in same workflow definition
+## Iteration 1 - Sun, Feb 15, 2026  4:41:18 PM
+Incomplete: Fix live simulation display in Chat Simulator (ID: US-018)
+
+## Iteration 2 - Sun, Feb 15, 2026
+
+### US-018: Fix live simulation display in Chat Simulator
+- **Root cause:** During Phase 30-33 modularization (extracting rainbow-admin.html.original → ES6 modules), 6 onclick handler functions were never extracted: `toggleAutotest`, `runAutotestWithFilter`, `toggleRunAllDropdown`, `closeRunAllDropdown`, `stopAutotest`, `testIntentClassifier`
+- **Additional bugs in autotest-execution.js:**
+  - `runAutotest()` referenced non-existent DOM IDs (`autotest-status`, `start-autotest-btn`) — fixed to use correct IDs from chat-simulator.html (`autotest-progress`, `at-progress-bar`, `run-all-btn`, etc.)
+  - `runScenario()` called wrong API endpoint (`/test-message` instead of `/intents/test`)
+  - `runScenario()` returned wrong shape — `renderScenarioCard()` expects `{ scenario, status, turns[], time, ruleResults[] }` with `turns[].userMessage`
+  - `evaluateRule()` used `turn.language` instead of `turn.detectedLanguage`
+  - `getAutotestScenariosByAction()` didn't handle routing entries that are objects (`{ action: 'x' }`) vs plain strings
+- **Files modified:**
+  - `RainbowAI/src/public/js/modules/autotest-execution.js` — full rewrite (504 lines): fixed DOM IDs, API endpoint, return shape, added 6 missing UI bridge functions, concurrent execution support
+  - `RainbowAI/src/public/js/core/module-registry.js` — added imports and window registrations for 6 new exports
+  - `prd.json` — US-018 passes: true
+- **Key learnings:**
+  - Module-registry.js is the single bridge between ES6 modules and HTML onclick handlers — any new exported function MUST be imported + registered here
+  - The autotest system has a contract: `runScenario()` must return the exact shape `renderScenarioCard()` expects, including `scenario` (the original scenario object), `ruleResults[]`, and `turns[].userMessage` (not `turns[].user`)
+  - Routing config entries can be either strings (`'static_reply'`) or objects (`{ action: 'static_reply', ... }`) — always handle both
+  - The `/intents/test` endpoint is in `testing.ts` and returns `{ intent, source, action, confidence, response, matchedKeyword, detectedLanguage }`
+- **No new TS errors introduced** (0 errors from changed files; 43 pre-existing errors in other files)
+

@@ -1,12 +1,13 @@
 /**
- * @fileoverview Autotest execution core - scenario running, validation, and rule evaluation
+ * @fileoverview Autotest execution core - scenario running, validation, rule evaluation,
+ * and UI bridge functions for the Chat Simulator tab.
  * @module autotest-execution
  */
 
 import { api, toast } from '../core/utils.js';
 
 // ─── State ─────────────────────────────────────────────────────────────
-let cachedRouting = null; // Cache routing configuration
+let cachedRouting = null;
 
 // ─── Constants ─────────────────────────────────────────────────────────
 // Map scenario id → primary intent (for filtering by current template routing)
@@ -50,6 +51,7 @@ const SCENARIO_ID_TO_INTENT = {
 };
 
 // ─── Routing Configuration ────────────────────────────────────────────
+
 /**
  * Get routing configuration for autotest (cached)
  */
@@ -67,37 +69,38 @@ export async function getRoutingForAutotest() {
  */
 export function getAutotestScenariosByAction(action) {
   const routing = cachedRouting || {};
-  const intentIds = Object.keys(routing).filter(id => routing[id] === action);
+  const intentIds = Object.keys(routing).filter(id => {
+    const route = routing[id];
+    const routeAction = typeof route === 'string' ? route : route?.action;
+    return routeAction === action;
+  });
   const scenarioIdsForAction = Object.keys(SCENARIO_ID_TO_INTENT).filter(sid => {
     const primaryIntent = SCENARIO_ID_TO_INTENT[sid];
     return intentIds.includes(primaryIntent);
   });
-  // Get scenarios from global AUTOTEST_SCENARIOS (will need to import this or pass as parameter)
-  // For now, return the scenario IDs
   return scenarioIdsForAction;
 }
 
 // ─── Test Execution ────────────────────────────────────────────────────
+
 /**
- * Run autotest with optional filter
- * @param {string} filter - Filter type: 'all', 'static_reply', 'llm_reply', 'workflow', 'escalate', etc.
+ * Run autotest scenarios with concurrency and live UI updates.
+ * Uses DOM element IDs from chat-simulator.html.
+ *
+ * @param {string} filter - 'all', 'static_reply', 'llm_reply', 'workflow', 'escalate'
  */
 export async function runAutotest(filter) {
-  // Import state from parent context (will be refactored in future phases)
-  // For now, this function needs to be called with proper context
-  const autotestRunning = window.autotestRunning || false;
-  const autotestAbortRequested = window.autotestAbortRequested || false;
-
-  if (autotestRunning) {
+  if (window.autotestRunning) {
     toast('Tests already running. Stop current run first.', 'error');
     return;
   }
 
-  // Get scenarios based on filter
+  // Determine scenarios
   let scenarios = [];
-  if (filter === 'all') {
+  if (filter === 'all' || !filter) {
     scenarios = window.AUTOTEST_SCENARIOS || [];
   } else {
+    await getRoutingForAutotest();
     const scenarioIds = getAutotestScenariosByAction(filter);
     scenarios = (window.AUTOTEST_SCENARIOS || []).filter(s => scenarioIds.includes(s.id));
   }
@@ -111,151 +114,226 @@ export async function runAutotest(filter) {
   window.autotestRunning = true;
   window.autotestAbortRequested = false;
 
-  const startTime = Date.now();
-  const results = [];
+  // Get concurrency setting
+  const concurrencyInput = document.getElementById('autotest-concurrency');
+  const concurrency = concurrencyInput ? Math.max(1, Math.min(20, parseInt(concurrencyInput.value) || 6)) : 6;
 
-  // Update UI
-  const statusEl = document.getElementById('autotest-status');
-  const resultsEl = document.getElementById('autotest-results');
+  // DOM elements
   const progressEl = document.getElementById('autotest-progress');
+  const progressBar = document.getElementById('at-progress-bar');
+  const progressText = document.getElementById('at-progress-text');
+  const summaryEl = document.getElementById('autotest-summary');
+  const resultsEl = document.getElementById('autotest-results');
+  const runBtn = document.getElementById('run-all-btn');
   const stopBtn = document.getElementById('stop-autotest-btn');
-  const startBtn = document.getElementById('start-autotest-btn');
+  const exportDropdown = document.getElementById('export-report-dropdown');
+  const livePass = document.getElementById('at-live-pass');
+  const liveWarn = document.getElementById('at-live-warn');
+  const liveFail = document.getElementById('at-live-fail');
 
-  if (statusEl) statusEl.textContent = `Running ${scenarios.length} tests...`;
-  if (resultsEl) resultsEl.innerHTML = '';
+  // Show progress, hide summary and export
   if (progressEl) progressEl.classList.remove('hidden');
+  if (summaryEl) summaryEl.classList.add('hidden');
+  if (exportDropdown) exportDropdown.classList.add('hidden');
+  if (resultsEl) resultsEl.innerHTML = '';
+  if (runBtn) { runBtn.disabled = true; runBtn.innerHTML = '<span>Running...</span>'; }
   if (stopBtn) stopBtn.classList.remove('hidden');
-  if (startBtn) startBtn.classList.add('hidden');
+  if (progressBar) progressBar.style.width = '0%';
+  if (progressText) progressText.textContent = 'Starting...';
+  if (livePass) livePass.textContent = '0';
+  if (liveWarn) liveWarn.textContent = '0';
+  if (liveFail) liveFail.textContent = '0';
 
-  // Run scenarios sequentially
-  for (let i = 0; i < scenarios.length; i++) {
-    if (window.autotestAbortRequested) {
-      if (statusEl) statusEl.textContent = `Stopped after ${i} tests`;
-      break;
-    }
+  const results = [];
+  const totalStart = Date.now();
+  let completedCount = 0;
+  let passCount = 0;
+  let warnCount = 0;
+  let failCount = 0;
 
-    const scenario = scenarios[i];
-    if (statusEl) statusEl.textContent = `Running ${i + 1}/${scenarios.length}: ${scenario.name}...`;
+  // Run with concurrency
+  let idx = 0;
+  const runNext = async () => {
+    while (idx < scenarios.length && !window.autotestAbortRequested) {
+      const currentIdx = idx++;
+      const scenario = scenarios[currentIdx];
 
-    try {
-      const result = await runScenario(scenario);
-      results.push(result);
-
-      // Render result card (will be extracted to UI module in future phase)
-      if (resultsEl && window.renderScenarioCard) {
-        resultsEl.insertAdjacentHTML('beforeend', window.renderScenarioCard(result));
+      if (progressText) {
+        progressText.textContent = 'Running ' + (completedCount + 1) + '/' + scenarios.length + ': ' + scenario.name;
       }
-    } catch (e) {
-      results.push({
-        id: scenario.id,
-        name: scenario.name,
-        status: 'fail',
-        error: e.message
-      });
+
+      try {
+        const result = await runScenario(scenario);
+        results[currentIdx] = result;
+
+        if (result.status === 'pass') passCount++;
+        else if (result.status === 'warn') warnCount++;
+        else failCount++;
+      } catch (err) {
+        results[currentIdx] = {
+          scenario,
+          status: 'fail',
+          turns: [],
+          time: 0,
+          ruleResults: [{ rule: { type: 'execution', critical: true }, passed: false, detail: err.message }]
+        };
+        failCount++;
+      }
+
+      completedCount++;
+
+      // Update progress bar and live counters
+      const pct = ((completedCount / scenarios.length) * 100).toFixed(0);
+      if (progressBar) progressBar.style.width = pct + '%';
+      if (livePass) livePass.textContent = String(passCount);
+      if (liveWarn) liveWarn.textContent = String(warnCount);
+      if (liveFail) liveFail.textContent = String(failCount);
+
+      // Render result card immediately
+      if (resultsEl && window.renderScenarioCard) {
+        resultsEl.insertAdjacentHTML('beforeend', window.renderScenarioCard(results[currentIdx]));
+      }
     }
+  };
 
-    // Small delay between tests
-    await new Promise(r => setTimeout(r, 100));
+  // Launch concurrent workers
+  const workers = [];
+  for (let w = 0; w < concurrency; w++) {
+    workers.push(runNext());
   }
+  await Promise.all(workers);
 
-  // Finalize
-  const totalTime = Date.now() - startTime;
-  const passed = results.filter(r => r.status === 'pass').length;
-  const warnings = results.filter(r => r.status === 'warn').length;
-  const failed = results.filter(r => r.status === 'fail').length;
+  const totalTime = Date.now() - totalStart;
 
-  if (statusEl) {
-    statusEl.textContent = `Completed ${results.length} tests in ${(totalTime / 1000).toFixed(1)}s - ` +
-      `✓ ${passed} pass, ⚠ ${warnings} warn, ✗ ${failed} fail`;
+  // Finalize progress
+  if (progressBar) progressBar.style.width = '100%';
+  if (progressText) progressText.textContent = 'Complete!';
+  setTimeout(() => { if (progressEl) progressEl.classList.add('hidden'); }, 1500);
+
+  // Update summary cards
+  const totalEl = document.getElementById('at-total');
+  const passedEl = document.getElementById('at-passed');
+  const warningsEl = document.getElementById('at-warnings');
+  const failedEl = document.getElementById('at-failed');
+  const timeEl = document.getElementById('at-time');
+  if (totalEl) totalEl.textContent = String(results.length);
+  if (passedEl) passedEl.textContent = String(passCount);
+  if (warningsEl) warningsEl.textContent = String(warnCount);
+  if (failedEl) failedEl.textContent = String(failCount);
+  if (timeEl) timeEl.textContent = (totalTime / 1000).toFixed(1) + 's';
+  if (summaryEl) summaryEl.classList.remove('hidden');
+
+  // Show export button
+  if (exportDropdown) exportDropdown.classList.remove('hidden');
+
+  // Restore run button
+  if (runBtn) {
+    runBtn.disabled = false;
+    runBtn.innerHTML = 'Run All <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
   }
-
-  if (progressEl) progressEl.classList.add('hidden');
   if (stopBtn) stopBtn.classList.add('hidden');
-  if (startBtn) startBtn.classList.remove('hidden');
 
+  // Save results
   window.autotestRunning = false;
-  window.lastAutotestResults = { results, totalTime, timestamp: new Date().toISOString() };
+  window.lastAutotestResults = { results, totalTime, timestamp: new Date().toISOString(), passed: passCount, warnings: warnCount, failed: failCount };
 
-  // Save to history (using global function temporarily)
-  if (window.autotestHistory && window.saveAutotestHistory) {
-    window.autotestHistory.push({
+  // Save to history
+  if (window.addToAutotestHistory) {
+    window.addToAutotestHistory({
       id: Date.now(),
       results,
       totalTime,
       timestamp: window.lastAutotestResults.timestamp,
-      passed,
-      warnings,
-      failed
+      passed: passCount,
+      warnings: warnCount,
+      failed: failCount
     });
-    window.saveAutotestHistory();
   }
+  if (window.updateHistoryButtonVisibility) window.updateHistoryButtonVisibility();
 
-  // Update history button visibility
-  if (window.updateHistoryButtonVisibility) {
-    window.updateHistoryButtonVisibility();
-  }
-
-  toast(`Tests completed: ${passed} passed, ${failed} failed`, failed === 0 ? 'success' : 'error');
+  toast('Tests completed: ' + passCount + ' passed, ' + failCount + ' failed', failCount === 0 ? 'success' : 'error');
 }
 
 /**
- * Run a single scenario
- * @param {object} scenario - Scenario configuration
- * @returns {Promise<object>} Test result
+ * Run a single scenario against /intents/test API.
+ * Returns shape expected by renderScenarioCard:
+ *   { scenario, status, turns[], time, ruleResults[] }
  */
 export async function runScenario(scenario) {
   const turns = [];
+  const scenarioStart = Date.now();
 
   for (let i = 0; i < scenario.messages.length; i++) {
     const msg = scenario.messages[i];
-    const startTime = Date.now();
+    const turnStart = Date.now();
 
     try {
-      const response = await api('/test-message', {
+      const response = await api('/intents/test', {
         method: 'POST',
-        body: { message: msg.text }
+        body: { message: msg.text },
+        timeout: 30000
       });
 
-      const responseTime = Date.now() - startTime;
+      const responseTime = Date.now() - turnStart;
       turns.push({
-        user: msg.text,
-        response: response.reply || '',
+        userMessage: msg.text,
+        response: response.response || '(no response)',
         intent: response.intent || 'unknown',
+        source: response.source || 'unknown',
+        routedAction: response.action || 'unknown',
         confidence: response.confidence || 0,
-        language: response.language || 'en',
-        messageType: response.messageType || 'text',
-        responseTime
+        detectedLanguage: response.detectedLanguage || 'en',
+        messageType: response.messageType || 'info',
+        model: response.model || null,
+        kbFiles: response.kbFiles || [],
+        responseTime,
+        matchedKeyword: response.matchedKeyword || null
       });
     } catch (e) {
       turns.push({
-        user: msg.text,
-        response: `Error: ${e.message}`,
+        userMessage: msg.text,
+        response: 'Error: ' + (e.message || 'Request failed'),
         intent: 'error',
+        source: 'error',
+        routedAction: 'error',
         confidence: 0,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - turnStart
       });
     }
   }
 
-  // Validate scenario
-  const validation = validateScenario(scenario, turns);
+  const totalTime = Date.now() - scenarioStart;
 
-  return {
-    id: scenario.id,
-    name: scenario.name,
-    category: scenario.category,
-    turns,
-    validation,
-    status: validation.status
-  };
+  // Validate scenario rules
+  const ruleResults = [];
+  const validations = scenario.validate || [];
+  let criticalFailed = false;
+
+  for (const v of validations) {
+    const turn = turns[v.turn];
+    if (!turn) {
+      ruleResults.push({ rule: { type: 'missing_turn', critical: true }, passed: false, turn: v.turn, detail: 'Turn ' + v.turn + ' not found' });
+      criticalFailed = true;
+      continue;
+    }
+
+    for (const rule of (v.rules || [])) {
+      const evalResult = evaluateRule(rule, turn);
+      ruleResults.push({ ...evalResult, turn: v.turn });
+      if (rule.critical && !evalResult.passed) criticalFailed = true;
+    }
+  }
+
+  const allPassed = ruleResults.length > 0 ? ruleResults.every(r => r.passed) : true;
+  const status = criticalFailed ? 'fail' : allPassed ? 'pass' : 'warn';
+
+  return { scenario, status, turns, time: totalTime, ruleResults };
 }
 
 // ─── Validation ────────────────────────────────────────────────────────
+
 /**
  * Validate scenario results against expected rules
- * @param {object} scenario - Scenario configuration
- * @param {array} turns - Conversation turns
- * @returns {object} Validation results
  */
 export function validateScenario(scenario, turns) {
   const validations = scenario.validate || [];
@@ -268,65 +346,158 @@ export function validateScenario(scenario, turns) {
       results.push({ turn: v.turn, error: 'Turn not found', failed: true });
       continue;
     }
-
     for (const rule of v.rules) {
       const evalResult = evaluateRule(rule, turn);
       results.push({ turn: v.turn, ...evalResult });
-
-      if (rule.critical && !evalResult.passed) {
-        criticalFailed = true;
-      }
+      if (rule.critical && !evalResult.passed) criticalFailed = true;
     }
   }
 
   const allPassed = results.every(r => r.passed);
   const status = criticalFailed ? 'fail' : allPassed ? 'pass' : 'warn';
-
   return { results, status };
 }
 
 /**
- * Evaluate a single validation rule
- * @param {object} rule - Validation rule
- * @param {object} turn - Conversation turn
- * @returns {object} Evaluation result
+ * Evaluate a single validation rule against a turn result
  */
 export function evaluateRule(rule, turn) {
   const response = (turn.response || '').toLowerCase();
 
   switch (rule.type) {
     case 'not_empty': {
-      const passed = response.length > 0 && !response.includes('ai not available') && !response.includes('error processing');
+      const passed = response.length > 0 && !response.includes('ai not available') && !response.includes('error processing') && !response.includes('error:');
       return { rule, passed, detail: passed ? 'Response is non-empty' : 'Response is empty or error' };
     }
     case 'contains_any': {
       const found = rule.values.some(v => response.includes(v.toLowerCase()));
       const matched = rule.values.filter(v => response.includes(v.toLowerCase()));
-      return { rule, passed: found, detail: found ? `Matched: ${matched.join(', ')}` : `None found from: ${rule.values.join(', ')}` };
+      return { rule, passed: found, detail: found ? 'Matched: ' + matched.join(', ') : 'None found from: ' + rule.values.join(', ') };
     }
     case 'not_contains': {
       const foundBad = rule.values.filter(v => response.includes(v.toLowerCase()));
       const passed = foundBad.length === 0;
-      return { rule, passed, detail: passed ? 'No forbidden content' : `Found: ${foundBad.join(', ')}` };
+      return { rule, passed, detail: passed ? 'No forbidden content' : 'Found: ' + foundBad.join(', ') };
     }
     case 'response_time': {
       const time = turn.responseTime || 0;
       const max = rule.max || 10000;
       const passed = time <= max;
-      return { rule, passed, detail: `${time}ms ${passed ? '<=' : '>'} ${max}ms` };
+      return { rule, passed, detail: time + 'ms ' + (passed ? '<=' : '>') + ' ' + max + 'ms' };
     }
     case 'language': {
-      const passed = turn.language === rule.expected;
-      return { rule, passed, detail: `Expected ${rule.expected}, got ${turn.language || 'unknown'}` };
+      const detected = turn.detectedLanguage || turn.language || 'unknown';
+      const passed = detected === rule.expected;
+      return { rule, passed, detail: 'Expected ' + rule.expected + ', got ' + detected };
     }
     case 'message_type': {
-      const passed = turn.messageType === rule.expected;
-      return { rule, passed, detail: `Expected ${rule.expected}, got ${turn.messageType}` };
+      const mt = turn.messageType || 'unknown';
+      const passed = mt === rule.expected;
+      return { rule, passed, detail: 'Expected ' + rule.expected + ', got ' + mt };
     }
     default:
-      return { rule, passed: false, detail: `Unknown rule type: ${rule.type}` };
+      return { rule, passed: false, detail: 'Unknown rule type: ' + rule.type };
   }
 }
+
+// ─── UI Bridge Functions ────────────────────────────────────────────────
+
+/**
+ * Toggle between autotest panel and chat layout (Quick Test)
+ */
+export function toggleAutotest() {
+  const panel = document.getElementById('autotest-panel');
+  const chatLayout = document.getElementById('chat-layout');
+
+  if (!panel || !chatLayout) return;
+
+  if (panel.classList.contains('hidden')) {
+    panel.classList.remove('hidden');
+    chatLayout.classList.add('hidden');
+
+    // Update scenario count
+    const countEl = document.getElementById('scenario-count');
+    if (countEl && window.AUTOTEST_SCENARIOS) {
+      countEl.textContent = String(window.AUTOTEST_SCENARIOS.length);
+    }
+
+    updateFilterCounts();
+  } else {
+    panel.classList.add('hidden');
+    chatLayout.classList.remove('hidden');
+  }
+}
+
+/**
+ * Update the counts in the Run All dropdown filter buttons
+ */
+async function updateFilterCounts() {
+  await getRoutingForAutotest();
+  const allScenarios = window.AUTOTEST_SCENARIOS || [];
+
+  const allCountEl = document.getElementById('run-all-count');
+  const staticCountEl = document.getElementById('run-static-count');
+  const workflowCountEl = document.getElementById('run-workflow-count');
+  const llmCountEl = document.getElementById('run-llm-count');
+
+  if (allCountEl) allCountEl.textContent = String(allScenarios.length);
+
+  const staticIds = getAutotestScenariosByAction('static_reply');
+  if (staticCountEl) staticCountEl.textContent = String(allScenarios.filter(s => staticIds.includes(s.id)).length);
+
+  const workflowIds = getAutotestScenariosByAction('workflow');
+  if (workflowCountEl) workflowCountEl.textContent = String(allScenarios.filter(s => workflowIds.includes(s.id)).length);
+
+  const llmIds = getAutotestScenariosByAction('llm_reply');
+  if (llmCountEl) llmCountEl.textContent = String(allScenarios.filter(s => llmIds.includes(s.id)).length);
+}
+
+/**
+ * Run autotest with a specific action filter.
+ */
+export function runAutotestWithFilter(filter) {
+  runAutotest(filter);
+}
+
+/**
+ * Toggle the "Run All" dropdown menu
+ */
+export function toggleRunAllDropdown() {
+  const menu = document.getElementById('run-all-dropdown-menu');
+  if (menu) menu.classList.toggle('hidden');
+}
+
+/**
+ * Close the "Run All" dropdown menu
+ */
+export function closeRunAllDropdown() {
+  const menu = document.getElementById('run-all-dropdown-menu');
+  if (menu) menu.classList.add('hidden');
+}
+
+/**
+ * Stop a running autotest
+ */
+export function stopAutotest() {
+  window.autotestAbortRequested = true;
+  toast('Stopping tests after current batch...', 'info');
+}
+
+/**
+ * Open autotest panel (triggered by "Test Intent Classifier" button)
+ */
+export function testIntentClassifier() {
+  toggleAutotest();
+}
+
+// ─── Close dropdown on outside click ────────────────────────────────────
+document.addEventListener('click', function (event) {
+  const dropdown = document.getElementById('run-all-dropdown');
+  const menu = document.getElementById('run-all-dropdown-menu');
+  if (dropdown && menu && !dropdown.contains(event.target)) {
+    menu.classList.add('hidden');
+  }
+});
 
 // ─── Exports ───────────────────────────────────────────────────────────
 export { SCENARIO_ID_TO_INTENT };

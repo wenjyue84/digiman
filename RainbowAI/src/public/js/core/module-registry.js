@@ -254,7 +254,19 @@ import {
   createWorkflow,
   deleteCurrentWorkflow,
   renderAdvancedSettings,
-  saveAdvancedWorkflow
+  saveAdvancedWorkflow,
+  // Node-based workflow functions
+  switchWorkflowFormat,
+  renderNodes,
+  addNode,
+  removeNode,
+  moveNode,
+  updateNodeField,
+  updateNodeConfig,
+  updateNodeConfigJSON,
+  updateNodeNext,
+  updateNodeOutput,
+  updateStartNodeId,
 } from '/public/js/modules/workflows.js';
 
 // Phase 28: Settings Tab Module
@@ -287,7 +299,13 @@ import {
   runScenario,
   validateScenario,
   evaluateRule,
-  SCENARIO_ID_TO_INTENT
+  SCENARIO_ID_TO_INTENT,
+  toggleAutotest,
+  runAutotestWithFilter,
+  toggleRunAllDropdown,
+  closeRunAllDropdown,
+  stopAutotest,
+  testIntentClassifier
 } from '/public/js/modules/autotest-execution.js';
 
 // Phase 32: Autotest Scenarios Data Module
@@ -334,7 +352,8 @@ import {
   testIntentManager,
   exportIntentData,
   updateTierUI,
-  resetToDefaults
+  resetToDefaults,
+  toggleHelp
 } from '/public/js/modules/intent-manager.js';
 
 // Phase 35: Dashboard Templates Module (Intent + Settings Templates)
@@ -511,6 +530,18 @@ window.createWorkflow = createWorkflow;
 window.deleteCurrentWorkflow = deleteCurrentWorkflow;
 window.renderAdvancedSettings = renderAdvancedSettings;
 window.saveAdvancedWorkflow = saveAdvancedWorkflow;
+// Node-based workflow globals
+window.switchWorkflowFormat = switchWorkflowFormat;
+window.renderNodes = renderNodes;
+window.addNode = addNode;
+window.removeNode = removeNode;
+window.moveNode = moveNode;
+window.updateNodeField = updateNodeField;
+window.updateNodeConfig = updateNodeConfig;
+window.updateNodeConfigJSON = updateNodeConfigJSON;
+window.updateNodeNext = updateNodeNext;
+window.updateNodeOutput = updateNodeOutput;
+window.updateStartNodeId = updateStartNodeId;
 // Phase 28: Settings Tab (other settings functions self-register from sub-modules)
 window.loadSettings = loadSettings;
 window.switchSettingsTab = switchSettingsTab;
@@ -533,6 +564,12 @@ window.runScenario = runScenario;
 window.validateScenario = validateScenario;
 window.evaluateRule = evaluateRule;
 window.SCENARIO_ID_TO_INTENT = SCENARIO_ID_TO_INTENT;
+window.toggleAutotest = toggleAutotest;
+window.runAutotestWithFilter = runAutotestWithFilter;
+window.toggleRunAllDropdown = toggleRunAllDropdown;
+window.closeRunAllDropdown = closeRunAllDropdown;
+window.stopAutotest = stopAutotest;
+window.testIntentClassifier = testIntentClassifier;
 // Phase 32: Autotest Scenarios Data
 window.AUTOTEST_SCENARIOS = AUTOTEST_SCENARIOS;
 // Phase 33: Autotest UI
@@ -573,6 +610,7 @@ window.testIntentManager = testIntentManager;
 window.exportIntentData = exportIntentData;
 window.updateTierUI = updateTierUI;
 window.resetToDefaults = resetToDefaults;
+window.toggleHelp = toggleHelp;
 // Phase 35: Dashboard Templates
 window.toggleTemplateHelp = toggleTemplateHelp;
 window.applyIntentTemplate = applyIntentTemplate;

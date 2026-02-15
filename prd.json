@@ -1,12 +1,21 @@
 {
-  "productName": "Intent Classifier Pipeline Refactoring",
-  "branchName": "refactor/intent-classifier-pipeline",
-  "overview": "Refactor the monolithic intent-classifier.ts (501 lines, 19 imports) into a modular pipeline with dependency injection. Each stage becomes independently testable.",
+  "productName": "Rainbow AI System Enhancements",
+  "branchName": "main",
+  "overview": "Comprehensive Rainbow AI improvements: pipeline refactoring (US-001–008), advanced check-in workflow (US-009), Ralph infrastructure upgrades (US-010), checkout workflow (US-011–012), complaint routing fixes (US-013), node-based workflows (US-014–017), dashboard UX polish (US-018–026).",
   "goals": [
     "Reduce intent-classifier.ts from 501 to ~100 lines",
     "Reduce imports from 19 to ~8",
     "Enable independent testing of each pipeline stage",
-    "Maintain full backward compatibility"
+    "Maintain full backward compatibility",
+    "Integrate real capsule availability and self-check-in links",
+    "Add guided checkout workflow for guest departure",
+    "Ensure consistent complaint routing to workflows",
+    "Enhance Ralph autonomous loop with quality gates and progress tracking",
+    "Fix live simulation display and chat simulator UX",
+    "Show token usage metrics in detection metadata",
+    "Enable staff to add keywords/examples directly from intent review",
+    "Add live chat search, reply, date filtering, and fullscreen mode",
+    "Keep help docs updated with all recent changes"
   ],
   "userStories": [
     {
@@ -172,8 +181,7 @@
       "dependencies": ["US-004", "US-005", "US-006", "US-007"],
       "estimatedComplexity": "large",
       "passes": true
-    }
-    ,
+    },
     {
       "id": "US-009",
       "title": "Advanced check-in workflow with real capsule availability",
@@ -197,6 +205,441 @@
       "dependencies": ["US-008"],
       "estimatedComplexity": "large",
       "passes": true
+    },
+    {
+      "id": "US-010",
+      "title": "Upgrade Ralph with quality gates and progress tracking",
+      "priority": 10,
+      "description": "Enhance the Ralph autonomous agent loop (scripts/ralph/) with quality gates (TypeScript compilation + 50-scenario intent test), progress.txt tracking with Codebase Patterns section, --dry-run mode, archiving, and install /prd and /ralph skills.",
+      "acceptanceCriteria": [
+        "ralph.sh has run_quality_checks() function with TypeScript + intent test gates",
+        "ralph.sh reverts prd.json passes mark when quality gates fail",
+        "ralph.sh supports --dry-run flag to preview stories without executing",
+        "ralph.sh supports --prd flag for custom PRD file path",
+        "progress.txt created with Codebase Patterns section and historical learnings",
+        "scripts/ralph/CLAUDE.md updated with project-specific context and quality check commands",
+        "/prd and /ralph skills installed in .claude/skills/",
+        "Co-Authored-By updated to Claude Opus 4.6"
+      ],
+      "technicalNotes": [
+        "Quality gates: TypeScript compilation (RainbowAI), TypeScript (server), intent accuracy test",
+        "Intent test gate skips gracefully when MCP server not running on port 3002",
+        "Server TS gate skips when no tsconfig found",
+        "Skills adapted from snarktank/ralph upstream with PelangiManager-specific additions"
+      ],
+      "dependencies": ["US-009"],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-011",
+      "title": "Add checkout_now intent with keywords and routing",
+      "priority": 11,
+      "description": "Add a new checkout_now intent for guests actively checking out (distinct from checkout_info which is informational). Add fuzzy keywords in en/ms/zh, semantic examples, and route to a new checkout_full workflow.",
+      "acceptanceCriteria": [
+        "checkout_now intent added to intent-keywords.json with keywords in en, ms, zh",
+        "checkout_now intent added to intent-examples.json with 5+ semantic examples",
+        "checkout_now routed to workflow action with workflow_id checkout_full in routing.json",
+        "LLM mapper in intents.ts maps checkout-related LLM returns to checkout_now when departure signals detected",
+        "Test Console: 'I want to checkout' classifies as checkout_now",
+        "Test Console: 'saya nak checkout' classifies as checkout_now",
+        "TypeScript compiles with zero errors",
+        "50-scenario accuracy test maintains 100%"
+      ],
+      "technicalNotes": [
+        "Must not conflict with existing checkout_info (informational) or checkout_procedure (how-to) intents",
+        "checkout_now = actively departing now; checkout_info = asking about times/policy",
+        "Keywords: 'i want to checkout', 'checking out now', 'im leaving', 'nak checkout', 'saya mahu checkout', '我要退房', '退房了'",
+        "Add checkout_now to the 50-scenario test suite as new test cases"
+      ],
+      "dependencies": ["US-010"],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-012",
+      "title": "Create checkout_full workflow with admin notification",
+      "priority": 12,
+      "description": "Create a guided checkout workflow that confirms the guest's capsule, reminds them about personal belongings and key card, sends admin notification, and thanks them with a review request.",
+      "acceptanceCriteria": [
+        "checkout_full workflow added to workflows.json with 4 steps",
+        "Step 1: Confirm checkout + ask capsule number (waitForReply: true)",
+        "Step 2: Remind about personal belongings check + key card return (waitForReply: false)",
+        "Step 3: Thank guest + notify admin via send_to_staff action (waitForReply: false)",
+        "Step 4: Farewell with Google review link and safe travels (waitForReply: false)",
+        "Admin receives WhatsApp notification with guest name, capsule, checkout time",
+        "All step messages in en, ms, zh",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in Chat Simulator: 'I want to checkout' triggers the workflow"
+      ],
+      "technicalNotes": [
+        "Use existing send_to_staff action handler for admin notification (no new code needed)",
+        "Workflow should be simple: 4 steps, 1 waitForReply, 1 action",
+        "Farewell message can include Google review link (ask user for the URL)",
+        "Step messages should feel warm and helpful, matching hostel's friendly tone"
+      ],
+      "dependencies": ["US-011"],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-013",
+      "title": "Fix general_complaint_in_stay routing to use complaint workflow",
+      "priority": 13,
+      "description": "Change general_complaint_in_stay from llm_reply to workflow action using the existing complaint_handling workflow, for consistency with how all other complaint intents are routed.",
+      "acceptanceCriteria": [
+        "general_complaint_in_stay routes to workflow action with workflow_id complaint_handling in routing.json",
+        "Test Console: 'I am very unhappy with my stay' triggers complaint_handling workflow",
+        "Existing complaint intents (noise_complaint, cleanliness_complaint, etc.) still route to complaint_handling",
+        "TypeScript compiles with zero errors",
+        "50-scenario accuracy test maintains 100%"
+      ],
+      "technicalNotes": [
+        "One-line change in routing.json: change action from llm_reply to workflow, add workflow_id",
+        "No new code needed — just routing config update",
+        "May need to add general_complaint_in_stay test case to the 50-scenario suite"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-014",
+      "title": "Define node-based workflow schema and executor adapter",
+      "priority": 14,
+      "description": "Create TypeScript interfaces for node-based workflows (inspired by n8n). Each workflow becomes a graph of typed nodes connected by edges. Support node types: message, wait_reply, whatsapp_send, pelangi_api, condition. The executor must handle both legacy step-based and new node-based formats via an adapter layer.",
+      "acceptanceCriteria": [
+        "New file: RainbowAI/src/assistant/workflow-nodes.ts with node type interfaces",
+        "WorkflowNode interface: id, type, label, config, next (string or {success, error}), outputs",
+        "NodeBasedWorkflow interface: id, name, nodes[], startNodeId",
+        "Node types enum: message, wait_reply, whatsapp_send, pelangi_api, condition",
+        "Adapter function: convertNodesToSteps() for backward compatibility with existing executor",
+        "Legacy step-based workflows in workflows.json continue to work unchanged",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Node config uses template variables: {{guest.name}}, {{guest.phone}}, {{workflow.data.s1}}, {{system.admin_phone}}",
+        "The 'next' field can be a string (single next node) or object {success: nodeId, error: nodeId} for branching",
+        "The 'outputs' field maps response data to named variables for downstream nodes",
+        "Adapter layer converts node graph to linear steps array for existing workflow-executor.ts",
+        "This story is schema + types only — no actual node execution yet"
+      ],
+      "dependencies": ["US-012"],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-015",
+      "title": "Implement WhatsApp sender node type",
+      "priority": 15,
+      "description": "Add a whatsapp_send node type that sends a configurable WhatsApp message. The node config allows setting sender number, receiver number, and message content (with template variables). This replaces the hardcoded send_to_staff action with a flexible, reusable node.",
+      "acceptanceCriteria": [
+        "whatsapp_send node handler in workflow-enhancer.ts or workflow-nodes.ts",
+        "Config schema: sender (phone string), receiver (phone string), content (multilang message or template string)",
+        "Template variable resolution: {{guest.name}}, {{guest.phone}}, {{workflow.data.s1}}, {{system.admin_phone}}",
+        "Sender defaults to system WhatsApp number when not specified",
+        "Receiver can be: a literal phone number, {{guest.phone}}, or {{system.admin_phone}}",
+        "Content supports multilang {en, ms, zh} or single string with template vars",
+        "Existing send_to_staff action continues to work (backward compatible)",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Uses existing sendWhatsAppMessage from baileys-client.ts",
+        "Template resolution happens at execution time using collectedData + context",
+        "Admin phone default: +60127088789 (from configStore.getWorkflow().payment.forward_to)",
+        "The node should work both standalone and as part of a node-based workflow"
+      ],
+      "dependencies": ["US-014"],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-016",
+      "title": "Implement Pelangi Manager connector node type",
+      "priority": 16,
+      "description": "Add a pelangi_api node type that connects to the Pelangi Manager system (port 5000) with selectable actions. Actions include: check_availability (GET /api/capsules/available), create_checkin_link (POST /api/guest-tokens/internal), book_capsule (POST /api/capsules/assign). Node outputs are available as template variables for downstream nodes.",
+      "acceptanceCriteria": [
+        "pelangi_api node handler with action selector: check_availability, create_checkin_link, book_capsule",
+        "check_availability action: calls GET /api/capsules/available, outputs: availableCount, availableCapsules, capsuleList",
+        "create_checkin_link action: calls POST /api/guest-tokens/internal with guestName + phoneNumber, outputs: checkinLink, assignedCapsule, token",
+        "book_capsule action: calls POST /api/capsules/assign with capsuleNumber + guestName, outputs: bookingConfirmed, capsuleNumber",
+        "Node outputs are injected into downstream node template variables (e.g., {{pelangi.availableCount}})",
+        "Error handling: if API call fails, node outputs error message and follows error edge",
+        "Existing check_availability and create_checkin_link actions in workflow-enhancer.ts continue to work",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Uses existing callAPI from http-client.ts (base URL: http://localhost:5000)",
+        "check_availability response: { capsules: [{number, status, type}...] }",
+        "create_checkin_link requires guestName and phoneNumber from collectedData or config",
+        "book_capsule endpoint may not exist yet — create it or skip as stretch goal",
+        "Error edge: if API returns non-200, follow {error: nodeId} path instead of {success: nodeId}"
+      ],
+      "dependencies": ["US-014"],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-017",
+      "title": "Redesign checkin_full workflow using node-based format",
+      "priority": 17,
+      "description": "Convert the checkin_full workflow from the legacy step-based format to the new node-based format, demonstrating all node types: message, wait_reply, pelangi_api (check_availability + create_checkin_link), and whatsapp_send (admin notification). Keep the legacy format as fallback.",
+      "acceptanceCriteria": [
+        "checkin_full workflow available in node-based format in workflows.json (or separate node-workflows.json)",
+        "Node graph: welcome_msg → wait_name → ask_phone → wait_phone → ask_dates → wait_dates → check_avail_api → create_link_api → send_link_wa → confirmation_msg",
+        "whatsapp_send node sends check-in link to guest's WhatsApp (receiver: {{guest.phone}})",
+        "pelangi_api node checks real capsule availability and creates check-in link",
+        "Workflow executor detects and runs node-based format when available",
+        "Legacy step-based checkin_full still works as fallback",
+        "Test via Chat Simulator: 'I want to check in' triggers the node-based workflow",
+        "TypeScript compiles with zero errors",
+        "53-scenario accuracy test maintains 100%"
+      ],
+      "technicalNotes": [
+        "The node-based workflow should produce identical guest experience to the step-based version",
+        "Node graph is a DAG (directed acyclic graph) — no cycles allowed",
+        "Template variables flow through the graph: each node's outputs feed the next node's inputs",
+        "Consider adding a 'format' field to workflow: 'steps' (legacy) vs 'nodes' (new)",
+        "The executor should auto-detect format by checking for 'nodes' vs 'steps' array"
+      ],
+      "dependencies": ["US-015", "US-016"],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-018",
+      "title": "Fix live simulation display in Chat Simulator",
+      "priority": 18,
+      "description": "The live simulation display in the Chat Simulator tab is broken — messages are not rendering correctly during workflow simulation. Check git history and backup files for the previously working version and restore/fix the display logic. The simulation should show bot messages, user input prompts, and workflow step progression clearly.",
+      "acceptanceCriteria": [
+        "Chat Simulator live simulation shows bot messages with proper formatting",
+        "User input prompts appear correctly during wait_reply steps",
+        "Workflow step progression is visually indicated (current step highlight)",
+        "Previous working code identified from git log or archive/ backups",
+        "Verify with agent-browser: open Chat Simulator, run a workflow simulation, confirm messages render",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Check git log for recent changes to chat simulator rendering: git log --oneline -20 -- RainbowAI/src/public/",
+        "Check archive/ directory for backup versions of the simulator",
+        "The simulation chat is in the #understanding tab (Chat Simulator section)",
+        "Key files: RainbowAI/src/public/js/modules/autotest-scenarios.js, responses.html or understanding.html template",
+        "Use string concatenation for HTML generation (no nested template literals)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-019",
+      "title": "Show token usage in detection metadata",
+      "priority": 19,
+      "description": "Display token usage statistics in the detection metadata section of the Chat Simulator. When a message is classified, the metadata panel should show tokens used (prompt tokens, completion tokens, total), model used, and cost estimate. This helps staff understand AI resource consumption per message.",
+      "acceptanceCriteria": [
+        "Detection metadata panel shows token usage: prompt_tokens, completion_tokens, total_tokens",
+        "Model name displayed in metadata (e.g., 'kimi-k2.5', 'llama-3.1')",
+        "Token data sourced from the classify API response devMetadata",
+        "Graceful fallback when token data is unavailable (show 'N/A')",
+        "Verify with agent-browser: classify a message in Chat Simulator, check metadata shows token counts",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "The classify endpoint returns devMetadata which may contain usage info from AI providers",
+        "Check ai-client.ts for how token usage is captured from provider responses",
+        "Token usage comes from OpenAI-compatible response.usage object",
+        "Display in the existing metadata expansion panel below classification results",
+        "Key file: RainbowAI/src/public/js/modules/autotest-scenarios.js or the test panel rendering code"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-020",
+      "title": "Staff Intent Review: add keywords and examples with dedup",
+      "priority": 20,
+      "description": "Enhance the Staff Intent Review panel so staff can directly add new keywords and semantic examples for intents. When reviewing a misclassified message, staff should be able to click 'Add as Keyword' or 'Add as Example' to add the message text to the intent's keyword list or example list. Include deduplication check to prevent adding entries that already exist.",
+      "acceptanceCriteria": [
+        "Staff Intent Review panel shows 'Add as Keyword' button next to each reviewed message",
+        "Staff Intent Review panel shows 'Add as Example' button next to each reviewed message",
+        "Clicking 'Add as Keyword' adds the message text to the selected intent's keywords in intent-keywords.json",
+        "Clicking 'Add as Example' adds the message text to the selected intent's examples in intent-examples.json",
+        "Dedup check: if keyword/example already exists, show warning and do not add duplicate",
+        "Success feedback shown after adding (e.g., toast or inline confirmation)",
+        "Verify with agent-browser: open Intent Manager, try adding a keyword, confirm it saves without duplicates",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "Intent keywords API: PUT /api/rainbow/config/intent-keywords (reads/writes intent-keywords.json)",
+        "Intent examples API: PUT /api/rainbow/config/intent-examples (reads/writes intent-examples.json)",
+        "The intent manager tab is in RainbowAI/src/public/templates/tabs/intent-manager.html",
+        "JS module: RainbowAI/src/public/js/modules/intent-manager.js",
+        "Dedup check should be case-insensitive and trim whitespace",
+        "Use existing admin API pattern for config updates"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-021",
+      "title": "Update help documentation for recent changes",
+      "priority": 21,
+      "description": "Update the Help tab documentation to reflect all recent changes including: node-based workflow editor, checkout workflow, pipeline refactoring, intent review improvements, and live chat features. The help docs should serve as a user guide for hostel staff operating the Rainbow AI dashboard.",
+      "acceptanceCriteria": [
+        "Help tab documents the node-based workflow editor (how to create/edit nodes)",
+        "Help tab documents the checkout workflow feature",
+        "Help tab documents the Staff Intent Review panel",
+        "Help tab documents chat simulator usage",
+        "Help tab documents live chat features (if implemented)",
+        "Help content is organized with clear sections and headings",
+        "Verify with agent-browser: open Help tab, confirm all sections render correctly",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Help tab template: RainbowAI/src/public/templates/tabs/help.html",
+        "May also have sub-templates: help-user-guide.html, help-developer-guide.html",
+        "JS module: RainbowAI/src/public/js/modules/help.js",
+        "Keep language simple — target audience is hostel staff, not developers",
+        "Use existing tab styling and layout patterns"
+      ],
+      "dependencies": ["US-018", "US-019", "US-020"],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-022",
+      "title": "Set Ralph default max iterations to 20",
+      "priority": 22,
+      "description": "Change the default MAX_ITERATIONS in ralph.sh from 10 to 20 to allow more stories to be processed in a single Ralph run. This gives Ralph more time to complete complex stories that may need multiple attempts.",
+      "acceptanceCriteria": [
+        "scripts/ralph/ralph.sh MAX_ITERATIONS default changed from 10 to 20",
+        "Ralph startup banner shows 'Max iters: 20' when no argument provided",
+        "Custom max iterations still work when passed as argument (e.g., ralph.sh --tool claude 30)",
+        "Ralph script runs without errors"
+      ],
+      "technicalNotes": [
+        "Single line change in scripts/ralph/ralph.sh: MAX_ITERATIONS=10 → MAX_ITERATIONS=20",
+        "Test: run ralph.sh --dry-run and verify the banner shows 20"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-023",
+      "title": "Live Chat: add search, reply, and date filtering",
+      "priority": 23,
+      "description": "Enhance the Live Chat (Conversations) tab with three new features: (1) Search bar to filter conversations by guest name/phone/message content, (2) Quick reply functionality to respond to guest messages directly from the dashboard, (3) Date range filter to view conversations from specific time periods.",
+      "acceptanceCriteria": [
+        "Search bar at top of conversations list filters by guest name, phone number, or message content",
+        "Search is case-insensitive and updates results in real-time as user types",
+        "Quick reply input field appears when viewing a conversation, allowing staff to type and send a response",
+        "Reply sends message via WhatsApp to the guest (uses existing sendWhatsAppMessage)",
+        "Date filter with 'from' and 'to' date pickers filters conversations by timestamp",
+        "Date filter defaults to 'last 7 days' on initial load",
+        "All three features work together (search + date filter combined)",
+        "Verify with agent-browser: open Conversations tab, test search, date filter, and reply UI",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Conversations tab template: RainbowAI/src/public/templates/tabs/conversations.html (or similar)",
+        "Conversations API: GET /api/rainbow/conversations",
+        "Reply API: POST /api/rainbow/send-message (or similar existing endpoint)",
+        "WhatsApp send: uses baileys-client.ts sendWhatsAppMessage()",
+        "Date filtering can be client-side if conversation count is manageable (<1000)",
+        "Search should debounce input (300ms) to avoid excessive filtering"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "large",
+      "passes": false
+    },
+    {
+      "id": "US-024",
+      "title": "Fullscreen chat window mode",
+      "priority": 24,
+      "description": "Add a fullscreen toggle button to the chat simulator and live chat conversation view. When activated, the chat area expands to fill the entire viewport (hiding the sidebar and other UI), providing a focused, distraction-free chat experience. A close/minimize button returns to the normal layout.",
+      "acceptanceCriteria": [
+        "Fullscreen toggle button visible in chat simulator header area",
+        "Fullscreen toggle button visible in live chat conversation view",
+        "Clicking fullscreen hides sidebar navigation and other panels",
+        "Chat area expands to 100vw x 100vh with proper padding",
+        "Close/minimize button clearly visible in fullscreen mode to return to normal view",
+        "Escape key also exits fullscreen mode",
+        "Fullscreen state does not persist across tab switches",
+        "Verify with agent-browser: click fullscreen, confirm layout change, click close to restore",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Use CSS class toggle approach (e.g., add 'fullscreen' class to chat container)",
+        "CSS: .fullscreen { position: fixed; inset: 0; z-index: 50; background: white; }",
+        "Add event listener for Escape key to exit fullscreen",
+        "Ensure the fullscreen container has its own scroll behavior",
+        "Don't use the browser Fullscreen API — use CSS-based fullscreen for simplicity"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-025",
+      "title": "Verify chat simulator display and fix rendering issues",
+      "priority": 25,
+      "description": "Thorough verification and fix of the Chat Simulator display. Ensure all UI elements render correctly: message bubbles (bot vs user), classification results panel, confidence scores, intent badges, metadata expansion, workflow simulation progress, and the test input area. Fix any CSS or JS rendering issues found.",
+      "acceptanceCriteria": [
+        "Bot messages display in left-aligned bubbles with bot icon/label",
+        "User messages display in right-aligned bubbles with user icon/label",
+        "Classification results show intent, confidence score, and tier source",
+        "Metadata expansion panel opens/closes correctly",
+        "Workflow simulation steps render with proper step indicators",
+        "Test input area is properly styled and functional",
+        "No JavaScript console errors when using the chat simulator",
+        "Verify with agent-browser: run full chat simulation flow, take screenshots, confirm rendering",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Chat simulator is in #understanding tab",
+        "Key files: autotest-scenarios.js, understanding.html template",
+        "Check CSS in rainbow-livechat-ui.css for chat bubble styling",
+        "Common issues: template literal nesting, missing DOM elements, z-index stacking",
+        "Use agent-browser snapshot -i to identify interactive elements and their state"
+      ],
+      "dependencies": ["US-018"],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-026",
+      "title": "Add agent-browser verification to Ralph testing workflow",
+      "priority": 26,
+      "description": "Update Ralph's CLAUDE.md instructions to mandate agent-browser testing for ALL UI-related stories. Add specific agent-browser verification steps, common snapshot patterns, and example test sequences. Ensure every story with UI acceptance criteria includes an agent-browser verification step.",
+      "acceptanceCriteria": [
+        "scripts/ralph/CLAUDE.md updated with mandatory agent-browser testing section",
+        "Agent-browser verification steps documented: open page, snapshot, interact, verify",
+        "Common test patterns documented: tab navigation, form submission, modal testing",
+        "Example test sequence included for Chat Simulator verification",
+        "Example test sequence included for Workflow Editor verification",
+        "Ralph script or CLAUDE.md mentions agent-browser as required tool for UI stories",
+        "Verify: read updated CLAUDE.md, confirm agent-browser instructions are clear and actionable"
+      ],
+      "technicalNotes": [
+        "Agent-browser commands: open, snapshot -i, click @ref, fill @ref, get text @ref",
+        "Dashboard URL: http://localhost:3002/admin/rainbow",
+        "Tab navigation: click on tab elements, then snapshot to verify content loaded",
+        "For API/health checks: use curl instead of screenshots",
+        "Add to Ralph CLAUDE.md section 5 (Verify in Browser) with more detailed instructions"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
     }
   ],
   "technicalContext": {
@@ -205,11 +648,28 @@
       "RainbowAI/src/assistant/pipeline/pipeline-context.ts",
       "RainbowAI/src/assistant/pipeline/stages/",
       "RainbowAI/src/assistant/workflow-enhancer.ts",
+      "RainbowAI/src/assistant/workflow-executor.ts",
+      "RainbowAI/src/assistant/workflow-nodes.ts",
       "RainbowAI/src/assistant/data/workflows.json",
+      "RainbowAI/src/assistant/data/routing.json",
+      "RainbowAI/src/assistant/data/intent-keywords.json",
+      "RainbowAI/src/assistant/data/intent-examples.json",
+      "RainbowAI/src/assistant/intents.ts",
       "RainbowAI/src/routes/admin/checkin-notify.ts",
-      "server/routes/guest-tokens.ts"
+      "RainbowAI/src/public/js/modules/autotest-scenarios.js",
+      "RainbowAI/src/public/js/modules/intent-manager.js",
+      "RainbowAI/src/public/js/modules/help.js",
+      "RainbowAI/src/public/templates/tabs/understanding.html",
+      "RainbowAI/src/public/templates/tabs/help.html",
+      "RainbowAI/src/public/templates/tabs/intent-manager.html",
+      "RainbowAI/src/public/templates/tabs/conversations.html",
+      "RainbowAI/src/public/css/rainbow-livechat-ui.css",
+      "server/routes/guest-tokens.ts",
+      "scripts/ralph/ralph.sh",
+      "scripts/ralph/CLAUDE.md",
+      "progress.txt"
     ],
-    "testingStrategy": "TypeScript compilation + agent-browser dashboard verification after each story",
-    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/assistant/pipeline/ && rm -rf RainbowAI/src/assistant/pipeline/stages/"
+    "testingStrategy": "TypeScript compilation + 53-scenario intent accuracy test + agent-browser dashboard verification (mandatory for UI stories)",
+    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/assistant/ && rm -f RainbowAI/src/assistant/workflow-nodes.ts"
   }
 }
