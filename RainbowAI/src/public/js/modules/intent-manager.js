@@ -648,6 +648,33 @@ export function updateTierUI(tiers) {
   }
 }
 
+// ─── Help Guide Toggle (lazy-loaded from partial) ───────────────────────
+
+let _imHelpLoaded = false;
+
+export function toggleHelp() {
+  const content = document.getElementById('intent-help-content');
+  const icon = document.getElementById('help-toggle-icon');
+  const text = document.getElementById('help-toggle-text');
+  if (!content || !icon || !text) return;
+
+  if (content.classList.contains('hidden')) {
+    content.classList.remove('hidden');
+    icon.textContent = '\u25BC';
+    text.textContent = 'Collapse Guide';
+    if (!_imHelpLoaded) {
+      fetch('/api/rainbow/templates/intent-manager-help')
+        .then(function(r) { return r.ok ? r.text() : Promise.reject('Failed to load'); })
+        .then(function(html) { content.innerHTML = html; _imHelpLoaded = true; })
+        .catch(function() { content.innerHTML = '<div class="text-center py-8 text-danger-500">Failed to load guide. Please refresh the page.</div>'; });
+    }
+  } else {
+    content.classList.add('hidden');
+    icon.textContent = '\u25B6';
+    text.textContent = 'Expand Guide';
+  }
+}
+
 // ─── Event Delegation (language tabs, dropdown close) ────────────────────
 
 // Run All dropdown close (uses event delegation)

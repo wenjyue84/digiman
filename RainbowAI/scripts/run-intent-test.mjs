@@ -57,6 +57,9 @@ const EXPECTED = {
   'mixed-booking': 'booking',
   'chinese-bill': 'billing_dispute',
   'malay-wifi': 'wifi',
+  'checkout-now-en': 'checkout_now',
+  'checkout-now-ms': 'checkout_now',
+  'checkout-now-zh': 'checkout_now',
 };
 
 const SCENARIOS = [
@@ -111,6 +114,9 @@ const SCENARIOS = [
   { id: 'mixed-booking', msg: 'Boleh saya book satu room untuk dua malam?' },
   { id: 'chinese-bill', msg: '账单上多收了钱怎么办？' },
   { id: 'malay-wifi', msg: 'Apa password WiFi?' },
+  { id: 'checkout-now-en', msg: 'I want to checkout' },
+  { id: 'checkout-now-ms', msg: 'Saya nak checkout' },
+  { id: 'checkout-now-zh', msg: '我要退房' },
 ];
 
 async function testOne(scenario) {

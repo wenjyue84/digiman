@@ -1,0 +1,13 @@
+{
+  "PostToolUse": [
+    {
+      "matcher": "Write|Edit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "powershell -Command \"$f = $env:CLAUDE_FILE_PATH; if ($f -and ($f -match '\\.json$') -and ($f -match 'RainbowAI[\\\\/]src[\\\\/]assistant[\\\\/]data')) { try { Get-Content $f -Raw | ConvertFrom-Json | Out-Null; Write-Output 'JSON valid' } catch { Write-Error \\\"INVALID JSON in $f - $($_.Exception.Message)\\\"; exit 1 } }\""
+        }
+      ]
+    }
+  ]
+}

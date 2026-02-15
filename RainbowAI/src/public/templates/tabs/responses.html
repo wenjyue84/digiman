@@ -285,17 +285,47 @@
                 class="text-lg font-semibold border-b border-transparent hover:border-neutral-300 focus:border-primary-500 outline-none px-1 py-0.5 flex-1" />
               <span id="wf-edit-id" class="text-xs font-mono text-neutral-400"></span>
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+              <!-- Format toggle -->
+              <div id="wf-format-toggle" class="flex bg-neutral-100 rounded-lg p-0.5 text-xs">
+                <button id="wf-format-steps-btn" onclick="switchWorkflowFormat('steps')" class="px-2.5 py-1 rounded-md transition font-medium">Steps</button>
+                <button id="wf-format-nodes-btn" onclick="switchWorkflowFormat('nodes')" class="px-2.5 py-1 rounded-md transition font-medium">Nodes</button>
+              </div>
               <button onclick="saveCurrentWorkflow()"
                 class="text-sm bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-2xl transition">Save</button>
               <button onclick="deleteCurrentWorkflow()"
                 class="text-sm text-danger-500 hover:bg-danger-50 px-3 py-1.5 rounded-2xl border transition">Delete</button>
             </div>
           </div>
-          <div id="wf-steps-container" class="space-y-0 mb-4"></div>
-          <button onclick="addStep()"
-            class="text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-2 rounded-2xl w-full transition border border-dashed border-neutral-300">+
-            Add Step</button>
+
+          <!-- Steps Editor (legacy) -->
+          <div id="wf-steps-editor">
+            <div id="wf-steps-container" class="space-y-0 mb-4"></div>
+            <button onclick="addStep()"
+              class="text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-2 rounded-2xl w-full transition border border-dashed border-neutral-300">+
+              Add Step</button>
+          </div>
+
+          <!-- Nodes Editor (n8n-inspired) -->
+          <div id="wf-nodes-editor" class="hidden">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-neutral-500">Start node:</span>
+                <select id="wf-start-node" onchange="updateStartNodeId()" class="text-xs border rounded-lg px-2 py-1 bg-white"></select>
+              </div>
+              <div class="text-xs text-neutral-400" id="wf-node-count">0 nodes</div>
+            </div>
+            <div id="wf-nodes-container" class="space-y-0 mb-4"></div>
+            <div class="flex gap-2">
+              <button onclick="addNode('message')" class="flex-1 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-2xl transition border border-dashed border-blue-300">+ Message</button>
+              <button onclick="addNode('wait_reply')" class="flex-1 text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 px-3 py-2 rounded-2xl transition border border-dashed border-purple-300">+ Wait Reply</button>
+              <button onclick="addNode('condition')" class="flex-1 text-sm bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-2 rounded-2xl transition border border-dashed border-amber-300">+ Condition</button>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button onclick="addNode('whatsapp_send')" class="flex-1 text-sm bg-green-50 hover:bg-green-100 text-green-700 px-3 py-2 rounded-2xl transition border border-dashed border-green-300">+ WhatsApp Send</button>
+              <button onclick="addNode('pelangi_api')" class="flex-1 text-sm bg-orange-50 hover:bg-orange-100 text-orange-700 px-3 py-2 rounded-2xl transition border border-dashed border-orange-300">+ API Call</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -16,9 +16,23 @@ const __dirname = dirname(__filename);
 // ─── Constants ───────────────────────────────────────────────────────
 
 export const VALID_CATEGORIES: IntentCategory[] = [
-  'greeting', 'thanks', 'wifi', 'directions', 'checkin_info', 'checkout_info',
-  'pricing', 'availability', 'booking', 'complaint', 'contact_staff',
-  'facilities', 'rules', 'payment', 'general', 'unknown'
+  // General support
+  'greeting', 'thanks', 'contact_staff', 'unknown',
+  // Pre-arrival
+  'pricing', 'availability', 'booking', 'directions', 'facilities_info',
+  'rules_policy', 'payment_info', 'payment_made', 'checkin_info', 'checkout_info',
+  // Arrival & check-in
+  'check_in_arrival', 'lower_deck_preference', 'wifi', 'facility_orientation',
+  // During stay
+  'climate_control_complaint', 'noise_complaint', 'cleanliness_complaint',
+  'facility_malfunction', 'card_locked', 'theft_report', 'general_complaint_in_stay',
+  'extra_amenity_request', 'tourist_guide',
+  // Checkout
+  'checkout_procedure', 'late_checkout_request', 'luggage_storage', 'billing_inquiry',
+  // Post-checkout
+  'forgot_item_post_checkout', 'post_checkout_complaint', 'billing_dispute', 'review_feedback',
+  // Legacy generic categories (for backward compatibility)
+  'complaint', 'facilities', 'rules', 'payment', 'general', 'checkin', 'checkout'
 ];
 
 // ─── T4 Provider Selection ───────────────────────────────────────────

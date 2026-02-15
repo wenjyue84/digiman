@@ -11,6 +11,7 @@
 
 import type { WorkflowStep } from './config-store.js';
 import { escalateToStaff } from './escalation.js';
+import { resolveTemplateVars, resolveVariableRef } from './workflow-nodes.js';
 
 // ============================================================================
 // Types
@@ -124,6 +125,12 @@ async function executeAction(
 
     case 'get_police_gps':
       return handleGetPoliceGPS(context);
+
+    case 'whatsapp_send':
+      return handleWhatsAppSend(action.params, context, sendMessage);
+
+    case 'book_capsule':
+      return handleBookCapsule(action.params, context, callAPI);
 
     default:
       console.warn(`[Workflow Enhancer] Unknown action type: ${action.type}`);
@@ -502,6 +509,134 @@ ${policeInfo.name}
 }
 
 // ============================================================================
+// Node-Based Action Handlers (US-015, US-016)
+// ============================================================================
+
+/**
+ * US-015: WhatsApp sender node — sends a configurable WhatsApp message
+ * Config: sender (optional), receiver (required), content, urgency
+ */
+async function handleWhatsAppSend(
+  params: Record<string, any> | undefined,
+  context: WorkflowEnhancerContext,
+  sendMessage: SendMessageFn
+): Promise<ActionResult> {
+
+  const receiver = params?.receiver || '{{system.admin_phone}}';
+  const sender = params?.sender; // Optional — system default if not set
+  const urgency = params?.urgency || 'normal';
+  const contentRaw = params?.content;
+
+  // Build template resolution context
+  const templateContext = {
+    collectedData: context.collectedData,
+    nodeOutputs: context.collectedData, // Reuse collected data as outputs for templates
+    phone: context.phone,
+    pushName: context.pushName,
+    language: context.language,
+    adminPhone: '+60127088789',
+  };
+
+  // Resolve receiver from template variable
+  const resolvedReceiver = resolveVariableRef(receiver, templateContext);
+
+  // Resolve message content
+  let messageContent: string;
+  if (contentRaw && typeof contentRaw === 'object' && contentRaw.en) {
+    // Multilang content object
+    const langContent = contentRaw[context.language] || contentRaw.en;
+    messageContent = resolveTemplateVars(langContent, templateContext);
+  } else if (typeof contentRaw === 'string') {
+    messageContent = resolveTemplateVars(contentRaw, templateContext);
+  } else {
+    // Build default notification from collected data
+    const urgencyMap: Record<string, string> = {
+      critical: '🚨 *URGENT CRITICAL*',
+      high: '⚠️ *URGENT*',
+      normal: '📝 *Notification*',
+    };
+    const parts = [
+      urgencyMap[urgency] || '📝 *Notification*',
+      `From: ${context.pushName} (${context.phone})`,
+      `Workflow: ${context.workflowId}`,
+    ];
+    for (const [key, value] of Object.entries(context.collectedData)) {
+      if (value) parts.push(`• ${key}: ${value}`);
+    }
+    messageContent = parts.join('\n');
+  }
+
+  // Send via WhatsApp
+  await sendMessage(resolvedReceiver, messageContent, context.instanceId);
+
+  console.log(`[Workflow Enhancer] WhatsApp sent to ${resolvedReceiver} (urgency: ${urgency})`);
+
+  return {
+    data: {
+      whatsappSent: true,
+      whatsappReceiver: resolvedReceiver,
+    }
+  };
+}
+
+/**
+ * US-016: Book capsule via Pelangi Manager API
+ * Action: POST /api/capsules/assign with capsuleNumber + guestName
+ */
+async function handleBookCapsule(
+  params: Record<string, any> | undefined,
+  context: WorkflowEnhancerContext,
+  callAPI: CallAPIFn
+): Promise<ActionResult> {
+
+  try {
+    const capsuleNumber = params?.capsuleNumber || context.collectedData['capsule_number'] || context.collectedData['s1'];
+    const guestName = params?.guestName || context.collectedData['guest_name'] || context.collectedData['s1'] || context.pushName;
+
+    if (!capsuleNumber) {
+      console.warn('[Workflow Enhancer] book_capsule: No capsule number provided');
+      return {
+        data: {
+          bookingConfirmed: false,
+          bookingError: 'No capsule number specified',
+        }
+      };
+    }
+
+    const response = await callAPI('/api/capsules/assign', {
+      method: 'POST',
+      body: JSON.stringify({
+        capsuleNumber,
+        guestName,
+      })
+    });
+
+    const success = response.success !== false;
+
+    console.log(`[Workflow Enhancer] Book capsule ${capsuleNumber} for ${guestName}: ${success ? 'OK' : 'FAILED'}`);
+
+    return {
+      data: {
+        bookingConfirmed: success,
+        capsuleNumber: capsuleNumber,
+        bookingMessage: success
+          ? `Capsule ${capsuleNumber} booked for ${guestName}`
+          : (response.message || 'Booking failed'),
+      }
+    };
+  } catch (error) {
+    console.error('[Workflow Enhancer] Failed to book capsule:', error);
+
+    return {
+      data: {
+        bookingConfirmed: false,
+        bookingError: error instanceof Error ? error.message : 'Unknown error',
+      }
+    };
+  }
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -555,6 +690,16 @@ function getFallbackMessage(actionType: string, language: string): string {
       en: '⚠️ Unable to generate check-in link. Please contact staff at +60127088789.',
       ms: '⚠️ Tidak dapat buat link check-in. Sila hubungi staf di +60127088789.',
       zh: '⚠️ 无法生成入住链接。请联系工作人员 +60127088789。'
+    },
+    whatsapp_send: {
+      en: '⚠️ Unable to send WhatsApp message. Please contact +60127088789.',
+      ms: '⚠️ Tidak dapat hantar mesej WhatsApp. Sila hubungi +60127088789.',
+      zh: '⚠️ 无法发送WhatsApp消息。请联系 +60127088789。'
+    },
+    book_capsule: {
+      en: '⚠️ Unable to book capsule automatically. Staff will assist you.',
+      ms: '⚠️ Tidak dapat tempah kapsul secara automatik. Staf akan bantu anda.',
+      zh: '⚠️ 无法自动预订胶囊房。工作人员将为您处理。'
     }
   };
 

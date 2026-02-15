@@ -245,6 +245,10 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
 
   // Map "checkout" variations
   if (llmIntent === 'checkout' || llmIntent === 'check_out') {
+    // Check for active departure (guest is checking out now)
+    if (/\b(i\s?(want|need|wanna)\s?(to\s?)?(checkout|check\s?out)|checking\s?out\s?(now|today)|i\s?am\s?leaving|im\s?leaving|ready\s?to\s?(checkout|leave)|nak\s?(checkout|keluar)|saya\s?(nak|mahu)\s?(checkout|keluar|pergi|balik)|我要退房|我想退房|退房了|准备退房|现在退房)\b/i.test(messageText)) {
+      return 'checkout_now';
+    }
     // Check for late checkout request
     if (/\b(late|later|extend|checkout\s?at|stay\s?longer|lewat|延迟|晚点)\b/i.test(messageText)) {
       return 'late_checkout_request';

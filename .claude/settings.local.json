@@ -2,53 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(npx kill-port:*)",
-      "Bash(npm run dev:*)",
-      "Bash(timeout:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
       "Bash(curl:*)",
-      "Bash(npm run build:*)",
+      "Bash(timeout:*)",
       "Bash(powershell:*)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\docs/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\docs/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\docs/**)",
-      "Bash(grep:*)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server\\routes/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server\\routes/**)",
-      "Read(C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components\\guest-checkin/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\shared/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\shared/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\pages/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\pages/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\pages/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\pages/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\pages/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\hooks\\guest-checkin/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components\\check-in/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\client\\src\\components/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server/**)",
-      "Read(/C:\\Users\\Jyue\\Desktop\\Projects\\PelangiManager\\server\\routes/**)"
+      "Bash(git:*)"
     ],
     "deny": [],
-    "ask": [],
-    "defaultMode": "acceptEdits",
-    "additionalDirectories": [
-      "C:\\d C:\\Users\\Jyue\\Desktop",
-      "C:\\c\\Users\\Jyue\\Desktop"
-    ]
+    "defaultMode": "acceptEdits"
   },
   "outputStyle": "Explanatory"
 }

@@ -156,10 +156,27 @@ export const workflowStepSchema = z.object({
 });
 export type WorkflowStep = z.infer<typeof workflowStepSchema>;
 
+// Node schema for node-based workflows (n8n-inspired)
+export const workflowNodeSchema = z.object({
+  id: z.string(),
+  type: z.enum(['message', 'wait_reply', 'whatsapp_send', 'pelangi_api', 'condition']),
+  label: z.string(),
+  config: z.any(),
+  next: z.union([
+    z.string(),
+    z.object({ success: z.string(), error: z.string().optional() }),
+  ]).optional(),
+  outputs: z.record(z.string(), z.string()).optional(),
+});
+
 export const workflowDefinitionSchema = z.object({
   id: z.string(),
   name: z.string(),
   steps: z.array(workflowStepSchema),
+  // Node-based workflow fields (optional — only for format: 'nodes')
+  format: z.enum(['steps', 'nodes']).optional(),
+  startNodeId: z.string().optional(),
+  nodes: z.array(workflowNodeSchema).optional(),
 });
 export type WorkflowDefinition = z.infer<typeof workflowDefinitionSchema>;
 

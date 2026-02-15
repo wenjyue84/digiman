@@ -335,11 +335,15 @@ router.post('/workflows', (req: Request, res: Response) => {
     conflict(res, `Workflow "${id}" already exists`);
     return;
   }
-  const newWf: WorkflowDefinition = {
+  const newWf: any = {
     id: id.trim().toLowerCase().replace(/\s+/g, '_'),
     name: name.trim(),
     steps: Array.isArray(steps) ? steps : []
   };
+  // Node-based workflow fields (optional)
+  if (req.body.format) newWf.format = req.body.format;
+  if (req.body.nodes) newWf.nodes = req.body.nodes;
+  if (req.body.startNodeId) newWf.startNodeId = req.body.startNodeId;
   data.workflows.push(newWf);
   configStore.setWorkflows(data);
   ok(res, { workflow: newWf });
@@ -355,6 +359,10 @@ router.put('/workflows/:id', (req: Request, res: Response) => {
   }
   if (req.body.name !== undefined) data.workflows[idx].name = req.body.name;
   if (req.body.steps !== undefined) data.workflows[idx].steps = req.body.steps;
+  // Node-based workflow fields
+  if (req.body.format !== undefined) (data.workflows[idx] as any).format = req.body.format;
+  if (req.body.nodes !== undefined) (data.workflows[idx] as any).nodes = req.body.nodes;
+  if (req.body.startNodeId !== undefined) (data.workflows[idx] as any).startNodeId = req.body.startNodeId;
   configStore.setWorkflows(data);
   ok(res, { workflow: data.workflows[idx] });
 });

@@ -52,7 +52,9 @@
         "Excludes last message (current user message) from summarization",
         "Logs reduction percentage when summarization occurs"
       ],
-      "dependencies": ["US-001"],
+      "dependencies": [
+        "US-001"
+      ],
       "estimatedComplexity": "small",
       "passes": true
     },
@@ -71,7 +73,9 @@
         "Always includes core files: AGENTS.md, soul.md, memory.md",
         "Updates state.devMetadata.kbFiles"
       ],
-      "dependencies": ["US-001"],
+      "dependencies": [
+        "US-001"
+      ],
       "estimatedComplexity": "small",
       "passes": true
     },
@@ -92,7 +96,9 @@
         "Receives ackTimer callback to clear thinking message timer",
         "Must handle time-sensitive intents (add time context to prompt)"
       ],
-      "dependencies": ["US-001"],
+      "dependencies": [
+        "US-001"
+      ],
       "estimatedComplexity": "large",
       "passes": true
     },
@@ -112,7 +118,9 @@
         "Reads threshold from llm-settings.json (default 0.80)",
         "Logs improvement or failure of fallback attempt"
       ],
-      "dependencies": ["US-004"],
+      "dependencies": [
+        "US-004"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
@@ -133,7 +141,9 @@
         "Tracks intent classification and predictions",
         "Handles config errors with admin notifications"
       ],
-      "dependencies": ["US-004"],
+      "dependencies": [
+        "US-004"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
@@ -155,7 +165,9 @@
         "Most complex action handlers: workflow (validates workflow_id exists), static_reply (complaint/problem/repeat overrides)",
         "Must handle config errors gracefully (missing workflow_id, missing route)"
       ],
-      "dependencies": ["US-006"],
+      "dependencies": [
+        "US-006"
+      ],
       "estimatedComplexity": "large",
       "passes": true
     },
@@ -178,7 +190,12 @@
         "Must preserve ackTimer (thinking message) behavior",
         "Must keep ensureResponseText as post-processing step"
       ],
-      "dependencies": ["US-004", "US-005", "US-006", "US-007"],
+      "dependencies": [
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007"
+      ],
       "estimatedComplexity": "large",
       "passes": true
     },
@@ -202,7 +219,9 @@
         "Workflow enhancer has new create_checkin_link action handler",
         "Post-check-in webhook: web server calls Rainbow AI /api/rainbow/notify-checkin"
       ],
-      "dependencies": ["US-008"],
+      "dependencies": [
+        "US-008"
+      ],
       "estimatedComplexity": "large",
       "passes": true
     },
@@ -227,7 +246,9 @@
         "Server TS gate skips when no tsconfig found",
         "Skills adapted from snarktank/ralph upstream with PelangiManager-specific additions"
       ],
-      "dependencies": ["US-009"],
+      "dependencies": [
+        "US-009"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
@@ -252,7 +273,9 @@
         "Keywords: 'i want to checkout', 'checking out now', 'im leaving', 'nak checkout', 'saya mahu checkout', '我要退房', '退房了'",
         "Add checkout_now to the 50-scenario test suite as new test cases"
       ],
-      "dependencies": ["US-010"],
+      "dependencies": [
+        "US-010"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
@@ -279,7 +302,9 @@
         "Farewell message can include Google review link (ask user for the URL)",
         "Step messages should feel warm and helpful, matching hostel's friendly tone"
       ],
-      "dependencies": ["US-011"],
+      "dependencies": [
+        "US-011"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
@@ -326,7 +351,9 @@
         "Adapter layer converts node graph to linear steps array for existing workflow-executor.ts",
         "This story is schema + types only — no actual node execution yet"
       ],
-      "dependencies": ["US-012"],
+      "dependencies": [
+        "US-012"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
@@ -352,7 +379,9 @@
         "Admin phone default: +60127088789 (from configStore.getWorkflow().payment.forward_to)",
         "The node should work both standalone and as part of a node-based workflow"
       ],
-      "dependencies": ["US-014"],
+      "dependencies": [
+        "US-014"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
@@ -379,7 +408,9 @@
         "book_capsule endpoint may not exist yet — create it or skip as stretch goal",
         "Error edge: if API returns non-200, follow {error: nodeId} path instead of {success: nodeId}"
       ],
-      "dependencies": ["US-014"],
+      "dependencies": [
+        "US-014"
+      ],
       "estimatedComplexity": "large",
       "passes": true
     },
@@ -406,7 +437,10 @@
         "Consider adding a 'format' field to workflow: 'steps' (legacy) vs 'nodes' (new)",
         "The executor should auto-detect format by checking for 'nodes' vs 'steps' array"
       ],
-      "dependencies": ["US-015", "US-016"],
+      "dependencies": [
+        "US-015",
+        "US-016"
+      ],
       "estimatedComplexity": "large",
       "passes": true
     },
@@ -433,7 +467,7 @@
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-019",
@@ -509,7 +543,11 @@
         "Keep language simple — target audience is hostel staff, not developers",
         "Use existing tab styling and layout patterns"
       ],
-      "dependencies": ["US-018", "US-019", "US-020"],
+      "dependencies": [
+        "US-018",
+        "US-019",
+        "US-020"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -530,7 +568,7 @@
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-023",
@@ -612,7 +650,9 @@
         "Common issues: template literal nesting, missing DOM elements, z-index stacking",
         "Use agent-browser snapshot -i to identify interactive elements and their state"
       ],
-      "dependencies": ["US-018"],
+      "dependencies": [
+        "US-018"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -639,7 +679,7 @@
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
-      "passes": false
+      "passes": true
     }
   ],
   "technicalContext": {

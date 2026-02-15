@@ -1366,6 +1366,47 @@
       }
     },
     {
+      "intent": "checkout_now",
+      "keywords": {
+        "en": [
+          "i want to checkout",
+          "i want to check out",
+          "im checking out",
+          "checking out now",
+          "i am leaving",
+          "im leaving now",
+          "ready to checkout",
+          "i need to checkout",
+          "checking out today",
+          "can i checkout now",
+          "i wanna checkout",
+          "checkout please",
+          "check out please"
+        ],
+        "ms": [
+          "saya nak checkout",
+          "saya mahu checkout",
+          "nak check out",
+          "saya nak keluar",
+          "saya dah nak pergi",
+          "nak checkout sekarang",
+          "boleh checkout sekarang",
+          "saya nak balik",
+          "checkout sekarang"
+        ],
+        "zh": [
+          "我要退房",
+          "我想退房",
+          "退房了",
+          "要退房了",
+          "我现在退房",
+          "可以退房吗",
+          "我要走了",
+          "准备退房"
+        ]
+      }
+    },
+    {
       "intent": "checkout_procedure",
       "keywords": {
         "en": [

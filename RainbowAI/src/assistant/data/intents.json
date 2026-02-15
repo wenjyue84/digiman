@@ -272,27 +272,29 @@
           "professional_term": "Access Card Issue",
           "severity": "CRITICAL",
           "patterns": [
-            "\\b(card\\s?(locked|inside|stuck)|locked\\s?(out|in)|can('|\\s)?t\\s?(get\\s?in|open)|kad\\s?terkunci|terkunci\\s?(dalam|luar))\\b",
-            "(卡.*锁|钥匙.*在里面|打不开)"
+            "\\b(card\\s?(locked|inside|stuck|in)|locked\\s?(out|in|inside)|can('|\\s)?t\\s?(get\\s?(in|out)|open)|kad\\s?(terkunci|dalam)|terkunci\\s?(dalam|luar|di))\\b",
+            "\\b(my\\s+card\\s+(is\\s+)?(locked|inside|stuck))\\b",
+            "(卡.*锁|钥匙.*在里面|打不开|锁.*里|出不去)"
           ],
           "flags": "i",
           "enabled": true,
-          "min_confidence": 0.5
+          "min_confidence": 0.3
         },
         {
           "category": "theft_report",
           "professional_term": "Security Incident Report",
           "severity": "CRITICAL",
           "patterns": [
-            "\\b(was\\s+stolen|were\\s+stolen|got\\s+stolen|been\\s+stolen|stole|stolen|theft|kecurian|dicuri|dirompak)\\b",
-            "\\b(my\\s+(phone|wallet|bag|laptop|passport|money).*(stolen|missing|gone|lost|taken))\\b",
+            "\\b(was\\s+stolen|were\\s+stolen|got\\s+stolen|been\\s+stolen|stole|stolen|theft|rob|kecurian|dicuri|dirompak)\\b",
+            "\\b(my\\s+(phone|wallet|bag|laptop|passport|money|jewelry|belongings).*(stolen|missing|gone|lost|taken))\\b",
             "\\b(someone\\s+(stole|took|robbed))\\b",
-            "(被偷|丢了|不见了|被盗)",
-            "\\b(safe|from\\s+the\\s+safe|missing\\s+from\\s+safe|peti\\s?besi|保险箱)\\b"
+            "\\b(jewelry|items?)\\s+(missing|gone|lost|stolen)\\s+from\\s+(the\\s+)?safe\\b",
+            "(被偷|丢了|不见了|被盗|失窃)",
+            "\\b(safe|from\\s+the\\s+safe|missing\\s+from\\s+safe|peti\\s?besi|保险箱.*不见|保险箱.*丢)\\b"
           ],
           "flags": "i",
           "enabled": true,
-          "min_confidence": 0.4
+          "min_confidence": 0.3
         },
         {
           "category": "general_complaint_in_stay",

@@ -44,6 +44,10 @@
   "checkout_info": {
     "action": "static_reply"
   },
+  "checkout_now": {
+    "action": "workflow",
+    "workflow_id": "checkout_full"
+  },
   "check_in_arrival": {
     "action": "workflow",
     "workflow_id": "checkin_full"
@@ -83,7 +87,8 @@
     "workflow_id": "theft_emergency"
   },
   "general_complaint_in_stay": {
-    "action": "llm_reply"
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
   },
   "extra_amenity_request": {
     "action": "llm_reply"

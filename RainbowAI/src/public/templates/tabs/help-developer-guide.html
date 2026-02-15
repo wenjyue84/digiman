@@ -1,0 +1,142 @@
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="text-3xl">👨‍💻</span>
+      <h2 class="text-2xl font-bold text-neutral-800">Rainbow AI — Developer Reference</h2>
+    </div>
+    <p class="text-neutral-600">Architecture, config files, API, and troubleshooting for developers</p>
+  </div>
+
+  <!-- Dev TOC -->
+  <div class="bg-neutral-100 rounded-2xl border border-neutral-200 p-6 mb-6">
+    <h3 class="font-semibold text-neutral-800 mb-3">📚 Quick Navigation</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+      <a href="#" class="help-nav-link text-primary-600 hover:text-primary-700 hover:underline"
+        data-scroll-to="dev-architecture">→ Architecture</a>
+      <a href="#" class="help-nav-link text-primary-600 hover:text-primary-700 hover:underline"
+        data-scroll-to="dev-modules">→ Modules & Ports</a>
+      <a href="#" class="help-nav-link text-primary-600 hover:text-primary-700 hover:underline"
+        data-scroll-to="dev-data-files">→ Data Files</a>
+      <a href="#" class="help-nav-link text-primary-600 hover:text-primary-700 hover:underline"
+        data-scroll-to="dev-key-files">→ Key Source Files</a>
+      <a href="#" class="help-nav-link text-primary-600 hover:text-primary-700 hover:underline"
+        data-scroll-to="dev-api">→ Admin API</a>
+      <a href="#" class="help-nav-link text-primary-600 hover:text-primary-700 hover:underline"
+        data-scroll-to="dev-env">→ Environment</a>
+      <a href="#" class="help-nav-link text-primary-600 hover:text-primary-700 hover:underline"
+        data-scroll-to="dev-troubleshooting">→ Dev Troubleshooting</a>
+    </div>
+  </div>
+
+  <div id="dev-architecture" class="bg-white rounded-2xl border p-6 mb-6">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-3">🏗️ Architecture</h3>
+    <p class="text-sm text-neutral-700 mb-3">Rainbow runs as part of PelangiManager. Three separate processes:</p>
+    <ul class="text-sm text-neutral-700 space-y-1 ml-4 list-disc">
+      <li><strong>Client</strong> (Vite) — port 3000 — React SPA</li>
+      <li><strong>Server</strong> (Express) — port 5000 — REST API, PostgreSQL, auth</li>
+      <li><strong>RainbowAI</strong> (MCP server) — port 3002 — WhatsApp (Baileys), intent pipeline, admin dashboard, KB
+      </li>
+    </ul>
+    <p class="text-xs text-neutral-500 mt-3">Dashboard at <code
+        class="bg-neutral-100 px-1 rounded">http://localhost:3002</code> needs all three running. See <code
+        class="bg-neutral-100 px-1 rounded">start-all.bat</code> / <code
+        class="bg-neutral-100 px-1 rounded">check-health.bat</code>.</p>
+  </div>
+
+  <div id="dev-modules" class="bg-white rounded-2xl border p-6 mb-6">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-3">📦 Modules & Ports</h3>
+    <div class="overflow-x-auto">
+      <table class="text-sm w-full border border-neutral-200 rounded-lg">
+        <thead>
+          <tr class="bg-neutral-50">
+            <th class="text-left p-2">Module</th>
+            <th class="text-left p-2">Port</th>
+            <th class="text-left p-2">Purpose</th>
+          </tr>
+        </thead>
+        <tbody class="text-neutral-700">
+          <tr>
+            <td class="p-2 border-t"><code>client/</code></td>
+            <td class="p-2 border-t">3000</td>
+            <td class="p-2 border-t">React SPA (check-in, settings, help)</td>
+          </tr>
+          <tr>
+            <td class="p-2 border-t"><code>server/</code></td>
+            <td class="p-2 border-t">5000</td>
+            <td class="p-2 border-t">Express API, DB, auth; proxies /api/rainbow-kb/*</td>
+          </tr>
+          <tr>
+            <td class="p-2 border-t"><code>RainbowAI/</code></td>
+            <td class="p-2 border-t">3002</td>
+            <td class="p-2 border-t">Baileys WhatsApp, message-router, intents, KB, admin UI</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="dev-data-files" class="bg-white rounded-2xl border p-6 mb-6">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-3">📄 Data Files</h3>
+    <p class="text-sm text-neutral-700 mb-3">Hot-reloadable JSON in <code
+        class="bg-neutral-100 px-1 rounded">RainbowAI/src/assistant/data/</code>. Atomic writes via <code
+        class="bg-neutral-100 px-1 rounded">config-store.ts</code> (.tmp then rename).</p>
+    <ul class="text-sm text-neutral-700 space-y-1 ml-4 list-disc">
+      <li><code>intents.json</code> — intent definitions, phases, confidence thresholds</li>
+      <li><code>intent-keywords.json</code> — T2 fuzzy keywords (en/ms/zh)</li>
+      <li><code>intent-examples.json</code> — T3 semantic examples</li>
+      <li><code>routing.json</code> — intent → action (static_reply, llm_reply, workflow, escalate)</li>
+      <li><code>knowledge.json</code> — static replies (en/ms/zh) + dynamic topic keys</li>
+      <li><code>workflows.json</code> — multi-step workflow definitions</li>
+      <li><code>settings.json</code> — AI models, notification preferences, operator phones, systemic config</li>
+      <li><code>templates.json</code> — non_text, rate_limited, thinking, error templates</li>
+    </ul>
+  </div>
+
+  <div id="dev-key-files" class="bg-white rounded-2xl border p-6 mb-6">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-3">🔑 Key Source Files</h3>
+    <ul class="text-sm text-neutral-700 space-y-1 ml-4 list-disc">
+      <li><code>message-router.ts</code> — entry for every WhatsApp message; filter → intent → route → reply</li>
+      <li><code>fuzzy-matcher.ts</code> — T2 Fuse.js</li>
+      <li><code>semantic-matcher.ts</code> — T3 embeddings (Xenova/MiniLM-L6-v2)</li>
+      <li><code>ai-client.ts</code> — T4/T5 LLM calls, model fallback</li>
+      <li><code>knowledge-base.ts</code> — RAG, topic selection, guessTopicFiles()</li>
+      <li><code>workflow-executor.ts</code> — multi-step workflows</li>
+      <li><code>config-store.ts</code> — read/write JSON configs atomically</li>
+      <li>KB markdown: <code>.rainbow-kb/</code> (e.g. pricing.md, checkin-wifi.md)</li>
+    </ul>
+  </div>
+
+  <div id="dev-api" class="bg-white rounded-2xl border p-6 mb-6">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-3">🔌 Admin API</h3>
+    <p class="text-sm text-neutral-700 mb-2">Base: <code
+        class="bg-neutral-100 px-1 rounded">http://localhost:3002/api/rainbow/</code>. Localhost is unauthenticated;
+      remote requires <code class="bg-neutral-100 px-1 rounded">X-Admin-Key</code>.</p>
+    <p class="text-xs text-neutral-600 mb-2">Examples: <code>/admin/config</code>, <code>/admin/intents</code>,
+      <code>/admin/knowledge/topics</code>, <code>/admin/templates/help</code>. See
+      <code>RainbowAI/src/routes/admin.ts</code> for full list.
+    </p>
+  </div>
+
+  <div id="dev-env" class="bg-white rounded-2xl border p-6 mb-6">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-3">🔐 Environment</h3>
+    <p class="text-sm text-neutral-700 mb-2">RainbowAI uses <code class="bg-neutral-100 px-1 rounded">.env</code> in
+      project root (or RainbowAI/). Typical keys: <code>GROQ_API_KEY</code>, <code>OPENROUTER_API_KEY</code>,
+      <code>MOONSHOT_API_KEY</code>, etc. See <code>settings.json</code> model IDs.
+    </p>
+  </div>
+
+  <div id="dev-troubleshooting" class="bg-white rounded-2xl border p-6 mb-6">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-3">🔧 Dev Troubleshooting</h3>
+    <ul class="text-sm text-neutral-700 space-y-2 ml-4 list-disc">
+      <li><strong>Dashboard "Loading..."</strong> — Ensure ports 3000, 5000, 3002 all running; hard refresh
+        (Ctrl+Shift+R).</li>
+      <li><strong>Port in use</strong> — <code>npm run dev:clean</code> (or kill process on 3000/5000/3002).</li>
+      <li><strong>Config not updating</strong> — Reload via dashboard "Reload Config" or restart RainbowAI server; T3
+        semantic model needs restart after changing intent-examples.json.</li>
+      <li><strong>WhatsApp not connecting</strong> — Baileys session in <code>RainbowAI/auth/</code>; QR at
+        <code>/admin/whatsapp-qr</code>.
+      </li>
+    </ul>
+    <p class="text-xs text-neutral-500 mt-3">Full project docs: <code>RAINBOW-AI.md</code>,
+      <code>docs/DEVELOPMENT_REFERENCE.md</code>, <code>docs/API-CONTRACT.md</code>.
+    </p>
+  </div>

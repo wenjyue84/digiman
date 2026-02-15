@@ -1,0 +1,378 @@
+<!-- Intent Manager Help Guide — Lazy-loaded partial -->
+<!-- Loaded into #intent-help-content via fetch on toggle click -->
+
+<!-- Navigation Path -->
+<div class="bg-white rounded-xl border border-purple-200 p-4">
+  <div class="flex items-center gap-2 mb-2">
+    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+    <h3 class="font-semibold text-purple-800">You Are Here</h3>
+  </div>
+  <div class="flex items-center gap-2 text-sm text-neutral-600">
+    <span class="font-medium text-success-600">&#x1F9E0; Train</span>
+    <span>&rarr;</span>
+    <span class="font-medium text-purple-600">Understanding (Intent Classification)</span>
+  </div>
+  <p class="text-xs text-neutral-500 mt-2">
+    Part of the <strong>4-section workflow</strong>: &#x1F4F1; Connect &rarr; <span class="text-success-600">&#x1F9E0; Train</span> &rarr; &#x1F9EA; Test &rarr; &#x1F4CA; Monitor &rarr; &#x2753; Help
+  </p>
+</div>
+
+<!-- 4-Tier System Overview -->
+<div class="bg-white rounded-xl border border-purple-200 p-5">
+  <div class="flex items-center gap-2 mb-4">
+    <span class="text-2xl">&#x1F3AF;</span>
+    <h3 class="text-lg font-semibold text-neutral-800">4-Tier Intent Classification System</h3>
+  </div>
+
+  <p class="text-sm text-neutral-600 mb-4">
+    Rainbow uses a <strong>cascading 4-tier system</strong> that progresses from fastest to smartest.
+    Each tier is checked in order until a match is found. This ensures optimal speed while maintaining accuracy.
+  </p>
+
+  <!-- Tier Comparison Table -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b-2 border-neutral-200">
+          <th class="text-left py-2 px-3 font-semibold text-neutral-700">Tier</th>
+          <th class="text-left py-2 px-3 font-semibold text-neutral-700">Speed</th>
+          <th class="text-left py-2 px-3 font-semibold text-neutral-700">Accuracy</th>
+          <th class="text-left py-2 px-3 font-semibold text-neutral-700">Best For</th>
+          <th class="text-left py-2 px-3 font-semibold text-neutral-700">Example</th>
+        </tr>
+      </thead>
+      <tbody class="text-xs">
+        <tr class="border-b border-neutral-100">
+          <td class="py-3 px-3"><span class="font-mono bg-danger-100 text-danger-700 px-2 py-1 rounded">&#x1F6A8; Priority Keywords</span></td>
+          <td class="py-3 px-3"><span class="font-semibold text-success-600">~0.1ms</span></td>
+          <td class="py-3 px-3"><span class="text-danger-600">&#x26A0;&#xFE0F; Strict</span></td>
+          <td class="py-3 px-3">Critical emergencies (fire, theft, ambulance)</td>
+          <td class="py-3 px-3"><code class="bg-neutral-100 px-1">/fire|kebakaran/i</code></td>
+        </tr>
+        <tr class="border-b border-neutral-100">
+          <td class="py-3 px-3"><span class="font-mono bg-primary-100 text-primary-700 px-2 py-1 rounded">&#x26A1; Smart Matching</span></td>
+          <td class="py-3 px-3"><span class="font-semibold text-success-600">~1ms</span></td>
+          <td class="py-3 px-3"><span class="text-primary-600">88-92%</span></td>
+          <td class="py-3 px-3">Direct keywords, abbreviations, typos</td>
+          <td class="py-3 px-3">"wifi", "wfi", "WiFi" all match</td>
+        </tr>
+        <tr class="border-b border-neutral-100">
+          <td class="py-3 px-3"><span class="font-mono bg-success-100 text-success-700 px-2 py-1 rounded">&#x1F4DA; Learning Examples</span></td>
+          <td class="py-3 px-3"><span class="font-semibold text-warning-600">~50ms</span></td>
+          <td class="py-3 px-3"><span class="text-success-600">92-95%</span></td>
+          <td class="py-3 px-3">Natural variations, paraphrases</td>
+          <td class="py-3 px-3">"how much" = "what's the cost"</td>
+        </tr>
+        <tr>
+          <td class="py-3 px-3"><span class="font-mono bg-warning-100 text-warning-700 px-2 py-1 rounded">&#x1F916; AI Fallback</span></td>
+          <td class="py-3 px-3"><span class="font-semibold text-danger-600">100-500ms</span></td>
+          <td class="py-3 px-3"><span class="text-success-600">90-93%</span></td>
+          <td class="py-3 px-3">Complex queries, edge cases, fallback</td>
+          <td class="py-3 px-3">Full AI classification</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 bg-purple-50 rounded-lg p-3 border border-purple-200">
+    <p class="text-xs font-semibold text-purple-800 mb-1">&#x1F4A1; Pro Tip: The Cascading Flow</p>
+    <p class="text-xs text-purple-700">
+      <strong>95%+ queries should match in T1-T3</strong> (under 50ms)! If your T4 usage is high (&gt;20%),
+      add more keywords/examples to T2/T3. Monitor tier usage in <strong>&#x1F4CA; Monitor &rarr; Performance</strong>.
+    </p>
+  </div>
+</div>
+
+<!-- Step-by-Step Guides for Each Tier -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+  <!-- T1 Guide -->
+  <div class="bg-white rounded-xl border border-danger-200 p-4">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xl">&#x1F6A8;</span>
+      <h4 class="font-semibold text-danger-800">T1: Emergency Regex</h4>
+    </div>
+    <div class="space-y-2 text-xs text-neutral-700">
+      <p><strong>When to use:</strong> Critical situations requiring instant detection</p>
+      <div class="bg-danger-50 rounded-lg p-2 space-y-1">
+        <p class="font-semibold text-danger-800">Quick Steps:</p>
+        <ol class="ml-4 space-y-1">
+          <li>1. Click the <strong>chevron</strong> on T1 section</li>
+          <li>2. Enter pattern: <code class="bg-white px-1">/fire|kebakaran/i</code></li>
+          <li>3. Add description: "Fire emergency"</li>
+          <li>4. Click <strong>Add</strong> &rarr; <strong>Save Patterns</strong></li>
+          <li>5. <strong>&#x26A0;&#xFE0F; Restart server</strong> to apply</li>
+        </ol>
+      </div>
+      <div class="bg-neutral-100 rounded p-2 mt-2">
+        <p class="font-semibold mb-1">Regex Cheat Sheet:</p>
+        <ul class="ml-3 space-y-0.5">
+          <li>&bull; <code class="bg-white px-1">/pattern/i</code> = case-insensitive</li>
+          <li>&bull; <code class="bg-white px-1">a|b</code> = "a" OR "b"</li>
+          <li>&bull; <code class="bg-white px-1">\b</code> = word boundary</li>
+          <li>&bull; <code class="bg-white px-1">.*</code> = any characters</li>
+        </ul>
+      </div>
+      <p class="text-warning-600 font-semibold mt-2">&#x26A0;&#xFE0F; Use sparingly! Regex always matches first.</p>
+    </div>
+  </div>
+
+  <!-- T2 Guide -->
+  <div class="bg-white rounded-xl border border-primary-200 p-4">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xl">&#x26A1;</span>
+      <h4 class="font-semibold text-primary-800">T2: Keywords (Fuzzy)</h4>
+    </div>
+    <div class="space-y-2 text-xs text-neutral-700">
+      <p><strong>When to use:</strong> Common queries with known keywords</p>
+      <div class="bg-primary-50 rounded-lg p-2 space-y-1">
+        <p class="font-semibold text-primary-800">Quick Steps:</p>
+        <ol class="ml-4 space-y-1">
+          <li>1. Click the <strong>chevron</strong> on T2 section</li>
+          <li>2. Select intent from left panel (e.g., "wifi")</li>
+          <li>3. Switch language tab (EN/MS/ZH)</li>
+          <li>4. Type keyword &rarr; Press <strong>Enter</strong></li>
+          <li>5. Click <strong>Save Keywords</strong></li>
+        </ol>
+      </div>
+      <div class="bg-neutral-100 rounded p-2 mt-2">
+        <p class="font-semibold mb-1">Keyword Tips:</p>
+        <ul class="ml-3 space-y-0.5">
+          <li>&bull; Add abbreviations: "wifi", "wi-fi"</li>
+          <li>&bull; Include typos: "pasword", "passowrd"</li>
+          <li>&bull; Multi-language: "&#x5BC6;&#x7801;" (ZH), "kata laluan" (MS)</li>
+          <li>&bull; Fuzzy matching auto-handles minor typos!</li>
+        </ul>
+      </div>
+      <p class="text-success-600 font-semibold mt-2">&#x2705; Start here! Fastest tier with great accuracy.</p>
+    </div>
+  </div>
+
+  <!-- T3 Guide -->
+  <div class="bg-white rounded-xl border border-success-200 p-4">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xl">&#x1F52C;</span>
+      <h4 class="font-semibold text-success-800">T3: Semantic Examples</h4>
+    </div>
+    <div class="space-y-2 text-xs text-neutral-700">
+      <p><strong>When to use:</strong> Different ways to ask the same thing</p>
+      <div class="bg-success-50 rounded-lg p-2 space-y-1">
+        <p class="font-semibold text-success-800">Quick Steps:</p>
+        <ol class="ml-4 space-y-1">
+          <li>1. Click the <strong>chevron</strong> on T3 section</li>
+          <li>2. Select intent from left panel</li>
+          <li>3. Type example: "what's the cost?"</li>
+          <li>4. Press <strong>Enter</strong> &rarr; Add more variations</li>
+          <li>5. Click <strong>Save Examples</strong></li>
+          <li>6. <strong>&#x26A0;&#xFE0F; Restart server</strong> to reload matcher</li>
+        </ol>
+      </div>
+      <div class="bg-neutral-100 rounded p-2 mt-2">
+        <p class="font-semibold mb-1">Example Phrases:</p>
+        <ul class="ml-3 space-y-0.5">
+          <li>&bull; Use full sentences: "What's the WiFi password?"</li>
+          <li>&bull; Include questions: "How much does it cost?"</li>
+          <li>&bull; Add casual: "yo what's the wifi lol"</li>
+          <li>&bull; AI understands meaning, not exact words!</li>
+        </ul>
+      </div>
+      <p class="text-primary-600 font-semibold mt-2">&#x1F4A1; Perfect for natural language variations!</p>
+    </div>
+  </div>
+
+  <!-- T4 Guide -->
+  <div class="bg-white rounded-xl border border-warning-200 p-4">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xl">&#x1F9E0;</span>
+      <h4 class="font-semibold text-warning-800">T4: LLM Fallback</h4>
+    </div>
+    <div class="space-y-2 text-xs text-neutral-700">
+      <p><strong>When to use:</strong> Automatically handles unmatched queries</p>
+      <div class="bg-warning-50 rounded-lg p-2 space-y-1">
+        <p class="font-semibold text-warning-800">Configuration:</p>
+        <ol class="ml-4 space-y-1">
+          <li>1. Click the <strong>chevron</strong> on T4 section</li>
+          <li>2. Set confidence thresholds (Fuzzy 80%, Semantic 70%, LLM 60%)</li>
+          <li>3. Select AI models in <strong>&#x1F4CA; Settings &rarr; AI Models</strong></li>
+          <li>4. Customize system prompt (optional)</li>
+          <li>5. Configure fallback behavior</li>
+          <li>6. Click <strong>Save LLM Settings</strong></li>
+        </ol>
+      </div>
+      <div class="bg-neutral-100 rounded p-2 mt-2">
+        <p class="font-semibold mb-1">Optimization Tips:</p>
+        <ul class="ml-3 space-y-0.5">
+          <li>&bull; Lower thresholds = more T2/T3 matches (faster)</li>
+          <li>&bull; Higher thresholds = more T4 usage (slower)</li>
+          <li>&bull; Monitor T4 % in Performance dashboard</li>
+          <li>&bull; Always-on fallback - cannot be disabled</li>
+        </ul>
+      </div>
+      <p class="text-neutral-600 font-semibold mt-2">&#x1F6E1;&#xFE0F; Safety net for edge cases!</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Workflow Best Practices -->
+<div class="bg-white rounded-xl border border-purple-200 p-5">
+  <div class="flex items-center gap-2 mb-4">
+    <span class="text-2xl">&#x2728;</span>
+    <h3 class="text-lg font-semibold text-neutral-800">Best Practices & Workflow</h3>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Getting Started -->
+    <div class="space-y-3">
+      <div class="bg-gradient-to-r from-primary-50 to-success-50 rounded-lg p-3 border border-primary-200">
+        <p class="text-sm font-semibold text-neutral-800 mb-2">&#x1F680; Getting Started (First Time)</p>
+        <ol class="text-xs text-neutral-700 ml-4 space-y-1">
+          <li>1. <strong>Start with T2</strong> - Add common keywords for main intents (wifi, pricing, greeting)</li>
+          <li>2. <strong>Test in Console</strong> - Use Test Console above to verify keywords match</li>
+          <li>3. <strong>Add T3 examples</strong> - Add natural language variations for popular queries</li>
+          <li>4. <strong>Reserve T1</strong> - Only add emergency regex patterns (fire, theft, medical)</li>
+          <li>5. <strong>Monitor T4</strong> - Check Performance tab to see T4 usage percentage</li>
+        </ol>
+      </div>
+
+      <div class="bg-success-50 rounded-lg p-3 border border-success-200">
+        <p class="text-sm font-semibold text-success-800 mb-2">&#x2705; Daily Operations</p>
+        <ul class="text-xs text-success-700 ml-4 space-y-1">
+          <li>&bull; <strong>Keep sections collapsed</strong> when not editing (clean UI)</li>
+          <li>&bull; <strong>Test after changes</strong> using Test Console at top</li>
+          <li>&bull; <strong>Export backups</strong> using JSON/CSV export buttons</li>
+          <li>&bull; <strong>Monitor metrics</strong> in &#x1F4CA; Monitor &rarr; Performance</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Common Pitfalls -->
+    <div class="space-y-3">
+      <div class="bg-danger-50 rounded-lg p-3 border border-danger-200">
+        <p class="text-sm font-semibold text-danger-800 mb-2">&#x26A0;&#xFE0F; Common Pitfalls (Avoid These!)</p>
+        <ul class="text-xs text-danger-700 ml-4 space-y-1">
+          <li>&bull; &#x274C; <strong>Over-using T1 regex</strong> - Only for true emergencies! Regex always matches first.</li>
+          <li>&bull; &#x274C; <strong>Forgetting to restart</strong> - T1 regex + T3 examples need server restart!</li>
+          <li>&bull; &#x274C; <strong>Not testing</strong> - Always test in Console before deploying</li>
+          <li>&bull; &#x274C; <strong>Ignoring T4 usage</strong> - High T4 = need more T2/T3 training</li>
+          <li>&bull; &#x274C; <strong>Duplicate keywords</strong> - Same keyword in multiple intents causes confusion</li>
+        </ul>
+      </div>
+
+      <div class="bg-primary-50 rounded-lg p-3 border border-primary-200">
+        <p class="text-sm font-semibold text-primary-800 mb-2">&#x1F4A1; Pro Tips</p>
+        <ul class="text-xs text-primary-700 ml-4 space-y-1">
+          <li>&bull; &#x1F4BE; <strong>Use Templates</strong> - Start with pre-configured templates at top</li>
+          <li>&bull; &#x1F30D; <strong>Multi-language</strong> - Add keywords in EN, MS, ZH for all intents</li>
+          <li>&bull; &#x1F3AF; <strong>Tier overrides</strong> - Set custom thresholds per intent (advanced)</li>
+          <li>&bull; &#x1F4CA; <strong>Monitor performance</strong> - Track which tier matches most often</li>
+          <li>&bull; &#x1F9EA; <strong>Test in Chat Simulator</strong> - Full conversation testing in &#x1F9EA; Test tab</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Reference -->
+<div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 p-5">
+  <div class="flex items-center gap-2 mb-3">
+    <span class="text-2xl">&#x26A1;</span>
+    <h3 class="text-lg font-semibold text-neutral-800">Quick Reference Card</h3>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+    <div class="bg-white rounded-lg p-3 border border-blue-200">
+      <p class="font-semibold text-neutral-800 mb-2">&#x1F3AF; Optimization Goal</p>
+      <ul class="space-y-1 text-neutral-700">
+        <li>&bull; <strong>T1+T2+T3:</strong> &gt;95% of queries</li>
+        <li>&bull; <strong>T4 fallback:</strong> &lt;5% of queries</li>
+        <li>&bull; <strong>Avg response:</strong> &lt;50ms</li>
+        <li>&bull; <strong>Accuracy:</strong> &gt;92%</li>
+      </ul>
+    </div>
+
+    <div class="bg-white rounded-lg p-3 border border-blue-200">
+      <p class="font-semibold text-neutral-800 mb-2">&#x1F527; Quick Actions</p>
+      <ul class="space-y-1 text-neutral-700">
+        <li>&bull; <strong>Export data:</strong> T2 section &rarr; Export JSON/CSV</li>
+        <li>&bull; <strong>Test intent:</strong> Test Console &rarr; Enter query &rarr; Test</li>
+        <li>&bull; <strong>Apply template:</strong> Top &rarr; Select template</li>
+        <li>&bull; <strong>Check metrics:</strong> &#x1F4CA; Monitor &rarr; Performance</li>
+      </ul>
+    </div>
+
+    <div class="bg-white rounded-lg p-3 border border-blue-200">
+      <p class="font-semibold text-neutral-800 mb-2">&#x1F4DA; Related Tabs</p>
+      <ul class="space-y-1 text-neutral-700">
+        <li>&bull; <strong>&#x1F4AC; Responses:</strong> Static reply messages</li>
+        <li>&bull; <strong>&#x1F3AF; Smart Routing:</strong> Intent actions</li>
+        <li>&bull; <strong>&#x1F9EA; Chat Simulator:</strong> Test full conversations</li>
+        <li>&bull; <strong>&#x2699;&#xFE0F; Settings:</strong> Configure AI models</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Troubleshooting -->
+<div class="bg-white rounded-xl border border-red-200 p-5">
+  <div class="flex items-center gap-2 mb-4">
+    <span class="text-2xl">&#x1F527;</span>
+    <h3 class="text-lg font-semibold text-neutral-800">Troubleshooting Common Issues</h3>
+  </div>
+
+  <div class="space-y-3 text-sm">
+    <div class="bg-red-50 rounded-lg p-3 border border-red-200">
+      <p class="font-semibold text-red-800 mb-1">&#x274C; Keywords not matching</p>
+      <p class="text-xs text-red-700 mb-2"><strong>Possible causes:</strong></p>
+      <ul class="text-xs text-red-700 ml-4 space-y-1">
+        <li>&bull; Keyword in wrong intent - check with Test Console</li>
+        <li>&bull; Fuzzy threshold too high - lower from 0.80 to 0.75 in T4 settings</li>
+        <li>&bull; Forgot to save - click "Save Keywords" button</li>
+        <li>&bull; Cache issue - reload page with Ctrl+Shift+R</li>
+      </ul>
+    </div>
+
+    <div class="bg-red-50 rounded-lg p-3 border border-red-200">
+      <p class="font-semibold text-red-800 mb-1">&#x274C; High T4 usage (&gt;20%)</p>
+      <p class="text-xs text-red-700 mb-2"><strong>Solutions:</strong></p>
+      <ul class="text-xs text-red-700 ml-4 space-y-1">
+        <li>&bull; Check Performance tab to see which queries hit T4</li>
+        <li>&bull; Add those queries as T2 keywords or T3 examples</li>
+        <li>&bull; Lower confidence thresholds (T2: 0.75, T3: 0.65)</li>
+        <li>&bull; Add more training examples for common patterns</li>
+      </ul>
+    </div>
+
+    <div class="bg-red-50 rounded-lg p-3 border border-red-200">
+      <p class="font-semibold text-red-800 mb-1">&#x274C; Wrong intent detected</p>
+      <p class="text-xs text-red-700 mb-2"><strong>Debug steps:</strong></p>
+      <ul class="text-xs text-red-700 ml-4 space-y-1">
+        <li>&bull; Use Test Console to see which tier/keyword matched</li>
+        <li>&bull; Check for duplicate keywords across intents</li>
+        <li>&bull; Verify regex patterns (T1) aren't too broad</li>
+        <li>&bull; Review semantic examples for conflicts</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Footer Links -->
+<div class="bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-4 text-center">
+  <p class="text-sm text-neutral-700 mb-3">
+    <strong>Need more help?</strong> Check out these resources:
+  </p>
+  <div class="flex flex-wrap justify-center gap-2">
+    <button onclick="switchTab('help')" class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition">
+      &#x2753; Full Help Guide
+    </button>
+    <button onclick="switchTab('chat-simulator')" class="text-xs bg-warning-600 hover:bg-warning-700 text-white px-4 py-2 rounded-lg transition">
+      &#x1F9EA; Test in Chat Simulator
+    </button>
+    <button onclick="switchTab('performance')" class="text-xs bg-neutral-600 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition">
+      &#x1F4CA; View Performance Metrics
+    </button>
+    <a href="/mcp-server/docs/QUICK-REFERENCE.md" target="_blank" class="text-xs bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition">
+      &#x1F4D6; Printable Quick Reference
+    </a>
+  </div>
+</div>

@@ -4,6 +4,14 @@ import type { WorkflowDefinition, WorkflowStep } from './config-store.js';
 import { enhanceWorkflowStep, WorkflowEnhancerContext } from './workflow-enhancer.js';
 import { callAPI as httpClientCallAPI } from '../lib/http-client.js';
 import { notifyAdminConfigError } from '../lib/admin-notifier.js';
+import type {
+  HybridWorkflowDefinition, WorkflowNode, NodeWorkflowState,
+  MessageNodeConfig, WaitReplyNodeConfig, WhatsAppSendNodeConfig,
+  PelangiApiNodeConfig, ConditionNodeConfig,
+} from './workflow-nodes.js';
+import {
+  isNodeBasedWorkflow, getNodeById, getNextNodeId, resolveTemplateVars,
+} from './workflow-nodes.js';
 
 // Wrapper to adapt http-client callAPI to workflow-enhancer's expected signature
 async function callAPIWrapper(url: string, options?: RequestInit): Promise<any> {
@@ -18,6 +26,10 @@ export interface WorkflowState {
   collectedData: Record<string, string>; // step id -> user response
   startedAt: number;
   lastUpdateAt: number;
+  // Node-based workflow fields (optional — only set for node workflows)
+  currentNodeId?: string;            // Current position in node graph
+  nodeOutputs?: Record<string, any>; // Accumulated outputs from API/action nodes
+  isNodeBased?: boolean;             // Quick flag to skip format detection
 }
 
 export interface WorkflowExecutionResult {
@@ -36,12 +48,23 @@ export function initWorkflowExecutor(sendFn: SendMessageFn): void {
 }
 
 export function createWorkflowState(workflowId: string): WorkflowState {
+  // Check if this workflow uses node-based format
+  const workflows = configStore.getWorkflows();
+  const workflow = workflows.workflows.find(w => w.id === workflowId) as HybridWorkflowDefinition | undefined;
+  const isNodes = workflow ? isNodeBasedWorkflow(workflow) : false;
+
   return {
     workflowId,
     currentStepIndex: 0,
     collectedData: {},
     startedAt: Date.now(),
-    lastUpdateAt: Date.now()
+    lastUpdateAt: Date.now(),
+    // Set node-based fields if applicable
+    ...(isNodes && workflow?.startNodeId ? {
+      currentNodeId: workflow.startNodeId,
+      nodeOutputs: {},
+      isNodeBased: true,
+    } : {}),
   };
 }
 
@@ -63,6 +86,15 @@ export async function executeWorkflowStep(
     };
   }
 
+  // ─── Node-Based Workflow Dispatch ──────────────────────────────────
+  const hybridWorkflow = workflow as unknown as HybridWorkflowDefinition;
+  if (state.isNodeBased || isNodeBasedWorkflow(hybridWorkflow)) {
+    return executeNodeWorkflowStep(
+      hybridWorkflow, state, userMessage, language, phone, pushName, instanceId
+    );
+  }
+
+  // ─── Legacy Step-Based Execution (below) ──────────────────────────
   // Validate workflow structure: steps must be a non-empty array
   if (!Array.isArray(workflow.steps)) {
     console.error(`[WorkflowExecutor] Workflow "${state.workflowId}" has invalid steps property (not an array)`);
@@ -245,6 +277,270 @@ export async function executeWorkflowStep(
     shouldForward: false,
     workflowId: state.workflowId,
     stepId: currentStep.id
+  };
+}
+
+// ============================================================================
+// Node-Based Workflow Executor (US-017)
+// ============================================================================
+
+async function executeNodeWorkflowStep(
+  workflow: HybridWorkflowDefinition,
+  state: WorkflowState,
+  userMessage: string | null,
+  language: string,
+  phone?: string,
+  pushName?: string,
+  instanceId?: string
+): Promise<WorkflowExecutionResult> {
+
+  const nodes = workflow.nodes!;
+  const nodeOutputs = state.nodeOutputs || {};
+
+  // If we're resuming after a wait_reply, store the user's response
+  if (userMessage && state.currentNodeId) {
+    const currentNode = getNodeById(nodes, state.currentNodeId);
+    if (currentNode?.type === 'wait_reply') {
+      const config = currentNode.config as WaitReplyNodeConfig;
+      state.collectedData[config.storeAs] = userMessage;
+      // Advance to next node after wait_reply
+      const nextId = getNextNodeId(currentNode);
+      if (nextId) {
+        state.currentNodeId = nextId;
+      } else {
+        // wait_reply was the last node — workflow complete
+        return {
+          response: '',
+          newState: null,
+          shouldForward: true,
+          workflowId: state.workflowId,
+        };
+      }
+    }
+  }
+
+  // Template context for variable resolution
+  const templateCtx = {
+    collectedData: state.collectedData,
+    nodeOutputs,
+    phone,
+    pushName: pushName || 'Guest',
+    language,
+    adminPhone: '+60127088789',
+  };
+
+  // Walk the node graph until we hit a wait_reply or reach the end
+  const responseParts: string[] = [];
+  let safetyCounter = 0;
+  const MAX_NODES = 50; // Prevent infinite loops
+
+  while (state.currentNodeId && safetyCounter < MAX_NODES) {
+    safetyCounter++;
+    const node = getNodeById(nodes, state.currentNodeId);
+
+    if (!node) {
+      console.error(`[NodeExecutor] Node ${state.currentNodeId} not found in workflow ${workflow.id}`);
+      break;
+    }
+
+    console.log(`[NodeExecutor] Executing node: ${node.id} (${node.type}) — ${node.label}`);
+
+    switch (node.type) {
+      case 'message': {
+        const config = node.config as MessageNodeConfig;
+        const msg = config.message;
+        const text = (language === 'ms' && msg.ms) ? msg.ms : (language === 'zh' && msg.zh) ? msg.zh : msg.en;
+        responseParts.push(resolveTemplateVars(text, templateCtx));
+
+        // Advance to next node
+        const nextId = getNextNodeId(node);
+        state.currentNodeId = nextId;
+        break;
+      }
+
+      case 'wait_reply': {
+        const config = node.config as WaitReplyNodeConfig;
+        // Send the prompt if present
+        if (config.prompt) {
+          const text = (language === 'ms' && config.prompt.ms)
+            ? config.prompt.ms
+            : (language === 'zh' && config.prompt.zh)
+            ? config.prompt.zh
+            : config.prompt.en;
+          responseParts.push(resolveTemplateVars(text, templateCtx));
+        }
+
+        // PAUSE execution — wait for user reply
+        // currentNodeId stays on this wait_reply node; next call will store the reply
+        return {
+          response: responseParts.join('\n\n'),
+          newState: {
+            ...state,
+            nodeOutputs,
+            isNodeBased: true,
+            lastUpdateAt: Date.now(),
+          },
+          workflowId: state.workflowId,
+          stepId: node.id,
+        };
+      }
+
+      case 'whatsapp_send': {
+        const config = node.config as WhatsAppSendNodeConfig;
+
+        if (sendMessageFn && phone) {
+          // Resolve receiver
+          const receiver = resolveTemplateVars(config.receiver, templateCtx);
+
+          // Resolve content
+          let content: string;
+          if (typeof config.content === 'string') {
+            content = resolveTemplateVars(config.content, templateCtx);
+          } else {
+            const raw = (language === 'ms' && config.content.ms)
+              ? config.content.ms
+              : (language === 'zh' && config.content.zh)
+              ? config.content.zh
+              : config.content.en;
+            content = resolveTemplateVars(raw, templateCtx);
+          }
+
+          try {
+            await sendMessageFn(receiver, content, instanceId);
+            console.log(`[NodeExecutor] WhatsApp sent to ${receiver}`);
+            if (node.outputs) {
+              nodeOutputs['whatsappSent'] = true;
+              nodeOutputs['whatsappReceiver'] = receiver;
+            }
+          } catch (err) {
+            console.error(`[NodeExecutor] WhatsApp send failed:`, err);
+            // Follow error edge if available
+            const errorNext = getNextNodeId(node, false);
+            if (errorNext) {
+              state.currentNodeId = errorNext;
+              continue;
+            }
+          }
+        }
+
+        state.currentNodeId = getNextNodeId(node);
+        break;
+      }
+
+      case 'pelangi_api': {
+        const config = node.config as PelangiApiNodeConfig;
+
+        try {
+          // Use workflow enhancer context to call the API action
+          const enhancerCtx: WorkflowEnhancerContext = {
+            workflowId: state.workflowId,
+            stepId: node.id,
+            userInput: userMessage,
+            collectedData: state.collectedData,
+            language,
+            phone: phone || '',
+            pushName: pushName || 'Guest',
+            instanceId,
+          };
+
+          // Build a synthetic step for the enhancer
+          const syntheticStep: WorkflowStep = {
+            id: node.id,
+            message: { en: '', ms: '', zh: '' },
+            waitForReply: false,
+            action: { type: config.action, params: config.params },
+          };
+
+          const enhanced = await enhanceWorkflowStep(
+            syntheticStep,
+            enhancerCtx,
+            callAPIWrapper,
+            sendMessageFn!
+          );
+
+          // Store API outputs for downstream nodes
+          if (enhanced.metadata) {
+            for (const [key, value] of Object.entries(enhanced.metadata)) {
+              nodeOutputs[key] = value;
+              nodeOutputs[`pelangi.${key}`] = value;
+            }
+          }
+
+          // Map node outputs
+          if (node.outputs) {
+            for (const [outputName, dataKey] of Object.entries(node.outputs)) {
+              nodeOutputs[outputName] = nodeOutputs[dataKey] ?? enhanced.metadata?.[dataKey] ?? '';
+            }
+          }
+
+          console.log(`[NodeExecutor] pelangi_api (${config.action}) completed, outputs:`, Object.keys(nodeOutputs));
+
+          state.currentNodeId = getNextNodeId(node, true);
+        } catch (err) {
+          console.error(`[NodeExecutor] pelangi_api failed:`, err);
+          nodeOutputs['apiError'] = err instanceof Error ? err.message : 'Unknown error';
+
+          // Follow error edge if available
+          const errorNext = getNextNodeId(node, false);
+          state.currentNodeId = errorNext || getNextNodeId(node, true);
+        }
+        break;
+      }
+
+      case 'condition': {
+        const config = node.config as ConditionNodeConfig;
+
+        // Resolve the field value
+        const fieldValue = resolveTemplateVars(config.field, templateCtx);
+
+        // Evaluate condition
+        let conditionMet = false;
+        switch (config.operator) {
+          case 'gt':
+            conditionMet = parseFloat(fieldValue) > (config.value as number);
+            break;
+          case 'lt':
+            conditionMet = parseFloat(fieldValue) < (config.value as number);
+            break;
+          case 'eq':
+            conditionMet = fieldValue === String(config.value);
+            break;
+          case 'neq':
+            conditionMet = fieldValue !== String(config.value);
+            break;
+          case 'exists':
+            conditionMet = !!fieldValue && fieldValue !== '';
+            break;
+          case 'empty':
+            conditionMet = !fieldValue || fieldValue === '';
+            break;
+        }
+
+        console.log(`[NodeExecutor] Condition: ${config.field} ${config.operator} ${config.value} → ${conditionMet}`);
+
+        state.currentNodeId = conditionMet ? config.trueNext : config.falseNext;
+        break;
+      }
+
+      default:
+        console.warn(`[NodeExecutor] Unknown node type: ${node.type}`);
+        state.currentNodeId = getNextNodeId(node);
+    }
+
+    // If no next node, workflow is complete
+    if (!state.currentNodeId) break;
+  }
+
+  if (safetyCounter >= MAX_NODES) {
+    console.error(`[NodeExecutor] Safety limit reached (${MAX_NODES} nodes) in workflow ${workflow.id}`);
+  }
+
+  // Workflow complete
+  return {
+    response: responseParts.join('\n\n'),
+    newState: null,
+    shouldForward: true,
+    workflowId: state.workflowId,
   };
 }
 

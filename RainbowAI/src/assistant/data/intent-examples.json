@@ -263,6 +263,40 @@
       }
     },
     {
+      "intent": "checkout_now",
+      "examples": {
+        "en": [
+          "I want to checkout",
+          "I'm checking out now",
+          "checking out today",
+          "I am leaving",
+          "ready to checkout",
+          "I need to checkout please",
+          "I wanna check out",
+          "checkout please",
+          "time to leave, help me checkout"
+        ],
+        "ms": [
+          "saya nak checkout",
+          "nak check out sekarang",
+          "saya dah nak pergi",
+          "saya nak keluar",
+          "boleh checkout sekarang",
+          "checkout sekarang",
+          "saya nak balik dah"
+        ],
+        "zh": [
+          "我要退房",
+          "我想退房了",
+          "现在退房",
+          "准备退房了",
+          "可以退房吗",
+          "我要走了",
+          "帮我退房"
+        ]
+      }
+    },
+    {
       "intent": "late_checkout_request",
       "examples": {
         "en": [

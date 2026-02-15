@@ -127,6 +127,191 @@
           },
           "waitForReply": false
         }
+      ],
+      "format": "nodes",
+      "startNodeId": "welcome_msg",
+      "nodes": [
+        {
+          "id": "welcome_msg",
+          "type": "message",
+          "label": "Welcome greeting",
+          "config": {
+            "message": {
+              "en": "Welcome to Pelangi Capsule Hostel! 🎉 I'll help you with check-in.",
+              "ms": "Selamat datang ke Pelangi Capsule Hostel! 🎉 Saya akan bantu anda check-in.",
+              "zh": "欢迎来到Pelangi胶囊旅舍！🎉 我来帮您办理入住。"
+            }
+          },
+          "next": "wait_name"
+        },
+        {
+          "id": "wait_name",
+          "type": "wait_reply",
+          "label": "Ask guest name",
+          "config": {
+            "storeAs": "guest_name",
+            "prompt": {
+              "en": "What is your full name (as on your passport or IC)?",
+              "ms": "Apakah nama penuh anda (seperti dalam pasport atau IC)?",
+              "zh": "请问您的全名是什么（护照或身份证上的）？"
+            }
+          },
+          "next": "wait_phone"
+        },
+        {
+          "id": "wait_phone",
+          "type": "wait_reply",
+          "label": "Ask phone number",
+          "config": {
+            "storeAs": "guest_phone",
+            "prompt": {
+              "en": "Thank you, {{workflow.data.guest_name}}! What is your phone number? (We'll send you a check-in link) 📱",
+              "ms": "Terima kasih, {{workflow.data.guest_name}}! Apakah nombor telefon anda? (Kami akan hantar link check-in) 📱",
+              "zh": "谢谢，{{workflow.data.guest_name}}！请问您的手机号码是？（我们会发送入住链接给您）📱"
+            }
+          },
+          "next": "wait_dates"
+        },
+        {
+          "id": "wait_dates",
+          "type": "wait_reply",
+          "label": "Ask check-in/out dates",
+          "config": {
+            "storeAs": "stay_dates",
+            "prompt": {
+              "en": "Got it! What are your check-in and check-out dates?\n(e.g., Check-in: 15 Feb, Check-out: 17 Feb)",
+              "ms": "Baik! Apakah tarikh check-in dan check-out anda?\n(contoh: Check-in: 15 Feb, Check-out: 17 Feb)",
+              "zh": "好的！您的入住和退房日期是？\n（例如：入住：2月15日，退房：2月17日）"
+            }
+          },
+          "next": "check_avail"
+        },
+        {
+          "id": "check_avail",
+          "type": "pelangi_api",
+          "label": "Check capsule availability",
+          "config": {
+            "action": "check_availability"
+          },
+          "next": {
+            "success": "check_avail_result",
+            "error": "avail_error"
+          },
+          "outputs": {
+            "availableCount": "availableCount",
+            "availableCapsules": "availableCapsules"
+          }
+        },
+        {
+          "id": "check_avail_result",
+          "type": "condition",
+          "label": "Capsules available?",
+          "config": {
+            "field": "{{pelangi.availableCount}}",
+            "operator": "gt",
+            "value": 0,
+            "trueNext": "create_link",
+            "falseNext": "no_capsules_msg"
+          }
+        },
+        {
+          "id": "no_capsules_msg",
+          "type": "message",
+          "label": "No capsules available",
+          "config": {
+            "message": {
+              "en": "I'm sorry, all capsules are currently occupied. 😔 Our admin at +60127088789 will contact you when one becomes available. We apologize for the inconvenience!",
+              "ms": "Maaf, semua capsule sedang penuh. 😔 Admin kami di +60127088789 akan hubungi anda bila ada yang kosong. Kami mohon maaf atas kesulitan!",
+              "zh": "抱歉，目前所有胶囊房都已满。😔 我们的管理员 +60127088789 会在有空房时联系您。非常抱歉给您带来不便！"
+            }
+          },
+          "next": "notify_admin_waitlist"
+        },
+        {
+          "id": "notify_admin_waitlist",
+          "type": "whatsapp_send",
+          "label": "Notify admin about waitlist",
+          "config": {
+            "receiver": "{{system.admin_phone}}",
+            "content": {
+              "en": "📋 *Waitlist Request*\nGuest: {{workflow.data.guest_name}}\nPhone: {{workflow.data.guest_phone}}\nDates: {{workflow.data.stay_dates}}\nNo capsules available — please follow up.",
+              "ms": "📋 *Permintaan Senarai Tunggu*\nTetamu: {{workflow.data.guest_name}}\nTelefon: {{workflow.data.guest_phone}}\nTarikh: {{workflow.data.stay_dates}}\nTiada capsule — sila follow up.",
+              "zh": "📋 *等候名单*\n客人：{{workflow.data.guest_name}}\n电话：{{workflow.data.guest_phone}}\n日期：{{workflow.data.stay_dates}}\n无可用胶囊房——请跟进。"
+            },
+            "urgency": "normal"
+          }
+        },
+        {
+          "id": "avail_error",
+          "type": "message",
+          "label": "API error fallback",
+          "config": {
+            "message": {
+              "en": "I couldn't check availability right now, but don't worry — capsules are almost always available! Let me continue with your check-in. 😊",
+              "ms": "Saya tak dapat check availability sekarang, tapi jangan risau — capsule biasanya ada! Biar saya teruskan check-in anda. 😊",
+              "zh": "暂时无法查询空房情况，但不用担心——通常都有空房！让我继续为您办理入住。😊"
+            }
+          },
+          "next": "create_link"
+        },
+        {
+          "id": "create_link",
+          "type": "pelangi_api",
+          "label": "Create self-check-in link",
+          "config": {
+            "action": "create_checkin_link",
+            "params": {
+              "guestName": "{{workflow.data.guest_name}}",
+              "phoneNumber": "{{workflow.data.guest_phone}}"
+            }
+          },
+          "next": {
+            "success": "send_link_msg",
+            "error": "link_error_msg"
+          },
+          "outputs": {
+            "checkinLink": "checkinLink",
+            "assignedCapsule": "assignedCapsule"
+          }
+        },
+        {
+          "id": "send_link_msg",
+          "type": "message",
+          "label": "Confirm link sent",
+          "config": {
+            "message": {
+              "en": "We have {{pelangi.availableCount}} capsules available ({{pelangi.availableCapsules}}) 🎊\n\nI've assigned capsule *{{pelangi.assignedCapsule}}* for you and sent a self-check-in link to your WhatsApp.\n\nPlease fill in the form to complete your check-in! Our admin will be notified automatically once you're done.",
+              "ms": "Kami ada {{pelangi.availableCount}} capsule tersedia ({{pelangi.availableCapsules}}) 🎊\n\nSaya telah assign capsule *{{pelangi.assignedCapsule}}* untuk anda dan hantar link self-check-in ke WhatsApp anda.\n\nSila isi borang untuk lengkapkan check-in anda! Admin kami akan diberitahu secara automatik selepas selesai.",
+              "zh": "我们有 {{pelangi.availableCount}} 个胶囊房可用 ({{pelangi.availableCapsules}}) 🎊\n\n我已为您分配了胶囊房 *{{pelangi.assignedCapsule}}* 并发送了自助入住链接到您的WhatsApp。\n\n请填写表格以完成入住！完成后我们的管理员会自动收到通知。"
+            }
+          },
+          "next": "info_msg"
+        },
+        {
+          "id": "link_error_msg",
+          "type": "message",
+          "label": "Link creation error fallback",
+          "config": {
+            "message": {
+              "en": "I wasn't able to generate the check-in link automatically, but our staff will help you directly. Please proceed to the front desk or contact +60127088789.",
+              "ms": "Saya tidak dapat buat link check-in secara automatik, tetapi staf kami akan bantu anda terus. Sila ke kaunter depan atau hubungi +60127088789.",
+              "zh": "无法自动生成入住链接，但我们的工作人员会直接帮助您。请到前台或联系 +60127088789。"
+            }
+          },
+          "next": "info_msg"
+        },
+        {
+          "id": "info_msg",
+          "type": "message",
+          "label": "Hostel info card",
+          "config": {
+            "message": {
+              "en": "✅ You're all set! Here's some useful info:\n\n📋 *Quick Reference:*\n• Check-in time: *2:00 PM*\n• Check-out time: *12:00 PM*\n• Door password: *1270#*\n• WiFi: *PelangiHostel*\n• Address: Jalan Dato Haji Hassan, JB\n\n🎥 First time? Watch our video guide: https://youtu.be/bYj1M37xJiE\n\nNeed anything else? Just ask! 😊",
+              "ms": "✅ Semua siap! Ini maklumat berguna:\n\n📋 *Rujukan Pantas:*\n• Masa check-in: *2:00 PM*\n• Masa check-out: *12:00 PM*\n• Password pintu: *1270#*\n• WiFi: *PelangiHostel*\n• Alamat: Jalan Dato Haji Hassan, JB\n\n🎥 Pertama kali? Tonton video panduan: https://youtu.be/bYj1M37xJiE\n\nPerlukan apa-apa lagi? Tanya sahaja! 😊",
+              "zh": "✅ 一切就绪！以下是一些有用信息：\n\n📋 *快速参考：*\n• 入住时间: *下午2:00*\n• 退房时间: *中午12:00*\n• 门密码: *1270#*\n• WiFi: *PelangiHostel*\n• 地址: Jalan Dato Haji Hassan, JB\n\n🎥 第一次来？观看视频指南: https://youtu.be/bYj1M37xJiE\n\n还需要其他帮助吗？随时问我！😊"
+            }
+          }
+        }
       ]
     },
     {
@@ -382,6 +567,54 @@
             "en": "Forwarding your payment details to admin...",
             "ms": "Menghantar butiran pembayaran anda ke admin...",
             "zh": "正在将您的付款信息转发给管理员..."
+          },
+          "waitForReply": false
+        }
+      ]
+    },
+    {
+      "id": "checkout_full",
+      "name": "Guest Checkout Process",
+      "steps": [
+        {
+          "id": "s1",
+          "message": {
+            "en": "We're sorry to see you go! 😊 I'll help you with checkout.\n\nWhat is your capsule number? (e.g., C5, C16, J3)",
+            "ms": "Kami sedih anda hendak pergi! 😊 Saya bantu anda checkout.\n\nApakah nombor capsule anda? (contoh: C5, C16, J3)",
+            "zh": "很遗憾您要离开了！😊 我来帮您办理退房。\n\n请问您的胶囊号是什么？（例如：C5、C16、J3）"
+          },
+          "waitForReply": true
+        },
+        {
+          "id": "s2",
+          "message": {
+            "en": "Thank you! Before you leave, please make sure:\n\n✅ Collect all personal belongings from your capsule\n✅ Check under the pillow and mattress\n✅ Return the key card at the front desk\n✅ Check the common areas (bathroom, lounge) for any items\n\nOnce you're ready, just say *done* and I'll complete your checkout! 👍",
+            "ms": "Terima kasih! Sebelum anda pergi, sila pastikan:\n\n✅ Kumpul semua barang peribadi dari capsule\n✅ Check bawah bantal dan tilam\n✅ Pulangkan kad kunci di kaunter depan\n✅ Check kawasan umum (bilik air, lounge) untuk barang anda\n\nBila dah siap, cakap *done* dan saya akan selesaikan checkout anda! 👍",
+            "zh": "谢谢！离开前请确认：\n\n✅ 收集胶囊房内所有个人物品\n✅ 检查枕头和床垫下面\n✅ 在前台归还钥匙卡\n✅ 检查公共区域（浴室、休息室）是否有遗留物品\n\n准备好了就说 *done*，我会帮您完成退房！👍"
+          },
+          "waitForReply": true
+        },
+        {
+          "id": "s3",
+          "message": {
+            "en": "Completing your checkout now... I'm notifying our admin about your departure. 📋",
+            "ms": "Sedang selesaikan checkout anda... Saya memberitahu admin tentang pemergian anda. 📋",
+            "zh": "正在完成您的退房...我正在通知管理员您的离开。📋"
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "send_to_staff",
+            "params": {
+              "urgency": "normal"
+            }
+          }
+        },
+        {
+          "id": "s4",
+          "message": {
+            "en": "✅ Checkout complete! Thank you for staying at Pelangi Capsule Hostel! 🌈\n\n🙏 We'd love your feedback! Please leave us a review:\n📍 Google: https://g.page/r/pelangi-capsule-hostel\n\n🧳 *Luggage storage* is available if you need to leave bags (free, limited space).\n\nSafe travels and we hope to see you again! 😊✨",
+            "ms": "✅ Checkout selesai! Terima kasih kerana menginap di Pelangi Capsule Hostel! 🌈\n\n🙏 Kami hargai maklum balas anda! Sila tinggalkan review:\n📍 Google: https://g.page/r/pelangi-capsule-hostel\n\n🧳 *Simpanan bagasi* tersedia jika perlu simpan beg (percuma, ruang terhad).\n\nSelamat jalan dan harap jumpa lagi! 😊✨",
+            "zh": "✅ 退房完成！感谢您入住Pelangi胶囊旅舍！🌈\n\n🙏 我们希望听到您的反馈！请给我们留下评价：\n📍 Google: https://g.page/r/pelangi-capsule-hostel\n\n🧳 如需寄存行李，我们提供 *行李寄存* 服务（免费，空间有限）。\n\n旅途愉快，希望再次见到您！😊✨"
           },
           "waitForReply": false
         }
