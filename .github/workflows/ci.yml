@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Root project
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: TypeScript check (root)
+        run: npx tsc --noEmit
+
+      - name: Unit tests (root)
+        run: npm test
+
+      # RainbowAI
+      - name: Install RainbowAI dependencies
+        run: npm ci
+        working-directory: RainbowAI
+
+      - name: TypeScript check (RainbowAI)
+        run: npx tsc --noEmit
+        working-directory: RainbowAI
+
+      - name: Unit tests (RainbowAI)
+        run: npx vitest run --reporter=verbose
+        working-directory: RainbowAI
+        env:
+          NODE_ENV: test
