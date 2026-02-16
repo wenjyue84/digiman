@@ -421,13 +421,14 @@ describe('Message Pipeline Integration', () => {
   });
 
   describe('Edge Cases', () => {
-    test('should handle very long messages', async () => {
+    test('should handle very long messages (truncated to 2000 chars)', async () => {
       const longText = 'a'.repeat(5000);
       const msg = createMessage({ text: longText });
       const result = await validateAndPrepare(msg, ctx);
       expect(result.continue).toBe(true);
       if (result.continue) {
-        expect(result.state.text).toBe(longText);
+        // input-validator.ts truncates messages > 2000 chars to prevent timeouts
+        expect(result.state.text).toBe('a'.repeat(2000) + '...');
       }
     });
 
