@@ -1,12 +1,9 @@
-import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Camera, Calendar } from "lucide-react";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import { EnhancedObjectUploader } from "@/components/EnhancedObjectUploader";
-import type { UploadResult } from "@uppy/core";
+import { OptimizedPhotoUploader } from "@/components/OptimizedPhotoUploader";
 import { useToast } from "@/hooks/use-toast";
 import { NATIONALITIES } from "@/lib/nationalities";
 import { getHolidayLabel, hasPublicHoliday } from "@/lib/holidays";
@@ -25,126 +22,12 @@ export default function IdentificationPersonalSection({
 }: IdentificationPersonalSectionProps) {
   const { toast } = useToast();
 
-  // FIXED: Upload failure issue - Request upload URL from server instead of generating locally
-  // This follows the correct API flow documented in DEVELOPMENT_REFERENCE.md
-  const handleGetUploadParameters = async () => {
-    try {
-      // Step 1: Request upload parameters from server
-      // Server generates unique upload URL and returns it
-      const response = await fetch('/api/objects/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}) // Empty body as per API spec
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Upload URL request failed:', errorData);
-        throw new Error('Failed to get upload URL');
-      }
-
-      const data = await response.json();
-      console.log('Server upload response:', data);
-
-      if (!data.uploadURL) {
-        throw new Error('No upload URL returned from server');
-      }
-
-      const uploadURL = data.uploadURL;
-      console.log('Upload URL received from server:', uploadURL);
-
-      // Store URL for later use in upload result handler
-      (window as any).__lastProfileUploadUrl = uploadURL;
-
-      // Return parameters that Uppy will use for the actual upload
-      return {
-        method: 'PUT' as const,
-        url: uploadURL, // Full URL like http://localhost:5000/api/objects/dev-upload/12345
-      };
-    } catch (error) {
-      console.error('Error getting upload parameters:', error);
-      throw new Error('Failed to get upload URL');
-    }
-  };
-
-  const handlePhotoUpload = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    console.log('=== Photo Upload Handler ===');
-    console.log('Full result:', JSON.stringify(result, null, 2));
-    
-    if (result.successful && result.successful.length > 0) {
-      const uploadedFile = result.successful[0];
-      console.log('Uploaded file object:', uploadedFile);
-      
-      const uploadURL = uploadedFile.uploadURL || (window as any).__lastProfileUploadUrl;
-      console.log('Upload URL:', uploadURL);
-
-      if (!uploadURL) {
-        console.error('No upload URL found');
-        toast({
-          title: 'Upload Error',
-          description: 'No upload URL found. Please try again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      try {
-        let objectId: string | undefined;
-
-        if (uploadURL.includes('/api/objects/dev-upload/')) {
-          const parts = uploadURL.split('/api/objects/dev-upload/');
-          objectId = parts[parts.length - 1];
-        } else if (uploadURL.startsWith('http://') || uploadURL.startsWith('https://')) {
-          const url = new URL(uploadURL);
-          objectId = url.pathname.split('/').pop();
-        } else if (uploadURL.startsWith('/')) {
-          objectId = uploadURL.split('/').pop();
-        }
-
-        if (!objectId) {
-          throw new Error('Could not extract object ID from upload URL');
-        }
-
-        const baseUrl = window.location.origin;
-        const photoUrl = `${baseUrl}/objects/uploads/${objectId}`;
-        setProfilePhotoUrl(photoUrl);
-        toast({
-          title: 'Photo uploaded',
-          description: 'Document photo uploaded successfully',
-        });
-      } catch (error) {
-        console.error('Error processing upload URL:', error);
-        toast({
-          title: 'Upload Error',
-          description: error instanceof Error ? error.message : 'Failed to process uploaded file',
-          variant: 'destructive',
-        });
-      } finally {
-        (window as any).__lastProfileUploadUrl = null;
-      }
-    } else {
-      console.error('Upload failed or no files uploaded');
-      console.error('Result:', result);
-      
-      // Check if there are any failed uploads with error messages
-      if (result.failed && result.failed.length > 0) {
-        const failedFile = result.failed[0];
-        const errorMessage = (failedFile.error as any)?.message || 'Upload failed';
-        console.error('Upload failed:', errorMessage);
-        
-        toast({
-          title: 'Upload Failed',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Upload Failed',
-          description: 'No files were uploaded successfully. Please try again.',
-          variant: 'destructive',
-        });
-      }
-    }
+  const handlePhotoSelected = (photoUrl: string) => {
+    setProfilePhotoUrl(photoUrl);
+    toast({
+      title: 'Photo uploaded',
+      description: 'Document photo uploaded successfully',
+    });
   };
 
   return (
@@ -224,20 +107,13 @@ export default function IdentificationPersonalSection({
                 </Button>
               </div>
             ) : (
-              <EnhancedObjectUploader
-                maxNumberOfFiles={1}
-                maxFileSize={5 * 1024 * 1024}
-                onGetUploadParameters={handleGetUploadParameters}
-                onComplete={handlePhotoUpload}
-                buttonClassName="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                directFileUpload={true}
-                showCameraOption={true}
-                useOptimization={true}
+              <OptimizedPhotoUploader
+                onPhotoSelected={handlePhotoSelected}
+                buttonText={`Upload ${form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"}`}
+                className="w-full"
                 uploadType="document"
-              >
-                <Camera className="mr-2 h-4 w-4" />
-                {`Upload ${form.watch("nationality") === "Malaysian" ? "IC Photo" : "Passport Photo"}`}
-              </EnhancedObjectUploader>
+                showCameraOption={true}
+              />
             )}
           </div>
         </div>

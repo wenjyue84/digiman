@@ -45,8 +45,6 @@ import CheckInDetailsSection from "@/components/check-in/CheckInDetailsSection";
 import SmartFeaturesSection from "@/components/check-in/SmartFeaturesSection";
 import StepProgressIndicator from "@/components/check-in/StepProgressIndicator";
 
-// Removed SmartPhotoUploader in favor of ObjectUploader in IdentificationPersonalSection
-
 export default function CheckIn() {
   const labels = useAccommodationLabels();
   const queryClient = useQueryClient();

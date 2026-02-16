@@ -37,7 +37,6 @@ import CountdownTimer from "@/components/guest-checkin/CountdownTimer";
 import { AlertTriangle, Clock, CheckCircle, HelpCircle, Camera, Upload, Calendar, MapPin } from "lucide-react";
 
 // Lazy load heavy components for better performance
-const LazyObjectUploader = React.lazy(() => import("@/components/ObjectUploader").then(module => ({ default: module.ObjectUploader })));
 const LazySuccessScreen = React.lazy(() => import("@/components/guest-checkin/SuccessScreen"));
 const LazyDocumentUploadSection = React.lazy(() => import("@/components/guest-checkin/DocumentUploadSection").then(module => ({ default: module.DocumentUploadSection })));
 
