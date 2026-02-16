@@ -134,3 +134,6 @@ reports/
 
 # Knowledge base backups (generated, not source)
 RainbowAI/.rainbow-kb/conversations_backup/
+
+# Runtime activity data (persisted across restarts)
+RainbowAI/data/
