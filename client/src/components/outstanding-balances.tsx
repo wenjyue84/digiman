@@ -311,7 +311,7 @@ export function OutstandingBalances() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={guest.profilePhotoUrl || ""} />
+                          <AvatarImage src={guest.phoneNumber ? `/api/rainbow/whatsapp/avatar/${guest.phoneNumber.replace(/[^0-9]/g, '')}` : ""} />
                           <AvatarFallback className="text-sm">
                             {guest.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>

@@ -410,7 +410,7 @@ export default function SettingsPage() {
 
 
         <TabsContent value="rules" className="space-y-6">
-          <CapsuleRulesTab />
+          <CapsuleRulesTab onSwitchTab={setActiveTab} />
         </TabsContent>
 
         <TabsContent value="tests" className="space-y-6">

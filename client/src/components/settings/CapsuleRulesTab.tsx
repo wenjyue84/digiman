@@ -6,9 +6,14 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Save, Shield, Users, Wrench, ArrowDown, X } from "lucide-react";
+import { Save, Shield, Users, Wrench, ArrowDown, X, Lock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+interface CapsuleRulesTabProps {
+  onSwitchTab?: (tab: string) => void;
+}
 
 interface CapsuleRules {
   deckPriority: boolean;
@@ -19,6 +24,7 @@ interface CapsuleRules {
   };
   maintenanceDeprioritize: boolean;
   deprioritizedCapsules: string[];
+  autoLinkedCapsules?: string[];
 }
 
 function ChipInput({ values, onChange, placeholder }: { values: string[]; onChange: (v: string[]) => void; placeholder: string }) {
@@ -60,7 +66,7 @@ function ChipInput({ values, onChange, placeholder }: { values: string[]; onChan
   );
 }
 
-export default function CapsuleRulesTab() {
+export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -76,8 +82,17 @@ export default function CapsuleRulesTab() {
   const [local, setLocal] = useState<CapsuleRules | null>(null);
   const [dirty, setDirty] = useState(false);
 
+  // Track auto-linked capsules separately (from server response)
+  const autoLinked = rules?.autoLinkedCapsules || [];
+
   useEffect(() => {
-    if (rules && !local) setLocal(rules);
+    if (rules && !local) {
+      // Store only manual capsules in local state (exclude auto-linked)
+      const manual = (rules.deprioritizedCapsules || []).filter(
+        c => !(rules.autoLinkedCapsules || []).includes(c)
+      );
+      setLocal({ ...rules, deprioritizedCapsules: manual });
+    }
   }, [rules, local]);
 
   const update = <K extends keyof CapsuleRules>(key: K, value: CapsuleRules[K]) => {
@@ -100,10 +115,13 @@ export default function CapsuleRulesTab() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: CapsuleRules) => {
-      const res = await apiRequest("PUT", "/api/settings/capsule-rules", data);
+      // Only send manual capsules — server re-merges auto-linked on next GET
+      const { autoLinkedCapsules, ...payload } = data;
+      const res = await apiRequest("PUT", "/api/settings/capsule-rules", payload);
       return res.json();
     },
     onSuccess: () => {
+      setLocal(null); // Reset so useEffect picks up fresh merged data from refetch
       queryClient.invalidateQueries({ queryKey: ["/api/settings/capsule-rules"] });
       setDirty(false);
       toast({ title: "Rules Saved", description: "Capsule assignment rules updated successfully." });
@@ -228,13 +246,46 @@ export default function CapsuleRulesTab() {
             />
           </div>
           {local.maintenanceDeprioritize && (
-            <div className="pt-2">
-              <Label className="text-sm font-medium mb-2 block">Deprioritized Capsules</Label>
-              <ChipInput
-                values={local.deprioritizedCapsules}
-                onChange={(v) => update("deprioritizedCapsules", v)}
-                placeholder="e.g. C10, C15"
-              />
+            <div className="pt-2 space-y-3">
+              {/* Auto-linked from active problems */}
+              {autoLinked.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block text-orange-700">
+                    Auto-linked from active problems ({autoLinked.length})
+                  </Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    <TooltipProvider>
+                      {autoLinked.map((capsule) => (
+                        <Tooltip key={capsule}>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="outline"
+                              className="gap-1 bg-orange-50 border-orange-300 text-orange-800 cursor-pointer hover:bg-orange-100"
+                              onClick={() => onSwitchTab?.("maintenance")}
+                            >
+                              <Lock className="h-3 w-3" />
+                              {capsule}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>Click to view in Maintenance tab</TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </TooltipProvider>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    These are automatically deprioritized based on active maintenance issues. Resolve the problem to remove.
+                  </p>
+                </div>
+              )}
+              {/* Manual deprioritized capsules */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Manual Deprioritization</Label>
+                <ChipInput
+                  values={local.deprioritizedCapsules}
+                  onChange={(v) => update("deprioritizedCapsules", v)}
+                  placeholder="e.g. C10, C15"
+                />
+              </div>
             </div>
           )}
         </CardContent>
