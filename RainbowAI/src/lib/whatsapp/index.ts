@@ -19,6 +19,7 @@ export type { WhatsAppInstanceStatus, MessageHandler } from './types.js';
 export { WhatsAppInstance } from './instance.js';
 export { WhatsAppManager, formatPhoneNumber } from './manager.js';
 export { LidMapper } from './lid-mapper.js';
+export { ensureAvatar, getAvatarFilePath } from './avatar-cache.js';
 
 // ─── Singleton Instance ─────────────────────────────────────────────
 

@@ -1,5 +1,6 @@
 import { callAPI } from '../lib/http-client.js';
 import { MCPTool, MCPToolResult } from '../types/mcp.js';
+import { handleToolCall } from './tool-factory.js';
 
 export const problemTools: MCPTool[] = [
   {
@@ -23,23 +24,7 @@ export const problemTools: MCPTool[] = [
 ];
 
 export async function listProblems(args: any): Promise<MCPToolResult> {
-  try {
-    const problems = await callAPI('GET', '/api/problems/active');
-    return {
-      content: [{
-        type: 'text',
-        text: JSON.stringify(problems, null, 2)
-      }]
-    };
-  } catch (error: any) {
-    return {
-      content: [{
-        type: 'text',
-        text: `Error listing problems: ${error.message}`
-      }],
-      isError: true
-    };
-  }
+  return handleToolCall(() => callAPI('GET', '/api/problems/active'), 'Error listing problems');
 }
 
 export async function exportWhatsappIssues(args: any): Promise<MCPToolResult> {

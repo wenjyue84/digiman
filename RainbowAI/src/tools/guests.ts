@@ -1,5 +1,6 @@
 import { callAPI } from '../lib/http-client.js';
 import { MCPTool, MCPToolResult } from '../types/mcp.js';
+import { handleToolCall } from './tool-factory.js';
 
 export const guestTools: MCPTool[] = [
   {
@@ -61,23 +62,7 @@ export async function listGuests(args: any): Promise<MCPToolResult> {
 }
 
 export async function getGuest(args: any): Promise<MCPToolResult> {
-  try {
-    const guest = await callAPI('GET', `/api/guests/profiles/${args.guestId}`);
-    return {
-      content: [{
-        type: 'text',
-        text: JSON.stringify(guest, null, 2)
-      }]
-    };
-  } catch (error: any) {
-    return {
-      content: [{
-        type: 'text',
-        text: `Error getting guest: ${error.message}`
-      }],
-      isError: true
-    };
-  }
+  return handleToolCall(() => callAPI('GET', `/api/guests/profiles/${args.guestId}`), 'Error getting guest');
 }
 
 export async function searchGuests(args: any): Promise<MCPToolResult> {

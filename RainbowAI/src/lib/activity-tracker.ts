@@ -1,11 +1,22 @@
 /**
  * Activity Tracker — Real-time event log with SSE broadcast
- * 
+ *
  * Captures events from message-router, baileys-client, config-store, etc.
  * Broadcasts to all connected SSE clients for real-time dashboard updates.
+ * Persists events to RainbowAI/data/recent-activity.json across restarts.
  */
 
 import { EventEmitter } from 'events';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const DATA_DIR = join(__dirname, '..', '..', 'data');
+const ACTIVITY_FILE = join(DATA_DIR, 'recent-activity.json');
+
+export type ActivityCategory = 'message' | 'reply' | 'connection' | 'classified' | 'system';
 
 export interface ActivityEvent {
   id: string;
@@ -13,10 +24,32 @@ export interface ActivityEvent {
       | 'whatsapp_connected' | 'whatsapp_disconnected' | 'whatsapp_unlinked'
       | 'config_reloaded' | 'escalation' | 'workflow_started' | 'booking_started'
       | 'error' | 'feedback' | 'rate_limited' | 'emergency';
+  category: ActivityCategory;
   icon: string;
   message: string;
   timestamp: string; // ISO string
   metadata?: Record<string, any>;
+}
+
+/** Derive category from event type (Notion-style: Message, Reply, Connection, Classified) */
+function deriveCategory(type: ActivityEvent['type']): ActivityCategory {
+  switch (type) {
+    case 'message_received':
+      return 'message';
+    case 'response_sent':
+    case 'workflow_started':
+    case 'booking_started':
+      return 'reply';
+    case 'whatsapp_connected':
+    case 'whatsapp_disconnected':
+    case 'whatsapp_unlinked':
+      return 'connection';
+    case 'intent_classified':
+    case 'feedback':
+      return 'classified';
+    default:
+      return 'system';
+  }
 }
 
 const ICON_MAP: Record<ActivityEvent['type'], string> = {
@@ -37,16 +70,59 @@ const ICON_MAP: Record<ActivityEvent['type'], string> = {
 };
 
 const MAX_EVENTS = 100;
+const SAVE_DEBOUNCE_MS = 2000;
 let eventCounter = 0;
 
 class ActivityTracker extends EventEmitter {
   private events: ActivityEvent[] = [];
+  private saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    super();
+    this.loadFromDisk();
+  }
+
+  private loadFromDisk(): void {
+    try {
+      if (existsSync(ACTIVITY_FILE)) {
+        const raw = readFileSync(ACTIVITY_FILE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          this.events = parsed.slice(-MAX_EVENTS);
+          const lastEvt = this.events[this.events.length - 1];
+          if (lastEvt) {
+            const match = lastEvt.id.match(/^evt-(\d+)-/);
+            if (match) eventCounter = parseInt(match[1], 10);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[ActivityTracker] Failed to load persisted activities:', (err as Error).message);
+    }
+  }
+
+  private saveToDisk(): void {
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => {
+      try {
+        if (!existsSync(DATA_DIR)) {
+          mkdirSync(DATA_DIR, { recursive: true });
+        }
+        const tmpPath = ACTIVITY_FILE + '.tmp';
+        writeFileSync(tmpPath, JSON.stringify(this.events.slice(-MAX_EVENTS), null, 2), 'utf-8');
+        renameSync(tmpPath, ACTIVITY_FILE);
+      } catch (err) {
+        console.warn('[ActivityTracker] Failed to persist activities:', (err as Error).message);
+      }
+    }, SAVE_DEBOUNCE_MS);
+  }
 
   /** Add a new activity event and broadcast to SSE clients */
   track(type: ActivityEvent['type'], message: string, metadata?: Record<string, any>): void {
     const event: ActivityEvent = {
       id: `evt-${++eventCounter}-${Date.now()}`,
       type,
+      category: deriveCategory(type),
       icon: ICON_MAP[type] || '📋',
       message,
       timestamp: new Date().toISOString(),
@@ -59,6 +135,9 @@ class ActivityTracker extends EventEmitter {
     if (this.events.length > MAX_EVENTS) {
       this.events = this.events.slice(-MAX_EVENTS);
     }
+
+    // Persist to disk (debounced)
+    this.saveToDisk();
 
     // Broadcast to SSE clients
     this.emit('activity', event);

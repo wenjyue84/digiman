@@ -314,6 +314,26 @@ export class WhatsAppManager {
     });
   }
 
+  async fetchProfilePictureUrl(phone: string): Promise<string | null> {
+    const jid = phone.includes('@')
+      ? phone
+      : `${formatPhoneNumber(phone)}@s.whatsapp.net`;
+
+    for (const instance of this.instances.values()) {
+      if (instance.state === 'open' && instance.sock) {
+        try {
+          // Try full image first, fall back to preview (lower privacy restriction)
+          const url = await instance.sock.profilePictureUrl(jid, 'image').catch(() => null)
+            ?? await instance.sock.profilePictureUrl(jid, 'preview').catch(() => null);
+          return url ?? null;
+        } catch {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
   private loadConfig(): InstancesFile | null {
     try {
       if (!fs.existsSync(INSTANCES_FILE)) return null;

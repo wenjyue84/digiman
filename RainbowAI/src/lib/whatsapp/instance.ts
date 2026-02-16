@@ -5,6 +5,7 @@ import { trackWhatsAppConnected, trackWhatsAppDisconnected, trackWhatsAppUnlinke
 import { notifyAdminDisconnection, notifyAdminReconnect } from '../admin-notifier.js';
 import type { WhatsAppInstanceStatus, MessageHandler } from './types.js';
 import { LidMapper } from './lid-mapper.js';
+import { ensureAvatar } from './avatar-cache.js';
 
 export class WhatsAppInstance {
   id: string;
@@ -254,6 +255,8 @@ export class WhatsAppInstance {
         messageType,
         instanceId: this.id
       };
+
+      if (!isGroup) ensureAvatar(from).catch(() => {}); // fire-and-forget
 
       if (this.messageHandler) {
         await this.messageHandler(incoming);
