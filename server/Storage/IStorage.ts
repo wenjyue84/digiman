@@ -1,7 +1,9 @@
 import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
 
-export interface IStorage {
-  // User management methods
+// ─── Domain Sub-Interfaces (Interface Segregation Principle) ─────────────────
+
+/** User CRUD and authentication methods */
+export interface IUserStorage {
   getUser(id: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -10,21 +12,25 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
-  
-  // Session management methods
+}
+
+/** Session store methods */
+export interface ISessionStorage {
   createSession(userId: string, token: string, expiresAt: Date): Promise<Session>;
   getSessionByToken(token: string): Promise<Session | undefined>;
   deleteSession(token: string): Promise<boolean>;
   cleanExpiredSessions(): Promise<void>;
-  
-  // Guest management methods
+}
+
+/** Guest CRUD, checkout, search, and occupancy queries */
+export interface IGuestStorage {
   createGuest(guest: InsertGuest): Promise<Guest>;
   getGuest(id: string): Promise<Guest | undefined>;
   getAllGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>>;
   getCheckedInGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>>;
   getGuestHistory(
-    pagination?: PaginationParams, 
-    sortBy?: string, 
+    pagination?: PaginationParams,
+    sortBy?: string,
     sortOrder?: 'asc' | 'desc',
     filters?: { search?: string; nationality?: string; capsule?: string }
   ): Promise<PaginatedResponse<Guest>>;
@@ -37,8 +43,10 @@ export interface IStorage {
   getUncleanedAvailableCapsules(): Promise<Capsule[]>;
   getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined>;
   getGuestByToken(token: string): Promise<Guest | undefined>;
-  
-  // Capsule management methods
+}
+
+/** Capsule CRUD, availability, and cleaning status */
+export interface ICapsuleStorage {
   getAllCapsules(): Promise<Capsule[]>;
   getCapsule(number: string): Promise<Capsule | undefined>;
   getCapsuleById(id: string): Promise<Capsule | undefined>;
@@ -49,8 +57,10 @@ export interface IStorage {
   markCapsuleNeedsCleaning(capsuleNumber: string): Promise<Capsule | undefined>;
   getCapsulesByCleaningStatus(status: "cleaned" | "to_be_cleaned"): Promise<Capsule[]>;
   getGuestsByCapsule(capsuleNumber: string): Promise<Guest[]>;
-  
-  // Capsule problem management
+}
+
+/** Capsule problem reporting and resolution */
+export interface IProblemStorage {
   createCapsuleProblem(problem: InsertCapsuleProblem): Promise<CapsuleProblem>;
   getCapsuleProblems(capsuleNumber: string): Promise<CapsuleProblem[]>;
   getActiveProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>>;
@@ -58,8 +68,10 @@ export interface IStorage {
   updateProblem(problemId: string, updates: Partial<InsertCapsuleProblem>): Promise<CapsuleProblem | undefined>;
   resolveProblem(problemId: string, resolvedBy: string, notes?: string): Promise<CapsuleProblem | undefined>;
   deleteProblem(problemId: string): Promise<boolean>;
+}
 
-  // Guest token management methods
+/** Guest token management for self-checkin */
+export interface ITokenStorage {
   createGuestToken(token: InsertGuestToken): Promise<GuestToken>;
   getGuestToken(token: string): Promise<GuestToken | undefined>;
   getGuestTokenById(id: string): Promise<GuestToken | undefined>;
@@ -68,33 +80,15 @@ export interface IStorage {
   updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined>;
   deleteGuestToken(id: string): Promise<boolean>;
   cleanExpiredTokens(): Promise<void>;
+}
 
-  // Admin notification methods
+/** Admin notifications and push subscription management */
+export interface INotificationStorage {
   createAdminNotification(notification: InsertAdminNotification): Promise<AdminNotification>;
   getAdminNotifications(pagination?: PaginationParams): Promise<PaginatedResponse<AdminNotification>>;
   getUnreadAdminNotifications(pagination?: PaginationParams): Promise<PaginatedResponse<AdminNotification>>;
   markNotificationAsRead(id: string): Promise<AdminNotification | undefined>;
   markAllNotificationsAsRead(): Promise<void>;
-
-  // App settings methods
-  getAppSetting(key: string): Promise<AppSetting | undefined>;
-  upsertAppSetting(setting: InsertAppSetting): Promise<AppSetting>;
-  getAllAppSettings(): Promise<AppSetting[]>;
-  deleteAppSetting(key: string): Promise<boolean>;
-  
-  // Legacy methods for backward compatibility
-  getSetting(key: string): Promise<AppSetting | undefined>;
-  setSetting(key: string, value: string, description?: string, updatedBy?: string): Promise<AppSetting>;
-  getAllSettings(): Promise<AppSetting[]>;
-  getGuestTokenExpirationHours(): Promise<number>;
-  
-  // Expense management methods
-  getExpenses(pagination?: PaginationParams): Promise<PaginatedResponse<Expense>>;
-  addExpense(expense: InsertExpense & { createdBy: string }): Promise<Expense>;
-  updateExpense(expense: UpdateExpense): Promise<Expense | undefined>;
-  deleteExpense(id: string): Promise<boolean>;
-  
-  // Push subscription management methods
   createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
   getPushSubscription(id: string): Promise<PushSubscription | undefined>;
   getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined>;
@@ -104,3 +98,41 @@ export interface IStorage {
   deletePushSubscription(id: string): Promise<boolean>;
   deletePushSubscriptionByEndpoint(endpoint: string): Promise<boolean>;
 }
+
+/** App settings CRUD and legacy settings methods */
+export interface ISettingsStorage {
+  getAppSetting(key: string): Promise<AppSetting | undefined>;
+  upsertAppSetting(setting: InsertAppSetting): Promise<AppSetting>;
+  getAllAppSettings(): Promise<AppSetting[]>;
+  deleteAppSetting(key: string): Promise<boolean>;
+  getSetting(key: string): Promise<AppSetting | undefined>;
+  setSetting(key: string, value: string, description?: string, updatedBy?: string): Promise<AppSetting>;
+  getAllSettings(): Promise<AppSetting[]>;
+  getGuestTokenExpirationHours(): Promise<number>;
+}
+
+/** Expense tracking and management */
+export interface IExpenseStorage {
+  getExpenses(pagination?: PaginationParams): Promise<PaginatedResponse<Expense>>;
+  addExpense(expense: InsertExpense & { createdBy: string }): Promise<Expense>;
+  updateExpense(expense: UpdateExpense): Promise<Expense | undefined>;
+  deleteExpense(id: string): Promise<boolean>;
+}
+
+// ─── Composed Interface ──────────────────────────────────────────────────────
+
+/**
+ * Full storage interface — extends all domain sub-interfaces.
+ * Implementations (MemStorage, DatabaseStorage) implement this composed interface.
+ * Consumers that only need a subset of methods can type against a sub-interface instead.
+ */
+export interface IStorage extends
+  IUserStorage,
+  ISessionStorage,
+  IGuestStorage,
+  ICapsuleStorage,
+  IProblemStorage,
+  ITokenStorage,
+  INotificationStorage,
+  ISettingsStorage,
+  IExpenseStorage {}

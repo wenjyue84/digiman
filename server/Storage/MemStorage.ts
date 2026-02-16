@@ -1,46 +1,71 @@
 import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
 import { randomUUID } from "crypto";
 import { IStorage } from "./IStorage";
+import {
+  MemUserStore,
+  MemSessionStore,
+  MemGuestStore,
+  MemCapsuleStore,
+  MemProblemStore,
+  MemTokenStore,
+  MemNotificationStore,
+  MemSettingsStore,
+  MemExpenseStore,
+} from "./mem";
 
+/** Storage seed data constants */
+export const STORAGE_CONSTANTS = {
+  TOTAL_CAPSULES: 22,
+  STANDARD_RATE: 45,
+  OUTSTANDING_PAYMENT_RATIO: 0.8,
+  MS_PER_DAY: 24 * 60 * 60 * 1000,
+} as const;
+
+/**
+ * In-memory storage facade.
+ *
+ * Delegates all domain operations to entity-specific stores under `./mem/`.
+ * Cross-entity methods (checkout, occupancy, available capsules) are
+ * coordinated here in the facade layer.
+ */
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private guests: Map<string, Guest>;
-  private capsules: Map<string, Capsule>;
-  private expenses: Map<string, Expense>;
-  private sessions: Map<string, Session>;
-  private guestTokens: Map<string, GuestToken>;
-  private capsuleProblems: Map<string, CapsuleProblem>;
-  private adminNotifications: Map<string, AdminNotification>;
-  private pushSubscriptions: Map<string, PushSubscription>;
-  private appSettings: Map<string, AppSetting>;
-  private totalCapsules = 22; // C1-C6 (6) + C25-C26 (2) + C11-C24 (14)
+  private readonly userStore: MemUserStore;
+  private readonly sessionStore: MemSessionStore;
+  private readonly guestStore: MemGuestStore;
+  private readonly capsuleStore: MemCapsuleStore;
+  private readonly problemStore: MemProblemStore;
+  private readonly tokenStore: MemTokenStore;
+  private readonly notificationStore: MemNotificationStore;
+  private readonly settingsStore: MemSettingsStore;
+  private readonly expenseStore: MemExpenseStore;
 
   constructor() {
-    this.users = new Map();
-    this.guests = new Map();
-    this.capsules = new Map();
-    this.expenses = new Map();
-    this.sessions = new Map();
-    this.guestTokens = new Map();
-    this.capsuleProblems = new Map();
-    this.adminNotifications = new Map();
-    this.pushSubscriptions = new Map();
-    this.appSettings = new Map();
-    
-    // Initialize capsules, admin user, and sample guests
+    // Create entity stores (problem store first — capsule store needs its map)
+    this.userStore = new MemUserStore();
+    this.sessionStore = new MemSessionStore();
+    this.guestStore = new MemGuestStore();
+    this.problemStore = new MemProblemStore();
+    this.capsuleStore = new MemCapsuleStore(this.problemStore.getMap());
+    this.tokenStore = new MemTokenStore();
+    this.notificationStore = new MemNotificationStore();
+    this.settingsStore = new MemSettingsStore();
+    this.expenseStore = new MemExpenseStore();
+
+    // Initialize seed data
     this.initializeCapsules();
     this.initializeDefaultUsers();
     this.initializeDefaultSettings();
     this.initializeSampleGuests();
   }
 
+  // ─── Initialization ─────────────────────────────────────────────────────────
+
   private initializeDefaultUsers() {
-    // Create default admin user
     const adminUser: User = {
       id: randomUUID(),
       email: "admin@pelangi.com",
       username: "admin",
-      password: "admin123", // In production, this should be hashed
+      password: "admin123",
       googleId: null,
       firstName: "Admin",
       lastName: "User",
@@ -49,12 +74,11 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    this.users.set(adminUser.id, adminUser);
+    this.userStore.getMap().set(adminUser.id, adminUser);
     console.log("Initialized default admin user with email:", adminUser.email);
   }
 
   private initializeSampleGuests() {
-    // In production, keep static dates to avoid confusion
     const now = new Date();
     const isDev = (process.env.NODE_ENV || 'development') !== 'production';
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 14, 0, 0);
@@ -72,9 +96,8 @@ export class MemStorage implements IStorage {
       { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "Male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
       { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "Male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
       { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "Male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
-      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
+      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * STORAGE_CONSTANTS.MS_PER_DAY).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * STORAGE_CONSTANTS.MS_PER_DAY)), nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ] : [
-      // Fallback static dataset (production)
       { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
       { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
       { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
@@ -82,12 +105,15 @@ export class MemStorage implements IStorage {
       { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: "2025-08-05T15:00:00", checkout: "2025-08-06", nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ];
 
+    const guestMap = this.guestStore.getMap();
+    const capsuleMap = this.capsuleStore.getMap();
+
     sampleGuests.forEach(guest => {
-      const standardRate = 45; // RM45 per night
+      const standardRate = STORAGE_CONSTANTS.STANDARD_RATE;
       const totalAmount = guest.nights * standardRate;
       const isOutstanding = guest.paymentStatus === "outstanding";
-      const paidAmount = isOutstanding ? Math.floor(totalAmount * 0.8) : totalAmount; // 80% paid for outstanding
-      
+      const paidAmount = isOutstanding ? Math.floor(totalAmount * STORAGE_CONSTANTS.OUTSTANDING_PAYMENT_RATIO) : totalAmount;
+
       const guestRecord: Guest = {
         id: randomUUID(),
         name: guest.name,
@@ -111,16 +137,16 @@ export class MemStorage implements IStorage {
         age: guest.age?.toString() || null,
         profilePhotoUrl: null,
         selfCheckinToken: null,
-        status: null, // Add missing status field
+        status: null,
+        alertSettings: null,
       };
-      
-      this.guests.set(guestRecord.id, guestRecord);
-      
-      // Mark capsule as occupied
-      const capsule = this.capsules.get(guest.capsule);
+
+      guestMap.set(guestRecord.id, guestRecord);
+
+      const capsule = capsuleMap.get(guest.capsule);
       if (capsule) {
         capsule.isAvailable = false;
-        this.capsules.set(guest.capsule, capsule);
+        capsuleMap.set(guest.capsule, capsule);
       }
     });
 
@@ -128,1088 +154,219 @@ export class MemStorage implements IStorage {
   }
 
   private initializeCapsules() {
-    // Back section: C1-C6
-    for (let i = 1; i <= 6; i++) {
-      const isEven = i % 2 === 0;
-      const capsule: Capsule = {
-        id: randomUUID(),
-        number: `C${i}`,
-        section: 'back',
-        isAvailable: true,
-        cleaningStatus: 'cleaned',
-        toRent: true,
-        lastCleanedAt: null,
-        lastCleanedBy: null,
-        color: null,
-        purchaseDate: '2024-01-01', // 01 Jan 24
-        position: isEven ? 'bottom' : 'top', // Even = bottom, Odd = top
-        remark: null,
-      };
-      this.capsules.set(capsule.number, capsule);
-    }
-    
-    // Middle section: C25, C26
-    for (const num of [25, 26]) {
-      const isEven = num % 2 === 0;
-      const capsule: Capsule = {
-        id: randomUUID(),
-        number: `C${num}`,
-        section: 'middle',
-        isAvailable: true,
-        cleaningStatus: 'cleaned',
-        toRent: true,
-        lastCleanedAt: null,
-        lastCleanedBy: null,
-        color: null,
-        purchaseDate: '2024-01-01', // 01 Jan 24
-        position: isEven ? 'bottom' : 'top', // Even = bottom, Odd = top
-        remark: null,
-      };
-      this.capsules.set(capsule.number, capsule);
-    }
-    
-    // Front section: C11-C24
-    for (let i = 11; i <= 24; i++) {
-      const isEven = i % 2 === 0;
-      const capsule: Capsule = {
-        id: randomUUID(),
-        number: `C${i}`,
-        section: 'front',
-        isAvailable: true,
-        cleaningStatus: 'cleaned',
-        toRent: true,
-        lastCleanedAt: null,
-        lastCleanedBy: null,
-        color: null,
-        purchaseDate: '2024-01-01', // 01 Jan 24
-        position: isEven ? 'bottom' : 'top', // Even = bottom, Odd = top
-        remark: null,
-      };
-      this.capsules.set(capsule.number, capsule);
-    }
-  }
-
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username?.toLowerCase() === username.toLowerCase(),
-    );
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
-  }
-
-  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.googleId === googleId,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      role: insertUser.role || "staff",
-      username: insertUser.username || null,
-      password: insertUser.password || null,
-      googleId: insertUser.googleId || null,
-      firstName: insertUser.firstName || null,
-      lastName: insertUser.lastName || null,
-      profileImage: insertUser.profileImage || null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.users.set(id, user);
-    return user;
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
-  }
-
-  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) {
-      return undefined;
-    }
-
-    const updatedUser: User = {
-      ...user,
-      ...updates,
-      updatedAt: new Date(),
-    };
-    this.users.set(id, updatedUser);
-    return updatedUser;
-  }
-
-  async deleteUser(id: string): Promise<boolean> {
-    return this.users.delete(id);
-  }
-
-  // Session management methods
-  async createSession(userId: string, token: string, expiresAt: Date): Promise<Session> {
-    const session: Session = {
+    const capsuleMap = this.capsuleStore.getMap();
+    const makeCapsule = (num: number, section: string): Capsule => ({
       id: randomUUID(),
-      userId,
-      token,
-      expiresAt,
-      createdAt: new Date(),
-    };
-    this.sessions.set(token, session);
-    return session;
-  }
-
-  async getSessionByToken(token: string): Promise<Session | undefined> {
-    return this.sessions.get(token);
-  }
-
-  async deleteSession(token: string): Promise<boolean> {
-    return this.sessions.delete(token);
-  }
-
-  async cleanExpiredSessions(): Promise<void> {
-    const now = new Date();
-    const sessionsArray = Array.from(this.sessions.entries());
-    for (const [token, session] of sessionsArray) {
-      if (session.expiresAt < now) {
-        this.sessions.delete(token);
-      }
-    }
-  }
-
-  async createGuest(insertGuest: InsertGuest): Promise<Guest> {
-    const id = randomUUID();
-    
-    // Use custom check-in date if provided, otherwise use current time
-    let checkinTime: Date;
-    if (insertGuest.checkInDate) {
-      // Parse the date string and set time to current time
-      const [year, month, day] = insertGuest.checkInDate.split('-').map(Number);
-      const now = new Date();
-      checkinTime = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
-    } else {
-      checkinTime = new Date();
-    }
-    
-    const { checkInDate, ...guestData } = insertGuest;
-    const guest: Guest = {
-      ...guestData,
-      id,
-      checkinTime,
-      checkoutTime: null,
-      isCheckedIn: true,
-      expectedCheckoutDate: insertGuest.expectedCheckoutDate || null,
-      paymentAmount: insertGuest.paymentAmount || null,
-      paymentMethod: insertGuest.paymentMethod || "cash",
-      paymentCollector: insertGuest.paymentCollector || null,
-      isPaid: insertGuest.isPaid || false,
-      notes: insertGuest.notes || null,
-      gender: insertGuest.gender || null,
-      nationality: insertGuest.nationality || null,
-      phoneNumber: insertGuest.phoneNumber || null,
-      email: insertGuest.email || null,
-      idNumber: insertGuest.idNumber || null,
-      emergencyContact: insertGuest.emergencyContact || null,
-      emergencyPhone: insertGuest.emergencyPhone || null,
-      age: insertGuest.age || null,
-      profilePhotoUrl: insertGuest.profilePhotoUrl || null,
-      selfCheckinToken: insertGuest.selfCheckinToken || null,
-      status: insertGuest.status || null,
-    };
-    this.guests.set(id, guest);
-    return guest;
-  }
-
-  async getGuest(id: string): Promise<Guest | undefined> {
-    return this.guests.get(id);
-  }
-
-  async getAllGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
-    const allGuests = Array.from(this.guests.values());
-    return this.paginate(allGuests, pagination);
-  }
-
-  async getCheckedInGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
-    const checkedInGuests = Array.from(this.guests.values()).filter(guest => guest.isCheckedIn);
-    return this.paginate(checkedInGuests, pagination);
-  }
-
-  async getGuestHistory(
-    pagination?: PaginationParams, 
-    sortBy: string = 'checkoutTime', 
-    sortOrder: 'asc' | 'desc' = 'desc',
-    filters?: { search?: string; nationality?: string; capsule?: string }
-  ): Promise<PaginatedResponse<Guest>> {
-    let guestHistory = Array.from(this.guests.values()).filter(guest => {
-      // Base condition: must be checked out
-      if (guest.isCheckedIn) return false;
-      
-      // Text search across multiple fields (case-insensitive)
-      if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        const matchesSearch = 
-          guest.name?.toLowerCase().includes(searchLower) ||
-          guest.phoneNumber?.toLowerCase().includes(searchLower) ||
-          guest.email?.toLowerCase().includes(searchLower) ||
-          guest.idNumber?.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
-      
-      // Nationality filter (exact match)
-      if (filters?.nationality && guest.nationality !== filters.nationality) {
-        return false;
-      }
-      
-      // Capsule filter (exact match)
-      if (filters?.capsule && guest.capsuleNumber !== filters.capsule) {
-        return false;
-      }
-      
-      return true;
+      number: `C${num}`,
+      section,
+      isAvailable: true,
+      cleaningStatus: 'cleaned',
+      toRent: true,
+      lastCleanedAt: null,
+      lastCleanedBy: null,
+      color: null,
+      purchaseDate: '2024-01-01',
+      position: num % 2 === 0 ? 'bottom' : 'top',
+      remark: null,
+      branch: null,
     });
-    
-    // Sort the history
-    guestHistory.sort((a, b) => {
-      let aVal: any, bVal: any;
-      if (sortBy === 'name') {
-        aVal = a.name;
-        bVal = b.name;
-      } else if (sortBy === 'capsuleNumber') {
-        // Natural sort for capsule numbers (C1, C2, ..., C10, C11 instead of C1, C10, C11, C2)
-        // Handles both formats: "C1", "C11" and "C-01", "A-02"
-        const parseCapNum = (cap: string) => {
-          // Match formats like "C1", "C11", "C-01", "A-02", "R3"
-          const match = cap?.match(/^([A-Za-z]+)-?(\d+)$/);
-          if (match) {
-            return { prefix: match[1].toUpperCase(), num: parseInt(match[2], 10) };
-          }
-          return { prefix: cap || '', num: 0 };
-        };
-        const aParsed = parseCapNum(a.capsuleNumber);
-        const bParsed = parseCapNum(b.capsuleNumber);
-        
-        // Compare by prefix first, then by number
-        if (aParsed.prefix !== bParsed.prefix) {
-          aVal = aParsed.prefix;
-          bVal = bParsed.prefix;
-        } else {
-          aVal = aParsed.num;
-          bVal = bParsed.num;
-        }
-      } else if (sortBy === 'checkinTime') {
-        aVal = new Date(a.checkinTime).getTime();
-        bVal = new Date(b.checkinTime).getTime();
-      } else if (sortBy === 'checkoutTime') {
-        aVal = a.checkoutTime ? new Date(a.checkoutTime).getTime() : 0;
-        bVal = b.checkoutTime ? new Date(b.checkoutTime).getTime() : 0;
-      } else {
-        aVal = a.checkoutTime ? new Date(a.checkoutTime).getTime() : 0;
-        bVal = b.checkoutTime ? new Date(b.checkoutTime).getTime() : 0;
-      }
-      
-      if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-      } else {
-        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
-      }
-    });
-    
-    return this.paginate(guestHistory, pagination);
+
+    // Back section: C1-C6
+    for (let i = 1; i <= 6; i++) capsuleMap.set(`C${i}`, makeCapsule(i, 'back'));
+    // Middle section: C25, C26
+    for (const n of [25, 26]) capsuleMap.set(`C${n}`, makeCapsule(n, 'middle'));
+    // Front section: C11-C24
+    for (let i = 11; i <= 24; i++) capsuleMap.set(`C${i}`, makeCapsule(i, 'front'));
   }
 
+  private initializeDefaultSettings(): void {
+    this.settingsStore.setSetting('guestTokenExpirationHours', '24', 'Hours before guest check-in tokens expire');
+    this.settingsStore.setSetting('accommodationType', 'capsule', 'Type of accommodation (capsule, room, or house)');
+    this.settingsStore.setSetting('guideIntro', 'Pelangi Capsule Hostel is a modern, innovative accommodation designed to provide guests with comfort, privacy, and convenience at an affordable price. Our contemporary capsule concept offers private sleeping pods with essential amenities in a clean, safe, and friendly environment. Communal spaces encourage social interaction while maintaining personal privacy.', 'Guest guide introduction');
+    this.settingsStore.setSetting('guideAddress', '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\nPhone: +60 12-345 6789\nEmail: info@pelangicapsule.com\nWebsite: www.pelangicapsule.com', 'Hostel address and contacts');
+    this.settingsStore.setSetting('guideWifiName', 'Pelangi_Guest', 'WiFi SSID');
+    this.settingsStore.setSetting('guideWifiPassword', 'Pelangi2024!', 'WiFi password');
+    this.settingsStore.setSetting('guideCheckin', 'Check-In Time: 2:00 PM\nCheck-Out Time: 12:00 PM\n\nHow to check in:\n1) Present a valid ID/passport at the front desk.\n2) If you have a self-check-in token, show it to staff.\n3) Early check-in / late check-out may be available upon request (subject to availability and charges).', 'Check-in and check-out guidance');
+    this.settingsStore.setSetting('guideOther', 'House rules and guidance:\n- Quiet hours: [insert time] to [insert time]\n- Keep shared spaces clean\n- No smoking inside the premises\n- Follow staff instructions for safety\n\nAmenities overview:\n- Private capsules with light, power outlet, and privacy screen\n- Air conditioning throughout\n- Free high-speed Wi-Fi\n- Clean shared bathrooms with toiletries\n- Secure lockers\n- Lounge area\n- Pantry/kitchenette with microwave, kettle, and fridge\n- Self-service laundry (paid)\n- 24-hour security and CCTV\n- Reception assistance and local tips', 'Other guest guidance and rules');
+    this.settingsStore.setSetting('guideFaq', 'Q: What are the check-in and check-out times?\nA: Standard check-in is at [insert time], and check-out is at [insert time]. Early/late options may be arranged based on availability.\n\nQ: Are towels and toiletries provided?\nA: Yes, fresh towels and basic toiletries are provided.\n\nQ: Is there parking available?\nA: [Insert parking information].\n\nQ: Can I store my luggage after check-out?\nA: Yes, complimentary luggage storage is available at the front desk.\n\nQ: Are there quiet hours?\nA: Yes, quiet hours are observed from [insert time] to [insert time].', 'Frequently asked questions');
+    this.settingsStore.setSetting('guideShowIntro', 'true', 'Show intro to guests');
+    this.settingsStore.setSetting('guideShowAddress', 'true', 'Show address to guests');
+    this.settingsStore.setSetting('guideShowWifi', 'true', 'Show WiFi to guests');
+    this.settingsStore.setSetting('guideShowCheckin', 'true', 'Show check-in guidance');
+    this.settingsStore.setSetting('guideShowOther', 'true', 'Show other guidance');
+    this.settingsStore.setSetting('guideShowFaq', 'true', 'Show FAQ');
+    this.settingsStore.setSetting('guideCheckinTime', '3:00 PM', 'Check-in time');
+    this.settingsStore.setSetting('guideCheckoutTime', '12:00 PM', 'Check-out time');
+    this.settingsStore.setSetting('guideDoorPassword', '1270#', 'Door access password');
+    this.settingsStore.setSetting('guideImportantReminders', 'Please keep your room key safe. Quiet hours are from 10:00 PM to 7:00 AM. No smoking inside the building. Keep shared spaces clean.', 'Important reminders for guests');
+  }
+
+  // ─── IUserStorage (delegates to MemUserStore) ──────────────────────────────
+
+  getUser(id: string) { return this.userStore.getUser(id); }
+  getAllUsers() { return this.userStore.getAllUsers(); }
+  getUserByUsername(username: string) { return this.userStore.getUserByUsername(username); }
+  getUserByEmail(email: string) { return this.userStore.getUserByEmail(email); }
+  getUserByGoogleId(googleId: string) { return this.userStore.getUserByGoogleId(googleId); }
+  createUser(user: InsertUser) { return this.userStore.createUser(user); }
+  updateUser(id: string, updates: Partial<User>) { return this.userStore.updateUser(id, updates); }
+  deleteUser(id: string) { return this.userStore.deleteUser(id); }
+
+  // ─── ISessionStorage (delegates to MemSessionStore) ────────────────────────
+
+  createSession(userId: string, token: string, expiresAt: Date) { return this.sessionStore.createSession(userId, token, expiresAt); }
+  getSessionByToken(token: string) { return this.sessionStore.getSessionByToken(token); }
+  deleteSession(token: string) { return this.sessionStore.deleteSession(token); }
+  cleanExpiredSessions() { return this.sessionStore.cleanExpiredSessions(); }
+
+  // ─── IGuestStorage (delegates to MemGuestStore, with cross-entity coordination) ─
+
+  createGuest(guest: InsertGuest) { return this.guestStore.createGuest(guest); }
+  getGuest(id: string) { return this.guestStore.getGuest(id); }
+  getAllGuests(pagination?: PaginationParams) { return this.guestStore.getAllGuests(pagination); }
+  getCheckedInGuests(pagination?: PaginationParams) { return this.guestStore.getCheckedInGuests(pagination); }
+  getGuestHistory(pagination?: PaginationParams, sortBy?: string, sortOrder?: 'asc' | 'desc', filters?: { search?: string; nationality?: string; capsule?: string }) {
+    return this.guestStore.getGuestHistory(pagination, sortBy, sortOrder, filters);
+  }
+  updateGuest(id: string, updates: Partial<Guest>) { return this.guestStore.updateGuest(id, updates); }
+  getGuestsWithCheckoutToday() { return this.guestStore.getGuestsWithCheckoutToday(); }
+  getRecentlyCheckedOutGuest() { return this.guestStore.getRecentlyCheckedOutGuest(); }
+  getGuestByCapsuleAndName(capsuleNumber: string, name: string) { return this.guestStore.getGuestByCapsuleAndName(capsuleNumber, name); }
+  getGuestByToken(token: string) { return this.guestStore.getGuestByToken(token); }
+
+  /** Cross-entity: checkout guest then update capsule cleaning status */
   async checkoutGuest(id: string): Promise<Guest | undefined> {
-    const guest = this.guests.get(id);
-    if (guest && guest.isCheckedIn) {
-      const updatedGuest: Guest = {
-        ...guest,
-        checkoutTime: new Date(),
-        isCheckedIn: false,
-      };
-      this.guests.set(id, updatedGuest);
-      
+    const updatedGuest = await this.guestStore.checkoutGuest(id);
+    if (updatedGuest) {
       // Set capsule status to 'to be cleaned' after checkout
-      const capsule = this.capsules.get(guest.capsuleNumber);
+      const capsule = await this.capsuleStore.getCapsule(updatedGuest.capsuleNumber);
       if (capsule) {
-        const updatedCapsule: Capsule = {
-          ...capsule,
+        await this.capsuleStore.updateCapsule(updatedGuest.capsuleNumber, {
           cleaningStatus: 'to_be_cleaned',
-          isAvailable: true, // Make available for booking but needs cleaning
-        };
-        this.capsules.set(guest.capsuleNumber, updatedCapsule);
+          isAvailable: true,
+        });
       }
-      
-      return updatedGuest;
     }
-    return undefined;
+    return updatedGuest;
   }
 
-  async updateGuest(id: string, updates: Partial<Guest>): Promise<Guest | undefined> {
-    const guest = this.guests.get(id);
-    if (guest) {
-      const updatedGuest = { ...guest, ...updates };
-      this.guests.set(id, updatedGuest);
-      return updatedGuest;
-    }
-    return undefined;
-  }
-
-  async getGuestsWithCheckoutToday(): Promise<Guest[]> {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    return Array.from(this.guests.values()).filter(
-      guest => guest.isCheckedIn && 
-      guest.expectedCheckoutDate === today
-    );
-  }
-
-  async getRecentlyCheckedOutGuest(): Promise<Guest | undefined> {
-    const checkedOutGuests = Array.from(this.guests.values()).filter(
-      guest => !guest.isCheckedIn && guest.checkoutTime !== null
-    );
-    
-    if (checkedOutGuests.length === 0) {
-      return undefined;
-    }
-    
-    // Sort by checkout time descending and return the most recent
-    checkedOutGuests.sort((a, b) => {
-      if (!a.checkoutTime || !b.checkoutTime) return 0;
-      return b.checkoutTime.getTime() - a.checkoutTime.getTime();
-    });
-    
-    return checkedOutGuests[0];
-  }
-
+  /** Cross-entity: occupancy requires guest + capsule data */
   async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
-    // Count only capsules that are available for rent (toRent = true)
-    const rentableCapsules = Array.from(this.capsules.values()).filter(c => c.toRent !== false);
+    const allCapsules = await this.capsuleStore.getAllCapsules();
+    const rentableCapsules = allCapsules.filter(c => c.toRent !== false);
     const totalCapsules = rentableCapsules.length;
     const rentableCapsuleNumbers = new Set(rentableCapsules.map(c => c.number));
-    
-    // Count only guests in rentable capsules
-    const checkedInGuestsResponse = await this.getCheckedInGuests();
+
+    const checkedInGuestsResponse = await this.guestStore.getCheckedInGuests();
     const occupied = checkedInGuestsResponse.data.filter(g => rentableCapsuleNumbers.has(g.capsuleNumber)).length;
-    
-    // Clamp values to prevent invalid metrics
+
     const available = Math.max(0, totalCapsules - occupied);
     const occupancyRate = totalCapsules > 0 ? Math.min(100, Math.round((occupied / totalCapsules) * 100)) : 0;
 
-    return {
-      total: totalCapsules,
-      occupied,
-      available,
-      occupancyRate,
-    };
+    return { total: totalCapsules, occupied, available, occupancyRate };
   }
 
+  /** Cross-entity: available capsules requires guest + capsule data */
   async getAvailableCapsules(): Promise<Capsule[]> {
-    const checkedInGuests = await this.getCheckedInGuests();
+    const checkedInGuests = await this.guestStore.getCheckedInGuests();
     const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
-    
-    const availableCapsules = Array.from(this.capsules.values()).filter(
-      capsule => capsule.isAvailable && 
-                  !occupiedCapsules.has(capsule.number) && 
+
+    const allCapsules = await this.capsuleStore.getAllCapsules();
+    const availableCapsules = allCapsules.filter(
+      capsule => capsule.isAvailable &&
+                  !occupiedCapsules.has(capsule.number) &&
                   capsule.cleaningStatus === "cleaned" &&
                   capsule.toRent !== false
     );
 
-    // Sort by sequential order: C1, C2, C3, C4... C20, C21, C24
     return availableCapsules.sort((a, b) => {
       const aNum = parseInt(a.number.replace('C', ''));
       const bNum = parseInt(b.number.replace('C', ''));
-      
-      // Simple numerical sort: lowest to highest
       return aNum - bNum;
     });
   }
 
-  // Get capsules that are available but not cleaned yet (for admin warnings)
+  /** Cross-entity: uncleaned available capsules requires guest + capsule data */
   async getUncleanedAvailableCapsules(): Promise<Capsule[]> {
-    const checkedInGuests = await this.getCheckedInGuests();
+    const checkedInGuests = await this.guestStore.getCheckedInGuests();
     const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
-    
-    return Array.from(this.capsules.values()).filter(
-      capsule => capsule.isAvailable && 
-                  !occupiedCapsules.has(capsule.number) && 
+
+    const allCapsules = await this.capsuleStore.getAllCapsules();
+    return allCapsules.filter(
+      capsule => capsule.isAvailable &&
+                  !occupiedCapsules.has(capsule.number) &&
                   capsule.cleaningStatus === "to_be_cleaned" &&
                   capsule.toRent !== false
     );
   }
 
-  async getAllCapsules(): Promise<Capsule[]> {
-    return Array.from(this.capsules.values());
-  }
+  // ─── ICapsuleStorage (delegates to MemCapsuleStore) ────────────────────────
 
-  async getCapsule(number: string): Promise<Capsule | undefined> {
-    return this.capsules.get(number);
-  }
+  getAllCapsules() { return this.capsuleStore.getAllCapsules(); }
+  getCapsule(number: string) { return this.capsuleStore.getCapsule(number); }
+  getCapsuleById(id: string) { return this.capsuleStore.getCapsuleById(id); }
+  updateCapsule(number: string, updates: Partial<Capsule>) { return this.capsuleStore.updateCapsule(number, updates); }
+  createCapsule(capsule: InsertCapsule) { return this.capsuleStore.createCapsule(capsule); }
+  deleteCapsule(number: string) { return this.capsuleStore.deleteCapsule(number); }
+  markCapsuleCleaned(capsuleNumber: string, cleanedBy: string) { return this.capsuleStore.markCapsuleCleaned(capsuleNumber, cleanedBy); }
+  markCapsuleNeedsCleaning(capsuleNumber: string) { return this.capsuleStore.markCapsuleNeedsCleaning(capsuleNumber); }
+  getCapsulesByCleaningStatus(status: "cleaned" | "to_be_cleaned") { return this.capsuleStore.getCapsulesByCleaningStatus(status); }
 
-  async getCapsuleById(id: string): Promise<Capsule | undefined> {
-    for (const capsule of Array.from(this.capsules.values())) {
-      if (capsule.id === id) {
-        return capsule;
-      }
-    }
-    return undefined;
-  }
+  /** Cross-entity: getGuestsByCapsule queries guests by capsule number */
+  getGuestsByCapsule(capsuleNumber: string) { return this.guestStore.getGuestsByCapsule(capsuleNumber); }
 
-  async updateCapsule(number: string, updates: Partial<Capsule>): Promise<Capsule | undefined> {
-    const capsule = this.capsules.get(number);
-    if (capsule) {
-      const updatedCapsule = { ...capsule, ...updates };
-      this.capsules.set(number, updatedCapsule);
-      
-      // Check if we're marking capsule as available again (problem resolved)
-      if (updates.isAvailable === true && !capsule.isAvailable) {
-        // Auto-resolve any active problems for this capsule
-        const problems = Array.from(this.capsuleProblems.values()).filter(
-          p => p.capsuleNumber === number && !p.isResolved
-        );
-        for (const problem of problems) {
-          problem.isResolved = true;
-          problem.resolvedAt = new Date();
-          problem.resolvedBy = "System";
-          problem.notes = "Auto-resolved when capsule marked as available";
-        }
-      }
-      
-      return updatedCapsule;
-    }
-    return undefined;
-  }
+  // ─── IProblemStorage (delegates to MemProblemStore) ────────────────────────
 
-  async createCapsule(insertCapsule: InsertCapsule): Promise<Capsule> {
-    const id = randomUUID();
-    const capsule: Capsule = { 
-      ...insertCapsule, 
-      id,
-      lastCleanedAt: insertCapsule.lastCleanedAt || null,
-      lastCleanedBy: insertCapsule.lastCleanedBy || null,
-      color: insertCapsule.color || null,
-      purchaseDate: insertCapsule.purchaseDate?.toISOString() || null,
-      position: insertCapsule.position || null,
-      remark: insertCapsule.remark || null,
-    };
-    this.capsules.set(capsule.number, capsule);
-    return capsule;
-  }
+  createCapsuleProblem(problem: InsertCapsuleProblem) { return this.problemStore.createCapsuleProblem(problem); }
+  getCapsuleProblems(capsuleNumber: string) { return this.problemStore.getCapsuleProblems(capsuleNumber); }
+  getActiveProblems(pagination?: PaginationParams) { return this.problemStore.getActiveProblems(pagination); }
+  getAllProblems(pagination?: PaginationParams) { return this.problemStore.getAllProblems(pagination); }
+  updateProblem(problemId: string, updates: Partial<InsertCapsuleProblem>) { return this.problemStore.updateProblem(problemId, updates); }
+  resolveProblem(problemId: string, resolvedBy: string, notes?: string) { return this.problemStore.resolveProblem(problemId, resolvedBy, notes); }
+  deleteProblem(problemId: string) { return this.problemStore.deleteProblem(problemId); }
 
-  async deleteCapsule(number: string): Promise<boolean> {
-    const exists = this.capsules.has(number);
-    if (exists) {
-      this.capsules.delete(number);
-      
-      // Also remove any associated problems
-      const problemsToDelete = Array.from(this.capsuleProblems.entries())
-        .filter(([_, problem]) => problem.capsuleNumber === number)
-        .map(([id, _]) => id);
-      
-      for (const problemId of problemsToDelete) {
-        this.capsuleProblems.delete(problemId);
-      }
-      
-      return true;
-    }
-    return false;
-  }
+  // ─── ITokenStorage (delegates to MemTokenStore) ────────────────────────────
 
-  async getGuestsByCapsule(capsuleNumber: string): Promise<Guest[]> {
-    return Array.from(this.guests.values())
-      .filter(guest => guest.capsuleNumber === capsuleNumber && guest.isCheckedIn);
-  }
+  createGuestToken(token: InsertGuestToken) { return this.tokenStore.createGuestToken(token); }
+  getGuestToken(token: string) { return this.tokenStore.getGuestToken(token); }
+  getGuestTokenById(id: string) { return this.tokenStore.getGuestTokenById(id); }
+  getActiveGuestTokens(pagination?: PaginationParams) { return this.tokenStore.getActiveGuestTokens(pagination); }
+  markTokenAsUsed(token: string) { return this.tokenStore.markTokenAsUsed(token); }
+  updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean) { return this.tokenStore.updateGuestTokenCapsule(tokenId, capsuleNumber, autoAssign); }
+  deleteGuestToken(id: string) { return this.tokenStore.deleteGuestToken(id); }
+  cleanExpiredTokens() { return this.tokenStore.cleanExpiredTokens(); }
 
-  async getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined> {
-    return Array.from(this.guests.values())
-      .find(guest => 
-        guest.capsuleNumber === capsuleNumber && 
-        guest.name === name && 
-        guest.isCheckedIn === true
-      );
-  }
+  // ─── INotificationStorage (delegates to MemNotificationStore) ──────────────
 
-  async getGuestByToken(token: string): Promise<Guest | undefined> {
-    return Array.from(this.guests.values())
-      .find(guest => guest.selfCheckinToken === token);
-  }
+  createAdminNotification(notification: InsertAdminNotification) { return this.notificationStore.createAdminNotification(notification); }
+  getAdminNotifications(pagination?: PaginationParams) { return this.notificationStore.getAdminNotifications(pagination); }
+  getUnreadAdminNotifications(pagination?: PaginationParams) { return this.notificationStore.getUnreadAdminNotifications(pagination); }
+  markNotificationAsRead(id: string) { return this.notificationStore.markNotificationAsRead(id); }
+  markAllNotificationsAsRead() { return this.notificationStore.markAllNotificationsAsRead(); }
+  createPushSubscription(subscription: InsertPushSubscription) { return this.notificationStore.createPushSubscription(subscription); }
+  getPushSubscription(id: string) { return this.notificationStore.getPushSubscription(id); }
+  getPushSubscriptionByEndpoint(endpoint: string) { return this.notificationStore.getPushSubscriptionByEndpoint(endpoint); }
+  getAllPushSubscriptions() { return this.notificationStore.getAllPushSubscriptions(); }
+  getUserPushSubscriptions(userId: string) { return this.notificationStore.getUserPushSubscriptions(userId); }
+  updatePushSubscriptionLastUsed(id: string) { return this.notificationStore.updatePushSubscriptionLastUsed(id); }
+  deletePushSubscription(id: string) { return this.notificationStore.deletePushSubscription(id); }
+  deletePushSubscriptionByEndpoint(endpoint: string) { return this.notificationStore.deletePushSubscriptionByEndpoint(endpoint); }
 
-  // Cleaning management methods
-  async markCapsuleCleaned(capsuleNumber: string, cleanedBy: string): Promise<Capsule | undefined> {
-    const capsule = this.capsules.get(capsuleNumber);
-    
-    if (capsule) {
-      const updatedCapsule: Capsule = {
-        ...capsule,
-        cleaningStatus: 'cleaned',
-        lastCleanedAt: new Date(),
-        lastCleanedBy: cleanedBy,
-      };
-      this.capsules.set(capsuleNumber, updatedCapsule);
-      return updatedCapsule;
-    }
-    return undefined;
-  }
+  // ─── ISettingsStorage (delegates to MemSettingsStore) ──────────────────────
 
-  async markCapsuleNeedsCleaning(capsuleNumber: string): Promise<Capsule | undefined> {
-    const capsule = this.capsules.get(capsuleNumber);
-    
-    if (capsule) {
-      const updatedCapsule: Capsule = {
-        ...capsule,
-        cleaningStatus: 'to_be_cleaned',
-        lastCleanedAt: null,
-        lastCleanedBy: null,
-      };
-      this.capsules.set(capsuleNumber, updatedCapsule);
-      return updatedCapsule;
-    }
-    return undefined;
-  }
+  getAppSetting(key: string) { return this.settingsStore.getAppSetting(key); }
+  upsertAppSetting(setting: InsertAppSetting) { return this.settingsStore.upsertAppSetting(setting); }
+  getAllAppSettings() { return this.settingsStore.getAllAppSettings(); }
+  deleteAppSetting(key: string) { return this.settingsStore.deleteAppSetting(key); }
+  getSetting(key: string) { return this.settingsStore.getSetting(key); }
+  setSetting(key: string, value: string, description?: string, updatedBy?: string) { return this.settingsStore.setSetting(key, value, description, updatedBy); }
+  getAllSettings() { return this.settingsStore.getAllSettings(); }
+  getGuestTokenExpirationHours() { return this.settingsStore.getGuestTokenExpirationHours(); }
 
-  async getCapsulesByCleaningStatus(status: "cleaned" | "to_be_cleaned"): Promise<Capsule[]> {
-    return Array.from(this.capsules.values()).filter(
-      capsule => capsule.cleaningStatus === status
-    );
-  }
+  // ─── IExpenseStorage (delegates to MemExpenseStore) ────────────────────────
 
-  // Capsule problem management
-  async createCapsuleProblem(problem: InsertCapsuleProblem): Promise<CapsuleProblem> {
-    const id = randomUUID();
-    const capsuleProblem: CapsuleProblem = {
-      id,
-      capsuleNumber: problem.capsuleNumber,
-      description: problem.description,
-      reportedBy: problem.reportedBy,
-      reportedAt: problem.reportedAt || new Date(),
-      isResolved: false,
-      resolvedBy: null,
-      resolvedAt: null,
-      notes: null,
-    };
-    this.capsuleProblems.set(id, capsuleProblem);
-    
-    // Note: We no longer automatically mark capsules as unavailable when problems are created.
-    // Users can manually mark capsules as unavailable in Settings if needed.
-    
-    return capsuleProblem;
-  }
-
-  async getCapsuleProblems(capsuleNumber: string): Promise<CapsuleProblem[]> {
-    return Array.from(this.capsuleProblems.values())
-      .filter(p => p.capsuleNumber === capsuleNumber)
-      .sort((a, b) => b.reportedAt.getTime() - a.reportedAt.getTime());
-  }
-
-  async getActiveProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>> {
-    const activeProblems = Array.from(this.capsuleProblems.values())
-      .filter(p => !p.isResolved)
-      .sort((a, b) => b.reportedAt.getTime() - a.reportedAt.getTime());
-    return this.paginate(activeProblems, pagination);
-  }
-
-  async getAllProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>> {
-    const allProblems = Array.from(this.capsuleProblems.values())
-      .sort((a, b) => b.reportedAt.getTime() - a.reportedAt.getTime());
-    return this.paginate(allProblems, pagination);
-  }
-
-  async updateProblem(problemId: string, updates: Partial<InsertCapsuleProblem>): Promise<CapsuleProblem | undefined> {
-    const problem = this.capsuleProblems.get(problemId);
-    if (problem) {
-      // Update the problem with the new data, preserving existing fields
-      const updatedProblem = {
-        ...problem,
-        ...updates,
-        // Keep original timestamps and resolved status
-        id: problem.id,
-        reportedAt: problem.reportedAt,
-        isResolved: problem.isResolved,
-        resolvedBy: problem.resolvedBy,
-        resolvedAt: problem.resolvedAt,
-        notes: problem.notes
-      };
-      
-      this.capsuleProblems.set(problemId, updatedProblem);
-      return updatedProblem;
-    }
-    return undefined;
-  }
-
-  async resolveProblem(problemId: string, resolvedBy: string, notes?: string): Promise<CapsuleProblem | undefined> {
-    const problem = this.capsuleProblems.get(problemId);
-    if (problem) {
-      problem.isResolved = true;
-      problem.resolvedBy = resolvedBy;
-      problem.resolvedAt = new Date();
-      problem.notes = notes || null;
-      this.capsuleProblems.set(problemId, problem);
-      
-      // Check if there are any other active problems for this capsule
-      const activeProblems = Array.from(this.capsuleProblems.values())
-        .filter(p => p.capsuleNumber === problem.capsuleNumber && !p.isResolved);
-      
-      // Note: We no longer automatically manage capsule availability based on problems.
-      // Users can manually control availability in Settings.
-      
-      return problem;
-    }
-    return undefined;
-  }
-
-  async deleteProblem(problemId: string): Promise<boolean> {
-    const problem = this.capsuleProblems.get(problemId);
-    if (problem) {
-      // Remove the problem
-      this.capsuleProblems.delete(problemId);
-      
-      // Check if there are any other active problems for this capsule
-      const activeProblems = Array.from(this.capsuleProblems.values())
-        .filter(p => p.capsuleNumber === problem.capsuleNumber && !p.isResolved);
-      
-      // Note: We no longer automatically manage capsule availability based on problems.
-      // Users can manually control availability in Settings.
-      
-      return true;
-    }
-    return false;
-  }
-
-  // Guest token management methods
-  async createGuestToken(insertToken: InsertGuestToken): Promise<GuestToken> {
-    const token: GuestToken = {
-      id: randomUUID(),
-      token: insertToken.token,
-      capsuleNumber: insertToken.capsuleNumber || null,
-      autoAssign: insertToken.autoAssign || false,
-      guestName: insertToken.guestName || null,
-      phoneNumber: insertToken.phoneNumber || null,
-      email: insertToken.email || null,
-      expectedCheckoutDate: insertToken.expectedCheckoutDate || null,
-      createdBy: insertToken.createdBy,
-      isUsed: false,
-      usedAt: null,
-      expiresAt: insertToken.expiresAt,
-      createdAt: new Date(),
-    };
-    this.guestTokens.set(token.token, token);
-    return token;
-  }
-
-  async getGuestToken(token: string): Promise<GuestToken | undefined> {
-    return this.guestTokens.get(token);
-  }
-
-  async getGuestTokenById(id: string): Promise<GuestToken | undefined> {
-    // Find the token by ID
-    for (const token of this.guestTokens.values()) {
-      if (token.id === id) {
-        return token;
-      }
-    }
-    return undefined;
-  }
-
-  async getActiveGuestTokens(pagination?: PaginationParams): Promise<PaginatedResponse<GuestToken>> {
-    const now = new Date();
-    const activeTokens = Array.from(this.guestTokens.values())
-      .filter(token => !token.isUsed && token.expiresAt > now)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    return this.paginate(activeTokens, pagination);
-  }
-
-  async markTokenAsUsed(token: string): Promise<GuestToken | undefined> {
-    const guestToken = this.guestTokens.get(token);
-    if (guestToken) {
-      const updatedToken = { ...guestToken, isUsed: true, usedAt: new Date() };
-      this.guestTokens.set(token, updatedToken);
-      return updatedToken;
-    }
-    return undefined;
-  }
-
-  async updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined> {
-    // Find the token by ID
-    let tokenKey: string | null = null;
-    let guestToken: GuestToken | null = null;
-    
-    this.guestTokens.forEach((token, key) => {
-      if (token.id === tokenId) {
-        tokenKey = key;
-        guestToken = token;
-      }
-    });
-    
-    if (guestToken && tokenKey) {
-      const updatedToken = { 
-        ...guestToken, 
-        capsuleNumber: capsuleNumber,
-        autoAssign: autoAssign 
-      };
-      this.guestTokens.set(tokenKey, updatedToken);
-      return updatedToken;
-    }
-    return undefined;
-  }
-
-  async deleteGuestToken(id: string): Promise<boolean> {
-    // Find the token by iterating through the Map values
-    let tokenToDelete: string | null = null;
-    
-    this.guestTokens.forEach((guestToken, token) => {
-      if (guestToken.id === id) {
-        tokenToDelete = token;
-      }
-    });
-    
-    if (tokenToDelete) {
-      this.guestTokens.delete(tokenToDelete);
-      return true;
-    }
-    
-    return false;
-  }
-
-  async cleanExpiredTokens(): Promise<void> {
-    const now = new Date();
-    for (const [token, tokenData] of Array.from(this.guestTokens.entries())) {
-      if (tokenData.expiresAt < now) {
-        this.guestTokens.delete(token);
-      }
-    }
-  }
-
-  // Admin notification methods
-  async createAdminNotification(notification: InsertAdminNotification): Promise<AdminNotification> {
-    const id = randomUUID();
-    const adminNotification: AdminNotification = {
-      id,
-      type: notification.type,
-      title: notification.title,
-      message: notification.message,
-      guestId: notification.guestId || null,
-      capsuleNumber: notification.capsuleNumber || null,
-      isRead: false,
-      createdAt: new Date(),
-    };
-    this.adminNotifications.set(id, adminNotification);
-    return adminNotification;
-  }
-
-  async getAdminNotifications(pagination?: PaginationParams): Promise<PaginatedResponse<AdminNotification>> {
-    const allNotifications = Array.from(this.adminNotifications.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    return this.paginate(allNotifications, pagination);
-  }
-
-  async getUnreadAdminNotifications(pagination?: PaginationParams): Promise<PaginatedResponse<AdminNotification>> {
-    const unreadNotifications = Array.from(this.adminNotifications.values())
-      .filter(n => !n.isRead)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    return this.paginate(unreadNotifications, pagination);
-  }
-
-  async markNotificationAsRead(id: string): Promise<AdminNotification | undefined> {
-    const notification = this.adminNotifications.get(id);
-    if (notification) {
-      const updatedNotification = { ...notification, isRead: true };
-      this.adminNotifications.set(id, updatedNotification);
-      return updatedNotification;
-    }
-    return undefined;
-  }
-
-  async markAllNotificationsAsRead(): Promise<void> {
-    for (const [id, notification] of Array.from(this.adminNotifications.entries())) {
-      if (!notification.isRead) {
-        notification.isRead = true;
-        this.adminNotifications.set(id, notification);
-      }
-    }
-  }
-
-  // App settings methods
-  async getSetting(key: string): Promise<AppSetting | undefined> {
-    return this.appSettings.get(key);
-  }
-
-  async setSetting(key: string, value: string, description?: string, updatedBy?: string): Promise<AppSetting> {
-    // Validate input parameters
-    if (!key || typeof key !== 'string' || key.trim() === '') {
-      throw new Error('Setting key is required and must be a non-empty string');
-    }
-    
-    if (value === null || value === undefined) {
-      throw new Error('Setting value is required');
-    }
-
-    const trimmedKey = key.trim();
-    const stringValue = String(value);
-    
-    const existing = this.appSettings.get(trimmedKey);
-    
-    if (existing) {
-      const updatedSetting: AppSetting = {
-        ...existing,
-        value: stringValue,
-        description: description || existing.description,
-        updatedBy: updatedBy || existing.updatedBy,
-        updatedAt: new Date(),
-      };
-      this.appSettings.set(trimmedKey, updatedSetting);
-      return updatedSetting;
-    } else {
-      const newSetting: AppSetting = {
-        id: randomUUID(),
-        key: trimmedKey,
-        value: stringValue,
-        description: description || null,
-        updatedBy: updatedBy || null,
-        updatedAt: new Date(),
-      };
-      this.appSettings.set(trimmedKey, newSetting);
-      return newSetting;
-    }
-  }
-
-  async getAllSettings(): Promise<AppSetting[]> {
-    return Array.from(this.appSettings.values());
-  }
-
-  async getGuestTokenExpirationHours(): Promise<number> {
-    const setting = await this.getSetting('guestTokenExpirationHours');
-    return setting ? parseInt(setting.value) : 24; // Default to 24 hours
-  }
-
-  // New app settings methods
-  async getAppSetting(key: string): Promise<AppSetting | undefined> {
-    return this.getSetting(key);
-  }
-
-  async upsertAppSetting(setting: InsertAppSetting): Promise<AppSetting> {
-    return this.setSetting(setting.key, setting.value, setting.description || undefined, setting.updatedBy || undefined);
-  }
-
-  async getAllAppSettings(): Promise<AppSetting[]> {
-    return this.getAllSettings();
-  }
-
-  async deleteAppSetting(key: string): Promise<boolean> {
-    const deleted = this.appSettings.delete(key);
-    return deleted;
-  }
-
-  private initializeDefaultSettings(): void {
-    // Initialize default settings
-    this.setSetting('guestTokenExpirationHours', '24', 'Hours before guest check-in tokens expire');
-    this.setSetting('accommodationType', 'capsule', 'Type of accommodation (capsule, room, or house)');
-    // Guest Guide defaults (can be edited in Settings > Guest Guide)
-    this.setSetting(
-      'guideIntro',
-      'Pelangi Capsule Hostel is a modern, innovative accommodation designed to provide guests with comfort, privacy, and convenience at an affordable price. Our contemporary capsule concept offers private sleeping pods with essential amenities in a clean, safe, and friendly environment. Communal spaces encourage social interaction while maintaining personal privacy.',
-      'Guest guide introduction'
-    );
-    this.setSetting(
-      'guideAddress',
-      '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\nPhone: +60 12-345 6789\nEmail: info@pelangicapsule.com\nWebsite: www.pelangicapsule.com',
-      'Hostel address and contacts'
-    );
-    this.setSetting('guideWifiName', 'Pelangi_Guest', 'WiFi SSID');
-    this.setSetting('guideWifiPassword', 'Pelangi2024!', 'WiFi password');
-    this.setSetting(
-      'guideCheckin',
-      'Check-In Time: 2:00 PM\nCheck-Out Time: 12:00 PM\n\nHow to check in:\n1) Present a valid ID/passport at the front desk.\n2) If you have a self-check-in token, show it to staff.\n3) Early check-in / late check-out may be available upon request (subject to availability and charges).',
-      'Check-in and check-out guidance'
-    );
-    this.setSetting(
-      'guideOther',
-      'House rules and guidance:\n- Quiet hours: [insert time] to [insert time]\n- Keep shared spaces clean\n- No smoking inside the premises\n- Follow staff instructions for safety\n\nAmenities overview:\n- Private capsules with light, power outlet, and privacy screen\n- Air conditioning throughout\n- Free high-speed Wi-Fi\n- Clean shared bathrooms with toiletries\n- Secure lockers\n- Lounge area\n- Pantry/kitchenette with microwave, kettle, and fridge\n- Self-service laundry (paid)\n- 24-hour security and CCTV\n- Reception assistance and local tips',
-      'Other guest guidance and rules'
-    );
-    this.setSetting(
-      'guideFaq',
-      'Q: What are the check-in and check-out times?\nA: Standard check-in is at [insert time], and check-out is at [insert time]. Early/late options may be arranged based on availability.\n\nQ: Are towels and toiletries provided?\nA: Yes, fresh towels and basic toiletries are provided.\n\nQ: Is there parking available?\nA: [Insert parking information].\n\nQ: Can I store my luggage after check-out?\nA: Yes, complimentary luggage storage is available at the front desk.\n\nQ: Are there quiet hours?\nA: Yes, quiet hours are observed from [insert time] to [insert time].',
-      'Frequently asked questions'
-    );
-    // Default visibility: show all sections to guests
-    this.setSetting('guideShowIntro', 'true', 'Show intro to guests');
-    this.setSetting('guideShowAddress', 'true', 'Show address to guests');
-    this.setSetting('guideShowWifi', 'true', 'Show WiFi to guests');
-    this.setSetting('guideShowCheckin', 'true', 'Show check-in guidance');
-    this.setSetting('guideShowOther', 'true', 'Show other guidance');
-    this.setSetting('guideShowFaq', 'true', 'Show FAQ');
-    
-    // Default time and access settings
-    this.setSetting('guideCheckinTime', '3:00 PM', 'Check-in time');
-    this.setSetting('guideCheckoutTime', '12:00 PM', 'Check-out time');
-    this.setSetting('guideDoorPassword', '1270#', 'Door access password');
-    this.setSetting('guideImportantReminders', 'Please keep your room key safe. Quiet hours are from 10:00 PM to 7:00 AM. No smoking inside the building. Keep shared spaces clean.', 'Important reminders for guests');
-  }
-
-  // Helper function for pagination
-  private paginate<T>(items: T[], pagination?: PaginationParams): PaginatedResponse<T> {
-    const page = pagination?.page || 1;
-    const limit = pagination?.limit || 20;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    
-    const paginatedItems = items.slice(startIndex, endIndex);
-    const total = items.length;
-    const totalPages = Math.ceil(total / limit);
-    const hasMore = page < totalPages;
-    
-    return {
-      data: paginatedItems,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasMore,
-      },
-    };
-  }
-
-  // Expense management methods
-  async getExpenses(pagination?: PaginationParams): Promise<PaginatedResponse<Expense>> {
-    const allExpenses = Array.from(this.expenses.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-
-    if (!pagination) {
-      return {
-        data: allExpenses,
-        pagination: {
-          page: 1,
-          limit: allExpenses.length,
-          total: allExpenses.length,
-          totalPages: 1,
-          hasMore: false,
-        },
-      };
-    }
-
-    const { page = 1, limit = 20 } = pagination;
-    const offset = (page - 1) * limit;
-    const paginatedExpenses = allExpenses.slice(offset, offset + limit);
-    const total = allExpenses.length;
-    const totalPages = Math.ceil(total / limit);
-    const hasMore = page < totalPages;
-
-    return {
-      data: paginatedExpenses,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasMore,
-      },
-    };
-  }
-
-  async addExpense(expense: InsertExpense & { createdBy: string }): Promise<Expense> {
-    const id = randomUUID();
-    const now = new Date();
-    const newExpense: Expense = {
-      id,
-      description: expense.description,
-      amount: expense.amount,
-      category: expense.category,
-      subcategory: expense.subcategory || null,
-      date: expense.date,
-      notes: expense.notes || null,
-      receiptPhotoUrl: expense.receiptPhotoUrl || null,
-      itemPhotoUrl: expense.itemPhotoUrl || null,
-      createdBy: expense.createdBy,
-      createdAt: now,
-      updatedAt: now,
-    };
-    this.expenses.set(id, newExpense);
-    return newExpense;
-  }
-
-  async updateExpense(expense: UpdateExpense): Promise<Expense | undefined> {
-    const existingExpense = this.expenses.get(expense.id!);
-    if (!existingExpense) {
-      return undefined;
-    }
-
-    const updatedExpense: Expense = {
-      ...existingExpense,
-      ...expense,
-      id: existingExpense.id,
-      createdBy: existingExpense.createdBy,
-      createdAt: existingExpense.createdAt,
-      updatedAt: new Date(),
-    };
-    this.expenses.set(expense.id!, updatedExpense);
-    return updatedExpense;
-  }
-
-  async deleteExpense(id: string): Promise<boolean> {
-    return this.expenses.delete(id);
-  }
-
-  // Push subscription management methods
-  async createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
-    const id = randomUUID();
-    const newSubscription: PushSubscription = {
-      id,
-      userId: subscription.userId || null,
-      endpoint: subscription.endpoint,
-      p256dhKey: subscription.p256dhKey,
-      authKey: subscription.authKey,
-      createdAt: new Date(),
-      lastUsed: null,
-    };
-    this.pushSubscriptions.set(id, newSubscription);
-    return newSubscription;
-  }
-
-  async getPushSubscription(id: string): Promise<PushSubscription | undefined> {
-    return this.pushSubscriptions.get(id);
-  }
-
-  async getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined> {
-    return Array.from(this.pushSubscriptions.values()).find(sub => sub.endpoint === endpoint);
-  }
-
-  async getAllPushSubscriptions(): Promise<PushSubscription[]> {
-    return Array.from(this.pushSubscriptions.values());
-  }
-
-  async getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
-    return Array.from(this.pushSubscriptions.values()).filter(sub => sub.userId === userId);
-  }
-
-  async updatePushSubscriptionLastUsed(id: string): Promise<PushSubscription | undefined> {
-    const subscription = this.pushSubscriptions.get(id);
-    if (!subscription) {
-      return undefined;
-    }
-    const updated: PushSubscription = {
-      ...subscription,
-      lastUsed: new Date(),
-    };
-    this.pushSubscriptions.set(id, updated);
-    return updated;
-  }
-
-  async deletePushSubscription(id: string): Promise<boolean> {
-    return this.pushSubscriptions.delete(id);
-  }
-
-  async deletePushSubscriptionByEndpoint(endpoint: string): Promise<boolean> {
-    const subscription = await this.getPushSubscriptionByEndpoint(endpoint);
-    if (!subscription) {
-      return false;
-    }
-    return this.pushSubscriptions.delete(subscription.id);
-  }
+  getExpenses(pagination?: PaginationParams) { return this.expenseStore.getExpenses(pagination); }
+  addExpense(expense: InsertExpense & { createdBy: string }) { return this.expenseStore.addExpense(expense); }
+  updateExpense(expense: UpdateExpense) { return this.expenseStore.updateExpense(expense); }
+  deleteExpense(id: string) { return this.expenseStore.deleteExpense(id); }
 }
