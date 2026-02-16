@@ -15,93 +15,75 @@ const DURABLE_MEMORY_FILE = 'memory.md';
 // In-memory cache of all KB files
 let kbCache: Map<string, string> = new Map();
 
-// Always injected into every prompt
-const CORE_FILES = ['AGENTS.md', 'soul.md'];
+// ─── KB Pattern Config (loaded from kb-patterns.json) ────────────────
 
-// Keyword patterns → which topic files to load
-// Patterns use regex alternation, tested case-insensitively
-const TOPIC_FILE_MAP: Record<string, string[]> = {
-  // Availability & Booking
-  'availab|vacancy|room|capsule|space|bed|book|reserve|reservation|tempah|kosong|空房|预订':
-    ['availability.md'],
-  // Pricing & rates
-  'price|cost|rate|how much|berapa|多少|rm\\d|ringgit':
-    ['pricing.md'],
-  // Payment methods & procedure
-  'pay|bayar|duitnow|bank|transfer|cash|maybank|boost|grabpay|shopeepay|touch.?n.?go':
-    ['payment-methods.md'],
-  // Deposits & refunds
-  'deposit|refund|cancel|return|pulang|退款':
-    ['refunds.md'],
-  // Check-in times
-  'check.?in.?time|check.?out.?time|what.?time|早到|晚退':
-    ['checkin-times.md'],
-  // Door access & password
-  'door|password|code|access|entry|entrance|masuk|pintu|密码|入口':
-    ['checkin-access.md'],
-  // Check-in procedure
-  'check.?in|self.?check|how.?to.?check|procedure|步骤':
-    ['checkin-procedure.md'],
-  // WiFi
-  'wifi|internet|password|网络|密码':
-    ['checkin-wifi.md'],
-  // Capsule facilities & features
-  'capsule|pod|bed|sleep|mattress|curtain|privacy|reading.?light|outlet|usb|charging':
-    ['facilities-capsules.md'],
-  // Capsule layout, deck, bunk assignment
-  'lower.?deck|upper.?deck|bottom.?bunk|top.?bunk|deck|bunk|even.?number|odd.?number|which.?capsule|capsule.?layout|assign':
-    ['capsule-layout.md'],
-  // Bathrooms & showers
-  'bathroom|shower|hot.?water|toiletries|shampoo|soap|hair.?dryer|toilet':
-    ['facilities-bathrooms.md'],
-  // Kitchen & dining
-  'kitchen|cook|fridge|microwave|kettle|coffee|utensil|plate|dapur|厨房':
-    ['facilities-kitchen.md'],
-  // Common areas, laundry, storage
-  'lounge|common.?area|work|desk|outdoor|laundry|wash|locker|luggage|storage':
-    ['facilities-common.md'],
-  // General facilities (fallback)
-  'facilit|amenities|air.?con|park':
-    ['facilities.md'],
-  // Quiet hours & smoking
-  'quiet|noise|loud|smoke|smoking|vape|rokok|merokok|安静|吸烟':
-    ['rules-quiet-smoking.md'],
-  // Guest conduct & visitors
-  'visitor|guest|friend|conduct|behav|alcohol|drink|drug|pelawat|规则':
-    ['rules-guests-conduct.md'],
-  // Shared spaces & kitchen rules
-  'clean|kitchen|shoe|damage|locker|security|key.?card|bersih|厨房|钥匙':
-    ['rules-shared-spaces.md'],
-  // General rules (loads quick reference)
-  'rule|allow|prohibit|peraturan':
-    ['houserules.md'],
-  // Pets policy
-  'pet|pets|animal|allowed.*pet':
-    ['rules-pets.md'],
-  // Extra amenities (towel, pillow, Maya)
-  'towel|pillow|extra.*(towel|pillow)|maya':
-    ['amenities-extra.md'],
-  // Location & directions
-  'where|direction|map|location|address|nearby|food|restaurant|transport|grab|alamat|dimana|地址|怎么走|airport|get.*(from|to)|how.*(get|reach|find)|way.*(here|there)':
-    ['location.md'],
-  // Theft / security incident (report, security, police, incident)
-  'stol[ea]n|theft|rob(?:bed|bery)|dicuri|kecurian|被偷|被抢|失窃|someone stole':
-    ['theft-incident.md'],
-};
+interface KBPatternEntry {
+  comment: string;
+  regex: string;
+  files: string[];
+}
+
+interface KBPatternsConfig {
+  description?: string;
+  coreFiles: string[];
+  defaultFallback: string;
+  patterns: KBPatternEntry[];
+}
+
+let kbPatternsConfig: KBPatternsConfig | null = null;
+
+function loadKBPatterns(): KBPatternsConfig {
+  if (kbPatternsConfig) return kbPatternsConfig;
+  try {
+    const configPath = resolve(__dirname, 'data', 'kb-patterns.json');
+    kbPatternsConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+    console.log(`[KnowledgeBase] Loaded ${kbPatternsConfig!.patterns.length} topic patterns from kb-patterns.json`);
+    return kbPatternsConfig!;
+  } catch (err: any) {
+    console.warn(`[KnowledgeBase] Failed to load kb-patterns.json: ${err.message} — using empty pattern map`);
+    kbPatternsConfig = {
+      coreFiles: ['AGENTS.md', 'soul.md'],
+      defaultFallback: 'faq.md',
+      patterns: []
+    };
+    return kbPatternsConfig;
+  }
+}
+
+// Always injected into every prompt (loaded from config)
+function getCoreFiles(): string[] {
+  return loadKBPatterns().coreFiles;
+}
+
+// Build TOPIC_FILE_MAP from config patterns
+function getTopicFileMap(): Record<string, string[]> {
+  const config = loadKBPatterns();
+  const map: Record<string, string[]> = {};
+  for (const entry of config.patterns) {
+    map[entry.regex] = entry.files;
+  }
+  return map;
+}
+
+// Default fallback file when no patterns match
+function getDefaultFallback(): string {
+  return loadKBPatterns().defaultFallback;
+}
 
 /**
  * Scan message text and return which topic files should be loaded.
- * Falls back to faq.md if no keywords match.
+ * Falls back to defaultFallback (faq.md) if no keywords match.
  */
 export function guessTopicFiles(text: string): string[] {
+  const topicFileMap = getTopicFileMap();
   const files = new Set<string>();
-  for (const [pattern, fileList] of Object.entries(TOPIC_FILE_MAP)) {
+  for (const [pattern, fileList] of Object.entries(topicFileMap)) {
     if (new RegExp(pattern, 'i').test(text)) {
       fileList.forEach(f => files.add(f));
     }
   }
   // Default fallback
-  if (files.size === 0) files.add('faq.md');
+  if (files.size === 0) files.add(getDefaultFallback());
   return Array.from(files);
 }
 
@@ -285,6 +267,7 @@ export function buildSystemPrompt(basePersona: string, topicFiles: string[] = []
   const routingLines = intents.map(i => `  - "${i}" → ${routing[i].action}`).join('\n');
 
   // Assemble KB content: core files always, topic files per message
+  const CORE_FILES = getCoreFiles();
   const missingCoreFiles = CORE_FILES.filter(f => !kbCache.get(f));
   if (missingCoreFiles.length > 0) {
     console.warn(`[KnowledgeBase] Missing core KB files: ${missingCoreFiles.join(', ')}`);

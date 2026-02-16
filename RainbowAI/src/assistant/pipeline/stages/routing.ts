@@ -96,6 +96,9 @@ export async function resolveRouting(
   diaryEvent.messageType = messageType;
   diaryEvent.confidence = result.confidence;
   devMetadata.routedAction = routedAction;
+  if (result.entities?.multiIntent === 'true') {
+    devMetadata.multiIntent = result.entities.allIntents;
+  }
 
   // Track prediction asynchronously
   const conversationId = `${phone}-${Date.now()}`;

@@ -21,6 +21,8 @@ interface LoadedEmergencyRule {
   re: RegExp;
   emergencyType: EmergencyType;
   isFire: boolean;
+  /** When set, overrides emergencyType with a custom intent (e.g., prompt injection → greeting) */
+  intentOverride?: string;
 }
 
 /** Loaded from regex-patterns.json when present; otherwise use built-in defaults. */
@@ -83,8 +85,10 @@ async function loadEmergencyPatternsFromFile(): Promise<void> {
         : (item.emergencyType === 'theft' ? 'theft_report' : 'complaint');
       const desc = (item.description || '').toLowerCase();
       const isFire = desc.includes('fire emergency');
+      // Support custom intent override (e.g., prompt injection → greeting deflection)
+      const intentOverride = item.intent && typeof item.intent === 'string' ? item.intent : undefined;
 
-      rules.push({ re, emergencyType, isFire });
+      rules.push({ re, emergencyType, isFire, intentOverride });
     }
     if (rules.length > 0) {
       emergencyRules = rules;
@@ -103,11 +107,13 @@ export function isEmergency(text: string): boolean {
  * Which intent to use when an emergency pattern matches.
  * Theft and card_locked have dedicated workflows; others escalate via complaint.
  */
-export function getEmergencyIntent(text: string): 'theft_report' | 'card_locked' | 'complaint' | null {
+export function getEmergencyIntent(text: string): string | null {
   if (emergencyRules.length > 0) {
-    for (const { re, emergencyType, isFire } of emergencyRules) {
+    for (const { re, emergencyType, isFire, intentOverride } of emergencyRules) {
       if (!re.test(text)) continue;
       if (isFire && FIRE_BENIGN_OVERRIDES.some(b => b.test(text))) continue;
+      // Skip rules with intentOverride — they are handled by getRegexDeflection() instead
+      if (intentOverride) continue;
       return emergencyType;
     }
     return null;
@@ -119,6 +125,20 @@ export function getEmergencyIntent(text: string): 'theft_report' | 'card_locked'
     if (i === BUILTIN_THEFT_INDEX) return 'theft_report';
     if (i === BUILTIN_CARD_LOCKED_INDEX) return 'card_locked';
     return 'complaint';
+  }
+  return null;
+}
+
+/**
+ * Check for non-emergency regex deflections (e.g., prompt injection → greeting).
+ * These patterns have an intentOverride field and should NOT trigger emergency escalation.
+ */
+export function getRegexDeflection(text: string): string | null {
+  for (const { re, isFire, intentOverride } of emergencyRules) {
+    if (!intentOverride) continue;
+    if (!re.test(text)) continue;
+    if (isFire && FIRE_BENIGN_OVERRIDES.some(b => b.test(text))) continue;
+    return intentOverride;
   }
   return null;
 }
@@ -206,8 +226,8 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
     if (/\b(worst\s+(hotel|hostel|place|stay)|highly\s+recommend|great\s+experience|give\s+.*(star|rating)|review|recommend|5\s?star|1\s?star|never\s+(come|stay|return)\s+back)\b/i.test(messageText)) {
       return 'review_feedback';
     }
-    // Otherwise generic in-stay complaint
-    return 'general_complaint_in_stay';
+    // Otherwise generic in-stay complaint — prefer 'complaint' if it exists in routing
+    return 'complaint';
   }
 
   // Map "facilities" to "facilities_info"
@@ -347,6 +367,157 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
  * @param lastIntent Previous detected intent (for context)
  * @returns Intent result with confidence and source
  */
+
+// ─── Multi-Intent Splitting (compound messages with 2+ intents) ────────────
+
+/** Conjunctions that split compound messages (EN / MS / ZH) */
+const SPLIT_CONJUNCTIONS = /\b(and\s+also|and also|also|but\s+also|but also|by the way|btw|oh by the way|oh|anyway|but|dan\s+juga|dan juga|dan|juga|serta|还有|和|另外)\b/i;
+const TRIVIAL_INTENTS = new Set(['greeting', 'thanks', 'unknown']);
+
+/** Phrases that look like conjunctions but are part of a SINGLE intent — do NOT split */
+const SINGLE_INTENT_GUARDS: RegExp[] = [
+  /\b(book\s+and\s+pay|want\s+to\s+book\s+and|tempah\s+dan\s+bayar|预订并付)\b/i,
+  /\b(check\s+in\s+and\s+(pay|register)|daftar\s+dan\s+bayar)\b/i,
+  /\b(clean\s+and\s+tidy|bersih\s+dan\s+kemas)\b/i,
+];
+
+/**
+ * Split a compound message into sub-messages using multiple strategies:
+ * 1. Question mark boundaries: "How much? And wifi?" → ["How much?", "And wifi?"]
+ * 2. Conjunction splitting: "X and Y" / "X dan Y" / "X 和 Y"
+ * 3. Sentence boundary with topic shift (basic heuristic)
+ *
+ * Returns null if message shouldn't be split (single-intent guard or too few segments).
+ */
+function splitMultiIntentMessage(text: string): string[] | null {
+  // Guard: don't split single-intent compound phrases
+  if (SINGLE_INTENT_GUARDS.some(g => g.test(text))) return null;
+
+  let segments: string[] = [];
+
+  // Strategy 1: Split on question marks (common in multi-intent questions)
+  // "How much? And wifi?" → ["How much?", "And wifi?"]
+  const questionParts = text.split(/\?\s*/).filter(s => s.trim().length > 2);
+  if (questionParts.length >= 2) {
+    // Re-add '?' to each part except possibly the last empty one
+    segments = questionParts.map((p, i) => i < questionParts.length - 1 || text.trimEnd().endsWith('?') ? p.trim() + '?' : p.trim()).filter(s => s.length > 3);
+    if (segments.length >= 2) {
+      return segments;
+    }
+  }
+
+  // Strategy 2: Split on conjunctions (EN/MS/ZH)
+  if (SPLIT_CONJUNCTIONS.test(text)) {
+    segments = text.split(SPLIT_CONJUNCTIONS).filter(s => s.trim().length > 3);
+    // Remove segments that are just the conjunction word itself
+    segments = segments.filter(s => !SPLIT_CONJUNCTIONS.test('^' + s.trim() + '$') && !/^(and|but|also|dan|juga|serta|oh|btw|anyway|还有|和|另外)$/i.test(s.trim()));
+    if (segments.length >= 2) return segments;
+  }
+
+  // Strategy 3: Chinese sentence boundaries (。/ ，separating different topics)
+  if (/[\u4e00-\u9fff]/.test(text)) {
+    const zhParts = text.split(/[，。；]/).filter(s => s.trim().length > 2);
+    if (zhParts.length >= 2) return zhParts;
+  }
+
+  return null;
+}
+
+export interface MultiIntentResult {
+  intents: IntentResult[];
+  segments: string[];
+}
+
+/**
+ * Detect and classify multiple intents in compound messages.
+ * For each sub-message, classify independently using fuzzy/semantic matchers.
+ * Returns all distinct non-trivial intents found, or null if message is single-intent.
+ */
+async function tryMultiIntentSplit(
+  text: string,
+  history: ChatMessage[],
+  lastIntent: string | null,
+  detectedLang: SupportedLanguage,
+  config: ReturnType<typeof getIntentConfig>
+): Promise<IntentResult | null> {
+  const segments = splitMultiIntentMessage(text);
+  if (!segments || segments.length < 2) return null;
+
+  console.log(`[Intent] Multi-intent split: ${segments.length} segments: ${JSON.stringify(segments)}`);
+
+  // Classify each segment independently
+  const results: IntentResult[] = [];
+  const seenIntents = new Set<string>();
+
+  for (const seg of segments) {
+    const trimmed = seg.trim();
+    if (trimmed.length < 3) continue;
+
+    let segResult: IntentResult | null = null;
+
+    // Try fuzzy first (fast)
+    if (fuzzyMatcher) {
+      const fuzzyResult = fuzzyMatcher.matchWithContext(trimmed, [], null, undefined);
+      if (fuzzyResult && fuzzyResult.score >= 0.65 && !TRIVIAL_INTENTS.has(fuzzyResult.intent)) {
+        console.log(`[Intent] Multi-intent segment "${trimmed}" -> fuzzy: ${fuzzyResult.intent} (${(fuzzyResult.score * 100).toFixed(0)}%)`);
+        segResult = {
+          category: fuzzyResult.intent as any,
+          confidence: fuzzyResult.score * 0.9,
+          entities: {},
+          source: 'fuzzy',
+          matchedKeyword: fuzzyResult.matchedKeyword,
+          detectedLanguage: detectedLang
+        };
+      }
+    }
+
+    // Try semantic if fuzzy didn't match
+    if (!segResult && config.tiers.tier3_semantic.enabled) {
+      const semanticMatcher = getSemanticMatcher();
+      if (semanticMatcher.isReady()) {
+        const semanticResult = await semanticMatcher.match(trimmed, 0.60);
+        if (semanticResult && !TRIVIAL_INTENTS.has(semanticResult.intent)) {
+          console.log(`[Intent] Multi-intent segment "${trimmed}" -> semantic: ${semanticResult.intent} (${(semanticResult.score * 100).toFixed(0)}%)`);
+          segResult = {
+            category: semanticResult.intent as any,
+            confidence: semanticResult.score * 0.9,
+            entities: {},
+            source: 'semantic',
+            matchedExample: semanticResult.matchedExample,
+            detectedLanguage: detectedLang
+          };
+        }
+      }
+    }
+
+    if (segResult && !seenIntents.has(segResult.category)) {
+      seenIntents.add(segResult.category);
+      results.push(segResult);
+    }
+  }
+
+  // If we found 2+ distinct intents, it's truly multi-intent
+  if (results.length >= 2) {
+    console.log(`[Intent] Multi-intent detected: ${results.map(r => r.category).join(' + ')}`);
+    // Return the first (primary) intent; the multi-intent info is available via entities
+    const primary = results[0];
+    primary.entities = {
+      ...primary.entities,
+      multiIntent: 'true',
+      allIntents: results.map(r => r.category).join(','),
+      segmentCount: String(results.length),
+    };
+    return primary;
+  }
+
+  // Only 1 distinct intent found — return it as a normal single result
+  if (results.length === 1) {
+    return results[0];
+  }
+
+  return null;
+}
+
 export async function classifyMessageWithContext(
   text: string,
   history: ChatMessage[] = [],
@@ -360,15 +531,44 @@ export async function classifyMessageWithContext(
 
   console.log(`[Intent] 🌍 Language: ${langName} (${detectedLang})`);
 
+  // PRE-PROCESSING: Deduplicate heavily repeated words (e.g., "hello hello hello" → "hello")
+  let processedText = text;
+  const words = text.trim().split(/\s+/);
+  if (words.length >= 3) {
+    const wordCounts: Record<string, number> = {};
+    for (const w of words) wordCounts[w.toLowerCase()] = (wordCounts[w.toLowerCase()] || 0) + 1;
+    const uniqueWords = Object.keys(wordCounts);
+    // If one word makes up 80%+ of the message, deduplicate to just that word
+    for (const [word, count] of Object.entries(wordCounts)) {
+      if (count / words.length >= 0.8) {
+        processedText = word;
+        console.log(`[Intent] 🔄 Dedup: "${text}" → "${processedText}"`);
+        break;
+      }
+    }
+  }
+
   // TIER 1: Emergency check (always enabled, always single message)
   if (config.tiers.tier1_emergency.enabled) {
     const emergencyIntent = getEmergencyIntent(text);
     if (emergencyIntent !== null) {
       console.log(`[Intent] 🚨 EMERGENCY detected (regex) → ${emergencyIntent}`);
       return {
-        category: emergencyIntent,
+        category: emergencyIntent as any,
         confidence: 1.0,
         entities: { emergency: 'true' },
+        source: 'regex',
+        detectedLanguage: detectedLang
+      };
+    }
+    // Check for non-emergency regex deflections (e.g., prompt injection → greeting)
+    const deflection = getRegexDeflection(text);
+    if (deflection !== null) {
+      console.log(`[Intent] 🛡️ Regex deflection → ${deflection}`);
+      return {
+        category: deflection as any,
+        confidence: 1.0,
+        entities: {},
         source: 'regex',
         detectedLanguage: detectedLang
       };
@@ -382,7 +582,7 @@ export async function classifyMessageWithContext(
     const languageFilter = detectedLang !== 'unknown' ? detectedLang : undefined;
 
     const fuzzyResult = fuzzyMatcher.matchWithContext(
-      text,
+      processedText,
       context,
       lastIntent,
       languageFilter
@@ -423,7 +623,7 @@ export async function classifyMessageWithContext(
   if (config.tiers.tier3_semantic.enabled) {
     const semanticMatcher = getSemanticMatcher();
     if (semanticMatcher.isReady()) {
-      const semanticResult = await semanticMatcher.match(text, config.tiers.tier3_semantic.threshold);
+      const semanticResult = await semanticMatcher.match(processedText, config.tiers.tier3_semantic.threshold);
 
       if (semanticResult && checkTierThreshold(
         semanticResult.intent,
@@ -456,16 +656,69 @@ export async function classifyMessageWithContext(
     }
   }
 
-  // TIER 4: LLM classification WITH CONFIGURABLE CONTEXT
+  // TIER 4: LLM classification WITH CONFIGURABLE CONTEXT (+ timeout fallback US-046)
   if (config.tiers.tier4_llm.enabled) {
     try {
       const contextSize = config.tiers.tier4_llm.contextMessages;
       const context = history.slice(-contextSize);
 
-      const llmResult = await llmClassify(text, context);
+      // US-046: Wrap LLM call with configurable timeout (default 8s)
+      const LLM_TIMEOUT_MS = 8000;
+      let llmResult: Awaited<ReturnType<typeof llmClassify>>;
+      let llmTimedOut = false;
+      try {
+        llmResult = await Promise.race([
+          llmClassify(processedText, context),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('LLM_TIMEOUT')), LLM_TIMEOUT_MS)
+          )
+        ]);
+      } catch (timeoutErr: any) {
+        if (timeoutErr?.message === 'LLM_TIMEOUT') {
+          llmTimedOut = true;
+          console.warn(`[Intent] ⏱️ LLM timeout (${LLM_TIMEOUT_MS}ms) for: "${text.slice(0, 60)}"`);
+          // Fallback: try semantic with lower threshold, then fuzzy with relaxed scoring
+          if (config.tiers.tier3_semantic.enabled) {
+            const semanticMatcher = getSemanticMatcher();
+            if (semanticMatcher.isReady()) {
+              const relaxedSemantic = await semanticMatcher.match(processedText, 0.55);
+              if (relaxedSemantic) {
+                console.log(`[Intent] ⏱️ Timeout fallback → semantic: ${relaxedSemantic.intent} (${(relaxedSemantic.score * 100).toFixed(0)}%)`);
+                return {
+                  category: relaxedSemantic.intent as any,
+                  confidence: relaxedSemantic.score * 0.85,
+                  entities: {},
+                  source: 'semantic',
+                  matchedExample: relaxedSemantic.matchedExample,
+                  detectedLanguage: detectedLang
+                };
+              }
+            }
+          }
+          if (fuzzyMatcher) {
+            const relaxedFuzzy = fuzzyMatcher.matchWithContext(processedText, [], null, undefined);
+            if (relaxedFuzzy && relaxedFuzzy.score >= 0.55) {
+              console.log(`[Intent] ⏱️ Timeout fallback → fuzzy: ${relaxedFuzzy.intent} (${(relaxedFuzzy.score * 100).toFixed(0)}%)`);
+              return {
+                category: relaxedFuzzy.intent as any,
+                confidence: relaxedFuzzy.score * 0.85,
+                entities: {},
+                source: 'fuzzy',
+                matchedKeyword: relaxedFuzzy.matchedKeyword,
+                detectedLanguage: detectedLang
+              };
+            }
+          }
+          // Multi-intent split as last resort
+          const splitResult = await tryMultiIntentSplit(text, history, lastIntent, detectedLang, config);
+          if (splitResult) return splitResult;
+          return { category: 'unknown', confidence: 0, entities: {}, source: 'llm', detectedLanguage: detectedLang };
+        }
+        throw timeoutErr; // Re-throw non-timeout errors
+      }
 
       // Map generic LLM intent names to specific defined intents
-      const mappedCategory = mapLLMIntentToSpecific(llmResult.category, text);
+      const mappedCategory = mapLLMIntentToSpecific(llmResult.category, processedText);
 
       if (mappedCategory !== llmResult.category) {
         console.log(
@@ -479,6 +732,12 @@ export async function classifyMessageWithContext(
         );
       }
 
+      // If LLM returned unknown with low confidence, try multi-intent splitting
+      if (mappedCategory === 'unknown' && llmResult.confidence < 0.3) {
+        const splitResult = await tryMultiIntentSplit(text, history, lastIntent, detectedLang, config);
+        if (splitResult) return splitResult;
+      }
+
       return {
         ...llmResult,
         category: mappedCategory as any,
@@ -487,6 +746,9 @@ export async function classifyMessageWithContext(
       };
     } catch (error) {
       console.error('[Intent] LLM classification failed:', error);
+      // On LLM failure, try multi-intent splitting as last resort
+      const splitResult = await tryMultiIntentSplit(text, history, lastIntent, detectedLang, config);
+      if (splitResult) return splitResult;
       return {
         category: 'unknown',
         confidence: 0,

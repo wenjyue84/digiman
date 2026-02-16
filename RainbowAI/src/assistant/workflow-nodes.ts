@@ -51,7 +51,7 @@ export interface WhatsAppSendNodeConfig {
 
 /** Config for 'pelangi_api' node — calls Pelangi Manager API at port 5000 */
 export interface PelangiApiNodeConfig {
-  action: 'check_availability' | 'create_checkin_link' | 'book_capsule';
+  action: 'check_availability' | 'check_lower_deck' | 'create_checkin_link' | 'book_capsule';
   params?: Record<string, string>; // Template variables for API params
 }
 
@@ -129,9 +129,44 @@ export interface NodeWorkflowState {
 // ============================================================================
 
 /**
+ * Strip `@s.whatsapp.net` suffix and `+` prefix from a phone number,
+ * then format as a clickable WhatsApp link: https://wa.me/[number]
+ *
+ * Example: "+601139751613@s.whatsapp.net" → "https://wa.me/601139751613"
+ * Example: "+60127088789" → "https://wa.me/60127088789"
+ */
+export function formatPhoneAsWaLink(phone: string): string {
+  if (!phone) return '';
+  // Strip @s.whatsapp.net suffix
+  let clean = phone.replace(/@s\.whatsapp\.net$/i, '');
+  // Strip leading +
+  clean = clean.replace(/^\+/, '');
+  // Strip non-digit characters (except for the number itself)
+  clean = clean.replace(/[^0-9]/g, '');
+  if (!clean) return phone;
+  return 'https://wa.me/' + clean;
+}
+
+/**
+ * Convert raw phone numbers in message text to clickable wa.me links.
+ * Matches patterns like +60127088789 (with optional parentheses around them).
+ * Only converts numbers that look like international phone numbers (+ followed by 10-15 digits).
+ */
+export function convertRawPhonesToLinks(text: string): string {
+  // Match +XX... phone numbers (10-15 digits after +), optionally wrapped in parens
+  // e.g. "+60127088789", "(+60127088789)"
+  return text.replace(/\(?(\+\d{10,15})\)?/g, (match, phone) => {
+    const clean = phone.replace(/^\+/, '');
+    return 'https://wa.me/' + clean;
+  });
+}
+
+/**
  * Resolve template variables in a string.
- * Supports: {{guest.name}}, {{guest.phone}}, {{system.admin_phone}},
+ * Supports: {{guest.name}}, {{guest.phone}}, {{guest.phone_link}}, {{system.admin_phone}},
  * {{workflow.data.varName}}, {{pelangi.field}}, {{node.outputField}}
+ *
+ * Phone numbers in message content are rendered as clickable wa.me links.
  */
 export function resolveTemplateVars(
   template: string,
@@ -148,11 +183,14 @@ export function resolveTemplateVars(
 
   // {{guest.*}} variables
   result = result.replace(/\{\{guest\.name\}\}/g, context.pushName || 'Guest');
-  result = result.replace(/\{\{guest\.phone\}\}/g, context.phone || '');
+  // {{guest.phone_link}} — explicit clickable wa.me link
+  result = result.replace(/\{\{guest\.phone_link\}\}/g, formatPhoneAsWaLink(context.phone || ''));
+  // {{guest.phone}} — render as clickable wa.me link in message content
+  result = result.replace(/\{\{guest\.phone\}\}/g, formatPhoneAsWaLink(context.phone || ''));
   result = result.replace(/\{\{guest\.language\}\}/g, context.language || 'en');
 
-  // {{system.*}} variables
-  result = result.replace(/\{\{system\.admin_phone\}\}/g, context.adminPhone || '+60127088789');
+  // {{system.*}} variables — admin phone as clickable wa.me link in message content
+  result = result.replace(/\{\{system\.admin_phone\}\}/g, formatPhoneAsWaLink(context.adminPhone || '+60127088789'));
 
   // {{workflow.data.*}} variables (from wait_reply collected data)
   result = result.replace(/\{\{workflow\.data\.(\w+)\}\}/g, (_, key) => {
@@ -169,12 +207,16 @@ export function resolveTemplateVars(
     return context.nodeOutputs[key] ?? '';
   });
 
+  // Post-process: convert any remaining raw phone numbers to wa.me links
+  result = convertRawPhonesToLinks(result);
+
   return result;
 }
 
 /**
  * Resolve a template variable reference to its actual value.
  * Used for receiver/sender fields in whatsapp_send nodes.
+ * Returns RAW phone numbers (not wa.me links) for use as WhatsApp recipients.
  */
 export function resolveVariableRef(
   ref: string,
@@ -186,9 +228,17 @@ export function resolveVariableRef(
     adminPhone?: string;
   }
 ): string {
-  // Direct template variable
+  // Direct template variable — resolve WITHOUT wa.me link formatting
+  if (ref === '{{guest.phone}}') {
+    return context.phone || '';
+  }
+  if (ref === '{{system.admin_phone}}') {
+    return context.adminPhone || '+60127088789';
+  }
   if (ref.startsWith('{{') && ref.endsWith('}}')) {
-    return resolveTemplateVars(ref, context);
+    // For other template vars, use resolveTemplateVars but strip any wa.me prefix
+    const resolved = resolveTemplateVars(ref, context);
+    return resolved;
   }
   // Literal value (phone number string)
   return ref;

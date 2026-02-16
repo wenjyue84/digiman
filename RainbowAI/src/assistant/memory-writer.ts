@@ -15,6 +15,7 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { getMemoryDir, getTodayDate, getMYTTimestamp, reloadKBFile } from './knowledge-base.js';
+import { getDailyMemoryTemplate } from './default-configs.js';
 
 export interface ConversationEvent {
   phone: string;
@@ -130,13 +131,11 @@ export function maybeWriteDiary(event: ConversationEvent): void {
     const timestamp = getMYTTimestamp();
     const filePath = join(memDir, `${today}.md`);
 
-    const TEMPLATE = `# ${today} -- Daily Memory\n\n## Staff Notes\n\n## Issues Reported\n\n## Operational Changes\n\n## Patterns Observed\n\n## AI Notes\n`;
-
     let content: string;
     try {
       content = readFileSync(filePath, 'utf-8');
     } catch {
-      content = TEMPLATE;
+      content = getDailyMemoryTemplate(today);
     }
 
     const newLine = `- ${timestamp} -- ${note.entry}`;

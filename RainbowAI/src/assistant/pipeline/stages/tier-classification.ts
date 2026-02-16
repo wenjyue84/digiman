@@ -21,6 +21,7 @@ export interface ClassificationResult {
   model?: string;
   responseTime?: number;
   detectedLanguage?: string;
+  entities?: Record<string, string>;
 }
 
 interface ClassificationInput {
@@ -102,6 +103,7 @@ async function classifyTieredPipeline(
       model: 'none (tiered)',
       responseTime: classifyTime,
       detectedLanguage: tierResult.detectedLanguage,
+      entities: tierResult.entities,
     };
   }
 
@@ -128,6 +130,7 @@ async function classifyTieredPipeline(
       model: replyResult.model,
       responseTime: classifyTime + (replyResult.responseTime || 0),
       detectedLanguage: tierResult.detectedLanguage,
+      entities: tierResult.entities,
     };
   }
 
@@ -144,6 +147,7 @@ async function classifyTieredPipeline(
     model: llmResult.model,
     responseTime: classifyTime + (llmResult.responseTime || 0),
     detectedLanguage: tierResult.detectedLanguage,
+    entities: tierResult.entities,
   };
 }
 

@@ -21,9 +21,39 @@ export type { AIAction } from './schemas.js';
 export interface AIResponse extends ZodAIResponse {
   model?: string;
   responseTime?: number;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
 }
 
 const VALID_ACTIONS = aiResponseActionSchema.options;
+
+// ─── Static fallback messages (trilingual) ────────────────────────
+// Used when ALL LLMs fail or for unknown/gibberish input
+// Reads from settings.json (unknownFallback) if configured, otherwise uses defaults
+
+const DEFAULT_FALLBACK_MESSAGES = {
+  en: "I'm sorry, I didn't quite understand that. Could you rephrase your question? I can help with bookings, check-in/out, amenities, and general hostel information.",
+  ms: "Maaf, saya tidak faham mesej anda. Boleh anda tulis semula soalan anda? Saya boleh bantu dengan tempahan, daftar masuk/keluar, kemudahan, dan maklumat am hostel.",
+  zh: "抱歉，我没有理解您的意思。您能重新表述一下您的问题吗？我可以帮助您处理预订、入住/退房、设施和旅舍的一般信息。"
+} as const;
+
+export function getUnknownFallbackMessages(): Record<string, string> {
+  const settings = configStore.getSettings();
+  const custom = (settings as any)?.unknownFallback;
+  if (custom && (custom.en || custom.ms || custom.zh)) {
+    return {
+      en: custom.en || DEFAULT_FALLBACK_MESSAGES.en,
+      ms: custom.ms || DEFAULT_FALLBACK_MESSAGES.ms,
+      zh: custom.zh || DEFAULT_FALLBACK_MESSAGES.zh,
+    };
+  }
+  return { ...DEFAULT_FALLBACK_MESSAGES };
+}
+
+export const UNKNOWN_FALLBACK_MESSAGES = DEFAULT_FALLBACK_MESSAGES;
 
 // ─── Chat (simple prompt → response) ────────────────────────────────
 
@@ -79,23 +109,25 @@ export async function classifyAndRespond(
 
     const aiCfg = getAISettings();
     const startTime = Date.now();
-    const { content, provider } = await chatWithFallback(messages, aiCfg.max_chat_tokens, aiCfg.chat_temperature, true);
+    const { content, provider, usage } = await chatWithFallback(messages, aiCfg.max_chat_tokens, aiCfg.chat_temperature, true);
     const responseTime = Date.now() - startTime;
 
     if (content) {
       const result = parseAIResponse(content);
       result.model = provider?.name || provider?.model || 'unknown';
       result.responseTime = responseTime;
+      result.usage = usage;
       return result;
     }
 
-    return { intent: 'unknown', action: 'reply', response: '', confidence: 0, model: 'failed', responseTime };
+    console.warn('[AI] classifyAndRespond: all LLMs failed, using static fallback (all_llm_failed)');
+    return { intent: 'unknown', action: 'reply', response: UNKNOWN_FALLBACK_MESSAGES.en, confidence: 0, model: 'all_llm_failed', responseTime };
   } catch (err: any) {
     console.error('[AI] classifyAndRespond error:', err);
     return {
       intent: 'unknown',
       action: 'reply',
-      response: 'I apologize, but I encountered an error processing your message. Please try again or contact staff.',
+      response: UNKNOWN_FALLBACK_MESSAGES.en,
       confidence: 0,
       model: 'error',
       responseTime: 0
@@ -218,12 +250,13 @@ export async function classifyAndRespondWithSmartFallback(
     }
   }
 
-  console.error('[AI] Smart fallback exhausted all providers');
+  console.error('[AI] Smart fallback exhausted all providers (all_llm_failed)');
   return {
     intent: 'unknown',
     action: 'reply',
-    response: '',
+    response: UNKNOWN_FALLBACK_MESSAGES.en,
     confidence: 0,
+    model: 'all_llm_failed',
     responseTime: Date.now() - startTime
   };
 }
@@ -298,7 +331,8 @@ Respond with ONLY valid JSON: {"response":"<your reply>", "confidence": 0.0-1.0}
     }
   }
 
-  return { response: '', confidence: 0, model: 'failed', responseTime };
+  console.warn('[AI] generateReplyOnly: all LLMs failed, using static fallback');
+  return { response: UNKNOWN_FALLBACK_MESSAGES.en, confidence: 0, model: 'all_llm_failed', responseTime };
 }
 
 // ─── Response Parsing ───────────────────────────────────────────────

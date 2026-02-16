@@ -135,7 +135,7 @@ async function aiBookingResponse(
   const langName = lang === 'ms' ? 'Malay' : lang === 'zh' ? 'Chinese' : 'English';
   const prompt = `You are Rainbow, a warm and helpful AI booking assistant for Pelangi Capsule Hostel in Johor Bahru.
 ${context}
-Reply naturally and conversationally in ${langName}. Keep under 400 chars. Sign off as "— Rainbow 🌈".`;
+Reply naturally and conversationally in ${langName}. Keep under 400 chars. Sign off as "— Rainbow \u{1F308}".`;
 
   try {
     return await chat(prompt, history.slice(-10), userMessage);
@@ -144,7 +144,340 @@ Reply naturally and conversationally in ${langName}. Keep under 400 chars. Sign 
   }
 }
 
-// ─── Main Booking Handler ───────────────────────────────────────────
+// ─── Pure Helpers ───────────────────────────────────────────────────
+
+/** Parse check-in/check-out from user input using regex splitting as fallback. */
+function parseCheckInOut(input: string): { checkIn: string | null; checkOut: string | null } {
+  const parts = input.split(/\s+(?:to|until|til|sampai)\s+|(?:\u5230)|(?:\s+~\s+)/i);
+  const checkIn = parseDate(parts[0]);
+  const checkOut = parts.length > 1 ? parseDate(parts[1]) : null;
+  return { checkIn, checkOut };
+}
+
+/** Build a localized booking confirmation message. */
+function buildConfirmMessage(
+  checkIn: string,
+  checkOut: string,
+  guests: number,
+  priceText: string,
+  lang: Language,
+  withRainbowSign: boolean
+): string {
+  const sign = withRainbowSign ? ' \u2014 Rainbow \u{1F308}' : '';
+  const msgs: Record<Language, string> = {
+    en: `*Booking Summary*\n\n\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}\n\u{1F465} ${guests} guest${guests > 1 ? 's' : ''}\n\n${priceText}\n\nReply *yes* to confirm or *cancel* to cancel.${sign}`,
+    ms: `*Ringkasan Tempahan*\n\n\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}\n\u{1F465} ${guests} tetamu\n\n${priceText}\n\nBalas *ya* untuk sahkan atau *batal* untuk membatalkan.${sign}`,
+    zh: `*\u9884\u8BA2\u6458\u8981*\n\n\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}\n\u{1F465} ${guests}\u4F4D\u5BA2\u4EBA\n\n${priceText}\n\n\u56DE\u590D *\u662F* \u786E\u8BA4\u6216 *\u53D6\u6D88* \u53D6\u6D88\u3002${sign}`
+  };
+  return msgs[lang];
+}
+
+/** Build the "dates confirmed, how many guests?" response. */
+function buildDatesConfirmedResponse(
+  checkIn: string,
+  checkOut: string,
+  priceText: string,
+  lang: Language
+): string {
+  return [
+    `\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}`,
+    '',
+    priceText,
+    '',
+    getTemplate('booking_guests', lang)
+  ].join('\n');
+}
+
+// ─── Stage Handlers ─────────────────────────────────────────────────
+
+async function handleCancelAttempt(
+  state: BookingState,
+  input: string,
+  lang: Language,
+  conversationHistory: ChatMessage[]
+): Promise<BookingStepResult> {
+  const aiSave = await aiBookingResponse(
+    "The guest wants to cancel their booking. Ask them why (genuinely curious, not pushy). Suggest maybe different dates would work, or mention our advantages: RM45/night, free WiFi, aircon capsules, shared kitchen, great Taman Pelangi location. Try ONE gentle save attempt. If they already gave a reason, acknowledge it warmly and let them go.",
+    input,
+    lang,
+    conversationHistory
+  );
+
+  return {
+    response: aiSave || getTemplate('booking_cancelled', lang),
+    newState: { ...state, stage: 'save_sale' }
+  };
+}
+
+async function handleInquiryStage(
+  state: BookingState,
+  input: string,
+  lang: Language,
+  conversationHistory: ChatMessage[]
+): Promise<BookingStepResult> {
+  const extraction = await aiExtractBookingInfo(input, conversationHistory);
+
+  // If AI extracted both dates, skip ahead
+  if (extraction?.checkIn && extraction.checkOut) {
+    const ciDate = new Date(extraction.checkIn);
+    const coDate = new Date(extraction.checkOut);
+
+    if (coDate <= ciDate) {
+      return {
+        response: getTemplate('booking_start', lang),
+        newState: { ...state, stage: 'dates' }
+      };
+    }
+
+    const breakdown = calculatePrice(extraction.checkIn, extraction.checkOut, extraction.guests);
+    const priceText = formatPriceBreakdown(breakdown, lang);
+
+    // Got dates + guests => jump to confirm
+    if (extraction.guests) {
+      return {
+        response: buildConfirmMessage(extraction.checkIn, extraction.checkOut, extraction.guests, priceText, lang, true),
+        newState: {
+          ...state,
+          stage: 'confirm',
+          checkIn: extraction.checkIn,
+          checkOut: extraction.checkOut,
+          guests: extraction.guests,
+          priceBreakdown: breakdown
+        }
+      };
+    }
+
+    // Got dates but no guest count
+    return {
+      response: buildDatesConfirmedResponse(extraction.checkIn, extraction.checkOut, priceText, lang),
+      newState: {
+        ...state,
+        stage: 'guests',
+        checkIn: extraction.checkIn,
+        checkOut: extraction.checkOut,
+        priceBreakdown: breakdown
+      }
+    };
+  }
+
+  // No dates extracted -- ask conversationally
+  const aiResponse = await aiBookingResponse(
+    "The guest wants to book a capsule. Ask them when they'd like to check in and for how many nights. Be warm and natural \u2014 don't say 'please use format X'. Just ask conversationally like 'When are you planning to arrive?' Mention we have capsules from RM45/night.",
+    input,
+    lang,
+    conversationHistory
+  );
+
+  return {
+    response: aiResponse || getTemplate('booking_start', lang),
+    newState: {
+      ...state,
+      stage: 'dates',
+      guests: extraction?.guests,
+      checkIn: extraction?.checkIn,
+      checkOut: extraction?.checkOut
+    }
+  };
+}
+
+async function handleDatesStage(
+  state: BookingState,
+  input: string,
+  lang: Language,
+  conversationHistory: ChatMessage[]
+): Promise<BookingStepResult> {
+  const extraction = await aiExtractBookingInfo(input, conversationHistory);
+
+  let checkIn = extraction?.checkIn || state.checkIn || null;
+  let checkOut = extraction?.checkOut || state.checkOut || null;
+  const guests = extraction?.guests ?? state.guests;
+
+  // Regex fallback only if AI didn't find a date
+  if (!checkIn && !extraction?.checkIn) {
+    const parsed = parseCheckInOut(input);
+    checkIn = parsed.checkIn;
+    if (parsed.checkOut) checkOut = parsed.checkOut;
+  }
+
+  // Merge extracted guests into state for downstream use
+  const updatedState = extraction?.guests
+    ? { ...state, guests: extraction.guests }
+    : state;
+
+  // Could not determine check-in -- ask again
+  if (!checkIn) {
+    const aiRetry = await aiBookingResponse(
+      "I couldn't understand the date from the guest's message. Ask them again naturally \u2014 suggest examples like 'next Friday', 'March 15', or '15/3/2026'. You MUST include the word 'check-in' or 'date' in your reply. Don't be robotic.",
+      input,
+      lang,
+      conversationHistory
+    );
+    return {
+      response: aiRetry || getTemplate('booking_start', lang),
+      newState: updatedState
+    };
+  }
+
+  // Default to 1-night stay if no check-out
+  if (!checkOut) {
+    const coDate = new Date(checkIn);
+    coDate.setDate(coDate.getDate() + 1);
+    checkOut = toLocalDateStr(coDate);
+  }
+
+  // Validate date order
+  const ciDate = new Date(checkIn);
+  const coDate = new Date(checkOut);
+  if (coDate <= ciDate) {
+    const msgs: Record<Language, string> = {
+      en: 'Check-out date must be after check-in date. Please try again.',
+      ms: 'Tarikh daftar keluar mesti selepas tarikh daftar masuk. Sila cuba lagi.',
+      zh: '\u9000\u623F\u65E5\u671F\u5FC5\u987B\u5728\u5165\u4F4F\u65E5\u671F\u4E4B\u540E\u3002\u8BF7\u91CD\u8BD5\u3002'
+    };
+    return { response: msgs[lang], newState: updatedState };
+  }
+
+  // If guests were also extracted, skip to confirm
+  if (guests && guests >= 1 && guests <= 20) {
+    const breakdown = calculatePrice(checkIn, checkOut, guests);
+    const priceText = formatPriceBreakdown(breakdown, lang);
+    return {
+      response: buildConfirmMessage(checkIn, checkOut, guests, priceText, lang, true),
+      newState: {
+        ...updatedState,
+        stage: 'confirm',
+        checkIn,
+        checkOut,
+        guests,
+        priceBreakdown: calculatePrice(checkIn, checkOut, guests)
+      }
+    };
+  }
+
+  // Dates confirmed, ask for guest count
+  const breakdown = calculatePrice(checkIn, checkOut);
+  const priceText = formatPriceBreakdown(breakdown, lang);
+
+  return {
+    response: buildDatesConfirmedResponse(checkIn, checkOut, priceText, lang),
+    newState: {
+      ...updatedState,
+      stage: 'guests',
+      checkIn,
+      checkOut,
+      priceBreakdown: breakdown
+    }
+  };
+}
+
+function handleGuestCountStage(
+  state: BookingState,
+  input: string,
+  lang: Language
+): BookingStepResult {
+  const guestCount = parseGuestCount(input);
+
+  if (!guestCount) {
+    const msgs: Record<Language, string> = {
+      en: 'Please enter the number of guests (1-20).',
+      ms: 'Sila masukkan bilangan tetamu (1-20).',
+      zh: '\u8BF7\u8F93\u5165\u5BA2\u4EBA\u4EBA\u6570\uFF081-20\u4EBA\uFF09\u3002'
+    };
+    return { response: msgs[lang], newState: state };
+  }
+
+  const breakdown = calculatePrice(state.checkIn!, state.checkOut!, guestCount);
+  const priceText = formatPriceBreakdown(breakdown, lang);
+
+  return {
+    response: buildConfirmMessage(state.checkIn!, state.checkOut!, guestCount, priceText, lang, false),
+    newState: {
+      ...state,
+      stage: 'confirm',
+      guests: guestCount,
+      priceBreakdown: breakdown
+    }
+  };
+}
+
+async function handleConfirmStage(
+  state: BookingState,
+  input: string,
+  lang: Language
+): Promise<BookingStepResult> {
+  const isConfirm = /\b(yes|ya|confirm|ok|sure|\u662F|\u786E\u8BA4|\u597D)\b/i.test(input);
+
+  if (!isConfirm) {
+    const msgs: Record<Language, string> = {
+      en: 'Please reply *yes* to confirm your booking or *cancel* to cancel.',
+      ms: 'Sila balas *ya* untuk sahkan atau *batal* untuk membatalkan.',
+      zh: '\u8BF7\u56DE\u590D *\u662F* \u786E\u8BA4\u9884\u8BA2\u6216 *\u53D6\u6D88* \u53D6\u6D88\u3002'
+    };
+    return { response: msgs[lang], newState: state };
+  }
+
+  if (callAPIFn) {
+    try {
+      await callAPIFn('POST', '/api/guest-tokens', {
+        autoAssign: true,
+        guestCount: state.guests,
+        checkIn: state.checkIn,
+        checkOut: state.checkOut,
+        source: 'whatsapp_bot'
+      });
+    } catch (err: any) {
+      console.error('[Booking] API error:', err.message);
+      const msgs: Record<Language, string> = {
+        en: 'Sorry, there was an error creating your booking. Please contact Maya at +60 17-670 1102.',
+        ms: 'Maaf, ada masalah membuat tempahan anda. Sila hubungi Maya di +60 17-670 1102.',
+        zh: '\u62B1\u6B49\uFF0C\u521B\u5EFA\u9884\u8BA2\u65F6\u51FA\u9519\u3002\u8BF7\u8054\u7CFBMaya +60 17-670 1102\u3002'
+      };
+      return { response: msgs[lang], newState: { ...state, stage: 'cancelled' } };
+    }
+  }
+
+  return {
+    response: getTemplate('booking_done', lang),
+    newState: { ...state, stage: 'done' }
+  };
+}
+
+async function handleSaveSaleStage(
+  state: BookingState,
+  input: string,
+  lang: Language,
+  conversationHistory: ChatMessage[]
+): Promise<BookingStepResult> {
+  const stillWants = /\b(ok|sure|yes|ya|alright|fine|book|proceed|\u597D|\u884C|\u662F)\b/i.test(input);
+
+  if (stillWants) {
+    const aiResume = await aiBookingResponse(
+      "The guest changed their mind and wants to continue booking. Welcome them back warmly and ask when they'd like to check in.",
+      input,
+      lang,
+      conversationHistory
+    );
+    return {
+      response: aiResume || getTemplate('booking_start', lang),
+      newState: { ...state, stage: 'dates', cancelReason: undefined }
+    };
+  }
+
+  // Accept the cancellation gracefully
+  const aiGoodbye = await aiBookingResponse(
+    "The guest has decided not to book. Accept gracefully, thank them for their interest, and let them know they're welcome anytime. Mention they can always reach out to us. Be warm, not pushy.",
+    input,
+    lang,
+    conversationHistory
+  );
+
+  return {
+    response: aiGoodbye || getTemplate('booking_cancelled', lang),
+    newState: { ...state, stage: 'cancelled', cancelReason: input }
+  };
+}
+
+// ─── Main Booking Handler (Dispatcher) ──────────────────────────────
 export async function handleBookingStep(
   state: BookingState,
   input: string,
@@ -153,305 +486,26 @@ export async function handleBookingStep(
 ): Promise<BookingStepResult> {
   // Check for cancel at any stage (except save_sale which handles it differently)
   if (isCancelMessage(input) && !['done', 'cancelled', 'save_sale'].includes(state.stage)) {
-    // Instead of immediately cancelling, enter save_sale stage
-    const aiSave = await aiBookingResponse(
-      "The guest wants to cancel their booking. Ask them why (genuinely curious, not pushy). Suggest maybe different dates would work, or mention our advantages: RM45/night, free WiFi, aircon capsules, shared kitchen, great Taman Pelangi location. Try ONE gentle save attempt. If they already gave a reason, acknowledge it warmly and let them go.",
-      input,
-      lang,
-      conversationHistory
-    );
-
-    return {
-      response: aiSave || getTemplate('booking_cancelled', lang),
-      newState: { ...state, stage: 'save_sale' }
-    };
+    return handleCancelAttempt(state, input, lang, conversationHistory);
   }
 
   switch (state.stage) {
-    case 'inquiry': {
-      // Try to extract booking info from the initial message (e.g. "book 2 capsules March 15-17")
-      const extraction = await aiExtractBookingInfo(input, conversationHistory);
-
-      if (extraction?.checkIn && extraction.checkOut) {
-        // Guest gave all date info upfront — skip to guests or confirm
-        const ciDate = new Date(extraction.checkIn);
-        const coDate = new Date(extraction.checkOut);
-        if (coDate <= ciDate) {
-          return {
-            response: getTemplate('booking_start', lang),
-            newState: { ...state, stage: 'dates' }
-          };
-        }
-
-        const breakdown = calculatePrice(extraction.checkIn, extraction.checkOut, extraction.guests);
-        const priceText = formatPriceBreakdown(breakdown, lang);
-
-        if (extraction.guests) {
-          // Got everything — jump straight to confirm
-          const confirmMsgs: Record<Language, string> = {
-            en: `*Booking Summary*\n\n\u{1F4C5} ${formatDate(extraction.checkIn, lang)} \u2192 ${formatDate(extraction.checkOut, lang)}\n\u{1F465} ${extraction.guests} guest${extraction.guests > 1 ? 's' : ''}\n\n${priceText}\n\nReply *yes* to confirm or *cancel* to cancel. \u2014 Rainbow \u{1F308}`,
-            ms: `*Ringkasan Tempahan*\n\n\u{1F4C5} ${formatDate(extraction.checkIn, lang)} \u2192 ${formatDate(extraction.checkOut, lang)}\n\u{1F465} ${extraction.guests} tetamu\n\n${priceText}\n\nBalas *ya* untuk sahkan atau *batal* untuk membatalkan. \u2014 Rainbow \u{1F308}`,
-            zh: `*\u9884\u8BA2\u6458\u8981*\n\n\u{1F4C5} ${formatDate(extraction.checkIn, lang)} \u2192 ${formatDate(extraction.checkOut, lang)}\n\u{1F465} ${extraction.guests}\u4F4D\u5BA2\u4EBA\n\n${priceText}\n\n\u56DE\u590D *\u662F* \u786E\u8BA4\u6216 *\u53D6\u6D88* \u53D6\u6D88\u3002\u2014\u2014 Rainbow \u{1F308}`
-          };
-          return {
-            response: confirmMsgs[lang],
-            newState: {
-              ...state,
-              stage: 'confirm',
-              checkIn: extraction.checkIn,
-              checkOut: extraction.checkOut,
-              guests: extraction.guests,
-              priceBreakdown: breakdown
-            }
-          };
-        }
-
-        // Got dates but no guest count
-        const guestPrompt = getTemplate('booking_guests', lang);
-        const response = [
-          `\u{1F4C5} ${formatDate(extraction.checkIn, lang)} \u2192 ${formatDate(extraction.checkOut, lang)}`,
-          '',
-          priceText,
-          '',
-          guestPrompt
-        ].join('\n');
-
-        return {
-          response,
-          newState: {
-            ...state,
-            stage: 'guests',
-            checkIn: extraction.checkIn,
-            checkOut: extraction.checkOut,
-            priceBreakdown: breakdown
-          }
-        };
-      }
-
-      // No dates extracted — ask conversationally
-      const aiResponse = await aiBookingResponse(
-        "The guest wants to book a capsule. Ask them when they'd like to check in and for how many nights. Be warm and natural — don't say 'please use format X'. Just ask conversationally like 'When are you planning to arrive?' Mention we have capsules from RM45/night.",
-        input,
-        lang,
-        conversationHistory
-      );
-
-      return {
-        response: aiResponse || getTemplate('booking_start', lang),
-        newState: {
-          ...state,
-          stage: 'dates',
-          guests: extraction?.guests,
-          checkIn: extraction?.checkIn,
-          checkOut: extraction?.checkOut
-        }
-      };
-    }
-
-    case 'dates': {
-      // Try AI extraction first, then regex fallback
-      const extraction = await aiExtractBookingInfo(input, conversationHistory);
-
-      let checkIn = extraction?.checkIn || state.checkIn || null;
-      let checkOut = extraction?.checkOut || state.checkOut || null;
-      let guests = extraction?.guests ?? state.guests;
-
-      if (!checkIn && !extraction?.checkIn) {
-        // Regex fallback only if AI didn't find a date
-        const parts = input.split(/\s+(?:to|until|til|sampai)\s+|(?:\u5230)|(?:\s+~\s+)/i);
-        checkIn = parseDate(parts[0]);
-        if (parts.length > 1) checkOut = parseDate(parts[1]);
-      }
-
-      if (extraction?.guests) {
-        state = { ...state, guests: extraction.guests };
-      }
-
-      if (!checkIn) {
-        // Ask again conversationally via AI
-        const aiRetry = await aiBookingResponse(
-          "I couldn't understand the date from the guest's message. Ask them again naturally — suggest examples like 'next Friday', 'March 15', or '15/3/2026'. You MUST include the word 'check-in' or 'date' in your reply. Don't be robotic.",
-          input,
-          lang,
-          conversationHistory
-        );
-        return {
-          response: aiRetry || getTemplate('booking_start', lang),
-          newState: state
-        };
-      }
-
-      if (!checkOut) {
-        const coDate = new Date(checkIn);
-        coDate.setDate(coDate.getDate() + 1);
-        checkOut = toLocalDateStr(coDate);
-      }
-
-      const ciDate = new Date(checkIn);
-      const coDate = new Date(checkOut);
-      if (coDate <= ciDate) {
-        const msgs: Record<Language, string> = {
-          en: 'Check-out date must be after check-in date. Please try again.',
-          ms: 'Tarikh daftar keluar mesti selepas tarikh daftar masuk. Sila cuba lagi.',
-          zh: '\u9000\u623F\u65E5\u671F\u5FC5\u987B\u5728\u5165\u4F4F\u65E5\u671F\u4E4B\u540E\u3002\u8BF7\u91CD\u8BD5\u3002'
-        };
-        return { response: msgs[lang], newState: state };
-      }
-
-      // If guests were also extracted, skip to confirm
-      if (guests && guests >= 1 && guests <= 20) {
-        const breakdown = calculatePrice(checkIn, checkOut, guests);
-        const priceText = formatPriceBreakdown(breakdown, lang);
-        const confirmMsgs: Record<Language, string> = {
-          en: `*Booking Summary*\n\n\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}\n\u{1F465} ${guests} guest${guests > 1 ? 's' : ''}\n\n${priceText}\n\nReply *yes* to confirm or *cancel* to cancel. \u2014 Rainbow \u{1F308}`,
-          ms: `*Ringkasan Tempahan*\n\n\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}\n\u{1F465} ${guests} tetamu\n\n${priceText}\n\nBalas *ya* untuk sahkan atau *batal* untuk membatalkan. \u2014 Rainbow \u{1F308}`,
-          zh: `*\u9884\u8BA2\u6458\u8981*\n\n\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}\n\u{1F465} ${guests}\u4F4D\u5BA2\u4EBA\n\n${priceText}\n\n\u56DE\u590D *\u662F* \u786E\u8BA4\u6216 *\u53D6\u6D88* \u53D6\u6D88\u3002\u2014\u2014 Rainbow \u{1F308}`
-        };
-        return {
-          response: confirmMsgs[lang],
-          newState: {
-            ...state,
-            stage: 'confirm',
-            checkIn,
-            checkOut,
-            guests,
-            priceBreakdown: calculatePrice(checkIn, checkOut, guests)
-          }
-        };
-      }
-
-      const breakdown = calculatePrice(checkIn, checkOut);
-      const priceText = formatPriceBreakdown(breakdown, lang);
-      const guestPrompt = getTemplate('booking_guests', lang);
-
-      const response = [
-        `\u{1F4C5} ${formatDate(checkIn, lang)} \u2192 ${formatDate(checkOut, lang)}`,
-        '',
-        priceText,
-        '',
-        guestPrompt
-      ].join('\n');
-
-      return {
-        response,
-        newState: {
-          ...state,
-          stage: 'guests',
-          checkIn,
-          checkOut,
-          priceBreakdown: breakdown
-        }
-      };
-    }
-
-    case 'guests': {
-      const guestCount = parseGuestCount(input);
-      if (!guestCount) {
-        const msgs: Record<Language, string> = {
-          en: 'Please enter the number of guests (1-20).',
-          ms: 'Sila masukkan bilangan tetamu (1-20).',
-          zh: '\u8BF7\u8F93\u5165\u5BA2\u4EBA\u4EBA\u6570\uFF081-20\u4EBA\uFF09\u3002'
-        };
-        return { response: msgs[lang], newState: state };
-      }
-
-      const breakdown = calculatePrice(state.checkIn!, state.checkOut!, guestCount);
-      const priceText = formatPriceBreakdown(breakdown, lang);
-
-      const confirmMsgs: Record<Language, string> = {
-        en: `*Booking Summary*\n\n\u{1F4C5} ${formatDate(state.checkIn!, lang)} \u2192 ${formatDate(state.checkOut!, lang)}\n\u{1F465} ${guestCount} guest${guestCount > 1 ? 's' : ''}\n\n${priceText}\n\nReply *yes* to confirm or *cancel* to cancel.`,
-        ms: `*Ringkasan Tempahan*\n\n\u{1F4C5} ${formatDate(state.checkIn!, lang)} \u2192 ${formatDate(state.checkOut!, lang)}\n\u{1F465} ${guestCount} tetamu\n\n${priceText}\n\nBalas *ya* untuk sahkan atau *batal* untuk membatalkan.`,
-        zh: `*\u9884\u8BA2\u6458\u8981*\n\n\u{1F4C5} ${formatDate(state.checkIn!, lang)} \u2192 ${formatDate(state.checkOut!, lang)}\n\u{1F465} ${guestCount}\u4F4D\u5BA2\u4EBA\n\n${priceText}\n\n\u56DE\u590D *\u662F* \u786E\u8BA4\u6216 *\u53D6\u6D88* \u53D6\u6D88\u3002`
-      };
-
-      return {
-        response: confirmMsgs[lang],
-        newState: {
-          ...state,
-          stage: 'confirm',
-          guests: guestCount,
-          priceBreakdown: breakdown
-        }
-      };
-    }
-
-    case 'confirm': {
-      const isConfirm = /\b(yes|ya|confirm|ok|sure|\u662F|\u786E\u8BA4|\u597D)\b/i.test(input);
-      if (!isConfirm) {
-        const msgs: Record<Language, string> = {
-          en: 'Please reply *yes* to confirm your booking or *cancel* to cancel.',
-          ms: 'Sila balas *ya* untuk sahkan atau *batal* untuk membatalkan.',
-          zh: '\u8BF7\u56DE\u590D *\u662F* \u786E\u8BA4\u9884\u8BA2\u6216 *\u53D6\u6D88* \u53D6\u6D88\u3002'
-        };
-        return { response: msgs[lang], newState: state };
-      }
-
-      if (callAPIFn) {
-        try {
-          await callAPIFn('POST', '/api/guest-tokens', {
-            autoAssign: true,
-            guestCount: state.guests,
-            checkIn: state.checkIn,
-            checkOut: state.checkOut,
-            source: 'whatsapp_bot'
-          });
-        } catch (err: any) {
-          console.error('[Booking] API error:', err.message);
-          const msgs: Record<Language, string> = {
-            en: 'Sorry, there was an error creating your booking. Please contact Maya at +60 17-670 1102.',
-            ms: 'Maaf, ada masalah membuat tempahan anda. Sila hubungi Maya di +60 17-670 1102.',
-            zh: '\u62B1\u6B49\uFF0C\u521B\u5EFA\u9884\u8BA2\u65F6\u51FA\u9519\u3002\u8BF7\u8054\u7CFBMaya +60 17-670 1102\u3002'
-          };
-          return { response: msgs[lang], newState: { ...state, stage: 'cancelled' } };
-        }
-      }
-
-      return {
-        response: getTemplate('booking_done', lang),
-        newState: { ...state, stage: 'done' }
-      };
-    }
-
-    case 'save_sale': {
-      // Guest is in save_sale stage — they cancelled and we asked why
-      // If they confirm cancellation or give a reason, gracefully let go
-      const stillWants = /\b(ok|sure|yes|ya|alright|fine|book|proceed|\u597D|\u884C|\u662F)\b/i.test(input);
-
-      if (stillWants) {
-        // They changed their mind! Resume booking
-        const aiResume = await aiBookingResponse(
-          "The guest changed their mind and wants to continue booking. Welcome them back warmly and ask when they'd like to check in.",
-          input,
-          lang,
-          conversationHistory
-        );
-        return {
-          response: aiResume || getTemplate('booking_start', lang),
-          newState: { ...state, stage: 'dates', cancelReason: undefined }
-        };
-      }
-
-      // Accept the cancellation gracefully
-      const aiGoodbye = await aiBookingResponse(
-        "The guest has decided not to book. Accept gracefully, thank them for their interest, and let them know they're welcome anytime. Mention they can always reach out to us. Be warm, not pushy.",
-        input,
-        lang,
-        conversationHistory
-      );
-
-      return {
-        response: aiGoodbye || getTemplate('booking_cancelled', lang),
-        newState: { ...state, stage: 'cancelled', cancelReason: input }
-      };
-    }
-
+    case 'inquiry':
+      return handleInquiryStage(state, input, lang, conversationHistory);
+    case 'dates':
+      return handleDatesStage(state, input, lang, conversationHistory);
+    case 'guests':
+      return handleGuestCountStage(state, input, lang);
+    case 'confirm':
+      return handleConfirmStage(state, input, lang);
+    case 'save_sale':
+      return handleSaveSaleStage(state, input, lang, conversationHistory);
     case 'done':
     case 'cancelled':
       return {
         response: getTemplate('booking_start', lang),
         newState: createBookingState()
       };
-
     default:
       return {
         response: getTemplate('booking_start', lang),

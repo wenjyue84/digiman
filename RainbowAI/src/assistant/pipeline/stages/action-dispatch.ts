@@ -110,6 +110,24 @@ async function handleStaticReply(
     logLanguageResolution('2nd repeat', lang, responseLang, result);
     state.response = result.response || context.getStaticReply(result.intent, responseLang);
     console.log(`[Dispatch] Repeat override: ${result.intent} → LLM response (2nd time)`);
+  } else if (result.entities?.multiIntent === 'true' && result.entities.allIntents) {
+    // Multi-intent: combine static replies for all detected intents
+    logLanguageResolution('multi-intent', lang, responseLang, result);
+    const intents = result.entities.allIntents.split(',');
+    const replies: string[] = [];
+    for (const intent of intents) {
+      const reply = context.getStaticReply(intent.trim(), responseLang);
+      if (reply) replies.push(reply);
+    }
+    if (replies.length >= 2) {
+      state.response = replies.join('\n\n');
+      console.log(`[Dispatch] Multi-intent combined: ${intents.join(' + ')} → ${replies.length} replies`);
+    } else {
+      // Fallback: not enough static replies, use LLM response or primary static
+      const primaryReply = context.getStaticReply(result.intent, responseLang);
+      state.response = primaryReply || result.response;
+      console.log(`[Dispatch] Multi-intent partial: only ${replies.length} static replies, using primary`);
+    }
   } else {
     logLanguageResolution('default', lang, responseLang, result);
     const staticResponse = context.getStaticReply(result.intent, responseLang);
@@ -250,7 +268,7 @@ async function handleWorkflow(
   context.trackWorkflowStarted(phone, msg.pushName, workflow.name);
   const workflowState = context.createWorkflowState(workflowId);
   const workflowResult = await context.executeWorkflowStep(
-    workflowState, null, lang, phone, msg.pushName, msg.instanceId
+    workflowState, null, { language: lang, phone, pushName: msg.pushName, instanceId: msg.instanceId }
   );
 
   if (workflowResult.newState) {
@@ -281,17 +299,29 @@ async function handleLLMReply(
   const { phone, text, convo, msg, diaryEvent } = state;
 
   state.response = result.response;
-  if (result.confidence < 0.4) {
+
+  // Track unknown intents OR low-confidence results for operator escalation
+  const isUnknownIntent = result.intent === 'unknown' || result.intent === 'unknown_intent';
+  if (isUnknownIntent || result.confidence < 0.4) {
     const unknownCount = context.incrementUnknown(phone);
     const escReason = context.shouldEscalate(null, unknownCount);
     if (escReason) {
       diaryEvent.escalated = true;
+      // Send customer-facing message about operator handoff
+      const lang = convo.language || 'en';
+      const handoffMessages: Record<string, string> = {
+        en: "I'm connecting you with our team for better assistance. A staff member will reply to you shortly.",
+        ms: "Saya menghubungkan anda dengan pasukan kami untuk bantuan yang lebih baik. Staf akan membalas anda tidak lama lagi.",
+        zh: "我正在为您联系我们的团队以提供更好的帮助。工作人员将很快回复您。"
+      };
+      state.response = handoffMessages[lang] || handoffMessages.en;
       await context.escalateToStaff({
         phone, pushName: msg.pushName, reason: escReason,
         recentMessages: convo.messages.map(m => `${m.role}: ${m.content}`),
         originalMessage: text, instanceId: msg.instanceId,
       });
       context.resetUnknown(phone);
+      console.log(`[Dispatch] Unknown escalation: ${unknownCount} consecutive unknowns → forwarded to operator`);
     }
   } else {
     context.resetUnknown(phone);

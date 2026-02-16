@@ -12,7 +12,7 @@
 
 import type { RouterContext } from './types.js';
 import type { ConversationState, ChatMessage, BookingState, IntentResult, EscalationReason } from '../types.js';
-import type { WorkflowState } from '../workflow-executor.js';
+import type { WorkflowState, WorkflowContext } from '../workflow-executor.js';
 
 /**
  * Dependency container for pipeline stages.
@@ -73,7 +73,7 @@ export interface IPipelineContext {
 
   handleBookingStep: (state: BookingState, text: string, lang: 'en' | 'ms' | 'zh', context: ChatMessage[]) => Promise<any>;
   createBookingState: () => BookingState;
-  executeWorkflowStep: (state: WorkflowState, userInput: string | null, lang: 'en' | 'ms' | 'zh', phone: string, pushName: string, instanceId?: string) => Promise<any>;
+  executeWorkflowStep: (state: WorkflowState, userInput: string | null, context: WorkflowContext) => Promise<any>;
   createWorkflowState: (workflowId: string) => WorkflowState;
   forwardWorkflowSummary: (phone: string, pushName: string, workflow: any, state: WorkflowState, instanceId?: string) => Promise<void>;
 

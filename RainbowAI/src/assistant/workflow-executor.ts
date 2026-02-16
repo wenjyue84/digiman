@@ -11,6 +11,7 @@ import type {
 } from './workflow-nodes.js';
 import {
   isNodeBasedWorkflow, getNodeById, getNextNodeId, resolveTemplateVars, resolveVariableRef,
+  convertRawPhonesToLinks,
 } from './workflow-nodes.js';
 
 // Wrapper to adapt http-client callAPI to workflow-enhancer's expected signature
@@ -41,10 +42,95 @@ export interface WorkflowExecutionResult {
   stepId?: string;      // For conversation log edit support
 }
 
+/**
+ * US-135: WorkflowContext bundles the scattered parameters of executeWorkflowStep()
+ * into a single context object. This reduces parameter count and makes the API
+ * easier to extend without breaking callers.
+ */
+export interface WorkflowContext {
+  language: string;
+  phone?: string;
+  pushName?: string;
+  instanceId?: string;
+}
+
 let sendMessageFn: SendMessageFn | null = null;
 
 export function initWorkflowExecutor(sendFn: SendMessageFn): void {
   sendMessageFn = sendFn;
+}
+
+// ─── US-089: Auto-update contact details from workflow data ───────────
+// Maps common workflow step IDs / data keys to contact fields
+const WORKFLOW_CONTACT_MAPPINGS: Record<string, string> = {
+  'check_in_date': 'checkIn',
+  'checkin_date': 'checkIn',
+  'checkin': 'checkIn',
+  'check_out_date': 'checkOut',
+  'checkout_date': 'checkOut',
+  'checkout': 'checkOut',
+  'capsule': 'unit',
+  'unit': 'unit',
+  'room': 'unit',
+  'capsule_number': 'unit',
+  'guest_name': 'name',
+  'name': 'name',
+  'email': 'email',
+};
+
+// Status transitions based on workflow ID
+const WORKFLOW_STATUS_MAP: Record<string, string> = {
+  'booking': 'Booked',
+  'book_room': 'Booked',
+  'checkin': 'Checked In',
+  'check_in': 'Checked In',
+  'checkout': 'Checked Out',
+  'check_out': 'Checked Out',
+};
+
+async function syncWorkflowDataToContact(
+  phone: string | undefined,
+  workflowId: string,
+  collectedData: Record<string, string>,
+  nodeOutputs?: Record<string, any>
+): Promise<void> {
+  if (!phone) return;
+
+  try {
+    const { updateContactDetails } = await import('./conversation-logger.js');
+    const updates: Record<string, any> = {};
+
+    // Map collected data to contact fields
+    for (const [stepId, value] of Object.entries(collectedData)) {
+      const field = WORKFLOW_CONTACT_MAPPINGS[stepId];
+      if (field && value) {
+        updates[field] = value;
+      }
+    }
+
+    // Map node outputs (from node-based workflows)
+    if (nodeOutputs) {
+      for (const [key, value] of Object.entries(nodeOutputs)) {
+        const field = WORKFLOW_CONTACT_MAPPINGS[key];
+        if (field && value) {
+          updates[field] = String(value);
+        }
+      }
+    }
+
+    // Auto-update contact status based on workflow type
+    const status = WORKFLOW_STATUS_MAP[workflowId];
+    if (status) {
+      updates.contactStatus = status;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await updateContactDetails(phone, updates);
+      console.log(`[WorkflowExecutor] US-089: Auto-updated contact for ${phone}:`, Object.keys(updates));
+    }
+  } catch (err) {
+    console.error('[WorkflowExecutor] US-089: Failed to sync contact:', err);
+  }
 }
 
 export function createWorkflowState(workflowId: string): WorkflowState {
@@ -71,11 +157,9 @@ export function createWorkflowState(workflowId: string): WorkflowState {
 export async function executeWorkflowStep(
   state: WorkflowState,
   userMessage: string | null,
-  language: string,
-  phone?: string,
-  pushName?: string,
-  instanceId?: string
+  context: WorkflowContext
 ): Promise<WorkflowExecutionResult> {
+  const { language, phone, pushName, instanceId } = context;
   const workflows = configStore.getWorkflows();
   const workflow = workflows.workflows.find(w => w.id === state.workflowId);
 
@@ -90,7 +174,7 @@ export async function executeWorkflowStep(
   const hybridWorkflow = workflow as unknown as HybridWorkflowDefinition;
   if (state.isNodeBased || isNodeBasedWorkflow(hybridWorkflow)) {
     return executeNodeWorkflowStep(
-      hybridWorkflow, state, userMessage, language, phone, pushName, instanceId
+      hybridWorkflow, state, userMessage, context
     );
   }
 
@@ -135,6 +219,8 @@ export async function executeWorkflowStep(
     const previousStep = workflow.steps[state.currentStepIndex - 1];
     if (previousStep && !previousStep.evaluation) {
       state.collectedData[previousStep.id] = userMessage;
+      // US-089: Sync collected data to contact details
+      syncWorkflowDataToContact(phone, state.workflowId, state.collectedData);
     }
   }
 
@@ -206,7 +292,7 @@ export async function executeWorkflowStep(
         // to see it potentially? Or strictly distinct?
         // Let's assume evaluation steps are invisible. The user's input triggered the evaluation.
         // The NEXT step will be the "response" to that input.
-        return executeWorkflowStep(nextState, null, language, phone, pushName, instanceId);
+        return executeWorkflowStep(nextState, null, context);
       } else {
         console.error(`[WorkflowExecutor] Evaluation target step ${nextStepId} not found!`);
       }
@@ -288,11 +374,9 @@ async function executeNodeWorkflowStep(
   workflow: HybridWorkflowDefinition,
   state: WorkflowState,
   userMessage: string | null,
-  language: string,
-  phone?: string,
-  pushName?: string,
-  instanceId?: string
+  context: WorkflowContext
 ): Promise<WorkflowExecutionResult> {
+  const { language, phone, pushName, instanceId } = context;
 
   const nodes = workflow.nodes!;
   const nodeOutputs = state.nodeOutputs || {};
@@ -303,6 +387,8 @@ async function executeNodeWorkflowStep(
     if (currentNode?.type === 'wait_reply') {
       const config = currentNode.config as WaitReplyNodeConfig;
       state.collectedData[config.storeAs] = userMessage;
+      // US-089: Sync collected data to contact details
+      syncWorkflowDataToContact(phone, state.workflowId, state.collectedData, nodeOutputs);
       // Advance to next node after wait_reply
       const nextId = getNextNodeId(currentNode);
       if (nextId) {
@@ -570,9 +656,12 @@ export async function forwardWorkflowSummary(
 function getStepMessage(step: WorkflowStep, language: string): string {
   // Support multi-language responses
   const messages = step.message;
-  if (language === 'ms' && messages.ms) return messages.ms;
-  if (language === 'zh' && messages.zh) return messages.zh;
-  return messages.en;
+  let text: string;
+  if (language === 'ms' && messages.ms) text = messages.ms;
+  else if (language === 'zh' && messages.zh) text = messages.zh;
+  else text = messages.en;
+  // Convert raw phone numbers to clickable wa.me links
+  return convertRawPhonesToLinks(text);
 }
 
 function buildConversationSummary(

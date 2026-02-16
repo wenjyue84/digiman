@@ -26,6 +26,7 @@ import {
 } from '../feedback.js';
 import { addApproval } from '../approval-queue.js';
 import { trackResponseSent } from '../../lib/activity-tracker.js';
+import { getUnknownFallbackMessages } from '../ai-response-generator.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ASSISTANT_DATA_DIR = join(__dirname, '..', 'data');
@@ -36,7 +37,12 @@ export async function processAndSend(
   const { requestId, phone, text, foreignLang, convo, lang, msg, diaryEvent, devMetadata } = state;
   let response = state.response;
 
-  if (!response) return;
+  // Catch-all fallback: if pipeline produced no response, use static fallback
+  if (!response || !response.trim()) {
+    console.warn(`[ResponseProcessor] Empty response for ${phone}, using static fallback (all_llm_failed)`);
+    const fallbacks = getUnknownFallbackMessages();
+    response = fallbacks[lang] || fallbacks.en;
+  }
 
   // ─── JSON safety: never send raw LLM JSON to guest ────────────
   response = ensureResponseText(response, lang);

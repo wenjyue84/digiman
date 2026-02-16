@@ -173,6 +173,14 @@ export const DEFAULT_ROUTING: RoutingData = {
 };
 
 /**
+ * Daily memory template. Canonical source -- also duplicated in server/routes/rainbow-kb.ts
+ * (server module cannot import from RainbowAI due to module boundary rules).
+ */
+export function getDailyMemoryTemplate(date: string): string {
+  return `# ${date} -- Daily Memory\n\n## Staff Notes\n\n## Issues Reported\n\n## Operational Changes\n\n## Patterns Observed\n\n## AI Notes\n`;
+}
+
+/**
  * Get default config for a specific file
  */
 export function getDefaultConfig(filename: string): unknown {

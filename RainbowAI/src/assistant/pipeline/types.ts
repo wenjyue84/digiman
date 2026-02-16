@@ -21,6 +21,7 @@ export interface DevMetadata {
   routedAction?: string;
   workflowId?: string;
   stepId?: string;
+  multiIntent?: string;
 }
 
 export interface PipelineState {

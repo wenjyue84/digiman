@@ -9,9 +9,17 @@
  */
 
 import { eq, desc, gt, sql, and } from 'drizzle-orm';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { db, dbReady } from '../lib/db.js';
+import { withFallback } from '../lib/with-fallback.js';
 // Import from .ts directly to bypass stale build artifacts
 import { rainbowConversations, rainbowMessages } from '../../../shared/schema-tables.ts';
+
+const __filename_cl = fileURLToPath(import.meta.url);
+const __dirname_cl = dirname(__filename_cl);
+const CONTACTS_DIR = resolve(__dirname_cl, '..', '..', '.rainbow-kb', 'contacts');
 
 // ─── Types (unchanged — callers still import these) ─────────────────
 
@@ -38,6 +46,7 @@ export interface ContactDetails {
   email?: string;
   country?: string;
   language?: string;
+  languageLocked?: boolean;
   checkIn?: string;
   checkOut?: string;
   unit?: string;
@@ -228,6 +237,11 @@ export async function logMessage(
     }
 
     invalidateListCache();
+
+    // Auto-update contact context file after assistant replies (debounced)
+    if (role === 'assistant') {
+      scheduleContextUpdate(key, pushName);
+    }
   } catch (err: any) {
     console.error(`[ConvoLogger] Failed to log message for ${phone}:`, err.message);
   }
@@ -263,7 +277,7 @@ export async function logNonTextExchange(
 // ─── List cache (same TTL approach) ─────────────────────────────────
 
 let _listCache: { data: ConversationSummary[]; ts: number } | null = null;
-const LIST_CACHE_TTL = 3_000;
+const LIST_CACHE_TTL = 10_000;
 
 function invalidateListCache(): void {
   _listCache = null;
@@ -277,328 +291,453 @@ export async function listConversations(): Promise<ConversationSummary[]> {
 
   if (!(await ensureDb())) return [];
 
-  try {
-    // Single query: join conversations with latest message + count
-    const convos = await db
-      .select()
-      .from(rainbowConversations);
-
-    const summaries: ConversationSummary[] = [];
-
-    for (const convo of convos) {
-      // Get last message
-      const lastMsgRows = await db
-        .select()
-        .from(rainbowMessages)
-        .where(eq(rainbowMessages.phone, convo.phone))
-        .orderBy(desc(rainbowMessages.timestamp))
-        .limit(1);
-
-      if (lastMsgRows.length === 0) continue;
-
-      const lastMsg = lastMsgRows[0];
-
-      // Get message count
-      const countResult = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(rainbowMessages)
-        .where(eq(rainbowMessages.phone, convo.phone));
-
-      // Get unread count (user messages after lastReadAt)
-      const lastReadAt = convo.lastReadAt;
-      let unreadCount = 0;
-      if (lastReadAt) {
-        const unreadResult = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(rainbowMessages)
-          .where(
-            and(
-              eq(rainbowMessages.phone, convo.phone),
-              eq(rainbowMessages.role, 'user'),
-              gt(rainbowMessages.timestamp, lastReadAt)
+  return withFallback(
+    async () => {
+      // Single query with LATERAL JOINs — eliminates N+1 problem
+      // NOTE: db.execute(sql``) returns raw PG column names (snake_case), NOT Drizzle camelCase
+      const result = await db.execute(sql`
+        SELECT
+          c.phone,
+          c.push_name,
+          c.instance_id,
+          c.pinned,
+          c.favourite,
+          c.created_at,
+          c.last_read_at,
+          lm.content   AS last_msg_content,
+          lm.role       AS last_msg_role,
+          lm.timestamp  AS last_msg_at,
+          COALESCE(mc.total, 0)::int  AS message_count,
+          COALESCE(uc.unread, 0)::int AS unread_count
+        FROM rainbow_conversations c
+        LEFT JOIN LATERAL (
+          SELECT content, role, timestamp
+          FROM rainbow_messages
+          WHERE phone = c.phone
+          ORDER BY timestamp DESC
+          LIMIT 1
+        ) lm ON true
+        LEFT JOIN LATERAL (
+          SELECT count(*)::int AS total
+          FROM rainbow_messages
+          WHERE phone = c.phone
+        ) mc ON true
+        LEFT JOIN LATERAL (
+          SELECT count(*)::int AS unread
+          FROM rainbow_messages
+          WHERE phone = c.phone
+            AND role = 'user'
+            AND (
+              c.last_read_at IS NULL
+              OR timestamp > c.last_read_at
             )
-          );
-        unreadCount = Number(unreadResult[0]?.count ?? 0);
-      } else {
-        // No read marker → all user messages are unread
-        const unreadResult = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(rainbowMessages)
-          .where(
-            and(
-              eq(rainbowMessages.phone, convo.phone),
-              eq(rainbowMessages.role, 'user')
-            )
-          );
-        unreadCount = Number(unreadResult[0]?.count ?? 0);
-      }
+        ) uc ON true
+        WHERE lm.content IS NOT NULL
+        ORDER BY lm.timestamp DESC
+      `);
+      const rows: any[] = result.rows;
 
-      summaries.push({
-        phone: convo.phone,
-        pushName: convo.pushName,
-        instanceId: convo.instanceId ?? undefined,
-        lastMessage: lastMsg.content.slice(0, 100),
-        lastMessageRole: lastMsg.role as 'user' | 'assistant',
-        lastMessageAt: lastMsg.timestamp.getTime(),
-        messageCount: Number(countResult[0]?.count ?? 0),
-        unreadCount,
-        pinned: convo.pinned,
-        favourite: convo.favourite,
-        createdAt: convo.createdAt.getTime(),
-      });
-    }
-
-    summaries.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
-    _listCache = { data: summaries, ts: Date.now() };
-    return summaries;
-  } catch (err: any) {
-    console.error('[ConvoLogger] Failed to list conversations:', err.message);
-    return [];
-  }
+      const summaries: ConversationSummary[] = rows.map((r: any) => ({
+        phone: r.phone,
+        pushName: r.push_name,
+        instanceId: r.instance_id ?? undefined,
+        lastMessage: (r.last_msg_content || '').slice(0, 100),
+        lastMessageRole: r.last_msg_role as 'user' | 'assistant',
+        lastMessageAt: r.last_msg_at instanceof Date
+          ? r.last_msg_at.getTime()
+          : new Date(r.last_msg_at).getTime(),
+        messageCount: Number(r.message_count ?? 0),
+        unreadCount: Number(r.unread_count ?? 0),
+        pinned: r.pinned,
+        favourite: r.favourite,
+        createdAt: r.created_at instanceof Date
+          ? r.created_at.getTime()
+          : new Date(r.created_at).getTime(),
+      }));
+      _listCache = { data: summaries, ts: Date.now() };
+      return summaries;
+    },
+    async () => [],
+    '[ConvoLogger] listConversations'
+  );
 }
 
 /** Get full conversation log for a phone number */
 export async function getConversation(phone: string): Promise<ConversationLog | null> {
   if (!(await ensureDb())) return null;
 
-  try {
-    const key = canonicalPhoneKey(phone);
+  return withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
 
-    const convoRows = await db
-      .select()
-      .from(rainbowConversations)
-      .where(eq(rainbowConversations.phone, key))
-      .limit(1);
+      const convoRows = await db
+        .select()
+        .from(rainbowConversations)
+        .where(eq(rainbowConversations.phone, key))
+        .limit(1);
 
-    if (convoRows.length === 0) return null;
-    const convo = convoRows[0];
+      if (convoRows.length === 0) return null;
+      const convo = convoRows[0];
 
-    // Get all messages ordered by timestamp
-    const msgRows = await db
-      .select()
-      .from(rainbowMessages)
-      .where(eq(rainbowMessages.phone, key))
-      .orderBy(rainbowMessages.timestamp);
+      // Get all messages ordered by timestamp
+      const msgRows = await db
+        .select()
+        .from(rainbowMessages)
+        .where(eq(rainbowMessages.phone, key))
+        .orderBy(rainbowMessages.timestamp);
 
-    const messages = msgRows.map(rowToMessage);
+      const messages = msgRows.map(rowToMessage);
 
-    let contactDetails: ContactDetails | undefined;
-    if (convo.contactDetailsJson) {
-      try { contactDetails = JSON.parse(convo.contactDetailsJson); } catch { /* ignore */ }
-    }
+      let contactDetails: ContactDetails | undefined;
+      if (convo.contactDetailsJson) {
+        try { contactDetails = JSON.parse(convo.contactDetailsJson); } catch { /* ignore */ }
+      }
 
-    return {
-      phone: convo.phone,
-      pushName: convo.pushName,
-      instanceId: convo.instanceId ?? undefined,
-      messages,
-      contactDetails,
-      pinned: convo.pinned,
-      favourite: convo.favourite,
-      lastReadAt: convo.lastReadAt?.getTime(),
-      responseMode: convo.responseMode ?? undefined,
-      createdAt: convo.createdAt.getTime(),
-      updatedAt: convo.updatedAt.getTime(),
-    };
-  } catch (err: any) {
-    console.error(`[ConvoLogger] Failed to get conversation for ${phone}:`, err.message);
-    return null;
-  }
+      return {
+        phone: convo.phone,
+        pushName: convo.pushName,
+        instanceId: convo.instanceId ?? undefined,
+        messages,
+        contactDetails,
+        pinned: convo.pinned,
+        favourite: convo.favourite,
+        lastReadAt: convo.lastReadAt?.getTime(),
+        responseMode: convo.responseMode ?? undefined,
+        createdAt: convo.createdAt.getTime(),
+        updatedAt: convo.updatedAt.getTime(),
+      };
+    },
+    async () => null,
+    `[ConvoLogger] getConversation(${phone})`
+  );
 }
 
 /** Mark conversation as read */
 export async function markConversationAsRead(phone: string): Promise<void> {
   if (!(await ensureDb())) return;
 
-  try {
-    const key = canonicalPhoneKey(phone);
-    await db
-      .update(rainbowConversations)
-      .set({ lastReadAt: new Date(), updatedAt: new Date() })
-      .where(eq(rainbowConversations.phone, key));
-    invalidateListCache();
-  } catch (err: any) {
-    console.error(`[ConvoLogger] markConversationAsRead failed for ${phone}:`, err.message);
-  }
+  await withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
+      await db
+        .update(rainbowConversations)
+        .set({ lastReadAt: new Date(), updatedAt: new Date() })
+        .where(eq(rainbowConversations.phone, key));
+      invalidateListCache();
+    },
+    async () => {},
+    `[ConvoLogger] markConversationAsRead(${phone})`
+  );
 }
 
 /** Delete a conversation log */
 export async function deleteConversation(phone: string): Promise<boolean> {
   if (!(await ensureDb())) return false;
 
-  try {
-    const key = canonicalPhoneKey(phone);
+  return withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
 
-    // Delete messages first (no FK constraint, but good practice)
-    await db.delete(rainbowMessages).where(eq(rainbowMessages.phone, key));
-    const result = await db.delete(rainbowConversations).where(eq(rainbowConversations.phone, key));
+      // Delete messages first (no FK constraint, but good practice)
+      await db.delete(rainbowMessages).where(eq(rainbowMessages.phone, key));
+      await db.delete(rainbowConversations).where(eq(rainbowConversations.phone, key));
 
-    invalidateListCache();
-    return true;
-  } catch (err: any) {
-    console.error(`[ConvoLogger] deleteConversation failed for ${phone}:`, err.message);
-    return false;
-  }
+      invalidateListCache();
+      return true;
+    },
+    async () => false,
+    `[ConvoLogger] deleteConversation(${phone})`
+  );
+}
+
+export async function clearConversationMessages(phone: string): Promise<boolean> {
+  if (!(await ensureDb())) return false;
+
+  return withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
+      await db.delete(rainbowMessages).where(eq(rainbowMessages.phone, key));
+      invalidateListCache();
+      return true;
+    },
+    async () => false,
+    `[ConvoLogger] clearConversationMessages(${phone})`
+  );
 }
 
 /** Toggle pin state for a conversation */
 export async function togglePin(phone: string): Promise<boolean> {
   if (!(await ensureDb())) return false;
 
-  try {
-    const key = canonicalPhoneKey(phone);
-    const rows = await db
-      .select({ pinned: rainbowConversations.pinned })
-      .from(rainbowConversations)
-      .where(eq(rainbowConversations.phone, key))
-      .limit(1);
+  return withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
+      const rows = await db
+        .select({ pinned: rainbowConversations.pinned })
+        .from(rainbowConversations)
+        .where(eq(rainbowConversations.phone, key))
+        .limit(1);
 
-    if (rows.length === 0) return false;
-    const newPinned = !rows[0].pinned;
+      if (rows.length === 0) return false;
+      const newPinned = !rows[0].pinned;
 
-    await db
-      .update(rainbowConversations)
-      .set({ pinned: newPinned, updatedAt: new Date() })
-      .where(eq(rainbowConversations.phone, key));
+      await db
+        .update(rainbowConversations)
+        .set({ pinned: newPinned, updatedAt: new Date() })
+        .where(eq(rainbowConversations.phone, key));
 
-    invalidateListCache();
-    return newPinned;
-  } catch (err: any) {
-    console.error(`[ConvoLogger] togglePin failed for ${phone}:`, err.message);
-    return false;
-  }
+      invalidateListCache();
+      return newPinned;
+    },
+    async () => false,
+    `[ConvoLogger] togglePin(${phone})`
+  );
 }
 
 /** Toggle favourite state for a conversation */
 export async function toggleFavourite(phone: string): Promise<boolean> {
   if (!(await ensureDb())) return false;
 
-  try {
-    const key = canonicalPhoneKey(phone);
-    const rows = await db
-      .select({ favourite: rainbowConversations.favourite })
-      .from(rainbowConversations)
-      .where(eq(rainbowConversations.phone, key))
-      .limit(1);
+  return withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
+      const rows = await db
+        .select({ favourite: rainbowConversations.favourite })
+        .from(rainbowConversations)
+        .where(eq(rainbowConversations.phone, key))
+        .limit(1);
 
-    if (rows.length === 0) return false;
-    const newFav = !rows[0].favourite;
+      if (rows.length === 0) return false;
+      const newFav = !rows[0].favourite;
 
-    await db
-      .update(rainbowConversations)
-      .set({ favourite: newFav, updatedAt: new Date() })
-      .where(eq(rainbowConversations.phone, key));
+      await db
+        .update(rainbowConversations)
+        .set({ favourite: newFav, updatedAt: new Date() })
+        .where(eq(rainbowConversations.phone, key));
 
-    invalidateListCache();
-    return newFav;
-  } catch (err: any) {
-    console.error(`[ConvoLogger] toggleFavourite failed for ${phone}:`, err.message);
-    return false;
-  }
+      invalidateListCache();
+      return newFav;
+    },
+    async () => false,
+    `[ConvoLogger] toggleFavourite(${phone})`
+  );
 }
 
 /** Get contact details for a phone number */
 export async function getContactDetails(phone: string): Promise<ContactDetails> {
   if (!(await ensureDb())) return {};
 
-  try {
-    const key = canonicalPhoneKey(phone);
-    const rows = await db
-      .select({ json: rainbowConversations.contactDetailsJson })
-      .from(rainbowConversations)
-      .where(eq(rainbowConversations.phone, key))
-      .limit(1);
+  return withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
+      const rows = await db
+        .select({ json: rainbowConversations.contactDetailsJson })
+        .from(rainbowConversations)
+        .where(eq(rainbowConversations.phone, key))
+        .limit(1);
 
-    if (rows.length === 0 || !rows[0].json) return {};
-    return JSON.parse(rows[0].json);
-  } catch (err: any) {
-    console.error(`[ConvoLogger] getContactDetails failed for ${phone}:`, err.message);
-    return {};
-  }
+      if (rows.length === 0 || !rows[0].json) return {};
+      return JSON.parse(rows[0].json);
+    },
+    async () => ({}),
+    `[ConvoLogger] getContactDetails(${phone})`
+  );
 }
 
 /** Merge partial contact details update for a phone number */
 export async function updateContactDetails(phone: string, partial: Partial<ContactDetails>): Promise<ContactDetails> {
   if (!(await ensureDb())) return {};
 
-  try {
-    const key = canonicalPhoneKey(phone);
+  return withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
 
-    // Ensure conversation exists
-    await db
-      .insert(rainbowConversations)
-      .values({ phone: key, pushName: '', createdAt: new Date(), updatedAt: new Date() })
-      .onConflictDoNothing();
+      // Ensure conversation exists
+      await db
+        .insert(rainbowConversations)
+        .values({ phone: key, pushName: '', createdAt: new Date(), updatedAt: new Date() })
+        .onConflictDoNothing();
 
-    // Get existing details
-    const rows = await db
-      .select({ json: rainbowConversations.contactDetailsJson })
-      .from(rainbowConversations)
-      .where(eq(rainbowConversations.phone, key))
-      .limit(1);
+      // Get existing details
+      const rows = await db
+        .select({ json: rainbowConversations.contactDetailsJson })
+        .from(rainbowConversations)
+        .where(eq(rainbowConversations.phone, key))
+        .limit(1);
 
-    let existing: ContactDetails = {};
-    if (rows.length > 0 && rows[0].json) {
-      try { existing = JSON.parse(rows[0].json); } catch { /* ignore */ }
-    }
+      let existing: ContactDetails = {};
+      if (rows.length > 0 && rows[0].json) {
+        try { existing = JSON.parse(rows[0].json); } catch { /* ignore */ }
+      }
 
-    const merged = { ...existing, ...partial };
+      const merged = { ...existing, ...partial };
 
-    await db
-      .update(rainbowConversations)
-      .set({ contactDetailsJson: JSON.stringify(merged), updatedAt: new Date() })
-      .where(eq(rainbowConversations.phone, key));
+      await db
+        .update(rainbowConversations)
+        .set({ contactDetailsJson: JSON.stringify(merged), updatedAt: new Date() })
+        .where(eq(rainbowConversations.phone, key));
 
-    return merged;
-  } catch (err: any) {
-    console.error(`[ConvoLogger] updateContactDetails failed for ${phone}:`, err.message);
-    return {};
-  }
+      return merged;
+    },
+    async () => ({}),
+    `[ConvoLogger] updateContactDetails(${phone})`
+  );
 }
 
 /** Update the response mode for a conversation (persists to DB). */
 export async function updateConversationMode(phone: string, mode: string): Promise<void> {
   if (!(await ensureDb())) return;
 
-  try {
-    const key = canonicalPhoneKey(phone);
-    await db
-      .update(rainbowConversations)
-      .set({ responseMode: mode, updatedAt: new Date() })
-      .where(eq(rainbowConversations.phone, key));
-  } catch (err: any) {
-    console.error(`[ConvoLogger] updateConversationMode failed for ${phone}:`, err.message);
-  }
+  await withFallback(
+    async () => {
+      const key = canonicalPhoneKey(phone);
+      await db
+        .update(rainbowConversations)
+        .set({ responseMode: mode, updatedAt: new Date() })
+        .where(eq(rainbowConversations.phone, key));
+    },
+    async () => {},
+    `[ConvoLogger] updateConversationMode(${phone})`
+  );
 }
 
 /** Aggregate response time from all messages (for dashboard avg). */
 export async function getResponseTimeStats(): Promise<{ count: number; sumMs: number; avgMs: number | null }> {
   if (!(await ensureDb())) return { count: 0, sumMs: 0, avgMs: null };
 
+  return withFallback(
+    async () => {
+      const result = await db
+        .select({
+          count: sql<number>`count(*)`,
+          sumMs: sql<number>`coalesce(sum(response_time_ms), 0)`,
+        })
+        .from(rainbowMessages)
+        .where(
+          and(
+            eq(rainbowMessages.role, 'assistant'),
+            gt(rainbowMessages.responseTime, 0)
+          )
+        );
+
+      const count = Number(result[0]?.count ?? 0);
+      const sumMs = Number(result[0]?.sumMs ?? 0);
+
+      return {
+        count,
+        sumMs,
+        avgMs: count > 0 ? Math.round(sumMs / count) : null,
+      };
+    },
+    async () => ({ count: 0, sumMs: 0, avgMs: null }),
+    '[ConvoLogger] getResponseTimeStats'
+  );
+}
+
+// ─── Auto-update Contact Context Files (US-104) ─────────────────────
+
+const _contextUpdateTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const CONTEXT_UPDATE_DEBOUNCE_MS = 30_000; // 30 seconds debounce
+
+/** Schedule a debounced context file update after assistant reply */
+export function scheduleContextUpdate(phone: string, pushName: string): void {
+  const key = phone.replace(/\D/g, '');
+  if (!key) return;
+
+  // Clear existing timer
+  const existing = _contextUpdateTimers.get(key);
+  if (existing) clearTimeout(existing);
+
+  // Schedule new update
+  _contextUpdateTimers.set(key, setTimeout(async () => {
+    _contextUpdateTimers.delete(key);
+    try {
+      await updateContactContextFile(key, pushName);
+    } catch (err: any) {
+      console.error(`[ContactContext] Auto-update failed for ${key}:`, err.message);
+    }
+  }, CONTEXT_UPDATE_DEBOUNCE_MS));
+}
+
+/** Write/update a contact context file from the latest conversation data */
+async function updateContactContextFile(phone: string, pushName: string): Promise<void> {
+  if (!(await ensureDb())) return;
+
   try {
-    const result = await db
-      .select({
-        count: sql<number>`count(*)`,
-        sumMs: sql<number>`coalesce(sum(response_time_ms), 0)`,
-      })
-      .from(rainbowMessages)
-      .where(
-        and(
-          eq(rainbowMessages.role, 'assistant'),
-          gt(rainbowMessages.responseTime, 0)
-        )
-      );
+    if (!existsSync(CONTACTS_DIR)) {
+      mkdirSync(CONTACTS_DIR, { recursive: true });
+    }
 
-    const count = Number(result[0]?.count ?? 0);
-    const sumMs = Number(result[0]?.sumMs ?? 0);
+    const convo = await getConversation(phone);
+    if (!convo || convo.messages.length === 0) return;
 
-    return {
-      count,
-      sumMs,
-      avgMs: count > 0 ? Math.round(sumMs / count) : null,
-    };
+    const messages = convo.messages;
+    const userMsgs = messages.filter(m => m.role === 'user');
+    const lastMsg = messages[messages.length - 1];
+
+    // Detect primary language
+    const langCounts: Record<string, number> = {};
+    for (const msg of userMsgs.slice(-20)) {
+      const lang = detectLangSimple(msg.content);
+      langCounts[lang] = (langCounts[lang] || 0) + 1;
+    }
+    const primaryLang = Object.entries(langCounts)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] || 'en';
+
+    // Extract intents
+    const intentSet = new Set<string>();
+    for (const msg of messages) {
+      if (msg.intent && msg.intent !== 'unknown') {
+        intentSet.add(msg.intent);
+      }
+    }
+
+    const recentUserMsgs = userMsgs.slice(-10).map(m => m.content).join('; ');
+    const topicSummary = recentUserMsgs.length > 300
+      ? recentUserMsgs.slice(0, 300) + '...'
+      : recentUserMsgs;
+
+    const details = convo.contactDetails || {};
+
+    const lines = [
+      `# Contact: ${pushName || convo.pushName || phone}`,
+      '',
+      `- **Phone:** ${phone}`,
+      `- **Name:** ${pushName || convo.pushName || 'Unknown'}`,
+      details.language ? `- **Language:** ${details.language}` : `- **Language:** ${primaryLang}`,
+      details.country ? `- **Country:** ${details.country}` : '',
+      `- **Total Messages:** ${messages.length}`,
+      `- **Last Interaction:** ${new Date(lastMsg.timestamp).toISOString().split('T')[0]}`,
+      `- **First Contact:** ${new Date(convo.createdAt).toISOString().split('T')[0]}`,
+      '',
+      '## Key Topics',
+      '',
+      intentSet.size > 0
+        ? Array.from(intentSet).map(i => `- ${i}`).join('\n')
+        : '- No classified intents yet',
+      '',
+      '## Recent Conversation Summary',
+      '',
+      topicSummary || 'No messages yet.',
+    ];
+
+    if (details.notes) {
+      lines.push('', '## Notes', '', details.notes);
+    }
+    if (details.tags && details.tags.length > 0) {
+      lines.push('', '## Tags', '', details.tags.join(', '));
+    }
+
+    const contextContent = lines.filter(l => l !== undefined).join('\n') + '\n';
+    const filename = `${phone}-context.md`;
+    writeFileSync(join(CONTACTS_DIR, filename), contextContent, 'utf-8');
   } catch (err: any) {
-    console.error('[ConvoLogger] getResponseTimeStats failed:', err.message);
-    return { count: 0, sumMs: 0, avgMs: null };
+    console.error(`[ContactContext] updateContactContextFile failed for ${phone}:`, err.message);
   }
+}
+
+function detectLangSimple(text: string): string {
+  if (/[\u4e00-\u9fff]/.test(text)) return 'zh';
+  if (/\b(saya|boleh|nak|mahu|ada|ini|itu|di|dan|untuk|tidak|dengan)\b/i.test(text)) return 'ms';
+  return 'en';
 }

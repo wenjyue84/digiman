@@ -16,7 +16,7 @@ import { logMessage } from '../conversation-logger.js';
 import { getEmergencyIntent } from '../intents.js';
 import { escalateToStaff } from '../escalation.js';
 import { handleBookingStep, createBookingState } from '../booking.js';
-import { executeWorkflowStep, createWorkflowState, forwardWorkflowSummary } from '../workflow-executor.js';
+import { executeWorkflowStep, createWorkflowState, forwardWorkflowSummary, type WorkflowContext } from '../workflow-executor.js';
 import {
   isAwaitingFeedback, detectFeedbackResponse, buildFeedbackData,
   clearAwaitingFeedback
@@ -77,7 +77,8 @@ export async function handleActiveStates(
 
   // ─── ACTIVE WORKFLOW ────────────────────────────────────────────
   if (convo.workflowState) {
-    const result = await executeWorkflowStep(convo.workflowState, text, lang, phone, msg.pushName, msg.instanceId);
+    const wfCtx: WorkflowContext = { language: lang, phone, pushName: msg.pushName, instanceId: msg.instanceId };
+    const result = await executeWorkflowStep(convo.workflowState, text, wfCtx);
 
     if (result.newState) {
       updateWorkflowState(phone, result.newState);
@@ -135,7 +136,8 @@ export async function handleActiveStates(
         console.log(`[Router] Emergency → workflow: ${workflow.name} (${route.workflow_id})`);
         trackWorkflowStarted(phone, msg.pushName, workflow.name);
         const workflowState = createWorkflowState(route.workflow_id);
-        const workflowResult = await executeWorkflowStep(workflowState, null, lang, phone, msg.pushName, msg.instanceId);
+        const emergencyWfCtx: WorkflowContext = { language: lang, phone, pushName: msg.pushName, instanceId: msg.instanceId };
+        const workflowResult = await executeWorkflowStep(workflowState, null, emergencyWfCtx);
 
         if (workflowResult.newState) {
           updateWorkflowState(phone, workflowResult.newState);
