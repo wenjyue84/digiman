@@ -128,6 +128,13 @@
     </div>
     <button onclick="refreshDashboard()" class="text-xs text-primary-500 hover:text-primary-600 font-medium">Refresh</button>
   </div>
+  <div class="flex border-b border-neutral-200 px-4 pt-2 gap-0" id="activity-category-tabs">
+    <button type="button" class="activity-cat-tab active" data-category="all" onclick="filterActivityByCategory('all')">All</button>
+    <button type="button" class="activity-cat-tab" data-category="message" onclick="filterActivityByCategory('message')">Message</button>
+    <button type="button" class="activity-cat-tab" data-category="reply" onclick="filterActivityByCategory('reply')">Reply</button>
+    <button type="button" class="activity-cat-tab" data-category="connection" onclick="filterActivityByCategory('connection')">Connection</button>
+    <button type="button" class="activity-cat-tab" data-category="classified" onclick="filterActivityByCategory('classified')">Classified</button>
+  </div>
   <div id="dashboard-recent-activity" class="p-4 overflow-y-auto recent-activity-list">
     <!-- Loading state -->
     <div class="text-center py-6">

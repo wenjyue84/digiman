@@ -3,9 +3,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { $, translationHelper } from './real-chat-state.js';
+import { avatarImg } from './live-chat-state.js';
 import { refreshActiveChat } from './real-chat-messaging.js';
 
 const api = window.api;
+const linkifyUrls = window.linkifyUrls || function(h) { return h; };
 
 // ─── Auto-refresh UI helpers ─────────────────────────────────────
 
@@ -292,7 +294,7 @@ export function renderConversationList(conversations) {
     const instanceLabel = c.instanceId ? ($.instances[c.instanceId] || c.instanceId) : '';
     const instanceBadge = instanceLabel ? '<span class="rc-instance-badge">' + escapeHtml(instanceLabel) + '</span>' : '';
     return '<div class="rc-chat-item' + isActive + '" onclick="openConversation(\'' + escapeAttr(c.phone) + '\')">' +
-      '<div class="rc-avatar">' + initials + '</div>' +
+      '<div class="rc-avatar">' + avatarImg(c.phone, initials) + '</div>' +
       '<div class="rc-chat-info">' +
       '<div class="rc-chat-name">' + escapeHtml(c.pushName || c.phone) + ' ' + instanceBadge + '</div>' +
       '<div class="rc-chat-preview">' + escapeHtml(preview) + '</div>' +
@@ -342,7 +344,7 @@ export function renderChatView(log) {
   chat.style.display = 'flex';
 
   const initials = (log.pushName || '?').slice(0, 2).toUpperCase();
-  document.getElementById('rc-active-avatar').textContent = initials;
+  document.getElementById('rc-active-avatar').innerHTML = avatarImg(log.phone, initials);
   document.getElementById('rc-active-name').textContent = log.pushName || 'Unknown';
 
   const phoneEl = document.getElementById('rc-active-phone');
@@ -504,7 +506,7 @@ function formatMessage(content) {
       '</div>';
   }
 
-  return escapeHtml(content).replace(/\n/g, '<br>');
+  return linkifyUrls(escapeHtml(content)).replace(/\n/g, '<br>');
 }
 
 export async function deleteActiveChat() {

@@ -201,90 +201,107 @@
     </div>
   </div>
 
-  <!-- ChatGPT-style Layout -->
-  <div id="chat-layout" class="bg-white border rounded-2xl overflow-hidden flex"
+  <!-- WhatsApp-style Layout (matches Live Chat) -->
+  <div id="chat-layout" class="lc-container overflow-hidden rounded-2xl border"
     style="height: calc(100vh - 340px); min-height: 600px;">
 
     <!-- Sidebar: Chat Sessions -->
-    <div class="w-64 border-r bg-neutral-50 flex flex-col">
+    <div class="cs-sidebar">
       <!-- Sidebar Header -->
-      <div class="px-4 py-3 border-b bg-white">
+      <div class="cs-sidebar-header">
         <button onclick="createNewChat()"
-          class="w-full bg-primary-500 hover:bg-primary-600 text-white px-3 py-2 rounded-2xl text-sm transition flex items-center justify-center gap-2">
-          <span>➕</span>
-          <span>New Chat</span>
+          class="cs-new-chat-btn">
+          + New Chat
         </button>
       </div>
 
       <!-- Chat Sessions List -->
-      <div id="chat-sessions" class="flex-1 overflow-y-auto p-2">
+      <div id="chat-sessions" class="lc-chat-list" style="padding: 0;">
         <!-- Sessions will be populated here -->
       </div>
 
       <!-- Info Footer -->
-      <div class="px-3 py-2 border-t text-xs text-neutral-500">
-        <p class="font-medium mb-1">💡 Tips:</p>
-        <p>• Sessions auto-save</p>
-        <p>• Click to switch</p>
+      <div class="cs-sidebar-footer">
+        <span>Sessions auto-save</span>
       </div>
     </div>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col">
+    <div class="lc-main" style="background: #efeae2;">
       <!-- Chat Header -->
-      <div class="bg-primary-50 border-b px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-2xl">💬</span>
-          <div>
-            <h3 class="font-semibold text-neutral-800">Guest Simulation</h3>
-            <p class="text-xs text-neutral-500">Messages use current Rainbow config</p>
+      <div class="lc-chat-header">
+        <div style="display:flex;align-items:center;">
+          <div class="lc-header-avatar" style="background:#6366f1;font-size:18px;">AI</div>
+          <div class="lc-header-info">
+            <div class="lc-header-name">Guest Simulation</div>
+            <div class="lc-header-phone">Messages use current Rainbow config</div>
           </div>
         </div>
-        <div class="flex gap-2">
-          <button id="view-history-btn-preview" onclick="showAutotestHistory()"
-            class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition flex items-center gap-1">
-            <span>📋</span>
-            <span>History</span>
+        <div class="lc-header-actions">
+          <button onclick="showQuickTestHistory()" title="Quick Test History">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           </button>
-          <button onclick="toggleAutotest()"
-            class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-2xl transition">Autotest</button>
-          <button onclick="clearCurrentChat()"
-            class="text-sm bg-white border border-neutral-300 hover:bg-neutral-50 px-3 py-1.5 rounded-2xl transition">Clear
-            Chat</button>
+          <button onclick="toggleAutotest()" title="Autotest Suite" style="font-size:13px;padding:6px 12px;border-radius:6px;background:#6366f1;color:#fff;">Autotest</button>
+          <button onclick="clearCurrentChat()" title="Clear Chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
           <button onclick="toggleChatFullscreen('chat-layout')" title="Fullscreen" class="fullscreen-toggle-btn">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
             </svg>
           </button>
         </div>
       </div>
 
-      <!-- Chat Input (Right below header) -->
-      <div class="border-b bg-white px-4 py-3">
-        <form onsubmit="sendChatMessage(event)" class="flex gap-2">
-          <input type="text" id="chat-input" placeholder="Type a guest message to test the AI agent..."
-            class="flex-1 px-4 py-2 border border-neutral-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-            autocomplete="off" />
-          <button type="submit" id="send-btn"
-            class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-2xl transition flex items-center gap-2">
-            <span>Send</span>
-            <span>➤</span>
-          </button>
-        </form>
-      </div>
-
-      <!-- Detection meta (under typing box) -->
-      <div id="chat-meta" class="border-b bg-neutral-50 px-4 py-2 text-xs text-neutral-600">
+      <!-- Detection meta (subtle bar under header) -->
+      <div id="chat-meta" class="cs-meta-bar">
         <!-- Detection: Fuzzy | Intent: ... | Routed to: ... (populated after AI responses) -->
       </div>
 
-      <!-- Chat Messages Container -->
-      <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-neutral-50">
+      <!-- Chat Messages Container (WhatsApp-style) -->
+      <div id="chat-messages" class="lc-messages" style="flex-direction: column-reverse;">
         <!-- Welcome message -->
-        <div class="text-center text-neutral-500 text-sm py-8">
-          <p class="text-2xl mb-2">👋</p>
-          <p class="font-medium mb-1">Welcome to AI Agent Preview</p>
-          <p class="text-xs">Type a message to test how the AI responds</p>
+        <div class="text-center py-8" style="color:#667781;">
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px;">Welcome to AI Agent Preview</div>
+          <div style="font-size:12px;">Type a message to test how the AI responds</div>
+        </div>
+      </div>
+
+      <!-- Chat Input (WhatsApp-style bottom bar) -->
+      <div class="lc-input-area">
+        <form onsubmit="sendChatMessage(event)" style="display:flex;align-items:flex-end;gap:8px;width:100%;">
+          <input type="text" id="chat-input" placeholder="Type a guest message..."
+            class="lc-input-box" style="min-height:42px;border-radius:8px;padding:10px 14px;border:none;outline:none;"
+            autocomplete="off" />
+          <button type="submit" id="send-btn" class="lc-send-btn" title="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Test History Modal -->
+  <div id="qt-history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-neutral-800">Quick Test History</h3>
+        <div class="flex items-center gap-2">
+          <button onclick="clearQuickTestHistory()" class="text-xs text-red-500 hover:text-red-600 transition">Clear All</button>
+          <button onclick="closeQuickTestHistory()" class="text-neutral-500 hover:text-neutral-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="qt-history-list" class="flex-1 overflow-y-auto space-y-2">
+        <div class="text-center text-neutral-400 text-sm py-12">
+          <p>No quick test history yet</p>
+          <p class="text-xs mt-1">Send messages in Quick Test to build history</p>
         </div>
       </div>
     </div>

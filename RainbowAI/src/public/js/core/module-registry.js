@@ -17,7 +17,8 @@ import {
   runDashboardProviderSpeedTest,
   initActivityStream,
   disconnectActivityStream,
-  toggleActivityExpand
+  toggleActivityExpand,
+  filterActivityByCategory
 } from '/public/js/modules/dashboard-helpers.js';
 
 // Phase 3: Medium Complexity Loaders
@@ -30,6 +31,7 @@ import { loadChatSimulator } from '/public/js/modules/chat-simulator.js';
 import { loadSystemStatus, testAIProvider } from '/public/js/modules/system-status.js';
 import {
   loadDashboard,
+  toggleDashboardAiModels,
   dismissChecklist,
   quickActionAddWhatsApp,
   quickActionTrainIntent,
@@ -49,7 +51,10 @@ import {
   toggleIntent,
   toggleTimeSensitive,
   changeConfidence,
-  deleteIntent
+  deleteIntent,
+  editUnknownSettings,
+  saveUnknownSettings,
+  closeUnknownSettings
 } from '/public/js/modules/intents.js';
 
 // Phase 6: Routing Templates Module
@@ -89,7 +94,8 @@ import {
   saveTemplate,
   deleteTemplate as deleteMessageTemplate,
   showAddTemplate,
-  submitAddTemplate
+  submitAddTemplate,
+  translateAllIntents
 } from '/public/js/modules/responses-crud.js';
 
 // Phase 8: WhatsApp Instance Management Module
@@ -102,10 +108,13 @@ import {
   removeInstance
 } from '/public/js/modules/whatsapp-instances.js';
 
-// Phase 9: Static Replies Filter Module
+// Phase 9: Responses Filter Module
 import {
   filterStaticReplies,
-  filterStaticCategory
+  filterStaticCategory,
+  filterSystemMessages,
+  filterWorkflows,
+  filterKBFiles
 } from '/public/js/modules/responses-filter.js';
 
 // Phase 10: Intent Management Helpers Module
@@ -232,11 +241,13 @@ import {
   clearCurrentChat,
   clearChat,
   renderChatMessages,
-  loadPreview
+  loadPreview,
+  toggleTokenPopover,
+  toggleDevBadges
 } from '/public/js/modules/chat-preview.js';
 
 // Phase 24b: Chat Send Module (Guest Simulation)
-import { sendChatMessage } from '/public/js/modules/chat-send.js';
+import { sendChatMessage, showQuickTestHistory, closeQuickTestHistory, clearQuickTestHistory } from '/public/js/modules/chat-send.js';
 
 // Phase 27: Workflow Management Module
 import {
@@ -267,6 +278,8 @@ import {
   updateNodeNext,
   updateNodeOutput,
   updateStartNodeId,
+  exportWorkflowJSON,
+  importWorkflowJSON,
 } from '/public/js/modules/workflows.js';
 
 // Phase 28: Settings Tab Module
@@ -381,6 +394,7 @@ window.runDashboardProviderSpeedTest = runDashboardProviderSpeedTest;
 window.initActivityStream = initActivityStream;
 window.disconnectActivityStream = disconnectActivityStream;
 window.toggleActivityExpand = toggleActivityExpand;
+window.filterActivityByCategory = filterActivityByCategory;
 window.loadStaticTemplates = loadStaticTemplates;
 window.editTemplate = editTemplate;
 window.switchSimulatorTab = switchSimulatorTab;
@@ -389,6 +403,7 @@ window.loadChatSimulator = loadChatSimulator;
 window.loadSystemStatus = loadSystemStatus;
 window.testAIProvider = testAIProvider;
 window.loadDashboard = loadDashboard;
+window.toggleDashboardAiModels = toggleDashboardAiModels;
 window.dismissChecklist = dismissChecklist;
 window.quickActionAddWhatsApp = quickActionAddWhatsApp;
 window.quickActionTrainIntent = quickActionTrainIntent;
@@ -405,6 +420,9 @@ window.toggleIntent = toggleIntent;
 window.toggleTimeSensitive = toggleTimeSensitive;
 window.changeConfidence = changeConfidence;
 window.deleteIntent = deleteIntent;
+window.editUnknownSettings = editUnknownSettings;
+window.saveUnknownSettings = saveUnknownSettings;
+window.closeUnknownSettings = closeUnknownSettings;
 window.renderTemplateButtons = renderTemplateButtons;
 window.showIntentsTemplateHelp = showIntentsTemplateHelp;
 window.detectActiveTemplate = detectActiveTemplate;
@@ -431,6 +449,7 @@ window.saveTemplate = saveTemplate;
 window.deleteMessageTemplate = deleteMessageTemplate;
 window.showAddTemplate = showAddTemplate;
 window.submitAddTemplate = submitAddTemplate;
+window.translateAllIntents = translateAllIntents;
 window.showAddInstance = showAddInstance;
 window.onPhoneInput = onPhoneInput;
 window.refreshWhatsAppList = refreshWhatsAppList;
@@ -439,6 +458,9 @@ window.logoutInstance = logoutInstance;
 window.removeInstance = removeInstance;
 window.filterStaticReplies = filterStaticReplies;
 window.filterStaticCategory = filterStaticCategory;
+window.filterSystemMessages = filterSystemMessages;
+window.filterWorkflows = filterWorkflows;
+window.filterKBFiles = filterKBFiles;
 window.showAddIntent = showAddIntent;
 window.onAddIntentRoutingChange = onAddIntentRoutingChange;
 window.submitAddIntent = submitAddIntent;
@@ -517,6 +539,11 @@ window.clearChat = clearChat;
 window.renderChatMessages = renderChatMessages;
 window.loadPreview = loadPreview;
 window.sendChatMessage = sendChatMessage;
+window.showQuickTestHistory = showQuickTestHistory;
+window.closeQuickTestHistory = closeQuickTestHistory;
+window.clearQuickTestHistory = clearQuickTestHistory;
+window.toggleTokenPopover = toggleTokenPopover;
+window.toggleDevBadges = toggleDevBadges;
 // Phase 27: Workflow Management
 window.loadWorkflow = loadWorkflow;
 window.renderWorkflowList = renderWorkflowList;
@@ -533,6 +560,8 @@ window.createWorkflow = createWorkflow;
 window.deleteCurrentWorkflow = deleteCurrentWorkflow;
 window.renderAdvancedSettings = renderAdvancedSettings;
 window.saveAdvancedWorkflow = saveAdvancedWorkflow;
+window.exportWorkflowJSON = exportWorkflowJSON;
+window.importWorkflowJSON = importWorkflowJSON;
 // Node-based workflow globals
 window.switchWorkflowFormat = switchWorkflowFormat;
 window.renderNodes = renderNodes;
@@ -625,6 +654,27 @@ window.renderSettingsTemplateButtons = renderSettingsTemplateButtons;
 window.applySettingsTemplate = applySettingsTemplate;
 window.detectActiveSettingsTemplate = detectActiveSettingsTemplate;
 window.settingsMatchTemplate = settingsMatchTemplate;
+
+// Phase 37: Prisma Bot Module
+import {
+  initPrismaBot,
+  showPrismaBotFab,
+  hidePrismaBotFab,
+  togglePrismaBotPanel,
+  sendPrismaBotMessage,
+  importPrismaBotWorkflow,
+  copyPrismaBotWorkflow,
+  clearPrismaBotChat
+} from '/public/js/modules/prisma-bot.js';
+
+window.initPrismaBot = initPrismaBot;
+window.showPrismaBotFab = showPrismaBotFab;
+window.hidePrismaBotFab = hidePrismaBotFab;
+window.togglePrismaBotPanel = togglePrismaBotPanel;
+window.sendPrismaBotMessage = sendPrismaBotMessage;
+window.importPrismaBotWorkflow = importPrismaBotWorkflow;
+window.copyPrismaBotWorkflow = copyPrismaBotWorkflow;
+window.clearPrismaBotChat = clearPrismaBotChat;
 
 // Phase 36: Global helpers (moved from legacy-functions.js)
 async function reloadConfig() {

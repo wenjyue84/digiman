@@ -158,6 +158,11 @@ async function kbFilterCategory(cat) {
 
   const list = document.getElementById('kb-file-list');
 
+  if (cat === 'contacts') {
+    await kbLoadContactContexts();
+    return;
+  }
+
   if (cat === 'memory') {
     // Fetch memory files from API
     list.innerHTML = '<div class="text-xs text-neutral-400 text-center py-3">Loading...</div>';
@@ -302,7 +307,14 @@ async function kbSaveFile() {
   const content = document.getElementById('kb-file-editor').value;
   try {
     let d;
-    if (kbCurrentFile.startsWith('memory/')) {
+    if (kbCurrentFile.startsWith('contacts/')) {
+      // Save contact context file
+      const phone = kbCurrentFile.replace('contacts/', '');
+      d = await kbApi('/contact-contexts/' + encodeURIComponent(phone), { method: 'PUT', body: { content: content } });
+      kbOriginalContent = content;
+      kbCheckModified();
+      toast(phone + '-context.md saved successfully');
+    } else if (kbCurrentFile.startsWith('memory/')) {
       // Save memory file
       const date = kbCurrentFile.replace('memory/', '');
       d = await kbApi('/memory/' + encodeURIComponent(date), { method: 'PUT', body: { content: content } });
@@ -521,6 +533,220 @@ async function saveKbFileFromModal() {
 // Exports (for use in other modules)
 // ═════════════════════════════════════════════════════════════════════
 
+// ═════════════════════════════════════════════════════════════════════
+// Contact Context Files (US-104)
+// ═════════════════════════════════════════════════════════════════════
+
+/**
+ * Contact context files list
+ * @type {Array<Object>}
+ */
+let kbContactFiles = [];
+
+/**
+ * Loads and displays contact context files
+ */
+async function kbLoadContactContexts() {
+  const list = document.getElementById('kb-file-list');
+  list.innerHTML = '<div class="text-xs text-neutral-400 text-center py-3">Loading contacts...</div>';
+
+  try {
+    const data = await kbApi('/contact-contexts');
+    kbContactFiles = data.files || [];
+
+    if (kbContactFiles.length === 0) {
+      list.innerHTML = '<div class="text-xs text-neutral-400 text-center py-4">' +
+        '<p class="mb-2">No contact context files yet</p>' +
+        '<button onclick="kbGenerateContactContexts()" class="text-xs bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-lg transition">' +
+        'Generate from conversations</button>' +
+        '</div>';
+      return;
+    }
+
+    var headerHtml = '<div class="flex items-center justify-between mb-2 p-2 bg-neutral-50 rounded-lg">' +
+      '<span class="text-xs text-neutral-500">' + kbContactFiles.length + ' contact' + (kbContactFiles.length !== 1 ? 's' : '') + '</span>' +
+      '<button onclick="kbGenerateContactContexts()" class="text-xs bg-primary-500 hover:bg-primary-600 text-white px-2 py-1 rounded transition" title="Regenerate context files from conversation history">' +
+      'Regenerate</button>' +
+      '</div>';
+
+    var filesHtml = kbContactFiles.map(function (f) {
+      var sel = kbCurrentFile === 'contacts/' + f.phone;
+      var modDate = new Date(f.modified).toLocaleDateString();
+      return '<button onclick="kbSelectContactFile(\'' + f.phone + '\')" class="w-full text-left p-3 rounded-xl border transition hover:bg-neutral-50 ' + (sel ? 'bg-purple-50 border-purple-300 shadow-sm' : 'bg-white border-neutral-200') + '">' +
+        '<div class="flex items-start gap-2">' +
+        '<span class="text-base mt-0.5">\uD83D\uDC64</span>' +
+        '<div class="flex-1 min-w-0">' +
+        '<div class="font-medium text-sm truncate">' + esc(f.phone) + '</div>' +
+        '<div class="text-xs text-neutral-500 mt-0.5">' + esc(modDate) + ' &middot; ' + Math.round(f.size / 1024 * 10) / 10 + 'KB</div>' +
+        '</div>' +
+        '</div>' +
+        '</button>';
+    }).join('');
+
+    list.innerHTML = headerHtml + filesHtml;
+  } catch (e) {
+    list.innerHTML = '<div class="text-xs text-red-400 text-center py-3">Failed to load contacts: ' + esc(e.message) + '</div>';
+  }
+}
+
+/**
+ * Generate contact context files from conversation history
+ */
+async function kbGenerateContactContexts() {
+  var list = document.getElementById('kb-file-list');
+  var prevHtml = list.innerHTML;
+  list.innerHTML = '<div class="text-xs text-neutral-400 text-center py-3">Generating context files from conversations...</div>';
+
+  try {
+    var data = await kbApi('/contact-contexts/generate', { method: 'POST' });
+    if (typeof toast === 'function') {
+      toast('Generated ' + data.generated + ' context files (' + data.skipped + ' skipped, ' + data.errors + ' errors)');
+    }
+    // Reload the list
+    await kbLoadContactContexts();
+  } catch (e) {
+    if (typeof toast === 'function') {
+      toast('Failed to generate: ' + e.message, 'error');
+    }
+    list.innerHTML = prevHtml;
+  }
+}
+
+/**
+ * Select and load a contact context file
+ * @param {string} phone - Phone number
+ */
+async function kbSelectContactFile(phone) {
+  try {
+    var d = await kbApi('/contact-contexts/' + encodeURIComponent(phone));
+    kbCurrentFile = 'contacts/' + phone;
+    kbOriginalContent = d.content || '';
+    document.getElementById('kb-file-editor').value = d.content || '';
+    document.getElementById('kb-editor-icon').textContent = '\uD83D\uDC64';
+    document.getElementById('kb-editor-filename').textContent = phone + '-context.md';
+    document.getElementById('kb-editor-desc').textContent = 'Contact context file';
+    document.getElementById('kb-no-file').classList.add('hidden');
+    document.getElementById('kb-editor-panel').classList.remove('hidden');
+    kbUpdateStats();
+    kbCheckModified();
+    kbSetViewMode('edit');
+    kbFilterCategory(kbCurrentCategory);
+  } catch (e) {
+    if (typeof toast === 'function') {
+      toast('Failed to load context for ' + phone + ': ' + e.message, 'error');
+    }
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// KB Test Chat (US-112)
+// ═════════════════════════════════════════════════════════════════════
+
+/**
+ * KB test chat history (for multi-turn)
+ * @type {Array<Object>}
+ */
+let kbTestHistory = [];
+
+/**
+ * Send a test question to KB-only endpoint
+ */
+async function kbTestSend() {
+  var input = document.getElementById('kb-test-input');
+  var question = (input ? input.value.trim() : '');
+  if (!question) return;
+
+  var msgContainer = document.getElementById('kb-test-messages');
+  if (!msgContainer) return;
+
+  // Add user message to UI
+  msgContainer.innerHTML += '<div class="flex justify-end mb-2">' +
+    '<div class="bg-primary-500 text-white px-3 py-2 rounded-2xl rounded-br-sm max-w-[80%] text-sm">' + esc(question) + '</div>' +
+    '</div>';
+
+  input.value = '';
+  input.disabled = true;
+
+  // Show loading
+  var loadingId = 'kb-test-loading-' + Date.now();
+  msgContainer.innerHTML += '<div id="' + loadingId + '" class="flex justify-start mb-2">' +
+    '<div class="bg-neutral-100 text-neutral-500 px-3 py-2 rounded-2xl rounded-bl-sm text-sm">Thinking...</div>' +
+    '</div>';
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  try {
+    var data = await kbApi('/kb-test', {
+      method: 'POST',
+      body: { question: question, history: kbTestHistory }
+    });
+
+    // Remove loading
+    var loadEl = document.getElementById(loadingId);
+    if (loadEl) loadEl.remove();
+
+    // Add to history
+    kbTestHistory.push({ role: 'user', content: question });
+    kbTestHistory.push({ role: 'assistant', content: data.answer });
+
+    // Build dev info
+    var di = data.devInfo || {};
+    var devHtml = '<div class="mt-1 text-xs text-neutral-400 space-x-2">' +
+      '<span>' + (di.responseTime || 0) + 'ms</span>' +
+      (di.tokensUsed ? '<span>&middot; ' + di.tokensUsed + ' tokens</span>' : '') +
+      (di.provider ? '<span>&middot; ' + esc(di.provider) + '</span>' : '') +
+      '</div>';
+    if (di.kbFilesMatched && di.kbFilesMatched.length > 0) {
+      devHtml += '<div class="mt-0.5 text-xs text-neutral-400">KB files: ' + di.kbFilesMatched.map(function(f) { return esc(f); }).join(', ') + '</div>';
+    }
+
+    // Add assistant message to UI
+    msgContainer.innerHTML += '<div class="flex justify-start mb-2">' +
+      '<div class="max-w-[85%]">' +
+      '<div class="bg-neutral-100 text-neutral-800 px-3 py-2 rounded-2xl rounded-bl-sm text-sm whitespace-pre-wrap">' + esc(data.answer) + '</div>' +
+      devHtml +
+      '</div>' +
+      '</div>';
+  } catch (e) {
+    var loadEl2 = document.getElementById(loadingId);
+    if (loadEl2) loadEl2.remove();
+
+    msgContainer.innerHTML += '<div class="flex justify-start mb-2">' +
+      '<div class="bg-red-50 text-red-600 px-3 py-2 rounded-2xl rounded-bl-sm text-sm">Error: ' + esc(e.message) + '</div>' +
+      '</div>';
+  }
+
+  input.disabled = false;
+  input.focus();
+  msgContainer.scrollTop = msgContainer.scrollHeight;
+}
+
+/**
+ * Clear KB test chat history and UI
+ */
+function kbTestClear() {
+  kbTestHistory = [];
+  var msgContainer = document.getElementById('kb-test-messages');
+  if (msgContainer) {
+    msgContainer.innerHTML = '<div class="text-center text-neutral-400 text-sm py-6">Ask a question to test Knowledge Base accuracy</div>';
+  }
+  var input = document.getElementById('kb-test-input');
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+}
+
+/**
+ * Handle Enter key in KB test input
+ * @param {KeyboardEvent} event
+ */
+function kbTestKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    kbTestSend();
+  }
+}
+
 // Main functions exported for global use
 window.loadKB = loadKB;
 window.kbFilterCategory = kbFilterCategory;
@@ -534,3 +760,11 @@ window.kbSetViewMode = kbSetViewMode;
 window.openKbEditModal = openKbEditModal;
 window.closeKbEditModal = closeKbEditModal;
 window.saveKbFileFromModal = saveKbFileFromModal;
+// US-104: Contact context files
+window.kbLoadContactContexts = kbLoadContactContexts;
+window.kbGenerateContactContexts = kbGenerateContactContexts;
+window.kbSelectContactFile = kbSelectContactFile;
+// US-112: KB test chat
+window.kbTestSend = kbTestSend;
+window.kbTestClear = kbTestClear;
+window.kbTestKeydown = kbTestKeydown;

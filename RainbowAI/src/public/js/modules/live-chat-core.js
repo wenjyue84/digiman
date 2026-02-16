@@ -2,26 +2,41 @@
 // Live Chat Core - Connection, init, list/chat rendering
 // ═══════════════════════════════════════════════════════════════════
 
-import { $ } from './live-chat-state.js';
-import { handleMessageChevronClick, bindContextMenuActions, clearFile, cancelReply } from './live-chat-actions.js';
-import { hideTranslatePreview } from './live-chat-features.js';
-import { loadContactDetails, updateModeUI, checkPendingApprovals } from './live-chat-panels.js';
+import { $, avatarImg } from './live-chat-state.js';
+import { handleMessageChevronClick, bindContextMenuActions, clearFile, cancelReply, loadMessageMetadata, updateMessageIndicators } from './live-chat-actions.js';
+import { hideTranslatePreview, updateTranslateIndicator, updateModeSubmenuUI } from './live-chat-features.js';
+import { loadContactDetails, updateModeUI, checkPendingApprovals, restoreWaStatusBarState, initResizableDivider, mobileShowChat } from './live-chat-panels.js';
 
 var api = window.api;
 
 // ─── WhatsApp connection status ──────────────────────────────────
 
 export function updateConnectionStatus(statusData) {
-  var bar = document.getElementById('lc-wa-status-bar');
-  if (!bar) return;
   var instances = (statusData && statusData.whatsappInstances) || [];
   var connected = instances.some(function (i) { return i.state === 'open'; });
-  bar.classList.remove('wa-connected', 'wa-disconnected');
-  bar.classList.add(connected ? 'wa-connected' : 'wa-disconnected');
-  var text = bar.querySelector('.wa-connection-text');
-  if (text) {
-    text.textContent = connected ? 'WhatsApp Connected' : 'Disconnected';
+
+  // Update the small status dot in sidebar header (US-077)
+  var dot = document.getElementById('lc-wa-dot');
+  if (dot) {
+    dot.classList.remove('lc-wa-connected', 'lc-wa-disconnected', 'lc-wa-checking');
+    dot.classList.add(connected ? 'lc-wa-connected' : 'lc-wa-disconnected');
+    dot.title = connected ? 'WhatsApp Connected' : 'WhatsApp Disconnected';
   }
+
+  // Update tooltip content
+  var tooltipStatus = document.getElementById('lc-wa-tooltip-status');
+  var tooltipPhone = document.getElementById('lc-wa-tooltip-phone');
+  if (tooltipStatus) {
+    tooltipStatus.textContent = connected ? 'Connected' : 'Disconnected';
+    tooltipStatus.style.color = connected ? '#25d366' : '#ea0038';
+  }
+  if (tooltipPhone) {
+    var phoneNumbers = instances
+      .filter(function (i) { return i.state === 'open' && i.user && i.user.phone; })
+      .map(function (i) { return '+' + i.user.phone; });
+    tooltipPhone.textContent = phoneNumbers.length > 0 ? phoneNumbers.join(', ') : (connected ? 'Connected' : 'No active connections');
+  }
+
   if ($.waWasConnected === true && !connected) {
     $.waWasConnected = false;
     alert('WhatsApp disconnected. Messages cannot be sent. Check Connect \u2192 Dashboard or scan QR at /admin/whatsapp-qr.');
@@ -46,23 +61,10 @@ export function initializeDateFilters() {
   var toInput = document.getElementById('lc-date-to');
   if (!fromInput || !toInput) return;
 
-  // Default: last 7 days to today
-  var today = new Date();
-  var sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(today.getDate() - 7);
-
-  var formatDate = function(d) {
-    var year = d.getFullYear();
-    var month = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    return year + '-' + month + '-' + day;
-  };
-
-  fromInput.value = formatDate(sevenDaysAgo);
-  toInput.value = formatDate(today);
-
-  $.dateFilterFrom = sevenDaysAgo;
-  $.dateFilterTo = today;
+  fromInput.value = '';
+  toInput.value = '';
+  $.dateFilterFrom = null;
+  $.dateFilterTo = null;
 }
 
 export function resetDateFilter() {
@@ -97,17 +99,40 @@ export function updateDateFilterFromInputs() {
 // ─── Main Load ───────────────────────────────────────────────────
 
 export async function loadLiveChat() {
-  // Restore translate state
+  // Fetch bot avatar setting (US-087)
+  try {
+    var settingsData = await api('/settings');
+    if (settingsData && settingsData.botAvatar) {
+      window._botAvatar = settingsData.botAvatar;
+    }
+  } catch (e) { /* fallback to default */ }
+
+  // Restore translate state (flag selector, US-096)
   var translateBtn = document.getElementById('lc-translate-toggle');
-  var langSelector = document.getElementById('lc-lang-selector');
+  var flagWrap = document.getElementById('lc-flag-selector-wrap');
   if ($.translateMode && translateBtn) {
     translateBtn.classList.add('active');
-    langSelector.style.display = '';
-    langSelector.value = $.translateLang;
+    if (flagWrap) flagWrap.style.display = '';
   }
 
   // Initialize date filters (default: last 7 days)
   initializeDateFilters();
+
+  // Restore WA status bar collapse state (US-056)
+  restoreWaStatusBarState();
+
+  // Initialize resizable divider (US-072) — must run after template is in DOM
+  initResizableDivider();
+
+  // Initialize translate indicator and mode submenu label
+  updateTranslateIndicator();
+  updateModeSubmenuUI();
+
+  // Show skeleton loading indicator (US-145)
+  var skeletonWrap = document.getElementById('lc-skeleton-wrap');
+  var emptyState = document.getElementById('lc-sidebar-empty');
+  if (skeletonWrap) skeletonWrap.style.display = '';
+  if (emptyState) emptyState.style.display = 'none';
 
   try {
     var results = await Promise.all([
@@ -116,6 +141,9 @@ export async function loadLiveChat() {
     ]);
     $.conversations = results[0];
     var statusData = results[1];
+
+    // Hide skeleton once data arrives (US-145)
+    if (skeletonWrap) skeletonWrap.style.display = 'none';
 
     $.instances = {};
     if (statusData.whatsappInstances) {
@@ -165,6 +193,8 @@ export async function loadLiveChat() {
     $.waStatusPoll = setInterval(pollConnectionStatus, 15000);
   } catch (err) {
     console.error('[LiveChat] Load failed:', err);
+    // Hide skeleton on error too (US-145)
+    if (skeletonWrap) skeletonWrap.style.display = 'none';
   }
 }
 
@@ -211,7 +241,11 @@ export function buildInstanceFilter() {
 export function renderList(conversations) {
   var list = document.getElementById('lc-chat-list');
   var empty = document.getElementById('lc-sidebar-empty');
+  var skeleton = document.getElementById('lc-skeleton-wrap');
   if (!list) return;
+
+  // Always hide skeleton when rendering real data (US-145)
+  if (skeleton) skeleton.style.display = 'none';
 
   if (!conversations.length) {
     if (empty) empty.style.display = '';
@@ -295,7 +329,7 @@ export function renderList(conversations) {
     if (c.pinned) bottomIcons += '<span class="lc-pin-indicator" title="Pinned"><svg width="12" height="12" viewBox="0 0 24 24" fill="#8696a0" stroke="none"><path d="M9 4v6l-2 4h10l-2-4V4M12 14v7M8 4h8"/></svg></span>';
 
     return '<div class="lc-chat-item' + isActive + '" onclick="lcOpenConversation(\'' + escapeAttr(c.phone) + '\')">' +
-      '<div class="lc-avatar">' + initials + '</div>' +
+      '<div class="lc-avatar">' + avatarImg(c.phone, initials) + '</div>' +
       '<div class="lc-chat-info">' +
       '<div class="lc-chat-top">' +
       '<span class="lc-chat-name">' + escapeHtml(c.pushName || formatPhoneForDisplay(c.phone)) + '</span>' +
@@ -313,6 +347,13 @@ export function renderList(conversations) {
 
 export function filterConversations() {
   renderList($.conversations);
+}
+
+export function debouncedSearch() {
+  clearTimeout($.sidebarSearchDebounce);
+  $.sidebarSearchDebounce = setTimeout(function () {
+    renderList($.conversations);
+  }, 300);
 }
 
 // ─── Chat View ───────────────────────────────────────────────────
@@ -333,10 +374,10 @@ export function getUserMessage(content) {
 }
 
 export function formatSystemContent(content) {
-  if (!content || typeof content !== 'string') return escapeHtml(content);
+  if (!content || typeof content !== 'string') return linkifyUrls(escapeHtml(content));
 
   var parts = content.split('\n\n{"intent":');
-  if (parts.length === 1) return escapeHtml(content);
+  if (parts.length === 1) return linkifyUrls(escapeHtml(content));
 
   var userMsg = parts[0].trim();
   var jsonPart = '{"intent":' + parts[1];
@@ -347,7 +388,7 @@ export function formatSystemContent(content) {
     prettyJson = JSON.stringify(parsed, null, 2);
   } catch (e) { }
 
-  return '<div class="lc-user-msg">' + escapeHtml(userMsg) + '</div>' +
+  return '<div class="lc-user-msg">' + linkifyUrls(escapeHtml(userMsg)) + '</div>' +
     '<div class="lc-system-data">' +
     '<div class="lc-system-label">System Debug Info:</div>' +
     '<pre class="lc-system-json">' + escapeHtml(prettyJson) + '</pre>' +
@@ -374,6 +415,7 @@ export async function openConversation(phone) {
   clearFile();
   cancelReply();
   hideTranslatePreview();
+  mobileShowChat(); // US-092: Switch to chat view on mobile
   if ($.contactPanelOpen) loadContactDetails();
   document.querySelectorAll('.lc-chat-item').forEach(function (el) { el.classList.remove('active'); });
   document.querySelectorAll('.lc-chat-item').forEach(function (el) {
@@ -383,6 +425,9 @@ export async function openConversation(phone) {
   try {
     var log = await api('/conversations/' + encodeURIComponent(phone));
     renderChat(log);
+    // Load message-level pin/star metadata and show indicators
+    await loadMessageMetadata();
+    updateMessageIndicators();
     await api('/conversations/' + encodeURIComponent(phone) + '/read', { method: 'PATCH' }).catch(function () { });
     var idx = $.conversations.findIndex(function (c) { return c.phone === phone; });
     if (idx >= 0) $.conversations[idx].unreadCount = 0;
@@ -414,7 +459,7 @@ export function renderChat(log) {
   chat.style.display = 'flex';
 
   var initials = (log.pushName || '?').slice(0, 2).toUpperCase();
-  document.getElementById('lc-header-avatar').textContent = initials;
+  document.getElementById('lc-header-avatar').innerHTML = avatarImg(log.phone, initials);
   document.getElementById('lc-header-name').textContent = log.pushName || 'Unknown';
   document.getElementById('lc-header-phone').textContent = '+' + formatPhoneForDisplay(log.phone);
 
@@ -457,8 +502,15 @@ export function renderChat(log) {
     var nonTextPlaceholder = getNonTextPlaceholder(displayContent);
     var mediaMatch = displayContent.match(/^\[(photo|video|document):\s*(.+?)\](.*)$/s);
 
+    // Prepend bot avatar emoji for AI/bot messages (not from staff)
+    var botAvatarPrefix = '';
+    if (!isGuest && !msg.manual) {
+      var avatarEmoji = window._botAvatar || '\uD83E\uDD16';
+      botAvatarPrefix = '<span class="lc-bot-avatar">' + avatarEmoji + ' </span>';
+    }
+
     if (isSystemMsg) {
-      bubbleContent = '<div class="lc-bubble-text">' + formatSystemContent(displayContent) + '</div>';
+      bubbleContent = '<div class="lc-bubble-text">' + botAvatarPrefix + formatSystemContent(displayContent) + '</div>';
     } else if (nonTextPlaceholder) {
       bubbleContent = '<div class="lc-media-placeholder">' + nonTextPlaceholder.icon + '<span class="lc-media-filename">' + escapeHtml(nonTextPlaceholder.label) + '</span></div>';
     } else if (mediaMatch) {
@@ -473,7 +525,7 @@ export function renderChat(log) {
         bubbleContent += '<div class="lc-bubble-text">' + highlightText(caption, query, isCurrentMatch) + '</div>';
       }
     } else {
-      bubbleContent = '<div class="lc-bubble-text">' + highlightText(displayContent, query, isCurrentMatch) + '</div>';
+      bubbleContent = '<div class="lc-bubble-text">' + botAvatarPrefix + highlightText(displayContent, query, isCurrentMatch) + '</div>';
     }
 
     var matchClass = isCurrentMatch ? ' lc-search-focus' : (isAnyMatch ? ' lc-search-match' : '');
@@ -517,9 +569,9 @@ function scrollToMatch(msgIdx) {
   }
 }
 
-/** Convert plain URLs in text to clickable <a> tags */
+/** Convert plain URLs in text to clickable <a> tags — delegates to global utils */
 function linkifyUrls(html) {
-  return html.replace(/(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="lc-link">$1</a>');
+  return window.linkifyUrls ? window.linkifyUrls(html) : html;
 }
 
 export function highlightText(text, query, isFocused) {
@@ -538,5 +590,6 @@ export async function refreshChat() {
   try {
     var log = await api('/conversations/' + encodeURIComponent($.activePhone));
     renderChat(log);
+    updateMessageIndicators();
   } catch (e) { }
 }

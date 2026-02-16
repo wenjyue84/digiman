@@ -9,10 +9,12 @@
           <option value="integration">Integration Tests</option>
           <option value="semantic">Semantic Tests</option>
         </select>
-        <button id="btn-run-tests" onclick="runTests()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition font-medium">
+        <button id="btn-run-tests" onclick="runTests()" class="text-sm bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition font-medium"
+          title="Runs the selected test suite (Unit, Integration, or Semantic) and displays pass/fail results with detailed error messages">
           Run Tests
         </button>
-        <button id="btn-run-coverage" onclick="runCoverage()" class="text-sm bg-neutral-600 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition font-medium">
+        <button id="btn-run-coverage" onclick="runCoverage()" class="text-sm bg-neutral-600 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition font-medium"
+          title="Generates a code coverage report showing which lines of source code are exercised by tests, helping identify untested code paths">
           Coverage
         </button>
         <!-- History Button -->

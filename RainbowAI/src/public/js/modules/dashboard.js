@@ -98,7 +98,28 @@ export async function loadDashboard() {
               </span>
             </div>
           `}).join('')}
-          ${aiProviders.length > 4 ? `<div class="text-xs text-neutral-400 mt-1 pl-4">+${aiProviders.length - 4} more models</div>` : ''}
+          ${aiProviders.length > 4 ? `
+            <button type="button" id="dashboard-ai-more-toggle" onclick="toggleDashboardAiModels()" class="text-xs text-primary-500 hover:text-primary-600 mt-1 pl-4 cursor-pointer underline">+${aiProviders.length - 4} more models</button>
+            <div id="dashboard-ai-more-list" class="hidden space-y-2 mt-2">
+              ${aiProviders.slice(4).map(provider => {
+                const isDefault = provider.priority === 0;
+                const defaultBadge = isDefault
+                  ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded ml-1 font-bold uppercase tracking-wide border border-amber-200">Default</span>'
+                  : '';
+                return '<div class="flex items-center justify-between text-sm" data-provider-id="' + esc(provider.id) + '">'
+                  + '<div class="flex items-center gap-2 overflow-hidden">'
+                  + '<span class="w-2 h-2 rounded-full flex-shrink-0 ' + (provider.available ? 'bg-success-400' : 'bg-neutral-300') + '"></span>'
+                  + '<span class="text-neutral-700 truncate ' + (isDefault ? 'font-semibold' : '') + '">' + esc(provider.name || 'Unknown') + '</span>'
+                  + defaultBadge
+                  + '</div>'
+                  + '<span class="flex items-center gap-2 flex-shrink-0 ml-2">'
+                  + '<span class="' + (provider.available ? 'text-success-600' : 'text-neutral-400') + ' text-xs whitespace-nowrap">' + (provider.available ? '\u2713 Ready' : '\u2717 Not configured') + '</span>'
+                  + '<span id="dashboard-ai-time-' + esc(provider.id) + '" class="text-neutral-500 font-mono text-xs w-10 text-right" data-provider-id="' + esc(provider.id) + '"></span>'
+                  + '</span>'
+                  + '</div>';
+              }).join('')}
+            </div>
+          ` : ''}
         </div>
       `;
     }
@@ -113,47 +134,75 @@ export async function loadDashboard() {
       satisfaction: document.getElementById('dashboard-stat-satisfaction'),
     };
 
-    // Show loading state
-    Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
+    // Show cached stats immediately (if available), otherwise show loading
+    const STATS_CACHE_KEY = 'rainbow-dashboard-stats';
+    const cached = sessionStorage.getItem(STATS_CACHE_KEY);
+    if (cached) {
+      try {
+        const cachedStats = JSON.parse(cached);
+        if (statsEls.messages) statsEls.messages.textContent = cachedStats.messages || '-';
+        if (statsEls.accuracy) statsEls.accuracy.textContent = cachedStats.accuracy || '-';
+        if (statsEls.response) statsEls.response.textContent = cachedStats.response || '-';
+        if (statsEls.satisfaction) statsEls.satisfaction.textContent = cachedStats.satisfaction || '-';
+        Object.values(statsEls).forEach(el => { if (el) el.style.opacity = '0.6'; });
+      } catch (_) {
+        Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
+      }
+    } else {
+      Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
+    }
 
-    // Fetch all three endpoints in parallel, each with independent error handling
-    const [conversationsResult, accuracyResult, feedbackResult] = await Promise.allSettled([
-      api('/conversations'),
-      api('/intent/accuracy'),
-      api('/feedback/stats'),
-    ]);
+    // Fetch all stats endpoints in parallel with independent error handling
+    const statsConfigs = await window.apiHelpers.loadMultipleConfigs(
+      { conversations: '/conversations', accuracy: '/intent/accuracy', feedback: '/feedback/stats', responseTime: '/conversations/stats/response-time' },
+      { settled: true }
+    );
+
+    const freshStats = {};
 
     // Messages Handled — sum messageCount from all conversations
-    if (conversationsResult.status === 'fulfilled' && Array.isArray(conversationsResult.value)) {
-      const totalMessages = conversationsResult.value.reduce((sum, c) => sum + (c.messageCount || 0), 0);
-      statsEls.messages.textContent = totalMessages.toLocaleString();
+    if (Array.isArray(statsConfigs.conversations)) {
+      const totalMessages = statsConfigs.conversations.reduce((sum, c) => sum + (c.messageCount || 0), 0);
+      freshStats.messages = totalMessages.toLocaleString();
     } else {
-      statsEls.messages.textContent = connectedCount > 0 ? '-' : '0';
+      freshStats.messages = connectedCount > 0 ? '-' : '0';
     }
+    statsEls.messages.textContent = freshStats.messages;
 
     // Intent Accuracy — from intent/accuracy API
-    if (accuracyResult.status === 'fulfilled' && accuracyResult.value?.accuracy?.overall) {
-      const rate = accuracyResult.value.accuracy.overall.accuracyRate;
-      statsEls.accuracy.textContent = rate != null ? `${Math.round(rate)}%` : '-';
+    if (statsConfigs.accuracy?.accuracy?.overall) {
+      const rate = statsConfigs.accuracy.accuracy.overall.accuracyRate;
+      freshStats.accuracy = rate != null ? `${Math.round(rate)}%` : '-';
     } else {
-      statsEls.accuracy.textContent = '-';
+      freshStats.accuracy = '-';
     }
+    statsEls.accuracy.textContent = freshStats.accuracy;
 
-    // Avg Response Time — from conversation logs only (all assistant replies with responseTime)
-    try {
-      const res = await api('/conversations/stats/response-time');
-      statsEls.response.textContent = res?.avgResponseTimeMs != null ? `${Math.round(res.avgResponseTimeMs)}ms` : '-';
-    } catch (_) {
-      statsEls.response.textContent = '-';
+    // Avg Response Time — from conversation logs
+    if (statsConfigs.responseTime?.avgResponseTimeMs != null) {
+      freshStats.response = `${Math.round(statsConfigs.responseTime.avgResponseTimeMs)}ms`;
+    } else {
+      freshStats.response = '-';
     }
+    statsEls.response.textContent = freshStats.response;
 
     // Satisfaction Rate — from feedback/stats API
-    if (feedbackResult.status === 'fulfilled' && feedbackResult.value?.stats?.overall) {
-      const satRate = parseFloat(feedbackResult.value.stats.overall.satisfactionRate);
-      statsEls.satisfaction.textContent = !isNaN(satRate) ? `${Math.round(satRate)}%` : '-';
+    if (statsConfigs.feedback?.stats?.overall) {
+      const satRate = parseFloat(statsConfigs.feedback.stats.overall.satisfactionRate);
+      freshStats.satisfaction = !isNaN(satRate) ? `${Math.round(satRate)}%` : '-';
     } else {
-      statsEls.satisfaction.textContent = '-';
+      freshStats.satisfaction = '-';
     }
+    statsEls.satisfaction.textContent = freshStats.satisfaction;
+
+    // Restore full opacity and cache fresh stats
+    Object.values(statsEls).forEach(el => {
+      if (el) {
+        el.style.transition = 'opacity 0.3s ease';
+        el.style.opacity = '1';
+      }
+    });
+    sessionStorage.setItem(STATS_CACHE_KEY, JSON.stringify(freshStats));
 
     // Initialize real-time activity feed via SSE
     initActivityStream();
@@ -201,6 +250,23 @@ export async function loadDashboard() {
     if (waEl && waEl.querySelector('.animate-spin')) waEl.innerHTML = errorHtml;
     if (aiEl && aiEl.querySelector('.animate-spin')) aiEl.innerHTML = errorHtml;
     if (actEl && actEl.querySelector('.animate-spin')) actEl.innerHTML = errorHtml;
+  }
+}
+
+/**
+ * Toggle showing all AI models in the dashboard card
+ */
+export function toggleDashboardAiModels() {
+  const list = document.getElementById('dashboard-ai-more-list');
+  const toggle = document.getElementById('dashboard-ai-more-toggle');
+  if (!list || !toggle) return;
+  const isHidden = list.classList.contains('hidden');
+  list.classList.toggle('hidden');
+  if (isHidden) {
+    toggle.textContent = 'Show less';
+  } else {
+    const count = list.querySelectorAll('[data-provider-id]').length;
+    toggle.textContent = `+${count} more models`;
   }
 }
 

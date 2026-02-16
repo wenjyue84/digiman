@@ -196,17 +196,6 @@
         <!-- Status Badge -->
         <span id="wa-badge"
           class="text-xs px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-500 border border-neutral-200 font-medium">Connecting...</span>
-
-        <!-- Reload Button -->
-        <button onclick="reloadConfig()"
-          class="text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-            </path>
-          </svg>
-          Reload Config
-        </button>
       </div>
     </header>
 
@@ -349,6 +338,8 @@
   </div>
 
   <!-- Core Scripts (Regular - global scope, load order matters!) -->
+  <script src="/public/js/core/cache-manager.js"></script>
+  <script src="/public/js/core/api-helpers.js"></script>
   <script src="/public/js/core/state.js"></script>
   <script src="/public/js/core/utils-global.js"></script>
   <script src="/public/js/core/sidebar.js"></script>

@@ -7,7 +7,11 @@ import { api, toast, escapeHtml as esc } from '../core/utils.js';
 import { updateWorkflowTestSelect } from './workflow-testing.js';
 
 // ─── State ─────────────────────────────────────────────────────────────
-let cachedWorkflows = { workflows: [] };
+// Cache key for centralized cacheManager (API-fetched data)
+const WF_CACHE_KEY = 'workflows.list';
+// Initialize cache with default value
+window.cacheManager.set(WF_CACHE_KEY, { workflows: [] });
+
 let currentWorkflowId = null;
 let currentWorkflowSteps = [];
 
@@ -26,16 +30,16 @@ const NODE_TYPES = {
 };
 
 // ─── Exported Getters (for workflow-testing.js) ──────────────────────────
-export function getCachedWorkflows() { return cachedWorkflows; }
+export function getCachedWorkflows() { return window.cacheManager.get(WF_CACHE_KEY); }
 
 // ─── Main Loader ───────────────────────────────────────────────────────
 export async function loadWorkflow() {
   try {
-    const [workflowsData, advancedData] = await Promise.all([
-      api('/workflows'),
-      api('/workflow')
-    ]);
-    cachedWorkflows = workflowsData;
+    const configs = await window.apiHelpers.loadMultipleConfigs(
+      { workflowsData: '/workflows', advancedData: '/workflow' },
+      { cacheKeys: { workflowsData: WF_CACHE_KEY } }
+    );
+    const { workflowsData, advancedData } = configs;
     renderWorkflowList();
     renderAdvancedSettings(advancedData);
     updateWorkflowTestSelect();
@@ -44,13 +48,13 @@ export async function loadWorkflow() {
       if (still) selectWorkflow(currentWorkflowId);
       else { currentWorkflowId = null; hideWorkflowEditor(); }
     }
-  } catch (e) { toast(e.message, 'error'); }
+  } catch (e) { toast(window.apiHelpers.formatApiError(e), 'error'); }
 }
 
 // ─── Workflow List ─────────────────────────────────────────────────────
 export function renderWorkflowList() {
   const el = document.getElementById('workflow-list');
-  const wfs = cachedWorkflows.workflows || [];
+  const wfs = window.cacheManager.get(WF_CACHE_KEY).workflows || [];
   if (wfs.length === 0) {
     el.innerHTML = '<p class="text-neutral-400 text-sm">No workflows yet</p>';
     return;
@@ -96,7 +100,7 @@ export function hideWorkflowEditor() {
 // ─── Select Workflow ───────────────────────────────────────────────────
 export async function selectWorkflow(id) {
   currentWorkflowId = id;
-  const wf = cachedWorkflows.workflows.find(w => w.id === id);
+  const wf = window.cacheManager.get(WF_CACHE_KEY).workflows.find(w => w.id === id);
   if (!wf) return;
 
   currentWorkflowSteps = JSON.parse(JSON.stringify(wf.steps || []));
@@ -617,7 +621,7 @@ export async function saveCurrentWorkflow() {
     });
     toast('Workflow saved: ' + name);
     var wfData = await api('/workflows');
-    cachedWorkflows = wfData;
+    window.cacheManager.set(WF_CACHE_KEY, wfData);
     renderWorkflowList();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -631,7 +635,7 @@ export async function createWorkflow() {
     await api('/workflows', { method: 'POST', body: { id: id, name: name.trim(), steps: [] } });
     toast('Created: ' + name);
     var wfData = await api('/workflows');
-    cachedWorkflows = wfData;
+    window.cacheManager.set(WF_CACHE_KEY, wfData);
     renderWorkflowList();
     selectWorkflow(id);
   } catch (e) { toast(e.message, 'error'); }
@@ -646,7 +650,7 @@ export async function deleteCurrentWorkflow() {
     currentWorkflowId = null;
     hideWorkflowEditor();
     var wfData = await api('/workflows');
-    cachedWorkflows = wfData;
+    window.cacheManager.set(WF_CACHE_KEY, wfData);
     renderWorkflowList();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -721,4 +725,83 @@ export async function saveAdvancedWorkflow() {
     });
     toast('Advanced settings saved');
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Export / Import Workflows as JSON ──────────────────────────────────
+
+/**
+ * Export the currently selected workflow as a downloadable JSON file
+ */
+export function exportWorkflowJSON() {
+  if (!currentWorkflowId) {
+    toast('Select a workflow first', 'error');
+    return;
+  }
+  const wf = window.cacheManager.get(WF_CACHE_KEY).workflows.find(function(w) { return w.id === currentWorkflowId; });
+  if (!wf) {
+    toast('Workflow not found', 'error');
+    return;
+  }
+  var exportData = {
+    id: wf.id,
+    name: wf.name,
+    format: wf.format || 'steps',
+    steps: wf.steps || [],
+    nodes: wf.nodes || [],
+    startNodeId: wf.startNodeId || '',
+    exportedAt: new Date().toISOString(),
+    source: 'Rainbow AI'
+  };
+  var json = JSON.stringify(exportData, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = wf.id + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Exported: ' + wf.name);
+}
+
+/**
+ * Import a workflow from a JSON file
+ */
+export function importWorkflowJSON() {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    try {
+      var text = await file.text();
+      var data = JSON.parse(text);
+      if (!data.id || !data.name) {
+        toast('Invalid workflow JSON: missing id or name', 'error');
+        return;
+      }
+      // Check for duplicate ID
+      var existing = window.cacheManager.get(WF_CACHE_KEY).workflows.find(function(w) { return w.id === data.id; });
+      if (existing) {
+        if (!confirm('Workflow "' + data.id + '" already exists. Overwrite it?')) return;
+      }
+      var body = {
+        id: data.id,
+        name: data.name,
+        steps: data.steps || [],
+        format: data.format || 'steps',
+        nodes: data.nodes || [],
+        startNodeId: data.startNodeId || ''
+      };
+      await api('/workflows/' + encodeURIComponent(data.id), { method: 'PUT', body: body });
+      toast('Imported: ' + data.name);
+      await loadWorkflow();
+      selectWorkflow(data.id);
+    } catch (err) {
+      toast('Import failed: ' + err.message, 'error');
+    }
+  };
+  input.click();
 }

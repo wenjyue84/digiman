@@ -13,15 +13,18 @@ import {
 } from './settings-ai-models.js';
 
 /**
- * Shared state — accessed by AI Models tab via getter/setter
+ * Shared state — backed by centralized cacheManager.
+ * Accessed by AI Models tab via getter/setter (backed by same cache keys).
  */
-let settingsData = null;
-let adminNotifsData = null;
+const SETTINGS_CACHE_KEYS = {
+  config:      'settings.config',
+  adminNotifs: 'settings.adminNotifs',
+};
 
 // Wire up shared state accessors for the AI Models sub-module
 initAiModelsState(
-  () => settingsData,
-  (v) => { settingsData = v; }
+  () => window.cacheManager.get(SETTINGS_CACHE_KEYS.config),
+  (v) => { window.cacheManager.set(SETTINGS_CACHE_KEYS.config, v); }
 );
 
 /**
@@ -30,10 +33,13 @@ initAiModelsState(
  */
 export async function loadSettings(subTab) {
   try {
-    settingsData = await api('/settings');
-    adminNotifsData = await api('/admin-notifications');
+    const configs = await window.apiHelpers.loadMultipleConfigs(
+      { config: '/settings', adminNotifs: '/admin-notifications' },
+      { cacheKeys: { config: SETTINGS_CACHE_KEYS.config, adminNotifs: SETTINGS_CACHE_KEYS.adminNotifs } }
+    );
 
     // Store operators in global variable for easy access
+    const adminNotifsData = window.cacheManager.get(SETTINGS_CACHE_KEYS.adminNotifs);
     window.currentOperators = adminNotifsData.operators || [];
 
     // Prioritize passed subTab, then stored state, then default
@@ -44,7 +50,7 @@ export async function loadSettings(subTab) {
 
     switchSettingsTab(activeTab, shouldUpdateHash);
   } catch (e) {
-    toast(e.message, 'error');
+    toast(window.apiHelpers.formatApiError(e), 'error');
   }
 }
 window.loadSettings = loadSettings;
@@ -79,7 +85,7 @@ export function switchSettingsTab(tabId, updateHash = true) {
   if (!container) return;
 
   // Ensure data is loaded
-  if (!settingsData || !adminNotifsData) return;
+  if (!window.cacheManager.get(SETTINGS_CACHE_KEYS.config) || !window.cacheManager.get(SETTINGS_CACHE_KEYS.adminNotifs)) return;
 
   // Clear previous content before rendering new
   container.innerHTML = '';
@@ -87,12 +93,103 @@ export function switchSettingsTab(tabId, updateHash = true) {
   if (tabId === 'ai-models') renderAiModelsTab(container);
   else if (tabId === 'notifications') renderNotificationsTab(container);
   else if (tabId === 'operators') renderOperatorsTab(container);
+  else if (tabId === 'bot-avatar') renderBotAvatarTab(container);
 }
 window.switchSettingsTab = switchSettingsTab;
+
+// ─── Bot Avatar Tab (US-087) ──────────────────────────────────────
+
+function renderBotAvatarTab(container) {
+  var settingsData = window.cacheManager.get(SETTINGS_CACHE_KEYS.config);
+  var currentAvatar = (settingsData && settingsData.botAvatar) || '\uD83E\uDD16';
+  var presets = ['\uD83E\uDD16', '\uD83D\uDCAC', '\u2728', '\uD83C\uDF08', '\uD83D\uDE80', '\uD83D\uDC8E', '\uD83C\uDF1F', '\uD83D\uDC4B', '\uD83E\uDDE0', '\uD83C\uDF3F'];
+
+  container.innerHTML =
+    '<div class="bg-white border rounded-2xl p-6">' +
+      '<h3 class="font-semibold text-lg mb-2">Bot Avatar</h3>' +
+      '<p class="text-sm text-neutral-500 mb-6 font-medium">Customize the icon shown before AI-generated messages in Live Chat. Human staff replies will not have this icon.</p>' +
+
+      '<div class="mb-6">' +
+        '<label class="block text-sm font-bold text-neutral-800 mb-3">Current Avatar</label>' +
+        '<div class="flex items-center gap-4 p-4 bg-neutral-50 rounded-xl border">' +
+          '<span id="bot-avatar-preview" class="text-4xl">' + esc(currentAvatar) + '</span>' +
+          '<div>' +
+            '<div class="text-sm font-medium text-neutral-800">Preview in chat bubble:</div>' +
+            '<div class="text-sm text-neutral-500 mt-1"><span id="bot-avatar-inline">' + esc(currentAvatar) + '</span> Hello! Welcome to Pelangi Capsule Hostel...</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="mb-6">' +
+        '<label class="block text-sm font-bold text-neutral-800 mb-3">Quick Presets</label>' +
+        '<div class="flex flex-wrap gap-2">' +
+          presets.map(function(emoji) {
+            var isActive = emoji === currentAvatar ? ' ring-2 ring-primary-500 ring-offset-2' : '';
+            return '<button onclick="selectBotAvatar(\'' + emoji + '\')" class="w-12 h-12 text-2xl rounded-xl border hover:bg-neutral-50 transition flex items-center justify-center' + isActive + '">' + emoji + '</button>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+
+      '<div class="mb-6">' +
+        '<label class="block text-sm font-bold text-neutral-800 mb-3">Custom Emoji / Text</label>' +
+        '<div class="flex gap-2">' +
+          '<input type="text" id="bot-avatar-custom" value="' + esc(currentAvatar) + '" placeholder="Type emoji or short text" class="flex-1 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition bg-white shadow-soft text-lg" maxlength="4" />' +
+          '<button onclick="saveBotAvatar()" class="px-8 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-medium font-bold">Save</button>' +
+        '</div>' +
+        '<p class="text-[11px] text-neutral-500 mt-2">Enter any emoji or up to 4 characters. This will appear before every AI message in Live Chat.</p>' +
+      '</div>' +
+    '</div>';
+}
+
+export function selectBotAvatar(emoji) {
+  var input = document.getElementById('bot-avatar-custom');
+  if (input) input.value = emoji;
+  var preview = document.getElementById('bot-avatar-preview');
+  if (preview) preview.textContent = emoji;
+  var inline = document.getElementById('bot-avatar-inline');
+  if (inline) inline.textContent = emoji;
+  // Auto-save on preset click
+  saveBotAvatarValue(emoji);
+}
+window.selectBotAvatar = selectBotAvatar;
+
+export async function saveBotAvatar() {
+  var input = document.getElementById('bot-avatar-custom');
+  var value = input ? input.value.trim() : '';
+  if (!value) {
+    toast('Please enter an emoji or text', 'error');
+    return;
+  }
+  await saveBotAvatarValue(value);
+}
+window.saveBotAvatar = saveBotAvatar;
+
+async function saveBotAvatarValue(value) {
+  try {
+    await api('/settings', { method: 'PATCH', body: { botAvatar: value } });
+    var settingsData = window.cacheManager.get(SETTINGS_CACHE_KEYS.config);
+    if (settingsData) settingsData.botAvatar = value;
+    window._botAvatar = value;
+    toast('Bot avatar updated');
+    // Update preview
+    var preview = document.getElementById('bot-avatar-preview');
+    if (preview) preview.textContent = value;
+    var inline = document.getElementById('bot-avatar-inline');
+    if (inline) inline.textContent = value;
+    // Re-render to update preset highlights
+    var container = document.getElementById('settings-tab-content');
+    if (container && window.activeSettingsTab === 'bot-avatar') {
+      renderBotAvatarTab(container);
+    }
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
 
 // ─── Notifications Tab ─────────────────────────────────────────────
 
 function renderNotificationsTab(container) {
+  const adminNotifsData = window.cacheManager.get(SETTINGS_CACHE_KEYS.adminNotifs);
   container.innerHTML = `
     <div class="bg-white border rounded-2xl p-6">
       <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
@@ -259,7 +356,8 @@ export async function updateSystemAdminPhone() {
     }
     await api('/admin-notifications/system-admin-phone', { method: 'PUT', body: { phone } });
     toast('System admin phone updated successfully');
-    adminNotifsData.systemAdminPhone = phone;
+    const adminNotifsData = window.cacheManager.get(SETTINGS_CACHE_KEYS.adminNotifs);
+    if (adminNotifsData) adminNotifsData.systemAdminPhone = phone;
   } catch (e) {
     toast(e.message, 'error');
   }
@@ -278,10 +376,13 @@ export async function updateAdminNotifPrefs() {
       body: { enabled, notifyDisconnect, notifyUnlink, notifyReconnect }
     });
     toast('Notification preferences updated');
-    adminNotifsData.enabled = enabled;
-    adminNotifsData.notifyOnDisconnect = notifyDisconnect;
-    adminNotifsData.notifyOnUnlink = notifyUnlink;
-    adminNotifsData.notifyOnReconnect = notifyReconnect;
+    const adminNotifsData = window.cacheManager.get(SETTINGS_CACHE_KEYS.adminNotifs);
+    if (adminNotifsData) {
+      adminNotifsData.enabled = enabled;
+      adminNotifsData.notifyOnDisconnect = notifyDisconnect;
+      adminNotifsData.notifyOnUnlink = notifyUnlink;
+      adminNotifsData.notifyOnReconnect = notifyReconnect;
+    }
   } catch (e) {
     toast(e.message, 'error');
   }

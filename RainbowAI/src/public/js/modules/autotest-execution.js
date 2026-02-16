@@ -37,9 +37,41 @@ const SCENARIO_ID_TO_INTENT = {
   'postcheckout-billing-dispute': 'billing_dispute', 'postcheckout-billing-minor': 'billing_inquiry',
   'postcheckout-review-positive': 'review_feedback', 'postcheckout-review-negative': 'review_feedback',
   'multilingual-chinese-greeting': 'greeting', 'multilingual-mixed-booking': 'booking',
-  'multilingual-chinese-bill': 'billing_inquiry', 'multilingual-malay-wifi': 'wifi',
-  'edge-gibberish': 'unknown', 'edge-emoji': 'unknown', 'edge-long-message': 'availability',
-  'edge-prompt-injection': 'unknown',
+  'multilingual-chinese-bill': 'billing_dispute', 'multilingual-malay-wifi': 'wifi',
+  'edge-gibberish': 'unknown', 'edge-emoji': 'greeting', 'edge-long-message': 'booking',
+  'edge-prompt-injection': 'greeting',
+  // Paraphrase resilience
+  'paraphrase-pricing-colloquial': 'pricing', 'paraphrase-pricing-formal': 'pricing',
+  'paraphrase-wifi-indirect': 'wifi', 'paraphrase-checkin-time-informal': 'checkin_info',
+  'paraphrase-checkout-time-informal': 'checkout_info', 'paraphrase-directions-taxi': 'directions',
+  'paraphrase-booking-want-stay': 'booking', 'paraphrase-complaint-rude': 'complaint',
+  'paraphrase-amenity-blanket': 'climate_control_complaint', 'paraphrase-lower-deck-question': 'lower_deck_preference',
+  // Typo tolerance
+  'typo-wifi-pasword': 'wifi', 'typo-checkin-chekin': 'check_in_arrival',
+  'typo-booking-bokking': 'booking', 'typo-thnks': 'thanks',
+  'typo-towl': 'extra_amenity_request', 'typo-lugage-storage': 'luggage_storage',
+  // Abbreviation/slang
+  'slang-tq': 'thanks', 'slang-tqvm': 'thanks', 'slang-brp-harga': 'pricing',
+  'slang-bole-checkin': 'checkin_info', 'slang-thx': 'thanks', 'slang-nk-tny-harga': 'pricing',
+  // Multilingual expanded
+  'ml-malay-pricing': 'pricing', 'ml-malay-directions': 'directions',
+  'ml-malay-complaint': 'cleanliness_complaint', 'ml-malay-checkout-time': 'checkout_info',
+  'ml-chinese-pricing': 'pricing', 'ml-chinese-wifi': 'wifi',
+  'ml-chinese-checkin': 'check_in_arrival', 'ml-chinese-complaint': 'noise_complaint',
+  // Capsule specific
+  'capsule-which-lower': 'lower_deck_preference', 'capsule-is-c4-lower': 'lower_deck_preference',
+  'capsule-bottom-bunk': 'lower_deck_preference', 'capsule-female-section': 'facilities_info',
+  // Context switching
+  'context-greeting-then-price': 'pricing', 'context-thanks-then-question': 'wifi',
+  'context-double-intent': 'pricing', 'context-complaint-then-wifi': 'wifi',
+  // Edge cases expanded
+  'edge-single-word': 'pricing', 'edge-single-word-wifi': 'wifi',
+  'edge-question-marks-only': 'unknown', 'edge-repeated-word': 'greeting',
+  'edge-numbers-only': 'unknown', 'edge-prompt-injection-v2': 'greeting',
+  // Multi-turn intent scenarios
+  'mt-noise-followup': 'noise_complaint', 'mt-booking-full-flow': 'pricing',
+  'mt-complaint-escalation': 'cleanliness_complaint', 'mt-checkin-flow': 'checkin_info',
+  'mt-billing-dispute': 'billing_inquiry', 'mt-checkout-luggage': 'checkout_info',
   'workflow-booking-payment-full': 'booking', 'workflow-checkin-full': 'check_in_arrival',
   'workflow-lower-deck-full': 'lower_deck_preference', 'workflow-complaint-full': 'complaint',
   'workflow-theft-emergency-full': 'theft_report', 'workflow-card-locked-full': 'card_locked',

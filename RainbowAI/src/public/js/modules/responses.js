@@ -10,7 +10,7 @@
  * Handles sub-tab initialization
  * @param {string} subTab - Sub-tab to load ('knowledge-base', 'quick-replies', 'workflows', 'system-messages')
  */
-export async function loadResponses(subTab = 'knowledge-base') {
+export async function loadResponses(subTab = 'quick-replies') {
   // Ensure sub-tab content is visible
   if (typeof window.switchResponseTab === 'function') {
     window.switchResponseTab(subTab, false);

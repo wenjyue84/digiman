@@ -116,6 +116,11 @@ async function loadTab(tabName, subTab = null) {
     window.stopStatusPolling();
   }
 
+  // Hide Prisma Bot FAB when navigating away from responses tab
+  if (typeof window.hidePrismaBotFab === 'function') {
+    window.hidePrismaBotFab();
+  }
+
   // Hide all tabs
   document.querySelectorAll('.tab-content').forEach(tab => {
     tab.classList.add('hidden');

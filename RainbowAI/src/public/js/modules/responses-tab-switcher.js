@@ -52,4 +52,11 @@ export function switchResponseTab(tabName, updateHash = true) {
   } else if (tabName === 'system-messages') {
     if (window.loadStaticTemplates) window.loadStaticTemplates();
   }
+
+  // Show/hide Prisma Bot FAB (only on workflows sub-tab)
+  if (tabName === 'workflows') {
+    if (window.showPrismaBotFab) window.showPrismaBotFab();
+  } else {
+    if (window.hidePrismaBotFab) window.hidePrismaBotFab();
+  }
 }

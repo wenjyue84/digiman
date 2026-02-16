@@ -11,6 +11,31 @@
   max-height: 24rem;
 }
 
+/* Activity Category Tabs — Notion-style views */
+.activity-cat-tab {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.activity-cat-tab:hover {
+  color: #374151;
+}
+
+.activity-cat-tab.active {
+  color: #111827;
+  border-bottom-color: #111827;
+  font-weight: 600;
+}
+
 /* Toast animations */
 .toast {
   animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;

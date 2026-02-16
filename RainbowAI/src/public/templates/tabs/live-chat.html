@@ -1,61 +1,96 @@
 <div class="lc-container">
-  <!-- WhatsApp connection status (visible on both Live Chat and when testing) -->
-  <!-- WhatsApp connection status (Floating) -->
-  <div id="lc-wa-status-bar" class="wa-floating-status" onclick="this.classList.toggle('expanded')" role="status"
-    aria-live="polite" title="WhatsApp Connection Status">
-    <span class="wa-icon">📱</span>
-    <span class="wa-connection-text wa-text">Checking…</span>
-  </div>
   <!-- Sidebar: Conversation List -->
   <div class="lc-sidebar" id="lc-sidebar">
     <div class="lc-sidebar-header">
+      <!-- Top bar: Chats title + status dot + action icons (WhatsApp Web style) -->
+      <div class="lc-sidebar-topbar">
+        <div class="lc-sidebar-title-wrap">
+          <h2 class="lc-sidebar-title">Chats</h2>
+          <!-- WhatsApp status dot (US-077) -->
+          <div class="lc-wa-dot lc-wa-disconnected" id="lc-wa-dot" onclick="lcShowWaStatusTooltip(event)" title="WhatsApp Disconnected">
+            <span class="lc-wa-dot-inner"></span>
+            <div class="lc-wa-tooltip" id="lc-wa-tooltip" style="display:none;">
+              <div class="lc-wa-tooltip-status" id="lc-wa-tooltip-status">Disconnected</div>
+              <div class="lc-wa-tooltip-phone" id="lc-wa-tooltip-phone">No active connections</div>
+            </div>
+          </div>
+        </div>
+        <div class="lc-sidebar-actions">
+          <button type="button" class="lc-sidebar-action-btn" onclick="lcNewChat()" title="New chat">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              <line x1="12" y1="8" x2="12" y2="14" />
+              <line x1="9" y1="11" x2="15" y2="11" />
+            </svg>
+          </button>
+          <div class="lc-sidebar-menu-wrap">
+            <button type="button" class="lc-sidebar-menu-btn" onclick="lcToggleSidebarMenu()" title="Menu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2">
+                <circle cx="12" cy="6" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="12" cy="18" r="1.5" />
+              </svg>
+            </button>
+            <div class="lc-sidebar-dropdown" id="lc-sidebar-dropdown" style="display:none;">
+              <div class="lc-sidebar-dropdown-item lc-instance-select-wrap">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                  <line x1="12" y1="18" x2="12" y2="18" />
+                </svg>
+                <select class="lc-instance-filter" id="lc-instance-filter" onchange="lcFilterConversations()">
+                  <option value="">All Instances</option>
+                </select>
+              </div>
+              <button type="button" class="lc-sidebar-dropdown-item" onclick="lcToggleDateFilterPanel()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span>Date Range Filter</span>
+                <span class="lc-date-filter-badge" id="lc-date-filter-badge" style="display:none;"></span>
+              </button>
+              <button type="button" class="lc-sidebar-dropdown-item" onclick="lcShowStarredMessages()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                <span>Starred messages</span>
+              </button>
+              <button type="button" class="lc-sidebar-dropdown-item" onclick="lcMarkAllAsRead()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>Mark all as read</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Search bar -->
       <div class="lc-search-wrap">
         <svg class="lc-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
         <input type="text" class="lc-search" id="lc-search" placeholder="Search or start new chat"
-          oninput="lcFilterConversations()">
+          oninput="lcDebouncedSearch()">
       </div>
-      <div class="lc-sidebar-menu-wrap">
-        <button type="button" class="lc-sidebar-menu-btn" onclick="lcToggleSidebarMenu()" title="Menu">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2">
-            <circle cx="12" cy="6" r="1.5" />
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="12" cy="18" r="1.5" />
+    </div>
+    <div class="lc-date-filter-panel" id="lc-date-filter-panel" style="display:none;">
+      <div class="lc-date-filter-wrap">
+        <div class="lc-date-filter-label">Date Range:</div>
+        <input type="date" class="lc-date-filter" id="lc-date-from" onchange="lcFilterConversations()" title="From date">
+        <span class="lc-date-filter-separator">to</span>
+        <input type="date" class="lc-date-filter" id="lc-date-to" onchange="lcFilterConversations()" title="To date">
+        <button type="button" class="lc-date-filter-reset" onclick="lcResetDateFilter()" title="Clear date filter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
-        <div class="lc-sidebar-dropdown" id="lc-sidebar-dropdown" style="display:none;">
-          <button type="button" class="lc-sidebar-dropdown-item" onclick="lcShowStarredMessages()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon
-                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <span>Starred messages</span>
-          </button>
-          <button type="button" class="lc-sidebar-dropdown-item" onclick="lcMarkAllAsRead()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            <span>Mark all as read</span>
-          </button>
-        </div>
       </div>
-      <select class="lc-instance-filter" id="lc-instance-filter" onchange="lcFilterConversations()">
-        <option value="">All Instances</option>
-      </select>
-    </div>
-    <div class="lc-date-filter-wrap">
-      <div class="lc-date-filter-label">Date Range:</div>
-      <input type="date" class="lc-date-filter" id="lc-date-from" onchange="lcFilterConversations()" title="From date">
-      <span class="lc-date-filter-separator">to</span>
-      <input type="date" class="lc-date-filter" id="lc-date-to" onchange="lcFilterConversations()" title="To date">
-      <button type="button" class="lc-date-filter-reset" onclick="lcResetDateFilter()" title="Clear date filter">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
     </div>
     <div class="lc-filter-chips" id="lc-filter-chips">
       <button class="lc-chip active" data-filter="all" onclick="lcSetFilter('all')">All</button>
@@ -64,12 +99,23 @@
       <button class="lc-chip" data-filter="groups" onclick="lcSetFilter('groups')">Groups</button>
     </div>
     <div class="lc-chat-list" id="lc-chat-list">
-      <div class="lc-sidebar-empty" id="lc-sidebar-empty">
+      <!-- Skeleton loading (US-145) — shown until real data arrives -->
+      <div class="lc-skeleton-wrap" id="lc-skeleton-wrap">
+        <div class="lc-skeleton-item"><div class="lc-skeleton-avatar"></div><div class="lc-skeleton-lines"><div class="lc-skeleton-line lc-skeleton-line-name"></div><div class="lc-skeleton-line lc-skeleton-line-msg"></div></div></div>
+        <div class="lc-skeleton-item"><div class="lc-skeleton-avatar"></div><div class="lc-skeleton-lines"><div class="lc-skeleton-line lc-skeleton-line-name"></div><div class="lc-skeleton-line lc-skeleton-line-msg"></div></div></div>
+        <div class="lc-skeleton-item"><div class="lc-skeleton-avatar"></div><div class="lc-skeleton-lines"><div class="lc-skeleton-line lc-skeleton-line-name"></div><div class="lc-skeleton-line lc-skeleton-line-msg"></div></div></div>
+        <div class="lc-skeleton-item"><div class="lc-skeleton-avatar"></div><div class="lc-skeleton-lines"><div class="lc-skeleton-line lc-skeleton-line-name"></div><div class="lc-skeleton-line lc-skeleton-line-msg"></div></div></div>
+        <div class="lc-skeleton-item"><div class="lc-skeleton-avatar"></div><div class="lc-skeleton-lines"><div class="lc-skeleton-line lc-skeleton-line-name"></div><div class="lc-skeleton-line lc-skeleton-line-msg"></div></div></div>
+      </div>
+      <div class="lc-sidebar-empty" id="lc-sidebar-empty" style="display:none">
         <p>No conversations yet</p>
         <p class="lc-sidebar-hint">Chats will appear here when guests message your WhatsApp.</p>
       </div>
     </div>
   </div>
+
+  <!-- Resizable Divider (US-072) -->
+  <div class="lc-divider" id="lc-divider" title="Drag to resize"></div>
 
   <!-- Main: Chat View -->
   <div class="lc-main" id="lc-main">
@@ -94,21 +140,34 @@
     <div id="lc-active-chat" style="display:none;flex-direction:column;height:100%;">
       <!-- Green WhatsApp header -->
       <div class="lc-chat-header">
+        <!-- Mobile back button (US-092) -->
+        <button type="button" class="lc-back-btn" onclick="lcMobileBack()" title="Back to chats">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
         <div class="lc-header-avatar" id="lc-header-avatar">?</div>
         <div class="lc-header-info">
           <div class="lc-header-name" id="lc-header-name">Guest</div>
           <div class="lc-header-phone" id="lc-header-phone">+60...</div>
         </div>
         <div class="lc-header-actions">
-          <button class="lc-translate-toggle" id="lc-translate-toggle" onclick="lcToggleTranslate()"
-            title="Translation mode">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-            </svg>
-          </button>
-          <select class="lc-lang-selector" id="lc-lang-selector" title="Target Language" style="display:none;"
-            onchange="lcHandleLangChange()">
+          <!-- Flag-icon language selector (US-096) -->
+          <div class="lc-flag-selector-wrap" id="lc-flag-selector-wrap" style="display:none;">
+            <button class="lc-flag-btn" id="lc-flag-btn" onclick="lcToggleFlagMenu()" title="Target Language">
+              <span id="lc-flag-icon">&#127468;&#127463;</span>
+            </button>
+            <div class="lc-flag-dropdown" id="lc-flag-dropdown" style="display:none;">
+              <button class="lc-flag-option" data-lang="en" onclick="lcSelectLang('en')">&#127468;&#127463; English</button>
+              <button class="lc-flag-option" data-lang="ms" onclick="lcSelectLang('ms')">&#127474;&#127486; Malay</button>
+              <button class="lc-flag-option" data-lang="zh" onclick="lcSelectLang('zh')">&#127464;&#127475; Chinese</button>
+              <button class="lc-flag-option" data-lang="id" onclick="lcSelectLang('id')">&#127470;&#127465; Indonesian</button>
+              <button class="lc-flag-option" data-lang="th" onclick="lcSelectLang('th')">&#127481;&#127469; Thai</button>
+              <button class="lc-flag-option" data-lang="vi" onclick="lcSelectLang('vi')">&#127483;&#127475; Vietnamese</button>
+            </div>
+          </div>
+          <!-- Hidden select for backward compat -->
+          <select id="lc-lang-selector" style="display:none!important;">
             <option value="en">English</option>
             <option value="ms">Malay</option>
             <option value="zh">Chinese</option>
@@ -116,33 +175,28 @@
             <option value="th">Thai</option>
             <option value="vi">Vietnamese</option>
           </select>
-          <!-- Mode Selector -->
+          <!-- Mode icon (small, icon-only) -->
           <div class="lc-mode-selector-wrap">
-            <button class="lc-mode-btn" id="lc-mode-btn" onclick="lcToggleModeMenu()" title="Response Mode">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path
-                  d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              <span id="lc-mode-label">Copilot</span>
+            <button class="lc-mode-btn" id="lc-mode-btn" onclick="lcToggleModeMenu()" title="Copilot — AI suggests, you approve">
+              <span id="lc-mode-icon" class="lc-mode-icon-only">&#129309;</span>
             </button>
             <div class="lc-mode-dropdown" id="lc-mode-dropdown" style="display:none;">
               <button class="lc-mode-option" data-mode="autopilot" onclick="lcSetMode('autopilot')">
-                <div class="lc-mode-option-icon">✈️</div>
+                <div class="lc-mode-option-icon">&#9992;&#65039;</div>
                 <div class="lc-mode-option-text">
                   <div class="lc-mode-option-title">Autopilot</div>
                   <div class="lc-mode-option-desc">AI responds automatically</div>
                 </div>
               </button>
               <button class="lc-mode-option" data-mode="copilot" onclick="lcSetMode('copilot')">
-                <div class="lc-mode-option-icon">🤝</div>
+                <div class="lc-mode-option-icon">&#129309;</div>
                 <div class="lc-mode-option-text">
                   <div class="lc-mode-option-title">Copilot</div>
                   <div class="lc-mode-option-desc">AI suggests, you approve</div>
                 </div>
               </button>
               <button class="lc-mode-option" data-mode="manual" onclick="lcSetMode('manual')">
-                <div class="lc-mode-option-icon">✍️</div>
+                <div class="lc-mode-option-icon">&#9997;&#65039;</div>
                 <div class="lc-mode-option-text">
                   <div class="lc-mode-option-title">Manual</div>
                   <div class="lc-mode-option-desc">You write, AI helps on request</div>
@@ -156,29 +210,14 @@
               </div>
             </div>
           </div>
-          <button onclick="lcToggleMaximize()" title="Focus mode (maximize)" id="lc-maximize-btn"
-            class="lc-header-action-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              id="lc-maximize-icon">
-              <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
-            </svg>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              id="lc-minimize-icon" style="display:none;">
-              <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
-            </svg>
-          </button>
-          <button onclick="lcRefreshChat()" title="Refresh" class="lc-header-action-btn">
+          <!-- Search icon -->
+          <button onclick="lcToggleSearch()" title="Search messages" class="lc-header-action-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16" />
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
             </svg>
           </button>
-          <button onclick="lcDeleteChat()" title="Delete conversation" class="lc-header-action-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-            </svg>
-          </button>
-
-          <!-- More Actions Menu -->
+          <!-- 3-dot menu -->
           <div class="lc-header-menu-wrap">
             <button type="button" onclick="lcToggleHeaderMenu()" title="More" id="lc-header-menu-btn"
               aria-haspopup="true" aria-expanded="false" class="lc-header-action-btn">
@@ -202,6 +241,59 @@
                   <path d="m21 21-4.35-4.35" />
                 </svg>
                 <span>Search messages</span>
+              </button>
+              <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuTranslate()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                </svg>
+                <span>Translate</span>
+                <span class="lc-menu-toggle-indicator" id="lc-menu-translate-indicator"></span>
+              </button>
+              <div class="lc-header-dropdown-submenu-wrap">
+                <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuMode(event)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <span>Mode</span>
+                  <span class="lc-menu-mode-current" id="lc-menu-mode-current">Copilot</span>
+                  <svg class="lc-submenu-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+                <div class="lc-header-submenu" id="lc-mode-submenu" style="display:none;">
+                  <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuSetMode('autopilot')">
+                    <span class="lc-submenu-icon">&#9992;&#65039;</span>
+                    <span>Autopilot</span>
+                  </button>
+                  <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuSetMode('copilot')">
+                    <span class="lc-submenu-icon">&#129309;</span>
+                    <span>Copilot</span>
+                  </button>
+                  <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuSetMode('manual')">
+                    <span class="lc-submenu-icon">&#9997;&#65039;</span>
+                    <span>Manual</span>
+                  </button>
+                </div>
+              </div>
+              <div class="lc-header-dropdown-divider"></div>
+              <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcToggleMaximize()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                </svg>
+                <span>Focus mode</span>
+              </button>
+              <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcRefreshChat()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16" />
+                </svg>
+                <span>Refresh</span>
+              </button>
+              <div class="lc-header-dropdown-divider"></div>
+              <button type="button" class="lc-header-dropdown-item lc-menu-danger" role="menuitem" onclick="lcOnMenuClearChat()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                </svg>
+                <span>Clear chat</span>
               </button>
             </div>
           </div>
@@ -356,32 +448,56 @@
 
       <!-- Input area -->
       <div class="lc-input-area">
-        <!-- Attachment button + popup -->
+        <!-- Attachment button + popup (US-073: WhatsApp-style '+' menu) -->
         <div class="lc-attach-wrap">
-          <button class="lc-attach-btn" id="lc-attach-btn" onclick="lcToggleAttachMenu()" title="Attach">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          <button class="lc-attach-btn lc-attach-plus" id="lc-attach-btn" onclick="lcToggleAttachMenu()" title="Attach">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
               stroke-linecap="round" stroke-linejoin="round">
-              <path
-                d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
           <div class="lc-attach-menu" id="lc-attach-menu" style="display:none;">
-            <button class="lc-attach-option" onclick="lcPickFile('photo')">
-              <span class="lc-attach-icon lc-attach-photo">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path
-                    d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                </svg>
-              </span>
-              <span>Photos & videos</span>
-            </button>
             <button class="lc-attach-option" onclick="lcPickFile('document')">
-              <span class="lc-attach-icon lc-attach-doc">
+              <span class="lc-attach-icon lc-attach-doc-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
                 </svg>
               </span>
               <span>Document</span>
+            </button>
+            <button class="lc-attach-option" onclick="lcPickFile('photo')">
+              <span class="lc-attach-icon lc-attach-photo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                </svg>
+              </span>
+              <span>Photos & videos</span>
+            </button>
+            <button class="lc-attach-option" onclick="lcPickFile('camera')">
+              <span class="lc-attach-icon lc-attach-camera-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z" />
+                  <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
+                </svg>
+              </span>
+              <span>Camera</span>
+            </button>
+            <button class="lc-attach-option" onclick="lcPickFile('audio')">
+              <span class="lc-attach-icon lc-attach-audio-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                </svg>
+              </span>
+              <span>Audio</span>
+            </button>
+            <button class="lc-attach-option" onclick="lcPickFile('contact')">
+              <span class="lc-attach-icon lc-attach-contact-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </span>
+              <span>Contact</span>
             </button>
           </div>
         </div>
@@ -390,6 +506,10 @@
           onchange="lcFileSelected(this, 'photo')">
         <input type="file" id="lc-file-doc" accept="*/*" style="display:none;"
           onchange="lcFileSelected(this, 'document')">
+        <input type="file" id="lc-file-camera" accept="image/*" capture="camera" style="display:none;"
+          onchange="lcFileSelected(this, 'photo')">
+        <input type="file" id="lc-file-audio" accept="audio/*" style="display:none;"
+          onchange="lcFileSelected(this, 'audio')">
 
         <textarea class="lc-input-box" id="lc-input-box" placeholder="Type a message" rows="1"
           oninput="lcAutoResize(this); lcOnInputTranslate()" onkeydown="lcHandleKeydown(event)"></textarea>
@@ -401,6 +521,22 @@
               d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
           Help me
+        </button>
+        <!-- Voice recording indicator (US-074) — shown during recording -->
+        <div class="lc-voice-recording" id="lc-voice-recording" style="display:none;">
+          <button class="lc-voice-cancel" id="lc-voice-cancel" onclick="lcCancelVoiceRecording()" title="Cancel recording">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <span class="lc-voice-pulse"></span>
+          <span class="lc-voice-timer" id="lc-voice-timer">0:00</span>
+        </div>
+        <!-- Mic button (US-074) — toggle voice recording -->
+        <button class="lc-mic-btn" id="lc-mic-btn" onclick="lcToggleVoiceRecording()" title="Voice message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z" />
+          </svg>
         </button>
         <button class="lc-send-btn" id="lc-send-btn" onclick="lcSendReply()" title="Send">
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -475,7 +611,11 @@
           </select>
         </div>
         <div class="lc-field">
-          <label class="lc-field-label">Language</label>
+          <label class="lc-field-label">Language
+            <button type="button" class="lc-lang-lock-btn" id="lc-cd-language-lock" onclick="lcToggleLanguageLock()" title="Language unlocked">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>
+            </button>
+          </label>
           <select class="lc-field-select" id="lc-cd-language" onchange="lcContactFieldChanged()">
             <option value="">--</option>
             <option value="en">English</option>
@@ -517,9 +657,11 @@
           <select class="lc-field-select" id="lc-cd-contact-status" onchange="lcContactFieldChanged()">
             <option value="">--</option>
             <option value="new_lead">New Lead</option>
+            <option value="Inquiring">Inquiring</option>
+            <option value="Booked">Booked</option>
             <option value="active">Active</option>
-            <option value="checked_in">Checked In</option>
-            <option value="checked_out">Checked Out</option>
+            <option value="Checked In">Checked In</option>
+            <option value="Checked Out">Checked Out</option>
             <option value="refunded">Refunded</option>
             <option value="blocked">Blocked</option>
           </select>
@@ -546,17 +688,46 @@
           onkeydown="lcTagKeydown(event)">
       </div>
 
-      <!-- Notes -->
+      <!-- Notes (US-090) -->
       <div class="lc-field">
-        <label class="lc-field-label">Notes</label>
+        <label class="lc-field-label">Notes
+          <button type="button" class="lc-ai-gen-btn" id="lc-cd-generate-notes" onclick="lcGenerateAINotes()" title="Generate notes from conversation using AI">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Generate by AI</span>
+          </button>
+        </label>
         <textarea class="lc-field-textarea" id="lc-cd-notes" placeholder="Internal notes about this guest..." rows="3"
           oninput="lcContactFieldChanged()"></textarea>
+      </div>
+
+      <div class="lc-field-divider"></div>
+
+      <!-- Add to Context (US-091) -->
+      <div class="lc-field">
+        <button type="button" class="lc-context-btn" onclick="lcOpenGuestContext()" title="Add/edit guest context file for AI reference">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+          <span>Add to Context</span>
+        </button>
       </div>
     </div>
 
     <!-- Save indicator -->
     <div class="lc-contact-footer">
       <span class="lc-contact-save-indicator" id="lc-contact-save-indicator"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Guest Context Editor Modal (US-091) -->
+<div id="lc-context-modal" class="lc-modal-overlay" style="display:none;"
+  onclick="if(event.target===this) lcCloseContextModal()">
+  <div class="lc-modal-content lc-context-modal">
+    <div class="lc-modal-title">Guest Context File</div>
+    <p class="lc-modal-subtitle" id="lc-context-filename"></p>
+    <textarea id="lc-context-editor" class="lc-context-editor" rows="12" placeholder="Loading..."></textarea>
+    <div class="lc-modal-buttons">
+      <button class="lc-modal-btn lc-modal-btn-cancel" onclick="lcCloseContextModal()">Cancel</button>
+      <button class="lc-modal-btn lc-modal-btn-send" onclick="lcSaveGuestContext()">Save Context</button>
     </div>
   </div>
 </div>

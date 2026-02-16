@@ -16,10 +16,23 @@ import { api, toast, escapeHtml as esc } from '../core/utils.js';
 
 /**
  * Restart a server (MCP, Backend, or Frontend)
+ * Shows a confirmation dialog for MCP restarts with impact info.
  * @param {string} serverKey - 'mcp', 'backend', or 'frontend'
  */
 export async function restartServer(serverKey) {
   if (serverKey === 'mcp') {
+    const confirmed = confirm(
+      'Restart MCP Server?\n\n'
+      + 'Affected services:\n'
+      + '  - MCP Server (port 3002)\n'
+      + '  - WhatsApp connections (will reconnect automatically)\n'
+      + '  - Live Chat sessions\n'
+      + '  - AI Classification pipeline\n\n'
+      + 'Estimated downtime: 15-30 seconds\n'
+      + 'Active WhatsApp conversations will be paused during restart.\n\n'
+      + 'Continue?'
+    );
+    if (!confirmed) return;
     try {
       toast('Restarting MCP server…', 'info');
       await api('/restart', { method: 'POST' });
@@ -93,6 +106,51 @@ let _activityEvents = []; // Local cache of activity events (newest first)
 const MAX_DISPLAYED_ACTIVITIES = 30;
 const DEFAULT_VISIBLE_ACTIVITIES = 3;
 let _activityExpanded = false;
+let _activityCategoryFilter = 'all'; // 'all' | 'message' | 'reply' | 'connection' | 'classified'
+
+/**
+ * Derive category from event type (client-side fallback for events without category)
+ * Notion-style categories: Message, Reply, Connection, Classified
+ */
+function deriveCategoryFromType(type) {
+  switch (type) {
+    case 'message_received':
+      return 'message';
+    case 'response_sent':
+    case 'workflow_started':
+    case 'booking_started':
+      return 'reply';
+    case 'whatsapp_connected':
+    case 'whatsapp_disconnected':
+    case 'whatsapp_unlinked':
+      return 'connection';
+    case 'intent_classified':
+    case 'feedback':
+      return 'classified';
+    default:
+      return 'system';
+  }
+}
+
+/**
+ * Filter activity events by selected category tab
+ * @param {string} category - 'all', 'whatsapp', 'ai', 'system', 'error'
+ */
+export function filterActivityByCategory(category) {
+  _activityCategoryFilter = category;
+
+  // Update tab active state
+  var tabs = document.querySelectorAll('.activity-cat-tab');
+  tabs.forEach(function (tab) {
+    if (tab.getAttribute('data-category') === category) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
+  renderActivityEvents();
+}
 
 /**
  * Format a timestamp into relative time string
@@ -157,22 +215,36 @@ function renderActivityEvents() {
   const el = document.getElementById('dashboard-recent-activity');
   if (!el) return;
 
-  if (_activityEvents.length === 0) {
-    el.innerHTML = `
-      <div class="text-center py-6">
-        <div class="text-3xl mb-2">🔍</div>
-        <div class="text-sm text-neutral-500">No activity yet — waiting for events...</div>
-        <div class="text-xs text-neutral-400 mt-1">Send a WhatsApp message to see real-time activity</div>
-      </div>`;
+  // Filter by selected category
+  let filteredEvents = _activityEvents;
+  if (_activityCategoryFilter !== 'all') {
+    filteredEvents = _activityEvents.filter(function (evt) {
+      var cat = evt.category || deriveCategoryFromType(evt.type);
+      return cat === _activityCategoryFilter;
+    });
+  }
+
+  if (filteredEvents.length === 0) {
+    var noDataMsg = _activityEvents.length === 0
+      ? 'No activity yet — waiting for events...'
+      : 'No ' + _activityCategoryFilter + ' events found';
+    var noDataHint = _activityEvents.length === 0
+      ? 'Send a WhatsApp message to see real-time activity'
+      : 'Try selecting a different category tab';
+    el.innerHTML = '<div class="text-center py-6">'
+      + '<div class="text-3xl mb-2">' + (_activityEvents.length === 0 ? '&#128269;' : '&#128196;') + '</div>'
+      + '<div class="text-sm text-neutral-500">' + noDataMsg + '</div>'
+      + '<div class="text-xs text-neutral-400 mt-1">' + noDataHint + '</div>'
+      + '</div>';
     return;
   }
 
   const visibleCount = _activityExpanded
-    ? Math.min(_activityEvents.length, MAX_DISPLAYED_ACTIVITIES)
+    ? Math.min(filteredEvents.length, MAX_DISPLAYED_ACTIVITIES)
     : DEFAULT_VISIBLE_ACTIVITIES;
-  const itemsToShow = _activityEvents.slice(0, visibleCount);
-  const hasMore = _activityEvents.length > DEFAULT_VISIBLE_ACTIVITIES;
-  const hiddenCount = _activityEvents.length - DEFAULT_VISIBLE_ACTIVITIES;
+  const itemsToShow = filteredEvents.slice(0, visibleCount);
+  const hasMore = filteredEvents.length > DEFAULT_VISIBLE_ACTIVITIES;
+  const hiddenCount = filteredEvents.length - DEFAULT_VISIBLE_ACTIVITIES;
 
   el.innerHTML = `
     <div class="space-y-0">

@@ -10,23 +10,61 @@ var api = window.api;
 
 // ─── Translation ─────────────────────────────────────────────────
 
+var LANG_FLAGS = { en: '\u{1F1EC}\u{1F1E7}', ms: '\u{1F1F2}\u{1F1FE}', zh: '\u{1F1E8}\u{1F1F3}', id: '\u{1F1EE}\u{1F1E9}', th: '\u{1F1F9}\u{1F1ED}', vi: '\u{1F1FB}\u{1F1F3}' };
+
 export function toggleTranslate() {
   $.translateMode = !$.translateMode;
   var btn = document.getElementById('lc-translate-toggle');
-  var selector = document.getElementById('lc-lang-selector');
+  var flagWrap = document.getElementById('lc-flag-selector-wrap');
   if ($.translateMode) {
     btn.classList.add('active');
-    selector.style.display = '';
-    selector.value = $.translateLang;
+    if (flagWrap) flagWrap.style.display = '';
+    updateFlagIcon($.translateLang);
   } else {
     btn.classList.remove('active');
-    selector.style.display = 'none';
+    if (flagWrap) flagWrap.style.display = 'none';
+    closeFlagMenu();
     hideTranslatePreview();
   }
 }
 
+export function toggleFlagMenu() {
+  var dd = document.getElementById('lc-flag-dropdown');
+  if (!dd) return;
+  var isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : '';
+  if (!isOpen) {
+    var opts = dd.querySelectorAll('.lc-flag-option');
+    opts.forEach(function(o) {
+      o.classList.toggle('active', o.getAttribute('data-lang') === $.translateLang);
+    });
+  }
+}
+
+function closeFlagMenu() {
+  var dd = document.getElementById('lc-flag-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+
+function updateFlagIcon(lang) {
+  var icon = document.getElementById('lc-flag-icon');
+  if (icon) icon.textContent = LANG_FLAGS[lang] || LANG_FLAGS.en;
+}
+
+export function selectLang(lang) {
+  $.translateLang = lang;
+  var selector = document.getElementById('lc-lang-selector');
+  if (selector) selector.value = lang;
+  updateFlagIcon(lang);
+  closeFlagMenu();
+  clearTimeout($.translateDebounce);
+  $.translateDebounce = null;
+  hideTranslatePreview();
+}
+
 export function handleLangChange() {
   $.translateLang = document.getElementById('lc-lang-selector').value;
+  updateFlagIcon($.translateLang);
   clearTimeout($.translateDebounce);
   $.translateDebounce = null;
   hideTranslatePreview();
@@ -229,6 +267,54 @@ export function onMenuContactInfo() {
 export function onMenuSearch() {
   closeHeaderMenu();
   toggleSearch();
+}
+
+export function onMenuTranslate() {
+  closeHeaderMenu();
+  toggleTranslate();
+  updateTranslateIndicator();
+}
+
+export function updateTranslateIndicator() {
+  var indicator = document.getElementById('lc-menu-translate-indicator');
+  if (!indicator) return;
+  if ($.translateMode) {
+    indicator.textContent = 'ON';
+    indicator.classList.add('active');
+  } else {
+    indicator.textContent = 'OFF';
+    indicator.classList.remove('active');
+  }
+}
+
+export function onMenuMode(event) {
+  event.stopPropagation();
+  var submenu = document.getElementById('lc-mode-submenu');
+  if (!submenu) return;
+  var isOpen = submenu.style.display !== 'none';
+  submenu.style.display = isOpen ? 'none' : '';
+  if (!isOpen) {
+    updateModeSubmenuUI();
+  }
+}
+
+export function updateModeSubmenuUI() {
+  var submenu = document.getElementById('lc-mode-submenu');
+  if (!submenu) return;
+  var items = submenu.querySelectorAll('.lc-header-dropdown-item');
+  var modes = ['autopilot', 'copilot', 'manual'];
+  for (var i = 0; i < items.length; i++) {
+    if (modes[i] === $.currentMode) {
+      items[i].classList.add('active-mode');
+    } else {
+      items[i].classList.remove('active-mode');
+    }
+  }
+  var currentLabel = document.getElementById('lc-menu-mode-current');
+  if (currentLabel) {
+    var labels = { autopilot: 'Autopilot', copilot: 'Copilot', manual: 'Manual' };
+    currentLabel.textContent = labels[$.currentMode] || $.currentMode;
+  }
 }
 
 // ─── Message Search ──────────────────────────────────────────────

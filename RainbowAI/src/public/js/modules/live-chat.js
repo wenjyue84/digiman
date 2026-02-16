@@ -15,29 +15,37 @@
 
 import { $ } from './live-chat-state.js';
 import {
-  loadLiveChat, filterConversations, openConversation, refreshChat, resetDateFilter
+  loadLiveChat, filterConversations, openConversation, refreshChat, resetDateFilter, debouncedSearch
 } from './live-chat-core.js';
 import {
   deleteChat, sendReply, toggleAttachMenu, pickFile, fileSelected, clearFile,
-  autoResize, handleKeydown, cancelReply, closeForwardModal
+  autoResize, handleKeydown, cancelReply, closeForwardModal,
+  toggleVoiceRecording, cancelVoiceRecording
 } from './live-chat-actions.js';
 import {
   toggleTranslate, handleLangChange, closeTranslateModal, confirmTranslation,
   onInputTranslate, toggleSearch, msgSearchInput, msgSearchNav, msgSearchKeydown,
-  toggleHeaderMenu, onMenuContactInfo, onMenuSearch
+  toggleHeaderMenu, onMenuContactInfo, onMenuSearch,
+  onMenuTranslate, onMenuMode, updateTranslateIndicator,
+  toggleFlagMenu, selectLang
 } from './live-chat-features.js';
 import {
   setFilter, togglePinChat, toggleFavouriteChat, toggleMaximize,
   toggleContactPanel, contactFieldChanged, tagKeydown, removeTag,
   toggleSidebarMenu, showStarredMessages, markAllAsRead,
   toggleChatDropdown, closeChatDropdown, markOneAsRead,
-  setMode, toggleModeMenu, approveResponse, rejectApproval, dismissApproval, getAIHelp
+  setMode, toggleModeMenu, approveResponse, rejectApproval, dismissApproval, getAIHelp,
+  toggleDateFilterPanel, clearChat, toggleWaStatusBar, restoreWaStatusBarState,
+  initResizableDivider, toggleLanguageLock,
+  generateAINotes, openGuestContext, closeContextModal, saveGuestContext,
+  mobileBack
 } from './live-chat-panels.js';
 
 // ─── Window exports for template onclick handlers ────────────────
 
 window.loadLiveChat = loadLiveChat;
 window.lcFilterConversations = filterConversations;
+window.lcDebouncedSearch = debouncedSearch;
 window.lcOpenConversation = openConversation;
 window.lcRefreshChat = refreshChat;
 window.lcDeleteChat = deleteChat;
@@ -45,6 +53,8 @@ window.lcResetDateFilter = resetDateFilter;
 window.lcSendReply = sendReply;
 window.lcToggleTranslate = toggleTranslate;
 window.lcHandleLangChange = handleLangChange;
+window.lcToggleFlagMenu = toggleFlagMenu;
+window.lcSelectLang = selectLang;
 window.lcCloseTranslateModal = closeTranslateModal;
 window.lcConfirmTranslation = confirmTranslation;
 window.lcAutoResize = autoResize;
@@ -69,6 +79,8 @@ window.lcContactFieldChanged = contactFieldChanged;
 window.lcTagKeydown = tagKeydown;
 window.lcRemoveTag = removeTag;
 window.lcCancelReply = cancelReply;
+window.lcToggleVoiceRecording = toggleVoiceRecording;
+window.lcCancelVoiceRecording = cancelVoiceRecording;
 window.lcCloseForwardModal = closeForwardModal;
 window.lcOnInputTranslate = onInputTranslate;
 window.lcToggleSidebarMenu = toggleSidebarMenu;
@@ -83,6 +95,50 @@ window.lcApproveResponse = approveResponse;
 window.lcRejectApproval = rejectApproval;
 window.lcDismissApproval = dismissApproval;
 window.lcGetAIHelp = getAIHelp;
+window.lcToggleDateFilterPanel = toggleDateFilterPanel;
+window.lcToggleLanguageLock = toggleLanguageLock;
+window.lcGenerateAINotes = generateAINotes;
+window.lcOpenGuestContext = openGuestContext;
+window.lcCloseContextModal = closeContextModal;
+window.lcSaveGuestContext = saveGuestContext;
+window.lcMobileBack = mobileBack;
+window.lcOnMenuTranslate = onMenuTranslate;
+window.lcOnMenuMode = onMenuMode;
+window.lcOnMenuSetMode = function (mode) {
+  var submenu = document.getElementById('lc-mode-submenu');
+  if (submenu) submenu.style.display = 'none';
+  var dropdown = document.getElementById('lc-header-dropdown');
+  if (dropdown) dropdown.classList.remove('open');
+  var btn = document.getElementById('lc-header-menu-btn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  setMode(mode);
+};
+window.lcOnMenuClearChat = function () {
+  var dropdown = document.getElementById('lc-header-dropdown');
+  if (dropdown) dropdown.classList.remove('open');
+  var btn = document.getElementById('lc-header-menu-btn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  clearChat();
+};
+// US-077: Show/hide WA status tooltip on dot click
+window.lcShowWaStatusTooltip = function (event) {
+  event.stopPropagation();
+  var tooltip = document.getElementById('lc-wa-tooltip');
+  if (!tooltip) return;
+  var isVisible = tooltip.style.display !== 'none';
+  tooltip.style.display = isVisible ? 'none' : 'block';
+};
+
+// US-071: New chat button handler
+window.lcNewChat = function () {
+  // Focus the search input to start a new chat
+  var searchInput = document.getElementById('lc-search');
+  if (searchInput) {
+    searchInput.focus();
+    searchInput.value = '';
+    filterConversations();
+  }
+};
 
 // ─── Global Event Handlers ───────────────────────────────────────
 
@@ -129,4 +185,20 @@ document.addEventListener('click', function (e) {
   if (modeMenu && modeBtn && !modeMenu.contains(e.target) && !modeBtn.contains(e.target)) {
     modeMenu.style.display = 'none';
   }
+  // Close WA status tooltip when clicking outside (US-077)
+  var waTooltip = document.getElementById('lc-wa-tooltip');
+  var waDot = document.getElementById('lc-wa-dot');
+  if (waTooltip && waTooltip.style.display !== 'none' && waDot && !waDot.contains(e.target) && !waTooltip.contains(e.target)) {
+    waTooltip.style.display = 'none';
+  }
+  // Close mode submenu when clicking outside
+  var modeSubmenu = document.getElementById('lc-mode-submenu');
+  var submenuWrap = document.querySelector('.lc-header-dropdown-submenu-wrap');
+  if (modeSubmenu && submenuWrap && !submenuWrap.contains(e.target)) {
+    modeSubmenu.style.display = 'none';
+  }
 });
+
+// ─── Resizable divider (US-072) ─────────────────────────────────
+// NOTE: initResizableDivider() is called inside loadLiveChat() after
+// the template HTML is injected into the DOM by tabs.js.

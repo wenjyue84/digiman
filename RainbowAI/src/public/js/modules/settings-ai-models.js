@@ -53,6 +53,16 @@ export function renderAiModelsTab(container) {
           <h3 class="font-semibold text-lg">AI Models</h3>
           <p class="text-sm text-neutral-500 font-medium">Rainbow uses these models to generate responses when no pre-written reply is found. Enable multiple to create a robust fallback chain.</p>
         </div>
+        <button onclick="reloadConfig()"
+          class="text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-2 flex-shrink-0"
+          title="Hot-reload all config files from disk without restarting the server">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+            </path>
+          </svg>
+          Reload Config
+        </button>
       </div>
 
       <div id="ai-providers-list" class="space-y-3">
@@ -153,6 +163,9 @@ export function renderAiModelsTab(container) {
   }).catch(() => {
     container.insertAdjacentHTML('beforeend', renderContextWindowsCard(null));
   });
+
+  // Append Prisma Bot settings card
+  renderPrismaBotSettingsCard(container, providers);
 
   // Stagger auto speed tests (one every 600ms) so providers aren't hit concurrently.
   const available = providers.filter(p => p.available);
@@ -412,12 +425,9 @@ window.testModelLatency = testModelLatency;
 
 function showTestSummaryToast() {
   const count = testSession.errors.length;
-  // Make it "pleasant" - less alarming message
-  const msg = '<div class="flex items-center gap-3">'
-    + '<span>⚠️ ' + count + ' model' + (count > 1 ? 's' : '') + ' responded slowly.</span>'
-    + '<button onclick="viewDiagnosticDetails()" class="underline font-bold hover:text-white/80 transition text-xs border border-white/30 px-2 py-1 rounded">Details</button>'
-    + '</div>';
-  toast(msg, 'warning', true, 6000); // 6s duration
+  const errorDetails = testSession.errors.map(e => `  - ${e.id}: ${e.error}`).join('\n');
+  console.warn(`[AI Models] ${count} model${count > 1 ? 's' : ''} responded slowly:\n${errorDetails}`);
+  toast(`${count} model${count > 1 ? 's' : ''} had errors — check console for details`, 'warning', false, 5000);
 }
 window.showTestSummaryToast = showTestSummaryToast;
 
@@ -440,3 +450,96 @@ export function viewDiagnosticDetails() {
   window.openModal('diagnostic-modal');
 }
 window.viewDiagnosticDetails = viewDiagnosticDetails;
+
+// ─── Prisma Bot Settings Card ──────────────────────────────────────
+
+function renderPrismaBotSettingsCard(container, providers) {
+  // Load current Prisma Bot settings from API
+  api('/prisma-bot/settings').then(settings => {
+    const currentProvider = settings.providerId || 'google-gemini-flash';
+    const currentPrompt = settings.systemPrompt || '';
+    const promptPreview = currentPrompt.length > 100
+      ? esc(currentPrompt.substring(0, 100)) + '...'
+      : esc(currentPrompt);
+
+    // Build provider options from all available providers
+    const allProviders = _getSettingsData()?.ai?.providers || providers || [];
+    var optionsHtml = '';
+    for (var i = 0; i < allProviders.length; i++) {
+      var p = allProviders[i];
+      var selected = p.id === currentProvider ? ' selected' : '';
+      optionsHtml += '<option value="' + esc(p.id) + '"' + selected + '>' + esc(p.name) + '</option>';
+    }
+
+    container.insertAdjacentHTML('beforeend',
+      '<div class="bg-white border rounded-2xl p-6 mt-6">'
+      + '<div class="flex items-start justify-between mb-4">'
+      +   '<div class="flex items-center gap-3">'
+      +     '<div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">'
+      +       '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 5.04A1.5 1.5 0 0119.756 22h-7.512a1.5 1.5 0 01-1.446-1.66L12.2 15.3"/></svg>'
+      +     '</div>'
+      +     '<div>'
+      +       '<h3 class="font-semibold text-lg">Prisma Bot</h3>'
+      +       '<p class="text-sm text-neutral-500">AI-powered workflow generator. Describe a workflow in plain English and Prisma Bot creates the JSON.</p>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>'
+      + '<div class="space-y-4">'
+      +   '<div>'
+      +     '<label class="block text-sm font-medium text-neutral-700 mb-1.5">Model</label>'
+      +     '<select id="prisma-bot-provider-select" onchange="savePrismaBotSettings()" '
+      +       'class="w-full border rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-violet-500">'
+      +       optionsHtml
+      +     '</select>'
+      +     '<p class="text-xs text-neutral-400 mt-1">The AI model used to generate workflow JSON. Gemini 2.5 Flash recommended for speed and accuracy.</p>'
+      +   '</div>'
+      +   '<div>'
+      +     '<label class="block text-sm font-medium text-neutral-700 mb-1.5">System Prompt</label>'
+      +     '<textarea id="prisma-bot-system-prompt" rows="6" '
+      +       'class="w-full border rounded-xl px-3 py-2 text-sm font-mono leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-violet-500" '
+      +       'placeholder="System prompt for Prisma Bot...">' + esc(currentPrompt) + '</textarea>'
+      +     '<div class="flex items-center justify-between mt-2">'
+      +       '<p class="text-xs text-neutral-400">Defines the workflow JSON schema and generation rules. Edit carefully.</p>'
+      +       '<div class="flex gap-2">'
+      +         '<button onclick="resetPrismaBotPrompt()" class="text-xs text-neutral-500 hover:text-neutral-700 border px-2 py-1 rounded-lg transition">Reset to Default</button>'
+      +         '<button onclick="savePrismaBotSettings()" class="text-xs bg-violet-600 hover:bg-violet-700 text-white px-3 py-1 rounded-lg transition">Save</button>'
+      +       '</div>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>'
+      + '</div>'
+    );
+  }).catch(err => {
+    console.warn('[PrismaBot] Failed to load settings:', err);
+  });
+}
+
+export async function savePrismaBotSettings() {
+  const providerSelect = document.getElementById('prisma-bot-provider-select');
+  const promptArea = document.getElementById('prisma-bot-system-prompt');
+  if (!providerSelect || !promptArea) return;
+
+  try {
+    await api('/prisma-bot/settings', {
+      method: 'PUT',
+      body: {
+        providerId: providerSelect.value,
+        systemPrompt: promptArea.value
+      }
+    });
+    toast('Prisma Bot settings saved');
+  } catch (e) {
+    toast(e.message || 'Failed to save Prisma Bot settings', 'error');
+  }
+}
+window.savePrismaBotSettings = savePrismaBotSettings;
+
+export function resetPrismaBotPrompt() {
+  const promptArea = document.getElementById('prisma-bot-system-prompt');
+  if (!promptArea) return;
+  // Clear the prompt — the backend will use the default when empty
+  promptArea.value = '';
+  savePrismaBotSettings();
+  toast('Prisma Bot prompt reset to default');
+}
+window.resetPrismaBotPrompt = resetPrismaBotPrompt;

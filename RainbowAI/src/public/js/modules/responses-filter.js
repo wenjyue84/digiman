@@ -1,6 +1,7 @@
 /**
- * Static Replies Filter Module
- * Handles search and category filtering for static replies in the Responses tab
+ * Responses Filter Module
+ * Handles search and category filtering for static replies, system messages,
+ * workflows, and knowledge base in the Responses tab
  */
 
 // Module-level state: active filter category
@@ -57,4 +58,57 @@ export function filterStaticCategory(category) {
 
   // Apply filter
   filterStaticReplies();
+}
+
+/**
+ * Filter system messages by search term
+ * Searches within message keys and content text
+ */
+export function filterSystemMessages() {
+  const searchTerm = (document.getElementById('system-messages-search-input')?.value || '').toLowerCase();
+  const container = document.getElementById('static-templates');
+  if (!container) return;
+
+  const items = container.children;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const content = item.textContent.toLowerCase();
+    const matches = searchTerm === '' || content.includes(searchTerm);
+    item.style.display = matches ? '' : 'none';
+  }
+}
+
+/**
+ * Filter workflows by search term
+ * Searches within workflow names, IDs, and descriptions in the sidebar list
+ */
+export function filterWorkflows() {
+  const searchTerm = (document.getElementById('workflows-search-input')?.value || '').toLowerCase();
+  const container = document.getElementById('workflow-list');
+  if (!container) return;
+
+  const items = container.children;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const content = item.textContent.toLowerCase();
+    const matches = searchTerm === '' || content.includes(searchTerm);
+    item.style.display = matches ? '' : 'none';
+  }
+}
+
+/**
+ * Filter KB files by search term
+ * Searches within file names and descriptions in the sidebar list
+ */
+export function filterKBFiles() {
+  const searchTerm = (document.getElementById('kb-search-input')?.value || '').toLowerCase();
+  const container = document.getElementById('kb-file-list');
+  if (!container) return;
+
+  const items = container.querySelectorAll('button');
+  items.forEach(function(item) {
+    const content = item.textContent.toLowerCase();
+    const matches = searchTerm === '' || content.includes(searchTerm);
+    item.style.display = matches ? '' : 'none';
+  });
 }

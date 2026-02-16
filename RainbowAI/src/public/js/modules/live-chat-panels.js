@@ -2,9 +2,9 @@
 // Live Chat Panels - Filters, pin/fav, sidebar, contact, modes, toast
 // ═══════════════════════════════════════════════════════════════════
 
-import { $ } from './live-chat-state.js';
+import { $, avatarImg } from './live-chat-state.js';
 import { renderList, refreshChat, formatPhoneForDisplay } from './live-chat-core.js';
-import { updateHeaderMenuActive, toggleSearch } from './live-chat-features.js';
+import { updateHeaderMenuActive, toggleSearch, updateModeSubmenuUI } from './live-chat-features.js';
 
 var api = window.api;
 
@@ -66,6 +66,7 @@ export function toggleSidebarMenu() {
   if (!menu) return;
   var isOpen = menu.style.display !== 'none';
   menu.style.display = isOpen ? 'none' : '';
+  updateDateFilterBadge();
   if (!isOpen) {
     setTimeout(function () {
       document.addEventListener('click', closeSidebarMenuOnClick, { once: true });
@@ -76,6 +77,28 @@ export function toggleSidebarMenu() {
 export function closeSidebarMenuOnClick() {
   var menu = document.getElementById('lc-sidebar-dropdown');
   if (menu) menu.style.display = 'none';
+}
+
+export function toggleDateFilterPanel() {
+  var panel = document.getElementById('lc-date-filter-panel');
+  if (!panel) return;
+  var menu = document.getElementById('lc-sidebar-dropdown');
+  if (menu) menu.style.display = 'none';
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : '';
+}
+
+export function updateDateFilterBadge() {
+  var badge = document.getElementById('lc-date-filter-badge');
+  if (!badge) return;
+  var fromInput = document.getElementById('lc-date-from');
+  var toInput = document.getElementById('lc-date-to');
+  if ((fromInput && fromInput.value) || (toInput && toInput.value)) {
+    badge.textContent = 'ON';
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 export function showStarredMessages() {
@@ -202,7 +225,142 @@ export async function loadContactDetails() {
   } catch (e) {
     $.contactDetails = {};
   }
+
+  // US-088: Auto-detect country from phone prefix if not set
+  if (!$.contactDetails.country && $.activePhone) {
+    var detected = detectCountryFromPhone($.activePhone);
+    if (detected) {
+      $.contactDetails.country = detected;
+      // Save auto-detected country
+      api('/conversations/' + encodeURIComponent($.activePhone) + '/contact', {
+        method: 'PATCH',
+        body: { country: detected }
+      }).catch(function () { });
+    }
+  }
+
+  // US-088: Auto-detect language from messages (after 3 user messages)
+  if (!$.contactDetails.languageLocked && !$.contactDetails.language) {
+    try {
+      var log = await api('/conversations/' + encodeURIComponent($.activePhone));
+      if (log && log.messages) {
+        var userMsgs = log.messages.filter(function (m) { return m.role === 'user'; });
+        if (userMsgs.length >= 3) {
+          var detectedLang = detectLanguageFromMessages(userMsgs);
+          if (detectedLang) {
+            $.contactDetails.language = detectedLang;
+            $.contactDetails.languageLocked = true;
+            api('/conversations/' + encodeURIComponent($.activePhone) + '/contact', {
+              method: 'PATCH',
+              body: { language: detectedLang, languageLocked: true }
+            }).catch(function () { });
+          }
+        }
+      }
+    } catch (e) { /* ignore */ }
+  }
+
   renderContactFields();
+}
+
+// US-088: Country detection from phone prefix
+function detectCountryFromPhone(phone) {
+  var clean = formatPhoneForDisplay(phone).replace(/[^0-9+]/g, '');
+  if (!clean.startsWith('+') && !clean.match(/^[0-9]/)) return null;
+  // Remove leading + if present
+  var digits = clean.replace(/^\+/, '');
+
+  var prefixMap = [
+    { prefix: '60', country: 'MY' },
+    { prefix: '65', country: 'SG' },
+    { prefix: '86', country: 'CN' },
+    { prefix: '62', country: 'ID' },
+    { prefix: '91', country: 'IN' },
+    { prefix: '1', country: 'US' },
+    { prefix: '44', country: 'GB' },
+    { prefix: '61', country: 'AU' },
+    { prefix: '81', country: 'JP' },
+    { prefix: '82', country: 'KR' },
+    { prefix: '66', country: 'TH' },
+    { prefix: '84', country: 'VN' },
+    { prefix: '63', country: 'PH' },
+    { prefix: '886', country: 'TW' },
+    { prefix: '852', country: 'HK' }
+  ];
+
+  // Sort by prefix length descending (match longer prefixes first)
+  prefixMap.sort(function (a, b) { return b.prefix.length - a.prefix.length; });
+
+  for (var i = 0; i < prefixMap.length; i++) {
+    if (digits.startsWith(prefixMap[i].prefix)) {
+      return prefixMap[i].country;
+    }
+  }
+  return null;
+}
+
+// US-088: Language detection from message content
+function detectLanguageFromMessages(userMessages) {
+  // Simple heuristic: check last 5 messages for language patterns
+  var recent = userMessages.slice(-5);
+  var text = recent.map(function (m) { return m.content || ''; }).join(' ').toLowerCase();
+
+  // Check for common language indicators
+  var langScores = { en: 0, ms: 0, zh: 0, id: 0 };
+
+  // English indicators
+  if (/\b(the|is|are|what|how|can|please|thank|hello|hi|do|have|where|when)\b/.test(text)) langScores.en += 3;
+  // Malay indicators
+  if (/\b(apa|boleh|saya|mau|ada|tidak|terima|kasih|selamat|bagaimana|berapa|nak|macam mana)\b/.test(text)) langScores.ms += 3;
+  // Chinese indicators (CJK characters)
+  if (/[\u4e00-\u9fff]/.test(text)) langScores.zh += 5;
+  // Indonesian indicators
+  if (/\b(saya|terima|kasih|bagaimana|bisa|tidak|mau|apakah|tolong)\b/.test(text)) langScores.id += 2;
+
+  var best = 'en';
+  var bestScore = 0;
+  for (var lang in langScores) {
+    if (langScores[lang] > bestScore) {
+      bestScore = langScores[lang];
+      best = lang;
+    }
+  }
+  return bestScore > 0 ? best : null;
+}
+
+// US-088: Toggle language lock
+export function toggleLanguageLock() {
+  if (!$.contactDetails) return;
+  $.contactDetails.languageLocked = !$.contactDetails.languageLocked;
+  updateLanguageLockUI();
+  var data = collectContactFields();
+  data.languageLocked = $.contactDetails.languageLocked;
+  saveContactDetailsData(data);
+}
+
+function updateLanguageLockUI() {
+  var lockBtn = document.getElementById('lc-cd-language-lock');
+  var langSelect = document.getElementById('lc-cd-language');
+  if (!lockBtn) return;
+  var isLocked = $.contactDetails && $.contactDetails.languageLocked;
+  lockBtn.innerHTML = isLocked
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>';
+  lockBtn.title = isLocked ? 'Language locked (click to unlock)' : 'Language unlocked (click to lock)';
+  if (langSelect) langSelect.disabled = isLocked;
+}
+
+async function saveContactDetailsData(data) {
+  if (!$.activePhone) return;
+  try {
+    $.contactDetails = await api('/conversations/' + encodeURIComponent($.activePhone) + '/contact', {
+      method: 'PATCH',
+      body: data
+    });
+    showSaveIndicator('saved');
+  } catch (e) {
+    showSaveIndicator('error');
+  }
 }
 
 function renderContactFields() {
@@ -213,7 +371,7 @@ function renderContactFields() {
   var headerName = document.getElementById('lc-header-name');
   var pushName = headerName ? headerName.textContent : '';
   var displayName = d.name || pushName || '?';
-  if (avatarEl) avatarEl.textContent = displayName.slice(0, 2).toUpperCase();
+  if (avatarEl) avatarEl.innerHTML = avatarImg($.activePhone || '', displayName.slice(0, 2).toUpperCase());
   if (phoneEl) phoneEl.textContent = '+' + formatPhoneForDisplay($.activePhone || '');
 
   var nameEl = document.getElementById('lc-cd-name');
@@ -236,6 +394,9 @@ function renderContactFields() {
   }
 
   renderTags(d.tags || []);
+
+  // US-088: Update language lock UI
+  updateLanguageLockUI();
 }
 
 function collectContactFields() {
@@ -367,15 +528,20 @@ export async function setMode(mode) {
 }
 
 export function updateModeUI(mode) {
-  var label = document.getElementById('lc-mode-label');
-  if (label) {
-    var labels = {
-      autopilot: '\u2708\uFE0F Autopilot',
-      copilot: '\uD83E\uDD1D Copilot',
-      manual: '\u270D\uFE0F Manual'
-    };
-    label.textContent = labels[mode] || mode;
-  }
+  var icon = document.getElementById('lc-mode-icon');
+  var btn = document.getElementById('lc-mode-btn');
+  var icons = {
+    autopilot: '\u2708\uFE0F',
+    copilot: '\uD83E\uDD1D',
+    manual: '\u270D\uFE0F'
+  };
+  var tooltips = {
+    autopilot: 'Autopilot \u2014 AI responds automatically',
+    copilot: 'Copilot \u2014 AI suggests, you approve',
+    manual: 'Manual \u2014 You write, AI helps on request'
+  };
+  if (icon) icon.textContent = icons[mode] || '\uD83E\uDD1D';
+  if (btn) btn.title = tooltips[mode] || mode;
 
   document.querySelectorAll('.lc-mode-option').forEach(function (btn) {
     btn.classList.toggle('active', btn.dataset.mode === mode);
@@ -385,6 +551,8 @@ export function updateModeUI(mode) {
   if (helpBtn) {
     helpBtn.style.display = mode === 'manual' ? '' : 'none';
   }
+
+  updateModeSubmenuUI();
 
   if (mode === 'copilot') {
     checkPendingApprovals();
@@ -529,6 +697,139 @@ export async function getAIHelp() {
   }
 }
 
+// ─── Clear Chat ──────────────────────────────────────────────────
+
+export async function clearChat() {
+  if (!$.activePhone) return;
+  if (!confirm('Clear all messages in this conversation? This cannot be undone.')) return;
+  try {
+    await api('/conversations/' + encodeURIComponent($.activePhone) + '/clear', { method: 'POST' });
+    showToast('Chat cleared', 'success');
+    await refreshChat();
+  } catch (err) {
+    showToast('Failed to clear chat: ' + (err.message || 'Unknown error'), 'error');
+  }
+}
+
+// ─── WA Status Bar Toggle (US-056) ──────────────────────────────
+
+export function toggleWaStatusBar() {
+  var bar = document.getElementById('lc-wa-status-bar');
+  if (!bar) return;
+  var isCollapsed = bar.classList.toggle('wa-collapsed');
+  try { sessionStorage.setItem('wa-status-collapsed', isCollapsed ? '1' : '0'); } catch (e) { }
+}
+
+export function restoreWaStatusBarState() {
+  var bar = document.getElementById('lc-wa-status-bar');
+  if (!bar) return;
+  try {
+    var stored = sessionStorage.getItem('wa-status-collapsed');
+    if (stored === '0') {
+      bar.classList.remove('wa-collapsed');
+    } else {
+      bar.classList.add('wa-collapsed');
+    }
+  } catch (e) {
+    bar.classList.add('wa-collapsed');
+  }
+}
+
+// ─── Resizable Divider (US-072) ──────────────────────────────────
+
+var _dividerInitialized = false;
+
+export function initResizableDivider() {
+  if (_dividerInitialized) return;
+  var divider = document.getElementById('lc-divider');
+  var sidebar = document.getElementById('lc-sidebar');
+  var main = document.getElementById('lc-main');
+  if (!divider || !sidebar || !main) return;
+  _dividerInitialized = true;
+
+  var MIN_LEFT = 200;
+  var MIN_RIGHT = 300;
+  var startX = 0;
+  var startWidth = 0;
+  var maxLeft = 0;
+  var dragging = false;
+  var rafId = 0;
+  var pendingWidth = 0;
+
+  // Restore saved width
+  try {
+    var saved = localStorage.getItem('lc-pane-width');
+    if (saved) {
+      var w = parseInt(saved, 10);
+      if (w >= MIN_LEFT) {
+        sidebar.style.width = w + 'px';
+        sidebar.style.flex = '0 0 ' + w + 'px';
+      }
+    }
+  } catch (e) { }
+
+  function applyWidth() {
+    rafId = 0;
+    sidebar.style.width = pendingWidth + 'px';
+    sidebar.style.flex = '0 0 ' + pendingWidth + 'px';
+  }
+
+  function onPointerDown(e) {
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    startWidth = sidebar.getBoundingClientRect().width;
+
+    // Cache layout values once at drag start (they don't change during drag)
+    var container = sidebar.parentElement;
+    var containerWidth = container ? container.getBoundingClientRect().width : window.innerWidth;
+    var contactPanel = document.getElementById('lc-contact-panel');
+    var contactWidth = (contactPanel && contactPanel.style.display !== 'none') ? contactPanel.getBoundingClientRect().width : 0;
+    maxLeft = containerWidth - 4 - MIN_RIGHT - contactWidth;
+
+    divider.classList.add('active');
+    document.body.classList.add('lc-resizing');
+    document.addEventListener('mousemove', onPointerMove);
+    document.addEventListener('mouseup', onPointerUp);
+    document.addEventListener('touchmove', onPointerMove, { passive: false });
+    document.addEventListener('touchend', onPointerUp);
+  }
+
+  function onPointerMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    var clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    pendingWidth = Math.max(MIN_LEFT, Math.min(maxLeft, startWidth + (clientX - startX)));
+
+    // Throttle DOM writes to one per animation frame
+    if (!rafId) {
+      rafId = requestAnimationFrame(applyWidth);
+    }
+  }
+
+  function onPointerUp() {
+    if (!dragging) return;
+    dragging = false;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    // Apply final width synchronously
+    applyWidth();
+    divider.classList.remove('active');
+    document.body.classList.remove('lc-resizing');
+    document.removeEventListener('mousemove', onPointerMove);
+    document.removeEventListener('mouseup', onPointerUp);
+    document.removeEventListener('touchmove', onPointerMove);
+    document.removeEventListener('touchend', onPointerUp);
+
+    // Save width to localStorage
+    try {
+      localStorage.setItem('lc-pane-width', Math.round(pendingWidth).toString());
+    } catch (e) { }
+  }
+
+  divider.addEventListener('mousedown', onPointerDown);
+  divider.addEventListener('touchstart', onPointerDown, { passive: false });
+}
+
 // ─── Toast ───────────────────────────────────────────────────────
 
 export function showToast(message, type) {
@@ -550,4 +851,106 @@ export function showToast(message, type) {
       }
     }, 300);
   }, 3000);
+}
+
+// ─── US-090: AI-Generated Notes ─────────────────────────────────
+
+export async function generateAINotes() {
+  if (!$.activePhone) return;
+
+  var btn = document.getElementById('lc-cd-generate-notes');
+  var textarea = document.getElementById('lc-cd-notes');
+  if (!btn || !textarea) return;
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    var result = await api('/conversations/' + encodeURIComponent($.activePhone) + '/generate-notes', {
+      method: 'POST'
+    });
+
+    if (result && result.notes) {
+      textarea.value = result.notes;
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+      showToast('AI notes generated (review before saving)', 'success');
+      // Trigger save after review delay
+      contactFieldChanged();
+    }
+  } catch (err) {
+    showToast('Failed to generate notes: ' + (err.message || 'Unknown error'), 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ─── US-091: Guest Context File ─────────────────────────────────
+
+export async function openGuestContext() {
+  if (!$.activePhone) return;
+
+  var modal = document.getElementById('lc-context-modal');
+  var editor = document.getElementById('lc-context-editor');
+  var filenameEl = document.getElementById('lc-context-filename');
+  if (!modal || !editor) return;
+
+  editor.value = 'Loading...';
+  modal.style.display = '';
+
+  try {
+    var result = await api('/conversations/' + encodeURIComponent($.activePhone) + '/context');
+    if (result) {
+      editor.value = result.content || '';
+      if (filenameEl) filenameEl.textContent = result.filename || '';
+    }
+  } catch (err) {
+    editor.value = '# Error loading context file\n\nPlease try again.';
+    showToast('Failed to load context: ' + (err.message || 'Unknown error'), 'error');
+  }
+}
+
+export function closeContextModal() {
+  var modal = document.getElementById('lc-context-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+export async function saveGuestContext() {
+  if (!$.activePhone) return;
+
+  var editor = document.getElementById('lc-context-editor');
+  if (!editor) return;
+
+  try {
+    await api('/conversations/' + encodeURIComponent($.activePhone) + '/context', {
+      method: 'PUT',
+      body: { content: editor.value }
+    });
+    showToast('Guest context saved', 'success');
+    closeContextModal();
+  } catch (err) {
+    showToast('Failed to save context: ' + (err.message || 'Unknown error'), 'error');
+  }
+}
+
+// ─── Mobile Navigation (US-092) ──────────────────────────────────
+
+/**
+ * Navigate back to sidebar on mobile (hides conversation, shows chat list)
+ */
+export function mobileBack() {
+  var container = document.querySelector('.lc-container');
+  if (container) container.classList.remove('lc-mobile-show-chat');
+}
+
+/**
+ * Show conversation view on mobile (hides sidebar, shows chat)
+ * Called from openConversation() when on mobile viewport
+ */
+export function mobileShowChat() {
+  var container = document.querySelector('.lc-container');
+  if (container && window.innerWidth <= 768) {
+    container.classList.add('lc-mobile-show-chat');
+  }
 }

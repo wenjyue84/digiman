@@ -239,6 +239,165 @@ export const WORKFLOW_SCENARIOS = [
   },
 
   // ══════════════════════════════════════════════════════════════
+  // MULTI_TURN_INTENT (6 tests) - Intent classification per turn
+  // Tests that intent is correctly classified at each turn in
+  // a sequential multi-turn conversation.
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'mt-noise-followup',
+    name: 'Multi-Turn - Noise complaint follow-up',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'The people next door are being really loud' },
+      { text: 'It has been going on for over an hour now' },
+      { text: 'Can someone come and tell them to quiet down?' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['sorry', 'noise', 'quiet', 'staff', 'relocate'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'send', 'address', 'quiet', 'sorry'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-booking-full-flow',
+    name: 'Multi-Turn - Booking full conversation flow',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'How much is a capsule per night?' },
+      { text: 'Do you have availability next weekend?' },
+      { text: 'Great, I would like to book a room please' },
+      { text: 'How can I pay?' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['RM', 'price', 'night', 'rate'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['available', 'check', 'book'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['book', 'reservation', 'WhatsApp', 'guest'], critical: true }
+      ]},
+      { turn: 3, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['cash', 'card', 'transfer', 'bank', 'payment'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-complaint-escalation',
+    name: 'Multi-Turn - Complaint escalation path',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'My room is not clean' },
+      { text: 'Nobody came to fix it after I reported it' },
+      { text: 'This is unacceptable! I want to speak to a manager!' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['sorry', 'clean', 'housekeeping'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['sorry', 'apologize', 'staff'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['manager', 'staff', 'sorry', 'escalat', 'contact'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-checkin-flow',
+    name: 'Multi-Turn - Check-in information flow',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'What time is check-in?' },
+      { text: 'I have arrived at the hostel now' },
+      { text: 'Can I get a lower deck capsule?' },
+      { text: 'What is the WiFi password?' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['2', '3', 'PM', 'check-in', 'afternoon'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['welcome', 'check-in', 'name', 'information'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['lower', 'deck', 'even', 'C2', 'C4'], critical: true }
+      ]},
+      { turn: 3, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['WiFi', 'wifi', 'password', 'network'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-billing-dispute',
+    name: 'Multi-Turn - Billing dispute',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'I want to check my bill' },
+      { text: 'There is an extra charge of RM50 I did not authorize' },
+      { text: 'I was overcharged and I want a refund' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['bill', 'charge', 'review'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['review', 'investigate', 'charge', 'refund'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['refund', 'investigation', 'review', 'management'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-checkout-luggage',
+    name: 'Multi-Turn - Checkout then luggage',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'What time do I need to check out?' },
+      { text: 'How do I check out?' },
+      { text: 'Can I leave my luggage here after checkout?' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['10', '11', '12', 'AM', 'noon', 'check-out'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['bill', 'front desk', 'payment', 'key'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['storage', 'bag', 'luggage'], critical: true }
+      ]}
+    ]
+  },
+
+  // ══════════════════════════════════════════════════════════════
   // CONVERSATION_SUMMARIZATION (4 tests) - Long conversation handling
   // ══════════════════════════════════════════════════════════════
   {

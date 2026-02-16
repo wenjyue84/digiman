@@ -61,6 +61,11 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/** Convert plain URLs in text to clickable <a> tags. Call AFTER escapeHtml(). */
+function linkifyUrls(html) {
+  return html.replace(/(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="lc-link">$1</a>');
+}
+
 function escapeAttr(s) {
   if (!s) return '';
   return escapeHtml(s).replace(/'/g, '&#39;');

@@ -26,12 +26,10 @@ function truncate(str, len) {
  */
 export async function loadStaticReplies() {
   try {
-    const [knowledgeData, templatesData, routingData, intentsData] = await Promise.all([
-      api('/knowledge'),
-      api('/templates'),
-      api('/routing'),
-      api('/intents')
-    ]);
+    const configs = await window.apiHelpers.loadMultipleConfigs(
+      { knowledgeData: '/knowledge', templatesData: '/templates', routingData: '/routing', intentsData: '/intents' }
+    );
+    const { knowledgeData, templatesData, routingData, intentsData } = configs;
 
     window.cachedRouting = routingData;
     window.cachedKnowledge = knowledgeData;
@@ -186,5 +184,5 @@ export async function loadStaticReplies() {
         </div>
       `).join('');
     }
-  } catch (e) { toast(e.message, 'error'); }
+  } catch (e) { toast(window.apiHelpers.formatApiError(e), 'error'); }
 }

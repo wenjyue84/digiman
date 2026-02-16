@@ -9,6 +9,18 @@
 //   api, escapeHtml, escapeAttr, formatRelativeTime
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Generate avatar HTML: <img> with onerror fallback to initials <span>.
+ * @param {string} phone - Phone number (may include @s.whatsapp.net)
+ * @param {string} fallbackInitials - Text to show if image fails
+ */
+export function avatarImg(phone, fallbackInitials) {
+  var clean = (phone || '').replace(/@s\.whatsapp\.net$/i, '').replace(/[^0-9]/g, '');
+  return '<img src="/api/rainbow/whatsapp/avatar/' + encodeURIComponent(clean) +
+    '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'" loading="lazy">' +
+    '<span style="display:none">' + escapeHtml(fallbackInitials) + '</span>';
+}
+
 export var $ = {
   conversations: [],
   activePhone: null,
@@ -42,5 +54,7 @@ export var $ = {
   waWasConnected: null,
   chatDropdownPhone: null,
   dateFilterFrom: null,
-  dateFilterTo: null
+  dateFilterTo: null,
+  sidebarSearchDebounce: null,
+  messageMetadata: { pinned: [], starred: [] }
 };

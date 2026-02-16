@@ -349,3 +349,32 @@ export async function submitAddTemplate(e) {
     toast(e.message, 'error');
   }
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// Bulk Translate All Intents
+// ═════════════════════════════════════════════════════════════════════
+
+/**
+ * Translate all intents that are missing MS or ZH translations
+ */
+export async function translateAllIntents() {
+  const btn = document.getElementById('translate-all-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Translating...';
+  }
+
+  try {
+    const result = await api('/knowledge/translate-all', { method: 'POST' });
+    const msg = 'Translated: ' + result.translated + ', Skipped: ' + result.skipped + ', Failed: ' + result.failed + ' (Total: ' + result.total + ')';
+    toast(msg);
+    loadStaticReplies();
+  } catch (e) {
+    toast(e.message || 'Bulk translation failed', 'error');
+  }
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Translate All';
+  }
+}
