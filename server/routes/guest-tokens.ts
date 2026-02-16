@@ -16,6 +16,7 @@ import { authenticateToken } from "./middleware/auth";
 import sgMail from "@sendgrid/mail";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
 import { handleDatabaseError, handleFeatureNotImplementedError } from "../lib/errorHandler";
+import { notifyOperatorMaintenanceCapsule } from "../lib/maintenanceNotify";
 
 const router = Router();
 
@@ -172,6 +173,30 @@ router.post("/internal",
 
       console.log(`[Internal Token] Created for ${guestName || 'Guest'} → ${assignedCapsule} | ${link}`);
 
+      // US-144: Notify operator if maintenance capsule assigned with no alternatives
+      try {
+        const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
+        const capsuleProblems = activeProblems.data.filter(
+          p => p.capsuleNumber === assignedCapsule && !p.isResolved
+        );
+        if (capsuleProblems.length > 0) {
+          const maintenanceCapsuleNumbers = new Set(activeProblems.data.map(p => p.capsuleNumber));
+          const hasCleanAlternative = candidates.some(
+            c => c.number !== assignedCapsule && !maintenanceCapsuleNumbers.has(c.number)
+          );
+          if (!hasCleanAlternative) {
+            notifyOperatorMaintenanceCapsule({
+              capsuleNumber: assignedCapsule,
+              guestName: guestName || 'Guest',
+              guestPhone: phoneNumber,
+              problems: capsuleProblems.map(p => p.description),
+            });
+          }
+        }
+      } catch (notifyErr: any) {
+        console.error('[Internal Token] Maintenance notification error (non-blocking):', notifyErr.message);
+      }
+
       res.json({
         success: true,
         token: createdToken.token,
@@ -218,15 +243,16 @@ router.post("/",
     
     // Determine capsule assignment
     let assignedCapsule: string | null = null;
-    
+    let autoAssignCandidates: any[] = []; // track candidates for maintenance notification
+
     if (validatedData.autoAssign) {
       // Auto-assign logic: get available capsules and pick the best one
       const availableCapsules = await storage.getAvailableCapsules();
-      
+
       if (availableCapsules.length === 0) {
         return res.status(400).json({ message: "No capsules available for assignment" });
       }
-      
+
       // Apply capsule assignment rules from settings
       let rules: any = null;
       try {
@@ -241,6 +267,7 @@ router.post("/",
 
       let candidates = availableCapsules.filter(c => !excludedList.includes(c.number));
       if (candidates.length === 0) candidates = availableCapsules;
+      autoAssignCandidates = candidates;
 
       const sortedCapsules = candidates.sort((a, b) => {
         const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
@@ -343,7 +370,33 @@ router.post("/",
       timestamp: new Date().toISOString()
     });
     console.log('🚀 [Guest Token Creation] Sending response to client...');
-    
+
+    // US-144: Notify operator if maintenance capsule assigned with no alternatives
+    if (assignedCapsule && validatedData.autoAssign && autoAssignCandidates.length > 0) {
+      try {
+        const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
+        const capsuleProblems = activeProblems.data.filter(
+          (p: any) => p.capsuleNumber === assignedCapsule && !p.isResolved
+        );
+        if (capsuleProblems.length > 0) {
+          const maintenanceCapsuleNumbers = new Set(activeProblems.data.map((p: any) => p.capsuleNumber));
+          const hasCleanAlternative = autoAssignCandidates.some(
+            (c: any) => c.number !== assignedCapsule && !maintenanceCapsuleNumbers.has(c.number)
+          );
+          if (!hasCleanAlternative) {
+            notifyOperatorMaintenanceCapsule({
+              capsuleNumber: assignedCapsule,
+              guestName: validatedData.guestName || 'Guest',
+              guestPhone: validatedData.phoneNumber,
+              problems: capsuleProblems.map((p: any) => p.description),
+            });
+          }
+        }
+      } catch (notifyErr: any) {
+        console.error('[Guest Token Creation] Maintenance notification error (non-blocking):', notifyErr.message);
+      }
+    }
+
     res.json({
       token: createdToken.token,
       link,
@@ -351,7 +404,7 @@ router.post("/",
       guestName: validatedData.guestName || "Guest",
       expiresAt: createdToken.expiresAt,
     });
-    
+
   } catch (error: any) {
     // Enhanced error logging for Create Link debugging
     console.error("❌ [Guest Token Creation] Error occurred during token creation");

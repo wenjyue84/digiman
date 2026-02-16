@@ -233,6 +233,7 @@ router.post('/memory/:date/append', async (req, res) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Invalid date format' });
   if (!section || !entry) return res.status(400).json({ error: 'section and entry required' });
 
+  // Canonical source: RainbowAI/src/assistant/default-configs.ts — keep in sync
   const TEMPLATE = `# ${date} -- Daily Memory\n\n## Staff Notes\n\n## Issues Reported\n\n## Operational Changes\n\n## Patterns Observed\n\n## AI Notes\n`;
 
   try {

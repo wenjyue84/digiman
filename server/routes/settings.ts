@@ -175,18 +175,36 @@ const DEFAULT_CAPSULE_RULES = {
 // GET /api/settings/capsule-rules — No auth required (MCP tool + frontend both read this)
 router.get("/capsule-rules", async (_req, res) => {
   try {
+    let rules = DEFAULT_CAPSULE_RULES;
     const setting = await storage.getSetting(CAPSULE_RULES_KEY);
     if (setting) {
       try {
-        res.json(JSON.parse(setting.value));
+        rules = JSON.parse(setting.value);
       } catch {
-        res.json(DEFAULT_CAPSULE_RULES);
+        // keep defaults
       }
     } else {
-      // First access: persist defaults and return them
+      // First access: persist defaults
       await storage.setSetting(CAPSULE_RULES_KEY, JSON.stringify(DEFAULT_CAPSULE_RULES), 'Default capsule assignment rules');
-      res.json(DEFAULT_CAPSULE_RULES);
     }
+
+    // Auto-link capsules with active problems into deprioritized list
+    let autoLinkedCapsules: string[] = [];
+    try {
+      const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
+      autoLinkedCapsules = [...new Set(activeProblems.data.map(p => p.capsuleNumber))];
+    } catch {
+      // If problems fetch fails, return rules without auto-link
+    }
+
+    const manualCapsules: string[] = rules.deprioritizedCapsules || [];
+    const mergedCapsules = [...new Set([...manualCapsules, ...autoLinkedCapsules])];
+
+    res.json({
+      ...rules,
+      deprioritizedCapsules: mergedCapsules,
+      autoLinkedCapsules,
+    });
   } catch (error) {
     console.error("Error fetching capsule rules:", error);
     res.status(500).json({ message: "Failed to fetch capsule rules" });

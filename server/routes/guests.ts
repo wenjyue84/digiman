@@ -20,6 +20,7 @@ import sgMail from "@sendgrid/mail";
 import { handleRouteError, asyncRouteHandler, sendSuccessResponse } from "../lib/errorHandler";
 import { getTodayBoundary, isOverdue } from "../lib/dateUtils";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
+import { notifyOperatorMaintenanceCapsule } from "../lib/maintenanceNotify";
 
 // Validation schema for guest history query parameters
 const guestHistoryQuerySchema = z.object({
@@ -279,14 +280,38 @@ router.post("/checkin",
           guest.name,
           `Capsule ${guest.capsuleNumber}`
         );
-        
+
         await pushNotificationService.sendToAdmins(notificationPayload);
         console.log(`Push notification sent for guest check-in: ${guest.name}`);
       } catch (error) {
         console.error('Failed to send push notification for guest check-in:', error);
         // Don't fail the request if notification fails
       }
-      
+
+      // US-144: Notify operator if capsule has maintenance issues and no clean alternative
+      try {
+        const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
+        const capsuleProblems = activeProblems.data.filter(
+          (p: any) => p.capsuleNumber === guest.capsuleNumber && !p.isResolved
+        );
+        if (capsuleProblems.length > 0) {
+          const maintenanceCapsuleNumbers = new Set(activeProblems.data.map((p: any) => p.capsuleNumber));
+          const hasCleanAlternative = availableCapsules.some(
+            (c: any) => c.number !== guest.capsuleNumber && !maintenanceCapsuleNumbers.has(c.number)
+          );
+          if (!hasCleanAlternative) {
+            notifyOperatorMaintenanceCapsule({
+              capsuleNumber: guest.capsuleNumber,
+              guestName: guest.name,
+              guestPhone: guest.phoneNumber || undefined,
+              problems: capsuleProblems.map((p: any) => p.description),
+            });
+          }
+        }
+      } catch (notifyErr: any) {
+        console.error('[Checkin] Maintenance notification error (non-blocking):', notifyErr.message);
+      }
+
       res.status(201).json(guest);
     } catch (error) {
       if (error instanceof z.ZodError) {
