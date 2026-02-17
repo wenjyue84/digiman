@@ -437,10 +437,50 @@ export async function openConversation(phone) {
     if (el.onclick && el.onclick.toString().includes(phone)) el.classList.add('active');
   });
 
+  // US-006: Optimistic UI — render cached conversation immediately
+  var cached = $.conversationCache.get(phone);
+  if (cached) {
+    renderChat(cached.log);
+    updateMessageIndicators();
+  }
+
+  // US-006: Show subtle loading spinner if fetch takes >500ms
+  var spinnerTimer = null;
+  if (!cached) {
+    // No cache: show spinner immediately (first load)
+    _showChatSpinner(true);
+  } else {
+    // Have cache: show spinner only if refresh takes >500ms
+    spinnerTimer = setTimeout(function () { _showChatSpinner(true); }, 500);
+  }
+
   try {
     var log = await api('/conversations/' + encodeURIComponent(phone));
-    renderChat(log);
-    // Load message-level pin/star metadata and show indicators
+
+    // US-006: Clear spinner timer and hide spinner
+    if (spinnerTimer) clearTimeout(spinnerTimer);
+    _showChatSpinner(false);
+
+    // Only re-render if this is still the active conversation
+    if ($.activePhone !== phone) return;
+
+    // US-006: Cache the fresh response
+    $.conversationCache.set(phone, { log: log, cachedAt: Date.now() });
+    // Limit cache size to 50 conversations to prevent memory bloat
+    if ($.conversationCache.size > 50) {
+      var oldest = $.conversationCache.keys().next().value;
+      $.conversationCache.delete(oldest);
+    }
+
+    // Only re-render if data actually changed (skip if cached version was identical)
+    var msgCount = (log.messages || []).length;
+    var cachedMsgCount = cached ? (cached.log.messages || []).length : -1;
+    var lastMsgTs = msgCount > 0 ? log.messages[msgCount - 1].timestamp : 0;
+    var cachedLastTs = cachedMsgCount > 0 ? cached.log.messages[cachedMsgCount - 1].timestamp : -1;
+    if (!cached || msgCount !== cachedMsgCount || lastMsgTs !== cachedLastTs) {
+      renderChat(log);
+    }
+
     await loadMessageMetadata();
     updateMessageIndicators();
     await api('/conversations/' + encodeURIComponent(phone) + '/read', { method: 'PATCH' }).catch(function () { });
@@ -464,7 +504,24 @@ export async function openConversation(phone) {
       console.error('[LiveChat] Failed to load mode:', err);
     }
   } catch (err) {
+    if (spinnerTimer) clearTimeout(spinnerTimer);
+    _showChatSpinner(false);
     console.error('[LiveChat] Failed to load conversation:', err);
+  }
+}
+
+/** US-006: Show/hide a subtle loading spinner overlay on the messages area */
+function _showChatSpinner(show) {
+  var container = document.getElementById('lc-messages');
+  if (!container) return;
+  var existing = container.querySelector('.lc-chat-spinner');
+  if (show && !existing) {
+    var spinner = document.createElement('div');
+    spinner.className = 'lc-chat-spinner';
+    spinner.innerHTML = '<div class="lc-chat-spinner-dot"></div>';
+    container.appendChild(spinner);
+  } else if (!show && existing) {
+    existing.remove();
   }
 }
 
@@ -604,6 +661,8 @@ export async function refreshChat() {
   if (!$.activePhone) return;
   try {
     var log = await api('/conversations/' + encodeURIComponent($.activePhone));
+    // US-006: Update cache on refresh
+    $.conversationCache.set($.activePhone, { log: log, cachedAt: Date.now() });
     renderChat(log);
     updateMessageIndicators();
   } catch (e) { }

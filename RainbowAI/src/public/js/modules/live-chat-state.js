@@ -16,8 +16,10 @@
  */
 export function avatarImg(phone, fallbackInitials) {
   var clean = (phone || '').replace(/@s\.whatsapp\.net$/i, '').replace(/[^0-9]/g, '');
-  return '<img src="/api/rainbow/whatsapp/avatar/' + encodeURIComponent(clean) +
-    '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'" loading="lazy">' +
+  var src = '/api/rainbow/whatsapp/avatar/' + encodeURIComponent(clean);
+  // onerror: retry once after 3s (avatar may be fetching in background), then show initials
+  return '<img src="' + src +
+    '" onerror="var i=this;if(!i.dataset.retried){i.dataset.retried=1;setTimeout(function(){i.src=\'' + src + '?\'+Date.now()},3000)}else{i.style.display=\'none\';i.nextElementSibling.style.display=\'\'}" loading="lazy">' +
     '<span style="display:none">' + escapeHtml(fallbackInitials) + '</span>';
 }
 
@@ -56,5 +58,7 @@ export var $ = {
   dateFilterFrom: null,
   dateFilterTo: null,
   sidebarSearchDebounce: null,
-  messageMetadata: { pinned: [], starred: [] }
+  messageMetadata: { pinned: [], starred: [] },
+  /** @type {Map<string, {log: object, cachedAt: number}>} conversation cache for instant switching (US-006) */
+  conversationCache: new Map()
 };

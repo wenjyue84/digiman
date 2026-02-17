@@ -26,10 +26,10 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "AI client returns usage data: RainbowAI/src/assistant/ai-client.ts \u00e2\u20ac\u201d look for usage/token fields in provider response",
+        "AI client returns usage data: RainbowAI/src/assistant/ai-client.ts â€” look for usage/token fields in provider response",
         "Message router passes AI response to frontend: RainbowAI/src/assistant/message-router.ts",
-        "Chat simulator test endpoint: RainbowAI/src/routes/admin/testing.ts \u00e2\u20ac\u201d ensure token data propagates in response",
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js \u00e2\u20ac\u201d add token display below bubble",
+        "Chat simulator test endpoint: RainbowAI/src/routes/admin/testing.ts â€” ensure token data propagates in response",
+        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js â€” add token display below bubble",
         "Chat simulator HTML: RainbowAI/src/public/templates/tabs/chat-simulator.html",
         "Context message count: count messages array length passed to AI provider in ai-client.ts"
       ],
@@ -52,12 +52,12 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js \u00e2\u20ac\u201d renderMessageBubble() add icon based on message source",
-        "Left pane previews: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d conversation list rendering",
+        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js â€” renderMessageBubble() add icon based on message source",
+        "Left pane previews: RainbowAI/src/public/js/modules/live-chat-panels.js â€” conversation list rendering",
         "Message source field: check if messages have a 'source' or 'fromMe'/'isBot' flag to distinguish AI vs manual",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00e2\u20ac\u201d message model",
+        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js â€” message model",
         "Use unicode robot face U+1F916 or a small SVG icon",
-        "No nested template literals in JS HTML generation \u00e2\u20ac\u201d use string concatenation"
+        "No nested template literals in JS HTML generation â€” use string concatenation"
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
@@ -67,10 +67,10 @@
       "id": "US-003",
       "title": "Guest Simulation input box at top of panel",
       "priority": 3,
-      "description": "As a tester, I want the typing input box in Guest Simulation (#chat-simulator > Guest Simulation tab) positioned at the top so I can quickly type test messages without scrolling. This is Guest Simulation only \u00e2\u20ac\u201d Live Simulation and Live Chat keep input at bottom.",
+      "description": "As a tester, I want the typing input box in Guest Simulation (#chat-simulator > Guest Simulation tab) positioned at the top so I can quickly type test messages without scrolling. This is Guest Simulation only â€” Live Simulation and Live Chat keep input at bottom.",
       "acceptanceCriteria": [
         "In #chat-simulator Guest Simulation tab, message input box is at the top of the chat area",
-        "Layout specific to Guest Simulation only \u00e2\u20ac\u201d Live Simulation and Live Chat keep input at bottom",
+        "Layout specific to Guest Simulation only â€” Live Simulation and Live Chat keep input at bottom",
         "Conversation messages flow below the input box",
         "Input box remains fixed/sticky at top when scrolling through messages",
         "TypeScript compiles with zero errors",
@@ -78,7 +78,7 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Chat simulator HTML: RainbowAI/src/public/templates/tabs/chat-simulator.html \u00e2\u20ac\u201d Guest Simulation section",
+        "Chat simulator HTML: RainbowAI/src/public/templates/tabs/chat-simulator.html â€” Guest Simulation section",
         "Use CSS flex-direction: column with input at top, messages below with overflow-y: auto",
         "May need to restructure the Guest Simulation panel HTML to separate input from message area",
         "Do NOT affect Live Simulation tab layout (input stays at bottom there)"
@@ -104,8 +104,8 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Static replies page: RainbowAI/src/public/templates/tabs/static-replies.html \u00e2\u20ac\u201d where these banners appear",
-        "Intent manager: RainbowAI/src/public/js/modules/intent-manager.js \u00e2\u20ac\u201d may generate these routing mismatch banners",
+        "Static replies page: RainbowAI/src/public/templates/tabs/static-replies.html â€” where these banners appear",
+        "Intent manager: RainbowAI/src/public/js/modules/intent-manager.js â€” may generate these routing mismatch banners",
         "localStorage key pattern: 'rainbow-dismissed-banners' as JSON array of banner IDs",
         "Dismissed messages panel: small floating panel or modal, similar to notification center pattern",
         "Banner ID: generate from content hash or intent name to track which are dismissed"
@@ -130,12 +130,12 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d Notes section with Generate by AI",
+        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js â€” Notes section with Generate by AI",
         "AI notes generation: likely calls an admin API endpoint that uses ai-client.ts to summarize conversation",
         "Truncation cause: check if response is being substring'd or if textarea has max-height with overflow hidden",
-        "Context files: RainbowAI/.rainbow-kb/contacts/ \u00e2\u20ac\u201d per-contact context markdown files",
-        "Knowledge base: RainbowAI/src/assistant/knowledge-base.ts \u00e2\u20ac\u201d reads context files",
-        "Admin API for context: RainbowAI/src/routes/admin/conversations.ts \u00e2\u20ac\u201d may have context file endpoints",
+        "Context files: RainbowAI/.rainbow-kb/contacts/ â€” per-contact context markdown files",
+        "Knowledge base: RainbowAI/src/assistant/knowledge-base.ts â€” reads context files",
+        "Admin API for context: RainbowAI/src/routes/admin/conversations.ts â€” may have context file endpoints",
         "Add endpoint to read/write context file content if not exists: GET/PUT /api/rainbow/contacts/:phone/context"
       ],
       "dependencies": [],
@@ -158,16 +158,16 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js \u00e2\u20ac\u201d contact click handler",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00e2\u20ac\u201d conversation data store",
-        "Conversations API: RainbowAI/src/routes/admin/conversations.ts \u00e2\u20ac\u201d message history endpoint",
+        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js â€” contact click handler",
+        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js â€” conversation data store",
+        "Conversations API: RainbowAI/src/routes/admin/conversations.ts â€” message history endpoint",
         "Add a Map<phoneNumber, messages[]> cache in live-chat-state.js",
         "On contact click: render cached messages immediately, then fetch fresh in background",
         "Use requestAnimationFrame or setTimeout(0) to avoid blocking the UI thread during render"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-007",
@@ -185,9 +185,9 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts \u00e2\u20ac\u201d connection.update events from Baileys",
-        "WhatsApp admin routes: RainbowAI/src/routes/admin/whatsapp.ts \u00e2\u20ac\u201d may have status endpoint or SSE",
-        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js \u00e2\u20ac\u201d connection status display",
+        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts â€” connection.update events from Baileys",
+        "WhatsApp admin routes: RainbowAI/src/routes/admin/whatsapp.ts â€” may have status endpoint or SSE",
+        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js â€” connection status display",
         "Check if there's an existing SSE/WebSocket for connection status, or if it only polls",
         "Baileys connection states: 'open', 'connecting', 'close' from connection.update event",
         "May need to add a /api/rainbow/whatsapp/status endpoint or SSE stream if not exists"
@@ -214,9 +214,9 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Config store: RainbowAI/src/assistant/config-store.ts \u00e2\u20ac\u201d use atomic write pattern for tags.json",
-        "New data file: RainbowAI/data/tags.json \u00e2\u20ac\u201d { tags: ['VIP', 'complaint', 'late-checkout', ...] }",
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d Tags input field",
+        "Config store: RainbowAI/src/assistant/config-store.ts â€” use atomic write pattern for tags.json",
+        "New data file: RainbowAI/data/tags.json â€” { tags: ['VIP', 'complaint', 'late-checkout', ...] }",
+        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js â€” Tags input field",
         "Admin API: add GET/POST /api/rainbow/tags endpoints in admin routes",
         "Frontend: combo-box style input with datalist or custom dropdown showing filtered suggestions",
         "Contact data storage: wherever contact metadata is stored (check live-chat-state.js or contacts JSON)"
@@ -241,9 +241,9 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d left pane rendering",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00e2\u20ac\u201d filter state management",
-        "Existing filters: All/Unread/Favourites/Groups tabs \u00e2\u20ac\u201d add tag filter alongside these",
+        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js â€” left pane rendering",
+        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js â€” filter state management",
+        "Existing filters: All/Unread/Favourites/Groups tabs â€” add tag filter alongside these",
         "Filter logic: add tagFilter to the conversation list filtering pipeline",
         "Tags come from contact data + global tag list (US-008)"
       ],
@@ -272,12 +272,12 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "New backend module: RainbowAI/src/lib/capsule-cache.ts \u00e2\u20ac\u201d fetch from http://localhost:5000/api/capsules, cache with 5-min TTL",
-        "Config store: RainbowAI/src/assistant/config-store.ts \u00e2\u20ac\u201d store custom capsule entries in data/custom-units.json",
+        "New backend module: RainbowAI/src/lib/capsule-cache.ts â€” fetch from http://localhost:5000/api/capsules, cache with 5-min TTL",
+        "Config store: RainbowAI/src/assistant/config-store.ts â€” store custom capsule entries in data/custom-units.json",
         "Admin API: add GET /api/rainbow/capsules endpoint that merges API cache + custom entries",
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d replace text input with combo-box",
-        "Cross-module: this is the only HTTP call from RainbowAI (3002) to server (5000) \u00e2\u20ac\u201d handle ECONNREFUSED",
-        "Import boundary: NO direct imports from server/ or shared/ \u00e2\u20ac\u201d HTTP fetch only"
+        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js â€” replace text input with combo-box",
+        "Cross-module: this is the only HTTP call from RainbowAI (3002) to server (5000) â€” handle ECONNREFUSED",
+        "Import boundary: NO direct imports from server/ or shared/ â€” HTTP fetch only"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
@@ -300,10 +300,10 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Settings: RainbowAI/src/assistant/data/settings.json \u00e2\u20ac\u201d add staffName field",
-        "Config store: RainbowAI/src/assistant/config-store.ts \u00e2\u20ac\u201d read/write staffName",
-        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js \u00e2\u20ac\u201d top-right header area",
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00e2\u20ac\u201d attach staffName to manual messages",
+        "Settings: RainbowAI/src/assistant/data/settings.json â€” add staffName field",
+        "Config store: RainbowAI/src/assistant/config-store.ts â€” read/write staffName",
+        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js â€” top-right header area",
+        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js â€” attach staffName to manual messages",
         "Admin API: add GET/PUT /api/rainbow/settings/staff-name endpoint",
         "Message storage: ensure staffName field is persisted with message metadata in conversation logs"
       ],
@@ -319,17 +319,17 @@
       "acceptanceCriteria": [
         "Contacts with unit assigned show [Unit]-[Name] format in left pane (e.g. 'C2-Jay')",
         "Prefix only in left pane conversation list, not in chat header or contact details",
-        "No prefix if no unit assigned \u00e2\u20ac\u201d name displays normally",
+        "No prefix if no unit assigned â€” name displays normally",
         "Prefix updates immediately when unit changed in Contact Details",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d conversation list name rendering",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00e2\u20ac\u201d contact data with unit field",
+        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js â€” conversation list name rendering",
+        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js â€” contact data with unit field",
         "Create a shared getDisplayName(contact) helper that formats: [Unit]-[Name] - [DateCode]",
-        "This helper will be reused by US-014 (date suffix) \u00e2\u20ac\u201d design it to handle both prefix and suffix",
+        "This helper will be reused by US-014 (date suffix) â€” design it to handle both prefix and suffix",
         "No nested template literals in JS HTML generation"
       ],
       "dependencies": [
@@ -342,7 +342,7 @@
       "id": "US-013",
       "title": "Unit/capsule filter in left pane",
       "priority": 13,
-      "description": "As a staff member, I want a 'Unit' filter button next to Favourites/Groups in the left pane so I can view all conversations for a specific capsule unit \u00e2\u20ac\u201d useful for troubleshooting maintenance issues mentioned in past chats.",
+      "description": "As a staff member, I want a 'Unit' filter button next to Favourites/Groups in the left pane so I can view all conversations for a specific capsule unit â€” useful for troubleshooting maintenance issues mentioned in past chats.",
       "acceptanceCriteria": [
         "A 'Unit' filter button/tab in left pane filter row next to All/Unread/Favourites/Groups",
         "Clicking Unit opens dropdown showing available unit/capsule options",
@@ -354,11 +354,11 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d filter tabs row",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00e2\u20ac\u201d add unitFilter to filter state",
+        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js â€” filter tabs row",
+        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js â€” add unitFilter to filter state",
         "Unit list: comes from capsule cache (US-010) + custom entries",
         "Filter pipeline: add unitFilter check after existing tab/search/tag filters",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css \u00e2\u20ac\u201d style the Unit filter button and dropdown"
+        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css â€” style the Unit filter button and dropdown"
       ],
       "dependencies": [
         "US-010"
@@ -382,8 +382,8 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d name rendering",
-        "Reuse getDisplayName(contact) helper from US-012 \u00e2\u20ac\u201d extend to handle date suffix",
+        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js â€” name rendering",
+        "Reuse getDisplayName(contact) helper from US-012 â€” extend to handle date suffix",
         "Contact data: check where checkIn/checkOut dates are stored in contact metadata",
         "Date format function: pad day/month to 2 digits, concatenate as DDDDMM string",
         "Contact details panel: ensure date fields exist in Contact Details UI for setting check-in/check-out"
@@ -412,13 +412,13 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00e2\u20ac\u201d message input handler",
-        "Static replies: RainbowAI/src/assistant/data/ \u00e2\u20ac\u201d check for static-replies.json or similar",
-        "Admin API for templates: RainbowAI/src/routes/admin/templates.ts \u00e2\u20ac\u201d existing template endpoints",
+        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js â€” message input handler",
+        "Static replies: RainbowAI/src/assistant/data/ â€” check for static-replies.json or similar",
+        "Admin API for templates: RainbowAI/src/routes/admin/templates.ts â€” existing template endpoints",
         "New data file: RainbowAI/data/custom-messages.json for user-created templates",
         "Command palette UI: absolute-positioned dropdown above input, filtered by typed text after /",
         "Keyboard nav: arrow keys to navigate, Enter to select, Escape to close",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css \u00e2\u20ac\u201d style the command palette dropdown"
+        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css â€” style the command palette dropdown"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
@@ -440,11 +440,11 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Workflow executor: RainbowAI/src/assistant/workflow-executor.ts \u00e2\u20ac\u201d existing workflow engine",
+        "Workflow executor: RainbowAI/src/assistant/workflow-executor.ts â€” existing workflow engine",
         "Workflow definitions: check RainbowAI/src/assistant/data/ for workflow JSON files",
-        "Reuse command palette infrastructure from US-015 \u00e2\u20ac\u201d detect // vs / prefix to show different dropdown",
+        "Reuse command palette infrastructure from US-015 â€” detect // vs / prefix to show different dropdown",
         "Admin API: may need POST /api/rainbow/workflows/:id/trigger endpoint to start workflow for a contact",
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00e2\u20ac\u201d extend / handler for //",
+        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js â€” extend / handler for //",
         "Workflow status: render as system message in chat bubbles (gray, centered, italic)"
       ],
       "dependencies": [
@@ -461,7 +461,7 @@
       "acceptanceCriteria": [
         "Sent messages show single grey tick when sent",
         "Double grey ticks when delivered to recipient device",
-        "Double blue ticks when read (best-effort \u00e2\u20ac\u201d Baileys detection)",
+        "Double blue ticks when read (best-effort â€” Baileys detection)",
         "Tooltip on hover: 'Read receipts may not always be available'",
         "Tick status updates in real-time from Baileys status events",
         "If read receipt data unavailable, show delivery ticks only (no false blue ticks)",
@@ -470,13 +470,13 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts \u00e2\u20ac\u201d listen for messages.update with status field",
+        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts â€” listen for messages.update with status field",
         "Baileys status values: PENDING=0, SERVER_ACK=1, DELIVERY_ACK=2, READ=3, PLAYED=4",
         "Backend: emit message status updates via SSE or WebSocket to frontend",
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js \u00e2\u20ac\u201d add tick icons to sent bubbles",
+        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js â€” add tick icons to sent bubbles",
         "Tick SVG: small checkmark icons, grey (#667781) for sent/delivered, blue (#53bdeb) for read",
         "Live chat state: track message status per message ID for real-time updates",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-core.css \u00e2\u20ac\u201d tick icon styles"
+        "CSS: RainbowAI/src/public/css/rainbow-livechat-core.css â€” tick icon styles"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
@@ -486,7 +486,7 @@
       "id": "US-018",
       "title": "Quick reply image attachments",
       "priority": 18,
-      "description": "As a staff member, I want to attach images to quick replies in #responses/quick-replies so I can send visual content (maps, menus, room photos) as part of predefined responses. Backward compatible \u00e2\u20ac\u201d text-only replies still work.",
+      "description": "As a staff member, I want to attach images to quick replies in #responses/quick-replies so I can send visual content (maps, menus, room photos) as part of predefined responses. Backward compatible â€” text-only replies still work.",
       "acceptanceCriteria": [
         "Quick reply editor in #responses/quick-replies has an Add Image button/field",
         "User can upload image files (jpg, png, webp)",
@@ -499,11 +499,11 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Quick replies UI: RainbowAI/src/public/templates/tabs/static-replies.html \u00e2\u20ac\u201d reply editor",
-        "Templates admin API: RainbowAI/src/routes/admin/templates.ts \u00e2\u20ac\u201d CRUD for quick replies",
+        "Quick replies UI: RainbowAI/src/public/templates/tabs/static-replies.html â€” reply editor",
+        "Templates admin API: RainbowAI/src/routes/admin/templates.ts â€” CRUD for quick replies",
         "Add image upload endpoint: POST /api/rainbow/uploads with multer middleware",
         "Image sending via Baileys: use sendMessage with { image: { url: filePath }, caption: text }",
-        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts \u00e2\u20ac\u201d extend sendMessage to handle image type",
+        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts â€” extend sendMessage to handle image type",
         "Storage: create RainbowAI/uploads/ directory for uploaded images, add to .gitignore",
         "Quick reply data model: add optional imageUrl field to reply schema"
       ],
@@ -528,8 +528,8 @@
         "Server starts and dashboard loads without errors"
       ],
       "technicalNotes": [
-        "New file: RainbowAI/src/lib/message-scheduler.ts \u00e2\u20ac\u201d singleton scheduler service",
-        "Config store pattern: RainbowAI/src/assistant/config-store.ts \u00e2\u20ac\u201d reuse atomic write for scheduled-messages.json",
+        "New file: RainbowAI/src/lib/message-scheduler.ts â€” singleton scheduler service",
+        "Config store pattern: RainbowAI/src/assistant/config-store.ts â€” reuse atomic write for scheduled-messages.json",
         "WhatsApp sending: use existing sendMessage from whatsapp/instance.ts",
         "Admin routes: add new route file RainbowAI/src/routes/admin/scheduled.ts",
         "Register in: RainbowAI/src/routes/admin/index.ts",
@@ -558,12 +558,12 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00e2\u20ac\u201d add schedule button next to send",
+        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js â€” add schedule button next to send",
         "Date picker: use native HTML datetime-local input or a lightweight picker library",
         "Scheduled messages list: could be a panel/drawer accessible via a clock icon in the header",
         "API calls to: POST/GET/PUT/DELETE /api/rainbow/scheduled-messages (from US-019)",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css \u00e2\u20ac\u201d schedule button and picker styles",
-        "Live chat features: RainbowAI/src/public/js/modules/live-chat-features.js \u00e2\u20ac\u201d scheduled messages panel"
+        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css â€” schedule button and picker styles",
+        "Live chat features: RainbowAI/src/public/js/modules/live-chat-features.js â€” scheduled messages panel"
       ],
       "dependencies": [
         "US-019"
@@ -588,7 +588,7 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Message scheduler: RainbowAI/src/lib/message-scheduler.ts \u00e2\u20ac\u201d extend to handle repeat logic",
+        "Message scheduler: RainbowAI/src/lib/message-scheduler.ts â€” extend to handle repeat logic",
         "After sending a repeating message: calculate next occurrence and create new pending entry",
         "Repeat logic: Daily = +1 day, Weekly = +7 days, Monthly = same day next month",
         "Data model: add repeatFrequency (none/daily/weekly/monthly) and repeatEndDate (optional) fields",
@@ -620,10 +620,10 @@
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "New data file: RainbowAI/data/payment-reminders.json \u00e2\u20ac\u201d array of { phone, dueDate, autoSend, template, status }",
-        "Message scheduler: RainbowAI/src/lib/message-scheduler.ts \u00e2\u20ac\u201d extend to check payment reminders",
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d add reminder UI below Payment",
-        "Left pane badges: RainbowAI/src/public/js/modules/live-chat-panels.js \u00e2\u20ac\u201d add badge rendering for overdue contacts",
+        "New data file: RainbowAI/data/payment-reminders.json â€” array of { phone, dueDate, autoSend, template, status }",
+        "Message scheduler: RainbowAI/src/lib/message-scheduler.ts â€” extend to check payment reminders",
+        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js â€” add reminder UI below Payment",
+        "Left pane badges: RainbowAI/src/public/js/modules/live-chat-panels.js â€” add badge rendering for overdue contacts",
         "Notification bell: add to Live Chat header area, count overdue reminders",
         "Admin API: add GET/POST/DELETE /api/rainbow/payment-reminders endpoints",
         "Default chase template: 'Hi [Name], this is a friendly reminder about your pending payment. Please let us know if you have any questions.'",
