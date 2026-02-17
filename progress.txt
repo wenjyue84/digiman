@@ -769,3 +769,51 @@ Incomplete: Verify activity tracker backend emits events correctly (ID: US-180)
 - Dev mode state: `StateManager.get('realChat.devMode')`, localStorage key `rc-dev-mode`
 - TS baseline: 222 (unchanged)
 
+## Iteration 8 - Tue, Feb 17, 2026  8:47:04 PM
+Incomplete: Verify activity tracker backend emits events correctly (ID: US-180)
+
+## Iteration 9 — Story: US-186 — Environment compatibility audit (localhost + Lightsail) (PASS)
+
+### What was implemented
+- **No code changes needed** — this was a pure audit story verifying US-180–US-185 work across environments.
+- **Audit results: ALL CLEAR** — no issues found across 8 acceptance criteria.
+
+### Verification performed
+1. **Hardcoded URLs**: Grepped all modified JS/TS/CSS files for `localhost`, `127.0.0.1`, `http://` — zero hardcoded URLs in any US-180–US-185 files. Two pre-existing error messages in `utils.js:78` and `utils-global.js:41` mention `localhost:3002` but are informational only (not API calls). One `localhost:11434` in `testing.ts:117` is the Ollama API endpoint (correct by design).
+2. **SSE uses relative paths**: `dashboard-helpers.js:321` uses `window.location.origin` — works on localhost:3002, localhost:3000 (Vite proxy), and 18.142.14.142:3002 (Lightsail).
+3. **SSE works with browser headers**: Tested with `Accept-Encoding: gzip, deflate, br` — compression bypass filter in `index.ts:72-78` correctly excludes SSE. Data flows immediately.
+4. **Vite proxy handles SSE**: `/api/rainbow` proxy rule in `vite.config.ts:178-181` catches `/api/rainbow/activity/stream`. Vite's `http-proxy` streams by default — no special SSE config needed.
+5. **CSS assets have no external deps**: Both doodle backgrounds use inline SVG `data:` URIs (not external URLs). The `http://www.w3.org/2000/svg` inside SVGs is an XML namespace, not an HTTP request.
+6. **All assets load (HTTP 200)**: Verified `rainbow-realchat.css`, `rainbow-livechat-core.css`, `dashboard-helpers.js`, `chat-renderer.js`, `real-chat-core.js`.
+7. **TypeScript: 222 errors** (= baseline 222, 0 new).
+8. **Dashboard loads, REST API works, SSE stream connects immediately**.
+
+### Patterns discovered
+- **`window.location.origin` is the correct pattern for environment-agnostic URLs** — resolves to whatever origin serves the page (localhost:3002, localhost:3000 via Vite, or Lightsail IP:3002).
+- **Inline SVG data URIs for background patterns** eliminate external asset dependencies — critical for production servers that may not have internet access for CDN assets.
+- **Vite's http-proxy streams by default** — no special configuration needed for SSE endpoints when using Vite's dev proxy. The proxy transparently passes `text/event-stream` responses.
+- **X-Accel-Buffering: no header** is important for nginx on Lightsail — even though port 3002 isn't behind nginx currently, the header provides defense-in-depth if the architecture changes.
+
+### Gotchas
+- The `localhost:11434` reference in `testing.ts` is Ollama's local API — this is correct and intentional (Ollama only runs locally).
+- Error messages in `utils.js`/`utils-global.js` mentioning `localhost:3002` are developer-facing help text, not API calls.
+- The Vite proxy doesn't need `ws: true` for SSE — SSE uses regular HTTP, not WebSockets.
+
+### Useful context for future iterations
+- Environment-safe URL pattern: always use `window.location.origin` or relative paths in client JS
+- Vite proxy config: `vite.config.ts:173-190` — `/api/rainbow/*` → port 3002, `/api/*` → port 5000
+- SSE compression bypass: `RainbowAI/src/index.ts:72-79`
+- SSE nginx buffering bypass: `X-Accel-Buffering: no` header in `activity.ts:28`
+- TS baseline: 222 (unchanged)
+
+### PRD COMPLETE — All 7 User Stories Pass
+| Story | Title | Status |
+|-------|-------|--------|
+| US-180 | Verify activity tracker backend emits events | PASS |
+| US-181 | Fix SSE activity stream connection | PASS |
+| US-182 | WhatsApp-style chat background and layout | PASS |
+| US-183 | WhatsApp-style message bubbles with timestamps | PASS |
+| US-184 | WhatsApp-style input area with send button | PASS |
+| US-185 | Developer metadata overlay (collapsible panel) | PASS |
+| US-186 | Environment compatibility audit | PASS |
+
