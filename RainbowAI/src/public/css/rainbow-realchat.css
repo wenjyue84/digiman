@@ -318,6 +318,7 @@
   align-items: flex-start;
 }
 
+.rc-bubble-wrap.ai,
 .rc-bubble-wrap.bot {
   align-items: flex-end;
 }
@@ -340,9 +341,64 @@
   border-top-left-radius: 0;
 }
 
+.rc-bubble.ai {
+  background: #d9fdd3;
+  border-top-right-radius: 0;
+}
+
+/* Legacy .bot class support */
 .rc-bubble.bot {
   background: #d9fdd3;
   border-top-right-radius: 0;
+}
+
+/* WhatsApp-style bubble tails (US-183) */
+.rc-bubble.guest::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 0 solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #fff;
+}
+
+.rc-bubble.ai::before,
+.rc-bubble.bot::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-top: 0 solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid #d9fdd3;
+}
+
+/* Consecutive message grouping: no tail, tighter spacing (US-183) */
+.rc-bubble-wrap.continuation {
+  margin-bottom: 2px;
+}
+
+.rc-bubble-wrap.continuation .rc-bubble.guest {
+  border-top-left-radius: 7.5px;
+}
+
+.rc-bubble-wrap.continuation .rc-bubble.guest::before {
+  display: none;
+}
+
+.rc-bubble-wrap.continuation .rc-bubble.ai,
+.rc-bubble-wrap.continuation .rc-bubble.bot {
+  border-top-right-radius: 7.5px;
+}
+
+.rc-bubble-wrap.continuation .rc-bubble.ai::before,
+.rc-bubble-wrap.continuation .rc-bubble.bot::before {
+  display: none;
 }
 
 .rc-bubble-meta {
@@ -366,6 +422,127 @@
 .rc-bubble-text {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* WhatsApp-style inline timestamp + checkmark (US-183) */
+.rc-bubble-footer {
+  display: inline-flex;
+  align-items: center;
+  float: right;
+  margin: -4px -4px -4px 7px;
+  padding-top: 4px;
+  gap: 3px;
+  height: 15px;
+}
+
+.rc-bubble-time {
+  font-size: 11px;
+  color: #667781;
+  white-space: nowrap;
+}
+
+/* Double checkmark for read receipts (US-183) */
+.rc-bubble-check {
+  display: inline-flex;
+  align-items: center;
+  color: #53bdeb;
+  margin-left: 1px;
+}
+
+.rc-bubble-check svg {
+  width: 16px;
+  height: 11px;
+}
+
+/* Manual reply indicator (US-183) */
+.rc-bubble-manual-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #667781;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-right: 2px;
+}
+
+/* Footer action buttons (edit, add example) — shown on hover */
+.rc-bubble-actions {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.rc-bubble:hover .rc-bubble-actions {
+  display: flex;
+}
+
+.rc-bubble-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: #667781;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.rc-bubble-actions button:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111b21;
+}
+
+/* Existing footer classes for non-WhatsApp mode — keep for backward compat */
+.rc-bubble-intent {
+  font-size: 10px;
+  color: #667781;
+  margin-left: 4px;
+}
+
+.rc-bubble-confidence {
+  font-size: 10px;
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+.rc-bubble-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: #667781;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.rc-bubble-edit:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111b21;
+}
+
+.rc-bubble-add-example {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: #667781;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.rc-bubble:hover .rc-bubble-add-example {
+  opacity: 1;
 }
 
 /* Dev metadata under messages */

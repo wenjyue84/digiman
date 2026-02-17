@@ -542,6 +542,52 @@ body.lc-resizing * {
   border-top-right-radius: 0;
 }
 
+/* WhatsApp-style bubble tails (US-183) */
+.lc-bubble.guest::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 0 solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #fff;
+}
+
+.lc-bubble.bot::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-top: 0 solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 8px solid #d9fdd3;
+}
+
+/* Consecutive message grouping (US-183) */
+.lc-bubble-wrap.continuation {
+  margin-bottom: 2px;
+}
+
+.lc-bubble-wrap.continuation .lc-bubble.guest {
+  border-top-left-radius: 7.5px;
+}
+
+.lc-bubble-wrap.continuation .lc-bubble.guest::before {
+  display: none;
+}
+
+.lc-bubble-wrap.continuation .lc-bubble.bot {
+  border-top-right-radius: 7.5px;
+}
+
+.lc-bubble-wrap.continuation .lc-bubble.bot::before {
+  display: none;
+}
+
 .lc-bubble-meta {
   display: flex;
   justify-content: flex-end;

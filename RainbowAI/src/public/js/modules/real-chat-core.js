@@ -474,43 +474,57 @@ export function renderChatView(log) {
   const container = document.getElementById('rc-messages');
   let html = '';
   let lastDate = '';
+  let lastSide = '';
 
   const devMode = StateManager.get('realChat.devMode');
 
-  for (const msg of log.messages) {
+  // Double checkmark SVG for read receipts (US-183)
+  const checkmarkSvg = '<span class="rc-bubble-check"><svg viewBox="0 0 16 11" width="16" height="11"><path d="M11.07.86l-1.43.77L5.64 7.65 2.7 5.32l-1.08 1.3L5.88 9.9l5.19-9.04z" fill="currentColor"/><path d="M15.07.86l-1.43.77L9.64 7.65 8.8 7.01l-.86 1.5 2.04 1.39 5.09-9.04z" fill="currentColor"/></svg></span>';
+
+  for (let i = 0; i < log.messages.length; i++) {
+    const msg = log.messages[i];
     const msgDate = new Date(msg.timestamp).toLocaleDateString('en-MY', { year: 'numeric', month: 'short', day: 'numeric' });
     if (msgDate !== lastDate) {
       html += '<div class="rc-date-sep"><span>' + msgDate + '</span></div>';
       lastDate = msgDate;
+      lastSide = '';
     }
 
     const isGuest = msg.role === 'user';
     const side = isGuest ? 'guest' : 'ai';
-    const time = new Date(msg.timestamp).toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-    const msgIndex = log.messages.indexOf(msg);
+    const time = new Date(msg.timestamp).toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-    let footer = '<span class="rc-bubble-time">' + time + '</span>';
-    if (isGuest) {
-      footer += '<button type="button" class="rc-bubble-add-example" onclick="openAddToTrainingExampleModal(' + msgIndex + ')" title="Add to Training Examples (Understanding)">📚 Add example</button>';
-    }
+    // Consecutive message grouping (US-183)
+    const isContinuation = side === lastSide;
+    const continuationClass = isContinuation ? ' continuation' : '';
+    lastSide = side;
+
+    // WhatsApp-style inline footer: timestamp + checkmark/manual (US-183)
+    let footerInner = '';
     if (!isGuest && msg.manual) {
-      footer += '<span class="rc-bubble-manual">✋ Manual</span>';
+      footerInner += '<span class="rc-bubble-manual-tag">Manual</span>';
     }
-    if (!isGuest && msg.intent) {
-      footer += '<span class="rc-bubble-intent">' + escapeHtml(msg.intent) + '</span>';
-    }
-    if (!isGuest && msg.confidence !== undefined) {
-      const pct = Math.round(msg.confidence * 100);
-      const color = pct >= 70 ? '#16a34a' : pct >= 40 ? '#ca8a04' : '#dc2626';
-      footer += '<span class="rc-bubble-confidence" style="color:' + color + '">' + pct + '%</span>';
+    footerInner += '<span class="rc-bubble-time">' + time + '</span>';
+    if (!isGuest) {
+      footerInner += checkmarkSvg;
     }
 
+    // Hover-only action buttons
     const canEdit = !isGuest && !msg.manual && (
       (msg.routedAction === 'static_reply' && msg.intent) ||
       (msg.routedAction === 'workflow' && msg.workflowId && msg.stepId)
     );
+
+    let actionsHtml = '';
+    const actionBtns = [];
+    if (isGuest) {
+      actionBtns.push('<button type="button" onclick="openAddToTrainingExampleModal(' + i + ')" title="Add to Training Examples">📚 Add</button>');
+    }
     if (canEdit) {
-      footer += '<button type="button" class="rc-bubble-edit" onclick="openRcEditModal(' + msgIndex + ')" title="Save to Responses (static reply / system message / workflow step)">✏️ Edit</button>';
+      actionBtns.push('<button type="button" onclick="openRcEditModal(' + i + ')" title="Save to Responses">✏️ Edit</button>');
+    }
+    if (actionBtns.length > 0) {
+      actionsHtml = '<div class="rc-bubble-actions">' + actionBtns.join('') + '</div>';
     }
 
     let devMeta = '';
@@ -521,7 +535,7 @@ export function renderChatView(log) {
         kbClickHandler: 'openKBFileFromPreview'
       });
 
-      var detailsId = 'rc-meta-details-' + msgIndex;
+      var detailsId = 'rc-meta-details-' + i;
       var detailRows = [];
       if (msg.source)    detailRows.push('<div class="rc-detail-row"><span class="rc-detail-label">Tier:</span><span class="rc-detail-value">' + escapeHtml(MetadataBadges.getTierLabel(msg.source)) + ' (' + escapeHtml(msg.source) + ')</span></div>');
       if (msg.intent)    detailRows.push('<div class="rc-detail-row"><span class="rc-detail-label">Intent:</span><span class="rc-detail-value">' + escapeHtml(msg.intent) + '</span></div>');
@@ -559,11 +573,12 @@ export function renderChatView(log) {
     const systemClass = isSystem ? ' lc-system-msg' : '';
 
     const textExtra = canEdit ? ' rc-bubble-text-editable cursor-pointer hover:opacity-90' : '';
-    const textOnclick = canEdit ? ' onclick="openRcEditModal(' + msgIndex + ')"' : '';
-    html += '<div class="rc-bubble-wrap ' + side + '">' +
+    const textOnclick = canEdit ? ' onclick="openRcEditModal(' + i + ')"' : '';
+    html += '<div class="rc-bubble-wrap ' + side + continuationClass + '">' +
       '<div class="rc-bubble ' + side + systemClass + '">' +
       '<div class="rc-bubble-text' + textExtra + '"' + textOnclick + ' title="' + (canEdit ? 'Click to edit and save to Responses' : '') + '">' + displayContent + '</div>' +
-      '<div class="rc-bubble-footer">' + footer + '</div>' +
+      '<div class="rc-bubble-footer">' + footerInner + '</div>' +
+      actionsHtml +
       devMeta +
       kbFilesBadge +
       '</div>' +

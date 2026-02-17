@@ -205,6 +205,9 @@ function generateEditPanel(message, editId, editMeta) {
   };
 }
 
+// Double checkmark SVG for read receipts (US-183)
+const CHECKMARK_SVG = '<span class="rc-bubble-check"><svg viewBox="0 0 16 11" width="16" height="11"><path d="M11.07.86l-1.43.77L5.64 7.65 2.7 5.32l-1.08 1.3L5.88 9.9l5.19-9.04z" fill="currentColor"/><path d="M15.07.86l-1.43.77L9.64 7.65 8.8 7.01l-.86 1.5 2.04 1.39 5.09-9.04z" fill="currentColor"/></svg></span>';
+
 /**
  * Render a complete message bubble
  * @param {Object} message - Message object
@@ -222,6 +225,7 @@ export function renderMessageBubble(message, options = {}) {
     timestamp: true,
     showFooter: true,
     messageIndex: null,
+    isContinuation: false,
     ...options
   };
 
@@ -235,6 +239,9 @@ export function renderMessageBubble(message, options = {}) {
   // Detect system message
   const isSystem = hasSystemContent(message.content);
   const systemClass = isSystem ? ' lc-system-msg' : '';
+
+  // Consecutive message grouping (US-183)
+  const continuationClass = opts.isContinuation ? ' continuation' : '';
 
   // Format content
   let displayContent = isSystem
@@ -266,63 +273,68 @@ export function renderMessageBubble(message, options = {}) {
 
   if (opts.devMode && !isGuest && meta) {
     const badges = getMetadataBadges(meta, {
-      showSentiment: false, // Sentiment badge optional
+      showSentiment: false,
       kbClickHandler: 'openKBFileFromPreview'
     });
     devMetaBadges = badges.inline;
     kbFilesHtml = badges.kbFiles;
   }
 
-  // Footer elements
+  // WhatsApp-style inline footer: timestamp + checkmark/manual (US-183)
   let footerHtml = '';
   if (opts.showFooter) {
-    const footerParts = [];
+    let footerInner = '';
+
+    // Manual flag
+    if (!isGuest && message.manual) {
+      footerInner += '<span class="rc-bubble-manual-tag">Manual</span>';
+    }
 
     // Timestamp
     if (opts.timestamp && message.timestamp) {
       const time = new Date(message.timestamp).toLocaleTimeString('en-MY', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: false
       });
-      footerParts.push('<span class="rc-bubble-time">' + time + '</span>');
+      footerInner += '<span class="rc-bubble-time">' + time + '</span>';
     }
 
-    // Manual flag
-    if (!isGuest && message.manual) {
-      footerParts.push('<span class="rc-bubble-manual">✋ Manual</span>');
+    // Double checkmark for bot messages (US-183)
+    if (!isGuest) {
+      footerInner += CHECKMARK_SVG;
     }
 
-    // Intent badge (simple text, not dev mode badge)
-    if (!isGuest && meta.intent && !opts.devMode) {
-      footerParts.push('<span class="rc-bubble-intent">' + escapeHtml(meta.intent) + '</span>');
+    if (footerInner) {
+      footerHtml = '<div class="rc-bubble-footer">' + footerInner + '</div>';
     }
+  }
 
-    // Confidence (simple text, not dev mode badge)
-    if (!isGuest && meta.confidence !== undefined && !opts.devMode) {
-      const pct = Math.round(meta.confidence * 100);
-      const color = pct >= 70 ? '#16a34a' : pct >= 40 ? '#ca8a04' : '#dc2626';
-      footerParts.push('<span class="rc-bubble-confidence" style="color:' + color + '">' + pct + '%</span>');
+  // Hover-only action buttons (US-183)
+  let actionsHtml = '';
+  const actionBtns = [];
+
+  if (isGuest && opts.messageIndex !== null) {
+    actionBtns.push('<button type="button" onclick="openAddToTrainingExampleModal(' + opts.messageIndex + ')" title="Add to Training Examples">📚 Add</button>');
+  }
+
+  if (opts.messageIndex !== null && !isGuest && !message.manual) {
+    const canEdit = (meta.routedAction === 'static_reply' && meta.intent) ||
+      (meta.routedAction === 'workflow' && meta.workflowId && meta.stepId);
+    if (canEdit) {
+      actionBtns.push('<button type="button" onclick="openRcEditModal(' + opts.messageIndex + ')" title="Save to Responses">✏️ Edit</button>');
     }
+  }
 
-    // Edit button (for messages without inline edit panel)
-    if (opts.messageIndex !== null && !opts.enableEdit && !isGuest && !message.manual) {
-      const canEdit = (meta.routedAction === 'static_reply' && meta.intent) ||
-        (meta.routedAction === 'workflow' && meta.workflowId && meta.stepId);
-
-      if (canEdit) {
-        footerParts.push('<button type="button" class="rc-bubble-edit" onclick="openRcEditModal(' + opts.messageIndex + ')" title="Save to Responses">✏️ Edit</button>');
-      }
+  if (opts.enableEdit && editPanelData) {
+    actionBtns.push(editPanelData.editBtnHtml);
+    if (editPanelData.alsoTemplateHtml) {
+      actionBtns.push(editPanelData.alsoTemplateHtml);
     }
+  }
 
-    // Add to training examples (for guest messages)
-    if (isGuest && opts.messageIndex !== null) {
-      footerParts.push('<button type="button" class="rc-bubble-add-example" onclick="openAddToTrainingExampleModal(' + opts.messageIndex + ')" title="Add to Training Examples (Understanding)">📚 Add example</button>');
-    }
-
-    if (footerParts.length > 0) {
-      footerHtml = '<div class="rc-bubble-footer">' + footerParts.join('') + '</div>';
-    }
+  if (actionBtns.length > 0) {
+    actionsHtml = '<div class="rc-bubble-actions">' + actionBtns.join('') + '</div>';
   }
 
   // Dev mode metadata section
@@ -330,8 +342,6 @@ export function renderMessageBubble(message, options = {}) {
   if (opts.devMode && devMetaBadges) {
     devMetaSection = '<div class="mt-2 pt-2 border-t flex items-center gap-2 text-xs text-neutral-500 flex-wrap">' +
       devMetaBadges +
-      (editPanelData ? editPanelData.editBtnHtml : '') +
-      (editPanelData ? editPanelData.alsoTemplateHtml : '') +
       '</div>';
   }
 
@@ -341,11 +351,12 @@ export function renderMessageBubble(message, options = {}) {
     editPanelsHtml = editPanelData.editPanelHtml + editPanelData.alsoTemplatePanelHtml;
   }
 
-  // Assemble complete bubble
-  const bubbleHtml = '<div class="rc-bubble-wrap ' + side + '">' +
+  // Assemble complete bubble (US-183: WhatsApp-style layout)
+  const bubbleHtml = '<div class="rc-bubble-wrap ' + side + continuationClass + '">' +
     '<div class="rc-bubble ' + side + systemClass + '">' +
     displayContent +
     footerHtml +
+    actionsHtml +
     devMetaSection +
     kbFilesHtml +
     editPanelsHtml +
@@ -364,9 +375,11 @@ export function renderMessageBubble(message, options = {}) {
 export function renderMessageList(messages, options = {}) {
   let html = '';
   let lastDate = '';
+  let lastSide = '';
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
+    const currentSide = msg.role === 'user' || msg.fromMe === false ? 'guest' : 'ai';
 
     // Date separator
     if (msg.timestamp) {
@@ -379,14 +392,20 @@ export function renderMessageList(messages, options = {}) {
       if (msgDate !== lastDate) {
         html += '<div class="rc-date-sep"><span>' + msgDate + '</span></div>';
         lastDate = msgDate;
+        lastSide = '';
       }
     }
+
+    // Consecutive message grouping (US-183)
+    const isContinuation = currentSide === lastSide;
+    lastSide = currentSide;
 
     // Render bubble
     const messageOptions = {
       ...options,
       messageIndex: i,
-      side: msg.role === 'user' || msg.fromMe === false ? 'guest' : 'ai'
+      side: currentSide,
+      isContinuation: isContinuation
     };
 
     html += renderMessageBubble(msg, messageOptions);
