@@ -42,6 +42,8 @@ import {
   generateAINotes, openGuestContext, closeContextModal, saveGuestContext,
   updateContextFilePath, mobileBack,
   toggleTagFilter, toggleTagSelection, clearTagFilter, loadContactTagsMap,
+  loadContactUnitsMap,
+  toggleUnitFilter, selectUnitFilter, clearUnitFilter,
   unitInput, selectUnit, unitKeydown, unitBlur, loadCapsuleUnits
 } from './live-chat-panels.js';
 
@@ -116,6 +118,10 @@ window.lcToggleTagFilter = toggleTagFilter;
 window.lcToggleTagSelection = toggleTagSelection;
 window.lcClearTagFilter = clearTagFilter;
 window.lcLoadContactTagsMap = loadContactTagsMap;
+window.lcLoadContactUnitsMap = loadContactUnitsMap;
+window.lcToggleUnitFilter = toggleUnitFilter;
+window.lcSelectUnitFilter = selectUnitFilter;
+window.lcClearUnitFilter = clearUnitFilter;
 window.lcUnitInput = unitInput;
 window.lcSelectUnit = selectUnit;
 window.lcUnitKeydown = unitKeydown;
@@ -227,6 +233,18 @@ document.addEventListener('click', function (e) {
   var unitInput = document.getElementById('lc-cd-unit');
   if (unitDropdown && unitDropdown.style.display !== 'none' && unitInput && !unitDropdown.contains(e.target) && !unitInput.contains(e.target)) {
     unitDropdown.style.display = 'none';
+  }
+  // US-009: Close tag filter dropdown when clicking outside
+  var tagFilterDd = document.getElementById('lc-tag-filter-dropdown');
+  var tagFilterBtn = document.getElementById('lc-tag-filter-btn');
+  if (tagFilterDd && tagFilterDd.style.display !== 'none' && tagFilterBtn && !tagFilterDd.contains(e.target) && !tagFilterBtn.contains(e.target)) {
+    tagFilterDd.style.display = 'none';
+  }
+  // US-013: Close unit filter dropdown when clicking outside
+  var unitFilterDd = document.getElementById('lc-unit-filter-dropdown');
+  var unitFilterBtn = document.getElementById('lc-unit-filter-btn');
+  if (unitFilterDd && unitFilterDd.style.display !== 'none' && unitFilterBtn && !unitFilterDd.contains(e.target) && !unitFilterBtn.contains(e.target)) {
+    unitFilterDd.style.display = 'none';
   }
 });
 
