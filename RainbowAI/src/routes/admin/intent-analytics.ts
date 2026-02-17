@@ -2,7 +2,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { db } from '../../lib/db.js';
 import { intentPredictions } from '../../../../shared/schema.js';
-import { desc, eq, sql, isNull, isNotNull } from 'drizzle-orm';
+import { desc, eq, sql, isNull, isNotNull, inArray } from 'drizzle-orm';
 import { serverError, badRequest, notFound } from './http-utils.js';
 import { safeReadJSON, atomicWriteJSON } from './file-utils.js';
 import { join, dirname } from 'path';
@@ -411,17 +411,32 @@ router.post('/intent/predictions/bulk-validate', async (req: Request, res: Respo
       correctedAt: new Date(),
     }));
 
-    // Bulk update all predictions in DB
-    for (const update of updates) {
+    // Bulk update all predictions in DB (US-166: batch update with inArray)
+    const allIds = updates.map(u => u.id);
+    const now = new Date();
+
+    if (wasCorrect) {
+      // All correct: single batch — SET actualIntent = predictedIntent (column reference)
       await db
         .update(intentPredictions)
         .set({
-          actualIntent: update.actualIntent,
-          wasCorrect: update.wasCorrect,
-          correctionSource: update.correctionSource,
-          correctedAt: update.correctedAt,
+          actualIntent: sql`${intentPredictions.predictedIntent}`,
+          wasCorrect: true,
+          correctionSource: 'manual',
+          correctedAt: now,
         })
-        .where(eq(intentPredictions.id, update.id));
+        .where(inArray(intentPredictions.id, allIds));
+    } else {
+      // All incorrect with same actualIntent: single batch update
+      await db
+        .update(intentPredictions)
+        .set({
+          actualIntent,
+          wasCorrect: false,
+          correctionSource: 'manual',
+          correctedAt: now,
+        })
+        .where(inArray(intentPredictions.id, allIds));
     }
 
     // Add approved messages to training data (intent-examples.json)

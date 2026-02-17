@@ -44,11 +44,31 @@ function adminAuth(req: Request, res: Response, next: NextFunction): void {
 
 router.use(adminAuth);
 
-// PERMANENT FIX: Prevent browser caching of all admin API responses
-router.use((_req: Request, res: Response, next: NextFunction) => {
-  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.header('Pragma', 'no-cache');
-  res.header('Expires', '0');
+// ─── Selective Cache Headers ─────────────────────────────────────────
+// Stable endpoints (config/definitions that rarely change) — 60s cache
+const STABLE_PATHS = [
+  '/settings', '/templates', '/intents', '/routing',
+  '/knowledge-base', '/knowledge', '/workflows', '/workflow',
+  '/intent-manager/keywords', '/intent-manager/examples',
+  '/intent-manager/tiers', '/intent-manager/llm-settings',
+];
+// Semi-stable endpoints (aggregated stats, refresh every 30s)
+const SEMI_STABLE_PATHS = [
+  '/feedback/stats', '/intent/accuracy',
+  '/conversations/stats', '/intent-manager/stats',
+];
+
+router.use((req: Request, res: Response, next: NextFunction) => {
+  const path = req.path;
+  // Only cache GET requests; all mutations remain uncacheable
+  if (req.method === 'GET' && STABLE_PATHS.some(p => path === p || path.startsWith(p + '/'))) {
+    res.setHeader('Cache-Control', 'public, max-age=60');
+  } else if (req.method === 'GET' && SEMI_STABLE_PATHS.some(p => path === p || path.startsWith(p + '/'))) {
+    res.setHeader('Cache-Control', 'public, max-age=30');
+  } else {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+  }
   next();
 });
 

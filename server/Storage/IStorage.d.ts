@@ -35,6 +35,7 @@ export interface IStorage {
     getUncleanedAvailableCapsules(): Promise<Capsule[]>;
     getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined>;
     getGuestByToken(token: string): Promise<Guest | undefined>;
+    getGuestsByDateRange(start: Date, end: Date): Promise<Guest[]>;
     getAllCapsules(): Promise<Capsule[]>;
     getCapsule(number: string): Promise<Capsule | undefined>;
     getCapsuleById(id: string): Promise<Capsule | undefined>;

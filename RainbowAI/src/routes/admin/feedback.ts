@@ -7,6 +7,10 @@ import { badRequest, serverError } from './http-utils.js';
 
 const router = Router();
 
+// ─── In-memory cache for feedback stats (US-165) ────────────────────
+let _feedbackStatsCache: { data: any; key: string; expiry: number } | null = null;
+const FEEDBACK_STATS_CACHE_TTL = 10_000; // 10 seconds
+
 // ─── POST /api/rainbow/feedback ─────────────────────────────────────
 // Submit user feedback for a bot response
 router.post('/feedback', async (req: Request, res: Response) => {
@@ -14,6 +18,9 @@ router.post('/feedback', async (req: Request, res: Response) => {
     const validated = insertRainbowFeedbackSchema.parse(req.body);
 
     const [feedback] = await db.insert(rainbowFeedback).values(validated).returning();
+
+    // Invalidate stats cache when new feedback is submitted
+    _feedbackStatsCache = null;
 
     console.log(`[Feedback] 📊 ${validated.rating === 1 ? '👍' : '👎'} from ${validated.phoneNumber} for intent '${validated.intent}' (confidence: ${validated.confidence?.toFixed(2)})`);
 
@@ -31,9 +38,22 @@ router.post('/feedback', async (req: Request, res: Response) => {
 
 // ─── GET /api/rainbow/feedback/stats ────────────────────────────────
 // Get feedback statistics (overall satisfaction, by intent, by date range)
+// US-165: 10-second in-memory cache to avoid redundant DB queries
 router.get('/feedback/stats', async (req: Request, res: Response) => {
   try {
     const { startDate, endDate, intent } = req.query;
+
+    // Build a cache key from query params
+    const cacheKey = JSON.stringify({ startDate, endDate, intent });
+
+    // Return cached result if still valid and same params
+    if (
+      _feedbackStatsCache &&
+      _feedbackStatsCache.expiry > Date.now() &&
+      _feedbackStatsCache.key === cacheKey
+    ) {
+      return res.json(_feedbackStatsCache.data);
+    }
 
     let whereConditions: any[] = [];
 
@@ -49,70 +69,73 @@ router.get('/feedback/stats', async (req: Request, res: Response) => {
 
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
-    // Overall stats
-    const overallStats = await db
-      .select({
-        totalFeedback: sql<number>`count(*)::int`,
-        thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
-        thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
-        avgConfidence: sql<number>`avg(confidence)`,
-        avgResponseTime: sql<number>`avg(response_time_ms)`,
-      })
-      .from(rainbowFeedback)
-      .where(whereClause);
-
-    // By intent
-    const byIntent = await db
-      .select({
-        intent: rainbowFeedback.intent,
-        totalFeedback: sql<number>`count(*)::int`,
-        thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
-        thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
-        avgConfidence: sql<number>`avg(confidence)`,
-        satisfactionRate: sql<number>`(count(*) filter (where rating = 1)::float / count(*)::float) * 100`,
-      })
-      .from(rainbowFeedback)
-      .where(whereClause)
-      .groupBy(rainbowFeedback.intent)
-      .orderBy(desc(sql`count(*)`));
-
-    // By tier
-    const byTier = await db
-      .select({
-        tier: rainbowFeedback.tier,
-        totalFeedback: sql<number>`count(*)::int`,
-        thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
-        thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
-        satisfactionRate: sql<number>`(count(*) filter (where rating = 1)::float / count(*)::float) * 100`,
-      })
-      .from(rainbowFeedback)
-      .where(whereClause)
-      .groupBy(rainbowFeedback.tier)
-      .orderBy(desc(sql`count(*)`));
-
-    // Daily trend (last 7 days if no date range specified)
+    // Daily trend date range
     const defaultStartDate = new Date();
     defaultStartDate.setDate(defaultStartDate.getDate() - 7);
-
     const trendStartDate = startDate ? new Date(startDate as string) : defaultStartDate;
     const trendEndDate = endDate ? new Date(endDate as string) : new Date();
 
-    const dailyTrend = await db
-      .select({
-        date: sql<string>`date(created_at)`,
-        totalFeedback: sql<number>`count(*)::int`,
-        thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
-        thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
-        satisfactionRate: sql<number>`(count(*) filter (where rating = 1)::float / count(*)::float) * 100`,
-      })
-      .from(rainbowFeedback)
-      .where(and(
-        gte(rainbowFeedback.createdAt, trendStartDate),
-        lte(rainbowFeedback.createdAt, trendEndDate),
-        intent ? eq(rainbowFeedback.intent, intent as string) : undefined
-      ))
-      .groupBy(sql`date(created_at)`)
-      .orderBy(sql`date(created_at)`);
+    // Run all four queries in parallel instead of sequentially
+    const [overallStats, byIntent, byTier, dailyTrend] = await Promise.all([
+      // Overall stats
+      db
+        .select({
+          totalFeedback: sql<number>`count(*)::int`,
+          thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
+          thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
+          avgConfidence: sql<number>`avg(confidence)`,
+          avgResponseTime: sql<number>`avg(response_time_ms)`,
+        })
+        .from(rainbowFeedback)
+        .where(whereClause),
+
+      // By intent
+      db
+        .select({
+          intent: rainbowFeedback.intent,
+          totalFeedback: sql<number>`count(*)::int`,
+          thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
+          thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
+          avgConfidence: sql<number>`avg(confidence)`,
+          satisfactionRate: sql<number>`(count(*) filter (where rating = 1)::float / count(*)::float) * 100`,
+        })
+        .from(rainbowFeedback)
+        .where(whereClause)
+        .groupBy(rainbowFeedback.intent)
+        .orderBy(desc(sql`count(*)`)),
+
+      // By tier
+      db
+        .select({
+          tier: rainbowFeedback.tier,
+          totalFeedback: sql<number>`count(*)::int`,
+          thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
+          thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
+          satisfactionRate: sql<number>`(count(*) filter (where rating = 1)::float / count(*)::float) * 100`,
+        })
+        .from(rainbowFeedback)
+        .where(whereClause)
+        .groupBy(rainbowFeedback.tier)
+        .orderBy(desc(sql`count(*)`)),
+
+      // Daily trend
+      db
+        .select({
+          date: sql<string>`date(created_at)`,
+          totalFeedback: sql<number>`count(*)::int`,
+          thumbsUp: sql<number>`count(*) filter (where rating = 1)::int`,
+          thumbsDown: sql<number>`count(*) filter (where rating = -1)::int`,
+          satisfactionRate: sql<number>`(count(*) filter (where rating = 1)::float / count(*)::float) * 100`,
+        })
+        .from(rainbowFeedback)
+        .where(and(
+          gte(rainbowFeedback.createdAt, trendStartDate),
+          lte(rainbowFeedback.createdAt, trendEndDate),
+          intent ? eq(rainbowFeedback.intent, intent as string) : undefined
+        ))
+        .groupBy(sql`date(created_at)`)
+        .orderBy(sql`date(created_at)`),
+    ]);
 
     // Calculate satisfaction rate
     const overall = overallStats[0];
@@ -120,7 +143,7 @@ router.get('/feedback/stats', async (req: Request, res: Response) => {
       ? (overall.thumbsUp / overall.totalFeedback) * 100
       : 0;
 
-    res.json({
+    const responseData = {
       success: true,
       stats: {
         overall: {
@@ -131,7 +154,16 @@ router.get('/feedback/stats', async (req: Request, res: Response) => {
         byTier,
         dailyTrend,
       },
-    });
+    };
+
+    // Cache the result for 10 seconds (US-165)
+    _feedbackStatsCache = {
+      data: responseData,
+      key: cacheKey,
+      expiry: Date.now() + FEEDBACK_STATS_CACHE_TTL,
+    };
+
+    res.json(responseData);
   } catch (error) {
     console.error('[Feedback Stats] ❌ Error fetching stats:', error);
     serverError(res, 'Failed to fetch feedback stats');

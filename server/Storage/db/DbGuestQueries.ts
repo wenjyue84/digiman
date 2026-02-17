@@ -1,6 +1,6 @@
 import type { Guest, InsertGuest, PaginationParams, PaginatedResponse } from "../../../shared/schema";
 import { guests } from "../../../shared/schema";
-import { eq, and, isNotNull, count, desc, asc, or, ilike } from "drizzle-orm";
+import { eq, and, isNotNull, count, desc, asc, or, ilike, lte, gte, isNull } from "drizzle-orm";
 import { paginate } from "./paginate";
 
 /**
@@ -225,6 +225,22 @@ export class DbGuestQueries {
       and(
         eq(guests.capsuleNumber, capsuleNumber),
         eq(guests.isCheckedIn, true)
+      )
+    );
+  }
+
+  /**
+   * Get guests whose stay overlaps the given date range.
+   * A guest overlaps if: checkinTime <= end AND (checkoutTime >= start OR checkoutTime IS NULL)
+   */
+  async getGuestsByDateRange(start: Date, end: Date): Promise<Guest[]> {
+    return await this.db.select().from(guests).where(
+      and(
+        lte(guests.checkinTime, end),
+        or(
+          gte(guests.checkoutTime, start),
+          isNull(guests.checkoutTime)
+        )
       )
     );
   }

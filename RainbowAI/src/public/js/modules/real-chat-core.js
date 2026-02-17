@@ -405,9 +405,14 @@ export function renderConversationList(conversations) {
   }
 }
 
+let _filterDebounceTimer = null;
+
 export function filterConversations() {
-  console.log('[RealChat] Filter triggered');
-  renderConversationList($.conversations);
+  clearTimeout(_filterDebounceTimer);
+  _filterDebounceTimer = setTimeout(() => {
+    console.log('[RealChat] Filter triggered');
+    renderConversationList($.conversations);
+  }, 300);
 }
 
 // ─── Chat View ───────────────────────────────────────────────────

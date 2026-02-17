@@ -227,4 +227,17 @@ export class MemGuestStore {
     return Array.from(this.guests.values())
       .filter(guest => guest.capsuleNumber === capsuleNumber && guest.isCheckedIn);
   }
+
+  /**
+   * Get guests whose stay overlaps the given date range.
+   * A guest overlaps if: checkinTime <= end AND (checkoutTime >= start OR checkoutTime is null)
+   */
+  async getGuestsByDateRange(start: Date, end: Date): Promise<Guest[]> {
+    return Array.from(this.guests.values()).filter(guest => {
+      const checkinTime = new Date(guest.checkinTime);
+      if (checkinTime > end) return false;
+      if (guest.checkoutTime === null) return true;
+      return new Date(guest.checkoutTime) >= start;
+    });
+  }
 }

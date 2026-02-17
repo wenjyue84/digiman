@@ -108,6 +108,7 @@ export class DatabaseStorage implements IStorage {
   getRecentlyCheckedOutGuest() { return this.guestQueries.getRecentlyCheckedOutGuest(); }
   getGuestByCapsuleAndName(capsuleNumber: string, name: string) { return this.guestQueries.getGuestByCapsuleAndName(capsuleNumber, name); }
   getGuestByToken(token: string) { return this.guestQueries.getGuestByToken(token); }
+  getGuestsByDateRange(start: Date, end: Date) { return this.guestQueries.getGuestsByDateRange(start, end); }
 
   /** Cross-entity: checkout guest then update capsule cleaning status */
   async checkoutGuest(id: string): Promise<Guest | undefined> {

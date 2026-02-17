@@ -55,34 +55,45 @@ router.get("/dashboard", asyncRouteHandler(async (req: any, res: any) => {
   });
 }));
 
-// Calendar occupancy data
+// Calendar occupancy data — filtered by month date range (US-167)
 router.get("/calendar/occupancy/:year/:month", asyncRouteHandler(async (req: any, res: any) => {
   const { year, month } = req.params;
   const yearNum = parseInt(year);
   const monthNum = parseInt(month);
-  
+
   if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
     return res.status(400).json({ message: "Invalid year or month" });
   }
 
-  // Get all guests for the month
+  // Compute the date range for this month
+  const monthStart = new Date(yearNum, monthNum - 1, 1);            // first day 00:00:00
+  const monthEnd = new Date(yearNum, monthNum, 0, 23, 59, 59, 999); // last day 23:59:59
+
+  // Fetch only guests whose stay overlaps this month (not all guests)
   const storage = await getStorage();
-  const allGuests = await storage.getAllGuests();
-  
-  if (!allGuests || !allGuests.data) {
-    return res.json({
-      checkins: [],
-      checkouts: [],
-      expectedCheckouts: [],
-      occupancy: 0,
-      totalCapsules: 22
-    });
+  const guestsInRange = await storage.getGuestsByDateRange(monthStart, monthEnd);
+
+  if (!guestsInRange || guestsInRange.length === 0) {
+    // Return an empty calendar structure
+    const emptyCalendar: any = {};
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateString = `${yearNum}-${monthNum.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      emptyCalendar[dateString] = {
+        checkins: [],
+        checkouts: [],
+        expectedCheckouts: [],
+        occupancy: 0,
+        totalCapsules: 22
+      };
+    }
+    return res.json(emptyCalendar);
   }
-  
+
   // Create calendar data structure
   const calendarData: any = {};
   const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
-  
+
   for (let day = 1; day <= daysInMonth; day++) {
     const dateString = `${yearNum}-${monthNum.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     calendarData[dateString] = {
@@ -93,32 +104,32 @@ router.get("/calendar/occupancy/:year/:month", asyncRouteHandler(async (req: any
       totalCapsules: 22
     };
   }
-  
+
   // Process guests to populate calendar data
-  allGuests.data.forEach(guest => {
+  guestsInRange.forEach(guest => {
     const checkinDate = new Date(guest.checkinTime).toISOString().split('T')[0];
     const checkoutDate = guest.checkoutTime ? new Date(guest.checkoutTime).toISOString().split('T')[0] : null;
     const expectedCheckoutDate = guest.expectedCheckoutDate || null;
-    
+
     // Add check-ins
     if (calendarData[checkinDate]) {
       calendarData[checkinDate].checkins.push(guest);
     }
-    
+
     // Add check-outs
     if (checkoutDate && calendarData[checkoutDate]) {
       calendarData[checkoutDate].checkouts.push(guest);
     }
-    
+
     // Add expected check-outs
     if (expectedCheckoutDate && calendarData[expectedCheckoutDate]) {
       calendarData[expectedCheckoutDate].expectedCheckouts.push(guest);
     }
-    
+
     // Calculate occupancy for each day
     const checkinDateObj = new Date(guest.checkinTime);
     const checkoutDateObj = guest.checkoutTime ? new Date(guest.checkoutTime) : new Date();
-    
+
     // Iterate through each day the guest was present
     let currentDate = new Date(checkinDateObj);
     while (currentDate <= checkoutDateObj) {
@@ -129,7 +140,7 @@ router.get("/calendar/occupancy/:year/:month", asyncRouteHandler(async (req: any
       currentDate.setDate(currentDate.getDate() + 1);
     }
   });
-  
+
   res.json(calendarData);
 }));
 

@@ -136,12 +136,13 @@ function rowToMessage(row: typeof rainbowMessages.$inferSelect): LoggedMessage {
 async function upsertConversation(
   phone: string,
   pushName: string,
-  instanceId?: string
+  instanceId?: string,
+  txOrDb: typeof db = db
 ): Promise<void> {
   const key = canonicalPhoneKey(phone);
   const now = new Date();
 
-  await db
+  await txOrDb
     .insert(rainbowConversations)
     .values({
       phone: key,
@@ -192,49 +193,52 @@ export async function logMessage(
     const key = canonicalPhoneKey(phone);
     const now = new Date();
 
-    // Upsert conversation
-    await upsertConversation(key, pushName, meta?.instanceId);
+    // Wrap upsert + insert + cap-delete in a single transaction (US-168)
+    await db.transaction(async (tx) => {
+      // Upsert conversation
+      await upsertConversation(key, pushName, meta?.instanceId, tx);
 
-    // Insert message
-    await db.insert(rainbowMessages).values({
-      phone: key,
-      role,
-      content,
-      timestamp: now,
-      intent: meta?.intent ?? null,
-      confidence: meta?.confidence ?? null,
-      action: meta?.action ?? null,
-      manual: meta?.manual ?? null,
-      source: meta?.source ?? null,
-      model: meta?.model ?? null,
-      responseTime: meta?.responseTime ?? null,
-      kbFilesJson: meta?.kbFiles ? JSON.stringify(meta.kbFiles) : null,
-      messageType: meta?.messageType ?? null,
-      routedAction: meta?.routedAction ?? null,
-      workflowId: meta?.workflowId ?? null,
-      stepId: meta?.stepId ?? null,
+      // Insert message
+      await tx.insert(rainbowMessages).values({
+        phone: key,
+        role,
+        content,
+        timestamp: now,
+        intent: meta?.intent ?? null,
+        confidence: meta?.confidence ?? null,
+        action: meta?.action ?? null,
+        manual: meta?.manual ?? null,
+        source: meta?.source ?? null,
+        model: meta?.model ?? null,
+        responseTime: meta?.responseTime ?? null,
+        kbFilesJson: meta?.kbFiles ? JSON.stringify(meta.kbFiles) : null,
+        messageType: meta?.messageType ?? null,
+        routedAction: meta?.routedAction ?? null,
+        workflowId: meta?.workflowId ?? null,
+        stepId: meta?.stepId ?? null,
+      });
+
+      // Cap at 500 messages per conversation
+      const countResult = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(rainbowMessages)
+        .where(eq(rainbowMessages.phone, key));
+
+      const totalCount = Number(countResult[0]?.count ?? 0);
+      if (totalCount > 500) {
+        // Delete oldest messages beyond 500
+        const excess = totalCount - 500;
+        await tx.execute(sql`
+          DELETE FROM rainbow_messages
+          WHERE id IN (
+            SELECT id FROM rainbow_messages
+            WHERE phone = ${key}
+            ORDER BY timestamp ASC
+            LIMIT ${excess}
+          )
+        `);
+      }
     });
-
-    // Cap at 500 messages per conversation
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(rainbowMessages)
-      .where(eq(rainbowMessages.phone, key));
-
-    const totalCount = Number(countResult[0]?.count ?? 0);
-    if (totalCount > 500) {
-      // Delete oldest messages beyond 500
-      const excess = totalCount - 500;
-      await db.execute(sql`
-        DELETE FROM rainbow_messages
-        WHERE id IN (
-          SELECT id FROM rainbow_messages
-          WHERE phone = ${key}
-          ORDER BY timestamp ASC
-          LIMIT ${excess}
-        )
-      `);
-    }
 
     invalidateListCache();
 
@@ -262,13 +266,16 @@ export async function logNonTextExchange(
     const now = new Date();
     const nowPlus1 = new Date(now.getTime() + 1);
 
-    await upsertConversation(key, pushName, instanceId);
+    // Wrap upsert + insert in a single transaction (US-168)
+    await db.transaction(async (tx) => {
+      await upsertConversation(key, pushName, instanceId, tx);
 
-    // Insert both messages
-    await db.insert(rainbowMessages).values([
-      { phone: key, role: 'user', content: userPlaceholder, timestamp: now },
-      { phone: key, role: 'assistant', content: assistantReply, timestamp: nowPlus1, responseTime: 0 },
-    ]);
+      // Insert both messages
+      await tx.insert(rainbowMessages).values([
+        { phone: key, role: 'user', content: userPlaceholder, timestamp: now },
+        { phone: key, role: 'assistant', content: assistantReply, timestamp: nowPlus1, responseTime: 0 },
+      ]);
+    });
   } catch (err: any) {
     console.error(`[ConvoLogger] Failed to log non-text exchange for ${phone}:`, err.message);
   }
@@ -438,9 +445,11 @@ export async function deleteConversation(phone: string): Promise<boolean> {
     async () => {
       const key = canonicalPhoneKey(phone);
 
-      // Delete messages first (no FK constraint, but good practice)
-      await db.delete(rainbowMessages).where(eq(rainbowMessages.phone, key));
-      await db.delete(rainbowConversations).where(eq(rainbowConversations.phone, key));
+      // Delete messages + conversation in a single transaction (US-168)
+      await db.transaction(async (tx) => {
+        await tx.delete(rainbowMessages).where(eq(rainbowMessages.phone, key));
+        await tx.delete(rainbowConversations).where(eq(rainbowConversations.phone, key));
+      });
 
       invalidateListCache();
       return true;

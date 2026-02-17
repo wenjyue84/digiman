@@ -233,6 +233,7 @@ export class MemStorage implements IStorage {
   getRecentlyCheckedOutGuest() { return this.guestStore.getRecentlyCheckedOutGuest(); }
   getGuestByCapsuleAndName(capsuleNumber: string, name: string) { return this.guestStore.getGuestByCapsuleAndName(capsuleNumber, name); }
   getGuestByToken(token: string) { return this.guestStore.getGuestByToken(token); }
+  getGuestsByDateRange(start: Date, end: Date) { return this.guestStore.getGuestsByDateRange(start, end); }
 
   /** Cross-entity: checkout guest then update capsule cleaning status */
   async checkoutGuest(id: string): Promise<Guest | undefined> {

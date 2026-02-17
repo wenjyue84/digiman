@@ -122,6 +122,19 @@
 - [x] **US-153** Cache dashboard HTML in memory — commit 079b24d
 - [x] **US-154** Parallelize dashboard stat API calls — commit 079b24d
 - [x] **US-155** Skip semantic matcher when fuzzy >= 0.85 — commit 079b24d
+- [x] **US-156** Eliminate N+1 query in listConversations — commit bfd758a
+- [x] **US-157** Cache KB system prompt template — commit bfd758a
+- [x] **US-158** Lazy-load frontend tab modules — commit bfd758a
+- [x] **US-159** Replace 3s polling with SSE — commit bfd758a
+- [x] **US-160** Clean up intervals on tab exit — commit bfd758a
+- [x] **US-161** Body limits + rate limiting — commit bfd758a
+- [x] **US-162** Selective cache headers — Phase 3
+- [x] **US-163** Debounce search inputs — Phase 3
+- [x] **US-164** Pre-built Tailwind CSS — Phase 3
+- [x] **US-165** Consolidate feedback stats queries — Phase 3
+- [x] **US-166** Batch UPDATE with inArray — Phase 3
+- [x] **US-167** Date range filter for calendar — Phase 3
+- [x] **US-168** DB transactions for multi-step ops — Phase 3
 
 ## Notes
 - Always read target files before editing

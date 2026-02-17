@@ -43,6 +43,8 @@ export interface IGuestStorage {
   getUncleanedAvailableCapsules(): Promise<Capsule[]>;
   getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined>;
   getGuestByToken(token: string): Promise<Guest | undefined>;
+  /** Get guests whose stay overlaps the given date range (checkinTime <= end AND (checkoutTime >= start OR still checked in)) */
+  getGuestsByDateRange(start: Date, end: Date): Promise<Guest[]>;
 }
 
 /** Capsule CRUD, availability, and cleaning status */
