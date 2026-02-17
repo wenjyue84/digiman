@@ -351,6 +351,17 @@ export function renderMessageBubble(message, options = {}) {
     if (meta.responseTime) rows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Time</span><span class="rc-dev-panel-value">' + getResponseTimeBadge(meta.responseTime) + '</span></div>');
     if (meta.routedAction) rows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Action</span><span class="rc-dev-panel-value">' + escapeHtml(meta.routedAction) + '</span></div>');
     if (meta.sentiment) rows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Sentiment</span><span class="rc-dev-panel-value">' + escapeHtml(meta.sentiment) + '</span></div>');
+    // US-001: Token usage row
+    if (meta.usage && (meta.usage.prompt_tokens || meta.usage.completion_tokens)) {
+      var pt = meta.usage.prompt_tokens || 0;
+      var ct = meta.usage.completion_tokens || 0;
+      var fmtTk = function(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'K' : String(n); };
+      var tokenText = fmtTk(pt) + ' in / ' + fmtTk(ct) + ' out';
+      if (meta.contextCount != null) tokenText += ' | ' + meta.contextCount + ' msgs context';
+      rows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Tokens</span><span class="rc-dev-panel-value"><span class="rc-dev-token-badge">' + tokenText + '</span></span></div>');
+    } else if (meta.source === 'llm') {
+      rows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Tokens</span><span class="rc-dev-panel-value" style="opacity:0.5;">N/A</span></div>');
+    }
     if (meta.kbFiles && meta.kbFiles.length > 0) {
       var chips = meta.kbFiles.map(function(f) {
         return '<span class="rc-dev-panel-kb-chip" onclick="openKBFileFromPreview(\'' + escapeHtml(f) + '\')" title="View ' + escapeHtml(f) + '">' + escapeHtml(f) + '</span>';
