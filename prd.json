@@ -67,7 +67,9 @@
         "CSS: RainbowAI/src/public/css/rainbow-base.css lines 5-37 (activity card styles)",
         "Dashboard chunk must export: window.filterActivityByCategory, window.toggleActivityExpand"
       ],
-      "dependencies": ["US-180"],
+      "dependencies": [
+        "US-180"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -127,7 +129,9 @@
         "Keep existing rc-bubble and lc-bubble class compatibility — both prefixes may be used in different tabs",
         "No nested template literals — use string concatenation for HTML in JS"
       ],
-      "dependencies": ["US-182"],
+      "dependencies": [
+        "US-182"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -158,7 +162,9 @@
         "Attachment popup menu (.rc-attach-menu) should still appear above the attachment button",
         "File preview and translation preview bars must not break with new input styling"
       ],
-      "dependencies": ["US-182"],
+      "dependencies": [
+        "US-182"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -189,7 +195,9 @@
         "Ensure metadata panel doesn't break the WhatsApp bubble styling from US-183",
         "No nested template literals — use string concatenation"
       ],
-      "dependencies": ["US-183"],
+      "dependencies": [
+        "US-183"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -216,7 +224,14 @@
         "PM2 on Lightsail uses ecosystem.config.cjs with fork mode — ESM imports work correctly",
         "If SSE doesn't work through Vite proxy, add SSE-specific proxy config in vite.config.ts"
       ],
-      "dependencies": ["US-180", "US-181", "US-182", "US-183", "US-184", "US-185"],
+      "dependencies": [
+        "US-180",
+        "US-181",
+        "US-182",
+        "US-183",
+        "US-184",
+        "US-185"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     }
