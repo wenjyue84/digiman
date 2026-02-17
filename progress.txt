@@ -570,3 +570,33 @@ Story reverted to passes: false
 FAILED quality gates: Verify activity tracker backend emits events correctly (ID: US-180)
 Story reverted to passes: false
 
+## Iteration 4 — Story: US-182 — WhatsApp-style chat background, header, and layout for Live Simulation (PASS)
+
+### What was implemented
+- **CSS-only doodle background**: Replaced external GitHub-hosted image (`user-images.githubusercontent.com`) with inline SVG data URI pattern on both `.rc-messages` and `.lc-messages`. Pattern includes WhatsApp-style doodle icons (clouds, smiley, stars, clock, chat, music, heart, document, play). Renders identically offline and on Lightsail without external asset dependencies.
+- **Chat header update**: Renamed `.rc-header-phone` div to `.rc-header-status` wrapper with phone and instance badge as separate spans. Added `.rc-header-status` CSS class for flex layout.
+- **Pill-shaped date separators**: Updated both `.rc-date-sep span` and `.lc-date-sep span` to use WhatsApp's exact pill style: `border-radius: 7.5px`, `rgba(255,255,255,0.92)` semi-transparent background, `12.5px` font, subtle shadow. Changed container to flex+centered.
+- **Scroll-to-bottom floating button**: Added `#rc-scroll-bottom` button in HTML (absolute-positioned, bottom-right of messages area), CSS styling (42x42px circle, white, box-shadow), and JS scroll listener in `loadRealChat()` that shows the button when user scrolls >200px from bottom.
+
+### Files modified
+- `RainbowAI/src/public/css/rainbow-realchat.css` — doodle background, header status, pill date sep, scroll button CSS
+- `RainbowAI/src/public/css/rainbow-livechat-core.css` — doodle background, pill date sep (Live Chat consistency)
+- `RainbowAI/src/public/templates/tabs/chat-simulator.html` — header structure, scroll-to-bottom button HTML
+- `RainbowAI/src/public/js/modules/real-chat-core.js` — scroll event listener for scroll-to-bottom button
+- `prd.json` — US-182 passes: true
+
+### Verification performed
+- TypeScript: 222 errors (all pre-existing, 0 in modified files)
+- Server running, dashboard loads at localhost:3002
+- CSS files served with new features (confirmed via curl)
+- Template API returns updated HTML with new elements
+- JS reference to #rc-active-phone preserved (still works inside new wrapper)
+
+### Patterns discovered
+- **CSS-only backgrounds over external assets**: WhatsApp doodle patterns can be recreated with inline SVG data URIs, eliminating external asset dependencies. This is important for production servers without reliable internet.
+- **Template loading is API-based**: Tab templates under `templates/tabs/` are loaded via `/api/rainbow/templates/{name}` API, reading from disk. Changes reflect immediately without server restart.
+
+### Gotchas
+- The `#rc-active-phone` element was moved from being a parent div (containing the instance badge span as child) to being a sibling span (both inside a new `.rc-header-status` wrapper). The JS `phoneEl.firstChild.textContent` still works because the firstChild of the span is still a text node.
+- The scroll-to-bottom button uses `position: absolute` inside `.rc-main` which has `position: relative`. The `bottom: 80px` accounts for the input area height below the messages.
+

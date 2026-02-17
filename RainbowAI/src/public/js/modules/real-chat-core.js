@@ -250,6 +250,16 @@ export async function loadRealChat() {
     SearchPanel.init({ containerId: 'rc-search-container', messagesContainerId: 'rc-messages' });
   }
 
+  // US-182: Scroll-to-bottom button — show when user scrolls up
+  const rcMsgs = document.getElementById('rc-messages');
+  const rcScrollBtn = document.getElementById('rc-scroll-bottom');
+  if (rcMsgs && rcScrollBtn) {
+    rcMsgs.addEventListener('scroll', function() {
+      const distFromBottom = rcMsgs.scrollHeight - rcMsgs.scrollTop - rcMsgs.clientHeight;
+      rcScrollBtn.style.display = distFromBottom > 200 ? 'flex' : 'none';
+    });
+  }
+
   const translateMode = StateManager.get('realChat.translateMode');
   const translateLang = StateManager.get('realChat.translateLang');
   const translateBtn = document.getElementById('rc-translate-toggle');

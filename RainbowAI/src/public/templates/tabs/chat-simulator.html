@@ -362,11 +362,13 @@
           <div class="rc-avatar" id="rc-active-avatar">?</div>
           <div class="rc-header-info">
             <div class="rc-header-name" id="rc-active-name">Guest</div>
-            <div class="rc-header-phone" id="rc-active-phone">+60... <span id="rc-active-instance"
-                class="rc-instance-badge" style="margin-left:4px;"></span></div>
+            <div class="rc-header-status" id="rc-active-status">
+              <span id="rc-active-phone">+60...</span>
+              <span id="rc-active-instance" class="rc-instance-badge" style="margin-left:4px;"></span>
+            </div>
           </div>
-          <div class="rc-header-actions" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <!-- Refresh indicator -->
+          <div class="rc-header-actions">
+            <!-- Refresh indicator (subtle) -->
             <span id="rc-refresh-indicator" class="rc-refresh-indicator" title="Auto-refreshes every 3 seconds">
               <span class="rc-spin-icon">⟳</span>
               <span id="rc-last-refresh">Updated just now</span>
@@ -420,6 +422,12 @@
           <button class="rc-msg-search-btn" onclick="toggleRcSearch()" title="Close search">✕</button>
         </div>
         <div class="rc-messages" id="rc-messages"></div>
+        <!-- Scroll-to-bottom floating button (US-182) -->
+        <button class="rc-scroll-bottom" id="rc-scroll-bottom" onclick="document.getElementById('rc-messages').scrollTo({top:document.getElementById('rc-messages').scrollHeight,behavior:'smooth'})" title="Scroll to bottom" style="display:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
         <!-- File preview bar (shown when file selected) -->
         <div class="rc-file-preview" id="rc-file-preview" style="display:none;">
           <div class="rc-file-preview-inner">
