@@ -46,7 +46,11 @@ import {
 } from '/public/js/modules/responses-tab-switcher.js';
 
 import {
-  loadStaticReplies
+  loadStaticReplies,
+  dismissBanner,
+  restoreBanner,
+  restoreAllBanners,
+  toggleDismissedPanel
 } from '/public/js/modules/static-messages.js';
 
 import {
@@ -131,6 +135,10 @@ window.translateQuickReplyFields = translateQuickReplyFields;
 window.translateInlineEditPanel = translateInlineEditPanel;
 window.switchResponseTab = switchResponseTab;
 window.loadStaticReplies = loadStaticReplies;
+window.dismissBanner = dismissBanner;
+window.restoreBanner = restoreBanner;
+window.restoreAllBanners = restoreAllBanners;
+window.toggleDismissedPanel = toggleDismissedPanel;
 window.toggleInlineEdit = toggleInlineEdit;
 window.saveInlineEdit = saveInlineEdit;
 window.loadWorkflow = loadWorkflow;
