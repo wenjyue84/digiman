@@ -5,6 +5,7 @@ import { isAIAvailable, classifyAndRespond } from '../../assistant/ai-client.js'
 import { UNKNOWN_FALLBACK_MESSAGES } from '../../assistant/ai-response-generator.js';
 import { buildSystemPrompt, guessTopicFiles } from '../../assistant/knowledge-base.js';
 import { badRequest, serverError } from './http-utils.js';
+import { trackMessageReceived, trackIntentClassified, trackResponseSent } from '../../lib/activity-tracker.js';
 
 const router = Router();
 
@@ -142,6 +143,7 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
 
   try {
     const startTime = Date.now();
+    trackMessageReceived('simulator@preview', 'Live Sim', sanitizedMessage);
 
     const conversationHistory = Array.isArray(history) ? history.map((msg: any) => ({
       role: (msg.role === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
@@ -360,6 +362,8 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     }
 
     const responseTime = Date.now() - startTime;
+    trackIntentClassified(intentResult.category, intentResult.confidence, intentResult.source);
+    trackResponseSent('simulator@preview', 'Live Sim', routedAction, responseTime);
 
     // Build token breakdown estimate (char/4 approximation)
     const usage = intentResult.usage || llmUsage || null;

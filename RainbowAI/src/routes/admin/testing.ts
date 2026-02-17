@@ -7,6 +7,7 @@ import { configStore } from '../../assistant/config-store.js';
 import { isAIAvailable, classifyAndRespond, testProvider } from '../../assistant/ai-client.js';
 import { buildSystemPrompt, guessTopicFiles } from '../../assistant/knowledge-base.js';
 import { ok, badRequest, notFound, serverError } from './http-utils.js';
+import { trackMessageReceived, trackIntentClassified, trackResponseSent } from '../../lib/activity-tracker.js';
 import previewRouter from './testing-preview.js';
 
 const router = Router();
@@ -23,6 +24,9 @@ router.post('/intents/test', async (req: Request, res: Response) => {
     return;
   }
   try {
+    const startTime = Date.now();
+    trackMessageReceived('simulator@test', 'Quick Test', message);
+
     const { classifyMessage } = await import('../../assistant/intents.js');
     const intentResult = await classifyMessage(message, []);
 
@@ -60,6 +64,10 @@ router.post('/intents/test', async (req: Request, res: Response) => {
       response = aiResult.response;
       llmUsage = aiResult.usage;
     }
+
+    trackIntentClassified(intentResult.category, intentResult.confidence, intentResult.source);
+    const responseTime = Date.now() - startTime;
+    trackResponseSent('simulator@test', 'Quick Test', routedAction, responseTime);
 
     res.json({
       intent: intentResult.category,
