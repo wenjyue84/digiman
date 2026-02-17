@@ -582,13 +582,13 @@
   100% { background: transparent; }
 }
 
-/* Input Area */
+/* Input Area — WhatsApp-style (US-184) */
 .rc-input-area {
-  padding: 8px 12px;
+  padding: 5px 10px;
   background: #f0f2f5;
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .rc-input-box {
@@ -596,14 +596,14 @@
   border: none;
   outline: none;
   background: #fff;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 14px;
+  border-radius: 21px;
+  padding: 9px 12px 11px;
+  font-size: 15px;
   font-family: inherit;
   resize: none;
-  max-height: 120px;
+  max-height: 100px;
   min-height: 42px;
-  line-height: 1.4;
+  line-height: 20px;
   overflow-y: auto;
 }
 
@@ -635,9 +635,11 @@
   height: 20px;
 }
 
-/* Attach button & menu */
+/* Attach button & menu — WhatsApp-style (US-184) */
 .rc-attach-wrap {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .rc-attach-btn {
@@ -652,6 +654,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 42px;
+  height: 42px;
 }
 
 .rc-attach-btn:hover {

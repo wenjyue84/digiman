@@ -684,3 +684,40 @@ Story reverted to passes: false
 - Manual tag class: `.rc-bubble-manual-tag` (different from old `.rc-bubble-manual` / `.rc-manual-tag`)
 - TS baseline: 222 (unchanged)
 
+## Iteration 6 - Tue, Feb 17, 2026  8:34:13 PM
+Incomplete: Verify activity tracker backend emits events correctly (ID: US-180)
+
+## Iteration 7 — Story: US-184 — WhatsApp-style input area with attachment and send button (PASS)
+
+### What was implemented
+- **CSS pill-shaped input**: Changed `rc-input-box` `border-radius` from `8px` → `21px` (pill shape), adjusted padding to `9px 12px 11px` for WhatsApp feel, bumped font-size to `15px` with `20px` line-height.
+- **Tighter input area**: Reduced `rc-input-area` padding from `8px 12px` → `5px 10px` and gap from `8px` → `6px` to match WhatsApp's compact layout.
+- **Attachment button sizing**: Added explicit `width: 42px; height: 42px` to `rc-attach-btn` for consistent circular appearance, added `display: flex; align-items: center` to `rc-attach-wrap`.
+- **Send button icon**: Replaced stroke-based paper-plane SVG with filled WhatsApp-style send arrow (`M1.101 21.757L23.8 12.028...`). Uses `fill="currentColor"` instead of stroke for cleaner rendering.
+- **Max-height adjusted**: Input `max-height` changed from `120px` → `100px` (≈5 rows at 20px line-height), matching WhatsApp's auto-resize behavior.
+
+### Files modified
+- `RainbowAI/src/public/css/rainbow-realchat.css` — input area, input box, attach button CSS (US-184 comments)
+- `RainbowAI/src/public/templates/tabs/chat-simulator.html` — send button SVG replaced
+- `prd.json` — US-184 passes: true
+
+### Verification performed
+- TypeScript: 222 errors (= baseline 222, 0 new)
+- Server running on port 3002, dashboard loads (HTTP 200)
+- CSS file serves correctly with new styles (HTTP 200)
+- Template API returns updated HTML with new SVG (confirmed `M1.101 21.757` path present)
+- All 10 acceptance criteria verified
+
+### Patterns discovered
+- **CSS-only changes are safe**: Pure CSS+HTML template changes can't introduce TS errors, but should still be verified against the TS baseline for quality gate compliance.
+- **SVG fill vs stroke**: WhatsApp uses filled SVGs (solid shapes) rather than stroke-based outlines for its action buttons. Using `fill="currentColor"` inherits the button's text color.
+
+### Gotchas
+- The `max-height: 100px` on the input box limits auto-resize to ~5 rows. If the line-height changes, this may need recalculation.
+- The file preview bar uses `position: absolute; bottom: 80px` — if input area height changes significantly, this may need adjustment.
+
+### Useful context for future iterations
+- Input area CSS: `rainbow-realchat.css` search for "US-184"
+- Send button SVG: `chat-simulator.html` search for "rc-send-btn"
+- TS baseline: 222 (unchanged)
+
