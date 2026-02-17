@@ -7,9 +7,10 @@ process.on('unhandledRejection', (reason) => {
 });
 
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { readFileSync } from 'fs';
+import { readFileSync, watchFile } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createMCPHandler } from './server.js';
@@ -29,6 +30,18 @@ const __dirname_main = dirname(__filename_main);
 // Single source for AI keys (OPENROUTER_API_KEY, etc.): RainbowAI/.env. Then cwd so repo root .env can add vars without overriding.
 dotenv.config({ path: join(__dirname_main, '..', '.env') });
 dotenv.config();
+
+// Startup env validation — warn about missing keys that will cause silent failures
+{
+  const warnings: string[] = [];
+  if (!process.env.GROQ_API_KEY && !process.env.OPENROUTER_API_KEY) {
+    warnings.push('  No AI provider API key set (GROQ_API_KEY or OPENROUTER_API_KEY) — AI replies will be unavailable');
+  }
+  if (warnings.length > 0) {
+    console.warn('[Startup] Environment warnings:');
+    warnings.forEach(w => console.warn(w));
+  }
+}
 
 // Initialize Knowledge Base (Memory & Files)
 try {
@@ -55,6 +68,7 @@ const PORT = parseInt(process.env.MCP_SERVER_PORT || '3002', 10);
 app.set('etag', false);
 
 // Middleware
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Allow up to 10MB for long messages/conversations
 
@@ -145,8 +159,38 @@ app.get('/health/ready', async (req, res) => {
   });
 });
 
+// --- Dashboard HTML cache ---
+// Read once at module load to avoid readFileSync on every request.
+// In development, fs.watchFile invalidates the cache when the file changes on disk.
+const DASHBOARD_HTML_PATH = join(__dirname_main, 'public', 'rainbow-admin.html');
+let _dashboardHtmlCache: string | null = null;
+
+function loadDashboardHtml(): string {
+  return readFileSync(DASHBOARD_HTML_PATH, 'utf-8');
+}
+
+// Eagerly load the HTML into memory
+try {
+  _dashboardHtmlCache = loadDashboardHtml();
+} catch {
+  // File may not exist yet during build; getDashboardHtml() will throw at request time
+}
+
+// In development, watch for file changes and invalidate the cache
+if (process.env.NODE_ENV !== 'production') {
+  watchFile(DASHBOARD_HTML_PATH, { interval: 500 }, () => {
+    try {
+      _dashboardHtmlCache = loadDashboardHtml();
+      console.log('[Dashboard] HTML cache refreshed (file changed)');
+    } catch {
+      _dashboardHtmlCache = null;
+    }
+  });
+}
+
 function getDashboardHtml(): string {
-  let html = readFileSync(join(__dirname_main, 'public', 'rainbow-admin.html'), 'utf-8');
+  // Use cached HTML; fall back to a fresh read if cache is somehow null
+  let html = _dashboardHtmlCache ?? loadDashboardHtml();
   // Cache-bust all local JS/CSS URLs with a fresh timestamp (mimics Vite's content hashing)
   // This forces the browser to fetch fresh files on every page load, preventing stale cache
   const v = Date.now();

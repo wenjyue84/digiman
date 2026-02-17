@@ -1,4 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
+import http from 'node:http';
+import https from 'node:https';
+
+// Keep-alive agents reuse TCP connections, avoiding handshake overhead per request
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 20 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 20 });
 
 // Prefer explicit PELANGI_API_URL; fall back to Zeabur internal host (port 80)
 const internalHost = process.env.PELANGI_MANAGER_HOST;
@@ -13,7 +19,9 @@ export const apiClient: AxiosInstance = axios.create({
     'Authorization': API_TOKEN ? `Bearer ${API_TOKEN}` : undefined,
     'Content-Type': 'application/json'
   },
-  timeout: 30000
+  timeout: 30000,
+  httpAgent,
+  httpsAgent
 });
 
 export function getApiBaseUrl(): string {

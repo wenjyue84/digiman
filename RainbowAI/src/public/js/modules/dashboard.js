@@ -25,8 +25,41 @@ const STATUS_POLL_INTERVAL = 15_000; // 15 seconds
  */
 export async function loadDashboard() {
   try {
-    // Load dashboard data
-    const statusData = await api('/status');
+    // Kick off status + stats fetches in parallel (US-154)
+    // Both are independent network calls — no need to wait for one before starting the other
+    const statusPromise = api('/status');
+    const statsPromise = window.apiHelpers.loadMultipleConfigs(
+      { conversations: '/conversations', accuracy: '/intent/accuracy', feedback: '/feedback/stats', responseTime: '/conversations/stats/response-time' },
+      { settled: true }
+    );
+
+    // While both are in flight, prepare stat DOM elements and show cached/loading state
+    const statsEls = {
+      messages: document.getElementById('dashboard-stat-messages'),
+      accuracy: document.getElementById('dashboard-stat-accuracy'),
+      response: document.getElementById('dashboard-stat-response'),
+      satisfaction: document.getElementById('dashboard-stat-satisfaction'),
+    };
+
+    const STATS_CACHE_KEY = 'rainbow-dashboard-stats';
+    const cached = sessionStorage.getItem(STATS_CACHE_KEY);
+    if (cached) {
+      try {
+        const cachedStats = JSON.parse(cached);
+        if (statsEls.messages) statsEls.messages.textContent = cachedStats.messages || '-';
+        if (statsEls.accuracy) statsEls.accuracy.textContent = cachedStats.accuracy || '-';
+        if (statsEls.response) statsEls.response.textContent = cachedStats.response || '-';
+        if (statsEls.satisfaction) statsEls.satisfaction.textContent = cachedStats.satisfaction || '-';
+        Object.values(statsEls).forEach(el => { if (el) el.style.opacity = '0.6'; });
+      } catch (_) {
+        Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
+      }
+    } else {
+      Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
+    }
+
+    // Await status data — needed for WhatsApp, server, and AI provider sections
+    const statusData = await statusPromise;
 
     // Update WhatsApp Status — show each instance with phone, label, last connected
     const waInstances = statusData.whatsappInstances || [];
@@ -126,37 +159,8 @@ export async function loadDashboard() {
     // Run speed test in background and fill response times (no user click needed)
     runDashboardProviderSpeedTest(true);
 
-    // Fetch real Quick Stats from API endpoints (parallel)
-    const statsEls = {
-      messages: document.getElementById('dashboard-stat-messages'),
-      accuracy: document.getElementById('dashboard-stat-accuracy'),
-      response: document.getElementById('dashboard-stat-response'),
-      satisfaction: document.getElementById('dashboard-stat-satisfaction'),
-    };
-
-    // Show cached stats immediately (if available), otherwise show loading
-    const STATS_CACHE_KEY = 'rainbow-dashboard-stats';
-    const cached = sessionStorage.getItem(STATS_CACHE_KEY);
-    if (cached) {
-      try {
-        const cachedStats = JSON.parse(cached);
-        if (statsEls.messages) statsEls.messages.textContent = cachedStats.messages || '-';
-        if (statsEls.accuracy) statsEls.accuracy.textContent = cachedStats.accuracy || '-';
-        if (statsEls.response) statsEls.response.textContent = cachedStats.response || '-';
-        if (statsEls.satisfaction) statsEls.satisfaction.textContent = cachedStats.satisfaction || '-';
-        Object.values(statsEls).forEach(el => { if (el) el.style.opacity = '0.6'; });
-      } catch (_) {
-        Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
-      }
-    } else {
-      Object.values(statsEls).forEach(el => { if (el) el.textContent = '...'; });
-    }
-
-    // Fetch all stats endpoints in parallel with independent error handling
-    const statsConfigs = await window.apiHelpers.loadMultipleConfigs(
-      { conversations: '/conversations', accuracy: '/intent/accuracy', feedback: '/feedback/stats', responseTime: '/conversations/stats/response-time' },
-      { settled: true }
-    );
+    // Await stats results — these were fetched in parallel with /status above
+    const statsConfigs = await statsPromise;
 
     const freshStats = {};
 

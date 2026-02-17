@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'pelangi-api',
-      script: 'dist/index.js',
+      script: 'dist/server/index.js',
       cwd: './',
       env: {
         NODE_ENV: 'production',

@@ -1,5 +1,9 @@
 import 'dotenv/config';
+import { validateEnv } from './validate-env';
+validateEnv();
+
 import express, { type Request, Response, NextFunction } from "express";
+import compression from 'compression';
 import cors from 'cors';
 // Force rebuild: 2026-02-13 - Updated DATABASE_URL in Zeabur
 import { registerRoutes } from "./routes";
@@ -9,6 +13,7 @@ import { initializeConfig, AppConfig, getConfig, getConfigUtils } from "./config
 import { storage } from "./storage";
 
 const app = express();
+app.use(compression());
 // Increase body size limits to accommodate small images embedded as Base64 in JSON
 // Staff check-in may include a profile photo string. Keep reasonable cap.
 app.use(express.json({ limit: '50mb' }));

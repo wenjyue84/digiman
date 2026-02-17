@@ -14,6 +14,7 @@ import { initWorkflowExecutor } from './workflow-executor.js';
 import { maybeWriteDiary } from './memory-writer.js';
 import { detectLanguage, getTemplate } from './formatter.js';
 import { trackError } from '../lib/activity-tracker.js';
+import { withSendRetry } from '../lib/send-retry.js';
 
 import { validateAndPrepare } from './pipeline/input-validator.js';
 import { handleActiveStates } from './pipeline/state-executor.js';
@@ -31,9 +32,9 @@ const ctx: RouterContext = {
 // ─── Init ────────────────────────────────────────────────────────
 
 export function initRouter(send: SendMessageFn, api: CallAPIFn): void {
-  ctx.sendMessage = send;
+  ctx.sendMessage = withSendRetry(send);
   ctx.callAPI = api;
-  initWorkflowExecutor(send);
+  initWorkflowExecutor(ctx.sendMessage);
 
   configStore.on('reload', (domain: string) => {
     if (['workflow', 'settings', 'routing', 'all'].includes(domain)) {

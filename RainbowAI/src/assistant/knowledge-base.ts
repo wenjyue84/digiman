@@ -32,6 +32,9 @@ interface KBPatternsConfig {
 
 let kbPatternsConfig: KBPatternsConfig | null = null;
 
+// Pre-compiled topic patterns: built once at first load, reused every message
+let COMPILED_TOPIC_PATTERNS: Array<{ pattern: RegExp; files: string[] }> | null = null;
+
 function loadKBPatterns(): KBPatternsConfig {
   if (kbPatternsConfig) return kbPatternsConfig;
   try {
@@ -48,6 +51,21 @@ function loadKBPatterns(): KBPatternsConfig {
     };
     return kbPatternsConfig;
   }
+}
+
+/**
+ * Build and cache pre-compiled RegExp objects from kb-patterns.json.
+ * Called once at first use; avoids `new RegExp()` on every message.
+ */
+function getCompiledTopicPatterns(): Array<{ pattern: RegExp; files: string[] }> {
+  if (COMPILED_TOPIC_PATTERNS) return COMPILED_TOPIC_PATTERNS;
+  const config = loadKBPatterns();
+  COMPILED_TOPIC_PATTERNS = config.patterns.map(entry => ({
+    pattern: new RegExp(entry.regex, 'i'),
+    files: entry.files
+  }));
+  console.log(`[KnowledgeBase] Compiled ${COMPILED_TOPIC_PATTERNS.length} topic regex patterns`);
+  return COMPILED_TOPIC_PATTERNS;
 }
 
 // Always injected into every prompt (loaded from config)
@@ -73,12 +91,13 @@ function getDefaultFallback(): string {
 /**
  * Scan message text and return which topic files should be loaded.
  * Falls back to defaultFallback (faq.md) if no keywords match.
+ * Uses pre-compiled regex patterns to avoid per-message RegExp construction.
  */
 export function guessTopicFiles(text: string): string[] {
-  const topicFileMap = getTopicFileMap();
+  const compiledPatterns = getCompiledTopicPatterns();
   const files = new Set<string>();
-  for (const [pattern, fileList] of Object.entries(topicFileMap)) {
-    if (new RegExp(pattern, 'i').test(text)) {
+  for (const { pattern, files: fileList } of compiledPatterns) {
+    if (pattern.test(text)) {
       fileList.forEach(f => files.add(f));
     }
   }

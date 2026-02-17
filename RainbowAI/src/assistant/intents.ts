@@ -576,6 +576,7 @@ export async function classifyMessageWithContext(
   }
 
   // TIER 2: Fuzzy keyword matching WITH CONTEXT
+  let fuzzyHighConfidenceResult: IntentResult | null = null;
   if (config.tiers.tier2_fuzzy.enabled && fuzzyMatcher) {
     const contextSize = config.tiers.tier2_fuzzy.contextMessages;
     const context = history.slice(-contextSize);
@@ -610,13 +611,36 @@ export async function classifyMessageWithContext(
       };
     }
 
+    // US-155: Skip semantic match if fuzzy confidence is already high (saves 100-300ms)
+    // Even if the fuzzy result didn't pass per-intent tier thresholds, a raw score >= 0.85
+    // is strong enough to skip the expensive semantic embedding step.
+    if (fuzzyResult && fuzzyResult.score >= 0.85) {
+      console.log(
+        `[Intent] ⚡ FUZZY high-confidence shortcut: ${fuzzyResult.intent} ` +
+        `(${(fuzzyResult.score * 100).toFixed(0)}% >= 85%) — skipping semantic tier`
+      );
+      fuzzyHighConfidenceResult = {
+        category: fuzzyResult.intent as any,
+        confidence: fuzzyResult.score,
+        entities: {},
+        source: 'fuzzy',
+        matchedKeyword: fuzzyResult.matchedKeyword,
+        detectedLanguage: detectedLang
+      };
+    }
+
     // Log if close but not confident enough
-    if (fuzzyResult && fuzzyResult.score > 0.60 && fuzzyResult.score < config.tiers.tier2_fuzzy.threshold) {
+    if (fuzzyResult && fuzzyResult.score > 0.60 && fuzzyResult.score < config.tiers.tier2_fuzzy.threshold && !fuzzyHighConfidenceResult) {
       console.log(
         `[Intent] 🔸 Fuzzy match below threshold: ${fuzzyResult.intent} ` +
         `(${(fuzzyResult.score * 100).toFixed(0)}%), trying semantic...`
       );
     }
+  }
+
+  // US-155: If fuzzy had high confidence (>= 0.85), skip semantic tier entirely
+  if (fuzzyHighConfidenceResult) {
+    return fuzzyHighConfidenceResult;
   }
 
   // TIER 3: Semantic similarity matching WITH CONTEXT

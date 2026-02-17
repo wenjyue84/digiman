@@ -22,6 +22,12 @@ export class FuzzyIntentMatcher {
   private fuse: Fuse<{ intent: string; keyword: string; language: string }>;
   private searchData: { intent: string; keyword: string; language: string }[];
 
+  // Pre-compiled regexes for hot-path context rules (compiled once at class load time)
+  private static readonly CONFIRMATION_RE = /\b(yes|ya|ok|okay|sure|confirm|订|是的|好)\b/i;
+  private static readonly FACILITIES_FOLLOWUP_RE = /\b(where|how|when|what time|哪里|怎么|什么时候)\b/i;
+  private static readonly DATE_KEYWORDS_RE = /\b(tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week|this week|besok|hari ini|malam ini|明天|今天|下周|这周|\d{1,2}\/\d{1,2}|\d{1,2}-\d{1,2})\b/i;
+  private static readonly NUMBER_KEYWORDS_RE = /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|satu|dua|tiga|empat|lima|一|二|三|四|五)\s*(people|person|guest|pax|night|nights|day|days|orang|malam|hari|人|晚|天)\b/i;
+
   constructor(intents: KeywordIntent[]) {
     // Flatten keywords with their intents for searching
     this.searchData = intents.flatMap(intent =>
@@ -196,7 +202,7 @@ export class FuzzyIntentMatcher {
       }
 
       // Check if user is confirming
-      if (/\b(yes|ya|ok|okay|sure|confirm|订|是的|好)\b/i.test(text)) {
+      if (FuzzyIntentMatcher.CONFIRMATION_RE.test(text)) {
         return {
           intent: 'booking',
           score: 0.85,
@@ -222,7 +228,7 @@ export class FuzzyIntentMatcher {
     // Rule 3: Facilities follow-up questions
     if (lastIntent === 'facilities') {
       // Questions about specific facilities
-      if (/\b(where|how|when|what time|哪里|怎么|什么时候)\b/i.test(text)) {
+      if (FuzzyIntentMatcher.FACILITIES_FOLLOWUP_RE.test(text)) {
         return {
           intent: 'facilities',
           score: 0.85,
@@ -235,15 +241,13 @@ export class FuzzyIntentMatcher {
     return null;
   }
 
-  // Helper: Check for date keywords
+  // Helper: Check for date keywords (uses pre-compiled regex)
   private containsDateKeywords(text: string): boolean {
-    const datePatterns = /\b(tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week|this week|besok|hari ini|malam ini|明天|今天|下周|这周|\d{1,2}\/\d{1,2}|\d{1,2}-\d{1,2})\b/i;
-    return datePatterns.test(text);
+    return FuzzyIntentMatcher.DATE_KEYWORDS_RE.test(text);
   }
 
-  // Helper: Check for number keywords (guests, nights)
+  // Helper: Check for number keywords (guests, nights) (uses pre-compiled regex)
   private containsNumberKeywords(text: string): boolean {
-    const numberPatterns = /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|satu|dua|tiga|empat|lima|一|二|三|四|五)\s*(people|person|guest|pax|night|nights|day|days|orang|malam|hari|人|晚|天)\b/i;
-    return numberPatterns.test(text);
+    return FuzzyIntentMatcher.NUMBER_KEYWORDS_RE.test(text);
   }
 }
