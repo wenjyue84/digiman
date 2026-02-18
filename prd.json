@@ -90,7 +90,7 @@
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-006",
@@ -356,7 +356,9 @@
         "Root cause from Phase 5: $.contactTagsMap and $.contactUnitsMap not populated — ensure loadContactTagsMap() and loadContactUnitsMap() are called in initialization",
         "Wire the new chip click events (US-003) to the existing dropdown render functions"
       ],
-      "dependencies": ["US-003"],
+      "dependencies": [
+        "US-003"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -495,7 +497,9 @@
         "window.openPrismaWindow() / window.closePrismaWindow() global functions for US-009 integration",
         "Session history: module-level array var prismaHistory = [] that resets when panel is closed"
       ],
-      "dependencies": ["US-009"],
+      "dependencies": [
+        "US-009"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -522,7 +526,9 @@
         "Endpoint must be authenticated: check X-Admin-Key header in production (RAINBOW_ROLE=primary)",
         "Mount in: RainbowAI/src/routes/admin/index.ts — app.use('/prisma', prismaRouter)"
       ],
-      "dependencies": ["US-010"],
+      "dependencies": [
+        "US-010"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -548,7 +554,9 @@
         "Internet: if the active AI provider supports web search (e.g. Perplexity, or a provider with search), use it; otherwise return unavailable message",
         "The frontend prisma-ai.js should include currentConversationMessages when source = all_history"
       ],
-      "dependencies": ["US-011"],
+      "dependencies": [
+        "US-011"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -574,7 +582,9 @@
         "Reset on close: prismaHistory = [] when the panel close (✕) button is clicked",
         "No server-side storage needed — purely stateless endpoint that receives history each time"
       ],
-      "dependencies": ["US-011"],
+      "dependencies": [
+        "US-011"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -604,7 +614,20 @@
         "If any feature is chat-simulator-specific HTML missing, add the required DOM elements (filter bar, search bar, action menus)",
         "CSS: all styles are global in rainbow-livechat-core.css and rainbow-livechat-ui.css — no extra CSS needed"
       ],
-      "dependencies": ["US-003", "US-004", "US-005", "US-006", "US-007", "US-008", "US-009", "US-010", "US-011", "US-012", "US-013", "US-014"],
+      "dependencies": [
+        "US-003",
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008",
+        "US-009",
+        "US-010",
+        "US-011",
+        "US-012",
+        "US-013",
+        "US-014"
+      ],
       "estimatedComplexity": "large",
       "passes": false
     }

@@ -97,7 +97,9 @@
           "what's the internet code",
           "how to get online",
           "connect to internet",
-          "What is the wifi?"
+          "What is the wifi?",
+          "Hi what is ur WiFi?",
+          "What is ur WiFi?"
         ],
         "ms": [
           "password wifi",
@@ -138,7 +140,8 @@
           "what's the arrival time",
           "earliest check in",
           "can I check in early",
-          "check in hours"
+          "check in hours",
+          "what is the checked in time?"
         ],
         "ms": [
           "masa check in",
@@ -191,7 +194,9 @@
           "check in pls",
           "checkin pls",
           "here for check in",
-          "I'm outside your hostel"
+          "I'm outside your hostel",
+          "Can I check in now ?",
+          "Bole check in sekarang?"
         ],
         "ms": [
           "saya nak check in",
@@ -394,7 +399,8 @@
           "any capsules free",
           "got any space",
           "any rooms left",
-          "is there space"
+          "is there space",
+          "But is lower deck capsule available?"
         ],
         "ms": [
           "ada bilik",
@@ -476,7 +482,9 @@
           "how to find you",
           "send me the address",
           "where exactly are you",
-          "location details"
+          "location details",
+          "Hi what is ur WiFi?",
+          "What is ur address?"
         ],
         "ms": [
           "di mana",
@@ -876,7 +884,8 @@
           "what tourist attractions are nearby",
           "nearby attractions",
           "attractions nearby",
-          "what attractions are near the hostel"
+          "what attractions are near the hostel",
+          "U know what is today festival?"
         ],
         "ms": [
           "apa boleh buat di Johor Bahru",
