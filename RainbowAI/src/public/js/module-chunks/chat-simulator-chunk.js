@@ -38,6 +38,10 @@ import {
 
 import { sendChatMessage, showQuickTestHistory, closeQuickTestHistory, clearQuickTestHistory } from '/public/js/modules/chat-send.js';
 
+// Load testing-chunk eagerly so autotest panel buttons (toggleAutotest, showAutotestHistory, etc.)
+// work when accessed from the Chat Simulator tab without visiting the Testing tab first
+import '/public/js/module-chunks/testing-chunk.js';
+
 // ─── Window globals ──────────────────────────────────────────────
 
 window.switchSimulatorTab = switchSimulatorTab;

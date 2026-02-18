@@ -1,37 +1,38 @@
 {
-  "productName": "Live Chat & Chat Simulator Enhancements",
+  "productName": "Rainbow AI Testing, Bug Fixes & Enhancements Phase 5",
   "branchName": "ralph/live-chat-enhancements",
-  "overview": "21 enhancements across 4 phases for Rainbow AI's Live Chat and Chat Simulator: quick UX fixes (token display, robot icon, smooth switching, connection status), contact management (tags, units, date codes, staff identity), messaging power (/ templates, // workflows, read receipts, image replies), and scheduling (scheduled messages, repeating, payment reminders). All changes within RainbowAI/ module only.",
+  "overview": "Phase 5: 18 user stories across 5 phases \u00e2\u20ac\u201d fix broken features (test history, image attachments, tags/unit filters, contact details, AI notes), improve UI (KB tester, AI model consolidation, staff name menu), strengthen testing infrastructure (check-in suite, multi-turn workflow tests, programmatic runner), add capsule conflict resolution workflow, and update documentation. All changes within RainbowAI/ module only. Cross-cutting: regression tests for every change, agent-browser verification for UI changes.",
   "goals": [
-    "Surface token usage, read receipts, and AI vs human message distinction for operational visibility",
-    "Improve navigation speed and fix UX bugs (smooth switching, connection status, notes truncation)",
-    "Enrich guest contact profiles with units, tags, check-in dates, and payment tracking",
-    "Enable scheduled messages with daily/weekly/monthly repeat cycles",
-    "Add / command palette for quick message templates and // for workflow triggers"
+    "Fix all 8 broken UI features (test history, pipeline test, image attachments, scenario count, button overlap, tags/unit filters, Set button, AI notes)",
+    "Consolidate AI model settings into one location with OCR model support",
+    "Build check-in process test suite with 10+ edge cases and multi-turn workflow tests",
+    "Add capsule conflict detection and LLM-powered resolution workflow with operator approval",
+    "Ensure zero regressions with comprehensive regression tests for every change"
   ],
   "userStories": [
     {
       "id": "US-001",
-      "title": "Display token usage in Chat Simulator Live Simulation",
+      "title": "Fix Quick Test History showing nothing",
       "priority": 1,
-      "description": "As a staff member testing AI responses, I want to see input/output token counts and context message count for each AI reply so that I can understand cost and context window usage. In #chat-simulator/live-simulation, each AI reply with tiered-LLM-fallback (or any LLM tier) should show a subtle metadata row below the bubble: e.g. '128 in / 256 out | 5 messages context'.",
+      "description": "As a tester, I want the Test History in #chat-simulator/quick-test to display previous test results so I can track my testing progress. History is managed by autotest-history.js module (localStorage keys: rainbow-autotest-history, rainbow-imported-reports). The modular refactor likely broke the save-after-test or render logic.",
       "acceptanceCriteria": [
-        "Each LLM-tier AI reply in Live Simulation shows input tokens, output tokens, total tokens",
-        "Shows how many previous conversation messages were included in the prompt (context count)",
-        "Token info displayed in a subtle metadata row below the AI reply bubble",
-        "Data sourced from AI provider response metadata (usage field in ai-client.ts response)",
-        "If token data unavailable from provider, show 'N/A' gracefully",
+        "Quick Test History modal shows previous test results when opened",
+        "Test results persisted to localStorage keys 'rainbow-autotest-history' and 'rainbow-imported-reports'",
+        "Each test run saved with: date, pass/fail/warning counts, pass rate",
+        "History survives page refresh; auto-purge keeps max 20 entries",
+        "Import mechanism loads reports from /api/rainbow/autotest/reports endpoint",
+        "Regression test verifies history persistence across page loads",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "AI client returns usage data: RainbowAI/src/assistant/ai-client.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd look for usage/token fields in provider response",
-        "Message router passes AI response to frontend: RainbowAI/src/assistant/message-router.ts",
-        "Chat simulator test endpoint: RainbowAI/src/routes/admin/testing.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd ensure token data propagates in response",
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add token display below bubble",
-        "Chat simulator HTML: RainbowAI/src/public/templates/tabs/chat-simulator.html",
-        "Context message count: count messages array length passed to AI provider in ai-client.ts"
+        "History module: RainbowAI/src/public/js/modules/autotest-history.js (state: autotestHistory array, importedReports array)",
+        "UI rendering: RainbowAI/src/public/js/modules/autotest-ui.js (showAutotestHistory() renders list, loadHistoricalReport(id) restores)",
+        "Also in: RainbowAI/src/public/js/modules/chat-send.js (line 17: QT_HISTORY_KEY, line 42: showQuickTestHistory())",
+        "HTML: RainbowAI/src/public/templates/tabs/chat-simulator.html (line 241: button, line 287: modal)",
+        "Auto-import: loadImportedReports() scans /api/rainbow/autotest/reports on page load",
+        "Check if showAutotestHistory() in autotest-ui.js properly reads from autotest-history.js state"
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
@@ -39,415 +40,428 @@
     },
     {
       "id": "US-002",
-      "title": "Robot icon prefix for AI-generated replies",
+      "title": "Fix 5 issues in message-pipeline.test.ts",
       "priority": 2,
-      "description": "As a staff member, I want AI-generated replies to have a robot icon prefix so I can instantly distinguish Rainbow AI auto-replies from manual staff messages. The icon must appear in both the chat bubble (right pane) and conversation preview (left pane) in Live Chat. Manual staff replies must NOT show the icon. Also apply in Chat Simulator live simulation for consistency.",
+      "description": "As a developer, I want message-pipeline.test.ts to pass all assertions correctly. The file EXISTS at RainbowAI/src/assistant/__tests__/message-pipeline.test.ts but has 5 identified issues: (1) incomplete error handling test, (2) truncation logic mismatch, (3) missing mock return values, (4) no prompt injection coverage, (5) static mock values making tests non-representative.",
       "acceptanceCriteria": [
-        "All AI-generated replies in Live Chat show a robot icon (unicode or SVG) before message text",
-        "Robot icon appears in both chat bubble (right pane) and conversation preview (left pane)",
-        "Manual staff replies do NOT show the robot icon",
-        "Robot icon appears in Chat Simulator live simulation view for AI replies",
+        "message-pipeline.test.ts runs successfully via Vitest with all assertions passing",
+        "Error handling test (line ~418) correctly tests whether processAndSend throws or catches",
+        "Truncation test (line ~431) matches actual input-validator.ts behavior (verify if '...' is appended)",
+        "callAPI mock returns realistic response objects instead of empty objects",
+        "Prompt injection sanitization test added (verify testing-preview.ts lines 36-71 logic)",
+        "classifyAndRespond mock uses varied intents per scenario instead of always 'pricing'",
+        "Regression test verifies test runner execution works",
         "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
+        "Server starts and dashboard loads without errors"
       ],
       "technicalNotes": [
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd renderMessageBubble() add icon based on message source",
-        "Left pane previews: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd conversation list rendering",
-        "Message source field: check if messages have a 'source' or 'fromMe'/'isBot' flag to distinguish AI vs manual",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd message model",
-        "Use unicode robot face U+1F916 or a small SVG icon",
-        "No nested template literals in JS HTML generation \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd use string concatenation"
+        "Test file: RainbowAI/src/assistant/__tests__/message-pipeline.test.ts (EXISTS \u00e2\u20ac\u201d uses Vitest)",
+        "Also exists: RainbowAI/src/assistant/__tests__/language-resolution.test.ts (unit tests for language detection)",
+        "Issue 1 (line ~418): Test expects rejects.toThrow() but comment says caller catches \u00e2\u20ac\u201d verify actual behavior",
+        "Issue 2 (line ~431): Expects 'a'.repeat(2000) + '...' \u00e2\u20ac\u201d check if input-validator.ts appends ellipsis or just truncates",
+        "Issue 3: callAPI mock returns {} as any \u00e2\u20ac\u201d should return { content, usage: { prompt_tokens, completion_tokens } }",
+        "Issue 4 (line ~436): XSS test sends <script> but expects .continue = true \u00e2\u20ac\u201d need to verify sanitization in testing-preview.ts",
+        "Issue 5: classifyAndRespond always returns 'pricing' \u00e2\u20ac\u201d make mock return different intents based on input message",
+        "Testing UI: RainbowAI/src/public/templates/tabs/testing.html + RainbowAI/src/public/js/modules/testing.js"
       ],
       "dependencies": [],
-      "estimatedComplexity": "small",
+      "estimatedComplexity": "medium",
       "passes": true
     },
     {
       "id": "US-003",
-      "title": "Guest Simulation input box at top of panel",
+      "title": "Fix image attachment 'not found' in Quick Replies",
       "priority": 3,
-      "description": "As a tester, I want the typing input box in Guest Simulation (#chat-simulator > Guest Simulation tab) positioned at the top so I can quickly type test messages without scrolling. This is Guest Simulation only \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd Live Simulation and Live Chat keep input at bottom.",
+      "description": "As a staff member, I want to attach images to quick replies in #responses/quick-replies without getting a 'not found' error so I can include visual content (maps, menus, room photos) in predefined responses.",
       "acceptanceCriteria": [
-        "In #chat-simulator Guest Simulation tab, message input box is at the top of the chat area",
-        "Layout specific to Guest Simulation only \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd Live Simulation and Live Chat keep input at bottom",
-        "Conversation messages flow below the input box",
-        "Input box remains fixed/sticky at top when scrolling through messages",
+        "Attaching an image in #responses/quick-replies works without 'not found' error",
+        "Image uploads successfully to server storage directory",
+        "Image preview displays in the quick reply editor after upload",
+        "Saved image URL is valid and accessible via HTTP GET",
+        "Regression test for image upload endpoint (POST and GET)",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Chat simulator HTML: RainbowAI/src/public/templates/tabs/chat-simulator.html \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd Guest Simulation section",
-        "Use CSS flex-direction: column with input at top, messages below with overflow-y: auto",
-        "May need to restructure the Guest Simulation panel HTML to separate input from message area",
-        "Do NOT affect Live Simulation tab layout (input stays at bottom there)"
+        "Quick replies CRUD: RainbowAI/src/public/js/modules/responses-crud.js (line 412: fetch('/api/rainbow/knowledge/upload-image', { method: 'POST', body: formData }))",
+        "ROOT CAUSE: Backend endpoint /api/rainbow/knowledge/upload-image returns 404 \u00e2\u20ac\u201d not implemented",
+        "Backend route file: RainbowAI/src/routes/admin/knowledge-base.ts \u00e2\u20ac\u201d needs upload-image handler",
+        "FIX: Add POST /knowledge/upload-image with multer middleware for multipart file upload",
+        "Endpoint should: accept file, store to uploads/ directory, return { imageUrl: '/path/to/image' }",
+        "Also need: create RainbowAI/uploads/ directory, add Express static middleware for /uploads/ prefix"
       ],
       "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
+      "estimatedComplexity": "medium",
+      "passes": false
     },
     {
       "id": "US-004",
-      "title": "Dismissable info/warning notification banners",
+      "title": "Fix autotest suite scenario count (hardcoded 58, actual 121)",
       "priority": 4,
-      "description": "As a staff member, I want to dismiss informational banners (like 'Reply for unknown exists but intent is routed to llm_reply') so they don't clutter my workspace, with the ability to review dismissed messages later via a small icon/button.",
+      "description": "As a tester, I want the autotest suite count to dynamically reflect the actual number of test scenarios. Currently hardcoded as '58 scenarios across 6 guest journey phases' but actual count is 121 scenarios (100 single-turn + 21 workflow) across 9 categories.",
       "acceptanceCriteria": [
-        "Info/warning banners (blue [i] banners) have a visible Dismiss or X button",
-        "Clicking dismiss hides the banner immediately",
-        "Dismissed messages stored in localStorage",
-        "A small icon/button shows count of dismissed messages",
-        "Clicking the dismissed messages icon opens a panel listing all dismissed messages",
-        "User can restore (un-dismiss) a message from the dismissed list",
+        "Scenario count in #chat-simulator updates dynamically from AUTOTEST_SCENARIOS.length (currently 121)",
+        "Count updates automatically when scenarios are added or removed",
+        "Hardcoded '58 scenarios' replaced with dynamic span in all HTML templates",
+        "Category count also updates dynamically (currently 9: general, pre-arrival, arrival, during-stay, checkout, post-checkout, workflow-complete, conversation, sentiment)",
+        "Regression test verifies count matches actual scenario array length",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Static replies page: RainbowAI/src/public/templates/tabs/static-replies.html \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd where these banners appear",
-        "Intent manager: RainbowAI/src/public/js/modules/intent-manager.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd may generate these routing mismatch banners",
-        "localStorage key pattern: 'rainbow-dismissed-banners' as JSON array of banner IDs",
-        "Dismissed messages panel: small floating panel or modal, similar to notification center pattern",
-        "Banner ID: generate from content hash or intent name to track which are dismissed"
+        "Hardcoded: RainbowAI/src/public/templates/tabs/chat-simulator.html (line 37: '58 scenarios across 6 guest journey phases')",
+        "Also hardcoded: RainbowAI/src/public/templates/tabs/preview.html (line 15)",
+        "Scenario sources: autotest-scenarios-single.js (100) + autotest-scenarios-workflow.js (21) = 121 total",
+        "Aggregator: RainbowAI/src/public/js/data/autotest-scenarios.js (combines SINGLE_TURN_SCENARIOS + WORKFLOW_SCENARIOS)",
+        "Dynamic counting exists: RainbowAI/src/public/js/modules/autotest-ui.js (lines 353-355) but HTML overrides it",
+        "Fix: Replace hardcoded text with <span id='scenario-count'>--</span> and <span id='phase-count'>--</span>, populate on load"
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-005",
-      "title": "Fix AI notes truncation and show editable context file",
+      "title": "Fix button overlap (delete/fullscreen)",
       "priority": 5,
-      "description": "As a staff member, I want: (a) 'Generate by AI' notes to show complete untruncated output, and (b) after clicking 'Add to Context', see the saved context file path below the button so I can click to edit it directly in the UI.",
+      "description": "As a staff member, I want all buttons in the dashboard to be properly positioned without overlapping so I can click them reliably. Delete and fullscreen buttons currently overlap in some panels.",
       "acceptanceCriteria": [
-        "In #live-chat > Contact Details > Notes, Generate by AI produces complete untruncated output",
-        "Notes textarea auto-expands or has adequate min-height to show full generated text",
-        "After clicking Add to Context, the saved context file path is displayed below the button",
-        "The displayed file path is clickable and opens file content in an editable textarea or modal",
-        "User can edit and save changes to the context file from the UI",
+        "Delete and fullscreen buttons do not overlap in any view",
+        "All action buttons have minimum 8px gap between them",
+        "Buttons are clickable without triggering adjacent buttons",
+        "Fix applies across all tabs where overlap occurs (test results, KB editor, etc.)",
+        "Regression test for button layout spacing",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd Notes section with Generate by AI",
-        "AI notes generation: likely calls an admin API endpoint that uses ai-client.ts to summarize conversation",
-        "Truncation cause: check if response is being substring'd or if textarea has max-height with overflow hidden",
-        "Context files: RainbowAI/.rainbow-kb/contacts/ \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd per-contact context markdown files",
-        "Knowledge base: RainbowAI/src/assistant/knowledge-base.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd reads context files",
-        "Admin API for context: RainbowAI/src/routes/admin/conversations.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd may have context file endpoints",
-        "Add endpoint to read/write context file content if not exists: GET/PUT /api/rainbow/contacts/:phone/context"
+        "Likely in autotest result cards or KB editor panels",
+        "Check CSS: RainbowAI/src/public/css/rainbow-livechat-core.css",
+        "Check CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css",
+        "May need gap, margin, or z-index fixes on absolute-positioned button groups",
+        "Use agent-browser screenshots to identify exact overlapping elements"
       ],
       "dependencies": [],
-      "estimatedComplexity": "medium",
-      "passes": true
+      "estimatedComplexity": "small",
+      "passes": false
     },
     {
       "id": "US-006",
-      "title": "Smooth instant conversation pane switching",
+      "title": "Fix Tags and Unit filter buttons in Live Chat",
       "priority": 6,
-      "description": "As a staff member, I want clicking a contact name in the left pane to instantly show their conversation in the right pane without multi-second delay. Use optimistic UI with cached conversations.",
+      "description": "As a staff member, I want the Tags and Unit filter buttons in #live-chat left pane to work \u00e2\u20ac\u201d clicking Unit should show all existing units, clicking Tags should show all existing tags, and selecting one should filter conversations.",
       "acceptanceCriteria": [
-        "Clicking a contact updates the right pane within 200ms (perceived instant)",
-        "Optimistic UI: immediately show cached conversation, hydrate with fresh data in background",
-        "Subtle loading indicator (spinner or skeleton) only if fresh data takes >500ms",
-        "Previously loaded conversations cached in memory for instant re-display",
-        "No full-page re-render when switching contacts",
+        "Clicking 'Unit' button shows dropdown of all existing units from capsule cache",
+        "Clicking 'Tags' button shows dropdown of all existing tags from tags API",
+        "Selecting a unit/tag filters conversation list correctly",
+        "Dropdown closes when clicking outside",
+        "Clear filter restores full conversation list",
+        "Multiple tags can be selected simultaneously",
+        "Regression test for filter dropdown rendering and filtering logic",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd contact click handler",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd conversation data store",
-        "Conversations API: RainbowAI/src/routes/admin/conversations.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd message history endpoint",
-        "Add a Map<phoneNumber, messages[]> cache in live-chat-state.js",
-        "On contact click: render cached messages immediately, then fetch fresh in background",
-        "Use requestAnimationFrame or setTimeout(0) to avoid blocking the UI thread during render"
+        "Filter code exists: RainbowAI/src/public/js/modules/live-chat-panels.js (lines 773-883: _renderTagFilterDropdown, _renderUnitFilterDropdown)",
+        "Core filtering: RainbowAI/src/public/js/modules/live-chat-core.js (lines 433-449)",
+        "HTML: RainbowAI/src/public/templates/tabs/live-chat.html (lines 111-125: tag/unit filter buttons with onclick handlers)",
+        "Dropdown elements: lc-tag-filter-dropdown, lc-unit-filter-dropdown",
+        "Button elements: lc-tag-filter-btn, lc-unit-filter-btn (onclick=lcToggleTagFilter/lcToggleUnitFilter)",
+        "Tags API: GET /api/rainbow/tags (RainbowAI/src/routes/admin/tags.ts)",
+        "Capsules API: GET /api/rainbow/capsules (RainbowAI/src/routes/admin/capsules.ts)",
+        "Click outside: RainbowAI/src/public/js/modules/live-chat.js (lines 265-276)",
+        "ROOT CAUSE: $.contactTagsMap and $.contactUnitsMap not populated \u00e2\u20ac\u201d loadContactTagsMap() and loadContactUnitsMap() not called early enough in initialization",
+        "FIX: Ensure loadContactTagsMap(), loadContactUnitsMap(), loadCapsuleUnits() are called in loadLiveChat() before displaying chat list"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-007",
-      "title": "Fix Connecting status to reflect actual WhatsApp state",
+      "title": "Fix Payment Reminder 'Set' button (Failed Not found)",
       "priority": 7,
-      "description": "As a staff member, I want the connection status at top-right of Live Chat to accurately show Connected/Connecting/Disconnected based on actual Baileys WebSocket state, because it currently shows 'Connecting...' even when messages can be sent.",
+      "description": "As a staff member, I want the 'Set' button for payment reminders in #live-chat contact details to work without showing 'Failed Not found' so I can schedule payment reminders for guests. The frontend calls POST /payment-reminders but this endpoint is missing from the backend routes.",
       "acceptanceCriteria": [
-        "Connection status reflects actual Baileys WebSocket state",
-        "When connected and messages can be sent: 'Connected' with green indicator",
-        "When reconnecting: 'Connecting...' with amber indicator",
-        "When disconnected: 'Disconnected' with red indicator",
-        "Status updates in real-time via WebSocket/SSE events from server",
+        "Clicking 'Set' in payment reminder section saves without 'Failed Not found' error",
+        "POST /api/rainbow/payment-reminders endpoint exists and accepts { phone, dueDate, autoSend }",
+        "Payment reminder data persisted to storage (JSON file with atomic write)",
+        "Auto-send checkbox controls whether chase message is sent automatically on due date",
+        "Success toast shown after saving reminder",
+        "Regression test for payment reminder endpoint (POST and GET)",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd connection.update events from Baileys",
-        "WhatsApp admin routes: RainbowAI/src/routes/admin/whatsapp.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd may have status endpoint or SSE",
-        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd connection status display",
-        "Check if there's an existing SSE/WebSocket for connection status, or if it only polls",
-        "Baileys connection states: 'open', 'connecting', 'close' from connection.update event",
-        "May need to add a /api/rainbow/whatsapp/status endpoint or SSE stream if not exists"
+        "Frontend call: RainbowAI/src/public/js/modules/live-chat-panels.js (lines 1500-1526: lcSetPaymentReminder())",
+        "Frontend calls: fetch('/api/rainbow/payment-reminders', { method: 'POST', body: { phone, dueDate, autoSend } })",
+        "HTML: RainbowAI/src/public/templates/tabs/live-chat.html (lines 764-775: payment reminder form)",
+        "Backend route file: RainbowAI/src/routes/admin/payment-reminders.ts \u00e2\u20ac\u201d check if it exists and is mounted in index.ts",
+        "Root cause: POST /payment-reminders endpoint is NOT implemented or NOT mounted in routes/admin/index.ts",
+        "Fix: Create or mount payment-reminders.ts route with POST handler that stores reminder data",
+        "Storage: Use atomic JSON write pattern (config-store.ts) to persist reminders"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-008",
-      "title": "Saved and reusable tags system with global tag list",
+      "title": "Fix AI Notes truncation in Contact Details",
       "priority": 8,
-      "description": "As a staff member, I want tags saved into a global list so that clicking the Tags input for any guest shows previously used tags as autocomplete suggestions, while still allowing new tag creation. Global tag list stored in Rainbow AI local JSON storage with atomic writes.",
+      "description": "As a staff member, I want 'Generate by AI' notes in #live-chat contact details to show complete output without truncation so I can see the full AI-generated summary of the conversation.",
       "acceptanceCriteria": [
-        "When a user adds a tag to any contact, it is automatically saved to a global tag list",
-        "Global tag list stored in Rainbow AI local JSON file (atomic write pattern via config-store.ts)",
-        "Clicking Tags input in Contact Details shows dropdown of all saved tags",
-        "User can select existing tag from dropdown OR type a new tag",
-        "New tags auto-added to global list upon creation",
-        "Duplicate tags prevented (case-insensitive)",
-        "Tags can be removed from contacts but remain in global list for reuse",
+        "'Generate by AI' produces complete, untruncated output",
+        "Notes textarea auto-expands to show full generated text",
+        "No max-height or overflow:hidden cutting off content in CSS",
+        "AI provider max_tokens is sufficient for full summary (check >= 500)",
+        "Regression test for notes generation completeness",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Config store: RainbowAI/src/assistant/config-store.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd use atomic write pattern for tags.json",
-        "New data file: RainbowAI/data/tags.json \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd { tags: ['VIP', 'complaint', 'late-checkout', ...] }",
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd Tags input field",
-        "Admin API: add GET/POST /api/rainbow/tags endpoints in admin routes",
-        "Frontend: combo-box style input with datalist or custom dropdown showing filtered suggestions",
-        "Contact data storage: wherever contact metadata is stored (check live-chat-state.js or contacts JSON)"
+        "AI notes function: RainbowAI/src/public/js/modules/live-chat-panels.js (lines 1322-1353: generateAINotes())",
+        "Frontend auto-expand code at lines 1341-1343: textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px';",
+        "API: POST /conversations/:phone/generate-notes in RainbowAI/src/routes/admin/conversations.ts (line 668: chatWithFallback(messages, 600, 0.5) \u00e2\u20ac\u201d 600 tokens is sufficient)",
+        "ROOT CAUSE: CSS .lc-field-textarea has max-height: 120px which overrides the JS auto-expand",
+        "CSS location: RainbowAI/src/public/css/rainbow-livechat-ui.css (line ~511: .lc-field-textarea { max-height: 120px })",
+        "FIX: Remove or significantly increase max-height on .lc-field-textarea, or add specific override for notes textarea"
       ],
       "dependencies": [],
-      "estimatedComplexity": "medium",
-      "passes": true
+      "estimatedComplexity": "small",
+      "passes": false
     },
     {
       "id": "US-009",
-      "title": "Filter conversations by tags in left pane",
+      "title": "Build KB Accuracy Tester at top of Knowledge Base page",
       "priority": 9,
-      "description": "As a staff member, I want to filter the conversation list by tags assigned in Contact Details so I can quickly find guests matching a specific category (VIP, late-checkout, complaint). Tag filter works alongside existing search and tab filters.",
+      "description": "As a staff member, I want a KB Accuracy Tester at the top of #responses/knowledge-base so I can test how well the KB retrieves relevant content for guest questions. Layout should be similar to #chat-simulator/quick-test. NOTE: This tester does NOT exist yet \u00e2\u20ac\u201d the Understanding tab has an intent classification test console, but there is no KB retrieval accuracy tester. It must be built from scratch.",
       "acceptanceCriteria": [
-        "Left pane has a tag filter control (filter icon or dropdown near search bar)",
-        "Clicking filter shows available tags from all contacts",
-        "Selecting one or more tags filters conversation list to matching contacts only",
-        "Filter can be cleared to show all conversations",
-        "Tag filter works in combination with search and tab filters (All, Unread, Favourites, Groups)",
+        "New KB Accuracy Tester section built at the top of Knowledge Base page",
+        "Input field to type a guest question + Test button",
+        "Results show: which KB files were loaded, relevance score, AI response using KB content",
+        "Layout similar to quick-test: input + results above KB file management content",
+        "Existing KB management content (file list, editor) below the tester",
+        "No functionality regression in KB file editing",
+        "Regression test for KB tester endpoint and UI",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd left pane rendering",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd filter state management",
-        "Existing filters: All/Unread/Favourites/Groups tabs \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add tag filter alongside these",
-        "Filter logic: add tagFilter to the conversation list filtering pipeline",
-        "Tags come from contact data + global tag list (US-008)"
+        "KB Accuracy Tester does NOT exist yet \u00e2\u20ac\u201d must be built from scratch",
+        "KB template: RainbowAI/src/public/templates/tabs/responses.html (Knowledge Base sub-tab)",
+        "KB modules: RainbowAI/src/public/js/modules/knowledge.js and kb-editor.js",
+        "KB route: RainbowAI/src/routes/admin/knowledge-base.ts",
+        "New endpoint needed: POST /api/rainbow/knowledge-base/test \u00e2\u20ac\u201d accepts question, returns loaded KB files + AI response",
+        "Backend: Use knowledge-base.ts guessTopicFiles() to find relevant files, then ai-client.ts to generate response",
+        "The Understanding tab has an intent test console \u00e2\u20ac\u201d use similar UI pattern but for KB retrieval"
       ],
-      "dependencies": [
-        "US-008"
-      ],
-      "estimatedComplexity": "medium",
-      "passes": true
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
     },
     {
       "id": "US-010",
-      "title": "Unit/capsule dropdown from dashboard API with cache",
+      "title": "Token usage details in KB Accuracy Tester",
       "priority": 10,
-      "description": "As a staff member, I want the Unit/Capsule field in Contact Details to show a dropdown fetched from the main dashboard's capsule data (port 5000 /api/capsules), cached on startup with periodic refresh, with combo-box behavior allowing custom entries.",
+      "description": "As a staff member, I want detailed token usage breakdown in the KB Accuracy Tester (built in US-009) so I can understand which parts consume the most tokens and optimize accordingly. This helps me figure out how to reduce token cost per question.",
       "acceptanceCriteria": [
-        "Unit/Capsule field in Contact Details shows a dropdown with capsule list",
-        "Capsule list fetched from port 5000 API (/api/capsules) on Rainbow AI startup then cached",
-        "Cache refreshes every 5 minutes or on manual trigger",
-        "Dropdown shows capsule names/numbers from cached list",
-        "User can type a custom unit name not in the list (combo-box behavior)",
-        "Custom entries saved and appear in future dropdowns for all contacts",
-        "Selected unit persisted in contact data",
-        "Graceful fallback if port 5000 unavailable (use cached or manual list)",
+        "KB test results show: input tokens, output tokens, total tokens",
+        "Show KB context tokens separately (how many tokens the loaded KB content consumes)",
+        "Show system prompt token count",
+        "Show user message token count",
+        "Breakdown table: system_prompt + kb_context + user_message = total input tokens",
+        "Show which KB files were loaded and their individual token sizes",
+        "Regression test for token data in test response",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "New backend module: RainbowAI/src/lib/capsule-cache.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd fetch from http://localhost:5000/api/capsules, cache with 5-min TTL",
-        "Config store: RainbowAI/src/assistant/config-store.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd store custom capsule entries in data/custom-units.json",
-        "Admin API: add GET /api/rainbow/capsules endpoint that merges API cache + custom entries",
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd replace text input with combo-box",
-        "Cross-module: this is the only HTTP call from RainbowAI (3002) to server (5000) \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd handle ECONNREFUSED",
-        "Import boundary: NO direct imports from server/ or shared/ \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd HTTP fetch only"
+        "Depends on US-009 (KB Accuracy Tester must exist first)",
+        "AI client: RainbowAI/src/assistant/ai-client.ts \u00e2\u20ac\u201d returns usage data from provider response",
+        "KB test endpoint: POST /api/rainbow/knowledge-base/test (created in US-009)",
+        "Token estimation: Use tiktoken or simple char/4 approximation for pre-send estimates",
+        "For each loaded KB file: calculate approximate token count before sending to AI",
+        "Display format: collapsible details panel below test result showing token breakdown table",
+        "Provider usage field varies: OpenAI-compatible returns { prompt_tokens, completion_tokens, total_tokens }"
       ],
-      "dependencies": [],
+      "dependencies": [
+        "US-009"
+      ],
       "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-011",
-      "title": "Staff name editing with message attribution",
+      "title": "Consolidate AI Model Settings with OCR model",
       "priority": 11,
-      "description": "As a staff member, I want to edit my display name (shown left of connection status at top-right) so that manual replies are attributed to me for responsibility tracing. Default name is 'Staff'. Name saved in Rainbow AI settings.json.",
+      "description": "As a staff member, I want all AI model settings combined at #settings/ai-models (merging settings from #understanding/t4), with a read-only link in T4, and a new OCR LLM model setting (default: Google Gemini 2.5 Flash) for passport/IC image extraction.",
       "acceptanceCriteria": [
-        "Staff name field appears left of connection status at top-right of Live Chat",
-        "Default name is 'Staff'",
-        "Clicking name makes it editable (inline edit or small modal)",
-        "Name saved in Rainbow AI settings (settings.json, atomic write)",
-        "Staff name stored with each manually-sent message for audit/tracing",
-        "Staff name persists across browser refreshes and server restarts",
+        "All AI model settings from #settings/ai-models and #understanding/t4 combined at #settings/ai-models",
+        "#understanding/t4 shows read-only display of current T4 model with 'Edit in Settings \u00e2\u2020\u2019 AI Models' link",
+        "New OCR LLM model setting added with default Google Gemini 2.5 Flash",
+        "OCR model selectable from existing provider dropdown list",
+        "Settings saved to settings.json atomically via config-store",
+        "Regression test for settings save/load with new OCR field",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Settings: RainbowAI/src/assistant/data/settings.json \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add staffName field",
-        "Config store: RainbowAI/src/assistant/config-store.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd read/write staffName",
-        "Live chat core: RainbowAI/src/public/js/modules/live-chat-core.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd top-right header area",
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd attach staffName to manual messages",
-        "Admin API: add GET/PUT /api/rainbow/settings/staff-name endpoint",
-        "Message storage: ensure staffName field is persisted with message metadata in conversation logs"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-012",
-      "title": "Unit prefix on contact names in left pane",
-      "priority": 12,
-      "description": "As a staff member, I want contacts with an assigned unit to show the unit as a prefix in the left pane (e.g. 'C2-Jay') so I can instantly identify which capsule a guest occupies. Prefix only in left pane, not in chat header or contact details.",
-      "acceptanceCriteria": [
-        "Contacts with unit assigned show [Unit]-[Name] format in left pane (e.g. 'C2-Jay')",
-        "Prefix only in left pane conversation list, not in chat header or contact details",
-        "No prefix if no unit assigned \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd name displays normally",
-        "Prefix updates immediately when unit changed in Contact Details",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd conversation list name rendering",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd contact data with unit field",
-        "Create a shared getDisplayName(contact) helper that formats: [Unit]-[Name] - [DateCode]",
-        "This helper will be reused by US-014 (date suffix) \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd design it to handle both prefix and suffix",
-        "No nested template literals in JS HTML generation"
-      ],
-      "dependencies": [
-        "US-010"
-      ],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-013",
-      "title": "Unit/capsule filter in left pane",
-      "priority": 13,
-      "description": "As a staff member, I want a 'Unit' filter button next to Favourites/Groups in the left pane so I can view all conversations for a specific capsule unit \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd useful for troubleshooting maintenance issues mentioned in past chats.",
-      "acceptanceCriteria": [
-        "A 'Unit' filter button/tab in left pane filter row next to All/Unread/Favourites/Groups",
-        "Clicking Unit opens dropdown showing available unit/capsule options",
-        "Selecting a unit filters conversations to contacts assigned to that unit",
-        "Filter can be cleared to return to full list",
-        "Works alongside other filters (search, tags)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd filter tabs row",
-        "Live chat state: RainbowAI/src/public/js/modules/live-chat-state.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add unitFilter to filter state",
-        "Unit list: comes from capsule cache (US-010) + custom entries",
-        "Filter pipeline: add unitFilter check after existing tab/search/tag filters",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd style the Unit filter button and dropdown"
-      ],
-      "dependencies": [
-        "US-010"
-      ],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-014",
-      "title": "Check-in/check-out date suffix on contact names",
-      "priority": 14,
-      "description": "As a staff member, I want contacts with check-in/check-out dates to show a short date code suffix in the left pane (e.g. 'Jay - 310101'). Format: [check-in day 2 digits][check-out day 2 digits][check-in month 2 digits]. Example: Check-in 31/1/25 + Check-out 1/2/25 = 310101. Combined with unit: 'C2-Jay - 310101'.",
-      "acceptanceCriteria": [
-        "Contacts with both check-in and check-out dates show suffix: [Name] - [DDDDMM]",
-        "Format: [check-in day][check-out day][check-in month], all zero-padded",
-        "If combined with unit prefix: [Unit]-[Name] - [DateCode] (e.g. 'C2-Jay - 310101')",
-        "Suffix only in left pane, not in chat header",
-        "No suffix if dates not set",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "Live chat panels: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd name rendering",
-        "Reuse getDisplayName(contact) helper from US-012 \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd extend to handle date suffix",
-        "Contact data: check where checkIn/checkOut dates are stored in contact metadata",
-        "Date format function: pad day/month to 2 digits, concatenate as DDDDMM string",
-        "Contact details panel: ensure date fields exist in Contact Details UI for setting check-in/check-out"
-      ],
-      "dependencies": [
-        "US-012"
-      ],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-015",
-      "title": "Custom message templates with / command palette",
-      "priority": 15,
-      "description": "As a staff member, I want to type / in the Live Chat message input to see and select predefined message templates so I can send common replies instantly. All static replies are available as defaults. Users can add more custom templates. Input placeholder: 'Type a message or type / to see custom commands'.",
-      "acceptanceCriteria": [
-        "Typing / in Live Chat message input opens a command palette/dropdown above the input",
-        "All static replies from responses/quick-replies are available as default custom messages",
-        "User can add new custom message templates via management UI",
-        "Command palette shows template name and preview of content",
-        "Selecting a template inserts content into message input (editable before sending)",
-        "Input placeholder reads: 'Type a message or type / to see custom commands'",
-        "Custom messages stored in Rainbow AI local JSON storage (atomic write)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd message input handler",
-        "Static replies: RainbowAI/src/assistant/data/ \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd check for static-replies.json or similar",
-        "Admin API for templates: RainbowAI/src/routes/admin/templates.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd existing template endpoints",
-        "New data file: RainbowAI/data/custom-messages.json for user-created templates",
-        "Command palette UI: absolute-positioned dropdown above input, filtered by typed text after /",
-        "Keyboard nav: arrow keys to navigate, Enter to select, Escape to close",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd style the command palette dropdown"
+        "Settings AI models module: RainbowAI/src/public/js/modules/settings-ai-models.js (546 lines \u00e2\u20ac\u201d drag-drop reorder, speed testing)",
+        "Settings template: RainbowAI/src/public/templates/tabs/settings.html",
+        "Understanding template: RainbowAI/src/public/templates/tabs/understanding.html (756 lines \u00e2\u20ac\u201d T4 section has LLM model selector, fallback list, max_tokens, temperature, system prompt)",
+        "Understanding module: RainbowAI/src/public/js/modules/understanding.js",
+        "Settings data: RainbowAI/src/assistant/data/settings.json (17 providers, routing_mode.classifyProvider is the T4 model config key)",
+        "T4 model structure in understanding.html: select dropdown for LLM model, fallback model list, max_tokens slider, temperature slider, system prompt editor",
+        "Add ocr_provider field to settings.json: { id: 'google-gemini-flash', model: 'gemini-2.5-flash' }",
+        "Consolidation: Move T4 model selector + fallback + max_tokens + temperature from understanding.html into settings-ai-models.js",
+        "Replace T4 section with read-only display showing current model name + link to #settings/ai-models"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
-      "id": "US-016",
-      "title": "Workflow triggers with // command palette",
-      "priority": 16,
-      "description": "As a staff member, I want to type // in the message input to trigger a workflow (check-in flow, complaint escalation) from a workflow palette. Selecting a workflow triggers the workflow executor for the current conversation. // palette is visually distinct from / palette.",
+      "id": "US-012",
+      "title": "Move Staff name to 3-dot vertical menu",
+      "priority": 12,
+      "description": "As a staff member, I want the Staff name moved from the header area into the 3-dot vertical menu in #live-chat to reduce header clutter. The edit-to-change-name functionality should remain.",
       "acceptanceCriteria": [
-        "Typing // in Live Chat message input opens a workflow palette/dropdown",
-        "Available workflows listed from Rainbow AI workflow definitions",
-        "Selecting a workflow triggers workflow executor for current conversation",
-        "Workflow execution status shown inline in chat (e.g. 'Workflow check-in started...')",
-        "/ and // palettes are visually distinct (different header or icon)",
+        "Staff name no longer shows directly in the header beside connection status",
+        "Staff name accessible via the 3-dot menu (vertical ellipsis icon)",
+        "3-dot menu shows 'Staff: [name]' with click-to-edit option",
+        "Staff name persists after editing (saved to settings.json)",
+        "Regression test for staff name save/load from menu",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Workflow executor: RainbowAI/src/assistant/workflow-executor.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd existing workflow engine",
-        "Workflow definitions: check RainbowAI/src/assistant/data/ for workflow JSON files",
-        "Reuse command palette infrastructure from US-015 \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd detect // vs / prefix to show different dropdown",
-        "Admin API: may need POST /api/rainbow/workflows/:id/trigger endpoint to start workflow for a contact",
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd extend / handler for //",
-        "Workflow status: render as system message in chat bubbles (gray, centered, italic)"
+        "Staff name in header: RainbowAI/src/public/js/modules/live-chat-core.js",
+        "Settings: RainbowAI/src/assistant/data/settings.json (field: staffName, default: 'Staff')",
+        "Live chat template: RainbowAI/src/public/templates/tabs/live-chat.html",
+        "3-dot menu: existing vertical ellipsis icon in the header area near 'New chat' button",
+        "Move the staff name element from header into the 3-dot dropdown menu items"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-013",
+      "title": "Add Check-in Process test suite",
+      "priority": 13,
+      "description": "As a tester, I want a dedicated 'Check-in Process' test suite in the Run All dropdown that tests the complete check-in workflow with 10+ edge cases from easy to hard, including different languages and error scenarios.",
+      "acceptanceCriteria": [
+        "New 'Check-in Process' option in Run All test suite dropdown",
+        "10+ scenarios ordered easy to hard: basic inquiry, specific date, multiple guests, capsule preference, special requests, late arrival, early arrival, fully booked, wrong date format, multilingual (en/ms/zh)",
+        "Tests run programmatically and report pass/fail per scenario",
+        "Results include: matched intent, confidence, response quality assessment",
+        "Failed tests logged with details for user story generation",
+        "Regression test for test suite runner functionality",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Autotest scenarios: RainbowAI/src/public/js/modules/autotest-scenarios.js",
+        "Autotest execution: RainbowAI/src/public/js/modules/autotest-execution.js",
+        "Autotest UI: RainbowAI/src/public/js/modules/autotest-ui.js",
+        "Add scenarios to autotest-scenarios.js with category 'check-in-process'",
+        "Run All dropdown: extend with new test suite filter option",
+        "Check-in intent keywords: RainbowAI/src/assistant/data/intent-keywords.json"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-014",
+      "title": "Run All tests programmatically and generate user stories",
+      "priority": 14,
+      "description": "As a developer, I want to run all autotest scenarios programmatically via API and get structured results so failed tests can be auto-converted to user stories for the next iteration.",
+      "acceptanceCriteria": [
+        "API endpoint POST /api/rainbow/testing/run-all triggers all tests",
+        "Returns JSON: { total, passed, failed, results: [{ scenario, expected, actual, confidence, error }] }",
+        "API endpoint GET /api/rainbow/testing/generate-stories converts failures to prd.json format",
+        "Generated stories include: title from failure, acceptance criteria from expected behavior",
+        "Can filter by test suite: ?suite=check-in-process or ?suite=workflow",
+        "Regression test for programmatic test runner",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Testing route: RainbowAI/src/routes/admin/testing.ts",
+        "Autotest execution: RainbowAI/src/public/js/modules/autotest-execution.js",
+        "Need backend version of test execution (frontend runs in browser, backend needs to call pipeline directly)",
+        "Use message-router.ts processMessage() to simulate each test scenario",
+        "Save results to RainbowAI/reports/autotest/ directory"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-015",
+      "title": "Enhance multi-turn workflow autotest to cover ALL turns",
+      "priority": 15,
+      "description": "As a tester, I want workflow autotests to simulate complete multi-turn conversations where the test answers ALL questions in a workflow (not just the first one). 21 workflow scenarios already exist in autotest-scenarios-workflow.js but some only test 1 turn. Enhance all scenarios to cover the full guest journey through every workflow step.",
+      "acceptanceCriteria": [
+        "All 21 existing workflow scenarios enhanced to include ALL turns (not just first message)",
+        "Each turn sends realistic guest response to the workflow question",
+        "Test verifies AI asks correct next question after each answer",
+        "Tests cover: check-in workflow (all steps), complaint workflow, booking workflow",
+        "Test validates workflow completion (final confirmation message)",
+        "Results show per-turn pass/fail, not just per-scenario",
+        "Regression test for multi-turn execution engine",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "21 workflow scenarios ALREADY EXIST: RainbowAI/src/public/js/modules/autotest-scenarios-workflow.js",
+        "Existing format: { id, name, category, messages: [{text}], validate: [{turn, rules}] }",
+        "Example: 'workflow-booking-payment-full' has 6 turns with per-turn validation rules",
+        "Execution engine: autotest-execution.js sends each message sequentially to /preview/chat with accumulated history",
+        "Workflow state tracking: testing-preview.ts uses previewWorkflowStates Map (key = firstMessage::history.length)",
+        "Issue: Some scenarios only define 1 message/turn but workflows need 3-6 turns to complete",
+        "Fix: Add full turn sequences (messages + validate arrays) to scenarios that currently only test first turn",
+        "Optimal concurrency: 2 workers (69.6% pass rate); 4+ causes rate limiting"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "large",
+      "passes": false
+    },
+    {
+      "id": "US-016",
+      "title": "Create user stories from autotest errors",
+      "priority": 16,
+      "description": "As a developer, after implementing multi-turn workflow tests and check-in suite, I want to run the full test suite and auto-generate user stories from any failures to feed the next development iteration.",
+      "acceptanceCriteria": [
+        "Full autotest suite runs including multi-turn workflow tests and check-in suite",
+        "All failures collected with: scenario name, expected vs actual, confidence, error details",
+        "User stories auto-generated in prd.json format from each failure category",
+        "Generated stories appended to prd.json or output as separate JSON file",
+        "At least 5 meaningful user stories generated from real test failures",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors"
+      ],
+      "technicalNotes": [
+        "Depends on US-014 (programmatic runner) and US-015 (multi-turn tests)",
+        "Use POST /api/rainbow/testing/run-all from US-014",
+        "Use GET /api/rainbow/testing/generate-stories from US-014 to convert",
+        "Output to: RainbowAI/reports/autotest/generated-stories.json",
+        "May also add generated stories directly to prd.json using a merge script"
       ],
       "dependencies": [
+        "US-014",
         "US-015"
       ],
       "estimatedComplexity": "medium",
@@ -455,227 +469,144 @@
     },
     {
       "id": "US-017",
-      "title": "WhatsApp read receipts (double tick / blue tick)",
+      "title": "Capsule Conflict Detection and Resolution Workflow",
       "priority": 17,
-      "description": "As a staff member, I want to see delivery and read status on sent messages: single grey tick (sent), double grey tick (delivered), double blue tick (read, best-effort). Tooltip disclaimer: 'Read receipts may not always be available'. Status updates in real-time from Baileys events.",
+      "description": "As a capsule operator, I want Rainbow AI to detect capsule occupancy conflicts (guest finds someone in their assigned capsule), notify the operator via WhatsApp, use LLM to suggest resolution, and execute approved changes. Covers: wrong updates, unauthorized capsule switches, and unknown occupants.",
       "acceptanceCriteria": [
-        "Sent messages show single grey tick when sent",
-        "Double grey ticks when delivered to recipient device",
-        "Double blue ticks when read (best-effort \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd Baileys detection)",
-        "Tooltip on hover: 'Read receipts may not always be available'",
-        "Tick status updates in real-time from Baileys status events",
-        "If read receipt data unavailable, show delivery ticks only (no false blue ticks)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd listen for messages.update with status field",
-        "Baileys status values: PENDING=0, SERVER_ACK=1, DELIVERY_ACK=2, READ=3, PLAYED=4",
-        "Backend: emit message status updates via SSE or WebSocket to frontend",
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add tick icons to sent bubbles",
-        "Tick SVG: small checkmark icons, grey (#667781) for sent/delivered, blue (#53bdeb) for read",
-        "Live chat state: track message status per message ID for real-time updates",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-core.css \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd tick icon styles"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "medium",
-      "passes": false
-    },
-    {
-      "id": "US-018",
-      "title": "Quick reply image attachments",
-      "priority": 18,
-      "description": "As a staff member, I want to attach images to quick replies in #responses/quick-replies so I can send visual content (maps, menus, room photos) as part of predefined responses. Backward compatible \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd text-only replies still work.",
-      "acceptanceCriteria": [
-        "Quick reply editor in #responses/quick-replies has an Add Image button/field",
-        "User can upload image files (jpg, png, webp)",
-        "Image stored in Rainbow AI local storage (RainbowAI/uploads/ or equivalent)",
-        "When quick reply is triggered, image sent along with text via WhatsApp",
-        "Image preview shown in quick reply editor",
-        "Quick replies without images continue to work as text-only (backward compatible)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "Quick replies UI: RainbowAI/src/public/templates/tabs/static-replies.html \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd reply editor",
-        "Templates admin API: RainbowAI/src/routes/admin/templates.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd CRUD for quick replies",
-        "Add image upload endpoint: POST /api/rainbow/uploads with multer middleware",
-        "Image sending via Baileys: use sendMessage with { image: { url: filePath }, caption: text }",
-        "WhatsApp instance: RainbowAI/src/lib/whatsapp/instance.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd extend sendMessage to handle image type",
-        "Storage: create RainbowAI/uploads/ directory for uploaded images, add to .gitignore",
-        "Quick reply data model: add optional imageUrl field to reply schema"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "medium",
-      "passes": false
-    },
-    {
-      "id": "US-019",
-      "title": "Scheduled messages backend (scheduler service + storage)",
-      "priority": 19,
-      "description": "As a staff member, I want to schedule messages for future send times. This story covers the backend: a scheduler service that checks pending scheduled messages and sends them at the right time, with JSON storage using atomic writes. Must survive server restarts by loading pending schedules on startup.",
-      "acceptanceCriteria": [
-        "Scheduled messages stored in RainbowAI/data/scheduled-messages.json (atomic write)",
-        "Each scheduled message has: id, phone, content, scheduledAt (ISO datetime), status, createdBy",
-        "Background scheduler (setInterval) checks pending messages every 30 seconds",
-        "Messages sent within 60 seconds of scheduled time via WhatsApp",
-        "Sent messages marked as 'sent' with sentAt timestamp",
-        "Scheduler loads pending messages on server startup (survives restarts)",
-        "Admin API: POST /api/rainbow/scheduled-messages (create), GET (list), DELETE/:id (cancel), PUT/:id (edit)",
+        "Rainbow AI detects capsule conflict from guest messages (e.g. 'someone is in my capsule')",
+        "New intent 'capsule_conflict' added with keywords and examples in en/ms/zh",
+        "AI checks capsule assignment data via dashboard API (port 5000 /api/capsules)",
+        "AI sends WhatsApp notification to capsule operator with conflict details",
+        "AI uses LLM to analyze situation and suggest resolution actions",
+        "For capsule switch: AI suggests updating both capsule assignments with operator approval",
+        "For unknown person: AI suggests physical inspection and waits for operator decision",
+        "Operator can approve/reject via WhatsApp reply (simple 'yes'/'no' or '1'/'2' options)",
+        "After approval: AI updates capsule assignment in system and confirms to guest",
+        "All conflict events logged to conversation history for audit",
+        "Regression tests for: intent detection, operator notification, approval flow",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors"
       ],
       "technicalNotes": [
-        "New file: RainbowAI/src/lib/message-scheduler.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd singleton scheduler service",
-        "Config store pattern: RainbowAI/src/assistant/config-store.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd reuse atomic write for scheduled-messages.json",
-        "WhatsApp sending: use existing sendMessage from whatsapp/instance.ts",
-        "Admin routes: add new route file RainbowAI/src/routes/admin/scheduled.ts",
-        "Register in: RainbowAI/src/routes/admin/index.ts",
-        "Initialize scheduler on server start in RainbowAI/src/index.ts or server entry",
-        "Timezone: use Asia/Kuala_Lumpur (MYT UTC+8) for all schedule times",
-        "Cleanup: auto-delete sent messages older than 30 days to prevent JSON bloat"
+        "New intent: Add capsule_conflict to intent-keywords.json and intent-examples.json",
+        "Routing: Add capsule_conflict to routing.json with action escalate_capsule_conflict",
+        "Capsule data: RainbowAI/src/lib/capsule-cache.ts for checking assignments via HTTP to port 5000",
+        "Staff notification: RainbowAI/src/lib/whatsapp/instance.ts sendMessage to operator phone",
+        "LLM analysis: RainbowAI/src/assistant/ai-client.ts with capsule conflict analysis prompt",
+        "Approval flow: Store pending approvals in RainbowAI/data/pending-approvals.json (atomic write)",
+        "Operator reply detection: Listen for staff phone messages in message-router.ts, match pending approval ID",
+        "Staff phones: settings.json \u00e2\u2020\u2019 staff.phones array",
+        "Multi-language: All messages to guest and operator need en/ms/zh variants",
+        "New pipeline stage or action handler needed in action-dispatch.ts for escalate_capsule_conflict"
       ],
       "dependencies": [],
       "estimatedComplexity": "large",
       "passes": false
     },
     {
-      "id": "US-020",
-      "title": "Scheduled messages UI (date picker + management view)",
-      "priority": 20,
-      "description": "As a staff member, I want a Schedule button (clock icon) in the Live Chat input area that opens a date/time picker. After scheduling, messages appear in a Scheduled section. I can edit or cancel scheduled messages before they are sent.",
+      "id": "US-018",
+      "title": "Update User Guide and Developer Guide",
+      "priority": 18,
+      "description": "As a staff member or developer, I want the guides at #help to reflect all Phase 5 changes \u00e2\u20ac\u201d bug fixes, new features, consolidated settings, test infrastructure improvements, and capsule conflict workflow.",
       "acceptanceCriteria": [
-        "Schedule button (clock icon) in Live Chat message input area",
-        "Clicking opens date/time picker for future send time",
-        "User composes message, sets date/time, confirms",
-        "Scheduled messages visible in a Scheduled section accessible from chat",
-        "User can edit or cancel a scheduled message before it is sent",
-        "Sent scheduled messages appear in conversation as normal messages",
+        "User guide updated: KB Accuracy Tester location, consolidated AI settings, OCR model, capsule conflict handling",
+        "Developer guide updated: new test suites, programmatic testing API, multi-turn test format, new intents/routes",
+        "Bug fixes mentioned in a changelog or 'Recent Changes' section",
+        "Staff name moved to menu documented in user guide",
+        "Capsule conflict workflow documented with operator instructions",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
         "Verify in browser using agent-browser"
       ],
       "technicalNotes": [
-        "Live chat actions: RainbowAI/src/public/js/modules/live-chat-actions.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add schedule button next to send",
-        "Date picker: use native HTML datetime-local input or a lightweight picker library",
-        "Scheduled messages list: could be a panel/drawer accessible via a clock icon in the header",
-        "API calls to: POST/GET/PUT/DELETE /api/rainbow/scheduled-messages (from US-019)",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd schedule button and picker styles",
-        "Live chat features: RainbowAI/src/public/js/modules/live-chat-features.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd scheduled messages panel"
+        "User guide: RainbowAI/src/public/templates/tabs/help-user-guide.html",
+        "Developer guide: RainbowAI/src/public/templates/tabs/help-developer-guide.html",
+        "Help module: RainbowAI/src/public/js/modules/help.js",
+        "Depends on all other stories being complete",
+        "Include links to relevant settings pages and test tools"
       ],
       "dependencies": [
-        "US-019"
+        "US-001",
+        "US-002",
+        "US-003",
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008",
+        "US-009",
+        "US-010",
+        "US-011",
+        "US-012",
+        "US-013",
+        "US-014",
+        "US-015",
+        "US-016",
+        "US-017"
       ],
       "estimatedComplexity": "medium",
-      "passes": false
-    },
-    {
-      "id": "US-021",
-      "title": "Repeating scheduled messages (daily/weekly/monthly)",
-      "priority": 21,
-      "description": "As a staff member, I want to set scheduled messages to repeat daily, weekly, or monthly for recurring communications (cleaning reminders, payment notices). Each repeat is logged in conversation. User can stop/pause repeating schedules.",
-      "acceptanceCriteria": [
-        "When scheduling a message, user can set repeat: None, Daily, Weekly, Monthly",
-        "Repeating messages execute at same time on their repeat cycle",
-        "Each repeat instance logged in conversation",
-        "User can stop/pause a repeating schedule at any time",
-        "Repeating config stored with scheduled message in JSON storage",
-        "Scheduled Messages management view shows all active repeating messages",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "Message scheduler: RainbowAI/src/lib/message-scheduler.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd extend to handle repeat logic",
-        "After sending a repeating message: calculate next occurrence and create new pending entry",
-        "Repeat logic: Daily = +1 day, Weekly = +7 days, Monthly = same day next month",
-        "Data model: add repeatFrequency (none/daily/weekly/monthly) and repeatEndDate (optional) fields",
-        "UI: extend the date picker from US-020 with a repeat frequency dropdown",
-        "Management view: show repeat icon and frequency label in scheduled messages list"
-      ],
-      "dependencies": [
-        "US-020"
-      ],
-      "estimatedComplexity": "medium",
-      "passes": false
-    },
-    {
-      "id": "US-022",
-      "title": "Payment reminder system with badges and auto-send",
-      "priority": 22,
-      "description": "As a staff member, I want to set a payment reminder with due date in Contact Details so I get notified when payment is overdue. The contact gets a special badge in the left pane, a notification appears at top-left, and optionally a payment chase message is auto-sent.",
-      "acceptanceCriteria": [
-        "In Contact Details below Payment section: Set Reminder control with date picker",
-        "When reminder date arrives: contact shows special badge (red/orange) in left pane",
-        "Notification indicator at top-left of Live Chat (bell icon with count)",
-        "Optional checkbox to auto-send predefined payment chase message on reminder date",
-        "Auto-send message template is configurable/editable by user",
-        "User can dismiss/snooze the reminder",
-        "Reminder data stored in Rainbow AI local JSON storage (atomic write)",
-        "Multiple contacts can have independent payment reminders",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
-      ],
-      "technicalNotes": [
-        "New data file: RainbowAI/data/payment-reminders.json \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd array of { phone, dueDate, autoSend, template, status }",
-        "Message scheduler: RainbowAI/src/lib/message-scheduler.ts \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd extend to check payment reminders",
-        "Contact details panel: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add reminder UI below Payment",
-        "Left pane badges: RainbowAI/src/public/js/modules/live-chat-panels.js \u00c3\u0192\u00c6\u2019\u00c3\u201a\u00c2\u00a2\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u201a\u00ac\u00c5\u00a1\u00c3\u201a\u00c2\u00ac\u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00af\u00c2\u00bf\u00c2\u00bd add badge rendering for overdue contacts",
-        "Notification bell: add to Live Chat header area, count overdue reminders",
-        "Admin API: add GET/POST/DELETE /api/rainbow/payment-reminders endpoints",
-        "Default chase template: 'Hi [Name], this is a friendly reminder about your pending payment. Please let us know if you have any questions.'",
-        "Template must have en/ms/zh variants per Rainbow convention"
-      ],
-      "dependencies": [
-        "US-019"
-      ],
-      "estimatedComplexity": "large",
       "passes": false
     }
   ],
   "technicalContext": {
     "affectedAreas": [
-      "RainbowAI/src/public/js/components/chat-renderer.js",
-      "RainbowAI/src/public/js/modules/live-chat-core.js",
-      "RainbowAI/src/public/js/modules/live-chat-state.js",
+      "RainbowAI/src/public/js/modules/chat-send.js",
+      "RainbowAI/src/public/js/modules/autotest-scenarios.js",
+      "RainbowAI/src/public/js/modules/autotest-scenarios-workflow.js",
+      "RainbowAI/src/public/js/modules/autotest-execution.js",
+      "RainbowAI/src/public/js/modules/autotest-ui.js",
+      "RainbowAI/src/public/js/modules/autotest-history.js",
+      "RainbowAI/src/public/js/modules/workflow-testing.js",
+      "RainbowAI/src/public/js/modules/testing.js",
+      "RainbowAI/src/public/js/modules/responses-crud.js",
       "RainbowAI/src/public/js/modules/live-chat-panels.js",
+      "RainbowAI/src/public/js/modules/live-chat-core.js",
       "RainbowAI/src/public/js/modules/live-chat-actions.js",
-      "RainbowAI/src/public/js/modules/live-chat-features.js",
       "RainbowAI/src/public/js/modules/live-chat.js",
-      "RainbowAI/src/public/js/module-chunks/live-chat-chunk.js",
-      "RainbowAI/src/public/js/modules/intent-manager.js",
+      "RainbowAI/src/public/js/modules/settings-ai-models.js",
+      "RainbowAI/src/public/js/modules/llm-settings.js",
+      "RainbowAI/src/public/js/modules/understanding.js",
+      "RainbowAI/src/public/js/modules/knowledge.js",
+      "RainbowAI/src/public/js/modules/kb-editor.js",
+      "RainbowAI/src/public/js/modules/help.js",
+      "RainbowAI/src/public/js/features/workflow-tester.js",
+      "RainbowAI/src/public/js/module-chunks/chat-simulator-chunk.js",
       "RainbowAI/src/public/templates/tabs/chat-simulator.html",
-      "RainbowAI/src/public/templates/tabs/static-replies.html",
+      "RainbowAI/src/public/templates/tabs/preview.html",
+      "RainbowAI/src/public/templates/tabs/settings.html",
+      "RainbowAI/src/public/templates/tabs/live-chat.html",
+      "RainbowAI/src/public/templates/tabs/testing.html",
+      "RainbowAI/src/public/templates/tabs/help-user-guide.html",
+      "RainbowAI/src/public/templates/tabs/help-developer-guide.html",
       "RainbowAI/src/public/css/rainbow-livechat-core.css",
       "RainbowAI/src/public/css/rainbow-livechat-ui.css",
+      "RainbowAI/src/routes/admin/testing.ts",
+      "RainbowAI/src/routes/admin/testing-preview.ts",
+      "RainbowAI/src/routes/admin/templates.ts",
+      "RainbowAI/src/routes/admin/tags.ts",
+      "RainbowAI/src/routes/admin/capsules.ts",
+      "RainbowAI/src/routes/admin/conversations.ts",
+      "RainbowAI/src/routes/admin/knowledge-base.ts",
+      "RainbowAI/src/routes/admin/index.ts",
+      "RainbowAI/src/assistant/data/settings.json",
+      "RainbowAI/src/assistant/data/intent-keywords.json",
+      "RainbowAI/src/assistant/data/intent-examples.json",
       "RainbowAI/src/assistant/message-router.ts",
       "RainbowAI/src/assistant/ai-client.ts",
       "RainbowAI/src/assistant/config-store.ts",
-      "RainbowAI/src/assistant/knowledge-base.ts",
-      "RainbowAI/src/assistant/workflow-executor.ts",
-      "RainbowAI/src/assistant/conversation-logger.ts",
-      "RainbowAI/src/assistant/data/settings.json",
-      "RainbowAI/src/lib/whatsapp/instance.ts",
-      "RainbowAI/src/routes/admin/index.ts",
-      "RainbowAI/src/routes/admin/testing.ts",
-      "RainbowAI/src/routes/admin/conversations.ts",
-      "RainbowAI/src/routes/admin/whatsapp.ts",
-      "RainbowAI/src/routes/admin/templates.ts"
+      "RainbowAI/src/lib/capsule-cache.ts",
+      "RainbowAI/src/lib/whatsapp/instance.ts"
     ],
     "newFiles": [
-      "RainbowAI/src/lib/capsule-cache.ts",
-      "RainbowAI/src/lib/message-scheduler.ts",
-      "RainbowAI/src/routes/admin/scheduled.ts",
-      "RainbowAI/data/tags.json",
-      "RainbowAI/data/custom-units.json",
-      "RainbowAI/data/custom-messages.json",
-      "RainbowAI/data/scheduled-messages.json",
-      "RainbowAI/data/payment-reminders.json"
+      "RainbowAI/data/pending-approvals.json"
     ],
-    "testingStrategy": "TypeScript compilation + curl endpoint verification + agent-browser dashboard visual verification for each UI story",
-    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/public/ RainbowAI/src/lib/ RainbowAI/src/assistant/ RainbowAI/src/routes/admin/"
+    "testingStrategy": "Regression tests for every change + programmatic autotest runner (US-014) + multi-turn workflow tests (US-015) + agent-browser visual verification for UI changes",
+    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/public/ RainbowAI/src/routes/ RainbowAI/src/assistant/ RainbowAI/src/lib/",
+    "crossCuttingConcerns": {
+      "regressionTests": "Every user story must include regression tests that verify the fix/feature works and existing features are not broken",
+      "agentBrowserVerification": "All UI-affecting stories must be verified using agent-browser skill before marking complete",
+      "importBoundaries": "RainbowAI/ must have ZERO imports from server/, client/, or shared/ \u00e2\u20ac\u201d HTTP fetch only for cross-module data",
+      "atomicWrites": "All new JSON data files use config-store.ts atomic write pattern (.tmp then renameSync)"
+    }
   }
 }

@@ -94,13 +94,13 @@ export function showAutotestHistory() {
 
   if (!modal || !listEl) return;
 
-  const autotestHistory = window.autotestHistory || [];
-  const importedReports = window.importedReports || [];
+  const historyArr = window.getAutotestHistory ? window.getAutotestHistory() : [];
+  const importedArr = window.getImportedReports ? window.getImportedReports() : [];
 
   // Combine and sort all reports by timestamp (newest first)
   const allReports = [
-    ...autotestHistory.map(r => ({ ...r, source: 'local' })),
-    ...importedReports.map(r => ({ ...r, source: 'imported' }))
+    ...historyArr.map(r => ({ ...r, source: 'local' })),
+    ...importedArr.map(r => ({ ...r, source: 'imported' }))
   ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   if (allReports.length === 0) {
@@ -151,8 +151,8 @@ export function openImportedReport(filename) {
 }
 
 export function loadHistoricalReport(reportId) {
-  const autotestHistory = window.autotestHistory || [];
-  const report = autotestHistory.find(r => r.id === reportId);
+  const historyArr = window.getAutotestHistory ? window.getAutotestHistory() : [];
+  const report = historyArr.find(r => r.id === reportId);
   if (!report) return;
 
   // Set as current report
@@ -171,7 +171,7 @@ export function loadHistoricalReport(reportId) {
   // Render results
   resultsEl.innerHTML = '';
   for (const r of report.results) {
-    const card = window.renderAutotestResult ? window.renderAutotestResult(r) : '';
+    const card = renderScenarioCard(r);
     if (typeof card === 'string') {
       resultsEl.insertAdjacentHTML('beforeend', card);
     } else if (card instanceof Node) {
@@ -187,8 +187,8 @@ export function loadHistoricalReport(reportId) {
 }
 
 export function exportHistoricalReport(reportId) {
-  const autotestHistory = window.autotestHistory || [];
-  const report = autotestHistory.find(r => r.id === reportId);
+  const historyArr = window.getAutotestHistory ? window.getAutotestHistory() : [];
+  const report = historyArr.find(r => r.id === reportId);
   if (!report) return;
   exportAutotestReport(report, 'all');
 }
@@ -197,8 +197,7 @@ export function clearAutotestHistoryUI() {
   if (!confirm('Are you sure you want to clear all autotest history? This cannot be undone.')) {
     return;
   }
-  window.autotestHistory = [];
-  if (window.saveAutotestHistory) window.saveAutotestHistory();
+  if (window.clearAutotestHistoryData) window.clearAutotestHistoryData();
   if (window.updateHistoryButtonVisibility) window.updateHistoryButtonVisibility();
   closeAutotestHistory();
 }
@@ -345,9 +344,8 @@ document.addEventListener('click', function (event) {
 });
 
 // ─── Auto-Init ───────────────────────────────────────────────────────────
-// ES6 modules execute after DOMContentLoaded, so DOM is ready
-if (window.loadAutotestHistory) window.loadAutotestHistory();
-if (window.updateHistoryButtonVisibility) window.updateHistoryButtonVisibility();
+// Note: loadAutotestHistory() is called in testing-chunk.js AFTER window registrations.
+// The previous auto-init here ran before window.* was set, so it was a dead call.
 
 // Update dynamic scenario count
 const scenarioCountEl = document.getElementById('scenario-count');

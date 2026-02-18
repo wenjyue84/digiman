@@ -76,7 +76,7 @@ window.updateHistoryButtonVisibility = updateHistoryButtonVisibility;
 window.getAutotestHistory = getAutotestHistory;
 window.getImportedReports = getImportedReports;
 window.addToAutotestHistory = addToAutotestHistory;
-window.clearAutotestHistory = clearAutotestHistory;
+window.clearAutotestHistoryData = clearAutotestHistory;
 window.clearImportedReports = clearImportedReports;
 
 // Phase 31: Autotest Execution Core
@@ -107,5 +107,11 @@ window.exportHistoricalReport = exportHistoricalReport;
 window.clearAutotestHistory = clearAutotestHistoryUI;
 window.toggleExportDropdown = toggleExportDropdown;
 window.exportAutotestReport = exportAutotestReport;
+
+// Load autotest history from localStorage on chunk load
+// Must happen AFTER window registrations so autotest-ui.js auto-init can find them
+loadAutotestHistory().then(() => {
+  updateHistoryButtonVisibility();
+});
 
 console.log('[LazyChunk] Testing modules registered');
