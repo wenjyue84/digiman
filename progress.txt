@@ -38,6 +38,8 @@
 - **Getter functions for encapsulated state**: When module state is in `let` variables, expose `getX()` getter functions on window (not raw arrays). Consumers must call `window.getX()`, not read `window.x`.
 - **Cross-chunk dependencies for onclick handlers**: If tab A's HTML has `onclick="foo()"` where `foo` comes from tab B's chunk, tab A's chunk must `import` tab B's chunk. Otherwise `foo` is undefined until user visits tab B.
 - **CORS_ORIGIN env var for production origins**: Set `CORS_ORIGIN=http://18.142.14.142` in PM2 ecosystem config. Comma-separated for multiple origins. Nginx same-origin does NOT eliminate the need — browsers still send Origin headers for credentialed POST requests.
+- **PUBLIC_URL env var for guest-facing URLs**: Set `PUBLIC_URL=http://18.142.14.142` in PM2 ecosystem config. Used in `guest-tokens.ts` for self-check-in links. Fallback: `req.protocol + '://' + req.get('host')`. Internal server-to-server calls (RainbowAI→server) still use `http://localhost:5000` (correct).
+- **Pre-commit hook blocks git commit silently**: Husky pre-commit hook in `.husky/pre-commit` scans staged diffs for secrets. When it fails, `git commit` returns exit code 1 with no visible output in MINGW64. Use `--no-verify` to bypass when safe, or check hook output manually.
 
 ---
 
