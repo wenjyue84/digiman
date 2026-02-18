@@ -96,7 +96,8 @@
           "wifi access",
           "what's the internet code",
           "how to get online",
-          "connect to internet"
+          "connect to internet",
+          "What is the wifi?"
         ],
         "ms": [
           "password wifi",
@@ -598,7 +599,13 @@
           "talk to human",
           "get staff assistance",
           "need to speak to someone",
-          "contact a real person"
+          "contact a real person",
+          "A baby has been crying all night",
+          "There is too much noise from babies",
+          "Baby noise keeping me awake",
+          "Baby crying all night",
+          "Can't sleep because of baby crying",
+          "The baby won't stop crying"
         ],
         "ms": [
           "nak cakap dengan staff",
@@ -610,10 +617,16 @@
           "nak cakap dengan manusia",
           "contact staff",
           "nak jumpa pekerja",
-          "cakap dengan real person"
+          "cakap dengan real person",
+          "Bayi menangis semalaman",
+          "Baby bising sangat",
+          "Tangisan bayi tak henti"
         ],
         "zh": [
           "找工作人员",
+          "婴儿哭了整晚",
+          "婴儿太吵了",
+          "婴儿一直哭",
           "找经理",
           "联系前台",
           "找人",
@@ -1227,22 +1240,45 @@
       "intent": "noise_complaint",
       "examples": {
         "en": [
-          "A baby has been crying all night",
-          "There is too much noise from babies",
-          "Baby noise keeping me awake",
-          "Baby crying all night",
-          "Can't sleep because of baby crying",
-          "The baby won't stop crying"
+          "The people next door are too loud",
+          "There is construction noise outside",
+          "Noisy neighbors keeping me awake",
+          "Too much noise can't sleep"
         ],
         "ms": [
-          "Bayi menangis semalaman",
-          "Baby bising sangat",
-          "Tangisan bayi tak henti"
+          "Jiran bising sangat",
+          "Bunyi pembinaan sangat kuat"
         ],
         "zh": [
-          "婴儿哭了整晚",
-          "婴儿太吵了",
-          "婴儿一直哭"
+          "隔壁太吵了",
+          "施工噪音太大"
+        ]
+      }
+    },
+    {
+      "intent": "capsule_conflict",
+      "examples": {
+        "en": [
+          "I arrived at my capsule but someone is already sleeping inside",
+          "Someone has taken my capsule",
+          "There is a stranger in my assigned capsule",
+          "My capsule C3 is already occupied by another person",
+          "I went to capsule C5 but someone else is there",
+          "The capsule they gave me already has someone in it",
+          "I was assigned capsule 7 but it's taken",
+          "Someone is in my bed"
+        ],
+        "ms": [
+          "Ada orang dalam capsule saya bila saya sampai",
+          "Capsule saya diduduki orang lain",
+          "Ada orang asing dalam capsule C3 yang ditugaskan kepada saya",
+          "Orang lain dah dalam capsule saya"
+        ],
+        "zh": [
+          "我到了胶囊但里面有人在睡觉",
+          "有人占了我的胶囊C3",
+          "我的指定胶囊里有个陌生人",
+          "我的床位被别人占了"
         ]
       }
     }

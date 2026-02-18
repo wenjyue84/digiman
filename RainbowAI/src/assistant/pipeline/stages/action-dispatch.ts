@@ -138,6 +138,12 @@ async function handleStaticReply(
       state.response = result.response;
     }
   }
+
+  // Attach image if the static reply has one configured
+  const imageUrl = context.getStaticReplyImageUrl(result.intent);
+  if (imageUrl) {
+    state.imageUrl = imageUrl;
+  }
 }
 
 /**

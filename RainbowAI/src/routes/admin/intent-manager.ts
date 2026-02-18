@@ -2,15 +2,13 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import axios from 'axios';
 import { readFile } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { configStore } from '../../assistant/config-store.js';
 import { getIntentConfig, updateIntentConfig, getIntentTiersFilePath } from '../../assistant/intent-config.js';
 import { badRequest, serverError } from './http-utils.js';
 import { atomicWriteJSON } from './file-utils.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(__dirname, '../../assistant/data');
+const DATA_DIR = join(process.cwd(), 'src', 'assistant', 'data');
 const LLM_SETTINGS_PATH = join(DATA_DIR, 'llm-settings.json');
 const SETTINGS_PATH = join(DATA_DIR, 'settings.json');
 

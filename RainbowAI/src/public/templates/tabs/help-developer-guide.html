@@ -6,6 +6,31 @@
     <p class="text-neutral-600">Comprehensive architecture, pipeline internals, API reference, and troubleshooting for developers and AI coding agents</p>
   </div>
 
+  <!-- Phase 5 Developer Changelog (US-018) -->
+  <div class="bg-neutral-900 text-green-400 rounded-2xl p-5 mb-6 font-mono text-xs leading-relaxed">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-yellow-400 text-sm font-bold">// Phase 5 Changelog — Feb 2026</span>
+    </div>
+    <div class="space-y-1">
+      <div><span class="text-neutral-500">// NEW ROUTES</span></div>
+      <div>POST /api/rainbow/testing/run-all — programmatic test runner, accepts scenarios[], returns {total,passed,failed,results}</div>
+      <div>GET  /api/rainbow/testing/generate-stories — converts latest test failures to prd.json user stories</div>
+      <div class="mt-2"><span class="text-neutral-500">// NEW INTENTS</span></div>
+      <div>capsule_conflict → routing: workflow "capsule_conflict_handling"</div>
+      <div>  keywords: "someone is in my capsule", "capsule taken" (en/ms/zh)</div>
+      <div class="mt-2"><span class="text-neutral-500">// SCHEMA CHANGES</span></div>
+      <div>settings.json: added ocr_provider = {id, model, description}</div>
+      <div>schemas.ts: settingsDataSchema.ocr_provider (optional)</div>
+      <div class="mt-2"><span class="text-neutral-500">// FRONTEND CHANGES</span></div>
+      <div>autotest-execution.js: runScenario() uses /preview/chat for WORKFLOW_COMPLETE (stateful)</div>
+      <div>autotest-execution.js: filter "checkin_process" added to runAutotest()</div>
+      <div>autotest-scenarios-single.js: 12 new check-in suite scenarios (suite: "checkin_process")</div>
+      <div>settings-ai-models.js: renderOcrSettingsCard() — OCR model selector</div>
+      <div>kb-editor.js: kbTestSend() shows detailed token breakdown in &lt;details&gt;</div>
+      <div>live-chat-panels.js: toggleTagFilter/toggleUnitFilter async (await data load on first click)</div>
+    </div>
+  </div>
+
   <!-- Dev TOC -->
   <div class="bg-neutral-100 rounded-2xl border border-neutral-200 p-6 mb-6">
     <h3 class="font-semibold text-neutral-800 mb-3">📚 Quick Navigation</h3>

@@ -21,7 +21,12 @@ import {
 import {
   deleteChat, sendReply, toggleAttachMenu, pickFile, fileSelected, clearFile,
   autoResize, handleKeydown, cancelReply, closeForwardModal,
-  toggleVoiceRecording, cancelVoiceRecording
+  toggleVoiceRecording, cancelVoiceRecording,
+  onInputCmd, loadCmdTemplates, hideCmdPalette, cmdPaletteClick, cmdAddTemplate,
+  loadWorkflows, showWorkflowPalette, hideWorkflowPalette, wfPaletteClick,
+  toggleSchedulePopover, hideSchedulePopover, confirmSchedule, toggleRepeatEndDate,
+  showScheduledPanel, closeScheduledPanel, cancelScheduled, editScheduled, updateScheduledBadge,
+  showReconnectionModal, reconnectInstance, addNewWhatsApp, closeReconnectionModal
 } from './live-chat-actions.js';
 import {
   toggleTranslate, handleLangChange, closeTranslateModal, confirmTranslation,
@@ -44,7 +49,9 @@ import {
   toggleTagFilter, toggleTagSelection, clearTagFilter, loadContactTagsMap,
   loadContactUnitsMap, loadContactDatesMap,
   toggleUnitFilter, selectUnitFilter, clearUnitFilter,
-  unitInput, selectUnit, unitKeydown, unitBlur, loadCapsuleUnits
+  unitInput, selectUnit, unitKeydown, unitBlur, loadCapsuleUnits,
+  loadPaymentReminder, setPaymentReminder, dismissReminder, snoozeReminder,
+  refreshOverdueBell, showOverdueReminders, addOverdueBadgeToList
 } from './live-chat-panels.js';
 
 // ─── Window exports for template onclick handlers ────────────────
@@ -93,6 +100,23 @@ window.lcCancelReply = cancelReply;
 window.lcToggleVoiceRecording = toggleVoiceRecording;
 window.lcCancelVoiceRecording = cancelVoiceRecording;
 window.lcCloseForwardModal = closeForwardModal;
+window.lcOnInputCmd = onInputCmd;
+window.lcLoadCmdTemplates = loadCmdTemplates;
+window.lcHideCmdPalette = hideCmdPalette;
+window.lcCmdPaletteClick = cmdPaletteClick;
+window.lcCmdAddTemplate = cmdAddTemplate;
+window.lcLoadWorkflows = loadWorkflows;
+window.lcShowWorkflowPalette = showWorkflowPalette;
+window.lcHideWorkflowPalette = hideWorkflowPalette;
+window.lcWfPaletteClick = wfPaletteClick;
+window.lcToggleSchedulePopover = toggleSchedulePopover;
+window.lcHideSchedulePopover = hideSchedulePopover;
+window.lcConfirmSchedule = confirmSchedule;
+window.lcShowScheduledPanel = showScheduledPanel;
+window.lcCloseScheduledPanel = closeScheduledPanel;
+window.lcCancelScheduled = cancelScheduled;
+window.lcEditScheduled = editScheduled;
+window.lcToggleRepeatEndDate = toggleRepeatEndDate;
 window.lcOnInputTranslate = onInputTranslate;
 window.lcToggleSidebarMenu = toggleSidebarMenu;
 window.lcShowStarredMessages = showStarredMessages;
@@ -128,6 +152,14 @@ window.lcSelectUnit = selectUnit;
 window.lcUnitKeydown = unitKeydown;
 window.lcUnitBlur = unitBlur;
 window.lcLoadCapsuleUnits = loadCapsuleUnits;
+window.lcSetPaymentReminder = setPaymentReminder;
+window.lcDismissReminder = dismissReminder;
+window.lcSnoozeReminder = snoozeReminder;
+window.lcShowOverdueReminders = showOverdueReminders;
+window.lcShowReconnectionModal = showReconnectionModal;
+window.lcReconnectInstance = reconnectInstance;
+window.lcAddNewWhatsApp = addNewWhatsApp;
+window.lcCloseReconnectionModal = closeReconnectionModal;
 window.lcOnMenuTranslate = onMenuTranslate;
 window.lcOnMenuMode = onMenuMode;
 window.lcOnMenuSetMode = function (mode) {
@@ -246,6 +278,18 @@ document.addEventListener('click', function (e) {
   var unitFilterBtn = document.getElementById('lc-unit-filter-btn');
   if (unitFilterDd && unitFilterDd.style.display !== 'none' && unitFilterBtn && !unitFilterDd.contains(e.target) && !unitFilterBtn.contains(e.target)) {
     unitFilterDd.style.display = 'none';
+  }
+  // US-015: Close command palette when clicking outside
+  var cmdPalette = document.getElementById('lc-cmd-palette');
+  var cmdInput = document.getElementById('lc-input-box');
+  if (cmdPalette && cmdPalette.style.display !== 'none' && cmdInput && !cmdPalette.contains(e.target) && !cmdInput.contains(e.target)) {
+    hideCmdPalette();
+  }
+  // US-020: Close schedule popover when clicking outside
+  var schedPop = document.getElementById('lc-schedule-popover');
+  var schedBtn = document.getElementById('lc-schedule-btn');
+  if (schedPop && schedPop.style.display !== 'none' && schedBtn && !schedPop.contains(e.target) && !schedBtn.contains(e.target)) {
+    hideSchedulePopover();
   }
 });
 

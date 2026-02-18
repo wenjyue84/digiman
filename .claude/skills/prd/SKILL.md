@@ -124,3 +124,7 @@ When creating PRDs for this project:
 - **Format:** Markdown (`.md`)
 - **Location:** `tasks/`
 - **Filename:** `prd-[feature-name].md` (kebab-case)
+
+**If also writing directly to prd.json** (skipping the Ralph converter):
+- Every story MUST have `"passes": false` — Ralph skips stories without this field
+- Use the Ralph skill's JSON schema as reference for required fields

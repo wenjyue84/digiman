@@ -512,4 +512,196 @@ router.get('/tests/scan-reports', async (_req: Request, res: Response) => {
   }
 });
 
+// ─── Programmatic Test Runner (US-014) ───────────────────────────────
+
+/**
+ * POST /testing/run-all
+ * Accepts an array of scenarios from the client, runs each through the intent pipeline,
+ * saves results to reports/autotest/ and returns structured JSON.
+ *
+ * Body: { scenarios: Array<{ id, name, category, suite?, messages: [{ text }], validate: [...] }>, suite?: string }
+ */
+router.post('/testing/run-all', async (req: Request, res: Response) => {
+  const { scenarios, suite } = req.body;
+
+  if (!Array.isArray(scenarios) || scenarios.length === 0) {
+    badRequest(res, 'scenarios (non-empty array) required');
+    return;
+  }
+
+  const startTime = Date.now();
+  const results: Array<{
+    id: string;
+    name: string;
+    category: string;
+    suite?: string;
+    status: 'pass' | 'warn' | 'fail';
+    expectedKeywords: string[];
+    actualResponse: string;
+    error?: string;
+  }> = [];
+
+  const { classifyMessage } = await import('../../assistant/intents.js');
+  const routingConfig = configStore.getRouting() || {};
+  const { getStaticReply } = await import('../../assistant/knowledge.js');
+
+  for (const scenario of scenarios) {
+    const firstMessage = scenario.messages?.[0]?.text;
+    if (!firstMessage) continue;
+
+    try {
+      const intentResult = await classifyMessage(firstMessage, []);
+      const route = routingConfig[intentResult.category];
+      const routedAction: string = typeof route === 'string' ? route : (route?.action || 'llm_reply');
+
+      let response = '';
+      if (routedAction === 'static_reply') {
+        response = getStaticReply(intentResult.category, 'en') || '(no static reply)';
+      } else {
+        response = `[${routedAction}] intent=${intentResult.category} confidence=${intentResult.confidence?.toFixed(2) ?? '?'}`;
+      }
+
+      // Evaluate against first turn rules
+      const firstValidate = scenario.validate?.[0];
+      let passed = true;
+      let warned = false;
+      const expectedKeywords: string[] = [];
+
+      if (firstValidate?.rules) {
+        for (const rule of firstValidate.rules) {
+          if (rule.type === 'contains_any' && rule.values) {
+            expectedKeywords.push(...rule.values);
+            const respLower = response.toLowerCase();
+            const anyMatch = rule.values.some((v: string) => respLower.includes(v.toLowerCase()));
+            if (!anyMatch) {
+              if (rule.critical) passed = false;
+              else warned = true;
+            }
+          } else if (rule.type === 'not_contains' && rule.values) {
+            const respLower = response.toLowerCase();
+            const hasMatch = rule.values.some((v: string) => respLower.includes(v.toLowerCase()));
+            if (hasMatch) {
+              if (rule.critical) passed = false;
+              else warned = true;
+            }
+          } else if (rule.type === 'not_empty') {
+            if (!response || response.trim().length === 0) {
+              if (rule.critical) passed = false;
+            }
+          }
+        }
+      }
+
+      results.push({
+        id: scenario.id,
+        name: scenario.name,
+        category: scenario.category,
+        suite: scenario.suite,
+        status: passed ? (warned ? 'warn' : 'pass') : 'fail',
+        expectedKeywords,
+        actualResponse: response,
+      });
+    } catch (err: any) {
+      results.push({
+        id: scenario.id,
+        name: scenario.name,
+        category: scenario.category,
+        suite: scenario.suite,
+        status: 'fail',
+        expectedKeywords: [],
+        actualResponse: '',
+        error: err.message,
+      });
+    }
+  }
+
+  const duration = Date.now() - startTime;
+  const passed = results.filter(r => r.status === 'pass').length;
+  const warned = results.filter(r => r.status === 'warn').length;
+  const failed = results.filter(r => r.status === 'fail').length;
+
+  // Save results to file for generate-stories
+  const reportsDir = path.join(process.cwd(), 'reports/autotest');
+  if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const resultFile = path.join(reportsDir, `programmatic-${timestamp}.json`);
+  fs.writeFileSync(resultFile, JSON.stringify({ timestamp: new Date().toISOString(), suite: suite || 'all', results }, null, 2));
+
+  ok(res, {
+    total: results.length,
+    passed,
+    warned,
+    failed,
+    duration,
+    suite: suite || 'all',
+    results,
+    savedTo: resultFile,
+  });
+});
+
+/**
+ * GET /testing/generate-stories
+ * Reads the latest programmatic test results and generates prd.json-compatible user stories
+ * from the failed tests.
+ *
+ * Query: ?suite=checkin_process (optional filter)
+ */
+router.get('/testing/generate-stories', (req: Request, res: Response) => {
+  const suiteFilter = req.query.suite as string | undefined;
+
+  const reportsDir = path.join(process.cwd(), 'reports/autotest');
+  if (!fs.existsSync(reportsDir)) {
+    ok(res, { stories: [], message: 'No test results found. Run /testing/run-all first.' });
+    return;
+  }
+
+  // Find latest programmatic result file
+  const files = fs.readdirSync(reportsDir)
+    .filter(f => f.startsWith('programmatic-') && f.endsWith('.json'))
+    .sort()
+    .reverse();
+
+  if (files.length === 0) {
+    ok(res, { stories: [], message: 'No programmatic test results found.' });
+    return;
+  }
+
+  const latest = JSON.parse(fs.readFileSync(path.join(reportsDir, files[0]), 'utf-8'));
+  let failures = (latest.results || []).filter((r: any) => r.status === 'fail' || r.status === 'warn');
+
+  if (suiteFilter) {
+    failures = failures.filter((r: any) => r.suite === suiteFilter || r.category === suiteFilter);
+  }
+
+  const baseId = 'US-AUTO';
+  const stories = failures.map((f: any, i: number) => ({
+    id: `${baseId}-${String(i + 1).padStart(3, '0')}`,
+    title: `Fix failing test: ${f.name}`,
+    priority: i + 100,
+    description: `Test "${f.name}" (${f.category}) failed programmatic run. Expected response to contain: ${f.expectedKeywords.join(', ') || '(any valid response)'}. Actual: "${f.actualResponse}". ${f.error ? 'Error: ' + f.error : ''}`,
+    acceptanceCriteria: [
+      `Test scenario "${f.id}" passes when run via Run All`,
+      f.expectedKeywords.length > 0 ? `Response contains one of: ${f.expectedKeywords.slice(0, 5).join(', ')}` : 'Response is non-empty',
+      'TypeScript compiles with zero errors',
+    ],
+    technicalNotes: [
+      `Scenario ID: ${f.id}`,
+      `Category: ${f.category}`,
+      `Suite: ${f.suite || 'general'}`,
+      `Failed action: ${f.actualResponse}`,
+    ],
+    dependencies: [],
+    estimatedComplexity: 'small',
+    passes: false,
+  }));
+
+  ok(res, {
+    total: failures.length,
+    stories,
+    generatedAt: new Date().toISOString(),
+    sourceFile: files[0],
+    message: stories.length === 0 ? 'All tests passed! No stories to generate.' : `Generated ${stories.length} user stories from ${failures.length} failures.`,
+  });
+});
+
 export default router;

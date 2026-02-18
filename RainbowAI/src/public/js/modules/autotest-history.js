@@ -165,11 +165,22 @@ export function saveImportedReports() {
 }
 
 /**
- * Save autotest history to localStorage
+ * Save autotest history to localStorage.
+ * Stores only summary data (without full results array) to avoid quota errors.
+ * Full results stay in-memory for within-session loadHistoricalReport.
  */
 export function saveAutotestHistory() {
   try {
-    localStorage.setItem('rainbow-autotest-history', JSON.stringify(autotestHistory));
+    const summaries = autotestHistory.map(entry => ({
+      id: entry.id,
+      timestamp: entry.timestamp,
+      totalTime: entry.totalTime,
+      passed: entry.passed,
+      warnings: entry.warnings,
+      failed: entry.failed,
+      total: Array.isArray(entry.results) ? entry.results.length : (entry.total || 0)
+    }));
+    localStorage.setItem('rainbow-autotest-history', JSON.stringify(summaries));
   } catch (e) {
     console.error('Error saving autotest history:', e);
   }

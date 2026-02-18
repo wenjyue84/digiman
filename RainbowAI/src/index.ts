@@ -23,7 +23,13 @@ import adminRoutes from './routes/admin/index.js';
 import { initFeedbackSettings } from './lib/init-feedback-settings.js';
 import { initAdminNotificationSettings } from './lib/admin-notification-settings.js';
 import { configStore } from './assistant/config-store.js';
-import { initKnowledgeBase } from './assistant/knowledge-base.js';
+import { initKnowledgeBase, initKBFromDB } from './assistant/knowledge-base.js';
+import { initCapsuleCache } from './lib/capsule-cache.js';
+import { initScheduler } from './lib/message-scheduler.js';
+import { ensureConfigTables } from './lib/config-db.js';
+import { reloadLLMSettingsFromDB } from './assistant/llm-settings-loader.js';
+import { loadIntentTiersFromDB } from './assistant/intent-config.js';
+import { initPricingFromDB } from './assistant/pricing.js';
 
 const __filename_main = fileURLToPath(import.meta.url);
 const __dirname_main = dirname(__filename_main);
@@ -44,22 +50,46 @@ dotenv.config();
   }
 }
 
-// Initialize Knowledge Base (Memory & Files)
+// Ensure DB config tables exist (no-op when DATABASE_URL not set)
+try {
+  await ensureConfigTables();
+} catch (err: any) {
+  console.warn('[Startup] Config tables setup failed (will use JSON files):', err.message);
+}
+
+// Initialize Knowledge Base (Memory & Files) — local first, then overlay from DB
 try {
   initKnowledgeBase();
+  await initKBFromDB();
   console.log('[Startup] KnowledgeBase initialized');
 } catch (err: any) {
   console.error('[Startup] Failed to initialize KnowledgeBase:', err.message);
 }
 
+// Initialize Capsule Cache (US-010) — fetches from dashboard API in background
+initCapsuleCache();
+
 // CRITICAL: Initialize configStore BEFORE mounting admin routes
 // This prevents "Cannot read properties of undefined" errors when API endpoints are called before WhatsApp init completes
+// Now async: tries DB first, falls back to local JSON files
 try {
-  configStore.init();
+  await configStore.init();
   console.log('[Startup] ConfigStore initialized successfully');
 } catch (err: any) {
   console.error('[Startup] Failed to initialize ConfigStore:', err.message);
   console.error('[Startup] Admin API may not function correctly until config files are fixed');
+}
+
+// Load standalone configs from DB (fire-and-forget, file fallbacks already loaded)
+try {
+  await Promise.all([
+    reloadLLMSettingsFromDB(),
+    loadIntentTiersFromDB(),
+    initPricingFromDB(),
+  ]);
+  console.log('[Startup] Standalone configs loaded from DB');
+} catch (err: any) {
+  console.warn('[Startup] Some DB config loads failed (using file fallbacks):', err.message);
 }
 
 const app = express();
@@ -351,6 +381,9 @@ server.listen(PORT, '0.0.0.0', () => {
     // Initialize WhatsApp (Baileys) with crash isolation supervisor
     await startBaileysWithSupervision();
 
+    // Initialize scheduled message checker (US-019)
+    initScheduler();
+
     // Initialize failover coordinator (primary/standby)
     const { failoverCoordinator } = await import('./lib/failover-coordinator.js');
     const failoverSettings = configStore.getSettings().failover ?? {
@@ -362,6 +395,16 @@ server.listen(PORT, '0.0.0.0', () => {
       peerUrl: process.env.RAINBOW_PEER_URL,
       secret: process.env.RAINBOW_FAILOVER_SECRET ?? '',
       settings: failoverSettings,
+    });
+
+    // Wire failover WhatsApp notifications
+    const { notifyAdminFailoverActivated, notifyAdminFailoverDeactivated } =
+      await import('./lib/admin-notifier.js');
+    failoverCoordinator.on('activated', () => {
+      notifyAdminFailoverActivated().catch(() => {});
+    });
+    failoverCoordinator.on('deactivated', () => {
+      notifyAdminFailoverDeactivated().catch(() => {});
     });
 
     // Update coordinator when settings are hot-reloaded

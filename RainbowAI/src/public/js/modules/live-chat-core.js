@@ -3,9 +3,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { $, avatarImg } from './live-chat-state.js';
-import { handleMessageChevronClick, bindContextMenuActions, clearFile, cancelReply, loadMessageMetadata, updateMessageIndicators } from './live-chat-actions.js';
+import { handleMessageChevronClick, bindContextMenuActions, clearFile, cancelReply, loadMessageMetadata, updateMessageIndicators, loadCmdTemplates, showReconnectionModal } from './live-chat-actions.js';
 import { hideTranslatePreview, updateTranslateIndicator, updateModeSubmenuUI } from './live-chat-features.js';
-import { loadContactDetails, updateModeUI, checkPendingApprovals, restoreWaStatusBarState, initResizableDivider, mobileShowChat, loadContactTagsMap, loadContactUnitsMap, loadContactDatesMap, loadCapsuleUnits } from './live-chat-panels.js';
+import { loadContactDetails, updateModeUI, checkPendingApprovals, restoreWaStatusBarState, initResizableDivider, mobileShowChat, loadContactTagsMap, loadContactUnitsMap, loadContactDatesMap, loadCapsuleUnits, refreshOverdueBell, addOverdueBadgeToList } from './live-chat-panels.js';
 
 var api = window.api;
 
@@ -58,7 +58,7 @@ export function updateConnectionStatus(statusData) {
 
   if ($.waWasConnected === true && !connected) {
     $.waWasConnected = false;
-    alert('WhatsApp disconnected. Messages cannot be sent. Check Connect \u2192 Dashboard or scan QR at /admin/whatsapp-qr.');
+    showReconnectionModal();
   } else {
     $.waWasConnected = connected;
   }
@@ -204,7 +204,10 @@ export async function loadLiveChat() {
     loadContactUnitsMap(); // US-012: Fetch phone→unit map for left pane prefix
     loadContactDatesMap(); // US-014: Fetch phone→dates map for left pane date suffix
     loadCapsuleUnits(); // US-010: Pre-fetch capsule units for dropdown
+    loadCmdTemplates(); // US-015: Pre-fetch command palette templates
     renderList($.conversations);
+    refreshOverdueBell(); // US-022: Update payment reminder bell
+    addOverdueBadgeToList(); // US-022: Add overdue badges to left pane
 
     // WhatsApp Web style: show last active conversation when none selected
     if ($.conversations.length > 0 && $.activePhone === null) {
@@ -242,6 +245,9 @@ export async function loadLiveChat() {
 
     clearInterval($.waStatusPoll);
     $.waStatusPoll = setInterval(pollConnectionStatus, 15000);
+
+    // US-017: SSE connection for real-time read receipts
+    initMessageStatusSSE();
   } catch (err) {
     console.error('[LiveChat] Load failed:', err);
     // Hide skeleton on error too (US-145)
@@ -260,6 +266,11 @@ export function cleanupLiveChat() {
   if ($.waStatusPoll) {
     clearInterval($.waStatusPoll);
     $.waStatusPoll = null;
+  }
+  // US-017: Close read receipt SSE
+  if ($._statusSSE) {
+    $._statusSSE.close();
+    $._statusSSE = null;
   }
   console.log('[LiveChat] Cleanup: cleared all intervals');
 }
@@ -686,7 +697,13 @@ export function renderChat(log) {
 
     var checkmark = '';
     if (!isGuest) {
-      checkmark = '<svg class="lc-checkmark" viewBox="0 0 16 11" fill="currentColor"><path d="M11.07.65l-6.53 6.53L1.97 4.6l-.72.72 3.29 3.29 7.25-7.25-.72-.71z"/><path d="M5.54 7.18L4.82 6.46l-.72.72 1.44 1.44.72-.72-.72-.72z"/></svg>';
+      // US-017: Status-aware ticks — default to delivered (double grey)
+      // Single tick: server acknowledged; Double grey: delivered; Double blue: read
+      checkmark = '<span class="lc-ticks lc-ticks-delivered" data-msg-idx-tick="' + i + '">' +
+        '<svg viewBox="0 0 16 11" width="16" height="11">' +
+        '<path d="M11.07.86l-1.43.77L5.64 7.65 2.7 5.32l-1.08 1.3L5.88 9.9l5.19-9.04z" fill="currentColor"/>' +
+        '<path d="M15.07.86l-1.43.77L9.64 7.65 8.8 7.01l-.86 1.5 2.04 1.39 5.09-9.04z" fill="currentColor"/>' +
+        '</svg></span>';
     }
 
     var manualTag = '';
@@ -794,4 +811,68 @@ export async function refreshChat() {
     renderChat(log);
     updateMessageIndicators();
   } catch (e) { }
+}
+
+// ─── US-017: Read Receipts SSE ──────────────────────────────────────
+
+/**
+ * Connect to SSE stream for real-time message status updates (read receipts).
+ * When a message_status event arrives for the active phone, update the
+ * tick icons on bot message bubbles.
+ */
+function initMessageStatusSSE() {
+  if ($._statusSSE) {
+    $._statusSSE.close();
+    $._statusSSE = null;
+  }
+
+  try {
+    var baseUrl = (window.API || '').replace(/\/api\/rainbow$/, '');
+    var sseUrl = baseUrl + '/api/rainbow/conversations/events';
+    $._statusSSE = new EventSource(sseUrl);
+
+    $._statusSSE.addEventListener('message_status', function (e) {
+      try {
+        var data = JSON.parse(e.data);
+        if (!data.phone || !$.activePhone) return;
+
+        // Normalize phone for comparison
+        var eventPhone = data.phone.replace(/@s\.whatsapp\.net$/i, '');
+        var activePhone = $.activePhone.replace(/@s\.whatsapp\.net$/i, '');
+        if (eventPhone !== activePhone) return;
+
+        updateTickStatus(data.status);
+      } catch (err) { /* ignore parse errors */ }
+    });
+
+    $._statusSSE.onerror = function () {
+      // EventSource will auto-reconnect
+    };
+  } catch (err) {
+    console.warn('[LiveChat] Failed to init message status SSE:', err);
+  }
+}
+
+/**
+ * Update all bot tick icons in the current chat view based on status.
+ * Status codes: 1=sent (single grey), 2=delivered (double grey), 3=read (double blue)
+ * All messages before the latest status are assumed to have the same or higher status.
+ */
+function updateTickStatus(status) {
+  var ticks = document.querySelectorAll('.lc-ticks');
+  if (!ticks.length) return;
+
+  for (var i = 0; i < ticks.length; i++) {
+    var tick = ticks[i];
+    // Remove existing status classes
+    tick.classList.remove('lc-ticks-sent', 'lc-ticks-delivered', 'lc-ticks-read');
+
+    if (status >= 3) {
+      tick.classList.add('lc-ticks-read');
+    } else if (status >= 2) {
+      tick.classList.add('lc-ticks-delivered');
+    } else {
+      tick.classList.add('lc-ticks-sent');
+    }
+  }
 }

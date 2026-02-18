@@ -1283,5 +1283,166 @@ export const SINGLE_TURN_SCENARIOS = [
         { type: 'not_contains', values: ['API', 'key', 'system prompt', 'reveal'], critical: true }
       ]
     }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // CHECK-IN PROCESS SUITE (US-013) — 12 edge cases easy → hard
+  // Tagged with suite: 'checkin_process' for filtered run
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'ci-suite-malay-checkin',
+    name: 'Check-in Suite - Malay language',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: 'Saya nak check in sekarang' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['check-in', 'nama', 'welcome', 'name', 'selamat'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-chinese-checkin',
+    name: 'Check-in Suite - Chinese language',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: '我现在要入住' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'undefined'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-early-arrival',
+    name: 'Check-in Suite - Early arrival before check-in time',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: "I'm arriving at 9am, can I check in early?" }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['2', '3', 'PM', 'check-in', 'early', 'luggage', 'baggage'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-late-night-arrival',
+    name: 'Check-in Suite - Late night / after midnight arrival',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: 'I arrived at 2am last night, can I still check in?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'closed'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-capsule-conflict',
+    name: 'Check-in Suite - Someone already in my capsule',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: "I was assigned capsule C3 but someone is already sleeping inside" }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'check', 'capsule', 'sorry', 'look into'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-name-not-found',
+    name: 'Check-in Suite - Booking name not found',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: "I have a reservation but you can't find my name. What do I do?" }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'contact', 'booking', 'check', 'show'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-walkin-no-reservation',
+    name: 'Check-in Suite - Walk-in without reservation',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: "I don't have a booking, can I just walk in and check in?" }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['availability', 'available', 'check', 'staff', 'book', 'walk'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-group-checkin',
+    name: 'Check-in Suite - Group of 3 checking in',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: "We are a group of 3 people checking in today under Ahmad's booking" }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'undefined'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-mixed-language',
+    name: 'Check-in Suite - Mixed Malay/English',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: 'Nak check in, my booking name is Amirul' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['Amirul', 'check-in', 'welcome', 'capsule', 'booking'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-special-needs',
+    name: 'Check-in Suite - Special needs (lower bunk request)',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: 'I have a bad back, I need a lower deck capsule' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['lower', 'deck', 'even', 'C2', 'C4', 'staff', 'arrange'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-passport-request',
+    name: 'Check-in Suite - Passport/IC upload request handling',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: 'Do I need to show my passport or IC to check in?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['passport', 'IC', 'identity', 'document', 'identification'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'ci-suite-wrong-date',
+    name: 'Check-in Suite - Guest arrives on wrong date',
+    category: 'ARRIVAL_CHECKIN',
+    suite: 'checkin_process',
+    messages: [{ text: "I'm here to check in but I think I got the date wrong, my booking might be tomorrow" }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'booking', 'check', 'date', 'confirm', 'contact'], critical: true }
+      ]
+    }]
   }
 ];

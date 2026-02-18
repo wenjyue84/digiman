@@ -1,44 +1,75 @@
 # 🚀 DEPLOYMENT & OPERATIONS GUIDE
 # PelangiManager - Complete Deployment & Operations Reference
 
-**Document Version:** 2025.01  
-**Date:** January 2025  
-**Project:** Pelangi Capsule Hostel Management System  
+**Document Version:** 2026.02 (updated)
+**Project:** Pelangi Capsule Hostel Management System
+
+> **Primary deployment reference:** `.claude/skills/lightsail-deployment/SKILL.md`
+> This file covers storage system details, email, performance, and general maintenance.
 
 ---
 
-## 🌐 **DEPLOYMENT GUIDES**
+## 🏗️ **PRODUCTION ARCHITECTURE**
 
-### **Replit Deployment (Recommended for Quick Start)**
+### Service Placement — Where Each Service Runs
 
-#### **Quick Start Steps**
-1. **Fork the Replit Template**
-   - Visit the PelangiManager Replit template
-   - Click "Fork" to create your own copy
+| Service | Production Home | Rationale |
+|---------|----------------|-----------|
+| **Website** (frontend nginx + API port 5000) | **Lightsail only** (always on) | Stateless, no session files — colleagues need 24/7 access without Jay's PC being on |
+| **Rainbow AI** (port 3002) | **Local PC (primary) + Lightsail (standby)** | Has WhatsApp auth session; local has better GPU for AI providers |
 
-2. **Configure Environment**
-   ```bash
-   # Set required environment variables
-   NODE_ENV=production
-   PORT=5000
-   ```
+### Rainbow AI Dual-Server Failover
 
-3. **Deploy**
-   - Click "Run" button
-   - Wait for build completion
-   - Access your live application
+```
+Local PC (primary)               AWS Lightsail (standby)
+──────────────────               ──────────────────────
+RAINBOW_ROLE=primary             RAINBOW_ROLE=standby
+RAINBOW_PEER_URL=http://18.142.14.142:3002
 
-#### **Replit-Specific Configuration**
-- **Auto-deploy**: Changes automatically deploy on save
-- **Custom Domain**: Configure in Replit settings
-- **Environment Variables**: Set in Secrets tab
-- **Database**: Use Replit's built-in database or external PostgreSQL
+isActive = true                  isActive = false
+→ processes & replies            → suppresses replies
+→ heartbeat every 20s ────────► → monitors heartbeat
+                                 → no beat for 60s → activates
+                                 → beat resumes → immediately deactivates
+```
 
-#### **Troubleshooting Replit Issues**
-- **Build Failures**: Check Node.js version compatibility
-- **Port Conflicts**: Ensure PORT environment variable is set
-- **Memory Issues**: Upgrade to paid plan for larger applications
-- **Database Connection**: Verify connection strings and credentials
+**Required env vars** (see `RainbowAI/.env.example` for full reference):
+```bash
+# Local PC .env
+RAINBOW_ROLE=primary
+RAINBOW_PEER_URL=http://18.142.14.142:3002
+RAINBOW_FAILOVER_SECRET=<shared-secret-from-openssl-rand-hex-16>
+
+# Lightsail .env (no RAINBOW_PEER_URL needed on standby)
+RAINBOW_ROLE=standby
+RAINBOW_FAILOVER_SECRET=<same-shared-secret>
+```
+
+**Dashboard:** Settings → 🔁 Failover tab shows role badge, last heartbeat time, and promote/demote controls.
+
+### Production URLs
+
+| URL | Service | Always On? |
+|-----|---------|------------|
+| `http://18.142.14.142/` | Website frontend (nginx) | ✅ Yes |
+| `http://18.142.14.142/api/*` | Backend API (PM2 `pelangi-api`) | ✅ Yes |
+| `http://18.142.14.142:3002/` | Rainbow AI dashboard (standby) | ✅ Yes (standby) |
+| `http://localhost:3002/` | Rainbow AI dashboard (primary) | When PC is on |
+
+### Deployment Commands
+
+```bash
+# Full deploy (build + upload website + Rainbow AI to Lightsail)
+./deploy.sh
+
+# Frontend only
+./deploy-frontend.sh
+
+# Check production status
+ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 list'
+```
+
+> **Full deployment steps, OOM prevention, nginx config, swap setup:** `.claude/skills/lightsail-deployment/SKILL.md`
 
 ---
 

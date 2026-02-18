@@ -2,16 +2,11 @@
  * ai-classification.ts — Intent classification + system prompt generation
  * (Single Responsibility: classify user messages into intents)
  */
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import type { AIClassifyResult, IntentCategory, ChatMessage } from './types.js';
 import { configStore } from './config-store.js';
 import { getContextWindows } from './context-windows.js';
 import { isAIAvailable, getAISettings, chatWithFallback, getProviders } from './ai-provider-manager.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { getLLMSettings } from './llm-settings-loader.js';
 
 // ─── Constants ───────────────────────────────────────────────────────
 
@@ -45,8 +40,7 @@ export const VALID_CATEGORIES: IntentCategory[] = [
  */
 export function getT4ProviderIds(): string[] | undefined {
   try {
-    const raw = readFileSync(join(__dirname, 'data', 'llm-settings.json'), 'utf-8');
-    const settings = JSON.parse(raw);
+    const settings = getLLMSettings();
     const defaultId = settings.defaultProviderId;
     if (defaultId && typeof defaultId === 'string') {
       return [defaultId];

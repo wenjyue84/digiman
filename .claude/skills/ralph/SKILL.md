@@ -105,12 +105,23 @@ Stories execute in priority order. Earlier stories must not depend on later ones
 
 ---
 
+## CRITICAL: passes Field
+
+**Every story MUST have `"passes": false`.** Ralph checks this field to find pending work. If missing, Ralph treats the story as already completed and skips it — resulting in "all stories completed" with zero work done.
+
+- New stories: always `"passes": false`
+- Ralph sets `"passes": true` after a story passes all acceptance criteria
+- Never omit this field — it is NOT optional
+
+---
+
 ## PelangiManager-Specific Fields
 
 This project uses an extended prd.json format with:
 - `technicalNotes` array (instead of just notes string)
 - `dependencies` array (story IDs that must complete first)
 - `estimatedComplexity` ("small" | "medium" | "large")
+- `passes` boolean (**REQUIRED** — must be `false` for new stories)
 - `technicalContext` object with affectedAreas, testingStrategy, rollbackPlan
 
 ---
@@ -129,6 +140,7 @@ Before writing a new prd.json, check if there is an existing one:
 
 ## Checklist Before Saving
 
+- [ ] **Every story has `"passes": false`** (CRITICAL — without this Ralph skips all stories)
 - [ ] Each story completable in one iteration
 - [ ] Stories ordered by dependency
 - [ ] Every story has "TypeScript compiles with zero errors"

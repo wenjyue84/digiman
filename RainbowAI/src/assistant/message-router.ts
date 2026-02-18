@@ -9,6 +9,7 @@
  */
 import type { IncomingMessage, SendMessageFn, CallAPIFn } from './types.js';
 import type { RouterContext } from './pipeline/types.js';
+import { failoverCoordinator } from '../lib/failover-coordinator.js';
 import { configStore } from './config-store.js';
 import { initWorkflowExecutor } from './workflow-executor.js';
 import { maybeWriteDiary } from './memory-writer.js';
@@ -46,6 +47,9 @@ export function initRouter(send: SendMessageFn, api: CallAPIFn): void {
 // ─── Main pipeline ──────────────────────────────────────────────
 
 export async function handleIncomingMessage(msg: IncomingMessage): Promise<void> {
+  // Standby mode: receive WA messages but do not respond
+  if (!failoverCoordinator.isActive()) return;
+
   // Phase 1: Validate & preprocess
   const validation = await validateAndPrepare(msg, ctx);
   if (!validation.continue) return;

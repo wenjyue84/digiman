@@ -6,15 +6,16 @@ import { isAIAvailable } from '../../assistant/ai-client.js';
 import { checkServerHealth } from './utils.js';
 import { trackConfigReloaded } from '../../lib/activity-tracker.js';
 import { ok } from './http-utils.js';
+import { getConfigAuditLog } from '../../lib/config-db.js';
 
 const router = Router();
 
 // ─── System ─────────────────────────────────────────────────────────
 
-router.post('/reload', (_req: Request, res: Response) => {
-  configStore.forceReload();
+router.post('/reload', async (_req: Request, res: Response) => {
+  await configStore.forceReload();
   trackConfigReloaded('all');
-  ok(res, { message: 'All config reloaded from disk' });
+  ok(res, { message: 'All config reloaded (DB-first, then disk)' });
 });
 
 /** POST /restart — exit process so a process manager (e.g. start-all.bat, PM2) can restart the MCP server. */
@@ -100,6 +101,14 @@ router.get('/status', async (_req: Request, res: Response) => {
     config_files: ['knowledge', 'intents', 'templates', 'settings', 'workflow', 'workflows', 'routing'],
     response_modes: settings.response_modes || { default_mode: 'autopilot' }
   });
+});
+
+// ─── Config Audit Log ────────────────────────────────────────────────
+
+router.get('/config-audit', async (req: Request, res: Response) => {
+  const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+  const rows = await getConfigAuditLog(limit);
+  ok(res, rows);
 });
 
 export default router;

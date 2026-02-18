@@ -10,6 +10,7 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 5000,
         CORS_ORIGIN: 'http://18.142.14.142',
+        PUBLIC_URL: 'http://18.142.14.142',
       },
       autorestart: true,
       max_restarts: 10,

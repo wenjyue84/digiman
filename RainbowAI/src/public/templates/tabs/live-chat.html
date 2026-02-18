@@ -15,6 +15,14 @@
             </div>
           </div>
         </div>
+        <!-- Payment reminder bell (US-022) -->
+        <button type="button" class="lc-reminder-bell" id="lc-reminder-bell" onclick="lcShowOverdueReminders()" title="Payment reminders" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+          <span class="lc-reminder-bell-count" id="lc-reminder-bell-count">0</span>
+        </button>
         <div class="lc-sidebar-actions">
           <button type="button" class="lc-sidebar-action-btn" onclick="lcNewChat()" title="New chat">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2">
@@ -32,6 +40,14 @@
               </svg>
             </button>
             <div class="lc-sidebar-dropdown" id="lc-sidebar-dropdown" style="display:none;">
+              <!-- Staff name (US-012) — moved from header into menu -->
+              <button type="button" class="lc-sidebar-dropdown-item" onclick="lcEditStaffName()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Staff: <span id="lc-staff-name">Staff</span></span>
+              </button>
               <div class="lc-sidebar-dropdown-item lc-instance-select-wrap">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
@@ -97,6 +113,22 @@
       <button class="lc-chip" data-filter="unread" onclick="lcSetFilter('unread')">Unread</button>
       <button class="lc-chip" data-filter="favourites" onclick="lcSetFilter('favourites')">Favourites</button>
       <button class="lc-chip" data-filter="groups" onclick="lcSetFilter('groups')">Groups</button>
+      <!-- US-009: Tag filter -->
+      <div class="lc-tag-filter-wrap" id="lc-tag-filter-wrap">
+        <button class="lc-chip lc-tag-filter-btn" id="lc-tag-filter-btn" onclick="lcToggleTagFilter()" title="Filter by tags">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <span id="lc-tag-filter-label">Tags</span>
+        </button>
+        <div class="lc-tag-filter-dropdown" id="lc-tag-filter-dropdown" style="display:none;"></div>
+      </div>
+      <!-- US-013: Unit filter -->
+      <div class="lc-tag-filter-wrap" id="lc-unit-filter-wrap">
+        <button class="lc-chip lc-tag-filter-btn" id="lc-unit-filter-btn" onclick="lcToggleUnitFilter()" title="Filter by unit/capsule">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span id="lc-unit-filter-label">Unit</span>
+        </button>
+        <div class="lc-tag-filter-dropdown" id="lc-unit-filter-dropdown" style="display:none;"></div>
+      </div>
     </div>
     <div class="lc-chat-list" id="lc-chat-list">
       <!-- Skeleton loading (US-145) — shown until real data arrives -->
@@ -282,6 +314,14 @@
                 </svg>
                 <span>Focus mode</span>
               </button>
+              <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcShowScheduledPanel()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+                <span>Scheduled messages</span>
+                <span class="lc-sched-badge" id="lc-sched-badge" style="display:none;">0</span>
+              </button>
               <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcRefreshChat()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16" />
@@ -448,6 +488,10 @@
 
       <!-- Input area -->
       <div class="lc-input-area">
+        <!-- Command palette dropdown (US-015) — positioned above input -->
+        <div class="lc-cmd-palette" id="lc-cmd-palette" style="display:none;"></div>
+        <!-- Workflow palette dropdown (US-016) — positioned above input -->
+        <div class="lc-wf-palette" id="lc-wf-palette" style="display:none;"></div>
         <!-- Attachment button + popup (US-073: WhatsApp-style '+' menu) -->
         <div class="lc-attach-wrap">
           <button class="lc-attach-btn lc-attach-plus" id="lc-attach-btn" onclick="lcToggleAttachMenu()" title="Attach">
@@ -511,8 +555,8 @@
         <input type="file" id="lc-file-audio" accept="audio/*" style="display:none;"
           onchange="lcFileSelected(this, 'audio')">
 
-        <textarea class="lc-input-box" id="lc-input-box" placeholder="Type a message" rows="1"
-          oninput="lcAutoResize(this); lcOnInputTranslate()" onkeydown="lcHandleKeydown(event)"></textarea>
+        <textarea class="lc-input-box" id="lc-input-box" placeholder="Type a message, / for templates, // for workflows" rows="1"
+          oninput="lcAutoResize(this); lcOnInputTranslate(); lcOnInputCmd(this)" onkeydown="lcHandleKeydown(event)"></textarea>
         <!-- Help Me button (only visible in manual mode) -->
         <button id="lc-help-me-btn" class="lc-help-me-btn" onclick="lcGetAIHelp()" style="display:none;"
           title="Get AI suggestion">
@@ -538,6 +582,34 @@
             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z" />
           </svg>
         </button>
+        <!-- Schedule button (US-020) -->
+        <button class="lc-schedule-btn" id="lc-schedule-btn" onclick="lcToggleSchedulePopover()" title="Schedule message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+        </button>
+        <!-- Schedule popover (US-020) -->
+        <div class="lc-schedule-popover" id="lc-schedule-popover" style="display:none;">
+          <div class="lc-schedule-popover-header">Schedule Message</div>
+          <label class="lc-schedule-label">Send at:</label>
+          <input type="datetime-local" class="lc-schedule-datetime" id="lc-schedule-datetime">
+          <label class="lc-schedule-label" style="margin-top:8px;">Repeat:</label>
+          <select class="lc-schedule-repeat" id="lc-schedule-repeat" onchange="lcToggleRepeatEndDate()">
+            <option value="none">None</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <div class="lc-schedule-end-wrap" id="lc-schedule-end-wrap" style="display:none;">
+            <label class="lc-schedule-label" style="margin-top:6px;">End date (optional):</label>
+            <input type="date" class="lc-schedule-datetime" id="lc-schedule-end-date">
+          </div>
+          <div class="lc-schedule-actions">
+            <button class="lc-schedule-cancel" onclick="lcHideSchedulePopover()">Cancel</button>
+            <button class="lc-schedule-confirm" onclick="lcConfirmSchedule()">Schedule</button>
+          </div>
+        </div>
         <button class="lc-send-btn" id="lc-send-btn" onclick="lcSendReply()" title="Send">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
@@ -643,10 +715,14 @@
         </div>
       </div>
 
-      <div class="lc-field">
+      <div class="lc-field" style="position: relative;">
         <label class="lc-field-label">Unit / Capsule</label>
-        <input type="text" class="lc-field-input" id="lc-cd-unit" placeholder="e.g. Capsule A12"
-          oninput="lcContactFieldChanged()">
+        <input type="text" class="lc-field-input" id="lc-cd-unit" placeholder="e.g. C1, C2..."
+          oninput="lcContactFieldChanged(); lcUnitInput()" onfocus="lcUnitInput()"
+          onkeydown="lcUnitKeydown(event)"
+          onblur="lcUnitBlur()"
+          autocomplete="off">
+        <div class="lc-tag-dropdown" id="lc-unit-dropdown" style="display:none;"></div>
       </div>
 
       <div class="lc-field-divider"></div>
@@ -675,6 +751,32 @@
             <option value="partial">Partial</option>
             <option value="refunded">Refunded</option>
           </select>
+        </div>
+      </div>
+
+      <!-- Payment Reminder (US-022) -->
+      <div class="lc-field lc-payment-reminder-section" id="lc-payment-reminder-section">
+        <label class="lc-field-label">Payment Reminder</label>
+        <div class="lc-payment-reminder-active" id="lc-payment-reminder-active" style="display:none;">
+          <div class="lc-payment-reminder-info">
+            <span class="lc-payment-reminder-due" id="lc-payment-reminder-due">Due: --</span>
+            <span class="lc-payment-reminder-auto" id="lc-payment-reminder-auto"></span>
+          </div>
+          <div class="lc-payment-reminder-actions">
+            <button type="button" class="lc-sched-edit-btn" onclick="lcSnoozeReminder()" title="Snooze 3 days">Snooze</button>
+            <button type="button" class="lc-sched-cancel-btn" onclick="lcDismissReminder()" title="Dismiss">Dismiss</button>
+          </div>
+        </div>
+        <div class="lc-payment-reminder-new" id="lc-payment-reminder-new">
+          <div class="lc-field-row" style="align-items:flex-end;gap:6px;">
+            <div style="flex:1;">
+              <input type="date" class="lc-field-input" id="lc-payment-due-date" title="Reminder due date">
+            </div>
+            <label class="lc-payment-autosend-label" title="Auto-send chase message on due date">
+              <input type="checkbox" id="lc-payment-autosend"> Auto
+            </label>
+            <button type="button" class="lc-schedule-confirm" style="padding:5px 10px;font-size:12px;" onclick="lcSetPaymentReminder()" title="Set reminder">Set</button>
+          </div>
         </div>
       </div>
 
@@ -743,6 +845,20 @@
     <div class="lc-forward-list" id="lc-forward-list"></div>
     <div class="lc-modal-buttons">
       <button class="lc-modal-btn lc-modal-btn-cancel" onclick="lcCloseForwardModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scheduled Messages Panel (US-020) -->
+<div id="lc-scheduled-panel" class="lc-modal-overlay" style="display:none;"
+  onclick="if(event.target===this) lcCloseScheduledPanel()">
+  <div class="lc-modal-content lc-scheduled-modal">
+    <div class="lc-modal-title">Scheduled Messages</div>
+    <div class="lc-scheduled-list" id="lc-scheduled-list">
+      <div class="lc-scheduled-empty">No scheduled messages</div>
+    </div>
+    <div class="lc-modal-buttons">
+      <button class="lc-modal-btn lc-modal-btn-cancel" onclick="lcCloseScheduledPanel()">Close</button>
     </div>
   </div>
 </div>

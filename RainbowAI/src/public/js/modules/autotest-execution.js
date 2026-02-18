@@ -131,6 +131,11 @@ export async function runAutotest(filter) {
   let scenarios = [];
   if (filter === 'all' || !filter) {
     scenarios = window.AUTOTEST_SCENARIOS || [];
+  } else if (filter === 'checkin_process') {
+    // Check-in Process suite: scenarios tagged with suite='checkin_process' or ARRIVAL_CHECKIN category
+    scenarios = (window.AUTOTEST_SCENARIOS || []).filter(s =>
+      s.suite === 'checkin_process' || s.category === 'ARRIVAL_CHECKIN'
+    );
   } else {
     await getRoutingForAutotest();
     const scenarioIds = getAutotestScenariosByAction(filter);
@@ -295,32 +300,69 @@ export async function runScenario(scenario) {
   const turns = [];
   const scenarioStart = Date.now();
 
+  // Multi-turn workflow scenarios use /preview/chat with session ID to maintain state (US-015)
+  const isMultiTurn = scenario.messages.length > 1 && (
+    scenario.category === 'WORKFLOW_COMPLETE' || scenario.category === 'ARRIVAL_CHECKIN' || scenario.suite === 'checkin_process'
+  );
+  const sessionId = isMultiTurn ? ('autotest-' + scenario.id + '-' + Date.now()) : null;
+  const chatHistory = [];
+
   for (let i = 0; i < scenario.messages.length; i++) {
     const msg = scenario.messages[i];
     const turnStart = Date.now();
 
     try {
-      const response = await api('/intents/test', {
-        method: 'POST',
-        body: { message: msg.text },
-        timeout: 30000
-      });
+      let response;
+      if (isMultiTurn) {
+        // Use preview/chat to maintain workflow state across turns
+        response = await api('/preview/chat', {
+          method: 'POST',
+          body: { message: msg.text, history: chatHistory, sessionId },
+          timeout: 45000
+        });
+        // Append to local history for next turn
+        chatHistory.push({ role: 'user', content: msg.text });
+        if (response.response) chatHistory.push({ role: 'assistant', content: response.response });
 
-      const responseTime = Date.now() - turnStart;
-      turns.push({
-        userMessage: msg.text,
-        response: response.response || '(no response)',
-        intent: response.intent || 'unknown',
-        source: response.source || 'unknown',
-        routedAction: response.action || 'unknown',
-        confidence: response.confidence || 0,
-        detectedLanguage: response.detectedLanguage || 'en',
-        messageType: response.messageType || 'info',
-        model: response.model || null,
-        kbFiles: response.kbFiles || [],
-        responseTime,
-        matchedKeyword: response.matchedKeyword || null
-      });
+        const responseTime = Date.now() - turnStart;
+        turns.push({
+          userMessage: msg.text,
+          response: response.response || response.message || '(no response)',
+          intent: response.intent || 'unknown',
+          source: response.source || 'workflow',
+          routedAction: response.action || response.workflowId || 'unknown',
+          confidence: response.confidence || 0,
+          detectedLanguage: response.detectedLanguage || 'en',
+          messageType: response.messageType || 'info',
+          model: response.model || null,
+          kbFiles: response.kbFiles || [],
+          responseTime,
+          matchedKeyword: response.matchedKeyword || null
+        });
+      } else {
+        // Single-turn: use intent test endpoint (fast, stateless)
+        response = await api('/intents/test', {
+          method: 'POST',
+          body: { message: msg.text },
+          timeout: 30000
+        });
+
+        const responseTime = Date.now() - turnStart;
+        turns.push({
+          userMessage: msg.text,
+          response: response.response || '(no response)',
+          intent: response.intent || 'unknown',
+          source: response.source || 'unknown',
+          routedAction: response.action || 'unknown',
+          confidence: response.confidence || 0,
+          detectedLanguage: response.detectedLanguage || 'en',
+          messageType: response.messageType || 'info',
+          model: response.model || null,
+          kbFiles: response.kbFiles || [],
+          responseTime,
+          matchedKeyword: response.matchedKeyword || null
+        });
+      }
     } catch (e) {
       turns.push({
         userMessage: msg.text,
@@ -482,6 +524,12 @@ async function updateFilterCounts() {
 
   const llmIds = getAutotestScenariosByAction('llm_reply');
   if (llmCountEl) llmCountEl.textContent = String(allScenarios.filter(s => llmIds.includes(s.id)).length);
+
+  const checkinCountEl = document.getElementById('run-checkin-count');
+  if (checkinCountEl) {
+    const checkinCount = allScenarios.filter(s => s.suite === 'checkin_process' || s.category === 'ARRIVAL_CHECKIN').length;
+    checkinCountEl.textContent = String(checkinCount);
+  }
 }
 
 /**

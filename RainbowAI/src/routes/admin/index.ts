@@ -18,6 +18,10 @@ import adminNotificationsRoutes from './admin-notifications.js';
 import checkinNotifyRoutes from './checkin-notify.js';
 import prismaBotRoutes from './prisma-bot.js';
 import tagsRoutes from './tags.js';
+import capsulesRoutes from './capsules.js';
+import customMessagesRoutes from './custom-messages.js';
+import scheduledMessagesRoutes from './scheduled-messages.js';
+import paymentRemindersRoutes from './payment-reminders.js';
 import latencyRoutes from '../test/latency.js';
 
 const router = Router();
@@ -91,6 +95,10 @@ router.use('/admin-notifications', adminNotificationsRoutes);
 router.use(checkinNotifyRoutes);
 router.use(prismaBotRoutes);
 router.use(tagsRoutes);
+router.use(capsulesRoutes);
+router.use(customMessagesRoutes);
+router.use(scheduledMessagesRoutes);
+router.use(paymentRemindersRoutes);
 router.use('/test', latencyRoutes);
 
 // Ensure unmatched /api/rainbow/* returns JSON 404 (never HTML)

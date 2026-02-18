@@ -219,6 +219,7 @@ export async function loadStaticReplies() {
               </div>
               <div class="flex gap-1">
                 <button onclick="editKnowledgeStatic('${esc(e.intent)}')" class="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">Edit</button>
+                <button onclick="toggleReplyImage('${esc(e.intent)}')" class="text-xs px-2 py-1 text-purple-600 hover:bg-purple-50 rounded" title="Attach image to this reply">${e.imageUrl ? '🖼️' : '📷'}</button>
                 <button onclick="deleteKnowledge('${esc(e.intent)}')" class="text-xs px-2 py-1 text-danger-500 hover:bg-danger-50 rounded">Delete</button>
               </div>
             </div>
@@ -226,6 +227,12 @@ export async function loadStaticReplies() {
               <div><span class="text-neutral-400">EN:</span> ${esc(truncate(e.response?.en || '', 120))}</div>
               <div><span class="text-neutral-400">MS:</span> ${esc(truncate(e.response?.ms || '', 120))}</div>
               <div><span class="text-neutral-400">ZH:</span> ${esc(truncate(e.response?.zh || '', 120))}</div>
+            </div>
+            ${e.imageUrl ? '<div class="mt-2 flex items-center gap-2"><span class="text-xs text-purple-600">🖼️ Image attached</span><button onclick="removeReplyImage(\'' + esc(e.intent) + '\')" class="text-xs text-danger-500 hover:underline">Remove</button></div>' : ''}
+            <div id="k-image-upload-${css(e.intent)}" class="hidden mt-2 p-3 bg-purple-50 border border-purple-200 rounded-xl">
+              <label class="text-xs font-medium text-purple-700 block mb-1">Attach Image (jpg/png/webp, max 5MB)</label>
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onchange="uploadReplyImage('${esc(e.intent)}', this)" class="text-xs" />
+              <div id="k-image-preview-${css(e.intent)}" class="mt-2"></div>
             </div>
             <div class="hidden mt-2" id="k-static-edit-${css(e.intent)}">
               <div class="grid grid-cols-1 gap-2 mb-2">

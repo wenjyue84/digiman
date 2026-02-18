@@ -43,6 +43,33 @@
       </div>
     </div>
 
+    <!-- KB Accuracy Tester (US-009: moved to top) -->
+    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-5 mb-5">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h3 class="font-semibold text-emerald-900">🔬 KB Accuracy Tester</h3>
+          <p class="text-xs text-emerald-600 mt-0.5">Ask questions answered ONLY from Knowledge Base content (bypasses intent pipeline)</p>
+        </div>
+        <button onclick="kbTestClear()"
+          class="text-xs bg-white hover:bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200 transition">Clear</button>
+      </div>
+
+      <!-- Test Messages -->
+      <div id="kb-test-messages"
+        class="bg-white rounded-lg border border-emerald-200 p-4 mb-3 max-h-72 overflow-y-auto min-h-[100px]">
+        <div class="text-center text-neutral-400 text-sm py-6">Ask a question to test Knowledge Base accuracy</div>
+      </div>
+
+      <!-- Test Input -->
+      <div class="flex gap-2">
+        <input type="text" id="kb-test-input" placeholder="Ask a question (e.g. What time is check-in?)"
+          class="flex-1 border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          onkeydown="kbTestKeydown(event)" />
+        <button onclick="kbTestSend()"
+          class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm transition">Send</button>
+      </div>
+    </div>
+
     <div class="grid grid-cols-12 gap-4" style="min-height: 700px;">
 
       <!-- File Browser Sidebar (4 cols) -->
@@ -158,33 +185,6 @@
             <span id="kb-editor-modified" class="hidden text-yellow-600 font-medium">Modified &middot; Not saved</span>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- KB Accuracy Test Panel (US-112) -->
-    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-5 mt-4">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <h3 class="font-semibold text-emerald-900">KB Accuracy Tester</h3>
-          <p class="text-xs text-emerald-600 mt-0.5">Ask questions answered ONLY from Knowledge Base content (bypasses intent pipeline)</p>
-        </div>
-        <button onclick="kbTestClear()"
-          class="text-xs bg-white hover:bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200 transition">Clear</button>
-      </div>
-
-      <!-- Test Messages -->
-      <div id="kb-test-messages"
-        class="bg-white rounded-lg border border-emerald-200 p-4 mb-3 max-h-72 overflow-y-auto min-h-[100px]">
-        <div class="text-center text-neutral-400 text-sm py-6">Ask a question to test Knowledge Base accuracy</div>
-      </div>
-
-      <!-- Test Input -->
-      <div class="flex gap-2">
-        <input type="text" id="kb-test-input" placeholder="Ask a question (e.g. What time is check-in?)"
-          class="flex-1 border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-          onkeydown="kbTestKeydown(event)" />
-        <button onclick="kbTestSend()"
-          class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm transition">Send</button>
       </div>
     </div>
 

@@ -5,11 +5,11 @@
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
+import { loadConfigFromDB } from '../lib/config-db.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(__dirname, 'data');
+// Use process.cwd() (= RainbowAI/) — __dirname is dist/ in esbuild bundle
+const DATA_DIR = join(process.cwd(), 'src', 'assistant', 'data');
 const TIERS_FILE = join(DATA_DIR, 'intent-tiers.json');
 
 // ─── Per-Intent Threshold Maps (Layer 1 + Tier Overrides) ───────────────────
@@ -272,6 +272,25 @@ export function checkTierThreshold(
 
   // No tier-specific override - use standard check
   return checkIntentThreshold(intentName, score, globalThreshold);
+}
+
+/** Try loading intent tiers from DB (called at startup). Falls back to file. */
+export async function loadIntentTiersFromDB(): Promise<void> {
+  try {
+    const dbData = await loadConfigFromDB('intent-tiers.json');
+    if (dbData && typeof dbData === 'object') {
+      const tiers = (dbData as { tiers?: Partial<IntentDetectionConfig['tiers']> }).tiers;
+      if (tiers) {
+        updateIntentConfig({ tiers: { ...currentConfig.tiers, ...tiers } });
+        console.log('[IntentConfig] Loaded tiers from DB');
+        return;
+      }
+    }
+  } catch (err: any) {
+    console.warn('[IntentConfig] DB load failed:', err.message);
+  }
+  // Fall back to file
+  loadIntentTiersFromFile();
 }
 
 // Load persisted tier state on module init (e.g. AI Fallback disabled)

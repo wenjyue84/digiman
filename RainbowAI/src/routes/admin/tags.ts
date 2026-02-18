@@ -6,14 +6,10 @@
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, renameSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const TAGS_FILE = join(__dirname, '..', '..', '..', 'data', 'tags.json');
+const TAGS_FILE = join(process.cwd(), 'data', 'tags.json');
 
 const router = Router();
 
@@ -34,6 +30,8 @@ function loadTags(): TagsData {
 }
 
 function saveTags(data: TagsData): void {
+  const dir = dirname(TAGS_FILE);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const tmpPath = TAGS_FILE + '.tmp';
   writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
   renameSync(tmpPath, TAGS_FILE);

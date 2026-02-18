@@ -610,7 +610,35 @@ body.lc-resizing * {
   width: 16px;
   height: 11px;
   color: #53bdeb;
-  /* Blue checkmarks for read */
+}
+
+/* US-017: Read receipt tick states */
+.lc-ticks {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+}
+.lc-ticks svg {
+  width: 16px;
+  height: 11px;
+}
+
+/* Single grey tick — server acknowledged */
+.lc-ticks-sent {
+  color: #667781;
+}
+.lc-ticks-sent svg path:last-child {
+  display: none;  /* Hide second tick path */
+}
+
+/* Double grey ticks — delivered */
+.lc-ticks-delivered {
+  color: #667781;
+}
+
+/* Double blue ticks — read */
+.lc-ticks-read {
+  color: #53bdeb;
 }
 
 /* US-087: Bot avatar prefix */

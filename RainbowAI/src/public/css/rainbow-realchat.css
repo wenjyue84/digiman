@@ -143,10 +143,11 @@
 
 .rc-header-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;  /* US-005: min 8px between buttons to prevent visual overlap */
   color: #54656f;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;  /* US-005: prevent wrapping that caused delete/fullscreen overlap */
+  flex-shrink: 0;
 }
 
 .rc-header-actions button {
@@ -160,6 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;  /* US-005: prevent buttons from being squeezed together */
 }
 
 .rc-header-actions button:hover {

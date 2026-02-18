@@ -123,7 +123,7 @@ export async function loadTierStates() {
   }
 
   const savedStates = localStorage.getItem('tierStates');
-  const defaultStates = { tier1: false, tier2: false, tier3: false, tier4: true };
+  const defaultStates = { tier1: true, tier2: true, tier3: true, tier4: true };
   const states = savedStates ? JSON.parse(savedStates) : defaultStates;
 
   document.getElementById('tier1-enabled').checked = states.tier1;
@@ -134,24 +134,24 @@ export async function loadTierStates() {
 }
 
 export async function resetToDefaults() {
-  if (!confirm('Reset all layers to default settings?\n\nThis will:\n- Disable Priority Keywords\n- Disable Smart Matching\n- Disable Learning Examples\n- Enable AI Fallback')) return;
+  if (!confirm('Reset all layers to default settings?\n\nThis will:\n- Enable Priority Keywords\n- Enable Smart Matching\n- Enable Learning Examples\n- Enable AI Fallback')) return;
 
-  const defaults = { tier1: false, tier2: false, tier3: false, tier4: true };
+  const defaults = { tier1: true, tier2: true, tier3: true, tier4: true };
   localStorage.setItem('tierStates', JSON.stringify(defaults));
 
   // Update UI
-  document.getElementById('tier1-enabled').checked = false;
-  document.getElementById('tier2-enabled').checked = false;
-  document.getElementById('tier3-enabled').checked = false;
+  document.getElementById('tier1-enabled').checked = true;
+  document.getElementById('tier2-enabled').checked = true;
+  document.getElementById('tier3-enabled').checked = true;
   document.getElementById('tier4-enabled').checked = true;
   updateTier4StatusLabel(true);
 
   // Save to backend
   try {
     const promises = [
-      saveTierState('tier1', false),
-      saveTierState('tier2', false),
-      saveTierState('tier3', false),
+      saveTierState('tier1', true),
+      saveTierState('tier2', true),
+      saveTierState('tier3', true),
       saveTierState('tier4', true)
     ];
     await Promise.all(promises);

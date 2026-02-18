@@ -141,6 +141,8 @@ export const adminNotifications = pgTable("admin_notifications", {
     index("idx_admin_notifications_is_read").on(table.isRead),
     index("idx_admin_notifications_type").on(table.type),
     index("idx_admin_notifications_created_at").on(table.createdAt),
+    // Composite: hot query for "unread notifications, newest first"
+    index("idx_admin_notifications_read_created").on(table.isRead, table.createdAt),
 ]));
 export const pushSubscriptions = pgTable("push_subscriptions", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
@@ -223,6 +225,8 @@ export const rainbowFeedback = pgTable("rainbow_feedback", {
     index("idx_rainbow_feedback_intent").on(table.intent),
     index("idx_rainbow_feedback_rating").on(table.rating),
     index("idx_rainbow_feedback_created_at").on(table.createdAt),
+    // Composite: hot query for feedback analytics by time range + intent
+    index("idx_rainbow_feedback_created_intent").on(table.createdAt, table.intent),
 ]));
 export const intentPredictions = pgTable("intent_predictions", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
@@ -245,6 +249,8 @@ export const intentPredictions = pgTable("intent_predictions", {
     index("idx_intent_predictions_tier").on(table.tier),
     index("idx_intent_predictions_was_correct").on(table.wasCorrect),
     index("idx_intent_predictions_created_at").on(table.createdAt),
+    // Composite: hot query for accuracy analytics (correct/incorrect over time)
+    index("idx_intent_predictions_correct_created").on(table.wasCorrect, table.createdAt),
 ]));
 export const rainbowConversationState = pgTable("rainbow_conversation_state", {
     phone: varchar("phone", { length: 32 }).primaryKey(),
@@ -295,9 +301,12 @@ export const rainbowMessages = pgTable("rainbow_messages", {
     routedAction: text("routed_action"), // static_reply | llm_reply | workflow | etc
     workflowId: text("workflow_id"),
     stepId: text("step_id"),
+    usageJson: text("usage_json"), // JSON: {prompt_tokens, completion_tokens, total_tokens}
 }, (table) => ([
     index("idx_rainbow_messages_phone").on(table.phone),
     index("idx_rainbow_messages_phone_timestamp").on(table.phone, table.timestamp),
     index("idx_rainbow_messages_role").on(table.role),
     index("idx_rainbow_messages_timestamp").on(table.timestamp),
+    // Composite: hot query for fetching conversation messages filtered by role
+    index("idx_rainbow_messages_phone_role_ts").on(table.phone, table.role, table.timestamp),
 ]));

@@ -136,5 +136,9 @@
   },
   "facilities": {
     "action": "static_reply"
+  },
+  "capsule_conflict": {
+    "action": "workflow",
+    "workflow_id": "capsule_conflict_handling"
   }
 }

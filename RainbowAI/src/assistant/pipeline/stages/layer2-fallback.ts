@@ -6,16 +6,11 @@
  * Only replaces the original result if the fallback improves confidence.
  */
 
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import type { IPipelineContext } from '../pipeline-context.js';
 import type { DevMetadata } from '../types.js';
 import type { ChatMessage } from '../../types.js';
 import type { ClassificationResult } from './tier-classification.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ASSISTANT_DATA_DIR = join(__dirname, '..', '..', 'data');
+import { getLLMSettings } from '../../llm-settings-loader.js';
 
 /**
  * Stage 4: Layer 2 Fallback
@@ -40,9 +35,7 @@ export async function applyLayer2Fallback(
   devMetadata: DevMetadata,
   context: IPipelineContext
 ): Promise<ClassificationResult> {
-  const llmSettings = JSON.parse(
-    readFileSync(join(ASSISTANT_DATA_DIR, 'llm-settings.json'), 'utf-8')
-  );
+  const llmSettings = getLLMSettings();
   const layer2Threshold = llmSettings.thresholds?.layer2 ?? 0.80;
 
   // Skip if confidence is already above threshold or AI unavailable
@@ -66,6 +59,7 @@ export async function applyLayer2Fallback(
     devMetadata.source = (devMetadata.source || 'llm') + '+layer2';
     devMetadata.model = fallbackResult.model;
     devMetadata.responseTime = (result.responseTime || 0) + (fallbackResult.responseTime || 0);
+    devMetadata.usage = fallbackResult.usage;
 
     return {
       intent: fallbackResult.intent,
@@ -75,6 +69,7 @@ export async function applyLayer2Fallback(
       model: fallbackResult.model,
       responseTime: (result.responseTime || 0) + (fallbackResult.responseTime || 0),
       detectedLanguage: result.detectedLanguage,
+      usage: fallbackResult.usage,
     };
   }
 

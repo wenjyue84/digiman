@@ -10,16 +10,13 @@
 
 import { eq, desc, gt, sql, and } from 'drizzle-orm';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join, resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { db, dbReady } from '../lib/db.js';
 import { withFallback } from '../lib/with-fallback.js';
 // Import from .ts directly to bypass stale build artifacts
 import { rainbowConversations, rainbowMessages } from '../../../shared/schema-tables.ts';
 
-const __filename_cl = fileURLToPath(import.meta.url);
-const __dirname_cl = dirname(__filename_cl);
-const CONTACTS_DIR = resolve(__dirname_cl, '..', '..', '.rainbow-kb', 'contacts');
+const CONTACTS_DIR = join(process.cwd(), '.rainbow-kb', 'contacts');
 
 // ─── Types (unchanged — callers still import these) ─────────────────
 

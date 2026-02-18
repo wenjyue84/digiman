@@ -263,6 +263,7 @@ export async function loadContactDetails() {
   renderContactFields();
   loadGlobalTags(); // US-008: Fetch global tags for autocomplete
   loadCapsuleUnits(); // US-010: Fetch capsule units for dropdown
+  loadPaymentReminder(); // US-022: Load payment reminder for this contact
 }
 
 // US-088: Country detection from phone prefix
@@ -629,7 +630,7 @@ var _capsuleUnits = [];      // Cached capsule unit list
 var _unitDropdownIdx = -1;   // Keyboard nav index in unit dropdown
 
 export function loadCapsuleUnits() {
-  api('/capsules').then(function (data) {
+  return api('/capsules').then(function (data) {
     _capsuleUnits = (data && Array.isArray(data.units)) ? data.units : [];
   }).catch(function () { /* silent — freeform input still works */ });
 }
@@ -748,7 +749,7 @@ function hideUnitDropdown() {
 // ─── Contact Units Map (US-012) ──────────────────────────────────
 
 export function loadContactUnitsMap() {
-  api('/conversations/units-map').then(function (data) {
+  return api('/conversations/units-map').then(function (data) {
     $.contactUnitsMap = (data && typeof data === 'object') ? data : {};
   }).catch(function () { $.contactUnitsMap = {}; });
 }
@@ -764,18 +765,22 @@ export function loadContactDatesMap() {
 // ─── Tag Filter (US-009) ────────────────────────────────────────
 
 export function loadContactTagsMap() {
-  api('/conversations/tags-map').then(function (data) {
+  return api('/conversations/tags-map').then(function (data) {
     $.contactTagsMap = (data && typeof data === 'object') ? data : {};
   }).catch(function () { $.contactTagsMap = {}; });
 }
 
-export function toggleTagFilter() {
+export async function toggleTagFilter() {
   var dropdown = document.getElementById('lc-tag-filter-dropdown');
   if (!dropdown) return;
   var isOpen = dropdown.style.display !== 'none';
   if (isOpen) {
     dropdown.style.display = 'none';
     return;
+  }
+  // US-006: Ensure tags are loaded before rendering (handles race on first click)
+  if (Object.keys($.contactTagsMap).length === 0) {
+    await loadContactTagsMap();
   }
   _renderTagFilterDropdown();
   dropdown.style.display = 'block';
@@ -869,13 +874,17 @@ function _updateTagFilterBtnLabel() {
 
 // ─── Unit Filter (US-013) ────────────────────────────────────────
 
-export function toggleUnitFilter() {
+export async function toggleUnitFilter() {
   var dropdown = document.getElementById('lc-unit-filter-dropdown');
   if (!dropdown) return;
   var isOpen = dropdown.style.display !== 'none';
   if (isOpen) {
     dropdown.style.display = 'none';
     return;
+  }
+  // US-006: Ensure unit/capsule data is loaded before rendering (handles race on first click)
+  if (Object.keys($.contactUnitsMap).length === 0 && _capsuleUnits.length === 0) {
+    await Promise.all([loadContactUnitsMap(), loadCapsuleUnits()]);
   }
   _renderUnitFilterDropdown();
   dropdown.style.display = 'block';
@@ -1337,9 +1346,12 @@ export async function generateAINotes() {
 
     if (result && result.notes) {
       textarea.value = result.notes;
-      // Auto-expand to show full content (no truncation)
+      // Auto-expand to show full content without truncation (US-008)
       textarea.style.height = 'auto';
       textarea.style.height = textarea.scrollHeight + 'px';
+      // Scroll the contact body so the expanded textarea is visible
+      var body = textarea.closest('.lc-contact-body');
+      if (body) body.scrollTop = body.scrollHeight;
       showToast('AI notes generated (review before saving)', 'success');
       contactFieldChanged();
     }
@@ -1448,4 +1460,166 @@ export function mobileShowChat() {
   if (container && window.innerWidth <= 768) {
     container.classList.add('lc-mobile-show-chat');
   }
+}
+
+// ─── Payment Reminders (US-022) ─────────────────────────────────
+
+var _currentReminder = null; // Active reminder for current contact
+
+export async function loadPaymentReminder() {
+  _currentReminder = null;
+  var activeEl = document.getElementById('lc-payment-reminder-active');
+  var newEl = document.getElementById('lc-payment-reminder-new');
+  if (!activeEl || !newEl) return;
+
+  if (!$.activePhone) {
+    activeEl.style.display = 'none';
+    newEl.style.display = '';
+    return;
+  }
+
+  try {
+    var result = await api('/payment-reminders?phone=' + encodeURIComponent($.activePhone));
+    var reminders = result.reminders || [];
+    var active = reminders.find(function (r) { return r.status === 'active' || r.status === 'snoozed'; });
+
+    if (active) {
+      _currentReminder = active;
+      activeEl.style.display = '';
+      newEl.style.display = 'none';
+      var dueEl = document.getElementById('lc-payment-reminder-due');
+      if (dueEl) dueEl.textContent = 'Due: ' + active.dueDate;
+      var autoEl = document.getElementById('lc-payment-reminder-auto');
+      if (autoEl) autoEl.textContent = active.autoSend ? '(auto-send)' : '';
+      // Add overdue styling
+      var today = new Date().toISOString().split('T')[0];
+      if (active.dueDate <= today) {
+        activeEl.classList.add('lc-reminder-overdue');
+      } else {
+        activeEl.classList.remove('lc-reminder-overdue');
+      }
+    } else {
+      activeEl.style.display = 'none';
+      newEl.style.display = '';
+    }
+  } catch {
+    activeEl.style.display = 'none';
+    newEl.style.display = '';
+  }
+}
+
+export async function setPaymentReminder() {
+  if (!$.activePhone) return;
+  var dateInput = document.getElementById('lc-payment-due-date');
+  var autoInput = document.getElementById('lc-payment-autosend');
+  if (!dateInput || !dateInput.value) {
+    if (window.toast) window.toast('Pick a due date', 'error');
+    return;
+  }
+
+  try {
+    await api('/payment-reminders', {
+      method: 'POST',
+      body: {
+        phone: $.activePhone,
+        dueDate: dateInput.value,
+        autoSend: autoInput ? autoInput.checked : false
+      }
+    });
+    if (window.toast) window.toast('Payment reminder set for ' + dateInput.value, 'success');
+    dateInput.value = '';
+    if (autoInput) autoInput.checked = false;
+    loadPaymentReminder();
+    refreshOverdueBell();
+  } catch (err) {
+    if (window.toast) window.toast('Failed: ' + (err.message || 'error'), 'error');
+  }
+}
+
+export async function dismissReminder() {
+  if (!_currentReminder) return;
+  try {
+    await api('/payment-reminders/' + encodeURIComponent(_currentReminder.id) + '/dismiss', { method: 'POST' });
+    if (window.toast) window.toast('Reminder dismissed', 'success');
+    loadPaymentReminder();
+    refreshOverdueBell();
+  } catch (err) {
+    if (window.toast) window.toast('Failed: ' + (err.message || 'error'), 'error');
+  }
+}
+
+export async function snoozeReminder() {
+  if (!_currentReminder) return;
+  try {
+    await api('/payment-reminders/' + encodeURIComponent(_currentReminder.id) + '/snooze', {
+      method: 'POST',
+      body: { days: 3 }
+    });
+    if (window.toast) window.toast('Reminder snoozed for 3 days', 'success');
+    loadPaymentReminder();
+    refreshOverdueBell();
+  } catch (err) {
+    if (window.toast) window.toast('Failed: ' + (err.message || 'error'), 'error');
+  }
+}
+
+// Overdue bell + badge in sidebar header
+export async function refreshOverdueBell() {
+  try {
+    var result = await api('/payment-reminders/overdue');
+    var count = result.count || 0;
+    var bell = document.getElementById('lc-reminder-bell');
+    var countEl = document.getElementById('lc-reminder-bell-count');
+    if (bell) bell.style.display = count > 0 ? '' : 'none';
+    if (countEl) countEl.textContent = String(count);
+  } catch {
+    // Non-critical
+  }
+}
+
+export async function showOverdueReminders() {
+  try {
+    var result = await api('/payment-reminders/overdue');
+    var reminders = result.reminders || [];
+    if (reminders.length === 0) {
+      if (window.toast) window.toast('No overdue payment reminders', 'info');
+      return;
+    }
+    var lines = reminders.map(function (r) {
+      var phone = r.phone.replace(/^\d{1,3}/, function (cc) { return '+' + cc + ' '; });
+      return phone + ' — due ' + r.dueDate;
+    });
+    alert('Overdue Payment Reminders:\n\n' + lines.join('\n'));
+  } catch (err) {
+    if (window.toast) window.toast('Failed to load reminders', 'error');
+  }
+}
+
+// Add overdue badge to left-pane conversation items
+export function addOverdueBadgeToList() {
+  api('/payment-reminders/overdue').then(function (result) {
+    var reminders = result.reminders || [];
+    var overduePhones = {};
+    for (var i = 0; i < reminders.length; i++) {
+      overduePhones[reminders[i].phone] = true;
+    }
+    // Find chat list items and add badge
+    var items = document.querySelectorAll('.lc-chat-item');
+    for (var j = 0; j < items.length; j++) {
+      var phone = items[j].getAttribute('data-phone');
+      var existingBadge = items[j].querySelector('.lc-overdue-badge');
+      if (phone && overduePhones[phone]) {
+        if (!existingBadge) {
+          var badge = document.createElement('span');
+          badge.className = 'lc-overdue-badge';
+          badge.title = 'Payment overdue';
+          badge.textContent = '$';
+          var nameEl = items[j].querySelector('.lc-chat-name');
+          if (nameEl) nameEl.appendChild(badge);
+        }
+      } else if (existingBadge) {
+        existingBadge.remove();
+      }
+    }
+  }).catch(function () { /* silent */ });
 }

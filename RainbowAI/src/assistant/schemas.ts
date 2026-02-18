@@ -24,6 +24,7 @@ export const knowledgeDataSchema = z.object({
   static: z.array(z.object({
     intent: z.string(),
     response: trilingualSchema,
+    imageUrl: z.string().optional(),
   })),
   dynamic: z.record(z.string(), z.string()),
 });
@@ -96,6 +97,11 @@ export const settingsDataSchema = z.object({
     providers: z.array(aiProviderSchema).optional(),
   }),
   routing_mode: routingModeSchema.optional(),
+  ocr_provider: z.object({
+    id: z.string(),
+    model: z.string(),
+    description: z.string().optional(),
+  }).optional(),
   system_prompt: z.string(),
   rate_limits: z.object({
     per_minute: z.number().int().positive(),
@@ -120,6 +126,13 @@ export const settingsDataSchema = z.object({
     consecutive_threshold: z.number().int(),
     cooldown_minutes: z.number().int(),
     description: z.string().optional(),
+  }).optional(),
+  failover: z.object({
+    enabled: z.boolean(),
+    heartbeatIntervalMs: z.number().int().positive(),
+    failoverThresholdMs: z.number().int().positive(),
+    handbackMode: z.enum(['immediate', 'grace']),
+    handbackGracePeriodMs: z.number().int().nonnegative(),
   }).optional(),
 }).passthrough();  // Allow unknown keys (response_modes, feedback, etc.)
 export type SettingsData = z.infer<typeof settingsDataSchema>;

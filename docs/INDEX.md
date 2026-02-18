@@ -40,10 +40,13 @@ Choose one branch; load only the files listed under that branch.
 
 ### 3. Deployment and operations
 
+> **Architecture summary:** Website (`client/` + `server/`) → **always Lightsail**. Rainbow AI → **local PC (primary) + Lightsail (standby)** with automatic failover.
+
 | Order | Doc | Use when |
 |-------|-----|----------|
-| 1 | [DEPLOYMENT_OPERATIONS.md](DEPLOYMENT_OPERATIONS.md) | General deployment and ops. |
-| 2 | [REPLIT_DEPLOYMENT_FALLBACK_SYSTEM.md](REPLIT_DEPLOYMENT_FALLBACK_SYSTEM.md) | Replit-specific deployment. |
+| 1 | `.claude/skills/lightsail-deployment/SKILL.md` | **Primary reference** — actual Lightsail deployment steps, PM2, nginx, OOM fixes. |
+| 2 | [DEPLOYMENT_OPERATIONS.md](DEPLOYMENT_OPERATIONS.md) | Legacy/general ops reference (storage, backup, monitoring). |
+| 3 | [REPLIT_DEPLOYMENT_FALLBACK_SYSTEM.md](REPLIT_DEPLOYMENT_FALLBACK_SYSTEM.md) | Replit-specific deployment (historical). |
 
 ### 4. Rainbow AI: intents and classification
 
@@ -102,14 +105,24 @@ Choose one branch; load only the files listed under that branch.
 | 11 | [OPTION-B-IMPLEMENTATION-SUMMARY.md](OPTION-B-IMPLEMENTATION-SUMMARY.md) | Option B implementation. |
 | 12 | [OPTION-B-TEST-RESULTS.md](OPTION-B-TEST-RESULTS.md) | Option B test results. |
 
-### 9. WhatsApp
+### 9. Rainbow AI Failover (Primary/Standby)
+
+| Order | Doc | Use when |
+|-------|-----|----------|
+| 1 | `RainbowAI/.env.example` | Env vars needed: `RAINBOW_ROLE`, `RAINBOW_PEER_URL`, `RAINBOW_FAILOVER_SECRET`. |
+| 2 | `RainbowAI/src/lib/failover-coordinator.ts` | Core failover logic — heartbeat, activate/deactivate, thresholds. |
+| 3 | Settings → 🔁 Failover tab | Dashboard panel — shows role, last heartbeat, promote/demote controls. |
+
+**Quick facts:** Primary (local PC) → heartbeat every 20s. Standby (Lightsail) → activates after 60s silence. Handback → immediate when primary resumes. Both servers must have the same `RAINBOW_FAILOVER_SECRET`.
+
+### 10. WhatsApp
 
 | Order | Doc | Use when |
 |-------|-----|----------|
 | 1 | [whatsapp-unlink-detection.md](whatsapp-unlink-detection.md) | Unlink detection behavior. |
 | 2 | [whatsapp-unlink-testing-guide.md](whatsapp-unlink-testing-guide.md) | How to test unlink. |
 
-### 10. Frontend and environment
+### 11. Frontend and environment
 
 | Order | Doc | Use when |
 |-------|-----|----------|
@@ -118,14 +131,14 @@ Choose one branch; load only the files listed under that branch.
 | 3 | [ENVIRONMENT_DETECTION_GUIDE.md](ENVIRONMENT_DETECTION_GUIDE.md) | Environment detection usage. |
 | 4 | [ENVIRONMENT_DETECTION_SUMMARY.md](ENVIRONMENT_DETECTION_SUMMARY.md) | Summary. |
 
-### 11. Testing and tooling
+### 12. Testing and tooling
 
 | Order | Doc | Use when |
 |-------|-----|----------|
 | 1 | [TEST-SUITE-ORGANIZATION.md](TEST-SUITE-ORGANIZATION.md) | How tests are organized. |
 | 2 | [AGENT-BROWSER-MULTI-WINDOW-SETUP.md](AGENT-BROWSER-MULTI-WINDOW-SETUP.md) | Multi-window browser setup for agents. |
 
-### 12. Requirements and project notes
+### 13. Requirements and project notes
 
 | Order | Doc | Use when |
 |-------|-----|----------|

@@ -109,10 +109,16 @@
                 <span id="run-workflow-count" class="ml-auto text-neutral-400 text-xs">0</span>
               </button>
               <button type="button" onclick="runAutotestWithFilter('llm_reply'); closeRunAllDropdown();"
-                class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-100 rounded-b-xl">
+                class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-100">
                 <span>🤖</span>
                 <span>LLM Reply only</span>
                 <span id="run-llm-count" class="ml-auto text-neutral-400 text-xs">0</span>
+              </button>
+              <button type="button" onclick="runAutotestWithFilter('checkin_process'); closeRunAllDropdown();"
+                class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-100 rounded-b-xl">
+                <span>🏨</span>
+                <span>Check-in Process</span>
+                <span id="run-checkin-count" class="ml-auto text-neutral-400 text-xs">0</span>
               </button>
             </div>
           </div>
@@ -259,7 +265,7 @@
       </div>
 
       <!-- Chat Messages Container (WhatsApp-style) -->
-      <div id="chat-messages" class="lc-messages" style="flex-direction: column-reverse;">
+      <div id="chat-messages" class="lc-messages">
         <!-- Welcome message -->
         <div class="text-center py-8" style="color:#667781;">
           <div style="font-size:14px;font-weight:500;margin-bottom:4px;">Welcome to AI Agent Preview</div>

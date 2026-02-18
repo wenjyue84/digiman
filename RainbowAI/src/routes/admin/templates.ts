@@ -21,7 +21,12 @@ router.get('/:name', (req, res) => {
 
   // Sanitize template name (prevent directory traversal)
   const safeName = name.replace(/[^a-z0-9_-]/gi, '');
-  const templatePath = join(process.cwd(), 'src/public/templates/tabs', `${safeName}.html`);
+
+  // Dev: templates live in src/public/templates/tabs (tsx mode, cwd = RainbowAI/)
+  // Prod: deploy.sh copies src/public → dist/public; only dist/ is uploaded to server
+  const srcPath = join(process.cwd(), 'src', 'public', 'templates', 'tabs', `${safeName}.html`);
+  const distPath = join(process.cwd(), 'dist', 'public', 'templates', 'tabs', `${safeName}.html`);
+  const templatePath = existsSync(srcPath) ? srcPath : distPath;
 
   if (!existsSync(templatePath)) {
     return notFound(res, 'Template');

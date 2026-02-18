@@ -777,3 +777,34 @@ Client code already uses relative paths (`/api/auth/login`) — no hardcoded loc
 - In production, `CORS_ORIGIN` must be set in ecosystem.config.cjs env block (not just .env file) because PM2 reads from ecosystem config.
 - The `PRODUCTION_URL` env var was already in the CORS code but was never set in production — `CORS_ORIGIN` is now the documented, explicit way to handle this.
 
+## Iteration 1 - Thu, Feb 19, 2026  2:38:46 AM
+Completed: Fix CORS policy violation on production login (ID: US-018)
+
+## Iteration 2 - Thu, Feb 19, 2026
+
+### What was implemented
+- **US-017**: Fix self-check-in link URL to use public Lightsail IP — COMPLETE
+
+### Root cause
+`server/routes/guest-tokens.ts` generated self-check-in links using `process.env.BASE_URL || 'http://localhost:5000'` as the base URL. In production on Lightsail, `BASE_URL` was never set in PM2 env, so guests received `http://localhost:5000/guest-checkin?token=...` links that were unreachable from their phones.
+
+Two locations in `guest-tokens.ts`:
+1. Line 171 — internal token creation endpoint (called by RainbowAI workflow enhancer via `callAPI`)
+2. Lines 346-358 — manual token creation with a needlessly complex Replit environment check
+
+### Changes made
+1. `server/routes/guest-tokens.ts:171` — Changed `process.env.BASE_URL || 'http://localhost:5000'` → `process.env.PUBLIC_URL || \`${req.protocol}://${req.get('host')}\``
+2. `server/routes/guest-tokens.ts:346-358` — Collapsed Replit-specific branching into same `PUBLIC_URL` pattern. Removed dead `PRIVATE_OBJECT_DIR` check.
+3. `ecosystem.config.cjs:13` — Added `PUBLIC_URL: 'http://18.142.14.142'` to pelangi-api PM2 env
+4. `.env.example:25-27` — Documented `PUBLIC_URL` env var with explanation
+
+### Patterns discovered
+- **PUBLIC_URL env var for guest-facing URLs**: Use `process.env.PUBLIC_URL || \`${req.protocol}://${req.get('host')}\`` for any URL a guest will click. The fallback uses request headers (correct for local dev behind Vite proxy). This is different from CORS_ORIGIN (which controls allowed origins for API calls).
+- **RainbowAI doesn't construct check-in URLs**: The workflow-enhancer calls the server's internal endpoint and receives the pre-built link. So the fix is entirely in `server/routes/guest-tokens.ts`.
+- **localhost:5000 in RainbowAI/ is intentional**: Internal API calls between RainbowAI (port 3002) and server (port 5000) correctly use `http://localhost:5000` because they run on the same machine. These are NOT guest-facing.
+
+### Gotchas
+- TS error baseline is 48 from root tsconfig (same as US-018 iteration). Only 1 pre-existing error in `guest-tokens.ts` (`paymentStatus` property) — unrelated to this fix.
+- The old code had `BASE_URL` as the env var name; the PRD specifies `PUBLIC_URL`. Using `PUBLIC_URL` is more semantically correct (it's the URL guests see, not an internal base URL).
+- The Replit environment check (`PRIVATE_OBJECT_DIR`) was dead code — this project runs on Lightsail, not Replit.
+

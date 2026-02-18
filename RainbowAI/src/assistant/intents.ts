@@ -8,10 +8,7 @@ import intentKeywordsData from './data/intent-keywords.json' with { type: 'json'
 import intentExamplesData from './data/intent-examples.json' with { type: 'json' };
 import intentsJsonData from './data/intents.json' with { type: 'json' };
 import { readFile } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { join } from 'path';
 
 // ─── Emergency patterns (regex, critical patterns for immediate escalation) ─────────
 
@@ -67,7 +64,7 @@ function parseRegexPattern(patternStr: string): RegExp | null {
 }
 
 async function loadEmergencyPatternsFromFile(): Promise<void> {
-  const dataPath = join(__dirname, 'data', 'regex-patterns.json');
+  const dataPath = join(process.cwd(), 'src', 'assistant', 'data', 'regex-patterns.json');
   try {
     const raw = await readFile(dataPath, 'utf-8');
     const items = JSON.parse(raw);
@@ -209,6 +206,9 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
     if (/\b(cold|hot|warm|temperature|ac|air\s?cond|heater|sejuk|panas)\b/i.test(messageText)) {
       return 'climate_control_complaint';
     }
+    if (/\b(baby|bayi|infant|婴儿)\b/i.test(messageText)) {
+      return 'contact_staff';  // Babies not allowed in hostel — escalate to staff
+    }
     if (/\b(nois[ye]|loud|bising|can'?t\s?sleep|quiet)\b/i.test(messageText)) {
       return 'noise_complaint';
     }
@@ -226,8 +226,8 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
     if (/\b(worst\s+(hotel|hostel|place|stay)|highly\s+recommend|great\s+experience|give\s+.*(star|rating)|review|recommend|5\s?star|1\s?star|never\s+(come|stay|return)\s+back)\b/i.test(messageText)) {
       return 'review_feedback';
     }
-    // Otherwise generic in-stay complaint — prefer 'complaint' if it exists in routing
-    return 'complaint';
+    // Otherwise generic in-stay complaint
+    return 'general_complaint_in_stay';
   }
 
   // Map "facilities" to "facilities_info"

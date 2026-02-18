@@ -585,7 +585,12 @@
           "talk to",
           "speak to",
           "contact",
-          "call someone"
+          "call someone",
+          "baby crying",
+          "baby noise",
+          "baby won't stop",
+          "baby all night",
+          "crying all night"
         ],
         "ms": [
           "staff",
@@ -594,7 +599,10 @@
           "manager",
           "manusia",
           "cakap dengan orang",
-          "jumpa staff"
+          "jumpa staff",
+          "baby menangis",
+          "bayi menangis",
+          "tangisan bayi"
         ],
         "zh": [
           "联系",
@@ -603,7 +611,8 @@
           "真人",
           "客服",
           "经理",
-          "员工"
+          "员工",
+          "婴儿哭"
         ]
       }
     },
@@ -1184,11 +1193,7 @@
           "cannot sleep",
           "people too loud",
           "construction noise",
-          "baby crying",
-          "quiet hours",
-          "crying all night",
-          "baby noise",
-          "baby won't stop"
+          "quiet hours"
         ],
         "ms": [
           "terlalu bising",
@@ -1199,10 +1204,7 @@
           "tak boleh tidur",
           "susah tidur",
           "orang bising",
-          "bunyi pembinaan",
-          "baby menangis",
-          "bayi menangis",
-          "tangisan bayi"
+          "bunyi pembinaan"
         ],
         "zh": [
           "太吵",
@@ -1213,8 +1215,7 @@
           "睡不着",
           "不能睡",
           "人太吵",
-          "施工噪音",
-          "婴儿哭"
+          "施工噪音"
         ]
       }
     },
@@ -1705,6 +1706,43 @@
           "可以带宠物吗",
           "可以吸烟吗",
           "安静时间"
+        ]
+      }
+    },
+    {
+      "intent": "capsule_conflict",
+      "keywords": {
+        "en": [
+          "someone is in my capsule",
+          "someone already in capsule",
+          "person in my capsule",
+          "occupied my capsule",
+          "my capsule is taken",
+          "capsule already occupied",
+          "wrong person in capsule",
+          "stranger in my capsule",
+          "someone sleeping in my capsule",
+          "capsule conflict",
+          "capsule taken",
+          "my bed is taken",
+          "someone in my bed",
+          "occupied my bed"
+        ],
+        "ms": [
+          "ada orang dalam capsule saya",
+          "capsule saya sudah diduduki",
+          "orang lain dalam capsule saya",
+          "capsule saya diambil",
+          "ada orang kat capsule saya",
+          "capsule dah penuh",
+          "ada orang tidur dalam capsule saya"
+        ],
+        "zh": [
+          "有人占了我的胶囊",
+          "我的胶囊被占了",
+          "有陌生人在我的胶囊里",
+          "我的胶囊有人了",
+          "我的床位被占了"
         ]
       }
     }

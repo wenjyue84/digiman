@@ -22,7 +22,7 @@ import '/public/js/core/lazy-loader.js';
 async function reloadConfig() {
   try {
     await window.api('/reload', { method: 'POST' });
-    window.toast('Config reloaded from disk');
+    window.toast('Config reloaded (DB → memory → files synced)');
     const activeTab = document.querySelector('.tab-active')?.dataset.tab || 'dashboard';
     window.loadTab(activeTab);
   } catch (e) { window.toast(e.message, 'error'); }

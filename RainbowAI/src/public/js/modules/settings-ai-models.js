@@ -167,6 +167,9 @@ export function renderAiModelsTab(container) {
   // Append Prisma Bot settings card
   renderPrismaBotSettingsCard(container, providers);
 
+  // Append OCR model settings card (US-011)
+  renderOcrSettingsCard(container, settingsData, providers);
+
   // Stagger auto speed tests (one every 600ms) so providers aren't hit concurrently.
   const available = providers.filter(p => p.available);
   testSession = { active: true, total: available.length, completed: 0, errors: [] };
@@ -543,3 +546,72 @@ export function resetPrismaBotPrompt() {
   toast('Prisma Bot prompt reset to default');
 }
 window.resetPrismaBotPrompt = resetPrismaBotPrompt;
+
+// ─── OCR Model Settings Card (US-011) ──────────────────────────────
+
+function renderOcrSettingsCard(container, settingsData, providers) {
+  const allProviders = settingsData?.ai?.providers || providers || [];
+  const ocrCfg = settingsData?.ocr_provider || { id: 'google-gemini-flash', model: 'gemini-2.5-flash' };
+
+  const providerOptions = allProviders.map(p =>
+    '<option value="' + esc(p.id) + '" ' + (p.id === ocrCfg.id ? 'selected' : '') + '>' + esc(p.name) + '</option>'
+  ).join('');
+
+  const card = '<div class="bg-white border rounded-2xl p-5 mt-4">' +
+    '<div class="flex items-start justify-between mb-3">' +
+    '<div>' +
+    '<h4 class="font-semibold text-neutral-700 flex items-center gap-2">📷 OCR / Image Extraction Model</h4>' +
+    '<p class="text-xs text-neutral-500 mt-0.5">LLM used for passport & IC image extraction. Requires vision capability (multimodal). Default: Google Gemini 2.5 Flash.</p>' +
+    '</div>' +
+    '</div>' +
+    '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
+    '<div>' +
+    '<label class="block text-xs text-neutral-500 mb-1">Provider</label>' +
+    '<select id="ocr-provider-select" class="w-full border rounded-2xl px-3 py-2 text-sm bg-white" onchange="saveOcrSettings()">' +
+    providerOptions +
+    '</select>' +
+    '</div>' +
+    '<div>' +
+    '<label class="block text-xs text-neutral-500 mb-1">Model name (override)</label>' +
+    '<input type="text" id="ocr-model-input" class="w-full border rounded-2xl px-3 py-2 text-sm" placeholder="e.g. gemini-2.5-flash" value="' + esc(ocrCfg.model || '') + '" onchange="saveOcrSettings()" />' +
+    '<div class="text-xs text-neutral-400 mt-1">Leave blank to use the provider\'s default model.</div>' +
+    '</div>' +
+    '</div>' +
+    '<div id="ocr-save-status" class="text-xs text-neutral-400 mt-2 hidden"></div>' +
+    '</div>';
+
+  container.insertAdjacentHTML('beforeend', card);
+}
+
+export async function saveOcrSettings() {
+  const providerSelect = document.getElementById('ocr-provider-select');
+  const modelInput = document.getElementById('ocr-model-input');
+  const statusEl = document.getElementById('ocr-save-status');
+  if (!providerSelect) return;
+
+  const providerId = providerSelect.value;
+  const model = (modelInput ? modelInput.value.trim() : '') || providerId;
+  const allProviders = _getSettingsData()?.ai?.providers || [];
+  const providerObj = allProviders.find(p => p.id === providerId);
+
+  if (statusEl) { statusEl.textContent = 'Saving…'; statusEl.classList.remove('hidden'); }
+  try {
+    await api('/settings', {
+      method: 'PATCH',
+      body: {
+        ocr_provider: {
+          id: providerId,
+          model: model,
+          description: providerObj ? providerObj.description : ''
+        }
+      }
+    });
+    _setSettingsData(await api('/settings'));
+    if (statusEl) { statusEl.textContent = '✓ Saved'; setTimeout(() => statusEl.classList.add('hidden'), 2000); }
+    toast('OCR model settings saved', 'success');
+  } catch (e) {
+    toast(e.message || 'Failed to save OCR settings', 'error');
+    if (statusEl) statusEl.classList.add('hidden');
+  }
+}
+window.saveOcrSettings = saveOcrSettings;

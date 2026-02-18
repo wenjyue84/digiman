@@ -25,7 +25,10 @@ import {
   deleteTemplate as deleteMessageTemplate,
   showAddTemplate,
   submitAddTemplate,
-  translateAllIntents
+  translateAllIntents,
+  toggleReplyImage,
+  uploadReplyImage,
+  removeReplyImage
 } from '/public/js/modules/responses-crud.js';
 
 import {
@@ -126,6 +129,9 @@ window.deleteMessageTemplate = deleteMessageTemplate;
 window.showAddTemplate = showAddTemplate;
 window.submitAddTemplate = submitAddTemplate;
 window.translateAllIntents = translateAllIntents;
+window.toggleReplyImage = toggleReplyImage;
+window.uploadReplyImage = uploadReplyImage;
+window.removeReplyImage = removeReplyImage;
 window.filterStaticReplies = filterStaticReplies;
 window.filterStaticCategory = filterStaticCategory;
 window.filterSystemMessages = filterSystemMessages;

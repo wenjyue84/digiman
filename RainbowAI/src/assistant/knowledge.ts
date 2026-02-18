@@ -126,6 +126,16 @@ export function getStaticReply(intent: string, lang: Language): string | null {
   return null;
 }
 
+/**
+ * Get the imageUrl for a static reply intent (if any).
+ */
+export function getStaticReplyImageUrl(intent: string): string | null {
+  const entry = faq.find(e => e.intent === intent);
+  return (entry as any)?.imageUrl || null;
+
+  return null;
+}
+
 export function getCachedSettings(): Record<string, any> | null {
   return cachedSettings;
 }

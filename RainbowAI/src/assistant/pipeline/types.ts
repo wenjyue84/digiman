@@ -22,6 +22,7 @@ export interface DevMetadata {
   workflowId?: string;
   stepId?: string;
   multiIntent?: string;
+  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
 }
 
 export interface PipelineState {
@@ -36,6 +37,7 @@ export interface PipelineState {
   diaryEvent: ConversationEvent;
   devMetadata: DevMetadata;
   response: string | null;
+  imageUrl?: string | null;
 }
 
 export type ValidationResult =

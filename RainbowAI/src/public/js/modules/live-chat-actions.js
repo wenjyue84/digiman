@@ -59,14 +59,19 @@ export async function sendReply() {
 
     await api('/conversations/' + encodeURIComponent($.activePhone) + '/send', {
       method: 'POST',
-      body: { message: message, instanceId: instanceId }
+      body: { message: message, instanceId: instanceId, staffName: $.staffName || 'Staff' }
     });
 
     input.value = '';
     input.style.height = '42px';
     await refreshChat();
   } catch (err) {
-    alert('Failed to send message: ' + (err.message || 'Unknown error'));
+    var msg = err.message || 'Unknown error';
+    if (isWhatsAppDisconnectError(msg)) {
+      showReconnectionModal();
+    } else {
+      alert('Failed to send message: ' + msg);
+    }
   } finally {
     btn.disabled = false;
     input.focus();
@@ -181,7 +186,12 @@ async function sendContactAsMessage(phone) {
     await refreshChat();
     if (window.toast) window.toast('Contact shared', 'success');
   } catch (err) {
-    if (window.toast) window.toast('Failed to share contact: ' + (err.message || 'Unknown error'), 'error');
+    var msg = err.message || 'Unknown error';
+    if (isWhatsAppDisconnectError(msg)) {
+      showReconnectionModal();
+    } else {
+      if (window.toast) window.toast('Failed to share contact: ' + msg, 'error');
+    }
   }
 }
 
@@ -263,7 +273,12 @@ export async function sendMedia() {
     await refreshChat();
     if (window.toast) window.toast('Sent ' + (data.mediaType || 'file'), 'success');
   } catch (err) {
-    alert('Failed to send message: ' + (err.message || 'Unknown error'));
+    var msg = err.message || 'Unknown error';
+    if (isWhatsAppDisconnectError(msg)) {
+      showReconnectionModal();
+    } else {
+      alert('Failed to send message: ' + msg);
+    }
   } finally {
     btn.disabled = false;
   }
@@ -429,7 +444,12 @@ export async function forwardMessageTo(phone, text) {
     });
     if (window.toast) window.toast('Forwarded', 'success');
   } catch (err) {
-    alert('Failed to forward: ' + err.message);
+    var msg = err.message || 'Unknown error';
+    if (isWhatsAppDisconnectError(msg)) {
+      showReconnectionModal();
+    } else {
+      alert('Failed to forward: ' + msg);
+    }
   }
 }
 
@@ -752,6 +772,57 @@ export function autoResize(textarea) {
 }
 
 export function handleKeydown(event) {
+  // Workflow palette keyboard nav (US-016)
+  var wfPalette = document.getElementById('lc-wf-palette');
+  if (wfPalette && wfPalette.style.display !== 'none') {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      workflowPaletteNav(event.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      workflowPaletteSelect();
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      hideWorkflowPalette();
+      return;
+    }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      workflowPaletteSelect();
+      return;
+    }
+  }
+
+  // Command palette keyboard nav
+  var palette = document.getElementById('lc-cmd-palette');
+  if (palette && palette.style.display !== 'none') {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      cmdPaletteNav(event.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      cmdPaletteSelect();
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      hideCmdPalette();
+      return;
+    }
+    // Tab also selects
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      cmdPaletteSelect();
+      return;
+    }
+  }
+
   if (event.key !== 'Enter') return;
   if (event.shiftKey) return;
 
@@ -766,4 +837,753 @@ export function handleKeydown(event) {
   }
   event.preventDefault();
   sendReply();
+}
+
+// ─── Command Palette (US-015) ─────────────────────────────────
+
+var _cmdTemplates = null; // cached from API
+var _cmdHighlight = -1;   // currently highlighted index
+
+export async function loadCmdTemplates() {
+  try {
+    _cmdTemplates = null;
+    var data = await api('/custom-messages');
+    if (data && Array.isArray(data.templates)) {
+      _cmdTemplates = data.templates;
+    }
+  } catch (e) {
+    console.error('[CmdPalette] Failed to load templates:', e);
+    _cmdTemplates = [];
+  }
+}
+
+export function onInputCmd(textarea) {
+  var val = textarea.value;
+  // Show workflow palette when input starts with //
+  if (val.charAt(0) === '/' && val.charAt(1) === '/') {
+    hideCmdPalette();
+    showWorkflowPalette(val.slice(2));
+  // Show template palette when input starts with / (but not //)
+  } else if (val.charAt(0) === '/' && val.charAt(1) !== '/') {
+    hideWorkflowPalette();
+    showCmdPalette(val.slice(1));
+  } else {
+    hideCmdPalette();
+    hideWorkflowPalette();
+  }
+}
+
+export function showCmdPalette(filter) {
+  if (!_cmdTemplates) {
+    // Templates not loaded yet — load and retry
+    loadCmdTemplates().then(function () { showCmdPalette(filter); });
+    return;
+  }
+
+  var palette = document.getElementById('lc-cmd-palette');
+  if (!palette) return;
+
+  var filterLower = (filter || '').toLowerCase().trim();
+  var matches = _cmdTemplates.filter(function (t) {
+    if (!filterLower) return true;
+    return t.name.toLowerCase().indexOf(filterLower) >= 0 ||
+           t.content.toLowerCase().indexOf(filterLower) >= 0 ||
+           (t.category && t.category.toLowerCase().indexOf(filterLower) >= 0);
+  });
+
+  if (matches.length === 0) {
+    palette.style.display = 'none';
+    return;
+  }
+
+  // Limit to 10 visible items
+  var visible = matches.slice(0, 10);
+
+  var html = '<div class="lc-cmd-header">' +
+    '<span class="lc-cmd-title">/ Message Templates</span>' +
+    '<span class="lc-cmd-count">' + matches.length + ' template' + (matches.length !== 1 ? 's' : '') + '</span>' +
+    '</div>';
+  html += '<div class="lc-cmd-list">';
+  for (var i = 0; i < visible.length; i++) {
+    var t = visible[i];
+    var preview = t.content.length > 80 ? t.content.substring(0, 77) + '...' : t.content;
+    // Clean markdown bold/italic for preview
+    preview = preview.replace(/\*/g, '').replace(/\n/g, ' ');
+    var catLabel = t.source === 'builtin' ? 'Static Reply' : (t.category || 'Custom');
+    html += '<div class="lc-cmd-item' + (i === 0 ? ' lc-cmd-active' : '') + '" data-cmd-idx="' + i + '" onclick="lcCmdPaletteClick(' + i + ')">' +
+      '<div class="lc-cmd-item-name">' +
+        '<span class="lc-cmd-slash">/</span>' + escapeHtml(t.name) +
+        '<span class="lc-cmd-cat">' + escapeHtml(catLabel) + '</span>' +
+      '</div>' +
+      '<div class="lc-cmd-item-preview">' + escapeHtml(preview) + '</div>' +
+    '</div>';
+  }
+  html += '</div>';
+
+  // Add "Add new template" button at bottom
+  html += '<div class="lc-cmd-footer" onclick="lcCmdAddTemplate()">' +
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+    ' Add custom template' +
+  '</div>';
+
+  palette.innerHTML = html;
+  palette.style.display = '';
+  _cmdHighlight = 0;
+  palette._matches = visible;
+}
+
+export function hideCmdPalette() {
+  var palette = document.getElementById('lc-cmd-palette');
+  if (palette) palette.style.display = 'none';
+  _cmdHighlight = -1;
+}
+
+function cmdPaletteNav(direction) {
+  var palette = document.getElementById('lc-cmd-palette');
+  if (!palette || !palette._matches) return;
+  var items = palette.querySelectorAll('.lc-cmd-item');
+  if (items.length === 0) return;
+
+  // Remove current highlight
+  if (_cmdHighlight >= 0 && _cmdHighlight < items.length) {
+    items[_cmdHighlight].classList.remove('lc-cmd-active');
+  }
+
+  _cmdHighlight += direction;
+  if (_cmdHighlight < 0) _cmdHighlight = items.length - 1;
+  if (_cmdHighlight >= items.length) _cmdHighlight = 0;
+
+  items[_cmdHighlight].classList.add('lc-cmd-active');
+  items[_cmdHighlight].scrollIntoView({ block: 'nearest' });
+}
+
+function cmdPaletteSelect() {
+  var palette = document.getElementById('lc-cmd-palette');
+  if (!palette || !palette._matches || _cmdHighlight < 0) return;
+  var entry = palette._matches[_cmdHighlight];
+  if (!entry) return;
+  insertTemplate(entry.content);
+}
+
+export function cmdPaletteClick(idx) {
+  var palette = document.getElementById('lc-cmd-palette');
+  if (!palette || !palette._matches) return;
+  var entry = palette._matches[idx];
+  if (!entry) return;
+  insertTemplate(entry.content);
+}
+
+function insertTemplate(content) {
+  var input = document.getElementById('lc-input-box');
+  if (!input) return;
+  input.value = content;
+  autoResize(input);
+  hideCmdPalette();
+  input.focus();
+  // Place cursor at end
+  input.setSelectionRange(input.value.length, input.value.length);
+}
+
+export function cmdAddTemplate() {
+  hideCmdPalette();
+  var input = document.getElementById('lc-input-box');
+  if (input) {
+    input.value = '';
+    autoResize(input);
+  }
+
+  // Simple prompt-based UI for adding templates
+  var name = prompt('Template name (short, e.g. "welcome"):');
+  if (!name || !name.trim()) return;
+  var content = prompt('Template message content:');
+  if (!content || !content.trim()) return;
+
+  api('/custom-messages', {
+    method: 'POST',
+    body: { name: name.trim(), content: content.trim() }
+  }).then(function () {
+    if (window.toast) window.toast('Template "' + name.trim() + '" saved', 'success');
+    // Refresh cache
+    loadCmdTemplates();
+  }).catch(function (err) {
+    if (window.toast) window.toast('Failed to save template: ' + (err.message || 'error'), 'error');
+  });
+}
+
+// ─── Workflow Palette (US-016: // command) ────────────────────────
+
+var _wfList = null;        // cached workflow list
+var _wfHighlight = -1;     // currently highlighted index
+var _wfTriggerPending = false; // prevent double-triggers
+
+export async function loadWorkflows() {
+  try {
+    _wfList = null;
+    var data = await api('/workflows');
+    if (data && Array.isArray(data.workflows)) {
+      _wfList = data.workflows;
+    }
+  } catch (e) {
+    console.error('[WfPalette] Failed to load workflows:', e);
+    _wfList = [];
+  }
+}
+
+export function showWorkflowPalette(filter) {
+  if (!_wfList) {
+    loadWorkflows().then(function () { showWorkflowPalette(filter); });
+    return;
+  }
+
+  var palette = document.getElementById('lc-wf-palette');
+  if (!palette) return;
+
+  var filterLower = (filter || '').toLowerCase().trim();
+  var matches = _wfList.filter(function (w) {
+    if (!filterLower) return true;
+    return w.name.toLowerCase().indexOf(filterLower) >= 0 ||
+           w.id.toLowerCase().indexOf(filterLower) >= 0;
+  });
+
+  if (matches.length === 0) {
+    palette.style.display = 'none';
+    return;
+  }
+
+  var visible = matches.slice(0, 10);
+  var escapeHtml = window.escapeHtml || function (s) { return String(s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+
+  var html = '<div class="lc-wf-header">' +
+    '<span class="lc-wf-title">// Workflows</span>' +
+    '<span class="lc-wf-count">' + matches.length + ' workflow' + (matches.length !== 1 ? 's' : '') + '</span>' +
+    '</div>';
+  html += '<div class="lc-wf-list">';
+  for (var i = 0; i < visible.length; i++) {
+    var w = visible[i];
+    var stepCount = (w.steps && w.steps.length) || 0;
+    var stepLabel = stepCount + ' step' + (stepCount !== 1 ? 's' : '');
+    html += '<div class="lc-wf-item' + (i === 0 ? ' lc-wf-active' : '') + '" data-wf-idx="' + i + '" onclick="lcWfPaletteClick(' + i + ')">' +
+      '<div class="lc-wf-item-name">' +
+        '<span class="lc-wf-slash">//</span>' + escapeHtml(w.name) +
+        '<span class="lc-wf-steps">' + stepLabel + '</span>' +
+      '</div>' +
+      '<div class="lc-wf-item-id">' + escapeHtml(w.id) + '</div>' +
+    '</div>';
+  }
+  html += '</div>';
+
+  palette.innerHTML = html;
+  palette.style.display = '';
+  _wfHighlight = 0;
+  palette._matches = visible;
+}
+
+export function hideWorkflowPalette() {
+  var palette = document.getElementById('lc-wf-palette');
+  if (palette) palette.style.display = 'none';
+  _wfHighlight = -1;
+}
+
+function workflowPaletteNav(direction) {
+  var palette = document.getElementById('lc-wf-palette');
+  if (!palette || !palette._matches) return;
+  var items = palette.querySelectorAll('.lc-wf-item');
+  if (items.length === 0) return;
+
+  if (_wfHighlight >= 0 && _wfHighlight < items.length) {
+    items[_wfHighlight].classList.remove('lc-wf-active');
+  }
+  _wfHighlight += direction;
+  if (_wfHighlight < 0) _wfHighlight = items.length - 1;
+  if (_wfHighlight >= items.length) _wfHighlight = 0;
+  items[_wfHighlight].classList.add('lc-wf-active');
+  items[_wfHighlight].scrollIntoView({ block: 'nearest' });
+}
+
+function workflowPaletteSelect() {
+  var palette = document.getElementById('lc-wf-palette');
+  if (!palette || !palette._matches || _wfHighlight < 0) return;
+  var entry = palette._matches[_wfHighlight];
+  if (!entry) return;
+  triggerWorkflow(entry);
+}
+
+export function wfPaletteClick(idx) {
+  var palette = document.getElementById('lc-wf-palette');
+  if (!palette || !palette._matches) return;
+  var entry = palette._matches[idx];
+  if (!entry) return;
+  triggerWorkflow(entry);
+}
+
+// ─── Scheduled Messages (US-020) ────────────────────────────────
+
+export function toggleSchedulePopover() {
+  var pop = document.getElementById('lc-schedule-popover');
+  if (!pop) return;
+  if (pop.style.display !== 'none') {
+    pop.style.display = 'none';
+    return;
+  }
+  // Default to 1 hour from now, rounded to nearest 15 minutes
+  var now = new Date();
+  now.setHours(now.getHours() + 1);
+  now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
+  var dtInput = document.getElementById('lc-schedule-datetime');
+  if (dtInput) {
+    // Format as YYYY-MM-DDTHH:mm for datetime-local
+    var y = now.getFullYear();
+    var mo = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    var h = String(now.getHours()).padStart(2, '0');
+    var mi = String(now.getMinutes()).padStart(2, '0');
+    dtInput.value = y + '-' + mo + '-' + d + 'T' + h + ':' + mi;
+    // Set min to current time
+    var nowMin = new Date();
+    var ny = nowMin.getFullYear();
+    var nmo = String(nowMin.getMonth() + 1).padStart(2, '0');
+    var nd = String(nowMin.getDate()).padStart(2, '0');
+    var nh = String(nowMin.getHours()).padStart(2, '0');
+    var nmi = String(nowMin.getMinutes()).padStart(2, '0');
+    dtInput.min = ny + '-' + nmo + '-' + nd + 'T' + nh + ':' + nmi;
+  }
+  // Reset repeat fields (US-021)
+  var repeatSel = document.getElementById('lc-schedule-repeat');
+  if (repeatSel) repeatSel.value = 'none';
+  var endWrap = document.getElementById('lc-schedule-end-wrap');
+  if (endWrap) endWrap.style.display = 'none';
+  var endDate = document.getElementById('lc-schedule-end-date');
+  if (endDate) endDate.value = '';
+
+  pop.style.display = 'block';
+}
+
+// US-021: Show/hide end date field based on repeat selection
+export function toggleRepeatEndDate() {
+  var repeatSel = document.getElementById('lc-schedule-repeat');
+  var endWrap = document.getElementById('lc-schedule-end-wrap');
+  if (!repeatSel || !endWrap) return;
+  endWrap.style.display = repeatSel.value !== 'none' ? '' : 'none';
+}
+
+export function hideSchedulePopover() {
+  var pop = document.getElementById('lc-schedule-popover');
+  if (pop) pop.style.display = 'none';
+}
+
+export async function confirmSchedule() {
+  if (!$.activePhone) {
+    if (window.toast) window.toast('Select a conversation first', 'error');
+    return;
+  }
+  var input = document.getElementById('lc-input-box');
+  var content = input ? input.value.trim() : '';
+  if (!content) {
+    if (window.toast) window.toast('Type a message to schedule', 'error');
+    return;
+  }
+  var dtInput = document.getElementById('lc-schedule-datetime');
+  var scheduledAt = dtInput ? dtInput.value : '';
+  if (!scheduledAt) {
+    if (window.toast) window.toast('Pick a date and time', 'error');
+    return;
+  }
+  // Convert local datetime-local value to ISO string
+  var dt = new Date(scheduledAt);
+  if (isNaN(dt.getTime()) || dt <= new Date()) {
+    if (window.toast) window.toast('Pick a future date and time', 'error');
+    return;
+  }
+
+  // US-021: Get repeat settings
+  var repeatSel = document.getElementById('lc-schedule-repeat');
+  var repeatFrequency = (repeatSel && repeatSel.value !== 'none') ? repeatSel.value : undefined;
+  var endDateInput = document.getElementById('lc-schedule-end-date');
+  var repeatEndDate = (endDateInput && endDateInput.value) ? endDateInput.value : undefined;
+
+  try {
+    var body = {
+      phone: $.activePhone,
+      content: content,
+      scheduledAt: dt.toISOString(),
+      createdBy: $.staffName || 'Staff'
+    };
+    if (repeatFrequency) body.repeatFrequency = repeatFrequency;
+    if (repeatEndDate) body.repeatEndDate = repeatEndDate;
+
+    await api('/scheduled-messages', {
+      method: 'POST',
+      body: body
+    });
+    // Clear input and hide popover
+    if (input) {
+      input.value = '';
+      autoResize(input);
+    }
+    hideSchedulePopover();
+    if (window.toast) window.toast('Message scheduled for ' + dt.toLocaleString(), 'success');
+    updateScheduledBadge();
+  } catch (err) {
+    if (window.toast) window.toast('Failed to schedule: ' + (err.message || 'error'), 'error');
+  }
+}
+
+export async function showScheduledPanel() {
+  // Close header menu
+  var dropdown = document.getElementById('lc-header-dropdown');
+  if (dropdown) dropdown.classList.remove('open');
+  var btn = document.getElementById('lc-header-menu-btn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+
+  var panel = document.getElementById('lc-scheduled-panel');
+  if (!panel) return;
+  panel.style.display = 'flex';
+
+  var list = document.getElementById('lc-scheduled-list');
+  if (!list) return;
+  list.innerHTML = '<div class="lc-scheduled-empty">Loading...</div>';
+
+  try {
+    var result = await api('/scheduled-messages');
+    var messages = result.messages || [];
+    if (messages.length === 0) {
+      list.innerHTML = '<div class="lc-scheduled-empty">No scheduled messages</div>';
+      return;
+    }
+    // Sort: pending first, then by scheduledAt ascending
+    messages.sort(function (a, b) {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime();
+    });
+
+    var html = '';
+    for (var i = 0; i < messages.length; i++) {
+      var m = messages[i];
+      var dt = new Date(m.scheduledAt);
+      var dateStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      var statusClass = m.status === 'pending' ? 'lc-sched-pending' : (m.status === 'sent' ? 'lc-sched-sent' : 'lc-sched-cancelled');
+      var statusLabel = m.status.charAt(0).toUpperCase() + m.status.slice(1);
+      var phone = m.phone.replace(/^\d{1,3}/, function (cc) { return '+' + cc + ' '; });
+      var preview = m.content.length > 80 ? m.content.substring(0, 80) + '...' : m.content;
+      var repeatLabel = '';
+      if (m.repeatFrequency && m.repeatFrequency !== 'none') {
+        repeatLabel = ' <span class="lc-sched-repeat">' + m.repeatFrequency + '</span>';
+      }
+
+      html += '<div class="lc-sched-item ' + statusClass + '">';
+      html += '<div class="lc-sched-item-top">';
+      html += '<span class="lc-sched-phone">' + phone + '</span>';
+      html += '<span class="lc-sched-status">' + statusLabel + '</span>' + repeatLabel;
+      html += '</div>';
+      html += '<div class="lc-sched-item-msg">' + preview.replace(/</g, '&lt;') + '</div>';
+      html += '<div class="lc-sched-item-bottom">';
+      html += '<span class="lc-sched-time">' + dateStr + '</span>';
+      if (m.status === 'pending') {
+        html += '<span class="lc-sched-item-actions">';
+        html += '<button class="lc-sched-edit-btn" onclick="lcEditScheduled(\'' + m.id + '\')" title="Edit">Edit</button>';
+        html += '<button class="lc-sched-cancel-btn" onclick="lcCancelScheduled(\'' + m.id + '\')" title="Cancel">Cancel</button>';
+        html += '</span>';
+      }
+      if (m.status === 'sent' && m.sentAt) {
+        html += '<span class="lc-sched-sent-at">Sent ' + new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+    }
+    list.innerHTML = html;
+  } catch (err) {
+    list.innerHTML = '<div class="lc-scheduled-empty">Failed to load: ' + (err.message || 'error') + '</div>';
+  }
+}
+
+export function closeScheduledPanel() {
+  var panel = document.getElementById('lc-scheduled-panel');
+  if (panel) panel.style.display = 'none';
+}
+
+export async function cancelScheduled(id) {
+  if (!confirm('Cancel this scheduled message?')) return;
+  try {
+    await api('/scheduled-messages/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (window.toast) window.toast('Scheduled message cancelled', 'success');
+    showScheduledPanel(); // Refresh list
+    updateScheduledBadge();
+  } catch (err) {
+    if (window.toast) window.toast('Failed to cancel: ' + (err.message || 'error'), 'error');
+  }
+}
+
+export async function editScheduled(id) {
+  // Fetch the message details
+  try {
+    var msg = await api('/scheduled-messages/' + encodeURIComponent(id));
+    if (!msg) return;
+
+    var newContent = prompt('Edit message content:', msg.content);
+    if (newContent === null) return; // User cancelled
+    if (!newContent.trim()) {
+      if (window.toast) window.toast('Message cannot be empty', 'error');
+      return;
+    }
+
+    var newTime = prompt('Edit scheduled time (YYYY-MM-DD HH:mm):', new Date(msg.scheduledAt).toLocaleString());
+    // If user cancels time edit, keep original
+    var updates = { content: newContent.trim() };
+    if (newTime !== null && newTime.trim()) {
+      var parsed = new Date(newTime.trim());
+      if (!isNaN(parsed.getTime()) && parsed > new Date()) {
+        updates.scheduledAt = parsed.toISOString();
+      }
+    }
+
+    await api('/scheduled-messages/' + encodeURIComponent(id), {
+      method: 'PUT',
+      body: updates
+    });
+    if (window.toast) window.toast('Scheduled message updated', 'success');
+    showScheduledPanel(); // Refresh list
+  } catch (err) {
+    if (window.toast) window.toast('Failed to edit: ' + (err.message || 'error'), 'error');
+  }
+}
+
+export async function updateScheduledBadge() {
+  try {
+    var result = await api('/scheduled-messages?status=pending');
+    var count = (result.messages || []).length;
+    var badge = document.getElementById('lc-sched-badge');
+    if (badge) {
+      if (count > 0) {
+        badge.textContent = String(count);
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch {
+    // Silently ignore — badge is non-critical
+  }
+}
+
+function triggerWorkflow(workflow) {
+  if (_wfTriggerPending) return;
+  if (!$.activePhone) {
+    if (window.toast) window.toast('Select a conversation first', 'error');
+    return;
+  }
+
+  // Clear input and hide palette
+  var input = document.getElementById('lc-input-box');
+  if (input) {
+    input.value = '';
+    autoResize(input);
+  }
+  hideWorkflowPalette();
+
+  _wfTriggerPending = true;
+  if (window.toast) window.toast('Starting workflow: ' + workflow.name + '...', 'info');
+
+  api('/conversations/' + encodeURIComponent($.activePhone) + '/trigger-workflow', {
+    method: 'POST',
+    body: {
+      workflowId: workflow.id,
+      staffName: $.staffName || 'Staff'
+    }
+  }).then(function (result) {
+    _wfTriggerPending = false;
+    if (window.toast) window.toast('Workflow "' + workflow.name + '" started', 'success');
+    // Refresh chat to show the workflow message
+    refreshChat();
+  }).catch(function (err) {
+    _wfTriggerPending = false;
+    if (window.toast) window.toast('Failed to trigger workflow: ' + (err.message || 'error'), 'error');
+  });
+}
+
+// ─── WhatsApp Reconnection Modal ──────────────────────────────────
+
+var _reconnectPollTimer = null;
+
+function isWhatsAppDisconnectError(msg) {
+  var lower = msg.toLowerCase();
+  return lower.indexOf('no whatsapp') >= 0 || lower.indexOf('instances connected') >= 0 || lower.indexOf('instance connected') >= 0;
+}
+
+export async function showReconnectionModal() {
+  // Remove existing modal if any
+  var existing = document.getElementById('lc-reconnect-modal');
+  if (existing) existing.remove();
+  clearInterval(_reconnectPollTimer);
+
+  var overlay = document.createElement('div');
+  overlay.id = 'lc-reconnect-modal';
+  overlay.className = 'lc-modal-overlay';
+  overlay.onclick = function (e) { if (e.target === overlay) closeReconnectionModal(); };
+
+  var content = document.createElement('div');
+  content.className = 'lc-modal-content lc-reconnect-modal';
+
+  var header = document.createElement('div');
+  header.className = 'lc-modal-title';
+  header.textContent = 'WhatsApp Disconnected';
+
+  var desc = document.createElement('p');
+  desc.className = 'lc-reconnect-desc';
+  desc.textContent = 'No WhatsApp connection available. Reconnect an existing number or add a new one.';
+
+  var instancesWrap = document.createElement('div');
+  instancesWrap.className = 'lc-reconnect-instances';
+  instancesWrap.id = 'lc-reconnect-instances';
+  instancesWrap.innerHTML = '<div class="lc-reconnect-loading">Loading instances...</div>';
+
+  var qrWrap = document.createElement('div');
+  qrWrap.className = 'lc-reconnect-qr-wrap';
+  qrWrap.id = 'lc-reconnect-qr-wrap';
+  qrWrap.style.display = 'none';
+  qrWrap.innerHTML =
+    '<div class="lc-reconnect-qr-label" id="lc-reconnect-qr-label">Scan QR code with WhatsApp</div>' +
+    '<div class="lc-reconnect-qr" id="lc-reconnect-qr"></div>' +
+    '<div class="lc-reconnect-qr-status" id="lc-reconnect-qr-status">Waiting for scan...</div>';
+
+  var buttons = document.createElement('div');
+  buttons.className = 'lc-modal-buttons';
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'lc-modal-btn lc-modal-btn-cancel';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = function () { closeReconnectionModal(); };
+
+  var addBtn = document.createElement('button');
+  addBtn.className = 'lc-modal-btn lc-modal-btn-send';
+  addBtn.textContent = '+ Add New Number';
+  addBtn.onclick = function () { addNewWhatsApp(); };
+
+  buttons.appendChild(cancelBtn);
+  buttons.appendChild(addBtn);
+
+  content.appendChild(header);
+  content.appendChild(desc);
+  content.appendChild(instancesWrap);
+  content.appendChild(qrWrap);
+  content.appendChild(buttons);
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+
+  loadReconnectInstances();
+}
+
+async function loadReconnectInstances() {
+  var container = document.getElementById('lc-reconnect-instances');
+  if (!container) return;
+
+  try {
+    var instances = await api('/whatsapp/instances');
+    if (!instances || instances.length === 0) {
+      container.innerHTML = '<div class="lc-reconnect-empty">No WhatsApp numbers configured. Click "+ Add New Number" to get started.</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < instances.length; i++) {
+      var inst = instances[i];
+      var stateClass = inst.state === 'open' ? 'lc-inst-connected' : (inst.state === 'connecting' ? 'lc-inst-connecting' : 'lc-inst-disconnected');
+      var stateLabel = inst.state === 'open' ? 'Connected' : (inst.state === 'connecting' ? 'Connecting...' : 'Disconnected');
+      var phone = (inst.user && inst.user.phone) ? '+' + inst.user.phone : '';
+      var actionBtn = inst.state !== 'open'
+        ? '<button class="lc-reconnect-btn" onclick="lcReconnectInstance(\'' + escapeAttr(inst.id) + '\')">Reconnect</button>'
+        : '<span class="lc-reconnect-ok">Connected</span>';
+
+      html += '<div class="lc-reconnect-item">' +
+        '<div class="lc-reconnect-item-info">' +
+          '<span class="lc-reconnect-item-label">' + escapeHtml(inst.label || inst.id) + '</span>' +
+          (phone ? '<span class="lc-reconnect-item-phone">' + escapeHtml(phone) + '</span>' : '') +
+        '</div>' +
+        '<div class="lc-reconnect-item-right">' +
+          '<span class="lc-reconnect-state ' + stateClass + '">' + stateLabel + '</span>' +
+          actionBtn +
+        '</div>' +
+      '</div>';
+    }
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div class="lc-reconnect-empty">Failed to load: ' + escapeHtml(err.message || 'error') + '</div>';
+  }
+}
+
+export async function reconnectInstance(instanceId) {
+  var qrWrap = document.getElementById('lc-reconnect-qr-wrap');
+  var qrEl = document.getElementById('lc-reconnect-qr');
+  var qrLabel = document.getElementById('lc-reconnect-qr-label');
+  var qrStatus = document.getElementById('lc-reconnect-qr-status');
+  if (!qrWrap || !qrEl) return;
+
+  qrWrap.style.display = '';
+  qrEl.innerHTML = '<div class="lc-reconnect-loading">Loading QR code...</div>';
+  if (qrStatus) qrStatus.textContent = 'Waiting for QR code...';
+  if (qrLabel) qrLabel.textContent = 'Scan QR code for "' + instanceId + '"';
+
+  clearInterval(_reconnectPollTimer);
+  _reconnectPollTimer = setInterval(function () { pollQR(instanceId); }, 3000);
+  pollQR(instanceId);
+}
+
+async function pollQR(instanceId) {
+  try {
+    var data = await api('/whatsapp/instances/' + encodeURIComponent(instanceId) + '/qr');
+    var qrEl = document.getElementById('lc-reconnect-qr');
+    var qrStatus = document.getElementById('lc-reconnect-qr-status');
+
+    if (!qrEl) { clearInterval(_reconnectPollTimer); return; }
+
+    if (data.state === 'open') {
+      clearInterval(_reconnectPollTimer);
+      qrEl.innerHTML = '<div class="lc-reconnect-success">' +
+        '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#25d366" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>' +
+        '<span>Connected!</span></div>';
+      if (qrStatus) qrStatus.textContent = 'WhatsApp connected successfully.';
+      if (window.toast) window.toast('WhatsApp reconnected!', 'success');
+      // Refresh instance list
+      loadReconnectInstances();
+      setTimeout(closeReconnectionModal, 2000);
+      return;
+    }
+
+    if (data.qrDataUrl) {
+      qrEl.innerHTML = '<img src="' + data.qrDataUrl + '" alt="QR Code" class="lc-reconnect-qr-img">';
+      if (qrStatus) qrStatus.textContent = 'Open WhatsApp > Linked Devices > Link a Device';
+    } else {
+      qrEl.innerHTML = '<div class="lc-reconnect-loading">Generating QR code...</div>';
+      if (qrStatus) qrStatus.textContent = 'QR code not yet available, retrying...';
+    }
+  } catch (err) {
+    var qrStatus = document.getElementById('lc-reconnect-qr-status');
+    if (qrStatus) qrStatus.textContent = 'Error: ' + (err.message || 'Failed to get QR');
+  }
+}
+
+export async function addNewWhatsApp() {
+  var id = prompt('Enter an ID for this WhatsApp number (e.g. "main" or "reception"):');
+  if (!id || !id.trim()) return;
+  var label = prompt('Enter a display label (e.g. "Main Line", "Reception"):');
+  if (!label || !label.trim()) return;
+
+  try {
+    await api('/whatsapp/instances', {
+      method: 'POST',
+      body: { id: id.trim(), label: label.trim() }
+    });
+    if (window.toast) window.toast('Instance added! Scan QR to connect.', 'success');
+    await loadReconnectInstances();
+    reconnectInstance(id.trim());
+  } catch (err) {
+    alert('Failed to add: ' + (err.message || 'error'));
+  }
+}
+
+export function closeReconnectionModal() {
+  clearInterval(_reconnectPollTimer);
+  _reconnectPollTimer = null;
+  var modal = document.getElementById('lc-reconnect-modal');
+  if (modal) modal.remove();
 }

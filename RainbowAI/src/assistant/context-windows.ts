@@ -1,9 +1,4 @@
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { getLLMSettings } from './llm-settings-loader.js';
 
 export interface ContextWindows {
   classify: number;
@@ -19,13 +14,12 @@ function clamp(value: unknown, min: number, max: number, fallback: number): numb
 }
 
 /**
- * Read context window sizes from llm-settings.json.
- * Re-reads on each call so dashboard changes take effect immediately.
+ * Read context window sizes from llm-settings (cached, DB-first).
+ * Re-reads on each call via cached loader so dashboard changes take effect quickly.
  */
 export function getContextWindows(): ContextWindows {
   try {
-    const raw = readFileSync(join(__dirname, 'data', 'llm-settings.json'), 'utf-8');
-    const settings = JSON.parse(raw);
+    const settings = getLLMSettings();
     const cw = settings.contextWindows;
     if (!cw || typeof cw !== 'object') return { ...DEFAULTS };
     return {

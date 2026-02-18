@@ -20,6 +20,64 @@ import {
 let _statusPollTimer = null;
 const STATUS_POLL_INTERVAL = 15_000; // 15 seconds
 
+// ── Initialization progress tracking ──
+// Baileys takes 10-30s to connect after server start.  During that window the
+// /status API returns an empty whatsappInstances array.  Instead of the
+// misleading "No WhatsApp instances connected" we show a progress indicator.
+const _pageLoadTime = Date.now();
+const INIT_WINDOW_MS = 30_000; // 30 seconds
+let _initProgressTimer = null;
+
+function isInInitWindow() {
+  return (Date.now() - _pageLoadTime) < INIT_WINDOW_MS;
+}
+
+function getInitElapsedSec() {
+  return Math.floor((Date.now() - _pageLoadTime) / 1000);
+}
+
+function getInitProgressHtml() {
+  const elapsed = getInitElapsedSec();
+  const pct = Math.min(95, Math.round((elapsed / (INIT_WINDOW_MS / 1000)) * 100));
+  return '<div class="text-center py-4" id="wa-init-progress">'
+    + '<div class="flex items-center justify-center gap-2 mb-2">'
+    + '<span class="inline-block w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></span>'
+    + '<span class="text-sm text-neutral-600 font-medium">Initializing WhatsApp\u2026</span>'
+    + '</div>'
+    + '<div class="w-48 mx-auto bg-neutral-200 rounded-full h-1.5 mb-2">'
+    + '<div class="bg-primary-500 h-1.5 rounded-full transition-all duration-500" style="width: ' + pct + '%"></div>'
+    + '</div>'
+    + '<p class="text-xs text-neutral-400">' + elapsed + 's elapsed \u00b7 ~' + pct + '%</p>'
+    + '</div>';
+}
+
+/** Tick every second to update the init progress bar and timer */
+function startInitProgressTimer() {
+  stopInitProgressTimer();
+  _initProgressTimer = setInterval(() => {
+    const container = document.getElementById('wa-init-progress');
+    if (!container || !isInInitWindow()) {
+      stopInitProgressTimer();
+      return;
+    }
+    const elapsed = getInitElapsedSec();
+    const pct = Math.min(95, Math.round((elapsed / (INIT_WINDOW_MS / 1000)) * 100));
+    // Update progress bar width
+    const bar = container.querySelector('.bg-primary-500');
+    if (bar) bar.style.width = pct + '%';
+    // Update text
+    const text = container.querySelector('.text-neutral-400');
+    if (text) text.textContent = elapsed + 's elapsed \u00b7 ~' + pct + '%';
+  }, 1000);
+}
+
+function stopInitProgressTimer() {
+  if (_initProgressTimer) {
+    clearInterval(_initProgressTimer);
+    _initProgressTimer = null;
+  }
+}
+
 /**
  * Main Dashboard tab loader
  */
@@ -69,7 +127,10 @@ export async function loadDashboard() {
     // Update header badge
     const badge = document.getElementById('wa-badge');
     if (badge) {
-      if (totalCount === 0) {
+      if (totalCount === 0 && isInInitWindow()) {
+        badge.textContent = 'initializing\u2026';
+        badge.className = 'text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-600 animate-pulse';
+      } else if (totalCount === 0) {
         badge.textContent = 'no instances';
         badge.className = 'text-xs px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600';
       } else {
@@ -90,13 +151,18 @@ export async function loadDashboard() {
     }
 
     const waStatusEl = document.getElementById('dashboard-wa-status');
-    if (totalCount === 0) {
+    if (totalCount === 0 && isInInitWindow()) {
+      waStatusEl.innerHTML = getInitProgressHtml();
+      startInitProgressTimer();
+    } else if (totalCount === 0) {
+      stopInitProgressTimer();
       waStatusEl.innerHTML = `
         <div class="text-center py-4">
           <p class="text-sm text-neutral-400 mb-2">No WhatsApp instances connected</p>
           <a href="/admin/whatsapp-qr" class="text-xs bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-lg transition inline-block">Pair WhatsApp (QR)</a>
         </div>`;
     } else {
+      stopInitProgressTimer();
       waStatusEl.innerHTML = waInstances.map(inst => renderInstanceCard(inst, totalCount)).join('');
     }
 
@@ -328,7 +394,10 @@ async function refreshStatusCards() {
     // Update header badge
     const badge = document.getElementById('wa-badge');
     if (badge) {
-      if (totalCount === 0) {
+      if (totalCount === 0 && isInInitWindow()) {
+        badge.textContent = 'initializing\u2026';
+        badge.className = 'text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-600 animate-pulse';
+      } else if (totalCount === 0) {
         badge.textContent = 'no instances';
         badge.className = 'text-xs px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600';
       } else {
@@ -342,13 +411,18 @@ async function refreshStatusCards() {
     // Update WhatsApp instance cards
     const waStatusEl = document.getElementById('dashboard-wa-status');
     if (waStatusEl) {
-      if (totalCount === 0) {
+      if (totalCount === 0 && isInInitWindow()) {
+        waStatusEl.innerHTML = getInitProgressHtml();
+        startInitProgressTimer();
+      } else if (totalCount === 0) {
+        stopInitProgressTimer();
         waStatusEl.innerHTML = `
           <div class="text-center py-4">
             <p class="text-sm text-neutral-400 mb-2">No WhatsApp instances connected</p>
             <a href="/admin/whatsapp-qr" class="text-xs bg-primary-500 hover:bg-primary-600 text-white px-3 py-1.5 rounded-lg transition inline-block">Pair WhatsApp (QR)</a>
           </div>`;
       } else {
+        stopInitProgressTimer();
         waStatusEl.innerHTML = waInstances.map(inst => renderInstanceCard(inst, totalCount)).join('');
       }
     }
@@ -501,6 +575,7 @@ export function stopStatusPolling() {
     clearInterval(_statusPollTimer);
     _statusPollTimer = null;
   }
+  stopInitProgressTimer();
   document.removeEventListener('visibilitychange', _onVisibilityChange);
 }
 

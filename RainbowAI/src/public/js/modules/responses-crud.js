@@ -378,3 +378,67 @@ export async function translateAllIntents() {
     btn.textContent = 'Translate All';
   }
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// Quick Reply Image Attachments (US-018)
+// ═════════════════════════════════════════════════════════════════════
+
+/**
+ * Toggle the image upload area for a quick reply intent
+ */
+export function toggleReplyImage(intent) {
+  const id = css(intent);
+  const el = document.getElementById('k-image-upload-' + id);
+  if (el) el.classList.toggle('hidden');
+}
+
+/**
+ * Upload an image file for a quick reply intent
+ */
+export async function uploadReplyImage(intent, inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    toast('Image must be under 5MB', 'error');
+    return;
+  }
+  const id = css(intent);
+  const previewEl = document.getElementById('k-image-preview-' + id);
+  if (previewEl) previewEl.innerHTML = '<span class="text-xs text-neutral-500">Uploading...</span>';
+
+  try {
+    var formData = new FormData();
+    formData.append('image', file);
+    var response = await fetch('/api/rainbow/knowledge/upload-image', { method: 'POST', body: formData });
+    var result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Upload failed');
+
+    // Save imageUrl to the knowledge entry
+    await api('/knowledge/' + encodeURIComponent(intent), {
+      method: 'PUT',
+      body: { imageUrl: result.imageUrl }
+    });
+    toast('Image attached to "' + intent + '"');
+    loadStaticReplies();
+  } catch (e) {
+    toast(e.message || 'Image upload failed', 'error');
+    if (previewEl) previewEl.innerHTML = '';
+  }
+}
+
+/**
+ * Remove image from a quick reply intent
+ */
+export async function removeReplyImage(intent) {
+  if (!confirm('Remove image from "' + intent + '"?')) return;
+  try {
+    await api('/knowledge/' + encodeURIComponent(intent), {
+      method: 'PUT',
+      body: { imageUrl: '' }
+    });
+    toast('Image removed from "' + intent + '"');
+    loadStaticReplies();
+  } catch (e) {
+    toast(e.message || 'Failed to remove image', 'error');
+  }
+}

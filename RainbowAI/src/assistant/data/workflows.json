@@ -1371,6 +1371,53 @@
           }
         }
       ]
+    },
+    {
+      "id": "capsule_conflict_handling",
+      "name": "Capsule Conflict Resolution",
+      "description": "Handles cases where a guest finds someone already in their assigned capsule",
+      "steps": [
+        {
+          "id": "s1",
+          "message": {
+            "en": "I'm sorry to hear someone is in your capsule! 😟 This is unusual and we'll sort it out right away. Could you tell me **which capsule number** you were assigned to?",
+            "ms": "Maaf mendengar ada orang dalam kapsul anda! 😟 Ini tidak biasa dan kami akan selesaikan segera. Boleh beritahu **nombor kapsul** yang ditugaskan kepada anda?",
+            "zh": "很遗憾听到有人占了您的胶囊！😟 这很不寻常，我们会立刻处理。能告诉我您被分配的是**哪个胶囊号码**吗？"
+          },
+          "waitForReply": true
+        },
+        {
+          "id": "s2",
+          "message": {
+            "en": "Thank you. I'm immediately notifying our staff about the capsule conflict. 🔔 Please stay nearby and our team will assist you within a few minutes. They will verify the assignment and find a resolution — either by moving the other person or assigning you an alternative capsule.",
+            "ms": "Terima kasih. Saya segera memaklumkan staf kami tentang konflik kapsul ini. 🔔 Sila berada berdekatan dan pasukan kami akan membantu anda dalam beberapa minit. Mereka akan mengesahkan penugasan dan mencari penyelesaian — sama ada dengan mengalihkan orang lain atau memberikan anda kapsul alternatif.",
+            "zh": "谢谢。我立即通知我们的工作人员关于胶囊冲突的情况。🔔 请您留在附近，我们的团队将在几分钟内协助您。他们将核实分配情况并找到解决方案——要么让另一位移离，要么为您安排另一个胶囊。"
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "notify_staff",
+            "message": "🚨 CAPSULE CONFLICT: Guest reports someone already in their assigned capsule. Please check and resolve immediately."
+          }
+        },
+        {
+          "id": "s3",
+          "message": {
+            "en": "Our staff has been notified. 📣 While you wait, could you let me know: is the person in the capsule currently **awake** or **asleep**? This will help our team approach the situation appropriately.",
+            "ms": "Staf kami telah diberitahu. 📣 Sementara menunggu, boleh beritahu saya: adakah orang dalam kapsul itu sedang **terjaga** atau **tidur**? Ini akan membantu pasukan kami mendekati situasi dengan sewajarnya.",
+            "zh": "我们的工作人员已收到通知。📣 在等待期间，能告诉我：胶囊里的人目前是**醒着**还是**睡着**了？这将帮助我们的团队以适当的方式处理这种情况。"
+          },
+          "waitForReply": true
+        },
+        {
+          "id": "s4",
+          "message": {
+            "en": "Understood. Our staff member is on the way to resolve this. I'll keep you informed. If you need immediate assistance, you can also call reception directly. We sincerely apologize for this inconvenience. 🙏",
+            "ms": "Difahami. Staf kami sedang dalam perjalanan untuk menyelesaikan ini. Saya akan memaklumkan anda. Jika anda memerlukan bantuan segera, anda juga boleh menghubungi penerimaan secara langsung. Kami dengan tulus memohon maaf atas ketidakselesaan ini. 🙏",
+            "zh": "明白了。我们的工作人员正在赶来解决此事。我会及时通知您。如有需要立即帮助，您也可以直接联系前台。我们真诚地为这次不便道歉。🙏"
+          },
+          "waitForReply": false
+        }
+      ]
     }
   ]
 }

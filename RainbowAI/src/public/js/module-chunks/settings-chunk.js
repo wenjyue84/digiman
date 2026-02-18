@@ -7,7 +7,13 @@
 
 import {
   loadSettings,
-  switchSettingsTab
+  switchSettingsTab,
+  renderFailoverTab,
+  loadFailoverStatus,
+  toggleHandbackGrace,
+  saveFailoverSettings,
+  failoverPromote,
+  failoverDemote
 } from '/public/js/modules/settings.js';
 
 import {
@@ -37,6 +43,12 @@ import {
 
 window.loadSettings = loadSettings;
 window.switchSettingsTab = switchSettingsTab;
+window.renderFailoverTab = renderFailoverTab;
+window.loadFailoverStatus = loadFailoverStatus;
+window.toggleHandbackGrace = toggleHandbackGrace;
+window.saveFailoverSettings = saveFailoverSettings;
+window.failoverPromote = failoverPromote;
+window.failoverDemote = failoverDemote;
 window.updateSystemAdminPhone = updateSystemAdminPhone;
 window.updateAdminNotifPrefs = updateAdminNotifPrefs;
 window.renderOperatorsList = renderOperatorsList;
