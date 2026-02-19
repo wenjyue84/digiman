@@ -1,13 +1,16 @@
 /**
- * prisma-bot.ts — Prisma Bot API endpoint
- * (Single Responsibility: Generate workflow JSON from natural language descriptions)
+ * prisma-bot.ts — Prisma Bot API endpoints
  *
- * POST /prisma-bot/generate — accepts { description, history? } and returns workflow JSON
+ * POST /prisma-bot/generate   — generate workflow JSON from natural language (original)
+ * POST /prisma/ask            — Prisma AI staff assistant chat (US-011/012)
+ *   sources: knowledge_base | mcp_server | all_history | internet
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { configStore } from '../../assistant/config-store.js';
 import { isAIAvailable, getProviders, resolveApiKey, providerChat } from '../../assistant/ai-provider-manager.js';
+import { getKnowledgeMarkdown } from '../../assistant/knowledge-base.js';
+import { listConversations, getConversation } from '../../assistant/conversation-logger.js';
 import { badRequest, serverError } from './http-utils.js';
 
 const router = Router();
@@ -317,6 +320,90 @@ router.put('/prisma-bot/settings', (req: Request, res: Response) => {
   };
   configStore.setSettings(settings);
   res.json({ ok: true, prismaBot: (settings as any).prismaBot });
+});
+
+// ─── Prisma AI Staff Assistant (US-011/012) ─────────────────────────
+
+const PRISMA_ASK_SYSTEM = `You are Prisma, an intelligent AI assistant for Pelangi Capsule Hostel staff.
+You help staff answer questions about guests, bookings, hostel operations, and policies.
+Be concise, factual, and helpful. If you don't know something, say so clearly.
+When referencing information, cite the source (e.g. "According to the knowledge base...").`;
+
+router.post('/prisma/ask', async (req: Request, res: Response) => {
+  const { question, source, conversationHistory, activePhone } = req.body;
+  if (!question || typeof question !== 'string') {
+    badRequest(res, 'question (string) required');
+    return;
+  }
+  if (!isAIAvailable()) {
+    serverError(res, 'No AI providers available');
+    return;
+  }
+
+  const src = (source as string) || 'knowledge_base';
+  let contextText = '';
+  let sourceUsed = src;
+
+  try {
+    if (src === 'knowledge_base') {
+      const kb = getKnowledgeMarkdown();
+      contextText = kb ? `## Knowledge Base\n\n${kb.slice(0, 8000)}` : '';
+    } else if (src === 'mcp_server') {
+      const convs = await listConversations();
+      const topContacts = convs.slice(0, 30).map((c: any) =>
+        `- ${c.name || c.phone} (${c.phone}): last msg ${new Date(c.lastMessageTime || 0).toLocaleDateString()}, unread: ${c.unreadCount || 0}`
+      ).join('\n');
+      contextText = `## Live Hostel Data (via MCP)\n\n### Recent Contacts\n${topContacts}`;
+    } else if (src === 'all_history' && activePhone) {
+      const conv = await getConversation(activePhone);
+      const msgs = (conv?.messages || []).slice(-60);
+      const historyText = msgs.map((m: any) =>
+        `[${m.fromMe ? 'Staff' : 'Guest'}] ${m.body || m.text || ''}`
+      ).filter((s: string) => s.trim().length > 1).join('\n');
+      contextText = `## Conversation History with ${activePhone}\n\n${historyText.slice(0, 8000)}`;
+    } else if (src === 'internet') {
+      contextText = '## Internet Search\n\nInternet search is not yet available. Please use Knowledge Base or MCP Server source instead.';
+    }
+  } catch (err: any) {
+    console.warn('[Prisma/ask] Context fetch error:', err.message);
+  }
+
+  const systemContent = PRISMA_ASK_SYSTEM + (contextText ? `\n\n${contextText}` : '');
+  const messages: Array<{ role: string; content: string }> = [
+    { role: 'system', content: systemContent }
+  ];
+
+  if (Array.isArray(conversationHistory)) {
+    for (const msg of conversationHistory.slice(-20)) {
+      if (msg.role && msg.content) {
+        messages.push({ role: msg.role === 'user' ? 'user' : 'assistant', content: msg.content });
+      }
+    }
+  }
+
+  messages.push({ role: 'user', content: question });
+
+  const providers = getProviders();
+  let result: { content: string; usage?: any } | null = null;
+  let usedModel = 'unknown';
+
+  for (const provider of providers) {
+    const apiKey = resolveApiKey(provider);
+    if (!apiKey && provider.type !== 'ollama') continue;
+    try {
+      result = await providerChat(provider, messages, 1024, 0.5, false);
+      if (result) { usedModel = provider.name; break; }
+    } catch (err: any) {
+      console.warn(`[Prisma/ask] Provider ${provider.name} failed: ${err.message}`);
+    }
+  }
+
+  if (!result) {
+    serverError(res, 'All AI providers failed');
+    return;
+  }
+
+  res.json({ ok: true, answer: result.content, sourceUsed, model: usedModel });
 });
 
 export default router;

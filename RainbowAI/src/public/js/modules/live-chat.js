@@ -15,6 +15,10 @@
 
 import { $ } from './live-chat-state.js';
 import {
+  openPrismaWindow, closePrismaWindow, minimisePrisma, prismaSetSource,
+  prismaSend, prismaKeydown, prismaAutoResize, initPrismaPanel
+} from './prisma-ai.js';
+import {
   loadLiveChat, filterConversations, openConversation, refreshChat, resetDateFilter, debouncedSearch,
   cleanupLiveChat, editStaffName
 } from './live-chat-core.js';
@@ -24,8 +28,9 @@ import {
   toggleVoiceRecording, cancelVoiceRecording,
   onInputCmd, loadCmdTemplates, hideCmdPalette, cmdPaletteClick, cmdAddTemplate,
   loadWorkflows, showWorkflowPalette, hideWorkflowPalette, wfPaletteClick,
-  toggleSchedulePopover, hideSchedulePopover, confirmSchedule, toggleRepeatEndDate,
+  toggleSchedulePopover, hideSchedulePopover, confirmSchedule, toggleRepeatEndDate, updateSchedulePreview,
   showScheduledPanel, closeScheduledPanel, cancelScheduled, editScheduled, updateScheduledBadge,
+  toggleDateJump, jumpToDate,
   showReconnectionModal, reconnectInstance, addNewWhatsApp, closeReconnectionModal
 } from './live-chat-actions.js';
 import {
@@ -56,7 +61,10 @@ import {
 
 // ─── Window exports for template onclick handlers ────────────────
 
-window.loadLiveChat = loadLiveChat;
+window.loadLiveChat = async function () {
+  await loadLiveChat();
+  initPrismaPanel(); // US-010: wire drag-to-move after DOM is ready
+};
 window.cleanupLiveChat = cleanupLiveChat;
 window.lcFilterConversations = filterConversations;
 window.lcDebouncedSearch = debouncedSearch;
@@ -117,6 +125,9 @@ window.lcCloseScheduledPanel = closeScheduledPanel;
 window.lcCancelScheduled = cancelScheduled;
 window.lcEditScheduled = editScheduled;
 window.lcToggleRepeatEndDate = toggleRepeatEndDate;
+window.lcUpdateSchedulePreview = updateSchedulePreview;
+window.lcToggleDateJump = toggleDateJump;
+window.lcJumpToDate = jumpToDate;
 window.lcOnInputTranslate = onInputTranslate;
 window.lcToggleSidebarMenu = toggleSidebarMenu;
 window.lcShowStarredMessages = showStarredMessages;
@@ -159,6 +170,14 @@ window.lcShowOverdueReminders = showOverdueReminders;
 window.lcShowReconnectionModal = showReconnectionModal;
 window.lcReconnectInstance = reconnectInstance;
 window.lcAddNewWhatsApp = addNewWhatsApp;
+// US-009/010: Prisma AI window
+window.lcOpenPrismaWindow = openPrismaWindow;
+window.lcClosePrismaWindow = closePrismaWindow;
+window.lcMinimisePrisma = minimisePrisma;
+window.lcPrismaSetSource = prismaSetSource;
+window.lcPrismaSend = prismaSend;
+window.lcPrismaKeydown = prismaKeydown;
+window.lcPrismaAutoResize = prismaAutoResize;
 window.lcCloseReconnectionModal = closeReconnectionModal;
 window.lcOnMenuTranslate = onMenuTranslate;
 window.lcOnMenuMode = onMenuMode;

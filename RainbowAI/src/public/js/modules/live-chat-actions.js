@@ -1158,6 +1158,81 @@ export function toggleSchedulePopover() {
   pop.style.display = 'block';
 }
 
+// US-008: Update schedule preview text
+export function updateSchedulePreview() {
+  var dateEl = document.getElementById('lc-schedule-date');
+  var hhEl = document.getElementById('lc-schedule-hh');
+  var mmEl = document.getElementById('lc-schedule-mm');
+  var preview = document.getElementById('lc-schedule-preview');
+  if (!preview) return;
+  if (!dateEl || !dateEl.value) { preview.textContent = ''; return; }
+  var hh = String(parseInt(hhEl && hhEl.value !== '' ? hhEl.value : '0', 10) || 0).padStart(2, '0');
+  var mm = String(parseInt(mmEl && mmEl.value !== '' ? mmEl.value : '0', 10) || 0).padStart(2, '0');
+  try {
+    var dt = new Date(dateEl.value + 'T' + hh + ':' + mm + ':00');
+    if (isNaN(dt.getTime())) { preview.textContent = ''; return; }
+    var opts = { day: 'numeric', month: 'short', year: 'numeric' };
+    var dateStr = dt.toLocaleDateString('en-GB', opts);
+    preview.textContent = 'Will send: ' + dateStr + ' at ' + hh + ':' + mm + ':00';
+  } catch (e) { preview.textContent = ''; }
+}
+
+// US-014: Toggle date-jump popover in message search bar
+export function toggleDateJump() {
+  var pop = document.getElementById('lc-date-jump-popover');
+  if (!pop) return;
+  var isOpen = pop.style.display !== 'none';
+  pop.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    var inp = document.getElementById('lc-date-jump-input');
+    if (inp) inp.focus();
+    setTimeout(function () {
+      function onOutside(e) {
+        var wrap = document.querySelector('.lc-msg-search-date-wrap');
+        if (wrap && !wrap.contains(e.target)) {
+          pop.style.display = 'none';
+          document.removeEventListener('click', onOutside);
+        }
+      }
+      document.addEventListener('click', onOutside);
+    }, 0);
+  }
+}
+
+// US-014: Scroll to the first message on a given date
+export function jumpToDate(dateStr) {
+  var pop = document.getElementById('lc-date-jump-popover');
+  if (pop) pop.style.display = 'none';
+  if (!dateStr) return;
+  var target = new Date(dateStr + 'T00:00:00');
+  var messages = document.querySelectorAll('#lc-messages [data-ts]');
+  var found = null;
+  for (var i = 0; i < messages.length; i++) {
+    var ts = parseInt(messages[i].getAttribute('data-ts'), 10);
+    if (!ts) continue;
+    var msgDate = new Date(ts < 1e12 ? ts * 1000 : ts);
+    if (msgDate >= target) { found = messages[i]; break; }
+  }
+  // Fallback: try date separator elements
+  if (!found) {
+    var seps = document.querySelectorAll('#lc-messages .lc-date-sep');
+    for (var j = 0; j < seps.length; j++) {
+      var sepText = seps[j].textContent || '';
+      var sepDate = new Date(sepText);
+      if (!isNaN(sepDate.getTime()) && sepDate >= target) { found = seps[j]; break; }
+    }
+  }
+  var dateOpts = { day: 'numeric', month: 'short', year: 'numeric' };
+  var displayDate = target.toLocaleDateString('en-GB', dateOpts);
+  if (!found) {
+    if (window.toast) window.toast('No messages found for ' + displayDate, 'info');
+    return;
+  }
+  found.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  found.classList.add('lc-date-jump-highlight');
+  setTimeout(function () { found.classList.remove('lc-date-jump-highlight'); }, 2000);
+}
+
 // US-021: Show/hide end date field based on repeat selection
 export function toggleRepeatEndDate() {
   var repeatSel = document.getElementById('lc-schedule-repeat');
@@ -1182,13 +1257,19 @@ export async function confirmSchedule() {
     if (window.toast) window.toast('Type a message to schedule', 'error');
     return;
   }
-  var dtInput = document.getElementById('lc-schedule-datetime');
-  var scheduledAt = dtInput ? dtInput.value : '';
-  if (!scheduledAt) {
+  // US-008: Read from separate date/time fields
+  var dateEl = document.getElementById('lc-schedule-date');
+  var hhEl = document.getElementById('lc-schedule-hh');
+  var mmEl = document.getElementById('lc-schedule-mm');
+  var ssEl = document.getElementById('lc-schedule-ss');
+  if (!dateEl || !dateEl.value) {
     if (window.toast) window.toast('Pick a date and time', 'error');
     return;
   }
-  // Convert local datetime-local value to ISO string
+  var hh = String(parseInt(hhEl && hhEl.value !== '' ? hhEl.value : '0', 10) || 0).padStart(2, '0');
+  var mm = String(parseInt(mmEl && mmEl.value !== '' ? mmEl.value : '0', 10) || 0).padStart(2, '0');
+  var ss = String(parseInt(ssEl && ssEl.value !== '' ? ssEl.value : '0', 10) || 0).padStart(2, '0');
+  var scheduledAt = dateEl.value + 'T' + hh + ':' + mm + ':' + ss;
   var dt = new Date(scheduledAt);
   if (isNaN(dt.getTime()) || dt <= new Date()) {
     if (window.toast) window.toast('Pick a future date and time', 'error');

@@ -260,6 +260,12 @@
               </svg>
             </button>
             <div class="lc-header-dropdown" id="lc-header-dropdown" role="menu">
+              <!-- US-009: Ask AI — Prisma entry -->
+              <button type="button" class="lc-header-dropdown-item lc-prisma-menu-item" role="menuitem" onclick="lcOpenPrismaWindow()">
+                <span style="font-size:16px;line-height:1;color:#6346ff;">✦</span>
+                <span>Ask AI — Prisma</span>
+              </button>
+              <div class="lc-header-dropdown-divider"></div>
               <button type="button" class="lc-header-dropdown-item" role="menuitem" onclick="lcOnMenuContactInfo()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
@@ -362,6 +368,20 @@
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
+        <!-- US-014: Calendar date-jump button -->
+        <div class="lc-msg-search-date-wrap">
+          <button class="lc-msg-search-nav" id="lc-date-jump-btn" onclick="lcToggleDateJump()" title="Jump to date">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </button>
+          <div id="lc-date-jump-popover" class="lc-date-jump-popover" style="display:none;">
+            <input type="date" id="lc-date-jump-input" onchange="lcJumpToDate(this.value)">
+          </div>
+        </div>
         <button class="lc-msg-search-close" onclick="lcToggleSearch()" title="Close search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 6L6 18M6 6l12 12" />
@@ -589,11 +609,20 @@
             <path d="M12 6v6l4 2" />
           </svg>
         </button>
-        <!-- Schedule popover (US-020) -->
+        <!-- Schedule popover (US-020/US-008) -->
         <div class="lc-schedule-popover" id="lc-schedule-popover" style="display:none;">
           <div class="lc-schedule-popover-header">Schedule Message</div>
           <label class="lc-schedule-label">Send at:</label>
-          <input type="datetime-local" class="lc-schedule-datetime" id="lc-schedule-datetime">
+          <!-- US-008: Separate date + HH/MM/SS fields -->
+          <input type="date" id="lc-schedule-date" class="lc-schedule-datetime" style="margin-bottom:6px;" oninput="lcUpdateSchedulePreview()">
+          <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px;">
+            <input type="number" id="lc-schedule-hh" min="0" max="23" placeholder="HH" style="width:52px;padding:4px 6px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;" oninput="lcUpdateSchedulePreview()">
+            <span style="font-size:16px;font-weight:600;color:#667781;">:</span>
+            <input type="number" id="lc-schedule-mm" min="0" max="59" placeholder="MM" style="width:52px;padding:4px 6px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;" oninput="lcUpdateSchedulePreview()">
+            <span style="font-size:16px;font-weight:600;color:#667781;">:</span>
+            <input type="number" id="lc-schedule-ss" min="0" max="59" placeholder="SS" style="width:52px;padding:4px 6px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;" oninput="lcUpdateSchedulePreview()">
+          </div>
+          <div id="lc-schedule-preview" style="font-size:12px;color:#25d366;min-height:16px;margin-bottom:4px;"></div>
           <label class="lc-schedule-label" style="margin-top:8px;">Repeat:</label>
           <select class="lc-schedule-repeat" id="lc-schedule-repeat" onchange="lcToggleRepeatEndDate()">
             <option value="none">None</option>
@@ -883,3 +912,32 @@
     </div>
   </div>
 </div>
+
+<!-- US-009/010: Prisma AI Floating Panel -->
+<div id="prisma-panel" class="prisma-panel" style="display:none;">
+  <div class="prisma-header" id="prisma-header">
+    <div class="prisma-title">✦ Prisma AI</div>
+    <div class="prisma-header-actions">
+      <button class="prisma-btn-icon" onclick="lcMinimisePrisma()" title="Minimise">—</button>
+      <button class="prisma-btn-icon" onclick="lcClosePrismaWindow()" title="Close">✕</button>
+    </div>
+  </div>
+  <div class="prisma-sources">
+    <button class="prisma-source-chip active" data-source="knowledge_base" onclick="lcPrismaSetSource('knowledge_base')">Knowledge Base</button>
+    <button class="prisma-source-chip" data-source="mcp_server" onclick="lcPrismaSetSource('mcp_server')">MCP Server</button>
+    <button class="prisma-source-chip" data-source="all_history" onclick="lcPrismaSetSource('all_history')">All History</button>
+    <button class="prisma-source-chip" data-source="internet" onclick="lcPrismaSetSource('internet')">Internet</button>
+  </div>
+  <div class="prisma-messages" id="prisma-messages">
+    <div class="prisma-welcome">Ask me anything about the hostel, guests, or bookings.</div>
+  </div>
+  <div class="prisma-input-area">
+    <textarea class="prisma-input" id="prisma-input" rows="1" placeholder="Ask Prisma..." onkeydown="lcPrismaKeydown(event)" oninput="lcPrismaAutoResize(this)"></textarea>
+    <button class="prisma-send-btn" onclick="lcPrismaSend()" title="Send">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+<button id="prisma-fab" class="prisma-fab" onclick="lcOpenPrismaWindow()" style="display:none;" title="Ask Prisma AI">
+  ✦ Prisma
+</button>
