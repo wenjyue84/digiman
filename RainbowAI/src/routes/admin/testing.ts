@@ -246,7 +246,6 @@ router.post('/tests/run', async (_req: Request, res: Response) => {
       const child = spawn(npxPath, args, {
         cwd: mcpRoot,
         env: { ...process.env, FORCE_COLOR: '0' },
-        shell: true,
         timeout: 120_000,
       });
       child.stdout.on('data', (d: Buffer) => { stdout += d.toString(); });
@@ -321,7 +320,6 @@ router.post('/tests/coverage', async (_req: Request, res: Response) => {
       const child = spawn(npxPath, coverageArgs, {
         cwd: mcpRoot,
         env: { ...process.env, FORCE_COLOR: '0' },
-        shell: true,
         timeout: 120_000,
       });
       child.stdout.on('data', (d: Buffer) => { stdout += d.toString(); });

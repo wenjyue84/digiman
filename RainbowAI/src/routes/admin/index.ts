@@ -36,7 +36,7 @@ function adminAuth(req: Request, res: Response, next: NextFunction): void {
   }
   const adminKey = process.env.RAINBOW_ADMIN_KEY;
   if (!adminKey) {
-    next();
+    res.status(401).json({ error: 'Unauthorized: RAINBOW_ADMIN_KEY not configured for remote access' });
     return;
   }
   const provided = req.headers['x-admin-key'];

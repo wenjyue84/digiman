@@ -1,14 +1,25 @@
 import { Router } from "express";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import rateLimit from "express-rate-limit";
 import { OAuth2Client } from "google-auth-library";
 import { storage } from "../storage";
 import { loginSchema, googleAuthSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware } from "../validation";
 import { AppConfig } from "../configManager";
 import { authenticateToken } from "./middleware/auth";
+import { verifyPassword, hashPassword, isHashed } from "../lib/password";
 
 const router = Router();
+
+// Rate limit login attempts: 5 per 15 minutes per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many login attempts. Please try again in 15 minutes." },
+});
 
 // Google OAuth client
 const googleClient = new OAuth2Client(
@@ -18,23 +29,34 @@ const googleClient = new OAuth2Client(
 );
 
 // Login endpoint
-router.post("/login", 
+router.post("/login",
+  loginLimiter,
   securityValidationMiddleware,
   validateData(loginSchema, 'body'),
   async (req, res) => {
   try {
     console.log("Login attempt:", req.body);
     const { email, password } = req.body;
-    
+
     // Try to find user by email first, then by username
     let user = await storage.getUserByEmail(email);
     if (!user) {
       user = await storage.getUserByUsername(email); // Allow login with username in email field
     }
     console.log("User found:", user ? "Yes" : "No");
-    
-    if (!user || user.password !== password) {
+
+    if (!user || !user.password || !(await verifyPassword(password, user.password))) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Auto-migrate legacy plaintext passwords to bcrypt on successful login
+    if (!isHashed(user.password)) {
+      try {
+        const hashed = await hashPassword(password);
+        await storage.updateUser(user.id, { password: hashed });
+      } catch {
+        // Non-critical: migration will retry on next login
+      }
     }
 
     // Create session
@@ -73,7 +95,7 @@ router.post("/logout", authenticateToken, async (req: any, res) => {
 });
 
 // Google OAuth login
-router.post("/google", async (req, res) => {
+router.post("/google", loginLimiter, async (req, res) => {
   try {
     const { token } = googleAuthSchema.parse(req.body);
     

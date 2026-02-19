@@ -61,11 +61,13 @@ export class MemStorage implements IStorage {
   // ─── Initialization ─────────────────────────────────────────────────────────
 
   private initializeDefaultUsers() {
+    const bcrypt = require('bcryptjs');
+    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
     const adminUser: User = {
       id: randomUUID(),
       email: "admin@pelangi.com",
       username: "admin",
-      password: "admin123",
+      password: bcrypt.hashSync(adminPassword, 10),
       googleId: null,
       firstName: "Admin",
       lastName: "User",

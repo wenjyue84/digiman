@@ -4,6 +4,7 @@ validateEnv();
 
 import express, { type Request, Response, NextFunction } from "express";
 import compression from 'compression';
+import helmet from 'helmet';
 import cors from 'cors';
 // Force rebuild: 2026-02-13 - Updated DATABASE_URL in Zeabur
 import { registerRoutes } from "./routes";
@@ -14,6 +15,13 @@ import { storage } from "./storage";
 
 const app = express();
 app.use(compression());
+
+// Security headers via helmet
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled — Vite injects inline scripts in dev; nginx handles CSP in production
+  crossOriginEmbedderPolicy: false, // Allow loading cross-origin images (guest photos, etc.)
+}));
+
 // Increase body size limits to accommodate small images embedded as Base64 in JSON
 // Staff check-in may include a profile photo string. Keep reasonable cap.
 app.use(express.json({ limit: '5mb' }));
@@ -93,44 +101,58 @@ app.use((req, res, next) => {
   AppConfig.initialize(getConfig(), getConfigUtils());
   
   // Seed default staff users on each start (idempotent by username)
+  // Passwords are hashed with bcrypt before storage
   try {
+    const { hashPassword } = await import('./lib/password.js');
     const existing = await storage.getAllUsers();
     const ensureUser = async (username: string, password: string) => {
       const found = existing.find(u => u.username === username);
       if (!found) {
+        const hashed = await hashPassword(password);
         await storage.createUser({
           email: `${username.toLowerCase()}@pelangi.local`,
           username,
-          password,
+          password: hashed,
           role: "staff",
         } as any);
       }
     };
-    // Add admin user first
     const ensureAdminUser = async (username: string, password: string) => {
       const found = existing.find(u => u.username === username || u.email === "admin@pelangi.com" || u.email === username);
       if (!found) {
+        const hashed = await hashPassword(password);
         await storage.createUser({
           email: "admin@pelangi.com",
           username,
-          password,
+          password: hashed,
           role: "admin",
         } as any);
-        console.log(`✅ Created admin user: ${username}`);
+        console.log(`Created admin user: ${username}`);
       }
     };
-    
-    await ensureAdminUser("admin", "admin123");
-    await ensureUser("Jay", "Jay123");
-    await ensureUser("Le", "Le123");
-    await ensureUser("Alston", "Alston123");
+
+    // Use env vars for credentials (fall back to defaults in development only)
+    const isDev = process.env.NODE_ENV !== 'production';
+    const adminPassword = process.env.ADMIN_PASSWORD || (isDev ? 'admin123' : undefined);
+    if (adminPassword) {
+      await ensureAdminUser("admin", adminPassword);
+    } else {
+      console.warn("ADMIN_PASSWORD env var not set — skipping admin user seed in production");
+    }
+
+    // Staff users only seeded in development
+    if (isDev) {
+      await ensureUser("Jay", process.env.STAFF_PASSWORD_JAY || "Jay123");
+      await ensureUser("Le", process.env.STAFF_PASSWORD_LE || "Le123");
+      await ensureUser("Alston", process.env.STAFF_PASSWORD_ALSTON || "Alston123");
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     const isSchemaOrConnection = /relation ".*" does not exist|connection|ECONNREFUSED|ETIMEDOUT|database/i.test(msg);
     console.warn("Warning: could not seed default users:", e);
     if (process.env.DATABASE_URL && isSchemaOrConnection) {
       console.warn("\n  → Database may be missing schema or unreachable. Run: npm run db:push");
-      console.warn("  → Then restart the server so the admin user (admin / admin123) can be created.\n");
+      console.warn("  → Then restart the server.\n");
     }
   }
 

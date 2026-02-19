@@ -14,7 +14,7 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 // Get admin configuration
-router.get("/config", securityValidationMiddleware, async (req, res) => {
+router.get("/config", authenticateToken, securityValidationMiddleware, async (req, res) => {
   try {
     const config = await getConfigForAPI();
     res.json(config);
@@ -24,7 +24,7 @@ router.get("/config", securityValidationMiddleware, async (req, res) => {
 });
 
 // Update admin configuration
-router.put("/config", securityValidationMiddleware, async (req, res) => {
+router.put("/config", authenticateToken, securityValidationMiddleware, async (req, res) => {
   try {
     const updates = req.body;
     const validation = await validateConfigUpdate(updates);
@@ -47,7 +47,7 @@ router.put("/config", securityValidationMiddleware, async (req, res) => {
 });
 
 // Reset admin configuration to defaults
-router.post("/config/reset", securityValidationMiddleware, async (req, res) => {
+router.post("/config/reset", authenticateToken, securityValidationMiddleware, async (req, res) => {
   try {
     const config = getConfig();
     await config.resetAll(req.user?.email || 'admin');
@@ -132,7 +132,7 @@ router.patch("/notifications/read-all", authenticateToken, async (req, res) => {
 // ─── Rainbow Intents Management ────────────────────────────────────────────
 
 // Get intents configuration
-router.get("/rainbow/intents", securityValidationMiddleware, async (req, res) => {
+router.get("/rainbow/intents", authenticateToken, securityValidationMiddleware, async (req, res) => {
   try {
     const intentsPath = path.join(process.cwd(), "mcp-server", "src", "assistant", "data", "intents.json");
     const intentsData = await fs.readFile(intentsPath, "utf-8");
@@ -145,7 +145,7 @@ router.get("/rainbow/intents", securityValidationMiddleware, async (req, res) =>
 });
 
 // Toggle intent enabled status
-router.post("/rainbow/intents/toggle", securityValidationMiddleware, async (req, res) => {
+router.post("/rainbow/intents/toggle", authenticateToken, securityValidationMiddleware, async (req, res) => {
   try {
     const { category, enabled } = req.body;
 
@@ -183,7 +183,7 @@ router.post("/rainbow/intents/toggle", securityValidationMiddleware, async (req,
 });
 
 // Test intent and get sample reply
-router.post("/rainbow/intents/test", securityValidationMiddleware, async (req, res) => {
+router.post("/rainbow/intents/test", authenticateToken, securityValidationMiddleware, async (req, res) => {
   try {
     const { category } = req.body;
 

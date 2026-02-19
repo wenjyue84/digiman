@@ -8,6 +8,7 @@ process.on('unhandledRejection', (reason) => {
 
 import express from 'express';
 import compression from 'compression';
+import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -97,6 +98,12 @@ const PORT = parseInt(process.env.MCP_SERVER_PORT || '3002', 10);
 
 // Disable ETags to prevent stale cache on normal refresh
 app.set('etag', false);
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Admin dashboard uses inline scripts
+  crossOriginEmbedderPolicy: false,
+}));
 
 // Middleware
 app.use(compression({

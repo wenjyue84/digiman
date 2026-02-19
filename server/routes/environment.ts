@@ -1,15 +1,27 @@
 import { Router } from "express";
 import { getEnvironmentConfig } from "../../shared/utils.js";
+import { authenticateToken } from "./middleware/auth";
 
 const router = Router();
 
+/** Mask sensitive env var values — show '[SET]' or '[NOT SET]' only */
+function maskSensitive(key: string, value: string | undefined): string | undefined {
+  const sensitivePatterns = ['SECRET', 'KEY', 'PASSWORD', 'TOKEN'];
+  const sensitiveKeys = ['DATABASE_URL', 'PRIVATE_DATABASE_URL'];
+  const upperKey = key.toUpperCase();
+  if (sensitiveKeys.includes(key) || sensitivePatterns.some(p => upperKey.includes(p))) {
+    return value ? '[SET]' : '[NOT SET]';
+  }
+  return value;
+}
+
 // Get current environment configuration
-router.get("/api/environment/config", (req, res) => {
+router.get("/api/environment/config", authenticateToken, (req, res) => {
   try {
     const config = getEnvironmentConfig();
-    
+
     // Add server-side environment variables for status checking
-    const envVars = {
+    const rawVars: Record<string, string | undefined> = {
       DATABASE_URL: process.env.DATABASE_URL,
       PRIVATE_DATABASE_URL: process.env.PRIVATE_DATABASE_URL,
       PRIVATE_OBJECT_DIR: process.env.PRIVATE_OBJECT_DIR,
@@ -22,6 +34,11 @@ router.get("/api/environment/config", (req, res) => {
       REPL_SLUG: process.env.REPL_SLUG
     };
 
+    const envVars: Record<string, string | undefined> = {};
+    for (const [key, value] of Object.entries(rawVars)) {
+      envVars[key] = maskSensitive(key, value);
+    }
+
     res.json({
       ...config,
       envVars,
@@ -30,7 +47,7 @@ router.get("/api/environment/config", (req, res) => {
     });
   } catch (error) {
     console.error("Failed to get environment config:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to get environment configuration",
       message: error instanceof Error ? error.message : "Unknown error"
     });
