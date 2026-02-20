@@ -71,7 +71,7 @@ export function ConfigurationDemo() {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">
-                {config.totalCapsules} Capsules
+                {config.totalUnits} Capsules
               </Badge>
             </div>
           </div>

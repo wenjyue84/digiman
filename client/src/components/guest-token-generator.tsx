@@ -37,7 +37,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
     VITE_REPL_ID: import.meta.env.VITE_REPL_ID
   });
   
-  const [selectedCapsule, setSelectedCapsule] = useState("auto-assign");
+  const [selectedUnit, setselectedUnit] = useState("auto-assign");
   const [guestName, setGuestName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -66,7 +66,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
   const [generatedToken, setGeneratedToken] = useState<{
     token: string;
     link: string;
-    capsuleNumber: string;
+    unitNumber: string;
     guestName: string;
     expiresAt: string;
   } | null>(null);
@@ -137,12 +137,12 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
   };
 
   const { data: availableCapsules = [], isLoading: capsulesLoading } = useQuery<Capsule[]>({
-    queryKey: ["/api/capsules/available"],
+    queryKey: ["/api/units/available"],
   });
 
   const createTokenMutation = useMutation({
     mutationFn: async (data: { 
-      capsuleNumber?: string; 
+      unitNumber?: string; 
       autoAssign?: boolean;
       guestName?: string;
       phoneNumber?: string;
@@ -178,12 +178,12 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
         await navigator.clipboard.writeText(finalLink);
         toast({
           title: "Check-in Link Created & Copied!",
-          description: `Generated self-check-in link for capsule ${data.capsuleNumber}`,
+          description: `Generated self-check-in link for capsule ${data.unitNumber}`,
         });
       } catch (error) {
         toast({
           title: "Check-in Link Created",
-          description: `Generated self-check-in link for capsule ${data.capsuleNumber}. Manual copy needed.`,
+          description: `Generated self-check-in link for capsule ${data.unitNumber}. Manual copy needed.`,
         });
       }
       onTokenCreated?.();
@@ -230,7 +230,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted with data:', {
-      selectedCapsule,
+      selectedUnit,
       guestName,
       phoneNumber,
       email,
@@ -240,7 +240,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
       prefillNationality
     });
     
-    if (!selectedCapsule) {
+    if (!selectedUnit) {
       toast({
         title: "Validation Error",
         description: `Please select a ${labels.lowerSingular} assignment option`,
@@ -260,9 +260,9 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
     
     // Name and phone are now optional - guest will fill them during self-check-in
 
-    const isAutoAssign = selectedCapsule === "auto-assign";
+    const isAutoAssign = selectedUnit === "auto-assign";
     createTokenMutation.mutate({
-      capsuleNumber: isAutoAssign ? undefined : selectedCapsule,
+      unitNumber: isAutoAssign ? undefined : selectedUnit,
       autoAssign: isAutoAssign,
       guestName: guestName.trim() || undefined,
       phoneNumber: phoneNumber.trim() || undefined,
@@ -506,7 +506,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
                 <MapPin className="h-4 w-4" />
                 Select {labels.singular}
               </Label>
-              <Select value={selectedCapsule} onValueChange={setSelectedCapsule}>
+              <Select value={selectedUnit} onValueChange={setselectedUnit}>
                 <SelectTrigger className="w-full mt-1">
                   <SelectValue placeholder={`Choose ${labels.lowerSingular} assignment`} />
                 </SelectTrigger>
@@ -549,7 +549,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
                   )}
                 </SelectContent>
               </Select>
-              {selectedCapsule === "auto-assign" && (
+              {selectedUnit === "auto-assign" && (
                 <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <p className="text-sm text-blue-700">
                     <span className="font-medium">Auto Assignment:</span> The system will automatically assign the best available capsule based on the guest's gender preference:
@@ -604,7 +604,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
               <Button 
                 type="submit" 
                 className="w-full h-12 sm:h-10 text-sm sm:text-base bg-orange-600 hover:bg-orange-700"
-                disabled={createTokenMutation.isPending || !selectedCapsule}
+                disabled={createTokenMutation.isPending || !selectedUnit}
                 isLoading={createTokenMutation.isPending}
               >
                 Generate Check-in Link
@@ -616,11 +616,11 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="bg-green-100 text-green-800">
-                  {generatedToken.capsuleNumber || "Auto Assign 🤖"}
+                  {generatedToken.unitNumber || "Auto Assign 🤖"}
                 </Badge>
                 <span className="text-sm text-green-700">Check-in link created!</span>
               </div>
-              {!generatedToken.capsuleNumber && (
+              {!generatedToken.unitNumber && (
                 <div className="text-xs text-blue-600 mt-1 font-medium">
                   {labels.singular} will be auto-assigned based on guest's gender
                 </div>
@@ -677,7 +677,7 @@ export default function GuestTokenGenerator({ onTokenCreated }: TokenGeneratorPr
                     variant="outline"
                     onClick={() => {
                       setGeneratedToken(null);
-                      setSelectedCapsule("auto-assign");
+                      setselectedUnit("auto-assign");
                       setGuestName("");
                       setPhoneNumber("");
                       setEmail("");

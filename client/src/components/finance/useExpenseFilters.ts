@@ -93,7 +93,9 @@ export function useExpenseFilters(expenses: ExpenseType[]) {
     setSortBy("");
   };
 
-  const hasActiveFilters = selectedCategory !== "all" || dateFrom || dateTo || amountMin || amountMax || sortBy;
+  const hasActiveFilters = Boolean(
+    selectedCategory !== "all" || dateFrom || dateTo || amountMin || amountMax || sortBy
+  );
 
   // Filter and sort expenses
   const filteredExpenses = useMemo(() => {

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 export interface MaintenanceFilters {
   dateFrom: string;
   dateTo: string;
-  capsuleNumber: string;
+  unitNumber: string;
   reportedBy: string;
   showResolved: boolean;
 }
@@ -32,13 +32,13 @@ export function MaintenanceFilters({
 }: MaintenanceFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasActiveFilters = filters.dateFrom || filters.dateTo || filters.capsuleNumber || filters.reportedBy || filters.showResolved;
+  const hasActiveFilters = filters.dateFrom || filters.dateTo || filters.unitNumber || filters.reportedBy || filters.showResolved;
 
   const clearFilters = () => {
     onFiltersChange({
       dateFrom: '',
       dateTo: '',
-      capsuleNumber: '',
+      unitNumber: '',
       reportedBy: '',
       showResolved: false,
     });
@@ -55,7 +55,7 @@ export function MaintenanceFilters({
     let count = 0;
     if (filters.dateFrom) count++;
     if (filters.dateTo) count++;
-    if (filters.capsuleNumber) count++;
+    if (filters.unitNumber) count++;
     if (filters.reportedBy) count++;
     if (filters.showResolved) count++;
     return count;
@@ -122,7 +122,7 @@ export function MaintenanceFilters({
               <Building2 className="h-3 w-3" />
               Capsule
             </Label>
-            <Select value={filters.capsuleNumber} onValueChange={(value) => updateFilter('capsuleNumber', value)}>
+            <Select value={filters.unitNumber} onValueChange={(value) => updateFilter('unitNumber', value)}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="All capsules" />
               </SelectTrigger>
@@ -187,9 +187,9 @@ export function MaintenanceFilters({
                     To: {new Date(filters.dateTo).toLocaleDateString()}
                   </Badge>
                 )}
-                {filters.capsuleNumber && (
+                {filters.unitNumber && (
                   <Badge variant="outline" className="text-xs">
-                    Capsule: {filters.capsuleNumber}
+                    Capsule: {filters.unitNumber}
                   </Badge>
                 )}
                 {filters.reportedBy && (

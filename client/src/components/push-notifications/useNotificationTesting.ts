@@ -27,7 +27,7 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
         data: {
           type: 'test-guest-checkin',
           guestName: 'John Doe (Test)',
-          capsuleNumber: 'A1',
+          unitNumber: 'A1',
           url: '/dashboard',
           isTest: true,
         },
@@ -46,7 +46,7 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
         data: {
           type: 'test-checkout-reminder',
           guestName: 'Jane Smith (Test)',
-          capsuleNumber: 'B2',
+          unitNumber: 'B2',
           url: '/dashboard',
           isTest: true,
         },
@@ -68,7 +68,7 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
         data: {
           type: 'test-overdue-checkout',
           guestName: 'Mike Johnson (Test)',
-          capsuleNumber: 'C3',
+          unitNumber: 'C3',
           daysPast: 2,
           url: '/dashboard',
           isTest: true,
@@ -87,7 +87,7 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
         tag: 'test-maintenance',
         data: {
           type: 'test-maintenance',
-          capsuleNumber: 'D4',
+          unitNumber: 'D4',
           issue: 'Air conditioning not working (Test)',
           url: '/dashboard',
           isTest: true,

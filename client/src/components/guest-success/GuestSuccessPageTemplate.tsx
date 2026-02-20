@@ -15,7 +15,11 @@ interface GuestSuccessPageTemplateProps {
     email?: string;
     expectedCheckoutDate?: string;
   } | null;
-  assignedCapsuleNumber?: string | null;
+  assignedUnitNumber?: string | null;
+  /** @deprecated Use assignedUnitNumber */
+  assignedunitNumber?: string | null;
+  unitIssues?: any[];
+  /** @deprecated Use unitIssues */
   capsuleIssues?: any[];
   
   // Settings data
@@ -71,13 +75,16 @@ export default function GuestSuccessPageTemplate({
   viewMode = 'mobile',
   isPreview = false,
   guestInfo,
-  assignedCapsuleNumber,
+  assignedUnitNumber,
+  assignedunitNumber,
+  unitIssues = [],
   capsuleIssues = [],
   settings,
   visibility = {},
   content = {},
   actions = {}
 }: GuestSuccessPageTemplateProps) {
+  const mergedUnitIssues = unitIssues.length ? unitIssues : capsuleIssues;
   
   // Use content from props for preview, or settings for actual page
   const effectiveContent = {
@@ -125,7 +132,7 @@ export default function GuestSuccessPageTemplate({
 
   const unitNumber = isPreview 
     ? 'Assigned based on availability'
-    : (assignedCapsuleNumber || guestInfo?.unitNumber || 'C01');
+    : (assignedUnitNumber || assignedunitNumber || guestInfo?.unitNumber || 'C01');
 
   return (
     <div className={`${viewMode === 'mobile' ? 'max-w-sm' : 'max-w-2xl'} mx-auto ${isPreview ? '' : 'px-4'}`}>
@@ -321,14 +328,14 @@ export default function GuestSuccessPageTemplate({
                 </div>
 
                 {/* Capsule Issues */}
-                {effectiveVisibility.showCapsuleIssues && capsuleIssues.length > 0 && (
+                {effectiveVisibility.showCapsuleIssues && mergedUnitIssues.length > 0 && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-yellow-600">⚠️</span>
                       <span className="font-medium text-yellow-800">Capsule Issues</span>
                     </div>
                     <div className="space-y-2">
-                      {capsuleIssues.map((issue, index) => (
+                      {mergedUnitIssues.map((issue, index) => (
                         <div key={index} className="text-sm text-yellow-700 bg-white/60 p-2 rounded border">
                           <div className="font-medium">{issue.description}</div>
                           <div className="text-xs text-yellow-600 mt-1">

@@ -66,13 +66,13 @@ export default function SortableGuestTable() {
   const activeTokens = activeTokensResponse?.data || [];
 
   const { data: allCapsulesResponse } = useVisibilityQuery<AllCapsule[]>({
-    queryKey: ["/api/capsules"],
+    queryKey: ["/api/units"],
   });
   const allCapsules = allCapsulesResponse || [];
   const exportCapsules = allCapsulesResponse || [];
 
   const { data: availableCapsules = [] } = useVisibilityQuery<AvailableCapsule[]>({
-    queryKey: ["/api/capsules/available"],
+    queryKey: ["/api/units/available"],
   });
 
   // ---------- Hooks ----------
@@ -170,10 +170,10 @@ export default function SortableGuestTable() {
             openAlertDialog={mutations.openAlertDialog}
             onCapsuleChange={mutations.handleCapsuleChange}
             onCancelToken={mutations.handleCancelToken}
-            onTokenCapsuleChange={mutations.handleTokenCapsuleChange}
+            onTokenUnitChange={mutations.handleTokenCapsuleChange}
             copyToClipboard={mutations.copyToClipboard}
             getCheckinLink={mutations.getCheckinLink}
-            onEmptyCapsuleClick={mutations.handleEmptyCapsuleClick}
+            onEmptyUnitClick={mutations.handleEmptyCapsuleClick}
           />
         )}
 
@@ -193,9 +193,9 @@ export default function SortableGuestTable() {
             onExtend={mutations.handleExtend}
             openAlertDialog={mutations.openAlertDialog}
             onCapsuleChange={mutations.handleCapsuleChange}
-            onTokenCapsuleChange={mutations.handleTokenCapsuleChange}
+            onTokenUnitChange={mutations.handleTokenCapsuleChange}
             onPendingCheckinClick={mutations.handlePendingCheckinClick}
-            onEmptyCapsuleClick={mutations.handleEmptyCapsuleClick}
+            onEmptyUnitClick={mutations.handleEmptyCapsuleClick}
           />
         )}
       </CardContent>

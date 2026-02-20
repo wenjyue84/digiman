@@ -15,7 +15,7 @@ interface DayData {
   checkouts: Guest[];
   expectedCheckouts: Guest[];
   occupancy: number;
-  totalCapsules: number;
+  totalUnits: number;
 }
 
 interface CalendarData {
@@ -231,15 +231,15 @@ export default function OccupancyCalendar() {
                 highOccupancy: (date) => {
                   const dateString = date.toISOString().split('T')[0];
                   const dayData = calendarData[dateString];
-                  if (!dayData || dayData.totalCapsules === 0) return false;
-                  const occupancyRate = (dayData.occupancy / dayData.totalCapsules) * 100;
+                  if (!dayData || dayData.totalUnits === 0) return false;
+                  const occupancyRate = (dayData.occupancy / dayData.totalUnits) * 100;
                   return occupancyRate > 80;
                 },
                 fullOccupancy: (date) => {
                   const dateString = date.toISOString().split('T')[0];
                   const dayData = calendarData[dateString];
-                  if (!dayData || dayData.totalCapsules === 0) return false;
-                  const occupancyRate = (dayData.occupancy / dayData.totalCapsules) * 100;
+                  if (!dayData || dayData.totalUnits === 0) return false;
+                  const occupancyRate = (dayData.occupancy / dayData.totalUnits) * 100;
                   return occupancyRate === 100;
                 },
                 holiday: (date) => {
@@ -311,9 +311,9 @@ export default function OccupancyCalendar() {
                         <Bed className="h-4 w-4" />
                         <span className="text-sm">Occupancy</span>
                       </div>
-                      <Badge variant={selectedDateData.occupancy === selectedDateData.totalCapsules ? "destructive" : 
-                                   selectedDateData.occupancy > selectedDateData.totalCapsules * 0.8 ? "secondary" : "default"}>
-                        {selectedDateData.occupancy}/{selectedDateData.totalCapsules}
+                      <Badge variant={selectedDateData.occupancy === selectedDateData.totalUnits ? "destructive" : 
+                                   selectedDateData.occupancy > selectedDateData.totalUnits * 0.8 ? "secondary" : "default"}>
+                        {selectedDateData.occupancy}/{selectedDateData.totalUnits}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">

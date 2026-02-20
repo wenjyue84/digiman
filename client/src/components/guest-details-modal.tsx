@@ -15,6 +15,7 @@ import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 import { useToast } from "@/hooks/use-toast";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { generateReceipt } from "@/lib/receiptGenerator";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 import type { Guest } from "@shared/schema";
 
 interface GuestDetailsModalProps {
@@ -24,6 +25,7 @@ interface GuestDetailsModalProps {
 }
 
 export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetailsModalProps) {
+  const business = useBusinessConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Guest>>({});
   const [isImageOpen, setIsImageOpen] = useState(false);
@@ -568,10 +570,11 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
             </div>
             {/* Print Receipt Button */}
             <div className="mt-4">
-              <Button
-                onClick={() => generateReceipt({ guest })}
-                size="sm"
-                variant="outline"
+                            <Button
+                              onClick={() => generateReceipt({ guest, business })
+              }
+                              size="sm"
+                              variant="outline"
                 className="w-full sm:w-auto"
                 data-testid="button-print-receipt"
               >
