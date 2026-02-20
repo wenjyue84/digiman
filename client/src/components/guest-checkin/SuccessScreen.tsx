@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Printer, Send, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useI18n } from "@/lib/i18n";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 import GuestSuccessPageTemplate from "@/components/guest-success/GuestSuccessPageTemplate";
 import GuestExtendDialog from "@/components/guest-success/GuestExtendDialog";
 
@@ -62,6 +63,7 @@ export default function SuccessScreen({
   onRefresh,
 }: SuccessScreenProps) {
   const { t } = useI18n();
+  const business = useBusinessConfig();
   const [showExtendDialog, setShowExtendDialog] = useState(false);
   
   // Derive a reliable unit number
@@ -91,7 +93,7 @@ export default function SuccessScreen({
     const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
     const doorPassword = settings?.guideDoorPassword || "1270#";
 
-    const shareText = `🏨 Pelangi Capsule Hostel - My Stay Information
+    const shareText = `🏨 ${business.name} - My Stay Information
 
 Name: ${guestName}
 Unit: ${unit}
@@ -101,11 +103,11 @@ Door Password: ${doorPassword}
 
 Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
 
-Welcome to Pelangi Capsule Hostel! 🌈`;
+Welcome to ${business.name}! 🌈`;
 
     if (navigator.share) {
       navigator.share({
-        title: 'Pelangi Capsule Hostel - My Stay Information',
+        title: `${business.name} - My Stay Information`,
         text: shareText,
       }).catch(() => {
         navigator.clipboard.writeText(shareText).then(() => {

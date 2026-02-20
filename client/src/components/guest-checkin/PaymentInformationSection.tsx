@@ -1,4 +1,5 @@
 import { CreditCard, Banknote, DollarSign, Globe } from "lucide-react";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,12 +15,13 @@ interface PaymentInformationSectionProps {
   watchedPaymentMethod: string;
 }
 
-export function PaymentInformationSection({ 
-  form, 
-  errors, 
-  t, 
-  watchedPaymentMethod 
+export function PaymentInformationSection({
+  form,
+  errors,
+  t,
+  watchedPaymentMethod
 }: PaymentInformationSectionProps) {
+  const business = useBusinessConfig();
   return (
     <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
       <h3 className="text-sm font-medium text-hostel-text mb-3 flex items-center">
@@ -89,7 +91,7 @@ export function PaymentInformationSection({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-medium text-blue-800 mb-3">Bank Account Details</h4>
             <div className="space-y-2 text-sm">
-              <div><strong>Account Name:</strong> Pelangi Capsule Hostel</div>
+              <div><strong>Account Name:</strong> {business.name}</div>
               <div><strong>Account Number:</strong> 551128652007</div>
               <div><strong>Bank:</strong> Maybank</div>
             </div>

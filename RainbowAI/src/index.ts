@@ -25,7 +25,7 @@ import { initFeedbackSettings } from './lib/init-feedback-settings.js';
 import { initAdminNotificationSettings } from './lib/admin-notification-settings.js';
 import { configStore } from './assistant/config-store.js';
 import { initKnowledgeBase, initKBFromDB } from './assistant/knowledge-base.js';
-import { initCapsuleCache } from './lib/capsule-cache.js';
+import { initUnitCache } from './lib/unit-cache.js';
 import { initScheduler } from './lib/message-scheduler.js';
 import { ensureConfigTables } from './lib/config-db.js';
 import { reloadLLMSettingsFromDB } from './assistant/llm-settings-loader.js';
@@ -67,8 +67,8 @@ try {
   console.error('[Startup] Failed to initialize KnowledgeBase:', err.message);
 }
 
-// Initialize Capsule Cache (US-010) — fetches from dashboard API in background
-initCapsuleCache();
+// Initialize Unit Cache — fetches from dashboard API in background
+initUnitCache();
 
 // CRITICAL: Initialize configStore BEFORE mounting admin routes
 // This prevents "Cannot read properties of undefined" errors when API endpoints are called before WhatsApp init completes

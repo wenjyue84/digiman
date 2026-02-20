@@ -14,7 +14,7 @@ import { useConfig, useConfigValue, AppConfig, DEFAULT_CONFIG } from '@/hooks/us
 export const CONFIG_DEFAULTS = {
   // Form defaults
   DEFAULT_PAYMENT_METHODS: ['cash', 'tng', 'bank', 'platform'] as const,
-  DEFAULT_CAPSULE_STATUSES: ['available', 'occupied', 'maintenance', 'cleaning'] as const,
+  DEFAULT_UNIT_STATUSES: ['available', 'occupied', 'maintenance', 'cleaning'] as const,
   DEFAULT_GUEST_GENDERS: ['Male', 'Female', 'Other'] as const,
   DEFAULT_PAYMENT_COLLECTORS: ['Admin', 'Staff', 'Self-Service'] as const,
   

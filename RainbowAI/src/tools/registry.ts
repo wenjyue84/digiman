@@ -34,7 +34,7 @@ import {
 
 import {
   settingsTools,
-  getCapsuleRules
+  getUnitRules
 } from './settings-tools.js';
 
 // Phase 3: WhatsApp integration tools
@@ -88,7 +88,7 @@ class ToolRegistry {
     this.register(analyticsTools[2], exportGuestsCSV);
 
     // Phase 2: Settings tools (1 tool)
-    this.register(settingsTools[0], getCapsuleRules);
+    this.register(settingsTools[0], getUnitRules);
 
     // Phase 3: WhatsApp integration (4 tools)
     this.register(whatsappTools[0], whatsappStatus);

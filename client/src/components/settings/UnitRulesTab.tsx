@@ -71,9 +71,9 @@ export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
   const queryClient = useQueryClient();
 
   const { data: rules, isLoading } = useQuery<UnitRules>({
-    queryKey: ["/api/settings/capsule-rules"],
+    queryKey: ["/api/settings/unit-rules"],
     queryFn: async () => {
-      const res = await fetch("/api/settings/capsule-rules");
+      const res = await fetch("/api/settings/unit-rules");
       if (!res.ok) throw new Error("Failed to fetch rules");
       return res.json();
     },
@@ -117,12 +117,12 @@ export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
     mutationFn: async (data: UnitRules) => {
       // Only send manual capsules — server re-merges auto-linked on next GET
       const { autoLinkedCapsules, ...payload } = data;
-      const res = await apiRequest("PUT", "/api/settings/capsule-rules", payload);
+      const res = await apiRequest("PUT", "/api/settings/unit-rules", payload);
       return res.json();
     },
     onSuccess: () => {
       setLocal(null); // Reset so useEffect picks up fresh merged data from refetch
-      queryClient.invalidateQueries({ queryKey: ["/api/settings/capsule-rules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/unit-rules"] });
       setDirty(false);
       toast({ title: "Rules Saved", description: "Unit assignment rules updated successfully." });
     },

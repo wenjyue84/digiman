@@ -16,7 +16,7 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { ViewToggle } from "@/components/ui/view-toggle";
 import { MaintenanceFilters, type MaintenanceFilters as MaintenanceFiltersType } from "@/components/ui/maintenance-filters";
 import { MaintenanceProblemCard } from "@/components/ui/maintenance-problem-card";
-import type { Capsule, UnitProblem, PaginatedResponse } from "@shared/schema";
+import type { Unit, UnitProblem, PaginatedResponse } from "@shared/schema";
 
 export default function MaintenanceManage() {
   const [selectedUnit, setselectedUnit] = useState<string>("");
@@ -38,7 +38,7 @@ export default function MaintenanceManage() {
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user;
 
-  const { data: capsules = [] } = useQuery<Capsule[]>({
+  const { data: units = [] } = useQuery<Unit[]>({
     queryKey: ["/api/units"],
   });
 
@@ -202,7 +202,7 @@ export default function MaintenanceManage() {
     });
   };
 
-  const availableUnits = capsules.filter(c => {
+  const availableUnits = units.filter(c => {
     const hasActiveProblem = activeProblems.some(p => p.unitNumber === c.number);
     return !hasActiveProblem;
   });
@@ -368,7 +368,7 @@ export default function MaintenanceManage() {
                   <MaintenanceFilters
                     filters={filters}
                     onFiltersChange={setFilters}
-                    units={capsules.map(c => ({ number: c.number, section: c.section }))}
+                    units={units.map(c => ({ number: c.number, section: c.section }))}
                     reporters={uniqueReporters}
                   />
                   
