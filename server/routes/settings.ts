@@ -194,13 +194,13 @@ router.get("/unit-rules", async (_req, res) => {
     let autoLinkedUnits: string[] = [];
     try {
       const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
-      autoLinkedUnits = [...new Set(activeProblems.data.map(p => p.unitNumber))];
+      autoLinkedUnits = Array.from(new Set(activeProblems.data.map(p => p.unitNumber)));
     } catch {
       // If problems fetch fails, return rules without auto-link
     }
 
     const manualUnits: string[] = rules.deprioritizedUnits || [];
-    const mergedUnits = [...new Set([...manualUnits, ...autoLinkedUnits])];
+    const mergedUnits = Array.from(new Set([...manualUnits, ...autoLinkedUnits]));
 
     res.json({
       ...rules,

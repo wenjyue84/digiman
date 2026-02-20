@@ -516,8 +516,8 @@ router.get("/debug-units", async (_req, res) => {
     res.json({
       totalUnits: unitData.length,
       units: unitData,
-      sections: [...new Set(unitData.map(u => u.section))],
-      positions: [...new Set(unitData.map(u => u.position))]
+      sections: Array.from(new Set(unitData.map(u => u.section))),
+      positions: Array.from(new Set(unitData.map(u => u.position)))
     });
   } catch (error) {
     console.error("Error getting unit debug data:", error);

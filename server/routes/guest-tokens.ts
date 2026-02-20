@@ -477,7 +477,7 @@ router.get("/:token", async (req, res) => {
               paymentAmount: guestRecord.paymentAmount,
               paymentMethod: guestRecord.paymentMethod,
               notes: guestRecord.notes,
-              isPaid: guestRecord.paymentStatus === 'paid'
+              isPaid: guestRecord.isPaid
             }
           });
         } else if (guestRecord) {

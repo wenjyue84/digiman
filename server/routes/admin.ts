@@ -37,7 +37,7 @@ router.put("/config", authenticateToken, securityValidationMiddleware, async (re
     }
 
     const config = getConfig();
-    await config.updateMultiple(updates, req.user?.email || 'admin');
+    await config.updateMultiple(updates, (req as any).user?.email || 'admin');
     
     res.json({ message: "Configuration updated successfully" });
   } catch (error) {
@@ -50,7 +50,7 @@ router.put("/config", authenticateToken, securityValidationMiddleware, async (re
 router.post("/config/reset", authenticateToken, securityValidationMiddleware, async (req, res) => {
   try {
     const config = getConfig();
-    await config.resetAll(req.user?.email || 'admin');
+    await config.resetAll((req as any).user?.email || 'admin');
     
     res.json({ message: "Configuration reset to defaults successfully" });
   } catch (error) {
