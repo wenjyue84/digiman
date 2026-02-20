@@ -8,6 +8,7 @@ process.on('unhandledRejection', (reason) => {
 
 import express from 'express';
 import compression from 'compression';
+import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -23,7 +24,13 @@ import adminRoutes from './routes/admin/index.js';
 import { initFeedbackSettings } from './lib/init-feedback-settings.js';
 import { initAdminNotificationSettings } from './lib/admin-notification-settings.js';
 import { configStore } from './assistant/config-store.js';
-import { initKnowledgeBase } from './assistant/knowledge-base.js';
+import { initKnowledgeBase, initKBFromDB } from './assistant/knowledge-base.js';
+import { initCapsuleCache } from './lib/capsule-cache.js';
+import { initScheduler } from './lib/message-scheduler.js';
+import { ensureConfigTables } from './lib/config-db.js';
+import { reloadLLMSettingsFromDB } from './assistant/llm-settings-loader.js';
+import { loadIntentTiersFromDB } from './assistant/intent-config.js';
+import { initPricingFromDB } from './assistant/pricing.js';
 
 const __filename_main = fileURLToPath(import.meta.url);
 const __dirname_main = dirname(__filename_main);
@@ -44,22 +51,46 @@ dotenv.config();
   }
 }
 
-// Initialize Knowledge Base (Memory & Files)
+// Ensure DB config tables exist (no-op when DATABASE_URL not set)
+try {
+  await ensureConfigTables();
+} catch (err: any) {
+  console.warn('[Startup] Config tables setup failed (will use JSON files):', err.message);
+}
+
+// Initialize Knowledge Base (Memory & Files) — local first, then overlay from DB
 try {
   initKnowledgeBase();
+  await initKBFromDB();
   console.log('[Startup] KnowledgeBase initialized');
 } catch (err: any) {
   console.error('[Startup] Failed to initialize KnowledgeBase:', err.message);
 }
 
+// Initialize Capsule Cache (US-010) — fetches from dashboard API in background
+initCapsuleCache();
+
 // CRITICAL: Initialize configStore BEFORE mounting admin routes
 // This prevents "Cannot read properties of undefined" errors when API endpoints are called before WhatsApp init completes
+// Now async: tries DB first, falls back to local JSON files
 try {
-  configStore.init();
+  await configStore.init();
   console.log('[Startup] ConfigStore initialized successfully');
 } catch (err: any) {
   console.error('[Startup] Failed to initialize ConfigStore:', err.message);
   console.error('[Startup] Admin API may not function correctly until config files are fixed');
+}
+
+// Load standalone configs from DB (fire-and-forget, file fallbacks already loaded)
+try {
+  await Promise.all([
+    reloadLLMSettingsFromDB(),
+    loadIntentTiersFromDB(),
+    initPricingFromDB(),
+  ]);
+  console.log('[Startup] Standalone configs loaded from DB');
+} catch (err: any) {
+  console.warn('[Startup] Some DB config loads failed (using file fallbacks):', err.message);
 }
 
 const app = express();
@@ -67,6 +98,12 @@ const PORT = parseInt(process.env.MCP_SERVER_PORT || '3002', 10);
 
 // Disable ETags to prevent stale cache on normal refresh
 app.set('etag', false);
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Admin dashboard uses inline scripts
+  crossOriginEmbedderPolicy: false,
+}));
 
 // Middleware
 app.use(compression({
@@ -169,6 +206,7 @@ app.get('/health/ready', async (req, res) => {
   // 3. AI provider circuit breakers
   const { circuitBreakerRegistry } = await import('./assistant/circuit-breaker.js');
   const cbStatuses = circuitBreakerRegistry.getAllStatuses();
+  const registeredCount = Object.keys(cbStatuses).length;
   const openCircuits = Object.entries(cbStatuses)
     .filter(([, s]) => s.state === 'OPEN')
     .map(([id]) => id);
@@ -176,7 +214,9 @@ app.get('/health/ready', async (req, res) => {
     ok: openCircuits.length === 0,
     detail: openCircuits.length > 0
       ? `${openCircuits.length} provider(s) circuit-open: ${openCircuits.join(', ')}`
-      : `${Object.keys(cbStatuses).length} provider(s) healthy`
+      : registeredCount > 0
+        ? `${registeredCount} provider(s) healthy`
+        : 'not yet tested (no AI requests since restart)'
   };
 
   // 4. Config store health
@@ -222,13 +262,23 @@ async function getDashboardHtml(_url: string): Promise<string> {
     // (HTML already uses absolute /public/... paths, and Vite prepends base again).
     // Vite's middleware still serves files correctly (strips base from requests).
     let html = readFileSync(DASHBOARD_HTML_PATH, 'utf-8');
-    html = html.replace('<head>', '<head>\n  <script type="module" src="/public/@vite/client"></script>');
+    const adminKeyDev = process.env.RAINBOW_ADMIN_KEY || '';
+    html = html.replace('<head>', `<head>\n  <script>window.__ADMIN_KEY__=${JSON.stringify(adminKeyDev)};</script>\n  <script type="module" src="/public/@vite/client"></script>`);
     return html;
   }
   // Prod: use cached HTML with cache-bust
   let html = _dashboardHtmlCache ?? loadDashboardHtml();
   const v = Date.now();
   html = html.replace(/(src|href)="(\/public\/[^"]+\.(js|css))"/g, `$1="$2?v=${v}"`);
+  // Inject admin key + fetch interceptor for remote browser access.
+  // tabs.js / template-loader.js use raw fetch() (not api()), so we patch window.fetch globally
+  // to auto-add X-Admin-Key on all /api/rainbow/ requests.
+  const adminKey = process.env.RAINBOW_ADMIN_KEY || '';
+  const interceptorScript = `<script>
+window.__ADMIN_KEY__=${JSON.stringify(adminKey)};
+(function(){var _f=window.fetch;window.fetch=function(url,opts){opts=opts||{};if(typeof url==='string'&&url.indexOf('/api/rainbow/')>=0&&window.__ADMIN_KEY__){var h=Object.assign({'X-Admin-Key':window.__ADMIN_KEY__},opts.headers||{});opts=Object.assign({},opts,{headers:h});}return _f.call(this,url,opts);};})();
+</script>`;
+  html = html.replace('<head>', `<head>\n  ${interceptorScript}`);
   return html;
 }
 
@@ -351,6 +401,9 @@ server.listen(PORT, '0.0.0.0', () => {
     // Initialize WhatsApp (Baileys) with crash isolation supervisor
     await startBaileysWithSupervision();
 
+    // Initialize scheduled message checker (US-019)
+    initScheduler();
+
     // Initialize failover coordinator (primary/standby)
     const { failoverCoordinator } = await import('./lib/failover-coordinator.js');
     const failoverSettings = configStore.getSettings().failover ?? {
@@ -362,6 +415,16 @@ server.listen(PORT, '0.0.0.0', () => {
       peerUrl: process.env.RAINBOW_PEER_URL,
       secret: process.env.RAINBOW_FAILOVER_SECRET ?? '',
       settings: failoverSettings,
+    });
+
+    // Wire failover WhatsApp notifications
+    const { notifyAdminFailoverActivated, notifyAdminFailoverDeactivated } =
+      await import('./lib/admin-notifier.js');
+    failoverCoordinator.on('activated', () => {
+      notifyAdminFailoverActivated().catch(() => {});
+    });
+    failoverCoordinator.on('deactivated', () => {
+      notifyAdminFailoverDeactivated().catch(() => {});
     });
 
     // Update coordinator when settings are hot-reloaded

@@ -167,8 +167,8 @@ router.post("/internal",
         createdAt: new Date(),
       });
 
-      // Build check-in link
-      const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+      // Build check-in link — PUBLIC_URL for production, fallback to request host for local dev
+      const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
       const link = `${baseUrl}/guest-checkin?token=${token}`;
 
       console.log(`[Internal Token] Created for ${guestName || 'Guest'} → ${assignedCapsule} | ${link}`);
@@ -343,20 +343,8 @@ router.post("/",
       createdAt: guestToken.createdAt,
     });
     
-    // Generate the check-in link - Environment-aware URL generation
-    let baseUrl: string;
-    
-    // Check if we're in Replit environment
-    if (process.env.PRIVATE_OBJECT_DIR) {
-      // In Replit, use the request headers to determine the correct URL
-      const protocol = req.protocol || 'https';
-      const host = req.get('host') || req.get('x-forwarded-host') || 'localhost:5000';
-      baseUrl = `${protocol}://${host}`;
-    } else {
-      // Local development - use environment variable or fallback
-      baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-    }
-    
+    // Generate the check-in link — PUBLIC_URL for production, fallback to request host for local dev
+    const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
     const link = `${baseUrl}/guest-checkin?token=${token}`;
     
     // Success logging for Create Link debugging

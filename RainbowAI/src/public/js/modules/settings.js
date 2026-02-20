@@ -94,6 +94,7 @@ export function switchSettingsTab(tabId, updateHash = true) {
   else if (tabId === 'notifications') renderNotificationsTab(container);
   else if (tabId === 'operators') renderOperatorsTab(container);
   else if (tabId === 'bot-avatar') renderBotAvatarTab(container);
+  else if (tabId === 'failover') renderFailoverTab(container);
 }
 window.switchSettingsTab = switchSettingsTab;
 
@@ -503,3 +504,243 @@ export async function saveOperators() {
   }
 }
 window.saveOperators = saveOperators;
+
+// ─── Failover Tab ──────────────────────────────────────────────────
+
+/** Auto-refresh interval handle for the failover panel */
+let _failoverRefreshTimer = null;
+
+export function renderFailoverTab(container) {
+  container.innerHTML = `
+    <div class="bg-white border rounded-2xl p-6">
+      <h3 class="font-semibold text-lg mb-1 flex items-center gap-2">
+        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Primary / Standby Failover
+      </h3>
+      <p class="text-sm text-neutral-500 mb-6 font-medium">
+        Coordinates which server (local PC or Lightsail) actively replies to WhatsApp messages.
+        The primary sends heartbeats; the standby takes over if heartbeats stop.
+      </p>
+
+      <!-- Status card -->
+      <div id="failover-status-card" class="mb-6 p-5 rounded-2xl border bg-neutral-50">
+        <div class="text-sm text-neutral-500">Loading status...</div>
+      </div>
+
+      <!-- Settings form -->
+      <div class="mb-6 space-y-4">
+        <h4 class="text-sm font-bold text-neutral-800">Thresholds</h4>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-neutral-600 mb-1">Heartbeat interval (ms)</label>
+            <input type="number" id="fo-heartbeat-interval" min="5000" step="1000"
+              class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" />
+            <p class="text-[11px] text-neutral-400 mt-1">How often primary pings standby. Default: 20000</p>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-neutral-600 mb-1">Failover threshold (ms)</label>
+            <input type="number" id="fo-failover-threshold" min="10000" step="1000"
+              class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" />
+            <p class="text-[11px] text-neutral-400 mt-1">Silence before standby activates. Default: 60000</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-neutral-600 mb-1">Handback mode</label>
+            <select id="fo-handback-mode"
+              class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition bg-white"
+              onchange="toggleHandbackGrace()">
+              <option value="immediate">Immediate</option>
+              <option value="grace">Grace period</option>
+            </select>
+          </div>
+          <div id="fo-grace-wrapper">
+            <label class="block text-xs font-medium text-neutral-600 mb-1">Grace period (ms)</label>
+            <input type="number" id="fo-grace-period" min="0" step="1000"
+              class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition" />
+            <p class="text-[11px] text-neutral-400 mt-1">Delay before handing back to primary</p>
+          </div>
+        </div>
+
+        <button onclick="saveFailoverSettings()"
+          class="px-8 py-2.5 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition font-bold text-sm shadow-medium">
+          Save Thresholds
+        </button>
+      </div>
+
+      <!-- Force Standby Toggle -->
+      <div class="mb-6 p-5 rounded-2xl border bg-amber-50">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-bold text-neutral-800 mb-1">Force Standby Mode</h4>
+            <p class="text-xs text-neutral-500">Stops heartbeats and suppresses replies so Lightsail handles all messages, even when this PC is online.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="fo-force-standby-toggle" class="sr-only peer" onchange="toggleForceStandby(this.checked)">
+            <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+          </label>
+        </div>
+        <div id="fo-force-standby-status" class="mt-2 text-xs text-neutral-400 hidden"></div>
+      </div>
+
+      <!-- Manual controls -->
+      <div class="flex gap-3 pt-4 border-t">
+        <button onclick="failoverPromote()"
+          class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-bold text-sm">
+          ▲ Promote (Force Active)
+        </button>
+        <button onclick="failoverDemote()"
+          class="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition font-bold text-sm">
+          ▼ Demote (Suppress Replies)
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Load current settings into form
+  const settings = window.cacheManager.get('settings.config');
+  if (settings && settings.failover) {
+    const fo = settings.failover;
+    document.getElementById('fo-heartbeat-interval').value = fo.heartbeatIntervalMs ?? 20000;
+    document.getElementById('fo-failover-threshold').value = fo.failoverThresholdMs ?? 60000;
+    const modeEl = document.getElementById('fo-handback-mode');
+    if (modeEl) modeEl.value = fo.handbackMode ?? 'immediate';
+    document.getElementById('fo-grace-period').value = fo.handbackGracePeriodMs ?? 30000;
+    toggleHandbackGrace();
+  }
+
+  // Start status polling
+  if (_failoverRefreshTimer) clearInterval(_failoverRefreshTimer);
+  loadFailoverStatus();
+  _failoverRefreshTimer = setInterval(loadFailoverStatus, 10000);
+}
+window.renderFailoverTab = renderFailoverTab;
+
+export async function loadFailoverStatus() {
+  const card = document.getElementById('failover-status-card');
+  if (!card) {
+    if (_failoverRefreshTimer) { clearInterval(_failoverRefreshTimer); _failoverRefreshTimer = null; }
+    return;
+  }
+  try {
+    const status = await api('/whatsapp/failover/status');
+    renderFailoverStatusCard(card, status);
+  } catch (e) {
+    card.innerHTML = '<div class="text-sm text-red-500">Failed to load status: ' + esc(e.message) + '</div>';
+  }
+}
+window.loadFailoverStatus = loadFailoverStatus;
+
+function renderFailoverStatusCard(card, s) {
+  const roleBadge = s.role === 'primary'
+    ? '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wide">PRIMARY</span>'
+    : s.isActive
+      ? '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wide">ACTIVE (took over)</span>'
+      : '<span class="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-xs font-bold uppercase tracking-wide">STANDBY</span>';
+
+  const activeBadge = s.isActive
+    ? '<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">Sending replies</span>'
+    : '<span class="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold">Suppressing replies</span>';
+
+  const lastBeat = s.role === 'standby' && s.secondsSinceLastBeat !== null
+    ? '<div class="mt-3 text-sm text-neutral-600">Last heartbeat received: <strong>' + s.secondsSinceLastBeat + 's ago</strong>' + (s.missedBeats > 0 ? ' (' + s.missedBeats + ' missed)' : '') + '</div>'
+    : s.role === 'primary' && s.lastHeartbeatSentAt
+      ? '<div class="mt-3 text-sm text-neutral-600">Last heartbeat sent: <strong>' + Math.floor((Date.now() - s.lastHeartbeatSentAt) / 1000) + 's ago</strong></div>'
+      : '';
+
+  const enabledNote = s.enabled ? '' : '<div class="mt-2 text-xs text-neutral-400">(Failover disabled — always active)</div>';
+  const forcedNote = s.forcedStandby ? '<div class="mt-2 text-xs text-amber-600 font-medium">Force Standby active — heartbeats stopped, Lightsail handles messages</div>' : '';
+
+  card.innerHTML =
+    '<div class="flex items-center gap-3 flex-wrap">' + roleBadge + activeBadge + '</div>' +
+    lastBeat + enabledNote + forcedNote;
+
+  // Sync the force-standby toggle
+  const toggle = document.getElementById('fo-force-standby-toggle');
+  if (toggle) toggle.checked = !!s.forcedStandby;
+}
+
+export function toggleHandbackGrace() {
+  const mode = document.getElementById('fo-handback-mode');
+  const wrapper = document.getElementById('fo-grace-wrapper');
+  if (mode && wrapper) {
+    wrapper.style.display = mode.value === 'grace' ? '' : 'none';
+  }
+}
+window.toggleHandbackGrace = toggleHandbackGrace;
+
+export async function saveFailoverSettings() {
+  const heartbeatIntervalMs = parseInt(document.getElementById('fo-heartbeat-interval').value, 10);
+  const failoverThresholdMs = parseInt(document.getElementById('fo-failover-threshold').value, 10);
+  const handbackMode = document.getElementById('fo-handback-mode').value;
+  const handbackGracePeriodMs = parseInt(document.getElementById('fo-grace-period').value, 10);
+
+  if (!heartbeatIntervalMs || heartbeatIntervalMs < 5000) { toast('Heartbeat interval must be >= 5000ms', 'error'); return; }
+  if (!failoverThresholdMs || failoverThresholdMs < 10000) { toast('Failover threshold must be >= 10000ms', 'error'); return; }
+
+  try {
+    await api('/settings', {
+      method: 'PATCH',
+      body: { failover: { heartbeatIntervalMs, failoverThresholdMs, handbackMode, handbackGracePeriodMs } }
+    });
+    const settingsData = window.cacheManager.get('settings.config');
+    if (settingsData) settingsData.failover = { ...settingsData.failover, heartbeatIntervalMs, failoverThresholdMs, handbackMode, handbackGracePeriodMs };
+    toast('Failover thresholds saved');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.saveFailoverSettings = saveFailoverSettings;
+
+export async function toggleForceStandby(enabled) {
+  try {
+    await api('/whatsapp/failover/force-standby', {
+      method: 'POST',
+      body: { enabled }
+    });
+    const statusEl = document.getElementById('fo-force-standby-status');
+    if (statusEl) {
+      statusEl.textContent = enabled
+        ? 'Standby mode active — Lightsail will take over within 60 seconds'
+        : 'Primary mode resumed — this server handles messages';
+      statusEl.classList.remove('hidden');
+      statusEl.className = 'mt-2 text-xs ' + (enabled ? 'text-amber-600 font-medium' : 'text-green-600 font-medium');
+    }
+    toast(enabled ? 'Force Standby ON — Lightsail will take over' : 'Force Standby OFF — resuming primary', enabled ? 'warning' : 'success');
+    loadFailoverStatus();
+  } catch (e) {
+    toast(e.message, 'error');
+    // Revert toggle
+    const toggle = document.getElementById('fo-force-standby-toggle');
+    if (toggle) toggle.checked = !enabled;
+  }
+}
+window.toggleForceStandby = toggleForceStandby;
+
+export async function failoverPromote() {
+  try {
+    await api('/whatsapp/failover/promote', { method: 'POST' });
+    toast('Promoted — this server is now active');
+    loadFailoverStatus();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.failoverPromote = failoverPromote;
+
+export async function failoverDemote() {
+  if (!confirm('Suppress replies on this server? WhatsApp messages will not be answered until promoted again.')) return;
+  try {
+    await api('/whatsapp/failover/demote', { method: 'POST' });
+    toast('Demoted — replies suppressed on this server');
+    loadFailoverStatus();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.failoverDemote = failoverDemote;

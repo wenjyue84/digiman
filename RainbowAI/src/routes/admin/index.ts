@@ -17,6 +17,11 @@ import activityRoutes from './activity.js';
 import adminNotificationsRoutes from './admin-notifications.js';
 import checkinNotifyRoutes from './checkin-notify.js';
 import prismaBotRoutes from './prisma-bot.js';
+import tagsRoutes from './tags.js';
+import capsulesRoutes from './capsules.js';
+import customMessagesRoutes from './custom-messages.js';
+import scheduledMessagesRoutes from './scheduled-messages.js';
+import paymentRemindersRoutes from './payment-reminders.js';
 import latencyRoutes from '../test/latency.js';
 
 const router = Router();
@@ -31,7 +36,7 @@ function adminAuth(req: Request, res: Response, next: NextFunction): void {
   }
   const adminKey = process.env.RAINBOW_ADMIN_KEY;
   if (!adminKey) {
-    next();
+    res.status(401).json({ error: 'Unauthorized: RAINBOW_ADMIN_KEY not configured for remote access' });
     return;
   }
   const provided = req.headers['x-admin-key'];
@@ -89,6 +94,11 @@ router.use(activityRoutes);
 router.use('/admin-notifications', adminNotificationsRoutes);
 router.use(checkinNotifyRoutes);
 router.use(prismaBotRoutes);
+router.use(tagsRoutes);
+router.use(capsulesRoutes);
+router.use(customMessagesRoutes);
+router.use(scheduledMessagesRoutes);
+router.use(paymentRemindersRoutes);
 router.use('/test', latencyRoutes);
 
 // Ensure unmatched /api/rainbow/* returns JSON 404 (never HTML)

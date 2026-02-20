@@ -5,6 +5,7 @@
 
 /* Input Area */
 .lc-input-area {
+  position: relative;
   padding: 8px 12px;
   background: #f0f2f5;
   display: flex;
@@ -150,6 +151,310 @@
 .lc-send-btn svg {
   width: 20px;
   height: 20px;
+}
+
+/* ─── Schedule Button & Popover (US-020) ─── */
+.lc-schedule-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  color: #54656f;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lc-schedule-btn:hover {
+  background: #f0f2f5;
+  color: #00a884;
+}
+.lc-schedule-popover {
+  position: absolute;
+  bottom: 52px;
+  right: 48px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 16px;
+  z-index: 50;
+  min-width: 240px;
+}
+.lc-schedule-popover-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111b21;
+  margin-bottom: 12px;
+}
+.lc-schedule-label {
+  font-size: 12px;
+  color: #667781;
+  display: block;
+  margin-bottom: 4px;
+}
+.lc-schedule-datetime {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d7db;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+.lc-schedule-datetime:focus {
+  border-color: #00a884;
+}
+.lc-schedule-repeat {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #d1d7db;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+  box-sizing: border-box;
+}
+.lc-schedule-repeat:focus {
+  border-color: #00a884;
+}
+.lc-schedule-end-wrap {
+  margin-top: 4px;
+}
+.lc-schedule-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.lc-schedule-cancel {
+  background: none;
+  border: 1px solid #d1d7db;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #54656f;
+}
+.lc-schedule-cancel:hover {
+  background: #f0f2f5;
+}
+.lc-schedule-confirm {
+  background: #00a884;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+.lc-schedule-confirm:hover {
+  background: #008f72;
+}
+
+/* Scheduled messages badge */
+.lc-sched-badge {
+  background: #00a884;
+  color: #fff;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: auto;
+  font-weight: 600;
+}
+
+/* Scheduled messages panel/modal */
+.lc-scheduled-modal {
+  max-width: 480px;
+  max-height: 70vh;
+}
+.lc-scheduled-list {
+  overflow-y: auto;
+  max-height: 50vh;
+  margin-bottom: 12px;
+}
+.lc-scheduled-empty {
+  text-align: center;
+  color: #667781;
+  padding: 24px 16px;
+  font-size: 14px;
+}
+.lc-sched-item {
+  border: 1px solid #e9edef;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.lc-sched-item.lc-sched-sent {
+  opacity: 0.6;
+}
+.lc-sched-item.lc-sched-cancelled {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.lc-sched-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.lc-sched-phone {
+  font-weight: 600;
+  font-size: 13px;
+  color: #111b21;
+}
+.lc-sched-status {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.lc-sched-pending .lc-sched-status {
+  background: #fff3cd;
+  color: #856404;
+}
+.lc-sched-sent .lc-sched-status {
+  background: #d4edda;
+  color: #155724;
+}
+.lc-sched-cancelled .lc-sched-status {
+  background: #f8d7da;
+  color: #721c24;
+}
+.lc-sched-repeat {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #e8daef;
+  color: #6c3483;
+  font-weight: 500;
+}
+.lc-sched-item-msg {
+  font-size: 13px;
+  color: #3b4a54;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.lc-sched-item-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.lc-sched-time {
+  font-size: 12px;
+  color: #667781;
+}
+.lc-sched-sent-at {
+  font-size: 11px;
+  color: #00a884;
+}
+.lc-sched-item-actions {
+  display: flex;
+  gap: 4px;
+}
+.lc-sched-edit-btn, .lc-sched-cancel-btn {
+  background: none;
+  border: 1px solid #d1d7db;
+  padding: 2px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #54656f;
+}
+.lc-sched-edit-btn:hover {
+  background: #e8f4f8;
+  border-color: #00a884;
+  color: #00a884;
+}
+.lc-sched-cancel-btn:hover {
+  background: #fde8e8;
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+/* ─── Payment Reminder (US-022) ─── */
+.lc-reminder-bell {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #e67e22;
+  flex-shrink: 0;
+}
+.lc-reminder-bell:hover {
+  color: #d35400;
+}
+.lc-reminder-bell-count {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 8px;
+  min-width: 14px;
+  text-align: center;
+  font-weight: 700;
+  line-height: 16px;
+}
+.lc-payment-reminder-active {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.lc-payment-reminder-active.lc-reminder-overdue {
+  background: #fde8e8;
+  border-color: #e74c3c;
+}
+.lc-payment-reminder-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.lc-payment-reminder-due {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+.lc-reminder-overdue .lc-payment-reminder-due {
+  color: #e74c3c;
+}
+.lc-payment-reminder-auto {
+  font-size: 11px;
+  color: #667781;
+}
+.lc-payment-reminder-actions {
+  display: flex;
+  gap: 6px;
+}
+.lc-payment-autosend-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #54656f;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 
 /* Help Me Button (Manual Mode) */
@@ -490,10 +795,10 @@
   animation: none;
 }
 
-/* Connecting — yellow */
+/* Connecting — amber with pulse (US-007) */
 .lc-wa-dot.lc-wa-checking .lc-wa-dot-inner {
   background: #f59e0b;
-  animation: none;
+  animation: lcWaAmberPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes lcWaPulse {
@@ -503,6 +808,34 @@
   50% {
     box-shadow: 0 0 0 4px rgba(37, 211, 102, 0);
   }
+}
+
+@keyframes lcWaAmberPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+  }
+}
+
+/* Staff name (US-011) */
+.lc-staff-name {
+  font-size: 12px;
+  color: #667781;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.lc-staff-name:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #111b21;
 }
 
 /* Tooltip */
@@ -818,6 +1151,25 @@
   color: #00a884;
 }
 
+/* US-005: Context file path indicator */
+.lc-context-filepath {
+  font-size: 11px;
+  color: #00a884;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  margin: 4px 0 0;
+  padding: 3px 6px;
+  background: #f0fdf4;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background .2s;
+}
+.lc-context-filepath:hover {
+  background: #dcfce7;
+}
+
 /* US-091: Context editor modal */
 .lc-context-modal {
   max-width: 560px;
@@ -896,6 +1248,13 @@
   transition: border-color .2s;
   width: 100%;
   box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Notes textarea (US-008): allow full AI-generated content to show without clipping */
+#lc-cd-notes {
+  min-height: 100px;
+  max-height: none;
 }
 
 .lc-field-textarea:focus {
@@ -953,6 +1312,106 @@
 
 .lc-tag-input {
   margin-top: 4px;
+}
+
+/* US-008: Tag autocomplete dropdown */
+.lc-tag-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 50;
+  margin-top: 2px;
+}
+
+.lc-tag-option {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #1a1a1a;
+  transition: background .1s;
+}
+
+.lc-tag-option:hover,
+.lc-tag-option.highlighted {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* US-009: Tag filter dropdown in filter chips row */
+.lc-tag-filter-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.lc-tag-filter-btn svg {
+  flex-shrink: 0;
+}
+
+.lc-tag-filter-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.14);
+  min-width: 160px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.lc-tag-filter-option {
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .1s;
+}
+
+.lc-tag-filter-option:hover {
+  background: #f0f2f5;
+}
+
+.lc-tag-filter-option.selected {
+  background: #e7fce3;
+  color: #008069;
+  font-weight: 500;
+}
+
+.lc-tag-filter-check {
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #008069;
+  flex-shrink: 0;
+}
+
+.lc-tag-filter-clear {
+  color: #ea0038;
+  font-weight: 500;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.lc-tag-filter-clear:hover {
+  background: #fee2e2;
+}
+
+.lc-tag-filter-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #8696a0;
 }
 
 /* Contact Footer & Save Indicator */
@@ -1107,6 +1566,60 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+/* ─── WhatsApp Reconnection Modal ──────────────────────────── */
+.lc-reconnect-modal { max-width: 440px; }
+.lc-reconnect-desc {
+  font-size: 13px; color: #667781; margin: -8px 0 16px; line-height: 1.4;
+}
+.lc-reconnect-instances {
+  border: 1px solid #e9edef; border-radius: 8px; overflow: hidden; margin-bottom: 12px;
+}
+.lc-reconnect-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid #f0f2f5;
+}
+.lc-reconnect-item:last-child { border-bottom: none; }
+.lc-reconnect-item-info { display: flex; flex-direction: column; gap: 2px; }
+.lc-reconnect-item-label { font-size: 14px; font-weight: 500; color: #111b21; }
+.lc-reconnect-item-phone { font-size: 12px; color: #8696a0; }
+.lc-reconnect-item-right { display: flex; align-items: center; gap: 10px; }
+.lc-reconnect-state {
+  font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px;
+}
+.lc-inst-connected { background: #d1fae5; color: #065f46; }
+.lc-inst-connecting { background: #fef3c7; color: #92400e; }
+.lc-inst-disconnected { background: #fee2e2; color: #991b1b; }
+.lc-reconnect-btn {
+  background: #008069; color: #fff; border: none; border-radius: 16px;
+  padding: 5px 14px; font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: background .15s;
+}
+.lc-reconnect-btn:hover { background: #006b57; }
+.lc-reconnect-ok {
+  font-size: 12px; color: #25d366; font-weight: 500;
+}
+.lc-reconnect-empty {
+  padding: 20px; text-align: center; font-size: 13px; color: #8696a0;
+}
+.lc-reconnect-loading {
+  padding: 16px; text-align: center; font-size: 13px; color: #8696a0;
+}
+.lc-reconnect-qr-wrap {
+  text-align: center; padding: 16px 0; border-top: 1px solid #e9edef; margin-top: 4px;
+}
+.lc-reconnect-qr-label {
+  font-size: 14px; font-weight: 500; color: #111b21; margin-bottom: 12px;
+}
+.lc-reconnect-qr { min-height: 200px; display: flex; align-items: center; justify-content: center; }
+.lc-reconnect-qr-img { width: 200px; height: 200px; border-radius: 8px; }
+.lc-reconnect-qr-status {
+  font-size: 12px; color: #8696a0; margin-top: 8px;
+}
+.lc-reconnect-success {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 500; color: #25d366;
 }
 
 /* Hover Actions in Sidebar */
@@ -1603,6 +2116,200 @@ body.lc-maximized .lc-header-actions #lc-maximize-btn.active {
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
+/* Command Palette (US-015)                                       */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.lc-cmd-palette {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -4px 16px rgba(0,0,0,.12);
+  max-height: 340px;
+  overflow: hidden;
+  z-index: 60;
+  margin-bottom: -1px;
+}
+
+.lc-cmd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f2f5;
+  background: #f8faf9;
+}
+
+.lc-cmd-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #008069;
+}
+
+.lc-cmd-count {
+  font-size: 11px;
+  color: #8696a0;
+}
+
+.lc-cmd-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.lc-cmd-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background .1s;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.lc-cmd-item:hover,
+.lc-cmd-item.lc-cmd-active {
+  background: #e7fce3;
+}
+
+.lc-cmd-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111b21;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lc-cmd-slash {
+  color: #008069;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.lc-cmd-cat {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: #8696a0;
+  background: #f0f2f5;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.lc-cmd-item-preview {
+  font-size: 12px;
+  color: #667781;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lc-cmd-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid #f0f2f5;
+  font-size: 12px;
+  color: #008069;
+  cursor: pointer;
+  transition: background .1s;
+}
+
+.lc-cmd-footer:hover {
+  background: #e7fce3;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* // Workflow Palette (US-016) — Purple theme                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.lc-wf-palette {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #d8d0e8;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -4px 16px rgba(100,60,180,.12);
+  max-height: 340px;
+  overflow: hidden;
+  z-index: 61;
+  margin-bottom: -1px;
+}
+
+.lc-wf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ede8f5;
+  background: #f5f0fa;
+}
+
+.lc-wf-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.lc-wf-count {
+  font-size: 11px;
+  color: #8696a0;
+}
+
+.lc-wf-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.lc-wf-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background .1s;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.lc-wf-item:hover,
+.lc-wf-item.lc-wf-active {
+  background: #ede9fe;
+}
+
+.lc-wf-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111b21;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lc-wf-slash {
+  color: #7c3aed;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.lc-wf-steps {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: #8696a0;
+  background: #f0f2f5;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.lc-wf-item-id {
+  font-size: 11px;
+  color: #8696a0;
+  margin-top: 1px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
 /* Fullscreen Chat Mode                                          */
 /* ═══════════════════════════════════════════════════════════════ */
 
@@ -1649,6 +2356,7 @@ body.lc-maximized .lc-header-actions #lc-maximize-btn.active {
   border: none;
   cursor: pointer;
   padding: 6px;
+  flex-shrink: 0;  /* US-005: prevent squeezing against adjacent delete button */
   border-radius: 50%;
   color: #6b7280;
   transition: all .15s;
@@ -1873,3 +2581,259 @@ body.lc-maximized .lc-header-actions #lc-maximize-btn.active {
     width: 280px;
   }
 }
+
+/* ─── US-014: Date-jump calendar popover ────────────────────────── */
+
+.lc-msg-search-date-wrap { position: relative; display: inline-flex; align-items: center; }
+
+.lc-date-jump-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 8px;
+  z-index: 200;
+}
+
+.lc-date-jump-popover input[type="date"] {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.lc-date-jump-popover input[type="date"]:focus { border-color: #25d366; }
+
+.lc-date-sep.lc-date-jump-highlight {
+  animation: lc-date-jump-flash 1.5s ease-out forwards;
+}
+
+@keyframes lc-date-jump-flash {
+  0%   { background: #25d366; color: #fff; }
+  30%  { background: #fff3cd; color: #856404; }
+  100% { background: transparent; color: #667781; }
+}
+
+/* ─── US-009/010: Prisma AI Floating Panel ─────────────────────── */
+
+.prisma-panel {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 340px;
+  height: 480px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+  display: flex;
+  flex-direction: column;
+  z-index: 1200;
+  overflow: hidden;
+  border: 1px solid rgba(99,70,255,0.12);
+}
+
+.prisma-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #6346ff 0%, #9b59b6 100%);
+  color: #fff;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.prisma-header:active { cursor: grabbing; }
+
+.prisma-title { font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
+
+.prisma-header-actions { display: flex; gap: 4px; }
+
+.prisma-btn-icon {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 0.15s;
+}
+
+.prisma-btn-icon:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+.prisma-sources {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #f8f6ff;
+  border-bottom: 1px solid #ede9ff;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.prisma-source-chip {
+  background: #fff;
+  border: 1.5px solid #d0c9ff;
+  color: #6346ff;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.prisma-source-chip:hover { background: #ede9ff; }
+
+.prisma-source-chip.active { background: #6346ff; border-color: #6346ff; color: #fff; }
+
+.prisma-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fafafa;
+}
+
+.prisma-welcome {
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  margin: auto;
+  padding: 20px;
+  line-height: 1.5;
+}
+
+.prisma-msg { display: flex; flex-direction: column; max-width: 88%; }
+.prisma-msg-user { align-self: flex-end; align-items: flex-end; }
+.prisma-msg-assistant { align-self: flex-start; align-items: flex-start; }
+
+.prisma-bubble {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.prisma-msg-user .prisma-bubble {
+  background: #6346ff;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.prisma-msg-assistant .prisma-bubble {
+  background: #fff;
+  color: #222;
+  border: 1px solid #e8e4ff;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.prisma-bubble-error {
+  background: #fff1f0 !important;
+  border-color: #ffccc7 !important;
+  color: #cf1322 !important;
+}
+
+.prisma-typing { display: flex; align-items: center; gap: 4px; padding: 10px 14px; }
+
+.prisma-typing span {
+  width: 7px; height: 7px; border-radius: 50%; background: #9b8fff;
+  animation: prisma-bounce 1.2s infinite;
+}
+
+.prisma-typing span:nth-child(2) { animation-delay: 0.2s; }
+.prisma-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes prisma-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+.prisma-source-label { font-size: 10.5px; color: #bbb; margin-top: 2px; padding-left: 2px; }
+
+.prisma-input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid #ede9ff;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.prisma-input {
+  flex: 1;
+  border: 1.5px solid #d0c9ff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  resize: none;
+  min-height: 36px;
+  max-height: 100px;
+  line-height: 1.4;
+  outline: none;
+  font-family: inherit;
+  overflow-y: auto;
+  transition: border-color 0.15s;
+}
+
+.prisma-input:focus { border-color: #6346ff; }
+
+.prisma-send-btn {
+  background: #6346ff;
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.prisma-send-btn:hover { background: #5238e0; transform: scale(1.05); }
+.prisma-send-btn:active { transform: scale(0.96); }
+
+.prisma-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  background: linear-gradient(135deg, #6346ff 0%, #9b59b6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 1200;
+  box-shadow: 0 4px 16px rgba(99,70,255,0.35);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.prisma-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,70,255,0.45); }
+
+.lc-prisma-menu-item { color: #6346ff !important; font-weight: 500; }
+.lc-prisma-menu-item:hover { background: #f3f0ff !important; }

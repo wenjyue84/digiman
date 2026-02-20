@@ -4,6 +4,16 @@
     "ms": "Hai! Saya *Rainbow* \ud83c\udf08, pembantu AI untuk Pelangi Capsule Hostel. Bagaimana saya boleh bantu?",
     "zh": "\u4f60\u597d\uff01\u6211\u662f *Rainbow* \ud83c\udf08\uff0cPelangi\u80f6\u56ca\u65c5\u9986\u7684AI\u52a9\u624b\u3002\u6709\u4ec0\u4e48\u53ef\u4ee5\u5e2e\u5230\u4f60\u7684\u5417\uff1f"
   },
+  "greeting_first_contact": {
+    "en": "Hi! I'm Rainbow \ud83c\udf08 I can help with:\n\u2022 \ud83c\udfe8 Check-in / Check-out\n\u2022 \ud83d\udcb0 Pricing & availability\n\u2022 \ud83d\udccd Location & directions\n\u2022 \ud83d\udec1 Facilities & WiFi\n\u2022 \ud83d\ude4b Or just ask me anything!",
+    "ms": "Hai! Saya Rainbow \ud83c\udf08 Boleh bantu dengan:\n\u2022 \ud83c\udfe8 Check-in / Check-out\n\u2022 \ud83d\udcb0 Harga & ketersediaan\n\u2022 \ud83d\udccd Lokasi & arah\n\u2022 \ud83d\udec1 Kemudahan & WiFi\n\u2022 \ud83d\ude4b Atau tanya apa sahaja!",
+    "zh": "\u4f60\u597d\uff01\u6211\u662fRainbow \ud83c\udf08 \u6211\u53ef\u4ee5\u5e2e\u52a9\u60a8\uff1a\n\u2022 \ud83c\udfe8 \u5165\u4f4f / \u9000\u623f\n\u2022 \ud83d\udcb0 \u4ef7\u683c\u4e0e\u623f\u6e90\n\u2022 \ud83d\udccd \u4f4d\u7f6e\u4e0e\u8def\u7ebf\n\u2022 \ud83d\udec1 \u8bbe\u65bd\u4e0eWiFi\n\u2022 \ud83d\ude4b \u6216\u8005\u968f\u4fbf\u95ee\u6211\uff01"
+  },
+  "cancel_workflow": {
+    "en": "No problem! Is there anything else I can help you with?",
+    "ms": "Takpe! Ada apa-apa lagi saya boleh bantu?",
+    "zh": "\u6ca1\u95ee\u9898\uff01\u8fd8\u6709\u5176\u4ed6\u6211\u53ef\u4ee5\u5e2e\u60a8\u7684\u5417\uff1f"
+  },
   "thanks": {
     "en": "You're welcome! I'm Rainbow, your AI assistant \u2014 feel free to ask if you need anything else.",
     "ms": "Sama-sama! Saya Rainbow, pembantu AI anda \u2014 jangan segan untuk bertanya lagi.",

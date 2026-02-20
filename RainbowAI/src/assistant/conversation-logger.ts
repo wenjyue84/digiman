@@ -10,16 +10,13 @@
 
 import { eq, desc, gt, sql, and } from 'drizzle-orm';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join, resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { db, dbReady } from '../lib/db.js';
 import { withFallback } from '../lib/with-fallback.js';
 // Import from .ts directly to bypass stale build artifacts
 import { rainbowConversations, rainbowMessages } from '../../../shared/schema-tables.ts';
 
-const __filename_cl = fileURLToPath(import.meta.url);
-const __dirname_cl = dirname(__filename_cl);
-const CONTACTS_DIR = resolve(__dirname_cl, '..', '..', '.rainbow-kb', 'contacts');
+const CONTACTS_DIR = join(process.cwd(), '.rainbow-kb', 'contacts');
 
 // ─── Types (unchanged — callers still import these) ─────────────────
 
@@ -39,6 +36,8 @@ export interface LoggedMessage {
   routedAction?: string;
   workflowId?: string;
   stepId?: string;
+  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+  staffName?: string;        // US-011: Staff display name for manual message attribution
 }
 
 export interface ContactDetails {
@@ -128,6 +127,9 @@ function rowToMessage(row: typeof rainbowMessages.$inferSelect): LoggedMessage {
   if (row.routedAction) msg.routedAction = row.routedAction;
   if (row.workflowId) msg.workflowId = row.workflowId;
   if (row.stepId) msg.stepId = row.stepId;
+  if (row.usageJson) {
+    try { msg.usage = JSON.parse(row.usageJson); } catch { /* ignore */ }
+  }
   return msg;
 }
 
@@ -183,6 +185,7 @@ export async function logMessage(
     routedAction?: string;
     workflowId?: string;
     stepId?: string;
+    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
     // Allow extra keys from copilot approval flow
     [key: string]: unknown;
   }
@@ -192,6 +195,23 @@ export async function logMessage(
   try {
     const key = canonicalPhoneKey(phone);
     const now = new Date();
+
+    // DB-level dedup: skip if identical message was logged in the last 10 seconds.
+    // This prevents duplicates from multiple servers (local + Lightsail) writing
+    // to the same Neon DB, or from Baileys double-fire events.
+    const windowStart = new Date(now.getTime() - 10_000);
+    const dupeCheck = await db.execute(sql`
+      SELECT 1 FROM rainbow_messages
+      WHERE phone = ${key}
+        AND role = ${role}
+        AND content = ${content}
+        AND timestamp > ${windowStart}
+      LIMIT 1
+    `);
+    if ((dupeCheck as any).rows?.length > 0) {
+      console.log(`[ConvoLogger] Dedup: skipping duplicate ${role} message for ${key}`);
+      return;
+    }
 
     // Wrap upsert + insert + cap-delete in a single transaction (US-168)
     await db.transaction(async (tx) => {
@@ -216,6 +236,9 @@ export async function logMessage(
         routedAction: meta?.routedAction ?? null,
         workflowId: meta?.workflowId ?? null,
         stepId: meta?.stepId ?? null,
+        usageJson: (meta?.usage || meta?.staffName)
+          ? JSON.stringify({ ...(meta?.usage || {}), ...(meta?.staffName ? { staffName: meta.staffName } : {}) })
+          : null,
       });
 
       // Cap at 500 messages per conversation
@@ -265,6 +288,21 @@ export async function logNonTextExchange(
     const key = canonicalPhoneKey(phone);
     const now = new Date();
     const nowPlus1 = new Date(now.getTime() + 1);
+
+    // DB-level dedup: skip if this non-text exchange was already logged recently
+    const windowStart = new Date(now.getTime() - 10_000);
+    const dupeCheck = await db.execute(sql`
+      SELECT 1 FROM rainbow_messages
+      WHERE phone = ${key}
+        AND role = 'user'
+        AND content = ${userPlaceholder}
+        AND timestamp > ${windowStart}
+      LIMIT 1
+    `);
+    if ((dupeCheck as any).rows?.length > 0) {
+      console.log(`[ConvoLogger] Dedup: skipping duplicate non-text exchange for ${key}`);
+      return;
+    }
 
     // Wrap upsert + insert in a single transaction (US-168)
     await db.transaction(async (tx) => {
@@ -593,6 +631,99 @@ export async function updateContactDetails(phone: string, partial: Partial<Conta
   );
 }
 
+/** Get phone→tags[] map for all contacts that have tags (US-009). */
+export async function getAllContactTags(): Promise<Record<string, string[]>> {
+  if (!(await ensureDb())) return {};
+
+  return withFallback(
+    async () => {
+      const rows = await db
+        .select({
+          phone: rainbowConversations.phone,
+          json: rainbowConversations.contactDetailsJson,
+        })
+        .from(rainbowConversations)
+        .where(sql`${rainbowConversations.contactDetailsJson} IS NOT NULL`);
+
+      const result: Record<string, string[]> = {};
+      for (const r of rows) {
+        if (!r.json) continue;
+        try {
+          const details = JSON.parse(r.json);
+          if (Array.isArray(details.tags) && details.tags.length > 0) {
+            result[r.phone] = details.tags;
+          }
+        } catch { /* ignore malformed JSON */ }
+      }
+      return result;
+    },
+    async () => ({}),
+    '[ConvoLogger] getAllContactTags'
+  );
+}
+
+/** Get phone→unit map for all contacts that have a unit assigned (US-012). */
+export async function getAllContactUnits(): Promise<Record<string, string>> {
+  if (!(await ensureDb())) return {};
+
+  return withFallback(
+    async () => {
+      const rows = await db
+        .select({
+          phone: rainbowConversations.phone,
+          json: rainbowConversations.contactDetailsJson,
+        })
+        .from(rainbowConversations)
+        .where(sql`${rainbowConversations.contactDetailsJson} IS NOT NULL`);
+
+      const result: Record<string, string> = {};
+      for (const r of rows) {
+        if (!r.json) continue;
+        try {
+          const details = JSON.parse(r.json);
+          if (details.unit && typeof details.unit === 'string' && details.unit.trim()) {
+            result[r.phone] = details.unit.trim();
+          }
+        } catch { /* ignore malformed JSON */ }
+      }
+      return result;
+    },
+    async () => ({}),
+    '[ConvoLogger] getAllContactUnits'
+  );
+}
+
+/** Get phone→{checkIn, checkOut} map for all contacts that have dates set (US-014). */
+export async function getAllContactDates(): Promise<Record<string, { checkIn: string; checkOut: string }>> {
+  if (!(await ensureDb())) return {};
+
+  return withFallback(
+    async () => {
+      const rows = await db
+        .select({
+          phone: rainbowConversations.phone,
+          json: rainbowConversations.contactDetailsJson,
+        })
+        .from(rainbowConversations)
+        .where(sql`${rainbowConversations.contactDetailsJson} IS NOT NULL`);
+
+      const result: Record<string, { checkIn: string; checkOut: string }> = {};
+      for (const r of rows) {
+        if (!r.json) continue;
+        try {
+          const details = JSON.parse(r.json);
+          if (details.checkIn && details.checkOut) {
+            result[r.phone] = { checkIn: details.checkIn, checkOut: details.checkOut };
+          }
+        } catch { /* ignore malformed JSON */ }
+      }
+      return result;
+    },
+    async () => ({}),
+    '[ConvoLogger] getAllContactDates'
+  );
+}
+
 /** Update the response mode for a conversation (persists to DB). */
 export async function updateConversationMode(phone: string, mode: string): Promise<void> {
   if (!(await ensureDb())) return;
@@ -749,4 +880,46 @@ function detectLangSimple(text: string): string {
   if (/[\u4e00-\u9fff]/.test(text)) return 'zh';
   if (/\b(saya|boleh|nak|mahu|ada|ini|itu|di|dan|untuk|tidak|dengan)\b/i.test(text)) return 'ms';
   return 'en';
+}
+
+// ─── One-time Dedup Cleanup (Baileys double-fire) ────────────────────
+
+/**
+ * Remove duplicate messages caused by Baileys firing messages.upsert twice.
+ * Duplicates are identified as rows with the same phone + role + content
+ * where timestamps are within 10 seconds of each other. Keeps the earlier row.
+ * (10s window accounts for varying AI response times when pipeline runs twice)
+ *
+ * Safe to call on startup — runs once, idempotent.
+ */
+export async function deduplicateMessages(): Promise<number> {
+  if (!(await ensureDb())) return 0;
+
+  try {
+    // Find and delete duplicate messages:
+    // Same phone, role, content, timestamps within 10 seconds
+    const result = await db.execute(sql`
+      DELETE FROM rainbow_messages
+      WHERE id IN (
+        SELECT b.id
+        FROM rainbow_messages a
+        JOIN rainbow_messages b
+          ON a.phone = b.phone
+          AND a.role = b.role
+          AND a.content = b.content
+          AND a.id < b.id
+          AND ABS(EXTRACT(EPOCH FROM (a.timestamp - b.timestamp))) < 10
+      )
+    `);
+
+    const deleted = (result as any).rowCount ?? 0;
+    if (deleted > 0) {
+      console.log(`[ConvoLogger] Dedup cleanup: removed ${deleted} duplicate message(s)`);
+      invalidateListCache();
+    }
+    return deleted;
+  } catch (err: any) {
+    console.error('[ConvoLogger] Dedup cleanup failed:', err.message);
+    return 0;
+  }
 }

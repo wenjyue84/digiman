@@ -3,6 +3,7 @@ import { join, resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { configStore } from './config-store.js';
 import { notifyAdminConfigError } from '../lib/admin-notifier.js';
+import { loadAllKBFromDB, saveKBFileToDB } from '../lib/config-db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -176,7 +177,10 @@ export function reloadKBFile(filename: string): void {
     const normalizedName = filename.replace(/\\/g, '/');
     const filePath = join(RAINBOW_KB_DIR, filename);
     if (existsSync(filePath)) {
-      kbCache.set(normalizedName, readFileSync(filePath, 'utf-8'));
+      const content = readFileSync(filePath, 'utf-8');
+      kbCache.set(normalizedName, content);
+      // Fire-and-forget DB sync
+      saveKBFileToDB(normalizedName, content).catch(() => {});
       console.log(`[KnowledgeBase] Reloaded ${filename}`);
       // Memory files are part of the cached base prompt — invalidate
       invalidateSystemPromptCache();
@@ -185,7 +189,10 @@ export function reloadKBFile(filename: string): void {
   }
   const filePath = join(RAINBOW_KB_DIR, filename);
   if (existsSync(filePath)) {
-    kbCache.set(filename, readFileSync(filePath, 'utf-8'));
+    const content = readFileSync(filePath, 'utf-8');
+    kbCache.set(filename, content);
+    // Fire-and-forget DB sync
+    saveKBFileToDB(filename, content).catch(() => {});
     console.log(`[KnowledgeBase] Reloaded ${filename}`);
     // Core files (AGENTS.md, soul.md) and durable memory are part of the cached base prompt.
     // Invalidate for any KB file change since topic files could also affect future caching.
@@ -253,6 +260,28 @@ function watchKBDirectory(): void {
   } catch (err: any) {
     console.warn(`[KnowledgeBase] Could not watch memory/: ${err.message}`);
   }
+}
+
+/**
+ * Try loading KB files from DB first. Falls back to local files.
+ * Called once at startup after ensureConfigTables().
+ */
+export async function initKBFromDB(): Promise<void> {
+  try {
+    const dbKB = await loadAllKBFromDB();
+    if (dbKB && dbKB.size > 0) {
+      // Merge DB KB into cache (DB is authoritative)
+      for (const [filename, content] of dbKB) {
+        kbCache.set(filename, content);
+      }
+      invalidateSystemPromptCache();
+      console.log(`[KnowledgeBase] Loaded ${dbKB.size} KB files from DB`);
+      return;
+    }
+  } catch (err: any) {
+    console.warn('[KnowledgeBase] DB KB load failed:', err.message);
+  }
+  console.log('[KnowledgeBase] No KB files in DB, using local files');
 }
 
 // ─── Initialization ─────────────────────────────────────────────────

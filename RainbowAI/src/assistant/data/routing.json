@@ -62,7 +62,8 @@
     "action": "static_reply"
   },
   "climate_control_complaint": {
-    "action": "static_reply"
+    "action": "workflow",
+    "workflow_id": "complaint_handling"
   },
   "noise_complaint": {
     "action": "workflow",
@@ -115,7 +116,8 @@
     "workflow_id": "complaint_handling"
   },
   "billing_dispute": {
-    "action": "static_reply"
+    "action": "workflow",
+    "workflow_id": "escalate"
   },
   "positive_review": {
     "action": "static_reply"
@@ -135,6 +137,13 @@
     "action": "static_reply"
   },
   "facilities": {
+    "action": "static_reply"
+  },
+  "capsule_conflict": {
+    "action": "workflow",
+    "workflow_id": "capsule_conflict_handling"
+  },
+  "cancel_workflow": {
     "action": "static_reply"
   }
 }

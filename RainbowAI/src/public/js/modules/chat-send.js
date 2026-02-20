@@ -181,7 +181,8 @@ export async function sendChatMessage(event) {
                 editMeta: result.editMeta || null,
                 messageId: editId || undefined,
                 usage: result.usage || null,
-                tokenBreakdown: result.tokenBreakdown || null
+                tokenBreakdown: result.tokenBreakdown || null,
+                contextCount: result.contextCount ?? null
             }
         });
 
@@ -217,8 +218,9 @@ export async function sendChatMessage(event) {
             const usageStr = result.usage
                 ? ` | Tokens: <b>${result.usage.prompt_tokens || 'N/A'}p + ${result.usage.completion_tokens || 'N/A'}c = ${result.usage.total_tokens || 'N/A'}</b>`
                 : '';
+            const contextStr = result.contextCount != null ? ` | Context: <b>${result.contextCount} msgs</b>` : '';
 
-            metaEl.innerHTML = `Detection: <b>${detectionMethod}</b> | Lang: <b>${langDisplay}</b> | Intent: <b>${esc(result.intent)}</b> | Routed to: <b>${esc(result.routedAction)}</b>${msgTypeStr}${sentimentStr}${overrideStr}${result.model ? ` | Model: <b>${esc(result.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${result.confidence ? (result.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}${usageStr}`;
+            metaEl.innerHTML = `Detection: <b>${detectionMethod}</b> | Lang: <b>${langDisplay}</b> | Intent: <b>${esc(result.intent)}</b> | Routed to: <b>${esc(result.routedAction)}</b>${msgTypeStr}${sentimentStr}${overrideStr}${result.model ? ` | Model: <b>${esc(result.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${result.confidence ? (result.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}${usageStr}${contextStr}`;
         }
 
     } catch (error) {

@@ -22,9 +22,9 @@ import { api, toast, escapeHtml as esc } from '../core/utils.js';
 export async function restartServer(serverKey) {
   if (serverKey === 'mcp') {
     const confirmed = confirm(
-      'Restart MCP Server?\n\n'
+      'Restart Rainbow AI Server?\n\n'
       + 'Affected services:\n'
-      + '  - MCP Server (port 3002)\n'
+      + '  - Rainbow AI (port 3002)\n'
       + '  - WhatsApp connections (will reconnect automatically)\n'
       + '  - Live Chat sessions\n'
       + '  - AI Classification pipeline\n\n'
@@ -34,7 +34,7 @@ export async function restartServer(serverKey) {
     );
     if (!confirmed) return;
     try {
-      toast('Restarting MCP server…', 'info');
+      toast('Restarting Rainbow AI server…', 'info');
       await api('/restart', { method: 'POST' });
       toast('Server is restarting. Reopen the dashboard in a few seconds.', 'info');
     } catch (e) {

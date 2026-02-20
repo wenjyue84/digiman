@@ -130,13 +130,29 @@ async function handleStaticReply(
     }
   } else {
     logLanguageResolution('default', lang, responseLang, result);
-    const staticResponse = context.getStaticReply(result.intent, responseLang);
+    // US-019: First-contact greeting with capability menu
+    let replyIntent = result.intent;
+    if (result.intent === 'greeting' && convo.messages.length <= 1) {
+      const firstContactReply = context.getStaticReply('greeting_first_contact', responseLang);
+      if (firstContactReply) {
+        state.response = firstContactReply;
+        console.log(`[Dispatch] First-contact greeting: using greeting_first_contact template`);
+        return; // early return — skip default static reply
+      }
+    }
+    const staticResponse = context.getStaticReply(replyIntent, responseLang);
     if (staticResponse) {
       state.response = staticResponse;
     } else {
       console.warn(`[Dispatch] No static reply for "${result.intent}", using LLM response`);
       state.response = result.response;
     }
+  }
+
+  // Attach image if the static reply has one configured
+  const imageUrl = context.getStaticReplyImageUrl(result.intent);
+  if (imageUrl) {
+    state.imageUrl = imageUrl;
   }
 }
 

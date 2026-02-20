@@ -1,9 +1,7 @@
 import type { PriceBreakdown, PricingConfig, HolidaysData } from './types.js';
 import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
 import path from 'path';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { loadConfigFromDB } from '../lib/config-db.js';
 
 /** Milliseconds in one day (24 hours). */
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -33,7 +31,7 @@ let holidays: HolidaysData | null = null;
 
 export function initPricing(): void {
   try {
-    const pricingPath = path.resolve(__dirname, 'data/pricing.json');
+    const pricingPath = path.join(process.cwd(), 'src', 'assistant', 'data', 'pricing.json');
     pricingConfig = JSON.parse(readFileSync(pricingPath, 'utf-8'));
   } catch (err: any) {
     console.warn('[Pricing] Failed to load pricing.json:', err.message);
@@ -42,11 +40,33 @@ export function initPricing(): void {
   }
 
   try {
-    const holidaysPath = path.resolve(__dirname, 'data/holidays.json');
+    const holidaysPath = path.join(process.cwd(), 'src', 'assistant', 'data', 'holidays.json');
     holidays = JSON.parse(readFileSync(holidaysPath, 'utf-8'));
   } catch (err: any) {
     console.warn('[Pricing] Failed to load holidays.json:', err.message);
     holidays = { year: 2026, country: 'MY', holidays: [] };
+  }
+}
+
+/** Try loading pricing + holidays from DB (called at startup). */
+export async function initPricingFromDB(): Promise<void> {
+  try {
+    const dbPricing = await loadConfigFromDB('pricing.json');
+    if (dbPricing) {
+      pricingConfig = dbPricing as PricingConfig;
+      console.log('[Pricing] Loaded pricing.json from DB');
+    }
+  } catch (err: any) {
+    console.warn('[Pricing] DB load for pricing.json failed:', err.message);
+  }
+  try {
+    const dbHolidays = await loadConfigFromDB('holidays.json');
+    if (dbHolidays) {
+      holidays = dbHolidays as HolidaysData;
+      console.log('[Pricing] Loaded holidays.json from DB');
+    }
+  } catch (err: any) {
+    console.warn('[Pricing] DB load for holidays.json failed:', err.message);
   }
 }
 

@@ -26,12 +26,13 @@ function fmtTokens(n) {
  * Build a clickable token usage badge with popover breakdown.
  * Returns HTML string. Usage must be non-null for clickable version.
  */
-function buildTokenBadge(usage, tokenBreakdown, badgeId) {
+function buildTokenBadge(usage, tokenBreakdown, badgeId, contextCount) {
   if (!usage) return '';
   const prompt = usage.prompt_tokens;
   const completion = usage.completion_tokens;
   const total = usage.total_tokens || ((prompt || 0) + (completion || 0));
-  const label = fmtTokens(prompt) + ' in / ' + fmtTokens(completion) + ' out';
+  const ctxLabel = (contextCount != null && typeof contextCount === 'number') ? ' | ' + contextCount + ' msgs context' : '';
+  const label = fmtTokens(prompt) + ' in / ' + fmtTokens(completion) + ' out' + ctxLabel;
 
   if (!tokenBreakdown) {
     return '<span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-mono text-xs" title="Token usage: prompt in / completion out">' + label + '</span>';
@@ -50,6 +51,7 @@ function buildTokenBadge(usage, tokenBreakdown, badgeId) {
     + '<div class="flex justify-between"><span>User Message</span><span class="font-mono">' + fmtTokens(tb.userMessage) + ' <span class="text-neutral-400">(' + pct(tb.userMessage || 0) + ')</span></span></div>'
     + '<div class="border-t border-neutral-100 mt-1 pt-1 flex justify-between font-semibold"><span>AI Response</span><span class="font-mono">' + fmtTokens(tb.aiResponse) + '</span></div>'
     + '<div class="border-t border-neutral-100 mt-1 pt-1 flex justify-between font-semibold"><span>Total</span><span class="font-mono">' + fmtTokens(total) + '</span></div>'
+    + (contextCount != null ? '<div class="border-t border-neutral-100 mt-1 pt-1 flex justify-between text-neutral-500"><span>Context Messages</span><span class="font-mono">' + contextCount + '</span></div>' : '')
     + '</div>'
     + '</div>';
 
@@ -350,7 +352,7 @@ export function renderChatMessages() {
             + '</div></div>';
         }
         var editBadgeUid = 'tkn-' + editId;
-        var usageBadge = msg.meta.usage ? buildTokenBadge(msg.meta.usage, msg.meta.tokenBreakdown, editBadgeUid) : (msg.meta.source === 'llm' ? '' : '<span class="px-1.5 py-0.5 bg-neutral-50 text-neutral-400 rounded text-xs">Tokens: N/A</span>');
+        var usageBadge = msg.meta.usage ? buildTokenBadge(msg.meta.usage, msg.meta.tokenBreakdown, editBadgeUid, msg.meta.contextCount) : (msg.meta.source === 'llm' ? '' : '<span class="px-1.5 py-0.5 bg-neutral-50 text-neutral-400 rounded text-xs">Tokens: N/A</span>');
         var contentClickable = 'cursor-pointer hover:bg-neutral-50 rounded -mx-1 px-1 py-0.5 transition';
         var contentOnclick = 'onclick="toggleInlineEdit(\'' + editId + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleInlineEdit(\'' + editId + '\')}" title="Click to edit this ' + (editLabel || 'reply') + '" role="button" tabindex="0"';
         // Bot bubble (right, green) with collapsible dev badges + bubble meta
@@ -385,7 +387,7 @@ export function renderChatMessages() {
       var timeBadge = window.MetadataBadges.getResponseTimeBadge(msg.meta?.responseTime);
       var confBadge = window.MetadataBadges.getConfidenceBadge(msg.meta?.confidence);
       var nonEditBadgeUid = 'tkn-ne-' + (historyLen - 1 - idx);
-      var usageBadge2 = msg.meta?.usage ? buildTokenBadge(msg.meta.usage, msg.meta.tokenBreakdown, nonEditBadgeUid) : '';
+      var usageBadge2 = msg.meta?.usage ? buildTokenBadge(msg.meta.usage, msg.meta.tokenBreakdown, nonEditBadgeUid, msg.meta?.contextCount) : '';
 
       var contentHtml = '<div class="lc-bubble-text" style="white-space:pre-wrap;">' + botAvatarPrefix + (isSystem ? displayContent : linkifyUrls(esc(displayContent))) + '</div>';
 
@@ -418,8 +420,9 @@ export function renderChatMessages() {
     const usageStr = lastMsg.meta.usage
       ? ' | Tokens: <b>' + (lastMsg.meta.usage.prompt_tokens || 'N/A') + 'p + ' + (lastMsg.meta.usage.completion_tokens || 'N/A') + 'c = ' + (lastMsg.meta.usage.total_tokens || 'N/A') + '</b>'
       : '';
+    const contextStr = lastMsg.meta.contextCount != null ? ' | Context: <b>' + lastMsg.meta.contextCount + ' msgs</b>' : '';
 
-    metaEl.innerHTML = `${detectionPrefix}Intent: <b>${esc(lastMsg.meta.intent)}</b> | Routed to: <b>${esc(lastMsg.meta.routedAction)}</b>${hMsgTypeStr}${hOverrideStr}${lastMsg.meta.model ? ` | Model: <b>${esc(lastMsg.meta.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${lastMsg.meta.confidence ? (lastMsg.meta.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}${usageStr}`;
+    metaEl.innerHTML = `${detectionPrefix}Intent: <b>${esc(lastMsg.meta.intent)}</b> | Routed to: <b>${esc(lastMsg.meta.routedAction)}</b>${hMsgTypeStr}${hOverrideStr}${lastMsg.meta.model ? ` | Model: <b>${esc(lastMsg.meta.model)}</b>` : ''} | Time: <b>${timeStr}</b> | Confidence: ${lastMsg.meta.confidence ? (lastMsg.meta.confidence * 100).toFixed(0) + '%' : 'N/A'}${kbFilesStr}${usageStr}${contextStr}`;
   }
 }
 

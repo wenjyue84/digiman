@@ -53,16 +53,7 @@ export function listDynamicKnowledge(): string[] {
   return Array.from(dynamicKnowledge.keys());
 }
 
-// ─── API Settings Cache ─────────────────────────────────────────────
-let cachedSettings: Record<string, any> | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL_MS = 300_000; // 5 minutes
-
-let callAPIFn: CallAPIFn | null = null;
-let refreshTimer: ReturnType<typeof setInterval> | null = null;
-
-export function initKnowledge(callAPI: CallAPIFn): void {
-  callAPIFn = callAPI;
+export function initKnowledge(_callAPI: CallAPIFn): void {
   // Load from config-store
   loadFromConfig();
   // Subscribe to reload events
@@ -72,31 +63,10 @@ export function initKnowledge(callAPI: CallAPIFn): void {
       console.log('[Knowledge] Reloaded from config-store');
     }
   });
-  // Initial cache load
-  refreshSettingsCache().catch(() => {});
-  // Auto-refresh every 5 minutes
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => {
-    refreshSettingsCache().catch(() => {});
-  }, CACHE_TTL_MS);
 }
 
 export function destroyKnowledge(): void {
-  if (refreshTimer) {
-    clearInterval(refreshTimer);
-    refreshTimer = null;
-  }
-}
-
-async function refreshSettingsCache(): Promise<void> {
-  if (!callAPIFn) return;
-  try {
-    const settings = await callAPIFn<Record<string, any>>('GET', '/api/settings');
-    cachedSettings = settings;
-    cacheTimestamp = Date.now();
-  } catch (err: any) {
-    console.warn('[Knowledge] Failed to refresh settings cache:', err.message);
-  }
+  // no-op — kept for API compatibility
 }
 
 export function getAnswer(intent: IntentCategory, lang: Language): string | null {
@@ -126,10 +96,12 @@ export function getStaticReply(intent: string, lang: Language): string | null {
   return null;
 }
 
-export function getCachedSettings(): Record<string, any> | null {
-  return cachedSettings;
+/**
+ * Get the imageUrl for a static reply intent (if any).
+ */
+export function getStaticReplyImageUrl(intent: string): string | null {
+  const entry = faq.find(e => e.intent === intent);
+  return (entry as any)?.imageUrl || null;
 }
 
-export function isCacheValid(): boolean {
-  return cachedSettings !== null && (Date.now() - cacheTimestamp) < CACHE_TTL_MS;
-}
+

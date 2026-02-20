@@ -6,12 +6,11 @@
  */
 
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { WhatsAppManager } from './manager.js';
 import type { MessageHandler } from './types.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const LEGACY_AUTH_DIR = process.env.WHATSAPP_AUTH_DIR || path.resolve(__dirname, '../../../whatsapp-auth');
+// Use process.cwd() (= RainbowAI/) — __dirname is dist/ in esbuild bundle
+const LEGACY_AUTH_DIR = process.env.WHATSAPP_AUTH_DIR || path.resolve(process.cwd(), 'whatsapp-auth');
 
 // ─── Export Types ───────────────────────────────────────────────────
 

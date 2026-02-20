@@ -412,7 +412,8 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       sentiment: sentimentScore,
       editMeta: editMeta,
       usage: usage,
-      tokenBreakdown: tokenBreakdown
+      tokenBreakdown: tokenBreakdown,
+      contextCount: conversationHistory.length
     });
   } catch (err: any) {
     // Log the error for debugging

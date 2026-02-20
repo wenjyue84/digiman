@@ -17,11 +17,11 @@ export function toggleTranslate() {
   var btn = document.getElementById('lc-translate-toggle');
   var flagWrap = document.getElementById('lc-flag-selector-wrap');
   if ($.translateMode) {
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
     if (flagWrap) flagWrap.style.display = '';
     updateFlagIcon($.translateLang);
   } else {
-    btn.classList.remove('active');
+    if (btn) btn.classList.remove('active');
     if (flagWrap) flagWrap.style.display = 'none';
     closeFlagMenu();
     hideTranslatePreview();

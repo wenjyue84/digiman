@@ -56,9 +56,10 @@ async function api(path, opts = {}) {
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
+    const adminKey = (typeof window !== 'undefined' && window.__ADMIN_KEY__) ? window.__ADMIN_KEY__ : '';
     const res = await fetch(API + path, {
       cache: 'no-store',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(adminKey ? { 'x-admin-key': adminKey } : {}) },
       ...opts,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
       signal: controller.signal

@@ -6,12 +6,10 @@
  * response mode dispatch (manual/copilot/autopilot),
  * logging, tracking, and feedback prompts.
  */
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import type { RouterContext, PipelineState } from './types.js';
 import { ensureResponseText, getConversationMode } from './input-validator.js';
 import { configStore } from '../config-store.js';
+import { getLLMSettings } from '../llm-settings-loader.js';
 import { addMessage } from '../conversation.js';
 import { isAIAvailable, translateText } from '../ai-client.js';
 import { getTemplate } from '../formatter.js';
@@ -28,8 +26,7 @@ import { addApproval } from '../approval-queue.js';
 import { trackResponseSent } from '../../lib/activity-tracker.js';
 import { getUnknownFallbackMessages } from '../ai-response-generator.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ASSISTANT_DATA_DIR = join(__dirname, '..', 'data');
+// LLM settings loaded via shared cached loader (llm-settings-loader.ts)
 
 export async function processAndSend(
   state: PipelineState, ctx: RouterContext
@@ -48,9 +45,7 @@ export async function processAndSend(
   response = ensureResponseText(response, lang);
 
   // ─── Confidence thresholds + disclaimers ───────────────────────
-  const llmSettings = JSON.parse(
-    readFileSync(join(ASSISTANT_DATA_DIR, 'llm-settings.json'), 'utf-8')
-  );
+  const llmSettings = getLLMSettings();
   const lowConfidenceThreshold = llmSettings.thresholds?.lowConfidence ?? 0.5;
   const mediumConfidenceThreshold = llmSettings.thresholds?.mediumConfidence ?? 0.7;
 
@@ -130,7 +125,8 @@ export async function processAndSend(
     messageType: diaryEvent.messageType,
     routedAction: devMetadata.routedAction,
     workflowId: devMetadata.workflowId,
-    stepId: devMetadata.stepId
+    stepId: devMetadata.stepId,
+    usage: devMetadata.usage
   };
 
   if (mode === 'manual') {
@@ -184,7 +180,32 @@ export async function processAndSend(
 
   // ─── Autopilot or auto-approved copilot — send immediately ────
   logMessage(phone, msg.pushName, 'assistant', response, logMeta).catch(() => { });
-  await ctx.sendMessage(phone, response, msg.instanceId);
+
+  // If static reply has an image attachment, send as media with text as caption
+  if (state.imageUrl) {
+    try {
+      const { sendWhatsAppMedia } = await import('../../lib/baileys-client.js');
+      const { readFileSync: readF, existsSync: existsF } = await import('fs');
+      const { basename, extname } = await import('path');
+      const imgPath = state.imageUrl;
+      if (existsF(imgPath)) {
+        const buffer = readF(imgPath);
+        const ext = extname(imgPath).toLowerCase();
+        const mimeMap: Record<string, string> = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' };
+        const mimetype = mimeMap[ext] || 'image/jpeg';
+        await sendWhatsAppMedia(phone, buffer, mimetype, basename(imgPath), response, msg.instanceId);
+        console.log(`[ResponseProcessor] Sent image + caption for ${phone}: ${imgPath}`);
+      } else {
+        console.warn(`[ResponseProcessor] Image file not found: ${imgPath}, sending text only`);
+        await ctx.sendMessage(phone, response, msg.instanceId);
+      }
+    } catch (imgErr: any) {
+      console.error(`[ResponseProcessor] Failed to send image, falling back to text:`, imgErr.message);
+      await ctx.sendMessage(phone, response, msg.instanceId);
+    }
+  } else {
+    await ctx.sendMessage(phone, response, msg.instanceId);
+  }
   trackResponseSent(phone, msg.pushName, devMetadata.routedAction || 'unknown', devMetadata.responseTime);
 
   // ─── Feedback prompt ──────────────────────────────────────────

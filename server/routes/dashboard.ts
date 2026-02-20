@@ -2,11 +2,12 @@ import { Router } from "express";
 import { getStorage } from "../Storage/StorageFactory.js";
 // REFACTORING: Import new utility functions to eliminate duplication
 import { asyncRouteHandler } from "../lib/errorHandler";
+import { authenticateToken } from "./middleware/auth";
 
 const router = Router();
 
 // Get storage type info
-router.get("/storage/info", asyncRouteHandler(async (_req: any, res: any) => {
+router.get("/storage/info", authenticateToken, asyncRouteHandler(async (_req: any, res: any) => {
   const storage = await getStorage();
   const storageType = storage.constructor.name;
   const isDatabase = storageType === 'DatabaseStorage';
@@ -18,7 +19,7 @@ router.get("/storage/info", asyncRouteHandler(async (_req: any, res: any) => {
 }));
 
 // Get occupancy summary - with caching
-router.get("/occupancy", asyncRouteHandler(async (_req: any, res: any) => {
+router.get("/occupancy", authenticateToken, asyncRouteHandler(async (_req: any, res: any) => {
   // Cache occupancy data for 30 seconds
   res.set('Cache-Control', 'public, max-age=30');
   const storage = await getStorage();
@@ -27,7 +28,7 @@ router.get("/occupancy", asyncRouteHandler(async (_req: any, res: any) => {
 }));
 
 // Bulk dashboard data endpoint - fetch all main dashboard data in one request
-router.get("/dashboard", asyncRouteHandler(async (req: any, res: any) => {
+router.get("/dashboard", authenticateToken, asyncRouteHandler(async (req: any, res: any) => {
   // Cache dashboard data for 15 seconds
   res.set('Cache-Control', 'public, max-age=15');
   
@@ -56,7 +57,7 @@ router.get("/dashboard", asyncRouteHandler(async (req: any, res: any) => {
 }));
 
 // Calendar occupancy data — filtered by month date range (US-167)
-router.get("/calendar/occupancy/:year/:month", asyncRouteHandler(async (req: any, res: any) => {
+router.get("/calendar/occupancy/:year/:month", authenticateToken, asyncRouteHandler(async (req: any, res: any) => {
   const { year, month } = req.params;
   const yearNum = parseInt(year);
   const monthNum = parseInt(month);

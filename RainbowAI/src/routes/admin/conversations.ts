@@ -3,15 +3,12 @@ import type { Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { listConversations, getConversation, deleteConversation, getResponseTimeStats, getContactDetails, updateContactDetails, togglePin, toggleFavourite, markConversationAsRead, updateConversationMode } from '../../assistant/conversation-logger.js';
+import { listConversations, getConversation, deleteConversation, getResponseTimeStats, getContactDetails, updateContactDetails, getAllContactTags, getAllContactUnits, getAllContactDates, togglePin, toggleFavourite, markConversationAsRead, updateConversationMode } from '../../assistant/conversation-logger.js';
 import { whatsappManager } from '../../lib/baileys-client.js';
 import { translateText } from '../../assistant/ai-client.js';
 import { ok, badRequest, notFound, serverError } from './http-utils.js';
 import { activityTracker } from '../../lib/activity-tracker.js';
 import type { ActivityEvent } from '../../lib/activity-tracker.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── Message Metadata Store (pin/star per message) ────────────────────
 interface MessageMetadata {
@@ -19,7 +16,7 @@ interface MessageMetadata {
   starred: Record<string, string[]>;  // phone -> array of message indices (as strings)
 }
 
-const METADATA_PATH = path.resolve(__dirname, '../../../data/message-metadata.json');
+const METADATA_PATH = path.join(process.cwd(), 'data', 'message-metadata.json');
 
 function loadMetadata(): MessageMetadata {
   try {
@@ -95,10 +92,21 @@ router.get('/conversations/events', (req: Request, res: Response) => {
 
   activityTracker.on('activity', onActivity);
 
+  // Forward message status (read receipts, US-017) via SSE
+  const onMessageStatus = (event: any) => {
+    res.write(`event: message_status\ndata: ${JSON.stringify({
+      phone: event.phone,
+      messageId: event.messageId,
+      status: event.status,
+    })}\n\n`);
+  };
+  whatsappManager.on('message_status', onMessageStatus);
+
   // Cleanup on disconnect
   req.on('close', () => {
     clearInterval(heartbeat);
     activityTracker.removeListener('activity', onActivity);
+    whatsappManager.removeListener('message_status', onMessageStatus);
   });
 });
 
@@ -108,6 +116,39 @@ router.get('/conversations', async (_req: Request, res: Response) => {
   try {
     const conversations = await listConversations();
     res.json(conversations);
+  } catch (err: any) {
+    serverError(res, err);
+  }
+});
+
+// ─── Contact Tags Map (US-009) ──────────────────────────────────────────
+
+router.get('/conversations/tags-map', async (_req: Request, res: Response) => {
+  try {
+    const tagsMap = await getAllContactTags();
+    res.json(tagsMap);
+  } catch (err: any) {
+    serverError(res, err);
+  }
+});
+
+// ─── Contact Units Map (US-012) ──────────────────────────────────────────
+
+router.get('/conversations/units-map', async (_req: Request, res: Response) => {
+  try {
+    const unitsMap = await getAllContactUnits();
+    res.json(unitsMap);
+  } catch (err: any) {
+    serverError(res, err);
+  }
+});
+
+// ─── Contact Dates Map (US-014) ──────────────────────────────────────────
+
+router.get('/conversations/dates-map', async (_req: Request, res: Response) => {
+  try {
+    const datesMap = await getAllContactDates();
+    res.json(datesMap);
   } catch (err: any) {
     serverError(res, err);
   }
@@ -294,7 +335,7 @@ router.post('/conversations/:phone/messages/:msgIdx/react', async (req: Request,
 router.post('/conversations/:phone/send', async (req: Request, res: Response) => {
   try {
     const phone = decodeURIComponent(req.params.phone);
-    const { message, instanceId } = req.body;
+    const { message, instanceId, staffName } = req.body;
 
     if (!message || typeof message !== 'string') {
       badRequest(res, 'message (string) required');
@@ -324,11 +365,12 @@ router.post('/conversations/:phone/send', async (req: Request, res: Response) =>
     const { sendWhatsAppMessage } = await import('../../lib/baileys-client.js');
     await sendWhatsAppMessage(phone, message, targetInstanceId);
 
+    const senderName = (typeof staffName === 'string' && staffName.trim()) ? staffName.trim() : 'Staff';
     const { logMessage } = await import('../../assistant/conversation-logger.js');
-    await logMessage(phone, pushName, 'assistant', message, { manual: true, instanceId: targetInstanceId });
+    await logMessage(phone, pushName, 'assistant', message, { manual: true, instanceId: targetInstanceId, staffName: senderName });
 
-    console.log(`[Admin] Manual message sent to ${phone} via ${targetInstanceId || 'default'}: ${message.substring(0, 50)}...`);
-    ok(res, { message: 'Message sent successfully', usedInstance: targetInstanceId });
+    console.log(`[Admin] Manual message sent by ${senderName} to ${phone} via ${targetInstanceId || 'default'}: ${message.substring(0, 50)}...`);
+    ok(res, { message: 'Message sent successfully', usedInstance: targetInstanceId, staffName: senderName });
   } catch (err: any) {
     console.error('[Admin] Failed to send manual message:', err);
     serverError(res, err);
@@ -383,6 +425,91 @@ router.post('/conversations/:phone/send-media', upload.single('file'), async (re
     ok(res, { mediaType, fileName: file.originalname, size: file.size });
   } catch (err: any) {
     console.error('[Admin] Failed to send media:', err);
+    serverError(res, err);
+  }
+});
+
+// Trigger a workflow for a specific contact (US-016: // command palette)
+router.post('/conversations/:phone/trigger-workflow', async (req: Request, res: Response) => {
+  try {
+    const phone = decodeURIComponent(req.params.phone);
+    const { workflowId, instanceId, staffName } = req.body;
+
+    if (!workflowId || typeof workflowId !== 'string') {
+      badRequest(res, 'workflowId (string) required');
+      return;
+    }
+
+    // Load workflow definition
+    const { configStore } = await import('../../assistant/config-store.js');
+    const workflows = configStore.getWorkflows();
+    const workflow = workflows.workflows.find((w: any) => w.id === workflowId);
+    if (!workflow) {
+      notFound(res, `Workflow "${workflowId}"`);
+      return;
+    }
+
+    // Create workflow state and execute first step
+    const { createWorkflowState, executeWorkflowStep } = await import('../../assistant/workflow-executor.js');
+    const { updateWorkflowState } = await import('../../assistant/conversation-logger.js');
+
+    const log = await getConversation(phone);
+    const pushName = log?.pushName || 'Guest';
+
+    // Resolve connected WhatsApp instance
+    let targetInstanceId = instanceId;
+    if (instanceId) {
+      const status = whatsappManager.getInstanceStatus(instanceId);
+      if (!status || status.state !== 'open') {
+        const instances = whatsappManager.getAllStatuses();
+        const connectedInstance = instances.find(i => i.state === 'open');
+        if (connectedInstance) {
+          targetInstanceId = connectedInstance.id;
+        } else {
+          res.status(503).json({ error: 'No WhatsApp instances connected.' });
+          return;
+        }
+      }
+    }
+
+    const workflowState = createWorkflowState(workflowId);
+    const result = await executeWorkflowStep(workflowState, null, {
+      language: 'en',
+      phone,
+      pushName,
+      instanceId: targetInstanceId,
+    });
+
+    // Send the first workflow message
+    if (result.response) {
+      const { sendWhatsAppMessage } = await import('../../lib/baileys-client.js');
+      await sendWhatsAppMessage(phone, result.response, targetInstanceId);
+
+      const senderName = (typeof staffName === 'string' && staffName.trim()) ? staffName.trim() : 'Staff';
+      const { logMessage } = await import('../../assistant/conversation-logger.js');
+      await logMessage(phone, pushName, 'assistant', result.response, {
+        manual: false,
+        instanceId: targetInstanceId,
+        staffName: senderName,
+        workflowId,
+      });
+    }
+
+    // Store workflow state so subsequent replies continue the workflow
+    if (result.newState) {
+      updateWorkflowState(phone, result.newState);
+    }
+
+    const sn = (typeof staffName === 'string' && staffName.trim()) ? staffName.trim() : 'Staff';
+    console.log(`[Admin] Workflow "${workflow.name}" triggered by ${sn} for ${phone}`);
+    ok(res, {
+      workflowId,
+      workflowName: workflow.name,
+      firstMessage: result.response,
+      hasMoreSteps: !!result.newState,
+    });
+  } catch (err: any) {
+    console.error('[Admin] Failed to trigger workflow:', err);
     serverError(res, err);
   }
 });
@@ -535,7 +662,7 @@ router.post('/conversations/:phone/generate-notes', async (req: Request, res: Re
       }
     ];
 
-    const { content } = await chatWithFallback(messages, 300, 0.5);
+    const { content } = await chatWithFallback(messages, 600, 0.5);
 
     if (!content) {
       serverError(res, 'AI generation failed');
@@ -555,7 +682,7 @@ router.get('/conversations/:phone/context', async (req: Request, res: Response) 
   try {
     const phone = decodeURIComponent(req.params.phone);
     const cleanPhone = phone.replace(/@s\.whatsapp\.net$/i, '').replace(/[^0-9+]/g, '');
-    const contextDir = path.resolve(__dirname, '../../../.rainbow-kb/guests');
+    const contextDir = path.join(process.cwd(), '.rainbow-kb', 'guests');
     const contextFile = path.join(contextDir, `${cleanPhone}-context.md`);
 
     if (fs.existsSync(contextFile)) {
@@ -583,7 +710,7 @@ router.put('/conversations/:phone/context', async (req: Request, res: Response) 
     }
 
     const cleanPhone = phone.replace(/@s\.whatsapp\.net$/i, '').replace(/[^0-9+]/g, '');
-    const contextDir = path.resolve(__dirname, '../../../.rainbow-kb/guests');
+    const contextDir = path.join(process.cwd(), '.rainbow-kb', 'guests');
 
     // Ensure directory exists
     if (!fs.existsSync(contextDir)) {

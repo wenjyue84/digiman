@@ -10,6 +10,12 @@ import { loadChatSimulator } from '/public/js/modules/chat-simulator.js';
 // real-chat.js self-registers window.loadRealChat etc. (used by live-simulation sub-tab)
 import '/public/js/modules/real-chat.js';
 
+// US-015: Prisma AI panel available from live-simulation tab (no code duplication)
+import {
+  openPrismaWindow, closePrismaWindow, minimisePrisma, prismaSetSource,
+  prismaSend, prismaKeydown, prismaAutoResize
+} from '/public/js/modules/prisma-ai.js';
+
 import {
   loadWorkflowTestSteps,
   resetWorkflowTest,
@@ -37,6 +43,10 @@ import {
 } from '/public/js/modules/chat-preview.js';
 
 import { sendChatMessage, showQuickTestHistory, closeQuickTestHistory, clearQuickTestHistory } from '/public/js/modules/chat-send.js';
+
+// Load testing-chunk eagerly so autotest panel buttons (toggleAutotest, showAutotestHistory, etc.)
+// work when accessed from the Chat Simulator tab without visiting the Testing tab first
+import '/public/js/module-chunks/testing-chunk.js';
 
 // ─── Window globals ──────────────────────────────────────────────
 
@@ -66,5 +76,14 @@ window.closeQuickTestHistory = closeQuickTestHistory;
 window.clearQuickTestHistory = clearQuickTestHistory;
 window.toggleTokenPopover = toggleTokenPopover;
 window.toggleDevBadges = toggleDevBadges;
+
+// US-015: Expose Prisma AI panel functions for live-simulation tab
+window.lcOpenPrismaWindow = openPrismaWindow;
+window.lcClosePrismaWindow = closePrismaWindow;
+window.lcMinimisePrisma = minimisePrisma;
+window.lcPrismaSetSource = prismaSetSource;
+window.lcPrismaSend = prismaSend;
+window.lcPrismaKeydown = prismaKeydown;
+window.lcPrismaAutoResize = prismaAutoResize;
 
 console.log('[LazyChunk] Chat Simulator modules registered');

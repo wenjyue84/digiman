@@ -15,13 +15,23 @@
 
 import { $ } from './live-chat-state.js';
 import {
+  openPrismaWindow, closePrismaWindow, minimisePrisma, prismaSetSource,
+  prismaSend, prismaKeydown, prismaAutoResize, initPrismaPanel
+} from './prisma-ai.js';
+import {
   loadLiveChat, filterConversations, openConversation, refreshChat, resetDateFilter, debouncedSearch,
-  cleanupLiveChat
+  cleanupLiveChat, editStaffName
 } from './live-chat-core.js';
 import {
   deleteChat, sendReply, toggleAttachMenu, pickFile, fileSelected, clearFile,
   autoResize, handleKeydown, cancelReply, closeForwardModal,
-  toggleVoiceRecording, cancelVoiceRecording
+  toggleVoiceRecording, cancelVoiceRecording,
+  onInputCmd, loadCmdTemplates, hideCmdPalette, cmdPaletteClick, cmdAddTemplate,
+  loadWorkflows, showWorkflowPalette, hideWorkflowPalette, wfPaletteClick,
+  toggleSchedulePopover, hideSchedulePopover, confirmSchedule, toggleRepeatEndDate, updateSchedulePreview,
+  showScheduledPanel, closeScheduledPanel, cancelScheduled, editScheduled, updateScheduledBadge,
+  toggleDateJump, jumpToDate,
+  showReconnectionModal, reconnectInstance, addNewWhatsApp, closeReconnectionModal
 } from './live-chat-actions.js';
 import {
   toggleTranslate, handleLangChange, closeTranslateModal, confirmTranslation,
@@ -33,18 +43,28 @@ import {
 import {
   setFilter, togglePinChat, toggleFavouriteChat, toggleMaximize,
   toggleContactPanel, contactFieldChanged, tagKeydown, removeTag,
+  tagInput, selectTag, loadGlobalTags,
   toggleSidebarMenu, showStarredMessages, markAllAsRead,
   toggleChatDropdown, closeChatDropdown, markOneAsRead,
   setMode, toggleModeMenu, approveResponse, rejectApproval, dismissApproval, getAIHelp,
   toggleDateFilterPanel, clearChat, toggleWaStatusBar, restoreWaStatusBarState,
   initResizableDivider, toggleLanguageLock,
   generateAINotes, openGuestContext, closeContextModal, saveGuestContext,
-  mobileBack
+  updateContextFilePath, mobileBack,
+  toggleTagFilter, toggleTagSelection, clearTagFilter, loadContactTagsMap,
+  loadContactUnitsMap, loadContactDatesMap,
+  toggleUnitFilter, selectUnitFilter, clearUnitFilter,
+  unitInput, selectUnit, unitKeydown, unitBlur, loadCapsuleUnits,
+  loadPaymentReminder, setPaymentReminder, dismissReminder, snoozeReminder,
+  refreshOverdueBell, showOverdueReminders, addOverdueBadgeToList
 } from './live-chat-panels.js';
 
 // ─── Window exports for template onclick handlers ────────────────
 
-window.loadLiveChat = loadLiveChat;
+window.loadLiveChat = async function () {
+  await loadLiveChat();
+  initPrismaPanel(); // US-010: wire drag-to-move after DOM is ready
+};
 window.cleanupLiveChat = cleanupLiveChat;
 window.lcFilterConversations = filterConversations;
 window.lcDebouncedSearch = debouncedSearch;
@@ -52,6 +72,7 @@ window.lcOpenConversation = openConversation;
 window.lcRefreshChat = refreshChat;
 window.lcDeleteChat = deleteChat;
 window.lcResetDateFilter = resetDateFilter;
+window.lcEditStaffName = editStaffName;
 window.lcSendReply = sendReply;
 window.lcToggleTranslate = toggleTranslate;
 window.lcHandleLangChange = handleLangChange;
@@ -80,10 +101,33 @@ window.lcToggleContactPanel = toggleContactPanel;
 window.lcContactFieldChanged = contactFieldChanged;
 window.lcTagKeydown = tagKeydown;
 window.lcRemoveTag = removeTag;
+window.lcTagInput = tagInput;
+window.lcSelectTag = selectTag;
+window.lcLoadGlobalTags = loadGlobalTags;
 window.lcCancelReply = cancelReply;
 window.lcToggleVoiceRecording = toggleVoiceRecording;
 window.lcCancelVoiceRecording = cancelVoiceRecording;
 window.lcCloseForwardModal = closeForwardModal;
+window.lcOnInputCmd = onInputCmd;
+window.lcLoadCmdTemplates = loadCmdTemplates;
+window.lcHideCmdPalette = hideCmdPalette;
+window.lcCmdPaletteClick = cmdPaletteClick;
+window.lcCmdAddTemplate = cmdAddTemplate;
+window.lcLoadWorkflows = loadWorkflows;
+window.lcShowWorkflowPalette = showWorkflowPalette;
+window.lcHideWorkflowPalette = hideWorkflowPalette;
+window.lcWfPaletteClick = wfPaletteClick;
+window.lcToggleSchedulePopover = toggleSchedulePopover;
+window.lcHideSchedulePopover = hideSchedulePopover;
+window.lcConfirmSchedule = confirmSchedule;
+window.lcShowScheduledPanel = showScheduledPanel;
+window.lcCloseScheduledPanel = closeScheduledPanel;
+window.lcCancelScheduled = cancelScheduled;
+window.lcEditScheduled = editScheduled;
+window.lcToggleRepeatEndDate = toggleRepeatEndDate;
+window.lcUpdateSchedulePreview = updateSchedulePreview;
+window.lcToggleDateJump = toggleDateJump;
+window.lcJumpToDate = jumpToDate;
 window.lcOnInputTranslate = onInputTranslate;
 window.lcToggleSidebarMenu = toggleSidebarMenu;
 window.lcShowStarredMessages = showStarredMessages;
@@ -103,7 +147,38 @@ window.lcGenerateAINotes = generateAINotes;
 window.lcOpenGuestContext = openGuestContext;
 window.lcCloseContextModal = closeContextModal;
 window.lcSaveGuestContext = saveGuestContext;
+window.lcUpdateContextFilePath = updateContextFilePath;
 window.lcMobileBack = mobileBack;
+window.lcToggleTagFilter = toggleTagFilter;
+window.lcToggleTagSelection = toggleTagSelection;
+window.lcClearTagFilter = clearTagFilter;
+window.lcLoadContactTagsMap = loadContactTagsMap;
+window.lcLoadContactUnitsMap = loadContactUnitsMap;
+window.lcLoadContactDatesMap = loadContactDatesMap;
+window.lcToggleUnitFilter = toggleUnitFilter;
+window.lcSelectUnitFilter = selectUnitFilter;
+window.lcClearUnitFilter = clearUnitFilter;
+window.lcUnitInput = unitInput;
+window.lcSelectUnit = selectUnit;
+window.lcUnitKeydown = unitKeydown;
+window.lcUnitBlur = unitBlur;
+window.lcLoadCapsuleUnits = loadCapsuleUnits;
+window.lcSetPaymentReminder = setPaymentReminder;
+window.lcDismissReminder = dismissReminder;
+window.lcSnoozeReminder = snoozeReminder;
+window.lcShowOverdueReminders = showOverdueReminders;
+window.lcShowReconnectionModal = showReconnectionModal;
+window.lcReconnectInstance = reconnectInstance;
+window.lcAddNewWhatsApp = addNewWhatsApp;
+// US-009/010: Prisma AI window
+window.lcOpenPrismaWindow = openPrismaWindow;
+window.lcClosePrismaWindow = closePrismaWindow;
+window.lcMinimisePrisma = minimisePrisma;
+window.lcPrismaSetSource = prismaSetSource;
+window.lcPrismaSend = prismaSend;
+window.lcPrismaKeydown = prismaKeydown;
+window.lcPrismaAutoResize = prismaAutoResize;
+window.lcCloseReconnectionModal = closeReconnectionModal;
 window.lcOnMenuTranslate = onMenuTranslate;
 window.lcOnMenuMode = onMenuMode;
 window.lcOnMenuSetMode = function (mode) {
@@ -198,6 +273,42 @@ document.addEventListener('click', function (e) {
   var submenuWrap = document.querySelector('.lc-header-dropdown-submenu-wrap');
   if (modeSubmenu && submenuWrap && !submenuWrap.contains(e.target)) {
     modeSubmenu.style.display = 'none';
+  }
+  // US-008: Close tag autocomplete dropdown when clicking outside
+  var tagDropdown = document.getElementById('lc-tag-dropdown');
+  var tagInput = document.getElementById('lc-cd-tag-input');
+  if (tagDropdown && tagDropdown.style.display !== 'none' && tagInput && !tagDropdown.contains(e.target) && !tagInput.contains(e.target)) {
+    tagDropdown.style.display = 'none';
+  }
+  // US-010: Close unit dropdown when clicking outside
+  var unitDropdown = document.getElementById('lc-unit-dropdown');
+  var unitInput = document.getElementById('lc-cd-unit');
+  if (unitDropdown && unitDropdown.style.display !== 'none' && unitInput && !unitDropdown.contains(e.target) && !unitInput.contains(e.target)) {
+    unitDropdown.style.display = 'none';
+  }
+  // US-009: Close tag filter dropdown when clicking outside
+  var tagFilterDd = document.getElementById('lc-tag-filter-dropdown');
+  var tagFilterBtn = document.getElementById('lc-tag-filter-btn');
+  if (tagFilterDd && tagFilterDd.style.display !== 'none' && tagFilterBtn && !tagFilterDd.contains(e.target) && !tagFilterBtn.contains(e.target)) {
+    tagFilterDd.style.display = 'none';
+  }
+  // US-013: Close unit filter dropdown when clicking outside
+  var unitFilterDd = document.getElementById('lc-unit-filter-dropdown');
+  var unitFilterBtn = document.getElementById('lc-unit-filter-btn');
+  if (unitFilterDd && unitFilterDd.style.display !== 'none' && unitFilterBtn && !unitFilterDd.contains(e.target) && !unitFilterBtn.contains(e.target)) {
+    unitFilterDd.style.display = 'none';
+  }
+  // US-015: Close command palette when clicking outside
+  var cmdPalette = document.getElementById('lc-cmd-palette');
+  var cmdInput = document.getElementById('lc-input-box');
+  if (cmdPalette && cmdPalette.style.display !== 'none' && cmdInput && !cmdPalette.contains(e.target) && !cmdInput.contains(e.target)) {
+    hideCmdPalette();
+  }
+  // US-020: Close schedule popover when clicking outside
+  var schedPop = document.getElementById('lc-schedule-popover');
+  var schedBtn = document.getElementById('lc-schedule-btn');
+  if (schedPop && schedPop.style.display !== 'none' && schedBtn && !schedPop.contains(e.target) && !schedBtn.contains(e.target)) {
+    hideSchedulePopover();
   }
 });
 

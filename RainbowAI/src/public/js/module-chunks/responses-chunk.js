@@ -25,7 +25,10 @@ import {
   deleteTemplate as deleteMessageTemplate,
   showAddTemplate,
   submitAddTemplate,
-  translateAllIntents
+  translateAllIntents,
+  toggleReplyImage,
+  uploadReplyImage,
+  removeReplyImage
 } from '/public/js/modules/responses-crud.js';
 
 import {
@@ -46,7 +49,11 @@ import {
 } from '/public/js/modules/responses-tab-switcher.js';
 
 import {
-  loadStaticReplies
+  loadStaticReplies,
+  dismissBanner,
+  restoreBanner,
+  restoreAllBanners,
+  toggleDismissedPanel
 } from '/public/js/modules/static-messages.js';
 
 import {
@@ -122,6 +129,9 @@ window.deleteMessageTemplate = deleteMessageTemplate;
 window.showAddTemplate = showAddTemplate;
 window.submitAddTemplate = submitAddTemplate;
 window.translateAllIntents = translateAllIntents;
+window.toggleReplyImage = toggleReplyImage;
+window.uploadReplyImage = uploadReplyImage;
+window.removeReplyImage = removeReplyImage;
 window.filterStaticReplies = filterStaticReplies;
 window.filterStaticCategory = filterStaticCategory;
 window.filterSystemMessages = filterSystemMessages;
@@ -131,6 +141,10 @@ window.translateQuickReplyFields = translateQuickReplyFields;
 window.translateInlineEditPanel = translateInlineEditPanel;
 window.switchResponseTab = switchResponseTab;
 window.loadStaticReplies = loadStaticReplies;
+window.dismissBanner = dismissBanner;
+window.restoreBanner = restoreBanner;
+window.restoreAllBanners = restoreAllBanners;
+window.toggleDismissedPanel = toggleDismissedPanel;
 window.toggleInlineEdit = toggleInlineEdit;
 window.saveInlineEdit = saveInlineEdit;
 window.loadWorkflow = loadWorkflow;

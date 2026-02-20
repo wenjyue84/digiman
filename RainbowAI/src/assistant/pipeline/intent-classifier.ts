@@ -73,6 +73,7 @@ export async function classifyAndRoute(
 
   devMetadata.model = result.model;
   devMetadata.responseTime = result.responseTime;
+  devMetadata.usage = result.usage;
 
   // ─── Stage 4: Layer 2 Fallback ────────────────────────────────────
   result = await applyLayer2Fallback(

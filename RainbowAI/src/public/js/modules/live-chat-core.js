@@ -3,9 +3,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { $, avatarImg } from './live-chat-state.js';
-import { handleMessageChevronClick, bindContextMenuActions, clearFile, cancelReply, loadMessageMetadata, updateMessageIndicators } from './live-chat-actions.js';
+import { handleMessageChevronClick, bindContextMenuActions, clearFile, cancelReply, loadMessageMetadata, updateMessageIndicators, loadCmdTemplates, showReconnectionModal } from './live-chat-actions.js';
 import { hideTranslatePreview, updateTranslateIndicator, updateModeSubmenuUI } from './live-chat-features.js';
-import { loadContactDetails, updateModeUI, checkPendingApprovals, restoreWaStatusBarState, initResizableDivider, mobileShowChat } from './live-chat-panels.js';
+import { loadContactDetails, updateModeUI, checkPendingApprovals, restoreWaStatusBarState, initResizableDivider, mobileShowChat, loadContactTagsMap, loadContactUnitsMap, loadContactDatesMap, loadCapsuleUnits, refreshOverdueBell, addOverdueBadgeToList } from './live-chat-panels.js';
 
 var api = window.api;
 
@@ -14,32 +14,51 @@ var api = window.api;
 export function updateConnectionStatus(statusData) {
   var instances = (statusData && statusData.whatsappInstances) || [];
   var connected = instances.some(function (i) { return i.state === 'open'; });
+  var connecting = !connected && instances.some(function (i) { return i.state === 'connecting'; });
 
-  // Update the small status dot in sidebar header (US-077)
+  // Derive a 3-state status: 'connected' | 'connecting' | 'disconnected'
+  var waState = connected ? 'connected' : (connecting ? 'connecting' : 'disconnected');
+
+  // Update the small status dot in sidebar header (US-077, US-007)
   var dot = document.getElementById('lc-wa-dot');
   if (dot) {
     dot.classList.remove('lc-wa-connected', 'lc-wa-disconnected', 'lc-wa-checking');
-    dot.classList.add(connected ? 'lc-wa-connected' : 'lc-wa-disconnected');
-    dot.title = connected ? 'WhatsApp Connected' : 'WhatsApp Disconnected';
+    var dotClass = waState === 'connected' ? 'lc-wa-connected'
+      : waState === 'connecting' ? 'lc-wa-checking'
+      : 'lc-wa-disconnected';
+    dot.classList.add(dotClass);
+    var dotTitle = waState === 'connected' ? 'WhatsApp Connected'
+      : waState === 'connecting' ? 'WhatsApp Connecting...'
+      : 'WhatsApp Disconnected';
+    dot.title = dotTitle;
   }
 
   // Update tooltip content
   var tooltipStatus = document.getElementById('lc-wa-tooltip-status');
   var tooltipPhone = document.getElementById('lc-wa-tooltip-phone');
   if (tooltipStatus) {
-    tooltipStatus.textContent = connected ? 'Connected' : 'Disconnected';
-    tooltipStatus.style.color = connected ? '#25d366' : '#ea0038';
+    var statusLabel = waState === 'connected' ? 'Connected'
+      : waState === 'connecting' ? 'Connecting...'
+      : 'Disconnected';
+    var statusColor = waState === 'connected' ? '#25d366'
+      : waState === 'connecting' ? '#f59e0b'
+      : '#ea0038';
+    tooltipStatus.textContent = statusLabel;
+    tooltipStatus.style.color = statusColor;
   }
   if (tooltipPhone) {
     var phoneNumbers = instances
       .filter(function (i) { return i.state === 'open' && i.user && i.user.phone; })
       .map(function (i) { return '+' + i.user.phone; });
-    tooltipPhone.textContent = phoneNumbers.length > 0 ? phoneNumbers.join(', ') : (connected ? 'Connected' : 'No active connections');
+    var phoneText = phoneNumbers.length > 0 ? phoneNumbers.join(', ')
+      : waState === 'connecting' ? 'Reconnecting...'
+      : (connected ? 'Connected' : 'No active connections');
+    tooltipPhone.textContent = phoneText;
   }
 
   if ($.waWasConnected === true && !connected) {
     $.waWasConnected = false;
-    alert('WhatsApp disconnected. Messages cannot be sent. Check Connect \u2192 Dashboard or scan QR at /admin/whatsapp-qr.');
+    showReconnectionModal();
   } else {
     $.waWasConnected = connected;
   }
@@ -52,6 +71,27 @@ export async function pollConnectionStatus() {
     var statusData = await api('/status');
     updateConnectionStatus(statusData);
   } catch (e) { }
+}
+
+// ─── Staff Name Editing (US-011) ────────────────────────────────
+
+export function editStaffName() {
+  var el = document.getElementById('lc-staff-name');
+  if (!el) return;
+  var current = $.staffName || 'Staff';
+  var newName = prompt('Enter your display name (shown on manual messages):', current);
+  if (newName === null) return; // cancelled
+  newName = newName.trim();
+  if (!newName) newName = 'Staff';
+  $.staffName = newName;
+  el.textContent = newName;
+  // Persist to settings
+  api('/settings', {
+    method: 'PATCH',
+    body: { staffName: newName }
+  }).catch(function (err) {
+    console.warn('[US-011] Failed to save staff name:', err);
+  });
 }
 
 // ─── Date Filter Functions ──────────────────────────────────────
@@ -99,11 +139,17 @@ export function updateDateFilterFromInputs() {
 // ─── Main Load ───────────────────────────────────────────────────
 
 export async function loadLiveChat() {
-  // Fetch bot avatar setting (US-087)
+  // Fetch bot avatar + staff name settings (US-087, US-011)
   try {
     var settingsData = await api('/settings');
     if (settingsData && settingsData.botAvatar) {
       window._botAvatar = settingsData.botAvatar;
+    }
+    // US-011: Load staff name
+    if (settingsData && settingsData.staffName) {
+      $.staffName = settingsData.staffName;
+      var staffEl = document.getElementById('lc-staff-name');
+      if (staffEl) staffEl.textContent = settingsData.staffName;
     }
   } catch (e) { /* fallback to default */ }
 
@@ -154,7 +200,14 @@ export async function loadLiveChat() {
     }
     updateConnectionStatus(statusData);
     buildInstanceFilter();
+    loadContactTagsMap(); // US-009: Fetch phone→tags map for tag filtering
+    loadContactUnitsMap(); // US-012: Fetch phone→unit map for left pane prefix
+    loadContactDatesMap(); // US-014: Fetch phone→dates map for left pane date suffix
+    loadCapsuleUnits(); // US-010: Pre-fetch capsule units for dropdown
+    loadCmdTemplates(); // US-015: Pre-fetch command palette templates
     renderList($.conversations);
+    refreshOverdueBell(); // US-022: Update payment reminder bell
+    addOverdueBadgeToList(); // US-022: Add overdue badges to left pane
 
     // WhatsApp Web style: show last active conversation when none selected
     if ($.conversations.length > 0 && $.activePhone === null) {
@@ -179,6 +232,7 @@ export async function loadLiveChat() {
         var fresh = await api('/conversations');
         $.conversations = fresh;
         buildInstanceFilter();
+        if ($.tagFilter && $.tagFilter.length > 0) loadContactTagsMap(); // US-009: Refresh tags map when filter active
         renderList($.conversations);
         if ($.activePhone) {
           await refreshChat();
@@ -191,6 +245,9 @@ export async function loadLiveChat() {
 
     clearInterval($.waStatusPoll);
     $.waStatusPoll = setInterval(pollConnectionStatus, 15000);
+
+    // US-017: SSE connection for real-time read receipts
+    initMessageStatusSSE();
   } catch (err) {
     console.error('[LiveChat] Load failed:', err);
     // Hide skeleton on error too (US-145)
@@ -209,6 +266,11 @@ export function cleanupLiveChat() {
   if ($.waStatusPoll) {
     clearInterval($.waStatusPoll);
     $.waStatusPoll = null;
+  }
+  // US-017: Close read receipt SSE
+  if ($._statusSSE) {
+    $._statusSSE.close();
+    $._statusSSE = null;
   }
   console.log('[LiveChat] Cleanup: cleared all intervals');
 }
@@ -251,6 +313,60 @@ export function buildInstanceFilter() {
   select.value = currentVal;
 }
 
+// ─── Display Name Helper (US-012) ────────────────────────────────
+
+/**
+ * Build display name for left pane: [Unit]-[Name] - [DateCode]
+ * Unit prefix and date suffix only appear in left pane conversation list.
+ * Date code format: [checkInDay][checkOutDay][checkInMonth] (all zero-padded)
+ * Example: check-in 2025-01-31, check-out 2025-02-01 → "310101"
+ * @param {string} phone - Contact phone number
+ * @param {string} name - Push name or fallback
+ * @returns {string} Formatted display name
+ */
+export function getDisplayName(phone, name) {
+  var unit = $.contactUnitsMap[phone] || '';
+  var result = unit ? unit + '-' + name : name;
+  var dates = $.contactDatesMap[phone];
+  if (dates && dates.checkIn && dates.checkOut) {
+    var dateCode = buildDateCode(dates.checkIn, dates.checkOut);
+    if (dateCode) result = result + ' - ' + dateCode;
+  }
+  return result;
+}
+
+/**
+ * Build DDDDMM date code from ISO date strings.
+ * @param {string} checkIn - ISO date string (YYYY-MM-DD)
+ * @param {string} checkOut - ISO date string (YYYY-MM-DD)
+ * @returns {string} Date code e.g. "310101" or empty string if invalid
+ */
+function buildDateCode(checkIn, checkOut) {
+  var ci = parseLocalDate(checkIn);
+  var co = parseLocalDate(checkOut);
+  if (!ci || !co) return '';
+  var ciDay = String(ci.getDate()).padStart(2, '0');
+  var coDay = String(co.getDate()).padStart(2, '0');
+  var ciMonth = String(ci.getMonth() + 1).padStart(2, '0');
+  return ciDay + coDay + ciMonth;
+}
+
+/**
+ * Parse YYYY-MM-DD as local date (not UTC).
+ * @param {string} s - ISO date string
+ * @returns {Date|null}
+ */
+function parseLocalDate(s) {
+  if (!s || typeof s !== 'string') return null;
+  var parts = s.split('-');
+  if (parts.length !== 3) return null;
+  var y = parseInt(parts[0], 10);
+  var m = parseInt(parts[1], 10) - 1;
+  var d = parseInt(parts[2], 10);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+  return new Date(y, m, d);
+}
+
 // ─── Conversation List ───────────────────────────────────────────
 
 export function renderList(conversations) {
@@ -286,7 +402,8 @@ export function renderList(conversations) {
   }
   if (searchVal) {
     filtered = filtered.filter(function (c) {
-      return (c.pushName || '').toLowerCase().includes(searchVal) ||
+      var displayName = getDisplayName(c.phone, c.pushName || '');
+      return displayName.toLowerCase().includes(searchVal) ||
         c.phone.toLowerCase().includes(searchVal) ||
         (c.lastMessage || '').toLowerCase().includes(searchVal);
     });
@@ -312,6 +429,27 @@ export function renderList(conversations) {
     filtered = filtered.filter(function (c) { return c.phone && c.phone.indexOf('@g.us') !== -1; });
   }
 
+  // Apply tag filter (US-009)
+  if ($.tagFilter && $.tagFilter.length > 0) {
+    filtered = filtered.filter(function (c) {
+      var contactTags = $.contactTagsMap[c.phone];
+      if (!contactTags || !Array.isArray(contactTags) || contactTags.length === 0) return false;
+      var lowerTags = contactTags.map(function (t) { return t.toLowerCase(); });
+      // Match if contact has ANY of the selected tags
+      return $.tagFilter.some(function (ft) {
+        return lowerTags.indexOf(ft.toLowerCase()) !== -1;
+      });
+    });
+  }
+
+  // Apply unit filter (US-013)
+  if ($.unitFilter) {
+    filtered = filtered.filter(function (c) {
+      var contactUnit = $.contactUnitsMap[c.phone];
+      return contactUnit && contactUnit.toLowerCase() === $.unitFilter.toLowerCase();
+    });
+  }
+
   // Sort: pinned first, then by most recent
   filtered.sort(function (a, b) {
     if (a.pinned && !b.pinned) return -1;
@@ -328,7 +466,7 @@ export function renderList(conversations) {
     var initials = (c.pushName || '?').slice(0, 2).toUpperCase();
     var time = formatRelativeTime(c.lastMessageAt);
     var preview = c.lastMessage || '';
-    if (c.lastMessageRole === 'assistant') preview = 'Rainbow: ' + preview;
+    if (c.lastMessageRole === 'assistant') preview = '\uD83E\uDD16 ' + preview;
     if (preview.length > 45) preview = preview.substring(0, 42) + '...';
     var isActive = c.phone === $.activePhone ? ' active' : '';
     var unreadCount = typeof c.unreadCount === 'number' ? c.unreadCount : 0;
@@ -347,7 +485,7 @@ export function renderList(conversations) {
       '<div class="lc-avatar">' + avatarImg(c.phone, initials) + '</div>' +
       '<div class="lc-chat-info">' +
       '<div class="lc-chat-top">' +
-      '<span class="lc-chat-name">' + escapeHtml(c.pushName || formatPhoneForDisplay(c.phone)) + '</span>' +
+      '<span class="lc-chat-name">' + escapeHtml(getDisplayName(c.phone, c.pushName || formatPhoneForDisplay(c.phone))) + '</span>' +
       '<span class="lc-chat-time">' + time + '</span>' +
       hoverActions +
       '</div>' +
@@ -437,10 +575,50 @@ export async function openConversation(phone) {
     if (el.onclick && el.onclick.toString().includes(phone)) el.classList.add('active');
   });
 
+  // US-006: Optimistic UI — render cached conversation immediately
+  var cached = $.conversationCache.get(phone);
+  if (cached) {
+    renderChat(cached.log);
+    updateMessageIndicators();
+  }
+
+  // US-006: Show subtle loading spinner if fetch takes >500ms
+  var spinnerTimer = null;
+  if (!cached) {
+    // No cache: show spinner immediately (first load)
+    _showChatSpinner(true);
+  } else {
+    // Have cache: show spinner only if refresh takes >500ms
+    spinnerTimer = setTimeout(function () { _showChatSpinner(true); }, 500);
+  }
+
   try {
     var log = await api('/conversations/' + encodeURIComponent(phone));
-    renderChat(log);
-    // Load message-level pin/star metadata and show indicators
+
+    // US-006: Clear spinner timer and hide spinner
+    if (spinnerTimer) clearTimeout(spinnerTimer);
+    _showChatSpinner(false);
+
+    // Only re-render if this is still the active conversation
+    if ($.activePhone !== phone) return;
+
+    // US-006: Cache the fresh response
+    $.conversationCache.set(phone, { log: log, cachedAt: Date.now() });
+    // Limit cache size to 50 conversations to prevent memory bloat
+    if ($.conversationCache.size > 50) {
+      var oldest = $.conversationCache.keys().next().value;
+      $.conversationCache.delete(oldest);
+    }
+
+    // Only re-render if data actually changed (skip if cached version was identical)
+    var msgCount = (log.messages || []).length;
+    var cachedMsgCount = cached ? (cached.log.messages || []).length : -1;
+    var lastMsgTs = msgCount > 0 ? log.messages[msgCount - 1].timestamp : 0;
+    var cachedLastTs = cachedMsgCount > 0 ? cached.log.messages[cachedMsgCount - 1].timestamp : -1;
+    if (!cached || msgCount !== cachedMsgCount || lastMsgTs !== cachedLastTs) {
+      renderChat(log);
+    }
+
     await loadMessageMetadata();
     updateMessageIndicators();
     await api('/conversations/' + encodeURIComponent(phone) + '/read', { method: 'PATCH' }).catch(function () { });
@@ -464,7 +642,24 @@ export async function openConversation(phone) {
       console.error('[LiveChat] Failed to load mode:', err);
     }
   } catch (err) {
+    if (spinnerTimer) clearTimeout(spinnerTimer);
+    _showChatSpinner(false);
     console.error('[LiveChat] Failed to load conversation:', err);
+  }
+}
+
+/** US-006: Show/hide a subtle loading spinner overlay on the messages area */
+function _showChatSpinner(show) {
+  var container = document.getElementById('lc-messages');
+  if (!container) return;
+  var existing = container.querySelector('.lc-chat-spinner');
+  if (show && !existing) {
+    var spinner = document.createElement('div');
+    spinner.className = 'lc-chat-spinner';
+    spinner.innerHTML = '<div class="lc-chat-spinner-dot"></div>';
+    container.appendChild(spinner);
+  } else if (!show && existing) {
+    existing.remove();
   }
 }
 
@@ -502,12 +697,19 @@ export function renderChat(log) {
 
     var checkmark = '';
     if (!isGuest) {
-      checkmark = '<svg class="lc-checkmark" viewBox="0 0 16 11" fill="currentColor"><path d="M11.07.65l-6.53 6.53L1.97 4.6l-.72.72 3.29 3.29 7.25-7.25-.72-.71z"/><path d="M5.54 7.18L4.82 6.46l-.72.72 1.44 1.44.72-.72-.72-.72z"/></svg>';
+      // US-017: Status-aware ticks — default to delivered (double grey)
+      // Single tick: server acknowledged; Double grey: delivered; Double blue: read
+      checkmark = '<span class="lc-ticks lc-ticks-delivered" data-msg-idx-tick="' + i + '">' +
+        '<svg viewBox="0 0 16 11" width="16" height="11">' +
+        '<path d="M11.07.86l-1.43.77L5.64 7.65 2.7 5.32l-1.08 1.3L5.88 9.9l5.19-9.04z" fill="currentColor"/>' +
+        '<path d="M15.07.86l-1.43.77L9.64 7.65 8.8 7.01l-.86 1.5 2.04 1.39 5.09-9.04z" fill="currentColor"/>' +
+        '</svg></span>';
     }
 
     var manualTag = '';
     if (!isGuest && msg.manual) {
-      manualTag = '<span class="lc-manual-tag">Staff</span>';
+      var staffLabel = (msg.staffName ? escapeHtml(msg.staffName) : null) || $.staffName || 'Staff';
+      manualTag = '<span class="lc-manual-tag">' + staffLabel + '</span>';
     }
 
     var isCurrentMatch = $.searchCurrent >= 0 && $.searchMatches[$.searchCurrent] === i;
@@ -604,7 +806,73 @@ export async function refreshChat() {
   if (!$.activePhone) return;
   try {
     var log = await api('/conversations/' + encodeURIComponent($.activePhone));
+    // US-006: Update cache on refresh
+    $.conversationCache.set($.activePhone, { log: log, cachedAt: Date.now() });
     renderChat(log);
     updateMessageIndicators();
   } catch (e) { }
+}
+
+// ─── US-017: Read Receipts SSE ──────────────────────────────────────
+
+/**
+ * Connect to SSE stream for real-time message status updates (read receipts).
+ * When a message_status event arrives for the active phone, update the
+ * tick icons on bot message bubbles.
+ */
+function initMessageStatusSSE() {
+  if ($._statusSSE) {
+    $._statusSSE.close();
+    $._statusSSE = null;
+  }
+
+  try {
+    var baseUrl = (window.API || '').replace(/\/api\/rainbow$/, '');
+    var sseUrl = baseUrl + '/api/rainbow/conversations/events';
+    $._statusSSE = new EventSource(sseUrl);
+
+    $._statusSSE.addEventListener('message_status', function (e) {
+      try {
+        var data = JSON.parse(e.data);
+        if (!data.phone || !$.activePhone) return;
+
+        // Normalize phone for comparison
+        var eventPhone = data.phone.replace(/@s\.whatsapp\.net$/i, '');
+        var activePhone = $.activePhone.replace(/@s\.whatsapp\.net$/i, '');
+        if (eventPhone !== activePhone) return;
+
+        updateTickStatus(data.status);
+      } catch (err) { /* ignore parse errors */ }
+    });
+
+    $._statusSSE.onerror = function () {
+      // EventSource will auto-reconnect
+    };
+  } catch (err) {
+    console.warn('[LiveChat] Failed to init message status SSE:', err);
+  }
+}
+
+/**
+ * Update all bot tick icons in the current chat view based on status.
+ * Status codes: 1=sent (single grey), 2=delivered (double grey), 3=read (double blue)
+ * All messages before the latest status are assumed to have the same or higher status.
+ */
+function updateTickStatus(status) {
+  var ticks = document.querySelectorAll('.lc-ticks');
+  if (!ticks.length) return;
+
+  for (var i = 0; i < ticks.length; i++) {
+    var tick = ticks[i];
+    // Remove existing status classes
+    tick.classList.remove('lc-ticks-sent', 'lc-ticks-delivered', 'lc-ticks-read');
+
+    if (status >= 3) {
+      tick.classList.add('lc-ticks-read');
+    } else if (status >= 2) {
+      tick.classList.add('lc-ticks-delivered');
+    } else {
+      tick.classList.add('lc-ticks-sent');
+    }
+  }
 }

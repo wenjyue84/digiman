@@ -6,15 +6,16 @@ import { isAIAvailable } from '../../assistant/ai-client.js';
 import { checkServerHealth } from './utils.js';
 import { trackConfigReloaded } from '../../lib/activity-tracker.js';
 import { ok } from './http-utils.js';
+import { getConfigAuditLog } from '../../lib/config-db.js';
 
 const router = Router();
 
 // ─── System ─────────────────────────────────────────────────────────
 
-router.post('/reload', (_req: Request, res: Response) => {
-  configStore.forceReload();
+router.post('/reload', async (_req: Request, res: Response) => {
+  await configStore.forceReload();
   trackConfigReloaded('all');
-  ok(res, { message: 'All config reloaded from disk' });
+  ok(res, { message: 'All config reloaded (DB-first, then disk)' });
 });
 
 /** POST /restart — exit process so a process manager (e.g. start-all.bat, PM2) can restart the MCP server. */
@@ -54,7 +55,8 @@ router.get('/status', async (_req: Request, res: Response) => {
   res.json({
     servers: {
       mcp: {
-        name: 'MCP Server',
+        name: 'Rainbow AI',
+        description: 'WhatsApp AI + Admin Dashboard (MCP tools moved to port 5000)',
         port: parseInt(process.env.MCP_SERVER_PORT || '3002', 10),
         online: true,
         responseTime: 0,
@@ -98,8 +100,17 @@ router.get('/status', async (_req: Request, res: Response) => {
       providers: aiProviders
     },
     config_files: ['knowledge', 'intents', 'templates', 'settings', 'workflow', 'workflows', 'routing'],
-    response_modes: settings.response_modes || { default_mode: 'autopilot' }
+    response_modes: settings.response_modes || { default_mode: 'autopilot' },
+    isCloud: process.env.RAINBOW_ROLE === 'primary'
   });
+});
+
+// ─── Config Audit Log ────────────────────────────────────────────────
+
+router.get('/config-audit', async (req: Request, res: Response) => {
+  const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+  const rows = await getConfigAuditLog(limit);
+  ok(res, rows);
 });
 
 export default router;

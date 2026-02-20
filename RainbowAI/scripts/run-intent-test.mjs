@@ -50,7 +50,7 @@ const EXPECTED = {
   // post-complaint-food removed: hostel doesn't serve food
   'post-complaint-service': 'post_checkout_complaint',
   'billing-dispute': 'billing_dispute',
-  'billing-minor': 'billing_dispute',
+  'billing-minor': 'billing_inquiry',  // "Small discrepancy" = inquiry, not dispute
   'review-positive': 'review_feedback',
   'review-negative': 'review_feedback',
   'chinese-greeting': 'greeting',

@@ -11,27 +11,68 @@ Three modules: web app (`client/` + `server/`), MCP server (`RainbowAI/`), share
 4. **Delete Confirmation**: Always ask before deleting files
 5. **Main Branch**: Work on `main`, use Conventional Commits
 
+## Environment
+
+This is a Windows development environment. When generating shell scripts, ALWAYS use LF line endings (not CRLF). Use `dos2unix` or write files with explicit LF. Bash scripts with CRLF will silently fail. Also prefer PowerShell over curl for HTTP requests on Windows.
+
+## Deployment
+
+When deploying to AWS Lightsail nano instances (512MB), ALWAYS build locally and transfer the tarball. Never run `npm install` on the instance — it will OOM-kill. Use `npm install --omit=dev`, build locally, tar the result, scp to server, and extract.
+
+## Resource Management
+
+When spawning background tasks or sub-agents, limit concurrent tasks to 3-4 maximum. Excessive parallel browser tasks or background processes cause OOM and crash the system. Always clean up zombie node processes before starting new servers (check with `netstat -ano | findstr "LISTENING"`).
+
+## Tech Stack & Conventions
+
+The primary stack is TypeScript (backend) + HTML/CSS/JavaScript (frontend dashboard). Use TypeScript for all backend code. The frontend uses modular CSS served via Express static middleware. When fixing CSS selectors, always inspect the actual DOM structure (`#app-sidebar`, `.app-topbar`) rather than assuming generic selectors (`body > header`).
+
+After making CSS or UI changes, always verify by checking the actual rendered output. When adding Express static middleware, mount at the correct prefix (usually root `/` not `/public/`). Test that assets return 200, not 404.
+
+## Database
+
+**Two Postgres databases:**
+- **Neon (Drizzle ORM):** Web app data — guests, capsules, users, settings. Schema in `shared/schema.ts`.
+- **Neon (raw pg):** Rainbow AI config sync — `rainbow_configs`, `rainbow_kb_files`, `rainbow_config_audit`. Managed by `RainbowAI/src/lib/config-db.ts`.
+
+Both use the same Neon Postgres instance but different tables. The config-db uses raw `pg` Pool (not Drizzle) to avoid coupling Rainbow AI to the web app schema.
+
+When fixing database queries, be careful about column name casing. The database may use snake_case while the TypeScript code uses camelCase. Always verify the actual column names in the schema before writing queries. Also verify query time windows — matching 'duplicate' messages across weeks is wrong; use tight time windows (< 60 seconds).
+
+## Production Architecture (Two Services, Different Homes)
+
+> **Website always on Lightsail. Rainbow AI uses Lightsail (primary) + local PC (standby).**
+
+| Service | Production Home | Reason |
+| ------- | --------------- | ------ |
+| **Website** (frontend + API, ports 80/5000) | **Lightsail only** | Stateless — colleagues need 24/7 access without your PC being on |
+| **Rainbow AI** (port 3002) | **Lightsail (primary) + Local PC (standby)** | Lightsail is always-on 24/7; local PC behind NAT can't receive heartbeats |
+
+**Config storage:** All Rainbow AI configs stored in shared Neon Postgres (`rainbow_configs` table). Both servers read from DB on startup. Changes via dashboard are dual-written (local file + DB). Audit trail in `rainbow_config_audit` table.
+
+**Rainbow AI Failover rules:**
+- Lightsail (`RAINBOW_ROLE=primary`) — sends WhatsApp replies, always-on
+- Local PC (`RAINBOW_ROLE=standby`) — polls Lightsail `/health` every 10s (pull mode), activates after 60s unreachable
+- When Lightsail comes back → local PC detects via poll and immediately steps down
+
 ## Quick Commands
 
 | Task              | Command                                           |
 | ----------------- | ------------------------------------------------- |
-| **Start all servers** | `start-all.bat` ⭐ (recommended - starts all 3 servers automatically) |
-| **Check health**  | `check-health.bat` (verify all servers running)   |
-| Start dev         | `npm run dev:clean` (kills ports 3000/5000 first) |
-| Start MCP server  | `cd RainbowAI && npm run dev`                     |
+| **Start all (local dev)** | `start-all.bat` ⭐ (starts ports 3000/5000/3002 locally) |
+| **Check health**  | `check-health.bat` (verify all local servers running)   |
+| Start website dev | `npm run dev:clean` (kills ports 3000/5000 first) |
+| Start Rainbow AI  | `cd RainbowAI && npm run dev`                     |
 | Build             | `npm run build`                                   |
 | Test              | `npm test`                                        |
 | Clear cache       | `rm -rf node_modules/.vite && npm run dev`        |
 | Push DB schema    | `npm run db:push`                                 |
+| **Deploy website** | `./deploy.sh` (builds + uploads to Lightsail)   |
+| **Deploy Rainbow** | `./deploy.sh` (same script, Lightsail primary) |
 
-**🚀 Daily Startup:** Run `start-all.bat` to start all 3 servers with one command!
+**⚠️ LOCAL DEV ONLY:** `start-all.bat` starts ports 3000/5000/3002 for local development. In production, the website is served by Lightsail. You only need all 3 running locally to work on the Rainbow AI dashboard.
 
-**⚠️ CRITICAL:** Rainbow dashboard (`http://localhost:3002`) requires **ALL 3 servers running**:
-- Port 3000: Frontend (Vite)
-- Port 5000: Backend API (Express) — MCP server fetches data from here!
-- Port 3002: MCP server (Rainbow AI)
-
-If dashboard shows "Loading..." → verify all 3 servers running, then hard refresh browser (`Ctrl+Shift+R`). See `fix.md` for full troubleshooting.
+If dashboard shows "Loading..." → verify all 3 servers running locally, then hard refresh browser (`Ctrl+Shift+R`). See `fix.md` for full troubleshooting.
 
 ## Architecture
 
@@ -88,7 +129,7 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 2. **Multi-language always** — any new template/response needs `en`, `ms`, `zh` variants
 3. **Escalation triggers** — emergency regex, complaint intent, low confidence, repeat intent 3×, negative sentiment
 4. **KB is progressive** — only load topic files matching the message, never dump everything
-5. **Config is atomic** — `config-store.ts` writes `.tmp` then `renameSync` to prevent corruption
+5. **Config is dual-written** — `config-store.ts` writes local file (sync) + Postgres DB (async). DB is primary on startup; local file is fallback. Audit trail in `rainbow_config_audit` table.
 6. **Admin API auth** — localhost is unauthenticated; remote requires `X-Admin-Key` header
 7. **Test before deploy** — use Chat Simulator tab to verify intent changes before production
 
@@ -111,6 +152,10 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | `docs/`                          | Project-wide documentation                       |
 | `scripts/`                       | Project-wide utility scripts                     |
 | `archive/`                       | Archived files (gitignored)                      |
+| `deploy.sh`                      | Lightsail full deployment script                 |
+| `ecosystem.config.cjs`           | PM2 process definitions (production)             |
+| `lightsail-nginx.sh`             | nginx reverse proxy setup script                 |
+| `lightsail-backup.sh`            | Automated snapshot backup script                 |
 
 ## Key File Locations
 
@@ -129,6 +174,9 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | **AI client**         | `RainbowAI/src/assistant/ai-client.ts`      |
 | **Knowledge base**    | `RainbowAI/src/assistant/knowledge-base.ts` |
 | **Config store**      | `RainbowAI/src/assistant/config-store.ts`   |
+| **Config DB**         | `RainbowAI/src/lib/config-db.ts`            |
+| **LLM settings**      | `RainbowAI/src/assistant/llm-settings-loader.ts` |
+| **Failover**          | `RainbowAI/src/lib/failover-coordinator.ts` |
 | **Conversation**      | `RainbowAI/src/assistant/conversation.ts`   |
 | **Workflow engine**   | `RainbowAI/src/assistant/workflow-executor.ts` |
 | MCP tools             | `RainbowAI/src/tools/registry.ts`           |
@@ -136,12 +184,100 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | Rainbow dashboard     | `RainbowAI/src/public/rainbow-admin.html`   |
 | Rainbow admin API     | `RainbowAI/src/routes/admin.ts`             |
 
+## AWS Lightsail Production
+
+### Instance
+
+| Spec | Value |
+| ---- | ----- |
+| Instance name | `pelangi-production-v2` |
+| Type | `micro_3_0` (1GB RAM, 40GB SSD) |
+| Static IP | `18.142.14.142` (`pelangi-static-ip`) |
+| OS | Ubuntu 22.04 LTS |
+| Region | `ap-southeast-1` (Singapore) |
+| SSH key | `~/.ssh/LightsailDefaultKeyPair.pem` |
+| Cost | $7/mo (dual-stack) |
+
+### Production URLs
+
+| Service | URL | Served By | Always On? |
+| ------- | --- | --------- | ---------- |
+| **Frontend** | `http://18.142.14.142/` | nginx (port 80) → static `dist/public` | ✅ Lightsail always |
+| **API** | `http://18.142.14.142/api/*` | nginx → PM2 `pelangi-api` (port 5000) | ✅ Lightsail always |
+| **Rainbow AI Dashboard** | `http://18.142.14.142:3002/` | PM2 `rainbow-ai` (primary mode) | ✅ Lightsail always |
+| **Rainbow AI (local)** | `http://localhost:3002/` | Local dev server (standby) | When PC is on |
+
+**Note:** Port 3000 does NOT run in production — nginx on port 80 serves the pre-built frontend.
+
+**Rainbow AI dual-server:** Lightsail `rainbow-ai` runs as **primary** (`RAINBOW_ROLE=primary`) — always-on, handles all WhatsApp messages. Local PC runs as **standby** (`RAINBOW_ROLE=standby`) and polls Lightsail's `/health` endpoint every 10s. If Lightsail is unreachable for 60+ seconds, local PC activates automatically. When Lightsail is reachable again, local PC deactivates. Dashboard is accessible on both servers independently. All config is shared via Neon Postgres (`rainbow_configs` table).
+
+### PM2 Processes (`ecosystem.config.cjs`)
+
+| Process | Script | Port | Heap Limit | Restart At |
+| ------- | ------ | ---- | ---------- | ---------- |
+| `pelangi-api` | `dist/server/index.js` | 5000 | 350MB | 400MB |
+| `rainbow-ai` | `RainbowAI/dist/index.js` | 3002 | 450MB | 500MB |
+
+Both use `fork` mode (not cluster — cluster breaks ESM imports).
+
+### Deployment
+
+```bash
+# Full deploy (build + upload + restart)
+./deploy.sh
+
+# Skip build (upload existing dist/)
+./deploy.sh --skip-build
+
+# SSH into instance
+ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142
+
+# Check PM2 status remotely
+ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 list'
+
+# View logs remotely
+ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 logs --lines 50'
+```
+
+**Critical deployment rules** (see `.claude/skills/lightsail-deployment/SKILL.md` for full details):
+- NEVER `npm install` without `--omit=dev` on the server (OOM risk)
+- Always build locally, upload pre-built artifacts only
+- 2GB swap must be active before any Node.js work
+- Use esbuild for RainbowAI (not tsc — rootDir errors in monorepo)
+
+### Deployment Scripts
+
+| Script | Purpose |
+| ------ | ------- |
+| `deploy.sh` | Full deployment (build → package → upload → install → restart) |
+| `deploy-frontend.sh` | Frontend-only deployment |
+| `lightsail-nginx.sh` | nginx config setup (run on server) |
+| `lightsail-backup.sh` | Weekly snapshot backup with rotation |
+| `setup-weekly-backup.sh` | Cron setup for automated backups |
+| `download-backups.sh` | Download backup snapshots |
+
+### Firewall (Open Ports)
+
+| Port | Service |
+| ---- | ------- |
+| 22 | SSH |
+| 80 | nginx (frontend + API proxy) |
+| 3002 | Rainbow AI (direct access) |
+
 ## Dual Storage System
 
+**Web App (Drizzle ORM):**
 - **Primary**: PostgreSQL (Neon) via Drizzle ORM
 - **Fallback**: In-memory storage (auto-failover)
 - **Factory**: `server/Storage/StorageFactory.ts` selects based on DB availability
 - **Models**: Guests, Capsules, Users, Problems, Settings, GuestTokens
+
+**Rainbow AI Config (raw pg):**
+- **Primary**: PostgreSQL (Neon) — `rainbow_configs` (JSONB), `rainbow_kb_files`, `rainbow_config_audit`
+- **Fallback**: Local JSON files in `RainbowAI/src/assistant/data/`
+- **Pattern**: DB-first read on startup, dual-write (local + DB) on save, fire-and-forget async DB writes
+- **Migration**: `npx tsx RainbowAI/scripts/migrate-configs-to-db.ts` (one-time seed from JSON to DB)
+- **Audit API**: `GET /api/rainbow/config-audit?limit=50`
 - Always test DB connections with minimal scripts first
 
 ## Common Issues
@@ -158,9 +294,16 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | Intent misclassified | Check `intent-keywords.json` (T2) and `intent-examples.json` (T3), test in Chat Simulator |
 | Wrong routing action | Check `routing.json` intent→action mapping |
 | KB not loading topic | Check `guessTopicFiles()` regex in `knowledge-base.ts` matches your topic file |
-| WhatsApp not connecting | Check phone internet, QR not expired, Baileys session in `RainbowAI/auth/` |
+| WhatsApp not connecting | Check phone internet, QR not expired, Baileys session in `RainbowAI/whatsapp-auth/`. Verify `authDir` in `whatsapp-data/instances.json` matches actual project path |
 | AI rate limited (429) | Provider hit limit — check logs, fallback chain should auto-switch |
 | Config file corrupted | Restore from git; `config-store.ts` uses atomic writes to prevent this |
+| **Production nginx 502** | PM2 process crashed — `ssh ubuntu@18.142.14.142 'pm2 list && pm2 restart all'` |
+| **Production OOM** | Check swap with `free -h`; add 2GB swap if missing (see Lightsail skill) |
+| **Deploy fails** | Run `./deploy.sh`; check SSH key exists at `~/.ssh/LightsailDefaultKeyPair.pem` |
+| **Both servers replying to guests** | Both are `RAINBOW_ROLE=primary` — local PC `.env` must be `RAINBOW_ROLE=standby` |
+| **Local PC not taking over when Lightsail down** | Check `RAINBOW_PEER_URL` in local `.env` points to Lightsail; verify `RAINBOW_FAILOVER_SECRET` matches; confirm local PC is linked as 2nd WA device |
+| **Website down** (colleagues can't access) | Check Lightsail PM2: `pm2 list`. Website always on Lightsail — unrelated to local PC |
+| **Failover tab not loading** | Settings → 🔁 Failover; ensure `RAINBOW_ROLE` is set in `.env` and server restarted |
 
 ## Skills Integration
 
@@ -168,6 +311,7 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | -------------------- | --------------------------------------------- |
 | Token saving         | `ollama-cloud`, `qwen-cli`                    |
 | Deep debugging       | `kimi-cli`, `deepseek-cli`                    |
+| **Lightsail deploy** | `.claude/skills/lightsail-deployment/`        |
 | Database issues      | `.claude/skills/database-troubleshooting/`    |
 | Zeabur deploy        | `.claude/skills/zeabur-deployment/`           |
 | Git security         | `.claude/skills/git-security-check/`          |
@@ -197,3 +341,5 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | Rainbow AI troubleshoot | `RainbowAI/AI-PROVIDER-TROUBLESHOOTING.md` |
 | Rainbow admin dashboard | `RainbowAI/docs/` |
 | Rainbow intent system | `RainbowAI/src/assistant/data/intents.json` + `routing.json` |
+| **Lightsail deployment** | `.claude/skills/lightsail-deployment/SKILL.md` |
+| PM2 ecosystem config | `ecosystem.config.cjs` |

@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { logoutWhatsApp, whatsappManager } from '../../lib/baileys-client.js';
 import { getAvatarFilePath, ensureAvatar } from '../../lib/whatsapp/avatar-cache.js';
 import { ok, badRequest, notFound, serverError } from './http-utils.js';
+import { failoverCoordinator } from '../../lib/failover-coordinator.js';
 
 const router = Router();
 
@@ -108,19 +109,106 @@ router.get('/whatsapp/instances/:id/qr', async (req: Request, res: Response) => 
 
 // ─── WhatsApp Avatar ─────────────────────────────────────────────────
 
-router.get('/whatsapp/avatar/:phone', (req: Request, res: Response) => {
+router.get('/whatsapp/avatar/:phone', async (req: Request, res: Response) => {
   const phone = req.params.phone.replace(/[^0-9]/g, '');
   if (!phone) { res.status(400).end(); return; }
 
-  const filePath = getAvatarFilePath(phone);
+  // Check cache first (fast path)
+  let filePath = getAvatarFilePath(phone);
+  if (filePath) {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(filePath);
+    return;
+  }
+
+  // Await fetch with timeout so avatars appear on first load
+  try {
+    await Promise.race([
+      ensureAvatar(phone),
+      new Promise(resolve => setTimeout(resolve, 5000))
+    ]);
+  } catch { /* ignore */ }
+
+  filePath = getAvatarFilePath(phone);
   if (filePath) {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(filePath);
   } else {
-    // Trigger background fetch for next time
-    ensureAvatar(phone).catch(() => {});
     res.status(404).end();
   }
+});
+
+// ─── Failover coordination endpoints ────────────────────────────────
+
+/**
+ * POST /whatsapp/heartbeat
+ * Called by the primary server every heartbeatIntervalMs to signal it is alive.
+ * The standby server listens on this endpoint.
+ */
+router.post('/whatsapp/heartbeat', (req: Request, res: Response) => {
+  const secret = process.env.RAINBOW_FAILOVER_SECRET;
+  if (secret) {
+    const auth = req.headers['authorization'] ?? '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    if (token !== secret) {
+      res.status(401).json({ error: 'Unauthorized — invalid heartbeat secret' });
+      return;
+    }
+  }
+
+  failoverCoordinator.receiveHeartbeat();
+  const status = failoverCoordinator.getStatus();
+  ok(res, {
+    received: true,
+    standbyRole: status.role,
+    isActive: status.isActive,
+  });
+});
+
+/**
+ * GET /whatsapp/failover/status
+ * Returns current failover coordinator status (role, isActive, last heartbeat, etc.)
+ */
+router.get('/whatsapp/failover/status', (_req: Request, res: Response) => {
+  ok(res, failoverCoordinator.getStatus());
+});
+
+/**
+ * POST /whatsapp/failover/promote
+ * Manually force this server to become active.
+ */
+router.post('/whatsapp/failover/promote', (_req: Request, res: Response) => {
+  failoverCoordinator.promote();
+  ok(res, { ok: true, isActive: true });
+});
+
+/**
+ * POST /whatsapp/failover/demote
+ * Manually force this server to become inactive (suppress replies).
+ */
+router.post('/whatsapp/failover/demote', (_req: Request, res: Response) => {
+  failoverCoordinator.demote();
+  ok(res, { ok: true, isActive: false });
+});
+
+/**
+ * POST /whatsapp/failover/force-standby
+ * Toggle force-standby mode: stops heartbeats so Lightsail takes over,
+ * even when this local PC has no connectivity issues.
+ * Body: { enabled: boolean }
+ */
+router.post('/whatsapp/failover/force-standby', (req: Request, res: Response) => {
+  const { enabled } = req.body;
+  if (typeof enabled !== 'boolean') {
+    res.status(400).json({ error: 'enabled (boolean) required' });
+    return;
+  }
+  if (enabled) {
+    failoverCoordinator.forceStandby();
+  } else {
+    failoverCoordinator.resumePrimary();
+  }
+  ok(res, { ok: true, forcedStandby: enabled, isActive: failoverCoordinator.isActive() });
 });
 
 export default router;

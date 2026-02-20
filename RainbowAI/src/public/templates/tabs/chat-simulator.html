@@ -34,7 +34,7 @@
           <span class="text-2xl">🧪</span>
           <div>
             <h3 class="font-semibold text-neutral-800">Autotest Suite</h3>
-            <p class="text-xs text-neutral-500">58 scenarios across 6 guest journey phases</p>
+            <p class="text-xs text-neutral-500"><span id="scenario-total-count">--</span> scenarios across <span id="scenario-category-count">--</span> categories</p>
           </div>
         </div>
         <div class="flex gap-2">
@@ -109,10 +109,16 @@
                 <span id="run-workflow-count" class="ml-auto text-neutral-400 text-xs">0</span>
               </button>
               <button type="button" onclick="runAutotestWithFilter('llm_reply'); closeRunAllDropdown();"
-                class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-100 rounded-b-xl">
+                class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-100">
                 <span>🤖</span>
                 <span>LLM Reply only</span>
                 <span id="run-llm-count" class="ml-auto text-neutral-400 text-xs">0</span>
+              </button>
+              <button type="button" onclick="runAutotestWithFilter('checkin_process'); closeRunAllDropdown();"
+                class="w-full text-left text-sm px-4 py-2.5 hover:bg-neutral-50 transition flex items-center gap-2 border-t border-neutral-100 rounded-b-xl">
+                <span>🏨</span>
+                <span>Check-in Process</span>
+                <span id="run-checkin-count" class="ml-auto text-neutral-400 text-xs">0</span>
               </button>
             </div>
           </div>
@@ -259,7 +265,7 @@
       </div>
 
       <!-- Chat Messages Container (WhatsApp-style) -->
-      <div id="chat-messages" class="lc-messages" style="flex-direction: column-reverse;">
+      <div id="chat-messages" class="lc-messages">
         <!-- Welcome message -->
         <div class="text-center py-8" style="color:#667781;">
           <div style="font-size:14px;font-weight:500;margin-bottom:4px;">Welcome to AI Agent Preview</div>
@@ -326,6 +332,19 @@
         <input type="text" class="rc-search" id="rc-search" placeholder="Search conversations..."
           oninput="filterConversations()">
       </div>
+      <!-- US-015: Filter chip bar (mirrors US-003/US-004 from live-chat) -->
+      <div class="lc-filter-bar" id="rc-filter-bar" style="padding:6px 8px;gap:4px;">
+        <button class="lc-chip active" data-filter="all" onclick="setRcFilter('all')">All</button>
+        <button class="lc-chip" data-filter="waiting" onclick="setRcFilter('waiting')">Waiting</button>
+        <div class="lc-chip-dropdown" style="position:relative;">
+          <button class="lc-chip" id="rc-tag-chip" onclick="toggleRcTagDropdown()">Tags ▾</button>
+          <div id="rc-tag-dropdown" class="lc-chip-dropdown-menu" style="display:none;position:absolute;top:100%;left:0;z-index:20;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);min-width:140px;max-height:200px;overflow-y:auto;padding:4px 0;"></div>
+        </div>
+        <div class="lc-chip-dropdown" style="position:relative;">
+          <button class="lc-chip" id="rc-unit-chip" onclick="toggleRcUnitDropdown()">Unit ▾</button>
+          <div id="rc-unit-dropdown" class="lc-chip-dropdown-menu" style="display:none;position:absolute;top:100%;left:0;z-index:20;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);min-width:120px;max-height:200px;overflow-y:auto;padding:4px 0;"></div>
+        </div>
+      </div>
       <div class="rc-chat-list" id="rc-chat-list">
         <div class="rc-sidebar-empty" id="rc-sidebar-empty">
           <p>No conversations yet.</p>
@@ -368,6 +387,8 @@
             </div>
           </div>
           <div class="rc-header-actions">
+            <!-- US-015: Ask AI — Prisma (mirrors live-chat feature) -->
+            <button class="lc-prisma-menu-item" onclick="lcOpenPrismaWindow()" title="Ask AI — Prisma" style="padding:4px 10px;border-radius:6px;font-size:12px;background:rgba(124,58,237,0.1);color:#7c3aed;border:1px solid rgba(124,58,237,0.2);cursor:pointer;">✦ Prisma</button>
             <!-- Refresh indicator (subtle) -->
             <span id="rc-refresh-indicator" class="rc-refresh-indicator" title="Auto-refreshes every 3 seconds">
               <span class="rc-spin-icon">⟳</span>
@@ -419,6 +440,20 @@
           <span class="rc-msg-search-count"></span>
           <button class="rc-msg-search-btn" onclick="SearchPanel.navigate(-1)" title="Previous match">↑</button>
           <button class="rc-msg-search-btn" onclick="SearchPanel.navigate(1)" title="Next match">↓</button>
+          <!-- US-015: Date-jump calendar button (mirrors live-chat US-014) -->
+          <div class="lc-msg-search-date-wrap">
+            <button class="rc-msg-search-btn" id="rc-date-jump-btn" onclick="toggleRcDateJump()" title="Jump to date">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </button>
+            <div id="rc-date-jump-popover" class="lc-date-jump-popover" style="display:none;">
+              <input type="date" id="rc-date-jump-input" onchange="jumpToRcDate(this.value)">
+            </div>
+          </div>
           <button class="rc-msg-search-btn" onclick="toggleRcSearch()" title="Close search">✕</button>
         </div>
         <div class="rc-messages" id="rc-messages"></div>
@@ -483,6 +518,31 @@
 
           <textarea class="rc-input-box" id="rc-input-box" placeholder="Type a manual reply..." rows="1"
             oninput="autoResizeInput(this)" onkeydown="handleInputKeydown(event)"></textarea>
+          <!-- US-015: Schedule button (mirrors US-008 from live-chat) -->
+          <div style="position:relative;">
+            <button class="rc-send-btn" id="rc-schedule-btn" onclick="toggleRcSchedule()" title="Schedule message"
+              style="background:transparent;color:#54656f;width:32px;height:32px;padding:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+            <div id="rc-schedule-popover" style="display:none;position:absolute;bottom:44px;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:12px;width:260px;z-index:30;">
+              <div style="font-weight:600;font-size:13px;margin-bottom:8px;">Schedule Message</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <input type="date" id="rc-schedule-date" class="lc-schedule-input" style="width:100%;padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+                <div style="display:flex;gap:4px;">
+                  <input type="number" id="rc-schedule-hh" min="0" max="23" placeholder="HH" class="lc-schedule-input" style="flex:1;padding:6px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:center;" oninput="updateRcSchedulePreview()">
+                  <span style="line-height:34px;">:</span>
+                  <input type="number" id="rc-schedule-mm" min="0" max="59" placeholder="MM" class="lc-schedule-input" style="flex:1;padding:6px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:center;" oninput="updateRcSchedulePreview()">
+                  <span style="line-height:34px;">:</span>
+                  <input type="number" id="rc-schedule-ss" min="0" max="59" placeholder="SS" value="0" class="lc-schedule-input" style="flex:1;padding:6px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:center;" oninput="updateRcSchedulePreview()">
+                </div>
+                <div id="rc-schedule-preview" style="font-size:11px;color:#6b7280;"></div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:10px;">
+                <button onclick="toggleRcSchedule()" style="flex:1;padding:6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;">Cancel</button>
+                <button onclick="confirmRcSchedule()" style="flex:1;padding:6px;border:none;border-radius:8px;font-size:12px;background:#00a884;color:#fff;cursor:pointer;font-weight:600;">Schedule</button>
+              </div>
+            </div>
+          </div>
           <button class="rc-send-btn" id="rc-send-btn" onclick="sendManualReply()" title="Send message">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/>

@@ -345,15 +345,33 @@ export async function markPredictionCorrect(id) {
   var actionsEl = document.getElementById('sr-actions-' + id);
   if (actionsEl) actionsEl.innerHTML = '<span class="text-xs text-neutral-400">Saving...</span>';
 
+  // Read predicted intent from data-intent attribute (reliable) with DOM fallback
+  var predictedIntent = '';
+  if (row && row.dataset.intent) {
+    predictedIntent = row.dataset.intent;
+  } else if (row) {
+    var cells = row.querySelectorAll('td');
+    var intentSpan = cells.length >= 3 ? cells[2].querySelector('span') : null;
+    predictedIntent = intentSpan ? intentSpan.textContent.trim() : '';
+  }
+
+  if (!predictedIntent) {
+    // Also check currentPredictions array as final fallback
+    var pred = currentPredictions.find(function (p) { return p.id === id; });
+    if (pred) predictedIntent = pred.predictedIntent;
+  }
+
+  if (!predictedIntent) {
+    toast('Could not determine intent for this prediction', 'error');
+    if (actionsEl) actionsEl.innerHTML = '<span class="text-xs text-red-500">Error</span>';
+    return;
+  }
+
   // Instant counter update
   pendingCount = Math.max(0, pendingCount - 1);
   updateStats();
 
   try {
-    var cells = row ? row.querySelectorAll('td') : [];
-    var intentSpan = cells.length >= 3 ? cells[2].querySelector('span') : null;
-    var predictedIntent = intentSpan ? intentSpan.textContent.trim() : '';
-
     var result = await api('/intent/predictions/' + id, {
       method: 'PATCH',
       body: { actualIntent: predictedIntent }
@@ -368,9 +386,9 @@ export async function markPredictionCorrect(id) {
       if (actionsEl) actionsEl.innerHTML = '<span class="text-xs text-red-500">Failed</span>';
     }
   } catch (err) {
-    console.error('[Staff Review] Error marking correct:', err);
+    console.error('[Staff Review] Error marking correct:', err, 'id:', id, 'intent:', predictedIntent);
     pendingCount++; updateStats();
-    toast('Failed to mark prediction', 'error');
+    toast('Failed to mark prediction: ' + (err.message || err), 'error');
     if (actionsEl) actionsEl.innerHTML = '<span class="text-xs text-red-500">Error</span>';
   }
 }

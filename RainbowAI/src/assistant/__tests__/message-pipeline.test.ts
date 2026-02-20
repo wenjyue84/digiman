@@ -175,6 +175,7 @@ vi.mock('../knowledge.js', () => ({
     };
     return replies[intent] || null;
   }),
+  getStaticReplyImageUrl: vi.fn((_intent: string) => null),
   setDynamicKnowledge: vi.fn(),
   deleteDynamicKnowledge: vi.fn(() => true),
   listDynamicKnowledge: vi.fn(() => ['wifi', 'checkin']),

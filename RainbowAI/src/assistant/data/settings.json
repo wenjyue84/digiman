@@ -1,5 +1,4 @@
 {
-  "botAvatar": "\uD83E\uDD16",
   "ai": {
     "nvidia_model": "moonshotai/kimi-k2.5",
     "nvidia_base_url": "https://integrate.api.nvidia.com/v1",
@@ -77,7 +76,7 @@
         "api_key_env": "GROQ_API_KEY",
         "base_url": "https://api.groq.com/openai/v1",
         "model": "qwen3-32b",
-        "enabled": false,
+        "enabled": true,
         "priority": 5,
         "available": true
       },
@@ -89,7 +88,7 @@
         "api_key_env": "",
         "base_url": "http://localhost:11434/v1",
         "model": "deepseek-v3.2:cloud",
-        "enabled": false,
+        "enabled": true,
         "priority": 6,
         "available": true
       },
@@ -208,6 +207,11 @@
     "classifyProvider": "groq-llama-8b",
     "tieredPipeline": true
   },
+  "ocr_provider": {
+    "id": "google-gemini-flash",
+    "model": "gemini-2.5-flash",
+    "description": "LLM model used for passport/IC image extraction (OCR). Google Gemini Flash recommended for its multimodal vision capabilities."
+  },
   "system_prompt": "You are Rainbow, a friendly female AI assistant for Pelangi Capsule Hostel in Johor Bahru, Malaysia. You always clarify that you are an AI bot when introducing yourself. You help guests with check-in info, pricing, availability, bookings, and general hostel questions. Be warm, concise, and helpful. Reply in the same language as the guest (English, Malay, or Chinese). Keep responses under 300 characters when possible. Sign off with \"— Rainbow 🌈\" on important messages. If unsure, suggest contacting staff.",
   "rate_limits": {
     "per_minute": 40,
@@ -237,28 +241,45 @@
     "cooldown_minutes": 30,
     "description": "Automatically detect frustrated users and escalate to staff when they send consecutive negative messages"
   },
+  "failover": {
+    "enabled": true,
+    "heartbeatIntervalMs": 20000,
+    "failoverThresholdMs": 60000,
+    "handbackMode": "immediate",
+    "handbackGracePeriodMs": 30000
+  },
+  "botAvatar": "🤖",
+  "prismaBot": {
+    "model": "gemini-2.5-flash",
+    "providerId": "google-gemini-flash",
+    "systemPrompt": ""
+  },
+  "staffName": "Rachel",
   "response_modes": {
-    "default_mode": "autopilot",
-    "description": "Global default response mode: autopilot (AI auto-sends), copilot (AI suggests, staff approves), or manual (staff writes, AI helps on request)",
+    "manual": {
+      "description": "Show AI suggestions when 'Help me' clicked",
+      "ai_help_provider": "groq-llama",
+      "show_ai_suggestions": true
+    },
     "copilot": {
-      "auto_approve_confidence": 0.95,
+      "description": "Auto-approve high-confidence responses for simple intents",
       "auto_approve_intents": [
         "greeting",
         "thanks",
-        "wifi"
+        "wifi",
+        "directions",
+        "checkin_info",
+        "checkout_info",
+        "facilities_info",
+        "rules_policy",
+        "payment_info",
+        "luggage_storage",
+        "extra_amenity_request"
       ],
       "queue_timeout_minutes": 30,
-      "description": "Auto-approve high-confidence responses for simple intents"
+      "auto_approve_confidence": 0.95
     },
-    "manual": {
-      "show_ai_suggestions": true,
-      "ai_help_provider": "groq-llama",
-      "description": "Show AI suggestions when 'Help me' clicked"
-    }
-  },
-  "prismaBot": {
-    "providerId": "google-gemini-flash",
-    "model": "gemini-2.5-flash",
-    "systemPrompt": ""
+    "description": "Global default response mode: autopilot (AI auto-sends), copilot (AI suggests, staff approves), or manual (staff writes, AI helps on request)",
+    "default_mode": "autopilot"
   }
 }

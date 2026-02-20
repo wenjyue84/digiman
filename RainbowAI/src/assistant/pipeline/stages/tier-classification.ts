@@ -22,6 +22,7 @@ export interface ClassificationResult {
   responseTime?: number;
   detectedLanguage?: string;
   entities?: Record<string, string>;
+  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
 }
 
 interface ClassificationInput {
@@ -131,6 +132,7 @@ async function classifyTieredPipeline(
       responseTime: classifyTime + (replyResult.responseTime || 0),
       detectedLanguage: tierResult.detectedLanguage,
       entities: tierResult.entities,
+      usage: replyResult.usage,
     };
   }
 
@@ -148,6 +150,7 @@ async function classifyTieredPipeline(
     responseTime: classifyTime + (llmResult.responseTime || 0),
     detectedLanguage: tierResult.detectedLanguage,
     entities: tierResult.entities,
+    usage: llmResult.usage,
   };
 }
 
@@ -194,6 +197,7 @@ async function classifySplitModel(
       confidence: finalConfidence,
       model: `${classifyResult.model} → ${replyResult.model}`,
       responseTime: (classifyResult.responseTime || 0) + (replyResult.responseTime || 0),
+      usage: replyResult.usage,
     };
   }
 
@@ -231,5 +235,6 @@ async function classifyDefault(
     confidence: result.confidence,
     model: result.model,
     responseTime: result.responseTime,
+    usage: result.usage,
   };
 }

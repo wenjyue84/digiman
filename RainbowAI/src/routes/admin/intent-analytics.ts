@@ -5,11 +5,9 @@ import { intentPredictions } from '../../../../shared/schema.js';
 import { desc, eq, sql, isNull, isNotNull, inArray } from 'drizzle-orm';
 import { serverError, badRequest, notFound } from './http-utils.js';
 import { safeReadJSON, atomicWriteJSON } from './file-utils.js';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const EXAMPLES_PATH = join(__dirname, '../../assistant/data/intent-examples.json');
+const EXAMPLES_PATH = join(process.cwd(), 'src', 'assistant', 'data', 'intent-examples.json');
 
 // ─── Training Data Helper ──────────────────────────────────────────
 // When staff approves a prediction, add the message text to intent-examples.json

@@ -170,6 +170,29 @@ export async function executeWorkflowStep(
     };
   }
 
+  // ─── US-020: Cancel Workflow Detection ─────────────────────────────
+  if (userMessage) {
+    const cancelKeywords = [
+      'cancel', 'nevermind', 'never mind', 'stop', 'forget it', 'no thanks',
+      'not interested', 'skip', 'exit', 'quit', 'nah', 'nvm',
+      'batal', 'tak nak', 'tak mahu', 'tak jadi', 'lupakan', 'tak payah', 'sudahlah',
+      '取消', '算了', '不要了', '不用了', '不需要'
+    ];
+    const normalizedMsg = userMessage.toLowerCase().trim();
+    if (cancelKeywords.some(kw => normalizedMsg === kw || normalizedMsg.startsWith(kw + ' '))) {
+      const cancelMessages: Record<string, string> = {
+        en: 'No problem! Is there anything else I can help you with?',
+        ms: 'Takpe! Ada apa-apa lagi saya boleh bantu?',
+        zh: '没问题！还有其他我可以帮您的吗？'
+      };
+      console.log(`[WorkflowExecutor] US-020: Cancel detected in workflow "${state.workflowId}" — exiting gracefully`);
+      return {
+        response: cancelMessages[language as keyof typeof cancelMessages] || cancelMessages.en,
+        newState: null
+      };
+    }
+  }
+
   // ─── Node-Based Workflow Dispatch ──────────────────────────────────
   const hybridWorkflow = workflow as unknown as HybridWorkflowDefinition;
   if (state.isNodeBased || isNodeBasedWorkflow(hybridWorkflow)) {

@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rainbow AI Developer Guide</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --sidebar-width: 280px;
+  --sidebar-bg: #1a1b2e;
+  --sidebar-text: #c4c7d4;
+  --sidebar-heading: #e8eaf0;
+  --sidebar-active: #7c6df0;
+  --sidebar-hover-bg: #252740;
+  --content-bg: #fafbfc;
+  --content-text: #2d3142;
+  --heading-color: #1a1b2e;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-border: #313244;
+  --table-header-bg: #2d3142;
+  --table-header-text: #ffffff;
+  --table-row-even: #f0f2f8;
+  --table-row-odd: #ffffff;
+  --table-border: #d1d5e0;
+  --accent-purple: #7c6df0;
+  --accent-blue: #4ea8de;
+  --accent-green: #4ec9b0;
+  --accent-orange: #e5a44d;
+  --accent-red: #f38ba8;
+  --accent-pink: #f5c2e7;
+  --border-color: #e2e5ef;
+  --link-color: #5b5bd6;
+  --gradient-start: #ff6b6b;
+  --gradient-mid: #feca57;
+  --gradient-mid2: #48dbfb;
+  --gradient-end: #a855f7;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+}
+
+/* ===== Reset ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: var(--font-sans);
+  color: var(--content-text);
+  background: var(--content-bg);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--sidebar-bg);
+  overflow-y: auto;
+  z-index: 100;
+  padding: 0 0 2rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3c52 transparent;
+}
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: #3a3c52; border-radius: 3px; }
+
+.sidebar-header {
+  padding: 1.5rem 1.25rem 1rem;
+  border-bottom: 1px solid #2d2f45;
+  margin-bottom: 0.75rem;
+}
+.sidebar-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--sidebar-heading);
+  letter-spacing: 0.02em;
+}
+.sidebar-header .subtitle {
+  font-size: 0.72rem;
+  color: #6c70a0;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sidebar nav { padding: 0 0.5rem; }
+.sidebar nav a {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.82rem;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+}
+.sidebar nav a:hover {
+  background: var(--sidebar-hover-bg);
+  color: #ffffff;
+}
+.sidebar nav a.active {
+  background: rgba(124, 109, 240, 0.15);
+  color: var(--sidebar-active);
+  font-weight: 600;
+}
+.sidebar nav .nav-group {
+  margin-top: 1rem;
+  padding: 0 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #5a5d80;
+  margin-bottom: 0.35rem;
+}
+
+/* ===== Hamburger (mobile) ===== */
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 200;
+  background: var(--sidebar-bg);
+  border: none;
+  color: #fff;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ===== Content ===== */
+.content {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+}
+
+/* ===== Hero Header ===== */
+.hero {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 25%, var(--gradient-mid2) 50%, var(--gradient-end) 100%);
+  padding: 3.5rem 3rem 2.5rem;
+  color: #fff;
+}
+.hero h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.hero .tagline {
+  font-size: 1.05rem;
+  margin-top: 0.5rem;
+  opacity: 0.92;
+  font-weight: 400;
+}
+.hero .meta {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+/* ===== Main Content Area ===== */
+.main {
+  max-width: 960px;
+  padding: 2.5rem 3rem 4rem;
+}
+
+/* ===== Headings ===== */
+.main h2 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--heading-color);
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border-color);
+  scroll-margin-top: 1rem;
+}
+.main h2 .section-num {
+  color: var(--accent-purple);
+  margin-right: 0.3rem;
+}
+.main h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #3a3d55;
+  margin-top: 1.75rem;
+  margin-bottom: 0.6rem;
+}
+.main h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4a4d68;
+  margin-top: 1.25rem;
+  margin-bottom: 0.4rem;
+}
+
+/* ===== Paragraphs & Lists ===== */
+.main p { margin-bottom: 0.85rem; }
+.main ul, .main ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.main li { margin-bottom: 0.35rem; }
+.main strong { color: #1a1b2e; }
+
+/* ===== Links ===== */
+.main a {
+  color: var(--link-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.main a:hover { border-bottom-color: var(--link-color); }
+
+/* ===== Code ===== */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: #eef0f8;
+  color: #5b3dbb;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+pre {
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 1.1rem 1.3rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 1.2rem;
+  border: 1px solid var(--code-border);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+}
+/* Syntax colors inside code blocks */
+.kw { color: #cba6f7; }       /* keyword */
+.fn { color: #89b4fa; }       /* function */
+.str { color: #a6e3a1; }      /* string */
+.num { color: #fab387; }      /* number */
+.cm { color: #6c7086; font-style: italic; } /* comment */
+.ty { color: #f9e2af; }       /* type */
+.op { color: #89dceb; }       /* operator */
+.param { color: #f38ba8; }    /* parameter */
+.prop { color: #74c7ec; }     /* property */
+.const { color: #fab387; }    /* constant */
+
+/* ===== Tables ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.88rem;
+}
+thead th {
+  background: var(--table-header-bg);
+  color: var(--table-header-text);
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+tbody td {
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid var(--table-border);
+  vertical-align: top;
+}
+tbody tr:nth-child(even) { background: var(--table-row-even); }
+tbody tr:nth-child(odd) { background: var(--table-row-odd); }
+tbody tr:hover { background: #e8ebf5; }
+
+/* ===== Info Boxes ===== */
+.info-box {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+  font-size: 0.9rem;
+  border-left: 4px solid;
+}
+.info-box.warning {
+  background: #fff8e6;
+  border-color: var(--accent-orange);
+  color: #6d5a1f;
+}
+.info-box.danger {
+  background: #fef0f0;
+  border-color: var(--accent-red);
+  color: #6d1f2b;
+}
+.info-box.info {
+  background: #f0f4ff;
+  border-color: var(--accent-blue);
+  color: #1f3a6d;
+}
+.info-box.success {
+  background: #f0faf4;
+  border-color: var(--accent-green);
+  color: #1f6d3a;
+}
+.info-box .box-title {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+/* ===== Collapsible Sections ===== */
+details {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+details summary {
+  padding: 0.75rem 1rem;
+  background: #f4f5fa;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--heading-color);
+  user-select: none;
+  list-style: none;
+}
+details summary::-webkit-details-marker { display: none; }
+details summary::before {
+  content: '\25B6';
+  display: inline-block;
+  margin-right: 0.6rem;
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  color: var(--accent-purple);
+}
+details[open] summary::before { transform: rotate(90deg); }
+details summary:hover { background: #ecedf5; }
+details .details-content { padding: 1rem 1.25rem; }
+
+/* ===== Pipeline diagram ===== */
+.pipeline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1.2rem 0;
+}
+.pipeline .phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #2d3142;
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.pipeline .phase .phase-label {
+  font-size: 0.65rem;
+  background: rgba(255,255,255,0.2);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.pipeline .arrow {
+  color: #9ca0b8;
+  font-size: 1.2rem;
+}
+
+/* ===== Tier cards ===== */
+.tier-card {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 1.1rem 1.3rem;
+  margin-bottom: 1rem;
+  background: #fff;
+}
+.tier-card .tier-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.tier-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.tier-badge.t1 { background: #e53e3e; }
+.tier-badge.t2 { background: #dd6b20; }
+.tier-badge.t3 { background: #3182ce; }
+.tier-badge.t4 { background: #805ad5; }
+.tier-card .tier-title { font-weight: 700; color: var(--heading-color); }
+.tier-card .tier-meta {
+  font-size: 0.78rem;
+  color: #6c7086;
+  margin-bottom: 0.5rem;
+}
+
+/* ===== File tree ===== */
+.file-tree {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  background: var(--code-bg);
+  color: var(--code-text);
+  padding: 1.2rem 1.4rem;
+  border-radius: 8px;
+  border: 1px solid var(--code-border);
+  overflow-x: auto;
+  margin-bottom: 1.2rem;
+}
+.file-tree .dir { color: #89b4fa; font-weight: 600; }
+.file-tree .file { color: #cdd6f4; }
+.file-tree .annotation { color: #6c7086; font-style: italic; }
+
+/* ===== Footer ===== */
+.footer {
+  margin-top: 3rem;
+  padding: 2rem 3rem;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca0b8;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .hamburger { display: flex; align-items: center; justify-content: center; }
+  .content { margin-left: 0; }
+  .hero { padding: 3rem 1.5rem 2rem; }
+  .hero h1 { font-size: 1.8rem; }
+  .main { padding: 1.5rem 1.5rem 3rem; }
+  .pipeline { flex-direction: column; align-items: flex-start; }
+  .pipeline .arrow { transform: rotate(90deg); }
+}
+
+/* ===== Print ===== */
+@media print {
+  .sidebar, .hamburger { display: none !important; }
+  .content { margin-left: 0 !important; }
+  .hero {
+    background: #333 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .main { max-width: 100%; padding: 1rem; }
+  pre { white-space: pre-wrap; word-break: break-all; }
+  details { break-inside: avoid; }
+  details[open] summary ~ * { break-inside: avoid; }
+  h2, h3, h4 { break-after: avoid; }
+  table { break-inside: avoid; font-size: 0.8rem; }
+  .info-box { break-inside: avoid; }
+  a { color: inherit !important; border: none !important; }
+  a::after { content: " (" attr(href) ")"; font-size: 0.7em; color: #666; }
+  .sidebar nav a::after { content: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hamburger Button (mobile) -->
+<button class="hamburger" onclick="document.querySelector('.sidebar').classList.toggle('open')" aria-label="Toggle navigation">&#9776;</button>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h2>Rainbow AI</h2>
+    <div class="subtitle">Developer Guide</div>
+  </div>
+  <nav>
+    <div class="nav-group">Architecture</div>
+    <a href="#architecture">1. Architecture Overview</a>
+    <a href="#pipeline">2. Message Pipeline</a>
+    <a href="#classification">3. 4-Tier Classification</a>
+    <a href="#knowledge-base">4. Knowledge Base</a>
+
+    <div class="nav-group">Systems</div>
+    <a href="#ai-providers">5. AI Provider System</a>
+    <a href="#workflow-engine">6. Workflow Engine</a>
+    <a href="#config-system">7. Config System</a>
+    <a href="#mcp-tools">8. MCP Tools</a>
+
+    <div class="nav-group">Integration</div>
+    <a href="#admin-api">9. Admin API</a>
+    <a href="#whatsapp">10. WhatsApp Integration</a>
+    <a href="#conversation">11. Conversation State</a>
+    <a href="#types">12. Types Reference</a>
+
+    <div class="nav-group">Infrastructure</div>
+    <a href="#storage">13. Dual Storage</a>
+    <a href="#file-tree">14. File Tree</a>
+
+    <div class="nav-group">Operations</div>
+    <a href="#dev-tasks">15. Development Tasks</a>
+    <a href="#troubleshooting">16. Troubleshooting</a>
+    <a href="#deployment">17. Deployment &amp; Env</a>
+  </nav>
+</aside>
+
+<!-- ===== CONTENT ===== -->
+<div class="content">
+
+  <!-- Hero -->
+  <header class="hero">
+    <h1>Rainbow AI Developer Guide</h1>
+    <div class="tagline">WhatsApp AI assistant for Pelangi Capsule Hostel &mdash; complete technical reference</div>
+    <div class="meta">PelangiManager-Zeabur &bull; Three-module monorepo &bull; MCP + Baileys + Multi-provider AI</div>
+  </header>
+
+  <main class="main">
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1: Architecture Overview -->
+    <!-- ============================================================ -->
+    <h2 id="architecture"><span class="section-num">1.</span> Architecture Overview</h2>
+
+    <h3>Three-Module Monorepo</h3>
+    <p>The project is structured as three independent modules with clean boundaries, plus a shared types package:</p>
+
+    <table>
+      <thead>
+        <tr><th>Module</th><th>Port</th><th>Stack</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>client/</code></td>
+          <td>3000</td>
+          <td>React 18 + Vite + Tailwind + shadcn/ui</td>
+          <td>Guest-facing SPA &amp; admin dashboard</td>
+        </tr>
+        <tr>
+          <td><code>server/</code></td>
+          <td>5000</td>
+          <td>Express + Drizzle ORM + PostgreSQL</td>
+          <td>REST API, auth, storage, business logic</td>
+        </tr>
+        <tr>
+          <td><code>RainbowAI/</code></td>
+          <td>3002</td>
+          <td>Express + Baileys + MCP SDK</td>
+          <td>Rainbow AI engine, WhatsApp, admin API</td>
+        </tr>
+        <tr>
+          <td><code>shared/</code></td>
+          <td>&mdash;</td>
+          <td>Drizzle schemas + Zod validators</td>
+          <td>Shared types and validation</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Import Rules (Strictly Enforced)</h3>
+    <div class="info-box danger">
+      <div class="box-title">Zero Cross-Module Imports for RainbowAI</div>
+      <code>RainbowAI/</code> has <strong>ZERO</strong> imports from <code>server/</code>, <code>client/</code>, or <code>shared/</code>. All communication is via HTTP. <code>client/</code> may import only types from <code>shared/</code>. <code>server/</code> may import only from <code>shared/</code>.
+    </div>
+
+    <h3>Vite Proxy Configuration</h3>
+    <p>Defined in <code>vite.config.ts</code> &mdash; routes requests from the frontend dev server to the correct backend:</p>
+    <table>
+      <thead>
+        <tr><th>Pattern</th><th>Target</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>/api/rainbow-kb/*</code></td><td>port 5000</td><td>Knowledge Base CRUD (web backend)</td></tr>
+        <tr><td><code>/api/rainbow/*</code></td><td>port 3002</td><td>Rainbow AI admin (MCP server)</td></tr>
+        <tr><td><code>/api/*</code></td><td>port 5000</td><td>All other API routes (web backend)</td></tr>
+        <tr><td><code>/objects/*</code></td><td>port 5000</td><td>File uploads and static objects</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Complete Tech Stack</h3>
+    <details>
+      <summary>Full Technology Stack</summary>
+      <div class="details-content">
+        <table>
+          <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+          <tbody>
+            <tr><td>Frontend</td><td>React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui</td></tr>
+            <tr><td>State Management</td><td>TanStack Query + React Hook Form + Zod</td></tr>
+            <tr><td>Backend</td><td>Node.js + Express + TypeScript</td></tr>
+            <tr><td>Database</td><td>PostgreSQL (Neon) + Drizzle ORM</td></tr>
+            <tr><td>Authentication</td><td>Passport.js sessions</td></tr>
+            <tr><td>AI Providers</td><td>Gemini Flash + Ollama + Groq + OpenRouter</td></tr>
+            <tr><td>WhatsApp</td><td>Baileys (@whiskeysockets/baileys)</td></tr>
+            <tr><td>Embeddings</td><td>Xenova/all-MiniLM-L6-v2 (local, free)</td></tr>
+            <tr><td>Fuzzy Search</td><td>Fuse.js</td></tr>
+            <tr><td>MCP Protocol</td><td>@modelcontextprotocol/sdk</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2: Message Pipeline -->
+    <!-- ============================================================ -->
+    <h2 id="pipeline"><span class="section-num">2.</span> Message Pipeline (4 Phases)</h2>
+
+    <p>Every incoming WhatsApp message flows through four phases sequentially. Earlier phases can short-circuit the pipeline.</p>
+
+    <div class="pipeline">
+      <div class="phase"><span class="phase-label">P1</span> Validate &amp; Prepare</div>
+      <span class="arrow">&rarr;</span>
+      <div class="phase"><span class="phase-label">P2</span> Active States</div>
+      <span class="arrow">&rarr;</span>
+      <div class="phase"><span class="phase-label">P3</span> Classify &amp; Route</div>
+      <span class="arrow">&rarr;</span>
+      <div class="phase"><span class="phase-label">P4</span> Process &amp; Send</div>
+    </div>
+
+    <h3>Phase 1: validateAndPrepare()</h3>
+    <p><strong>File:</strong> <code>input-validator.ts</code></p>
+    <ul>
+      <li>Validate message format (non-empty, length limits)</li>
+      <li>Detect language (<code>en</code>, <code>ms</code>, <code>zh</code>)</li>
+      <li>Apply rate limiting per phone number</li>
+      <li>Detect staff commands (<code>!</code> prefix)</li>
+      <li>Compute sentiment score</li>
+      <li>Load conversation context from state map</li>
+    </ul>
+
+    <h3>Phase 2: handleActiveStates()</h3>
+    <p><strong>File:</strong> <code>state-executor.ts</code> &mdash; <em>Short-circuits pipeline if matched</em></p>
+    <ul>
+      <li>Feedback mode (guest is rating/reviewing)</li>
+      <li>Active workflow in progress (multi-step)</li>
+      <li>Booking state machine (dates/guests/capsule/confirm)</li>
+      <li>Emergency regex check (immediate escalation)</li>
+    </ul>
+
+    <h3>Phase 3: classifyAndRoute()</h3>
+    <p><strong>File:</strong> <code>intent-classifier.ts</code></p>
+    <ul>
+      <li>Runs 4-tier classification (T1 &rarr; T2 &rarr; T3 &rarr; T4) with early exit on confident match</li>
+      <li>Resolves routing action via <code>routing.json</code></li>
+    </ul>
+
+    <h3>Phase 4: processAndSend()</h3>
+    <p><strong>File:</strong> <code>response-processor.ts</code></p>
+    <ul>
+      <li>Execute the resolved action (knowledge_base, workflow, template, escalate, or llm_reply)</li>
+      <li>Verify confidence thresholds</li>
+      <li>Translate response to detected language</li>
+      <li>Send response via WhatsApp (Baileys)</li>
+      <li>Log analytics and update conversation state</li>
+    </ul>
+
+    <h3>Routing Actions</h3>
+    <table>
+      <thead><tr><th>Action</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>knowledge_base</code></td><td>Load relevant KB topic files and generate RAG response</td></tr>
+        <tr><td><code>workflow</code></td><td>Start or continue a multi-step workflow</td></tr>
+        <tr><td><code>template</code></td><td>Send a pre-defined template response</td></tr>
+        <tr><td><code>escalate</code></td><td>Forward to human staff member</td></tr>
+        <tr><td><code>llm_reply</code></td><td>Generate freeform AI response with context</td></tr>
+      </tbody>
+    </table>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3: 4-Tier Classification -->
+    <!-- ============================================================ -->
+    <h2 id="classification"><span class="section-num">3.</span> 4-Tier Intent Classification</h2>
+
+    <p>Classification runs tiers sequentially. If a tier produces a result above its confidence threshold, later tiers are skipped.</p>
+
+    <div class="tier-card">
+      <div class="tier-header">
+        <span class="tier-badge t1">T1</span>
+        <span class="tier-title">Emergency Regex</span>
+      </div>
+      <div class="tier-meta">~0.1ms &bull; 100% confidence &bull; 0 tokens</div>
+      <p><strong>File:</strong> <code>intents.json</code> &rarr; <code>emergencyPatterns</code></p>
+      <p>Regex patterns for life-safety situations. Always matches with 100% confidence and triggers immediate escalation.</p>
+      <pre><code><span class="cm">// Example patterns</span>
+<span class="str">/theft|steal|rob/i</span>
+<span class="str">/emergency|ambulance/i</span>
+<span class="str">/fire|kebakaran/i</span>
+<span class="str">/blood|bleeding|hurt badly/i</span></code></pre>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-header">
+        <span class="tier-badge t2">T2</span>
+        <span class="tier-title">Fuzzy Keywords</span>
+      </div>
+      <div class="tier-meta">~1ms &bull; Threshold 0.80 &bull; 0 tokens (free)</div>
+      <p><strong>Files:</strong> <code>fuzzy-matcher.ts</code> + <code>intent-keywords.json</code></p>
+      <p>Uses Fuse.js for fuzzy string matching against multilingual keyword lists per intent. Handles typos and abbreviations.</p>
+      <pre><code><span class="cm">// Fuse.js configuration</span>
+{
+  <span class="prop">threshold</span>: <span class="num">0.3</span>,       <span class="cm">// match tolerance (0=exact, 1=anything)</span>
+  <span class="prop">distance</span>: <span class="num">100</span>,        <span class="cm">// character distance for match</span>
+  <span class="prop">minMatchCharLength</span>: <span class="num">2</span> <span class="cm">// minimum chars to consider</span>
+}
+
+<span class="cm">// intent-keywords.json example</span>
+{
+  <span class="str">"check_in"</span>: {
+    <span class="str">"en"</span>: [<span class="str">"check in"</span>, <span class="str">"checkin"</span>, <span class="str">"arrival"</span>],
+    <span class="str">"ms"</span>: [<span class="str">"daftar masuk"</span>, <span class="str">"tiba"</span>],
+    <span class="str">"zh"</span>: [<span class="str">"入住"</span>, <span class="str">"登记"</span>]
+  }
+}</code></pre>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-header">
+        <span class="tier-badge t3">T3</span>
+        <span class="tier-title">Semantic Matching</span>
+      </div>
+      <div class="tier-meta">~50ms &bull; Threshold 0.70 &bull; 0 tokens (free, local embeddings)</div>
+      <p><strong>Files:</strong> <code>semantic-matcher.ts</code> + <code>intent-examples.json</code></p>
+      <p>Embeds the user message and compares via cosine similarity against pre-computed example embeddings. Uses the <code>Xenova/all-MiniLM-L6-v2</code> model locally.</p>
+      <div class="info-box warning">
+        <div class="box-title">Restart Required</div>
+        Editing <code>intent-examples.json</code> requires a server restart. Embeddings are computed at startup and cached in memory.
+      </div>
+    </div>
+
+    <div class="tier-card">
+      <div class="tier-header">
+        <span class="tier-badge t4">T4</span>
+        <span class="tier-title">LLM Classification</span>
+      </div>
+      <div class="tier-meta">~100&ndash;500ms &bull; Threshold 0.60 &bull; ~100 tokens per call</div>
+      <p><strong>File:</strong> <code>ai-classification.ts</code></p>
+      <p>Builds a dynamic prompt from intent definitions and conversation context. Sends to AI provider fallback chain. Only reached when T1&ndash;T3 fail to produce a confident match.</p>
+      <pre><code><span class="cm">// Default confidence thresholds</span>
+<span class="const">T1</span> = <span class="num">1.00</span>  <span class="cm">// Emergency always 100%</span>
+<span class="const">T2</span> = <span class="num">0.80</span>  <span class="cm">// Fuzzy keyword match</span>
+<span class="const">T3</span> = <span class="num">0.70</span>  <span class="cm">// Semantic similarity</span>
+<span class="const">T4</span> = <span class="num">0.60</span>  <span class="cm">// LLM classification</span></code></pre>
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4: Knowledge Base -->
+    <!-- ============================================================ -->
+    <h2 id="knowledge-base"><span class="section-num">4.</span> Knowledge Base &mdash; Progressive Loading</h2>
+
+    <p><strong>File:</strong> <code>knowledge-base.ts</code></p>
+    <p>The KB system uses progressive loading to save 60&ndash;70% of tokens compared to loading all files. Only topic files matching the user's message are loaded into the RAG prompt.</p>
+
+    <h3>Core Files (Always Loaded)</h3>
+    <table>
+      <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>AGENTS.md</code></td><td>Behavioral guidelines and response rules</td></tr>
+        <tr><td><code>soul.md</code></td><td>Personality traits (friendly, professional, multilingual)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Topic File Matching</h3>
+    <p>The <code>guessTopicFiles()</code> function uses regex patterns to select relevant files:</p>
+    <pre><code><span class="cm">// guessTopicFiles() pattern mapping</span>
+<span class="str">/wifi|internet|password/i</span>   &rarr; <span class="str">"checkin-wifi.md"</span>
+<span class="str">/price|cost|rate|harga/i</span>    &rarr; <span class="str">"pricing.md"</span>
+<span class="str">/check.?in|daftar masuk/i</span>   &rarr; <span class="str">"checkin-procedure.md"</span>
+<span class="str">/check.?out|keluar/i</span>        &rarr; <span class="str">"checkout-procedure.md"</span>
+<span class="str">/book|reserv|tempah/i</span>       &rarr; <span class="str">"booking.md"</span>
+<span class="str">/facility|amenity|kemudahan/i</span> &rarr; <span class="str">"facilities.md"</span>
+<span class="str">/location|direction|arah/i</span>  &rarr; <span class="str">"location.md"</span></code></pre>
+
+    <h3>RAG Prompt Assembly Order</h3>
+    <ol>
+      <li><strong>Guidelines</strong> &mdash; AGENTS.md (behavioral rules)</li>
+      <li><strong>Personality</strong> &mdash; soul.md (tone, style)</li>
+      <li><strong>Matched topic files</strong> &mdash; only relevant files</li>
+      <li><strong>Conversation history</strong> &mdash; last 10 messages</li>
+      <li><strong>User message</strong> &mdash; current input</li>
+    </ol>
+
+    <div class="info-box info">
+      <div class="box-title">Fallback Behavior</div>
+      If no regex patterns match the user's message, <strong>all</strong> topic files are loaded as a fallback to ensure coverage.
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5: AI Provider System -->
+    <!-- ============================================================ -->
+    <h2 id="ai-providers"><span class="section-num">5.</span> AI Provider System</h2>
+
+    <p><strong>File:</strong> <code>ai-provider-manager.ts</code></p>
+    <p>Multi-provider system with automatic failover. Providers are tried in priority order (lowest number first). If one fails or is rate-limited, the next is attempted.</p>
+
+    <h3>Provider Fallback Chain</h3>
+    <table>
+      <thead><tr><th>Priority</th><th>Provider</th><th>Model</th><th>Cost</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Google Gemini</td><td>Gemini 2.5 Flash</td><td>Free tier</td></tr>
+        <tr><td>1</td><td>Ollama Cloud</td><td>gemini-3-flash-preview</td><td>Free</td></tr>
+        <tr><td>2</td><td>Groq</td><td>Llama 3.3 70B</td><td>Cheap</td></tr>
+        <tr><td>3+</td><td>OpenRouter / NVIDIA</td><td>Various</td><td>Pay-per-token</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Configuration</h3>
+    <p>Providers are defined in <code>settings.json</code>:</p>
+    <pre><code>{
+  <span class="str">"providers"</span>: [
+    {
+      <span class="str">"id"</span>: <span class="str">"gemini-flash"</span>,
+      <span class="str">"type"</span>: <span class="str">"google"</span>,
+      <span class="str">"api_key_env"</span>: <span class="str">"GEMINI_API_KEY"</span>,
+      <span class="str">"base_url"</span>: <span class="str">"https://generativelanguage.googleapis.com/v1beta"</span>,
+      <span class="str">"model"</span>: <span class="str">"gemini-2.5-flash"</span>,
+      <span class="str">"enabled"</span>: <span class="kw">true</span>,
+      <span class="str">"priority"</span>: <span class="num">0</span>,
+      <span class="str">"available"</span>: <span class="kw">true</span>
+    }
+  ]
+}</code></pre>
+
+    <h3>Token Budgets</h3>
+    <table>
+      <thead><tr><th>Parameter</th><th>Value</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>max_classify_tokens</code></td><td>100</td><td>T4 LLM classification response</td></tr>
+        <tr><td><code>max_chat_tokens</code></td><td>500</td><td>Response generation</td></tr>
+        <tr><td><code>classify_temperature</code></td><td>0.05</td><td>Near-deterministic classification</td></tr>
+        <tr><td><code>chat_temperature</code></td><td>0.7</td><td>Natural-sounding responses</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Token Usage by Tier</h3>
+    <table>
+      <thead><tr><th>Tier</th><th>Tokens Used</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>T1 (Emergency Regex)</td><td>0</td><td>Pure regex, free</td></tr>
+        <tr><td>T2 (Fuzzy Keywords)</td><td>0</td><td>Fuse.js local, free</td></tr>
+        <tr><td>T3 (Semantic)</td><td>0</td><td>Local embeddings, free</td></tr>
+        <tr><td>T4 (LLM Classification)</td><td>~100</td><td>AI provider call</td></tr>
+        <tr><td>Response Generation</td><td>~500</td><td>AI provider call</td></tr>
+      </tbody>
+    </table>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6: Workflow Engine -->
+    <!-- ============================================================ -->
+    <h2 id="workflow-engine"><span class="section-num">6.</span> Workflow Engine</h2>
+
+    <p><strong>File:</strong> <code>workflow-executor.ts</code></p>
+    <p>The workflow engine supports two formats for multi-step interactive flows:</p>
+
+    <h3>Linear Steps Format</h3>
+    <p>Sequential step-by-step execution. Each step asks a question and validates the reply.</p>
+    <pre><code>{
+  <span class="str">"id"</span>: <span class="str">"complaint_flow"</span>,
+  <span class="str">"steps"</span>: [
+    {
+      <span class="str">"id"</span>: <span class="str">"describe"</span>,
+      <span class="str">"question"</span>: <span class="str">"Please describe your complaint."</span>,
+      <span class="str">"validator"</span>: <span class="str">"minLength:10"</span>
+    },
+    {
+      <span class="str">"id"</span>: <span class="str">"urgency"</span>,
+      <span class="str">"question"</span>: <span class="str">"How urgent is this? (low/medium/high)"</span>,
+      <span class="str">"validator"</span>: <span class="str">"enum:low,medium,high"</span>
+    }
+  ]
+}</code></pre>
+
+    <h3>Node-Based Format</h3>
+    <p>Branching logic with different node types for complex flows.</p>
+    <pre><code>{
+  <span class="str">"id"</span>: <span class="str">"booking_flow"</span>,
+  <span class="str">"startNodeId"</span>: <span class="str">"ask_dates"</span>,
+  <span class="str">"nodes"</span>: [
+    { <span class="str">"id"</span>: <span class="str">"ask_dates"</span>, <span class="str">"type"</span>: <span class="str">"wait_reply"</span>, ... },
+    { <span class="str">"id"</span>: <span class="str">"check_avail"</span>, <span class="str">"type"</span>: <span class="str">"pelangi_api"</span>, ... },
+    { <span class="str">"id"</span>: <span class="str">"branch"</span>, <span class="str">"type"</span>: <span class="str">"condition"</span>, ... }
+  ]
+}</code></pre>
+
+    <h3>Node Types</h3>
+    <table>
+      <thead><tr><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>message</code></td><td>Send text message to user</td></tr>
+        <tr><td><code>wait_reply</code></td><td>Pause and wait for user input</td></tr>
+        <tr><td><code>condition</code></td><td>Branch based on variable/expression</td></tr>
+        <tr><td><code>whatsapp_send</code></td><td>Send notification to a phone number</td></tr>
+        <tr><td><code>pelangi_api</code></td><td>Call backend API (check availability, create booking, etc.)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>State Lifecycle</h3>
+    <pre><code><span class="cm">// Workflow state lifecycle</span>
+Intent match &rarr; <span class="fn">createWorkflowState</span>()
+  &rarr; Step N prompt (send question)
+  &rarr; <span class="kw">wait</span> reply (user responds)
+  &rarr; <span class="fn">validate</span>(input)
+  &rarr; next step <span class="kw">or</span> branch
+  &rarr; complete (workflowState = <span class="kw">null</span>)</code></pre>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7: Config System -->
+    <!-- ============================================================ -->
+    <h2 id="config-system"><span class="section-num">7.</span> Config System &mdash; Atomic Writes</h2>
+
+    <p><strong>File:</strong> <code>config-store.ts</code> (extends <code>EventEmitter</code>)</p>
+    <p>All configuration changes use atomic writes: data is written to a <code>.tmp</code> file first, then <code>renameSync</code> replaces the original. This prevents corruption from partial writes or crashes.</p>
+
+    <h3>Data Files</h3>
+    <p>All located in <code>RainbowAI/src/assistant/data/</code>:</p>
+    <table>
+      <thead><tr><th>File</th><th>Purpose</th><th>Hot Reload?</th></tr></thead>
+      <tbody>
+        <tr><td><code>settings.json</code></td><td>Provider config, rate limits, staff phones</td><td>Yes</td></tr>
+        <tr><td><code>intents.json</code></td><td>Intent definitions, emergency patterns</td><td>Yes</td></tr>
+        <tr><td><code>intent-keywords.json</code></td><td>T2 fuzzy keyword lists per intent</td><td>Yes</td></tr>
+        <tr><td><code>intent-examples.json</code></td><td>T3 semantic example sentences</td><td>No (restart)</td></tr>
+        <tr><td><code>routing.json</code></td><td>Intent &rarr; action mapping</td><td>Yes</td></tr>
+        <tr><td><code>templates.json</code></td><td>Pre-defined response templates (en/ms/zh)</td><td>Yes</td></tr>
+        <tr><td><code>workflows.json</code></td><td>Multi-step workflow definitions</td><td>Yes</td></tr>
+        <tr><td><code>knowledge.json</code></td><td>KB metadata and file index</td><td>Yes</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Runtime Reload</h3>
+    <pre><code><span class="cm">// Listen for config changes</span>
+<span class="const">configStore</span>.<span class="fn">on</span>(<span class="str">'reload'</span>, (<span class="param">domain</span>) =&gt; {
+  <span class="kw">if</span> (<span class="param">domain</span> === <span class="str">'intents'</span>) <span class="fn">reloadFuzzyMatcher</span>();
+  <span class="kw">if</span> (<span class="param">domain</span> === <span class="str">'routing'</span>) <span class="fn">reloadRoutingTable</span>();
+});</code></pre>
+
+    <div class="info-box warning">
+      <div class="box-title">T3 Requires Restart</div>
+      T2 keywords and T4 definitions hot-reload automatically. T3 semantic examples require a full server restart because embeddings are pre-computed at startup.
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8: MCP Tools -->
+    <!-- ============================================================ -->
+    <h2 id="mcp-tools"><span class="section-num">8.</span> MCP Tools (19 Total)</h2>
+
+    <p><strong>File:</strong> <code>registry.ts</code> &mdash; Exposed at <code>POST /mcp</code> (JSON-RPC 2.0)</p>
+
+    <h3>Guest Management (5 tools)</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>pelangi_list_guests</code></td><td>List all guests with optional filters</td></tr>
+        <tr><td><code>pelangi_get_guest</code></td><td>Get guest details by ID</td></tr>
+        <tr><td><code>pelangi_search_guests</code></td><td>Search guests by name, phone, email</td></tr>
+        <tr><td><code>pelangi_check_in_guest</code></td><td>Check in a guest to a capsule</td></tr>
+        <tr><td><code>pelangi_check_out_guest</code></td><td>Check out a guest and free capsule</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Capsule Operations (4 tools)</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>pelangi_list_capsules</code></td><td>List all capsules with status</td></tr>
+        <tr><td><code>pelangi_get_occupancy</code></td><td>Get current occupancy statistics</td></tr>
+        <tr><td><code>pelangi_check_availability</code></td><td>Check available capsules for date range</td></tr>
+        <tr><td><code>pelangi_update_capsule</code></td><td>Update capsule status or details</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Dashboard &amp; Analytics (4 tools)</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>pelangi_get_dashboard</code></td><td>Get dashboard summary data</td></tr>
+        <tr><td><code>pelangi_get_overdue_guests</code></td><td>List guests past checkout time</td></tr>
+        <tr><td><code>pelangi_get_analytics</code></td><td>Revenue, occupancy, trend analytics</td></tr>
+        <tr><td><code>pelangi_export_csv</code></td><td>Export data as CSV</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Problem Tracking (4 tools)</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>pelangi_list_problems</code></td><td>List reported problems</td></tr>
+        <tr><td><code>pelangi_create_problem</code></td><td>Create a new problem report</td></tr>
+        <tr><td><code>pelangi_update_problem</code></td><td>Update problem status</td></tr>
+        <tr><td><code>pelangi_export_whatsapp_issues</code></td><td>Export WhatsApp-reported issues</td></tr>
+      </tbody>
+    </table>
+
+    <h3>WhatsApp (2 tools)</h3>
+    <table>
+      <thead><tr><th>Tool</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>pelangi_send_whatsapp</code></td><td>Send WhatsApp message to a number</td></tr>
+        <tr><td><code>pelangi_get_whatsapp_status</code></td><td>Get WhatsApp connection status</td></tr>
+      </tbody>
+    </table>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9: Admin API -->
+    <!-- ============================================================ -->
+    <h2 id="admin-api"><span class="section-num">9.</span> Admin API Reference</h2>
+
+    <p><strong>Base URL:</strong> <code>http://localhost:3002/api/rainbow/</code></p>
+
+    <div class="info-box info">
+      <div class="box-title">Authentication</div>
+      Localhost requests require no authentication. Remote requests must include the <code>X-Admin-Key</code> header matching <code>RAINBOW_ADMIN_KEY</code> env var.
+    </div>
+
+    <h3>Configuration Endpoints</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>GET / PUT</td><td><code>/settings</code></td><td>AI provider settings, rate limits</td></tr>
+        <tr><td>GET / PUT</td><td><code>/intents</code></td><td>Intent definitions</td></tr>
+        <tr><td>GET / PUT</td><td><code>/intent-keywords</code></td><td>T2 fuzzy keyword lists</td></tr>
+        <tr><td>GET / PUT</td><td><code>/intent-examples</code></td><td>T3 semantic examples</td></tr>
+        <tr><td>GET / PUT</td><td><code>/routing</code></td><td>Intent &rarr; action mapping</td></tr>
+        <tr><td>GET / PUT</td><td><code>/workflows</code></td><td>Workflow definitions</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Knowledge Base Endpoints</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>GET</td><td><code>/kb/files</code></td><td>List all KB topic files</td></tr>
+        <tr><td>GET / PUT / DELETE</td><td><code>/kb/files/:name</code></td><td>Read, update, or delete a topic file</td></tr>
+      </tbody>
+    </table>
+
+    <h3>AI &amp; Testing Endpoints</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>POST</td><td><code>/ai/chat</code></td><td>Send message through full pipeline (Chat Simulator)</td></tr>
+        <tr><td>POST</td><td><code>/tests/run</code></td><td>Run automated intent classification tests</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Conversations &amp; WhatsApp</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>GET</td><td><code>/conversations</code></td><td>List active conversations</td></tr>
+        <tr><td>GET</td><td><code>/whatsapp/status</code></td><td>WhatsApp connection status</td></tr>
+        <tr><td>GET</td><td><code>/whatsapp/qr</code></td><td>Get QR code for pairing</td></tr>
+        <tr><td>POST</td><td><code>/whatsapp/send</code></td><td>Send message via WhatsApp</td></tr>
+      </tbody>
+    </table>
+
+    <h3>System</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>GET</td><td><code>/health</code></td><td>Health check (server status, provider availability)</td></tr>
+        <tr><td>POST</td><td><code>/mcp</code></td><td>MCP JSON-RPC endpoint (tool calls)</td></tr>
+      </tbody>
+    </table>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10: WhatsApp Integration -->
+    <!-- ============================================================ -->
+    <h2 id="whatsapp"><span class="section-num">10.</span> WhatsApp Integration (Baileys)</h2>
+
+    <p><strong>File:</strong> <code>baileys-client.ts</code></p>
+    <p>Uses <code>@whiskeysockets/baileys</code> for direct WhatsApp Web connection (no Business API required).</p>
+
+    <h3>Connection Flow</h3>
+    <pre><code><span class="fn">start</span>()
+  &rarr; Generate QR code
+  &rarr; User scans with phone
+  &rarr; Session saved to <span class="str">auth/</span> directory
+  &rarr; Auto-reconnect on disconnect</code></pre>
+
+    <h3>Message Processing</h3>
+    <pre><code><span class="cm">// Message event handler</span>
+<span class="const">sock</span>.<span class="fn">ev</span>.<span class="fn">on</span>(<span class="str">'messages.upsert'</span>, <span class="kw">async</span> ({ <span class="param">messages</span> }) =&gt; {
+  <span class="cm">// Extract message text, sender, metadata</span>
+  <span class="kw">const</span> <span class="const">msg</span> = <span class="fn">extractMessage</span>(<span class="param">messages</span>[<span class="num">0</span>]);
+  <span class="cm">// Run through 4-phase pipeline</span>
+  <span class="kw">const</span> <span class="const">response</span> = <span class="kw">await</span> <span class="fn">handleIncomingMessage</span>(<span class="const">msg</span>);
+  <span class="cm">// Send response back</span>
+  <span class="kw">await</span> <span class="const">sock</span>.<span class="fn">sendMessage</span>(<span class="const">msg</span>.<span class="prop">from</span>, { <span class="prop">text</span>: <span class="const">response</span> });
+});</code></pre>
+
+    <h3>Multi-Instance Support</h3>
+    <p>Separate sessions per phone number stored in <code>auth/{instanceId}/</code>. Each instance maintains its own connection and state.</p>
+
+    <h3>Response Modes</h3>
+    <table>
+      <thead><tr><th>Mode</th><th>Behavior</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Autopilot</strong></td><td>AI processes and replies automatically</td></tr>
+        <tr><td><strong>Copilot</strong></td><td>AI suggests response, human approves before sending</td></tr>
+        <tr><td><strong>Manual</strong></td><td>Human writes all responses, AI is silent</td></tr>
+      </tbody>
+    </table>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 11: Conversation State -->
+    <!-- ============================================================ -->
+    <h2 id="conversation"><span class="section-num">11.</span> Conversation State Machine</h2>
+
+    <p><strong>File:</strong> <code>conversation.ts</code></p>
+    <p>Each phone number has its own <code>ConversationState</code> stored in memory with a 1-hour TTL and automatic cleanup.</p>
+
+    <h3>ConversationState Fields</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>phone</code></td><td>string</td><td>Phone number (key)</td></tr>
+        <tr><td><code>pushName</code></td><td>string</td><td>WhatsApp display name</td></tr>
+        <tr><td><code>messages</code></td><td>ChatMessage[]</td><td>Last 20 messages (rolling window)</td></tr>
+        <tr><td><code>language</code></td><td>'en' | 'ms' | 'zh'</td><td>Detected language</td></tr>
+        <tr><td><code>bookingState</code></td><td>BookingState?</td><td>Active booking flow state</td></tr>
+        <tr><td><code>workflowState</code></td><td>WorkflowState?</td><td>Active workflow state</td></tr>
+        <tr><td><code>lastIntent</code></td><td>string</td><td>Last classified intent</td></tr>
+        <tr><td><code>repeatCount</code></td><td>number</td><td>Times same intent repeated (3x &rarr; escalate)</td></tr>
+        <tr><td><code>unknownCount</code></td><td>number</td><td>Consecutive unknown intents (3x &rarr; escalate)</td></tr>
+        <tr><td><code>slots</code></td><td>Record&lt;string, any&gt;</td><td>Extracted entities / slot values</td></tr>
+        <tr><td><code>createdAt</code></td><td>Date</td><td>Session start time</td></tr>
+        <tr><td><code>lastActiveAt</code></td><td>Date</td><td>Last activity (TTL reference)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Escalation Triggers</h3>
+    <ul>
+      <li><strong>Emergency regex</strong> &mdash; T1 match triggers immediate escalation</li>
+      <li><strong>Complaint intent</strong> &mdash; classified as complaint</li>
+      <li><strong>Low confidence</strong> &mdash; all tiers below threshold</li>
+      <li><strong>Repeat intent 3x</strong> &mdash; same intent three times in a row</li>
+      <li><strong>Unknown 3x</strong> &mdash; three consecutive unclassified messages</li>
+      <li><strong>Negative sentiment</strong> &mdash; sentiment score below threshold</li>
+    </ul>
+
+    <h3>BookingState</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">BookingState</span> {
+  <span class="prop">stage</span>: <span class="str">'dates'</span> | <span class="str">'guests'</span> | <span class="str">'capsule_type'</span> | <span class="str">'confirm'</span>;
+  <span class="prop">checkIn</span>?: <span class="ty">string</span>;
+  <span class="prop">checkOut</span>?: <span class="ty">string</span>;
+  <span class="prop">guests</span>?: <span class="ty">number</span>;
+  <span class="prop">capsuleType</span>?: <span class="ty">string</span>;
+  <span class="prop">priceBreakdown</span>?: <span class="ty">PriceBreakdown</span>;
+}</code></pre>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 12: Types Reference -->
+    <!-- ============================================================ -->
+    <h2 id="types"><span class="section-num">12.</span> Types Reference (<code>types.ts</code>)</h2>
+
+    <h3>IncomingMessage</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">IncomingMessage</span> {
+  <span class="prop">from</span>: <span class="ty">string</span>;          <span class="cm">// phone number</span>
+  <span class="prop">text</span>: <span class="ty">string</span>;          <span class="cm">// message content</span>
+  <span class="prop">pushName</span>: <span class="ty">string</span>;      <span class="cm">// WhatsApp display name</span>
+  <span class="prop">messageId</span>: <span class="ty">string</span>;     <span class="cm">// unique message ID</span>
+  <span class="prop">timestamp</span>: <span class="ty">number</span>;     <span class="cm">// Unix timestamp</span>
+  <span class="prop">instanceId</span>?: <span class="ty">string</span>;   <span class="cm">// WhatsApp instance (multi-instance)</span>
+}</code></pre>
+
+    <h3>IntentResult</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">IntentResult</span> {
+  <span class="prop">category</span>: <span class="ty">string</span>;      <span class="cm">// intent name (e.g. "check_in")</span>
+  <span class="prop">confidence</span>: <span class="ty">number</span>;    <span class="cm">// 0.0 to 1.0</span>
+  <span class="prop">source</span>: <span class="str">'regex'</span> | <span class="str">'fuzzy'</span> | <span class="str">'semantic'</span> | <span class="str">'llm'</span>;
+  <span class="prop">entities</span>?: <span class="ty">Record</span>&lt;<span class="ty">string</span>, <span class="ty">any</span>&gt;;
+}</code></pre>
+
+    <h3>ChatMessage</h3>
+    <pre><code><span class="kw">interface</span> <span class="ty">ChatMessage</span> {
+  <span class="prop">role</span>: <span class="str">'user'</span> | <span class="str">'assistant'</span>;
+  <span class="prop">content</span>: <span class="ty">string</span>;
+  <span class="prop">timestamp</span>: <span class="ty">number</span>;
+}</code></pre>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 13: Dual Storage -->
+    <!-- ============================================================ -->
+    <h2 id="storage"><span class="section-num">13.</span> Dual Storage System</h2>
+
+    <p><strong>File:</strong> <code>server/Storage/StorageFactory.ts</code></p>
+
+    <h3>Storage Selection</h3>
+    <pre><code><span class="cm">// StorageFactory.ts</span>
+<span class="kw">if</span> (<span class="const">process</span>.<span class="prop">env</span>.<span class="const">DATABASE_URL</span>) {
+  <span class="cm">// Primary: PostgreSQL via Drizzle ORM</span>
+  <span class="kw">return new</span> <span class="ty">DatabaseStorage</span>(<span class="const">process</span>.<span class="prop">env</span>.<span class="const">DATABASE_URL</span>);
+} <span class="kw">else</span> {
+  <span class="cm">// Fallback: In-memory (auto-failover)</span>
+  <span class="kw">return new</span> <span class="ty">MemStorage</span>();
+}</code></pre>
+
+    <h3>Database Schema (<code>shared/schema.ts</code>)</h3>
+    <table>
+      <thead><tr><th>Table</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>guests</code></td><td>Guest records (name, phone, check-in/out dates, capsule)</td></tr>
+        <tr><td><code>capsules</code></td><td>Capsule inventory (number, type, status, floor)</td></tr>
+        <tr><td><code>problems</code></td><td>Problem reports (description, status, priority, capsule)</td></tr>
+        <tr><td><code>users</code></td><td>Admin/staff user accounts</td></tr>
+        <tr><td><code>settings</code></td><td>Application settings (key-value)</td></tr>
+        <tr><td><code>guestTokens</code></td><td>Self-service check-in/out tokens</td></tr>
+        <tr><td><code>expenseRecords</code></td><td>Financial expense tracking</td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box info">
+      <div class="box-title">Zod Validation</div>
+      All API inputs are validated at runtime using Zod schemas generated alongside Drizzle table definitions in <code>shared/schema.ts</code>.
+    </div>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 14: File Tree -->
+    <!-- ============================================================ -->
+    <h2 id="file-tree"><span class="section-num">14.</span> Complete File Tree</h2>
+
+    <details>
+      <summary>RainbowAI/ &mdash; AI Engine &amp; WhatsApp</summary>
+      <div class="details-content">
+        <div class="file-tree">
+<span class="dir">RainbowAI/</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="dir">assistant/</span>                    <span class="annotation"># Core AI engine</span>
+│   │   ├── <span class="file">message-router.ts</span>         <span class="annotation"># Entry point — orchestrates 4 phases</span>
+│   │   ├── <span class="file">input-validator.ts</span>        <span class="annotation"># Phase 1: validate, language, rate limit</span>
+│   │   ├── <span class="file">state-executor.ts</span>         <span class="annotation"># Phase 2: active states (workflow, booking)</span>
+│   │   ├── <span class="file">intent-classifier.ts</span>      <span class="annotation"># Phase 3: 4-tier classification orchestrator</span>
+│   │   ├── <span class="file">response-processor.ts</span>     <span class="annotation"># Phase 4: action execution, translation, send</span>
+│   │   ├── <span class="file">fuzzy-matcher.ts</span>          <span class="annotation"># T2 fuzzy keyword matching (Fuse.js)</span>
+│   │   ├── <span class="file">semantic-matcher.ts</span>       <span class="annotation"># T3 semantic embedding matching</span>
+│   │   ├── <span class="file">ai-classification.ts</span>      <span class="annotation"># T4 LLM-based classification</span>
+│   │   ├── <span class="file">ai-client.ts</span>              <span class="annotation"># AI provider HTTP client</span>
+│   │   ├── <span class="file">ai-provider-manager.ts</span>    <span class="annotation"># Multi-provider failover</span>
+│   │   ├── <span class="file">ai-utilities.ts</span>           <span class="annotation"># Shared AI helper functions</span>
+│   │   ├── <span class="file">knowledge-base.ts</span>         <span class="annotation"># Progressive KB loading &amp; RAG</span>
+│   │   ├── <span class="file">config-store.ts</span>           <span class="annotation"># Atomic config read/write</span>
+│   │   ├── <span class="file">conversation.ts</span>           <span class="annotation"># Conversation state management</span>
+│   │   ├── <span class="file">workflow-executor.ts</span>      <span class="annotation"># Workflow engine (linear + node-based)</span>
+│   │   ├── <span class="file">types.ts</span>                  <span class="annotation"># TypeScript type definitions</span>
+│   │   └── <span class="dir">data/</span>                     <span class="annotation"># Configuration data files</span>
+│   │       ├── <span class="file">settings.json</span>         <span class="annotation"># Provider config, rate limits, staff</span>
+│   │       ├── <span class="file">intents.json</span>          <span class="annotation"># Intent definitions + emergency patterns</span>
+│   │       ├── <span class="file">intent-keywords.json</span>  <span class="annotation"># T2 fuzzy keywords (en/ms/zh)</span>
+│   │       ├── <span class="file">intent-examples.json</span>  <span class="annotation"># T3 semantic examples</span>
+│   │       ├── <span class="file">routing.json</span>          <span class="annotation"># Intent → action mapping</span>
+│   │       ├── <span class="file">templates.json</span>        <span class="annotation"># Response templates (multilingual)</span>
+│   │       ├── <span class="file">workflows.json</span>        <span class="annotation"># Workflow definitions</span>
+│   │       └── <span class="file">knowledge.json</span>        <span class="annotation"># KB metadata</span>
+│   ├── <span class="dir">tools/</span>                        <span class="annotation"># MCP tool implementations</span>
+│   │   └── <span class="file">registry.ts</span>              <span class="annotation"># 19 MCP tools (JSON-RPC at POST /mcp)</span>
+│   ├── <span class="dir">routes/</span>                       <span class="annotation"># Express route handlers</span>
+│   │   └── <span class="file">admin.ts</span>                 <span class="annotation"># ~50 admin API endpoints</span>
+│   ├── <span class="dir">lib/</span>                          <span class="annotation"># Libraries</span>
+│   │   └── <span class="file">baileys-client.ts</span>        <span class="annotation"># WhatsApp Baileys connection</span>
+│   ├── <span class="dir">public/</span>                       <span class="annotation"># Static assets</span>
+│   │   ├── <span class="file">rainbow-admin.html</span>       <span class="annotation"># Admin dashboard SPA</span>
+│   │   ├── <span class="dir">js/</span>                      <span class="annotation"># Dashboard JavaScript modules</span>
+│   │   ├── <span class="dir">css/</span>                     <span class="annotation"># Dashboard styles</span>
+│   │   └── <span class="dir">templates/</span>               <span class="annotation"># Dashboard HTML templates</span>
+│   └── <span class="file">index.ts</span>                     <span class="annotation"># Server entry point</span>
+├── <span class="dir">.rainbow-kb/</span>                      <span class="annotation"># Knowledge base markdown files</span>
+│   ├── <span class="file">AGENTS.md</span>                    <span class="annotation"># AI behavioral guidelines</span>
+│   ├── <span class="file">soul.md</span>                      <span class="annotation"># Personality definition</span>
+│   ├── <span class="file">checkin-wifi.md</span>              <span class="annotation"># WiFi &amp; check-in topic</span>
+│   ├── <span class="file">pricing.md</span>                   <span class="annotation"># Pricing information</span>
+│   ├── <span class="file">checkin-procedure.md</span>         <span class="annotation"># Check-in process</span>
+│   ├── <span class="file">checkout-procedure.md</span>        <span class="annotation"># Check-out process</span>
+│   ├── <span class="file">booking.md</span>                   <span class="annotation"># Booking information</span>
+│   ├── <span class="file">facilities.md</span>                <span class="annotation"># Hostel facilities</span>
+│   └── <span class="file">location.md</span>                  <span class="annotation"># Location &amp; directions</span>
+├── <span class="dir">auth/</span>                             <span class="annotation"># WhatsApp session data (gitignored)</span>
+├── <span class="dir">reports/autotest/</span>                 <span class="annotation"># Automated test HTML reports</span>
+├── <span class="dir">scripts/</span>                          <span class="annotation"># Rainbow-specific scripts</span>
+├── <span class="dir">docs/</span>                             <span class="annotation"># Rainbow documentation</span>
+├── <span class="file">package.json</span>
+├── <span class="file">tsconfig.json</span>
+└── <span class="file">.env</span>                             <span class="annotation"># Environment variables (gitignored)</span>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>server/ &mdash; Backend API</summary>
+      <div class="details-content">
+        <div class="file-tree">
+<span class="dir">server/</span>
+├── <span class="dir">routes/</span>                           <span class="annotation"># Express route handlers</span>
+│   ├── <span class="file">guests.ts</span>                    <span class="annotation"># Guest CRUD</span>
+│   ├── <span class="file">capsules.ts</span>                  <span class="annotation"># Capsule management</span>
+│   ├── <span class="file">problems.ts</span>                  <span class="annotation"># Problem tracking</span>
+│   ├── <span class="file">auth.ts</span>                      <span class="annotation"># Authentication</span>
+│   ├── <span class="file">settings.ts</span>                  <span class="annotation"># App settings</span>
+│   ├── <span class="file">dashboard.ts</span>                 <span class="annotation"># Dashboard data</span>
+│   └── <span class="file">rainbow-kb.ts</span>                <span class="annotation"># KB file CRUD (proxied from 3000)</span>
+├── <span class="dir">Storage/</span>                          <span class="annotation"># Storage implementations</span>
+│   ├── <span class="file">StorageFactory.ts</span>            <span class="annotation"># DB or memory selection</span>
+│   ├── <span class="file">DatabaseStorage.ts</span>           <span class="annotation"># PostgreSQL + Drizzle</span>
+│   └── <span class="file">MemStorage.ts</span>                <span class="annotation"># In-memory fallback</span>
+├── <span class="file">configManager.ts</span>                 <span class="annotation"># System configuration</span>
+├── <span class="file">index.ts</span>                         <span class="annotation"># Express server entry</span>
+└── <span class="file">vite.ts</span>                          <span class="annotation"># Vite dev middleware</span>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>client/ &mdash; Frontend SPA</summary>
+      <div class="details-content">
+        <div class="file-tree">
+<span class="dir">client/</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="dir">pages/</span>                        <span class="annotation"># Route components</span>
+│   │   ├── <span class="file">dashboard.tsx</span>            <span class="annotation"># Main dashboard</span>
+│   │   ├── <span class="file">check-in.tsx</span>             <span class="annotation"># Guest check-in flow</span>
+│   │   ├── <span class="file">check-out.tsx</span>            <span class="annotation"># Guest check-out flow</span>
+│   │   ├── <span class="file">guests.tsx</span>               <span class="annotation"># Guest management</span>
+│   │   ├── <span class="file">capsules.tsx</span>             <span class="annotation"># Capsule management</span>
+│   │   ├── <span class="file">problems.tsx</span>             <span class="annotation"># Problem tracking</span>
+│   │   └── <span class="file">settings.tsx</span>             <span class="annotation"># Settings page</span>
+│   ├── <span class="dir">components/</span>                   <span class="annotation"># Reusable UI components</span>
+│   ├── <span class="dir">hooks/</span>                        <span class="annotation"># Custom React hooks</span>
+│   ├── <span class="dir">lib/</span>                          <span class="annotation"># Utility libraries</span>
+│   └── <span class="file">App.tsx</span>                      <span class="annotation"># Root component + routing</span>
+├── <span class="file">index.html</span>
+└── <span class="file">vite.config.ts</span>                   <span class="annotation"># Vite config + proxy rules</span>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>shared/ &mdash; Shared Types</summary>
+      <div class="details-content">
+        <div class="file-tree">
+<span class="dir">shared/</span>
+├── <span class="file">schema.ts</span>                        <span class="annotation"># Drizzle table defs + Zod schemas + TS types</span>
+└── <span class="file">index.ts</span>                         <span class="annotation"># Re-exports</span>
+        </div>
+      </div>
+    </details>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 15: Development Tasks -->
+    <!-- ============================================================ -->
+    <h2 id="dev-tasks"><span class="section-num">15.</span> Common Development Tasks</h2>
+
+    <details>
+      <summary>Add a New Intent (6 Steps)</summary>
+      <div class="details-content">
+        <ol>
+          <li>
+            <strong>Define the intent</strong> in <code>intents.json</code>:
+            <pre><code>{
+  <span class="str">"id"</span>: <span class="str">"lost_key"</span>,
+  <span class="str">"name"</span>: <span class="str">"Lost Key"</span>,
+  <span class="str">"description"</span>: <span class="str">"Guest has lost their capsule key or access card"</span>
+}</code></pre>
+          </li>
+          <li>
+            <strong>Add T2 keywords</strong> in <code>intent-keywords.json</code>:
+            <pre><code>{
+  <span class="str">"lost_key"</span>: {
+    <span class="str">"en"</span>: [<span class="str">"lost key"</span>, <span class="str">"missing key"</span>, <span class="str">"key card"</span>, <span class="str">"locked out"</span>],
+    <span class="str">"ms"</span>: [<span class="str">"kunci hilang"</span>, <span class="str">"terkunci"</span>],
+    <span class="str">"zh"</span>: [<span class="str">"钥匙丢了"</span>, <span class="str">"锁门外"</span>]
+  }
+}</code></pre>
+          </li>
+          <li>
+            <strong>Add T3 semantic examples</strong> in <code>intent-examples.json</code>:
+            <pre><code>{
+  <span class="str">"lost_key"</span>: [
+    <span class="str">"I lost my key card"</span>,
+    <span class="str">"I can't find my room key"</span>,
+    <span class="str">"I'm locked out of my capsule"</span>
+  ]
+}</code></pre>
+          </li>
+          <li>
+            <strong>Add routing</strong> in <code>routing.json</code>:
+            <pre><code>{
+  <span class="str">"lost_key"</span>: {
+    <span class="str">"action"</span>: <span class="str">"template"</span>,
+    <span class="str">"template_id"</span>: <span class="str">"lost_key_response"</span>
+  }
+}</code></pre>
+          </li>
+          <li><strong>Add response template</strong> in <code>templates.json</code> with <code>en</code>, <code>ms</code>, <code>zh</code> variants.</li>
+          <li><strong>Restart server</strong> (required for T3 embeddings), then <strong>test in Chat Simulator</strong>.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>Create a Workflow (4 Steps)</summary>
+      <div class="details-content">
+        <ol>
+          <li><strong>Define workflow</strong> in <code>workflows.json</code> (linear steps or node-based).</li>
+          <li><strong>Map intent to workflow</strong> in <code>routing.json</code>:
+            <pre><code>{
+  <span class="str">"my_intent"</span>: {
+    <span class="str">"action"</span>: <span class="str">"workflow"</span>,
+    <span class="str">"workflow_id"</span>: <span class="str">"my_workflow"</span>
+  }
+}</code></pre>
+          </li>
+          <li><strong>Add validators</strong> if needed (e.g., <code>minLength:10</code>, <code>enum:low,medium,high</code>, <code>phone</code>, <code>email</code>).</li>
+          <li><strong>Test</strong> end-to-end in Chat Simulator with multiple messages.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>Add a Knowledge Base Topic File (3 Steps)</summary>
+      <div class="details-content">
+        <ol>
+          <li><strong>Create markdown file</strong> in <code>.rainbow-kb/</code> (e.g., <code>parking.md</code>).</li>
+          <li><strong>Add regex pattern</strong> in <code>knowledge-base.ts</code> &rarr; <code>guessTopicFiles()</code>:
+            <pre><code><span class="kw">if</span> (<span class="str">/park|parking|kereta/i</span>.<span class="fn">test</span>(<span class="param">message</span>)) {
+  <span class="param">files</span>.<span class="fn">push</span>(<span class="str">'parking.md'</span>);
+}</code></pre>
+          </li>
+          <li><strong>Test</strong> by sending a relevant message and verifying the topic is included in the response context.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>Switch or Add an AI Provider (4 Steps)</summary>
+      <div class="details-content">
+        <ol>
+          <li><strong>Add API key</strong> to <code>.env</code> file (e.g., <code>GROQ_API_KEY=gsk_...</code>).</li>
+          <li><strong>Add provider config</strong> in <code>settings.json</code> &rarr; <code>providers[]</code>:
+            <pre><code>{
+  <span class="str">"id"</span>: <span class="str">"groq-llama"</span>,
+  <span class="str">"type"</span>: <span class="str">"groq"</span>,
+  <span class="str">"api_key_env"</span>: <span class="str">"GROQ_API_KEY"</span>,
+  <span class="str">"model"</span>: <span class="str">"llama-3.3-70b-versatile"</span>,
+  <span class="str">"enabled"</span>: <span class="kw">true</span>,
+  <span class="str">"priority"</span>: <span class="num">2</span>,
+  <span class="str">"available"</span>: <span class="kw">true</span>
+}</code></pre>
+          </li>
+          <li><strong>Implement adapter</strong> if new provider type (add to <code>ai-client.ts</code>).</li>
+          <li><strong>Test</strong> via Chat Simulator or <code>curl</code> to <code>/api/rainbow/ai/chat</code>.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>Debug Intent Classification (curl Examples)</summary>
+      <div class="details-content">
+        <pre><code><span class="cm"># Test a message through the full pipeline</span>
+curl -X POST http://localhost:3002/api/rainbow/ai/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "How much is a capsule per night?",
+    "phone": "test-debug",
+    "pushName": "Developer"
+  }'
+
+<span class="cm"># Check which tier matched</span>
+<span class="cm"># Response includes: intent, confidence, source (regex|fuzzy|semantic|llm)</span>
+
+<span class="cm"># Run automated classification tests</span>
+curl -X POST http://localhost:3002/api/rainbow/tests/run
+
+<span class="cm"># Check current intent definitions</span>
+curl http://localhost:3002/api/rainbow/intents
+
+<span class="cm"># Check routing configuration</span>
+curl http://localhost:3002/api/rainbow/routing
+
+<span class="cm"># Health check (includes provider status)</span>
+curl http://localhost:3002/api/rainbow/health</code></pre>
+      </div>
+    </details>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 16: Troubleshooting -->
+    <!-- ============================================================ -->
+    <h2 id="troubleshooting"><span class="section-num">16.</span> Troubleshooting</h2>
+
+    <table>
+      <thead><tr><th>Problem</th><th>Solution</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Dashboard "Loading..." stuck</strong></td>
+          <td>
+            All 3 ports must be running (3000, 5000, 3002). Port 5000 is the most common missing one. Run <code>check-health.bat</code> or verify with:<br>
+            <code>netstat -ano | findstr ":3000 :5000 :3002" | findstr "LISTENING"</code><br>
+            Then hard refresh browser (<code>Ctrl+Shift+R</code>).
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Port already in use</strong></td>
+          <td>
+            Run <code>npm run dev:clean</code> (kills ports 3000/5000 automatically), or <code>npx kill-port 3000 5000 3002</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>T3 semantic not matching after edit</strong></td>
+          <td>
+            T3 embeddings are computed at startup. You <strong>must restart</strong> the MCP server after editing <code>intent-examples.json</code>. T2 keywords and T4 hot-reload automatically.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>WhatsApp not connecting</strong></td>
+          <td>
+            1) Ensure phone has internet. 2) QR code expires quickly; refresh and scan promptly. 3) If session is corrupted, delete <code>auth/{instanceId}/</code> and re-pair.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>AI rate limited (429)</strong></td>
+          <td>
+            The provider fallback chain should auto-switch to the next provider. Check logs for which provider failed. Add more providers to <code>settings.json</code> for resilience.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Config file corrupted</strong></td>
+          <td>
+            Rare due to atomic writes (<code>.tmp</code> + <code>renameSync</code>). If it happens, restore from git: <code>git checkout -- RainbowAI/src/assistant/data/&lt;file&gt;</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>KB topic not loading</strong></td>
+          <td>
+            Check <code>guessTopicFiles()</code> regex in <code>knowledge-base.ts</code>. Add a new regex pattern for your topic keywords.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Intent misclassified</strong></td>
+          <td>
+            1) Check T2 keywords in <code>intent-keywords.json</code>. 2) Check T3 examples in <code>intent-examples.json</code>. 3) Test in Chat Simulator. 4) Check <code>routing.json</code> for wrong action mapping.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Rainbow AI not replying</strong></td>
+          <td>
+            Check AI providers in <code>settings.json</code>. Verify API keys in <code>.env</code>. Run <code>curl http://localhost:3002/api/rainbow/health</code> to check provider status.
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Component cache stale</strong></td>
+          <td>
+            Delete Vite cache: <code>rm -rf node_modules/.vite && npm run dev</code>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+
+    <!-- ============================================================ -->
+    <!-- SECTION 17: Deployment -->
+    <!-- ============================================================ -->
+    <h2 id="deployment"><span class="section-num">17.</span> Deployment &amp; Environment</h2>
+
+    <h3>Environment Variables</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>DATABASE_URL</code></td><td>Yes*</td><td>PostgreSQL connection string (Neon). *Falls back to in-memory.</td></tr>
+        <tr><td><code>PELANGI_API_URL</code></td><td>Yes</td><td>Backend API URL (e.g., <code>http://localhost:5000</code>)</td></tr>
+        <tr><td><code>PELANGI_API_TOKEN</code></td><td>Yes</td><td>Auth token for backend API calls from MCP server</td></tr>
+        <tr><td><code>MCP_SERVER_PORT</code></td><td>No</td><td>MCP server port (default: 3002)</td></tr>
+        <tr><td><code>GEMINI_API_KEY</code></td><td>Yes</td><td>Google Gemini API key (primary provider)</td></tr>
+        <tr><td><code>GROQ_API_KEY</code></td><td>No</td><td>Groq API key (fallback provider)</td></tr>
+        <tr><td><code>OPENROUTER_API_KEY</code></td><td>No</td><td>OpenRouter API key (fallback provider)</td></tr>
+        <tr><td><code>RAINBOW_ADMIN_KEY</code></td><td>No</td><td>Admin API key for remote access (localhost bypasses)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Deployment Targets</h3>
+    <table>
+      <thead><tr><th>Target</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Zeabur</strong> (primary)</td><td>Auto-deploy from main branch. See <code>.claude/skills/zeabur-deployment/</code></td></tr>
+        <tr><td>Railway</td><td>Alternative hosting platform</td></tr>
+        <tr><td>Replit</td><td>Development/testing</td></tr>
+        <tr><td>Local</td><td>Full development environment</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Quick Start</h3>
+    <pre><code><span class="cm"># Option 1: Start all servers with one command (recommended)</span>
+start-all.bat
+
+<span class="cm"># Option 2: Start individually</span>
+<span class="cm"># Terminal 1: Frontend + Backend</span>
+npm run dev:clean
+
+<span class="cm"># Terminal 2: MCP Server (Rainbow AI)</span>
+cd RainbowAI && npm run dev
+
+<span class="cm"># Verify all servers are running</span>
+check-health.bat
+<span class="cm"># or manually:</span>
+netstat -ano | findstr ":3000 :5000 :3002" | findstr "LISTENING"
+
+<span class="cm"># Access points</span>
+<span class="cm"># Frontend:  http://localhost:3000</span>
+<span class="cm"># Backend:   http://localhost:5000/api</span>
+<span class="cm"># Rainbow:   http://localhost:3002/admin/rainbow</span>
+<span class="cm"># Health:    http://localhost:3002/api/rainbow/health</span></code></pre>
+
+    <div class="info-box warning">
+      <div class="box-title">All 3 Servers Required</div>
+      The Rainbow dashboard at <code>http://localhost:3002</code> requires all 3 servers running. The MCP server fetches guest/capsule data from port 5000. If the dashboard shows "Loading...", port 5000 is most likely not running.
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Generated for <strong>PelangiManager-Zeabur</strong> &mdash; Rainbow AI Developer Guide</p>
+    <p>Three-module monorepo &bull; WhatsApp AI Assistant &bull; MCP Server</p>
+  </footer>
+
+</div>
+
+<!-- ===== Active sidebar link highlighting ===== -->
+<script>
+(function() {
+  // Sidebar active link tracking
+  const links = document.querySelectorAll('.sidebar nav a');
+  const sections = [];
+  links.forEach(link => {
+    const id = link.getAttribute('href');
+    if (id && id.startsWith('#')) {
+      const el = document.querySelector(id);
+      if (el) sections.push({ link, el });
+    }
+  });
+
+  function updateActive() {
+    let current = sections[0];
+    const scrollY = window.scrollY + 80;
+    for (const s of sections) {
+      if (s.el.offsetTop <= scrollY) current = s;
+    }
+    links.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+
+  // Close mobile sidebar when link clicked
+  links.forEach(link => {
+    link.addEventListener('click', () => {
+      document.querySelector('.sidebar').classList.remove('open');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

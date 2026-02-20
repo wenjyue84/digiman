@@ -9,16 +9,36 @@
 //   api, escapeHtml, escapeAttr, formatRelativeTime
 // ═══════════════════════════════════════════════════════════════════
 
+// US-007: Color palette for initials avatars (no red/green — avoid status confusion)
+var AVATAR_COLORS = ['#1abc9c','#3498db','#9b59b6','#e67e22','#e91e63','#00bcd4','#ff5722','#607d8b'];
+
+function avatarColorFromPhone(phone) {
+  var sum = 0;
+  for (var i = 0; i < phone.length; i++) sum += phone.charCodeAt(i);
+  return AVATAR_COLORS[sum % AVATAR_COLORS.length];
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  var parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0][0].toUpperCase();
+}
+
 /**
- * Generate avatar HTML: <img> with onerror fallback to initials <span>.
+ * Generate avatar HTML: <img> with onerror fallback to colored initials circle.
  * @param {string} phone - Phone number (may include @s.whatsapp.net)
- * @param {string} fallbackInitials - Text to show if image fails
+ * @param {string} fallbackInitials - Display name or text for initials
  */
 export function avatarImg(phone, fallbackInitials) {
   var clean = (phone || '').replace(/@s\.whatsapp\.net$/i, '').replace(/[^0-9]/g, '');
-  return '<img src="/api/rainbow/whatsapp/avatar/' + encodeURIComponent(clean) +
-    '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'" loading="lazy">' +
-    '<span style="display:none">' + escapeHtml(fallbackInitials) + '</span>';
+  var src = '/api/rainbow/whatsapp/avatar/' + encodeURIComponent(clean);
+  var bgColor = avatarColorFromPhone(clean);
+  var initials = getInitials(fallbackInitials);
+  // onerror: retry once after 3s (avatar may be fetching in background), then show colored initials
+  return '<img src="' + src +
+    '" onerror="var i=this;if(!i.dataset.retried){i.dataset.retried=1;setTimeout(function(){i.src=\'' + src + '?\'+Date.now()},3000)}else{i.style.display=\'none\';i.nextElementSibling.style.display=\'\'}" loading="lazy">' +
+    '<span class="avatar-initials" style="display:none;background:' + bgColor + '">' + escapeHtml(initials) + '</span>';
 }
 
 export var $ = {
@@ -56,5 +76,19 @@ export var $ = {
   dateFilterFrom: null,
   dateFilterTo: null,
   sidebarSearchDebounce: null,
-  messageMetadata: { pinned: [], starred: [] }
+  messageMetadata: { pinned: [], starred: [] },
+  /** @type {Map<string, {log: object, cachedAt: number}>} conversation cache for instant switching (US-006) */
+  conversationCache: new Map(),
+  /** @type {Object<string, string[]>} phone→tags[] map for tag filtering (US-009) */
+  contactTagsMap: {},
+  /** @type {string[]} Currently selected tags for filtering (US-009) */
+  tagFilter: [],
+  /** @type {Object<string, string>} phone→unit map for unit prefix display (US-012) */
+  contactUnitsMap: {},
+  /** @type {string} Currently selected unit for filtering (US-013) */
+  unitFilter: '',
+  /** @type {Object<string, {checkIn: string, checkOut: string}>} phone→dates map for date suffix display (US-014) */
+  contactDatesMap: {},
+  /** @type {string} Current staff display name for manual message attribution (US-011) */
+  staffName: 'Staff'
 };

@@ -85,6 +85,14 @@ async function attemptStart(config: SupervisorConfig): Promise<void> {
       console.warn('[BaileysSupervisor] WhatsApp auto-reply disabled. Manual tools still work.');
     }
 
+    // One-time dedup cleanup for Baileys double-fire duplicates
+    try {
+      const { deduplicateMessages } = await import('../assistant/conversation-logger.js');
+      await deduplicateMessages();
+    } catch (err: any) {
+      console.warn(`[BaileysSupervisor] Dedup cleanup failed (non-fatal): ${err.message}`);
+    }
+
     // Start daily report scheduler (11:30 AM MYT)
     startDailyReportScheduler();
 

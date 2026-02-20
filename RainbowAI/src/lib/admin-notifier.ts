@@ -301,6 +301,63 @@ export async function notifyAdminConfigError(message: string): Promise<void> {
 }
 
 /**
+ * Send failover activation alert to system admin.
+ * Called when standby server takes over because primary went silent.
+ */
+export async function notifyAdminFailoverActivated(): Promise<void> {
+  if (!notificationContext) {
+    logger.warn('Not initialized — cannot send failover activation notification');
+    return;
+  }
+
+  const settings = await loadAdminNotificationSettings();
+  if (!settings.enabled) return;
+
+  const role = process.env.RAINBOW_ROLE || 'unknown';
+  const message = `🔄 *Rainbow AI Failover Activated*\n\n` +
+    `Server role: *${role}* → now ACTIVE\n` +
+    `Reason: Primary server heartbeat lost\n` +
+    `Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}\n\n` +
+    `This server is now handling all WhatsApp messages.\n` +
+    `Check primary server status and restart if needed.`;
+
+  try {
+    await notificationContext.sendMessage(settings.systemAdminPhone, message);
+    logger.info('Sent failover activation notification');
+  } catch (err: any) {
+    logger.error('Failed to send failover activation notification', { error: err.message });
+  }
+}
+
+/**
+ * Send failover deactivation alert to system admin.
+ * Called when primary server resumes and standby hands back.
+ */
+export async function notifyAdminFailoverDeactivated(): Promise<void> {
+  if (!notificationContext) {
+    logger.warn('Not initialized — cannot send failover deactivation notification');
+    return;
+  }
+
+  const settings = await loadAdminNotificationSettings();
+  if (!settings.enabled) return;
+
+  const role = process.env.RAINBOW_ROLE || 'unknown';
+  const message = `✅ *Rainbow AI Failover Deactivated*\n\n` +
+    `Server role: *${role}* → now STANDBY\n` +
+    `Reason: Primary server heartbeat resumed\n` +
+    `Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}\n\n` +
+    `Primary server is back in control. This server is monitoring.`;
+
+  try {
+    await notificationContext.sendMessage(settings.systemAdminPhone, message);
+    logger.info('Sent failover deactivation notification');
+  } catch (err: any) {
+    logger.error('Failed to send failover deactivation notification', { error: err.message });
+  }
+}
+
+/**
  * Send AI provider rate limit alert to system admin
  * Notifies when a provider hits too many consecutive 429 errors
  */

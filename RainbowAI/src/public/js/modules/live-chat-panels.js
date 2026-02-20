@@ -261,6 +261,9 @@ export async function loadContactDetails() {
   }
 
   renderContactFields();
+  loadGlobalTags(); // US-008: Fetch global tags for autocomplete
+  loadCapsuleUnits(); // US-010: Fetch capsule units for dropdown
+  loadPaymentReminder(); // US-022: Load payment reminder for this contact
 }
 
 // US-088: Country detection from phone prefix
@@ -397,6 +400,9 @@ function renderContactFields() {
 
   // US-088: Update language lock UI
   updateLanguageLockUI();
+
+  // US-005: Check if context file exists and show path
+  updateContextFilePath();
 }
 
 function collectContactFields() {
@@ -426,12 +432,38 @@ export function contactFieldChanged() {
 
 async function saveContactDetails(data) {
   if (!$.activePhone) return;
+  var prevUnit = $.contactUnitsMap[$.activePhone] || '';
   try {
     $.contactDetails = await api('/conversations/' + encodeURIComponent($.activePhone) + '/contact', {
       method: 'PATCH',
       body: data
     });
     showSaveIndicator('saved');
+    // US-012: Sync unit to contactUnitsMap and re-render left pane if unit changed
+    var newUnit = (data.unit || '').trim();
+    var unitChanged = newUnit !== prevUnit;
+    if (unitChanged) {
+      if (newUnit) {
+        $.contactUnitsMap[$.activePhone] = newUnit;
+      } else {
+        delete $.contactUnitsMap[$.activePhone];
+      }
+    }
+    // US-014: Sync dates to contactDatesMap and re-render left pane if dates changed
+    var prevDates = $.contactDatesMap[$.activePhone] || {};
+    var newCheckIn = data.checkIn || '';
+    var newCheckOut = data.checkOut || '';
+    var datesChanged = newCheckIn !== (prevDates.checkIn || '') || newCheckOut !== (prevDates.checkOut || '');
+    if (datesChanged) {
+      if (newCheckIn && newCheckOut) {
+        $.contactDatesMap[$.activePhone] = { checkIn: newCheckIn, checkOut: newCheckOut };
+      } else {
+        delete $.contactDatesMap[$.activePhone];
+      }
+    }
+    if (unitChanged || datesChanged) {
+      renderList($.conversations);
+    }
   } catch (e) {
     showSaveIndicator('error');
   }
@@ -453,6 +485,23 @@ function showSaveIndicator(state) {
   }
 }
 
+// ─── Global Tags System (US-008) ────────────────────────────────
+
+var _globalTags = [];       // Cached global tag list
+var _tagDropdownIdx = -1;   // Keyboard nav index in dropdown
+
+export function loadGlobalTags() {
+  api('/tags').then(function (data) {
+    _globalTags = (data && Array.isArray(data.tags)) ? data.tags : [];
+  }).catch(function () { /* silent — autocomplete degrades gracefully */ });
+}
+
+function syncTagToGlobal(tag) {
+  api('/tags', { method: 'POST', body: { tag: tag } }).then(function (data) {
+    if (data && Array.isArray(data.tags)) _globalTags = data.tags;
+  }).catch(function () { /* silent */ });
+}
+
 function renderTags(tags) {
   var container = document.getElementById('lc-cd-tags');
   if (!container) return;
@@ -466,12 +515,19 @@ function addTag(text) {
   var tag = text.trim();
   if (!tag) return;
   if (!$.contactDetails.tags) $.contactDetails.tags = [];
-  if ($.contactDetails.tags.indexOf(tag) !== -1) return;
+  // Case-insensitive duplicate check
+  var lower = tag.toLowerCase();
+  var isDup = $.contactDetails.tags.some(function (t) { return t.toLowerCase() === lower; });
+  if (isDup) return;
   $.contactDetails.tags.push(tag);
   renderTags($.contactDetails.tags);
   var data = collectContactFields();
   data.tags = $.contactDetails.tags;
   saveContactDetails(data);
+  syncTagToGlobal(tag);
+  hideTagDropdown();
+  // US-009: Update local tags map for filter
+  if ($.activePhone) $.contactTagsMap[$.activePhone] = $.contactDetails.tags.slice();
 }
 
 export function removeTag(index) {
@@ -481,16 +537,434 @@ export function removeTag(index) {
   var data = collectContactFields();
   data.tags = $.contactDetails.tags;
   saveContactDetails(data);
+  // US-009: Update local tags map for filter
+  if ($.activePhone) $.contactTagsMap[$.activePhone] = $.contactDetails.tags.slice();
 }
 
 export function tagKeydown(event) {
+  var dropdown = document.getElementById('lc-tag-dropdown');
+  var visible = dropdown && dropdown.style.display !== 'none';
+  var items = visible ? dropdown.querySelectorAll('.lc-tag-option') : [];
+
+  if (event.key === 'ArrowDown' && visible && items.length) {
+    event.preventDefault();
+    _tagDropdownIdx = Math.min(_tagDropdownIdx + 1, items.length - 1);
+    updateTagDropdownHighlight(items);
+    return;
+  }
+  if (event.key === 'ArrowUp' && visible && items.length) {
+    event.preventDefault();
+    _tagDropdownIdx = Math.max(_tagDropdownIdx - 1, 0);
+    updateTagDropdownHighlight(items);
+    return;
+  }
   if (event.key === 'Enter') {
     event.preventDefault();
+    if (visible && _tagDropdownIdx >= 0 && items[_tagDropdownIdx]) {
+      var selected = items[_tagDropdownIdx].getAttribute('data-tag');
+      if (selected) {
+        addTag(selected);
+        var input = document.getElementById('lc-cd-tag-input');
+        if (input) input.value = '';
+        return;
+      }
+    }
     var input = document.getElementById('lc-cd-tag-input');
     if (input && input.value.trim()) {
       addTag(input.value);
       input.value = '';
     }
+    return;
+  }
+  if (event.key === 'Escape' && visible) {
+    event.preventDefault();
+    hideTagDropdown();
+    return;
+  }
+}
+
+export function tagInput() {
+  var input = document.getElementById('lc-cd-tag-input');
+  if (!input) return;
+  var query = input.value.trim().toLowerCase();
+  if (!query) { hideTagDropdown(); return; }
+
+  var currentTags = ($.contactDetails.tags || []).map(function (t) { return t.toLowerCase(); });
+  var matches = _globalTags.filter(function (t) {
+    return t.toLowerCase().indexOf(query) !== -1 && currentTags.indexOf(t.toLowerCase()) === -1;
+  });
+
+  if (matches.length === 0) { hideTagDropdown(); return; }
+
+  var dropdown = document.getElementById('lc-tag-dropdown');
+  if (!dropdown) return;
+  _tagDropdownIdx = -1;
+  dropdown.innerHTML = matches.slice(0, 8).map(function (t) {
+    return '<div class="lc-tag-option" data-tag="' + escapeAttr(t) + '" onclick="lcSelectTag(this)">' + escapeHtml(t) + '</div>';
+  }).join('');
+  dropdown.style.display = 'block';
+}
+
+function updateTagDropdownHighlight(items) {
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.toggle('highlighted', i === _tagDropdownIdx);
+  }
+}
+
+export function selectTag(el) {
+  var tag = el.getAttribute('data-tag');
+  if (tag) addTag(tag);
+  var input = document.getElementById('lc-cd-tag-input');
+  if (input) input.value = '';
+}
+
+function hideTagDropdown() {
+  var dropdown = document.getElementById('lc-tag-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  _tagDropdownIdx = -1;
+}
+
+// ─── Unit / Capsule Dropdown (US-010) ────────────────────────────
+
+var _capsuleUnits = [];      // Cached capsule unit list
+var _unitDropdownIdx = -1;   // Keyboard nav index in unit dropdown
+
+export function loadCapsuleUnits() {
+  return api('/capsules').then(function (data) {
+    _capsuleUnits = (data && Array.isArray(data.units)) ? data.units : [];
+  }).catch(function () { /* silent — freeform input still works */ });
+}
+
+function syncCustomUnit(unit) {
+  api('/capsules/custom', { method: 'POST', body: { unit: unit } }).then(function (data) {
+    if (data && Array.isArray(data.units)) _capsuleUnits = data.units;
+  }).catch(function () { /* silent */ });
+}
+
+export function unitInput() {
+  var input = document.getElementById('lc-cd-unit');
+  if (!input) return;
+  var query = input.value.trim().toLowerCase();
+
+  var matches;
+  if (!query) {
+    // Show all units when field is focused with no text
+    matches = _capsuleUnits.slice(0, 12);
+  } else {
+    matches = _capsuleUnits.filter(function (u) {
+      return u.toLowerCase().indexOf(query) !== -1;
+    });
+  }
+
+  if (matches.length === 0) { hideUnitDropdown(); return; }
+
+  var dropdown = document.getElementById('lc-unit-dropdown');
+  if (!dropdown) return;
+  _unitDropdownIdx = -1;
+  dropdown.innerHTML = matches.slice(0, 10).map(function (u) {
+    return '<div class="lc-tag-option" data-unit="' + escapeAttr(u) + '" onclick="lcSelectUnit(this)">' + escapeHtml(u) + '</div>';
+  }).join('');
+  dropdown.style.display = 'block';
+}
+
+export function selectUnit(el) {
+  var unit = el.getAttribute('data-unit');
+  if (!unit) return;
+  var input = document.getElementById('lc-cd-unit');
+  if (input) {
+    input.value = unit;
+    contactFieldChanged();
+  }
+  hideUnitDropdown();
+}
+
+export function unitKeydown(event) {
+  var dropdown = document.getElementById('lc-unit-dropdown');
+  var visible = dropdown && dropdown.style.display !== 'none';
+  var items = visible ? dropdown.querySelectorAll('.lc-tag-option') : [];
+
+  if (event.key === 'ArrowDown' && visible && items.length) {
+    event.preventDefault();
+    _unitDropdownIdx = Math.min(_unitDropdownIdx + 1, items.length - 1);
+    _updateUnitDropdownHighlight(items);
+    return;
+  }
+  if (event.key === 'ArrowUp' && visible && items.length) {
+    event.preventDefault();
+    _unitDropdownIdx = Math.max(_unitDropdownIdx - 1, 0);
+    _updateUnitDropdownHighlight(items);
+    return;
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    if (visible && _unitDropdownIdx >= 0 && items[_unitDropdownIdx]) {
+      var selected = items[_unitDropdownIdx].getAttribute('data-unit');
+      if (selected) {
+        var input = document.getElementById('lc-cd-unit');
+        if (input) { input.value = selected; contactFieldChanged(); }
+        hideUnitDropdown();
+        return;
+      }
+    }
+    // If Enter pressed with no dropdown selection, save custom unit and trigger save
+    var input = document.getElementById('lc-cd-unit');
+    if (input && input.value.trim()) {
+      syncCustomUnit(input.value.trim());
+      contactFieldChanged();
+    }
+    hideUnitDropdown();
+    return;
+  }
+  if (event.key === 'Escape' && visible) {
+    event.preventDefault();
+    hideUnitDropdown();
+    return;
+  }
+}
+
+function _updateUnitDropdownHighlight(items) {
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.toggle('highlighted', i === _unitDropdownIdx);
+  }
+}
+
+export function unitBlur() {
+  // Small delay to allow dropdown click to register before hiding
+  setTimeout(function () {
+    hideUnitDropdown();
+    // Sync any typed custom unit to global list
+    var input = document.getElementById('lc-cd-unit');
+    if (input && input.value.trim()) {
+      syncCustomUnit(input.value.trim());
+    }
+  }, 200);
+}
+
+function hideUnitDropdown() {
+  var dropdown = document.getElementById('lc-unit-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  _unitDropdownIdx = -1;
+}
+
+// ─── Contact Units Map (US-012) ──────────────────────────────────
+
+export function loadContactUnitsMap() {
+  return api('/conversations/units-map').then(function (data) {
+    $.contactUnitsMap = (data && typeof data === 'object') ? data : {};
+  }).catch(function () { $.contactUnitsMap = {}; });
+}
+
+// ─── Contact Dates Map (US-014) ─────────────────────────────────
+
+export function loadContactDatesMap() {
+  api('/conversations/dates-map').then(function (data) {
+    $.contactDatesMap = (data && typeof data === 'object') ? data : {};
+  }).catch(function () { $.contactDatesMap = {}; });
+}
+
+// ─── Tag Filter (US-009) ────────────────────────────────────────
+
+export function loadContactTagsMap() {
+  return api('/conversations/tags-map').then(function (data) {
+    $.contactTagsMap = (data && typeof data === 'object') ? data : {};
+  }).catch(function () { $.contactTagsMap = {}; });
+}
+
+export async function toggleTagFilter() {
+  var dropdown = document.getElementById('lc-tag-filter-dropdown');
+  if (!dropdown) return;
+  var isOpen = dropdown.style.display !== 'none';
+  if (isOpen) {
+    dropdown.style.display = 'none';
+    return;
+  }
+  // US-006: Ensure tags are loaded before rendering (handles race on first click)
+  if (Object.keys($.contactTagsMap).length === 0) {
+    await loadContactTagsMap();
+  }
+  _renderTagFilterDropdown();
+  dropdown.style.display = 'block';
+}
+
+function _renderTagFilterDropdown() {
+  var dropdown = document.getElementById('lc-tag-filter-dropdown');
+  if (!dropdown) return;
+
+  // Collect all unique tags from contactTagsMap
+  var tagSet = {};
+  var phones = Object.keys($.contactTagsMap);
+  for (var i = 0; i < phones.length; i++) {
+    var tags = $.contactTagsMap[phones[i]];
+    if (Array.isArray(tags)) {
+      for (var j = 0; j < tags.length; j++) {
+        var t = tags[j];
+        tagSet[t.toLowerCase()] = t; // Keep original case from first occurrence
+      }
+    }
+  }
+  // Also include global tags for completeness
+  for (var k = 0; k < _globalTags.length; k++) {
+    var gt = _globalTags[k];
+    if (!tagSet[gt.toLowerCase()]) tagSet[gt.toLowerCase()] = gt;
+  }
+
+  var allTags = Object.keys(tagSet).sort().map(function (k) { return tagSet[k]; });
+
+  if (allTags.length === 0) {
+    dropdown.innerHTML = '<div class="lc-tag-filter-empty">No tags yet</div>';
+    return;
+  }
+
+  var html = '';
+  // Clear filter option (only if filter is active)
+  if ($.tagFilter.length > 0) {
+    html += '<div class="lc-tag-filter-option lc-tag-filter-clear" onclick="lcClearTagFilter()">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+      ' Clear filter</div>';
+  }
+
+  for (var m = 0; m < allTags.length; m++) {
+    var tag = allTags[m];
+    var isSelected = $.tagFilter.indexOf(tag) !== -1;
+    html += '<div class="lc-tag-filter-option' + (isSelected ? ' selected' : '') +
+      '" data-tag="' + escapeAttr(tag) + '" onclick="lcToggleTagSelection(this)">' +
+      '<span class="lc-tag-filter-check">' + (isSelected ? '\u2713' : '') + '</span>' +
+      escapeHtml(tag) + '</div>';
+  }
+  dropdown.innerHTML = html;
+}
+
+export function toggleTagSelection(el) {
+  var tag = el.getAttribute('data-tag');
+  if (!tag) return;
+  var idx = $.tagFilter.indexOf(tag);
+  if (idx === -1) {
+    $.tagFilter.push(tag);
+  } else {
+    $.tagFilter.splice(idx, 1);
+  }
+  _renderTagFilterDropdown();
+  _updateTagFilterBtnLabel();
+  renderList($.conversations);
+}
+
+export function clearTagFilter() {
+  $.tagFilter = [];
+  var dropdown = document.getElementById('lc-tag-filter-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  _updateTagFilterBtnLabel();
+  renderList($.conversations);
+}
+
+function _updateTagFilterBtnLabel() {
+  var label = document.getElementById('lc-tag-filter-label');
+  var btn = document.getElementById('lc-tag-filter-btn');
+  if (!label) return;
+  if ($.tagFilter.length === 0) {
+    label.textContent = 'Tags';
+    if (btn) btn.classList.remove('active');
+  } else if ($.tagFilter.length === 1) {
+    label.textContent = $.tagFilter[0];
+    if (btn) btn.classList.add('active');
+  } else {
+    label.textContent = $.tagFilter.length + ' tags';
+    if (btn) btn.classList.add('active');
+  }
+}
+
+// ─── Unit Filter (US-013) ────────────────────────────────────────
+
+export async function toggleUnitFilter() {
+  var dropdown = document.getElementById('lc-unit-filter-dropdown');
+  if (!dropdown) return;
+  var isOpen = dropdown.style.display !== 'none';
+  if (isOpen) {
+    dropdown.style.display = 'none';
+    return;
+  }
+  // US-006: Ensure unit/capsule data is loaded before rendering (handles race on first click)
+  if (Object.keys($.contactUnitsMap).length === 0 && _capsuleUnits.length === 0) {
+    await Promise.all([loadContactUnitsMap(), loadCapsuleUnits()]);
+  }
+  _renderUnitFilterDropdown();
+  dropdown.style.display = 'block';
+}
+
+function _renderUnitFilterDropdown() {
+  var dropdown = document.getElementById('lc-unit-filter-dropdown');
+  if (!dropdown) return;
+
+  // Collect all unique units from contactUnitsMap
+  var unitSet = {};
+  var phones = Object.keys($.contactUnitsMap);
+  for (var i = 0; i < phones.length; i++) {
+    var u = $.contactUnitsMap[phones[i]];
+    if (u) unitSet[u.toLowerCase()] = u;
+  }
+  // Also include capsule units from cache
+  for (var j = 0; j < _capsuleUnits.length; j++) {
+    var cu = _capsuleUnits[j];
+    if (cu && !unitSet[cu.toLowerCase()]) unitSet[cu.toLowerCase()] = cu;
+  }
+
+  var allUnits = Object.keys(unitSet).sort().map(function (k) { return unitSet[k]; });
+
+  if (allUnits.length === 0) {
+    dropdown.innerHTML = '<div class="lc-tag-filter-empty">No units assigned yet</div>';
+    return;
+  }
+
+  var html = '';
+  // Clear filter option (only if filter is active)
+  if ($.unitFilter) {
+    html += '<div class="lc-tag-filter-option lc-tag-filter-clear" onclick="lcClearUnitFilter()">' +
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+      ' Clear filter</div>';
+  }
+
+  for (var m = 0; m < allUnits.length; m++) {
+    var unit = allUnits[m];
+    var isSelected = $.unitFilter === unit;
+    html += '<div class="lc-tag-filter-option' + (isSelected ? ' selected' : '') +
+      '" data-unit="' + escapeAttr(unit) + '" onclick="lcSelectUnitFilter(this)">' +
+      '<span class="lc-tag-filter-check">' + (isSelected ? '\u2713' : '') + '</span>' +
+      escapeHtml(unit) + '</div>';
+  }
+  dropdown.innerHTML = html;
+}
+
+export function selectUnitFilter(el) {
+  var unit = el.getAttribute('data-unit');
+  if (!unit) return;
+  // Toggle: if already selected, clear it
+  if ($.unitFilter === unit) {
+    $.unitFilter = '';
+  } else {
+    $.unitFilter = unit;
+  }
+  _renderUnitFilterDropdown();
+  _updateUnitFilterBtnLabel();
+  renderList($.conversations);
+}
+
+export function clearUnitFilter() {
+  $.unitFilter = '';
+  var dropdown = document.getElementById('lc-unit-filter-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
+  _updateUnitFilterBtnLabel();
+  renderList($.conversations);
+}
+
+function _updateUnitFilterBtnLabel() {
+  var label = document.getElementById('lc-unit-filter-label');
+  var btn = document.getElementById('lc-unit-filter-btn');
+  if (!label) return;
+  if (!$.unitFilter) {
+    label.textContent = 'Unit';
+    if (btn) btn.classList.remove('active');
+  } else {
+    label.textContent = $.unitFilter;
+    if (btn) btn.classList.add('active');
   }
 }
 
@@ -872,10 +1346,13 @@ export async function generateAINotes() {
 
     if (result && result.notes) {
       textarea.value = result.notes;
+      // Auto-expand to show full content without truncation (US-008)
       textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+      textarea.style.height = textarea.scrollHeight + 'px';
+      // Scroll the contact body so the expanded textarea is visible
+      var body = textarea.closest('.lc-contact-body');
+      if (body) body.scrollTop = body.scrollHeight;
       showToast('AI notes generated (review before saving)', 'success');
-      // Trigger save after review delay
       contactFieldChanged();
     }
   } catch (err) {
@@ -887,6 +1364,29 @@ export async function generateAINotes() {
 }
 
 // ─── US-091: Guest Context File ─────────────────────────────────
+
+// US-005: Check if context file exists for current contact and show path
+export async function updateContextFilePath() {
+  var pathEl = document.getElementById('lc-context-filepath');
+  if (!pathEl) return;
+
+  if (!$.activePhone) {
+    pathEl.style.display = 'none';
+    return;
+  }
+
+  try {
+    var result = await api('/conversations/' + encodeURIComponent($.activePhone) + '/context');
+    if (result && result.exists && result.filename) {
+      pathEl.textContent = '\u{1F4C4} ' + result.filename;
+      pathEl.style.display = '';
+    } else {
+      pathEl.style.display = 'none';
+    }
+  } catch (err) {
+    pathEl.style.display = 'none';
+  }
+}
 
 export async function openGuestContext() {
   if (!$.activePhone) return;
@@ -923,12 +1423,19 @@ export async function saveGuestContext() {
   if (!editor) return;
 
   try {
-    await api('/conversations/' + encodeURIComponent($.activePhone) + '/context', {
+    var result = await api('/conversations/' + encodeURIComponent($.activePhone) + '/context', {
       method: 'PUT',
       body: { content: editor.value }
     });
     showToast('Guest context saved', 'success');
     closeContextModal();
+
+    // US-005: Show the saved file path below the button
+    var pathEl = document.getElementById('lc-context-filepath');
+    if (pathEl && result && result.filename) {
+      pathEl.textContent = '\u{1F4C4} ' + result.filename;
+      pathEl.style.display = '';
+    }
   } catch (err) {
     showToast('Failed to save context: ' + (err.message || 'Unknown error'), 'error');
   }
@@ -953,4 +1460,166 @@ export function mobileShowChat() {
   if (container && window.innerWidth <= 768) {
     container.classList.add('lc-mobile-show-chat');
   }
+}
+
+// ─── Payment Reminders (US-022) ─────────────────────────────────
+
+var _currentReminder = null; // Active reminder for current contact
+
+export async function loadPaymentReminder() {
+  _currentReminder = null;
+  var activeEl = document.getElementById('lc-payment-reminder-active');
+  var newEl = document.getElementById('lc-payment-reminder-new');
+  if (!activeEl || !newEl) return;
+
+  if (!$.activePhone) {
+    activeEl.style.display = 'none';
+    newEl.style.display = '';
+    return;
+  }
+
+  try {
+    var result = await api('/payment-reminders?phone=' + encodeURIComponent($.activePhone));
+    var reminders = result.reminders || [];
+    var active = reminders.find(function (r) { return r.status === 'active' || r.status === 'snoozed'; });
+
+    if (active) {
+      _currentReminder = active;
+      activeEl.style.display = '';
+      newEl.style.display = 'none';
+      var dueEl = document.getElementById('lc-payment-reminder-due');
+      if (dueEl) dueEl.textContent = 'Due: ' + active.dueDate;
+      var autoEl = document.getElementById('lc-payment-reminder-auto');
+      if (autoEl) autoEl.textContent = active.autoSend ? '(auto-send)' : '';
+      // Add overdue styling
+      var today = new Date().toISOString().split('T')[0];
+      if (active.dueDate <= today) {
+        activeEl.classList.add('lc-reminder-overdue');
+      } else {
+        activeEl.classList.remove('lc-reminder-overdue');
+      }
+    } else {
+      activeEl.style.display = 'none';
+      newEl.style.display = '';
+    }
+  } catch {
+    activeEl.style.display = 'none';
+    newEl.style.display = '';
+  }
+}
+
+export async function setPaymentReminder() {
+  if (!$.activePhone) return;
+  var dateInput = document.getElementById('lc-payment-due-date');
+  var autoInput = document.getElementById('lc-payment-autosend');
+  if (!dateInput || !dateInput.value) {
+    if (window.toast) window.toast('Pick a due date', 'error');
+    return;
+  }
+
+  try {
+    await api('/payment-reminders', {
+      method: 'POST',
+      body: {
+        phone: $.activePhone,
+        dueDate: dateInput.value,
+        autoSend: autoInput ? autoInput.checked : false
+      }
+    });
+    if (window.toast) window.toast('Payment reminder set for ' + dateInput.value, 'success');
+    dateInput.value = '';
+    if (autoInput) autoInput.checked = false;
+    loadPaymentReminder();
+    refreshOverdueBell();
+  } catch (err) {
+    if (window.toast) window.toast('Failed: ' + (err.message || 'error'), 'error');
+  }
+}
+
+export async function dismissReminder() {
+  if (!_currentReminder) return;
+  try {
+    await api('/payment-reminders/' + encodeURIComponent(_currentReminder.id) + '/dismiss', { method: 'POST' });
+    if (window.toast) window.toast('Reminder dismissed', 'success');
+    loadPaymentReminder();
+    refreshOverdueBell();
+  } catch (err) {
+    if (window.toast) window.toast('Failed: ' + (err.message || 'error'), 'error');
+  }
+}
+
+export async function snoozeReminder() {
+  if (!_currentReminder) return;
+  try {
+    await api('/payment-reminders/' + encodeURIComponent(_currentReminder.id) + '/snooze', {
+      method: 'POST',
+      body: { days: 3 }
+    });
+    if (window.toast) window.toast('Reminder snoozed for 3 days', 'success');
+    loadPaymentReminder();
+    refreshOverdueBell();
+  } catch (err) {
+    if (window.toast) window.toast('Failed: ' + (err.message || 'error'), 'error');
+  }
+}
+
+// Overdue bell + badge in sidebar header
+export async function refreshOverdueBell() {
+  try {
+    var result = await api('/payment-reminders/overdue');
+    var count = result.count || 0;
+    var bell = document.getElementById('lc-reminder-bell');
+    var countEl = document.getElementById('lc-reminder-bell-count');
+    if (bell) bell.style.display = count > 0 ? '' : 'none';
+    if (countEl) countEl.textContent = String(count);
+  } catch {
+    // Non-critical
+  }
+}
+
+export async function showOverdueReminders() {
+  try {
+    var result = await api('/payment-reminders/overdue');
+    var reminders = result.reminders || [];
+    if (reminders.length === 0) {
+      if (window.toast) window.toast('No overdue payment reminders', 'info');
+      return;
+    }
+    var lines = reminders.map(function (r) {
+      var phone = r.phone.replace(/^\d{1,3}/, function (cc) { return '+' + cc + ' '; });
+      return phone + ' — due ' + r.dueDate;
+    });
+    alert('Overdue Payment Reminders:\n\n' + lines.join('\n'));
+  } catch (err) {
+    if (window.toast) window.toast('Failed to load reminders', 'error');
+  }
+}
+
+// Add overdue badge to left-pane conversation items
+export function addOverdueBadgeToList() {
+  api('/payment-reminders/overdue').then(function (result) {
+    var reminders = result.reminders || [];
+    var overduePhones = {};
+    for (var i = 0; i < reminders.length; i++) {
+      overduePhones[reminders[i].phone] = true;
+    }
+    // Find chat list items and add badge
+    var items = document.querySelectorAll('.lc-chat-item');
+    for (var j = 0; j < items.length; j++) {
+      var phone = items[j].getAttribute('data-phone');
+      var existingBadge = items[j].querySelector('.lc-overdue-badge');
+      if (phone && overduePhones[phone]) {
+        if (!existingBadge) {
+          var badge = document.createElement('span');
+          badge.className = 'lc-overdue-badge';
+          badge.title = 'Payment overdue';
+          badge.textContent = '$';
+          var nameEl = items[j].querySelector('.lc-chat-name');
+          if (nameEl) nameEl.appendChild(badge);
+        }
+      } else if (existingBadge) {
+        existingBadge.remove();
+      }
+    }
+  }).catch(function () { /* silent */ });
 }

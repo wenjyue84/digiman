@@ -1,260 +1,704 @@
 {
-  "productName": "Dashboard Activity Fix & WhatsApp-Style Chat Simulator",
-  "branchName": "main",
-  "overview": "Two improvements to Rainbow AI Dashboard: (1) Fix the 'Connecting...' bug in Dashboard Recent Activity — the SSE real-time activity stream infrastructure exists fully but fails to connect. (2) Redesign Chat Simulator Live Simulation pane to match WhatsApp's native look with developer metadata overlays. Both must work on localhost and Lightsail.",
+  "productName": "Rainbow AI Live Chat Phase 3 — WhatsApp UX, Prisma AI & Bug Fixes",
+  "branchName": "ralph/live-chat-enhancements",
+  "overview": "Phase 3: 22 user stories across 7 areas — fix infrastructure bugs (CORS login, self-check-in URL), fix live-chat bugs (translate toggle, staff-review prediction), improve Rainbow AI content and config (greeting hint, workflow dead ends, Malay naturalness, auto-approve expansion), add WhatsApp UX parity (pill-chip filters, message menu positioning, avatar initials, schedule datetime, date-jump search), build Prisma AI in-chat assistant for new staff, and mirror all features in chat-simulator/live-simulation. All changes within RainbowAI/ and server/ modules only.",
   "goals": [
-    "Restore real-time activity feed on the Dashboard (SSE stream showing live WhatsApp events, AI classifications, system events)",
-    "Make Chat Simulator Live Simulation visually match WhatsApp desktop (bubbles, background, input, header)",
-    "Maintain developer metadata badges (intent, confidence, tier, provider, response time) in a clean collapsible overlay",
-    "Ensure all changes work identically on localhost:3002 and Lightsail 18.142.14.142:3002"
+    "Fix production infrastructure: CORS login error and broken guest self-check-in link URL",
+    "Fix live-chat bugs: translate toggle, staff-review prediction marking, Ollama UX",
+    "Improve Rainbow AI guest experience: first-contact greeting, workflow cancel escape, natural Malay",
+    "Expand copilot auto-approve from 3 to 11 informational intents to reduce 30-minute wait times",
+    "Match WhatsApp Web UX conventions: filter chips, context menu anchoring, colored avatars, full datetime scheduling, date-jump search",
+    "Build Prisma AI floating assistant for new staff to answer questions using KB, MCP, history, and internet",
+    "Keep #live-chat and #chat-simulator/live-simulation in full feature parity"
   ],
   "userStories": [
     {
-      "id": "US-180",
-      "title": "Verify activity tracker backend emits events correctly",
+      "id": "US-018",
+      "title": "Fix CORS policy violation on production login",
       "priority": 1,
-      "description": "The activity tracker singleton in activity-tracker.ts has tracking functions (trackMessageReceived, trackIntentClassified, trackResponseSent, etc.) integrated into 15+ files. Verify these functions are actually called during the message pipeline and that events are emitted and persisted to data/recent-activity.json. Add debug logging if events are not firing. The backend must work before we can fix the frontend SSE connection.",
+      "description": "As a staff member logging in at http://18.142.14.142/login, I want the sign-in to succeed without a CORS error so I can access the dashboard. The browser reports 'CORS policy violation' on login form submission. In production, nginx serves both frontend and API from port 80 — requests should be same-origin. Root cause is likely a hardcoded localhost URL in the login form action or API call that bypasses nginx and hits port 5000 directly.",
       "acceptanceCriteria": [
-        "Sending a test message via Chat Simulator Quick Test generates at least 2 activity events (message_received + response_sent)",
-        "Activity events include correct metadata (phone, intent, confidence, response time)",
-        "data/recent-activity.json file gets created/updated with events after sending messages",
-        "GET /api/rainbow/activity returns { events: [...], count: N } with N > 0 after sending test messages",
-        "No duplicate events appear in the persisted file",
+        "Identify the CORS root cause: check server/index.ts cors() middleware config AND scan client-side login code for any hardcoded localhost:5000 or port 5000 references",
+        "If hardcoded URL found: replace with relative path (e.g. /api/login instead of http://localhost:5000/api/login)",
+        "If CORS config is the root cause: add http://18.142.14.142 to allowed origins via CORS_ORIGIN env var",
+        "Login at http://18.142.14.142/login completes without CORS errors in browser console",
+        "Local dev login at http://localhost:3000 is not broken",
+        "CORS_ORIGIN env var documented in root .env.example if used",
         "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors"
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: navigate to http://18.142.14.142/login, submit credentials, confirm no CORS error"
       ],
       "technicalNotes": [
-        "Activity tracker singleton: RainbowAI/src/lib/activity-tracker.ts",
-        "Tracking integration points: pipeline/input-validator.ts (trackMessageReceived), pipeline/stages/routing.ts (trackIntentClassified), pipeline/response-processor.ts (trackResponseSent)",
-        "WhatsApp tracking: RainbowAI/src/lib/whatsapp/instance.ts (trackWhatsAppConnected/Disconnected/Unlinked)",
-        "REST endpoint: GET /api/rainbow/activity in RainbowAI/src/routes/admin/activity.ts",
-        "Data file: RainbowAI/data/recent-activity.json (created at runtime, debounced 2s writes)",
-        "Test via curl: curl http://localhost:3002/api/rainbow/activity",
-        "If events not firing, check import paths and whether activity-tracker.ts is loaded as singleton correctly"
+        "CORS config: server/index.ts — check cors() middleware origin setting",
+        "Login API call: client/src/ — search for fetch('/api/auth/login') or similar; check if any hardcoded http://localhost:5000 exists",
+        "In production: nginx at port 80 proxies /api/* to port 5000. Frontend at port 80 + API at port 80 = same origin = no CORS needed",
+        "If login JS calls http://localhost:5000/api directly (not relative path), browser blocks it as cross-origin",
+        "Fix priority: relative path fix >> CORS header fix (simpler, no env var needed)",
+        "Check Vite config (vite.config.ts) for proxy settings that may be misapplied in production builds"
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
       "passes": true
     },
     {
-      "id": "US-181",
-      "title": "Fix SSE activity stream connection (Connecting... bug)",
+      "id": "US-017",
+      "title": "Fix self-check-in link URL to use public Lightsail IP",
       "priority": 2,
-      "description": "The Dashboard Recent Activity section shows 'Connecting...' indefinitely. The SSE endpoint at /api/rainbow/activity/stream exists and is registered (admin/index.ts line 88), and the frontend client (dashboard-helpers.js initActivityStream()) creates an EventSource. Debug why the connection fails: check URL path, CORS, cache headers interference (US-162 added selective caching — verify SSE path is excluded), and EventSource error handling. Fix the connection so the LIVE green dot appears and events stream in real time.",
+      "description": "As a guest receiving a self-check-in WhatsApp message, I want the check-in link to work from my phone. The current generated link uses http://localhost:5000/guest-checkin?token=... which guests cannot open. Fix: read PUBLIC_URL env var as the base URL when generating the link.",
       "acceptanceCriteria": [
-        "Opening Dashboard tab shows 'LIVE' green dot within 2 seconds (not 'Connecting...')",
-        "SSE connection to /api/rainbow/activity/stream establishes successfully",
-        "Incoming WhatsApp messages appear as activity events in real time",
-        "AI classifications, responses sent, and connection events appear correctly",
-        "Category tabs (All, Message, Reply, Connection, Classified) filter events correctly",
-        "Show more / Show less expand/collapse works",
-        "Relative timestamps update every 30 seconds",
-        "SSE auto-reconnects after disconnect (shows 'Reconnecting...' briefly, then 'LIVE' again)",
-        "Activity events persist across page refreshes (loaded from data/recent-activity.json)",
+        "Search server/ codebase for all occurrences of 'localhost:5000' in string templates, URL construction, and link generation code",
+        "Add PUBLIC_URL env var support: when set, use it as the base URL for all guest-facing links",
+        "Generated self-check-in URL uses PUBLIC_URL as base: http://18.142.14.142/guest-checkin?token=...",
+        "If PUBLIC_URL is not set, fall back to req.protocol + '://' + req.get('host') (preserves local dev at localhost:5000)",
+        "Same fix applied to any other guest-facing links with hardcoded localhost (payment links, QR links, etc.)",
+        "Root .env.example updated with: PUBLIC_URL=http://18.142.14.142",
+        "On local dev (PUBLIC_URL not set), the link still resolves to localhost (from request host header)",
         "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
+        "Server starts and dashboard loads without errors"
       ],
       "technicalNotes": [
-        "SSE route: RainbowAI/src/routes/admin/activity.ts GET /activity/stream",
-        "Route registration: RainbowAI/src/routes/admin/index.ts line 16 (import) and line 88 (router.use)",
-        "Frontend SSE client: RainbowAI/src/public/js/modules/dashboard-helpers.js initActivityStream() line 305",
-        "EventSource URL: window.location.origin + '/api/rainbow/activity/stream'",
-        "Check if US-162 cache headers (admin/index.ts STABLE_PATHS/SEMI_STABLE_PATHS) accidentally cache the SSE endpoint — /activity/stream should NOT be cached",
-        "SSE headers must include: Content-Type: text/event-stream, Cache-Control: no-cache, X-Accel-Buffering: no",
-        "Verify with curl: curl -N http://localhost:3002/api/rainbow/activity/stream — should see event: init followed by data",
-        "Dashboard HTML: RainbowAI/src/public/templates/tabs/dashboard.html lines 115-145",
-        "CSS: RainbowAI/src/public/css/rainbow-base.css lines 5-37 (activity card styles)",
-        "Dashboard chunk must export: window.filterActivityByCategory, window.toggleActivityExpand"
+        "Grep server/ for 'localhost:5000' string literals to find all hardcoded URLs",
+        "Self-check-in link is likely generated in server/routes/ when creating a guest token",
+        "Pattern to use: const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;",
+        "Also check RainbowAI/ for any guest-facing URL generation that might use localhost",
+        "The guest-checkin page is served by the server at port 5000 (proxied by nginx in production)"
       ],
-      "dependencies": [
-        "US-180"
-      ],
-      "estimatedComplexity": "medium",
+      "dependencies": [],
+      "estimatedComplexity": "small",
       "passes": true
     },
     {
-      "id": "US-182",
-      "title": "WhatsApp-style chat background, header, and layout for Live Simulation",
+      "id": "US-016",
+      "title": "Fix 'Failed to mark prediction' error in staff-review",
       "priority": 3,
-      "description": "Redesign the Live Simulation pane in Chat Simulator to match WhatsApp desktop's visual layout. Add WhatsApp's doodle background pattern (CSS-only, no external assets), update the chat header to show avatar/name/status like WhatsApp, add pill-shaped date separators, and add a scroll-to-bottom floating button. This is CSS + HTML template changes only — no JS logic changes.",
+      "description": "As an admin reviewing predictions in #staff-review, I want marking a prediction to succeed without errors. Every row shows 'Error' status (Image #6). Root cause unknown — investigate the mark-prediction API endpoint, request payload, and response.",
       "acceptanceCriteria": [
-        "Chat area background uses a subtle CSS doodle pattern (not plain #efeae2)",
-        "Messages area uses WhatsApp's exact spacing and padding",
-        "Chat header matches WhatsApp style: avatar circle (40px), contact name, online/last seen status text, right-side action buttons",
-        "Date separators between message groups use WhatsApp's pill-shaped style (rounded, centered, semi-transparent background)",
-        "Scroll-to-bottom button appears when user scrolls up (circular down-arrow, bottom-right of message area)",
+        "Identify the failing API call: check RainbowAI/src/routes/admin/intent-analytics.ts for the mark-prediction endpoint",
+        "Verify the frontend request payload matches what the backend expects (field names, types, content-type header)",
+        "Fix the root cause: missing field, wrong content-type, auth issue, or schema mismatch",
+        "Marking a prediction as correct or incorrect succeeds and the row updates its status visually (no 'Error' label)",
+        "No console errors in browser when marking predictions",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
+        "Verify in browser using agent-browser: load #staff-review, click mark on any row, confirm success state"
       ],
       "technicalNotes": [
-        "HTML template: RainbowAI/src/public/templates/tabs/chat-simulator.html lines 311-560 (Live Simulation section)",
-        "CSS files: RainbowAI/src/public/css/rainbow-livechat-core.css (bubble layout), rainbow-livechat-ui.css (input/buttons)",
-        "WhatsApp doodle pattern: use CSS background-image with inline SVG data URI or CSS-only pattern (repeating radial-gradient)",
-        "Date separator: WhatsApp uses rounded pill with rgba(255,255,255,0.9) background, 12px font, centered",
-        "Scroll-to-bottom: add a fixed-position button inside #rc-messages container, show/hide via scroll event listener",
-        "Do NOT change JS message rendering logic in this story — focus on HTML structure and CSS only",
-        "Keep all existing functionality: dev mode toggle, search, translate, file upload",
-        "No nested template literals in JS HTML generation — use string concatenation"
+        "Staff review route: RainbowAI/src/routes/admin/intent-analytics.ts — look for PATCH or POST endpoint for marking predictions",
+        "Frontend call: search RainbowAI/src/public/js/modules/ for 'mark' or 'prediction' to find the fetch() call",
+        "Common causes: body not JSON.stringify'd, missing Content-Type: application/json header, wrong HTTP method, endpoint path mismatch",
+        "The 'Error' shown in Image #6 appears in every row — suggests a systematic issue (wrong URL or auth), not a data issue"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Fix translate toggle in live-chat",
+      "priority": 4,
+      "description": "As a staff member, I want the Translate toggle in #live-chat to actually enable translation of incoming messages. The toggle currently cannot be turned ON (reverts immediately or has no effect). This feature was previously working — check git log for the regression.",
+      "acceptanceCriteria": [
+        "Check git log for recent changes to translate-related code in live-chat-actions.js, live-chat-core.js, or the translate API route",
+        "Translate toggle can be toggled ON without reverting back to OFF",
+        "When ON, incoming messages are translated using the active AI provider and translation appears below the original text",
+        "When OFF, no translation is shown",
+        "Toggle state persists across conversation switches within the same browser session",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: toggle ON, send a non-English message via chat simulator, confirm translation appears"
+      ],
+      "technicalNotes": [
+        "Translate toggle: RainbowAI/src/public/js/modules/live-chat-actions.js — look for toggleTranslate() or similar",
+        "State management: RainbowAI/src/public/js/modules/live-chat-core.js — check if translate state is being persisted",
+        "Translate API: check RainbowAI/src/routes/admin/conversations.ts for a translate endpoint",
+        "git log -- RainbowAI/src/public/js/modules/live-chat-actions.js to find the regression commit",
+        "Common regression: event listener removed during modular refactor, or state variable renamed"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-001",
+      "title": "Ollama troubleshooting guide on speed test error",
+      "priority": 5,
+      "description": "As a staff member, I want to see a troubleshooting guide when an Ollama model fails the speed test in #settings/ai-models, so I know it's a local software issue and how to fix it. The guide must explain that Ollama must be running locally, with steps to install, start, and retry.",
+      "acceptanceCriteria": [
+        "When 'Test Speed' is clicked on an Ollama model and it returns an error, a collapsible troubleshooting panel appears below that model card (not a toast — must persist)",
+        "The panel contains: (1) explanation 'Ollama runs locally on your computer and must be started before use', (2) steps: install Ollama → run ollama serve → pull the model → retry, (3) a Retry button that re-runs the speed test inline",
+        "The panel does NOT appear for non-Ollama providers (OpenAI, Anthropic, NVIDIA, etc.)",
+        "If the retry succeeds, the panel collapses and the speed result is shown normally",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: open #settings/ai-models, test an Ollama model, confirm guide appears on error"
+      ],
+      "technicalNotes": [
+        "Speed test UI: RainbowAI/src/public/js/modules/settings-ai-models.js — find the testSpeed() function",
+        "Template: RainbowAI/src/public/templates/tabs/settings.html — Ollama provider cards",
+        "Detection: check provider.id or provider.type for 'ollama' string before showing the guide",
+        "The guide should be injected into the DOM after the model card, not shown as a modal/toast"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Cloud environment Ollama unavailability warning",
+      "priority": 6,
+      "description": "As a cloud server admin viewing #settings/ai-models on the Lightsail instance, I want a persistent notice that Ollama is not available in the cloud environment, so I don't waste time enabling it. Detect cloud context via RAINBOW_ROLE=primary env var.",
+      "acceptanceCriteria": [
+        "Detect cloud context server-side: if RAINBOW_ROLE === 'primary', expose isCloud: true in GET /api/rainbow/status response",
+        "In #settings/ai-models, when isCloud is true, Ollama model cards show a yellow warning badge: 'Not available on cloud server — Ollama requires local installation'",
+        "The Activate toggle for Ollama models is disabled (greyed out) in cloud context with tooltip explaining why",
+        "Test Speed button for Ollama is also disabled in cloud context",
+        "In local/standby mode (RAINBOW_ROLE=standby or unset), the warning does NOT appear",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: open #settings/ai-models and confirm Ollama UI state matches environment"
+      ],
+      "technicalNotes": [
+        "Status endpoint: RainbowAI/src/routes/admin/index.ts or whatsapp.ts — GET /api/rainbow/status",
+        "Add isCloud: process.env.RAINBOW_ROLE === 'primary' to the status response",
+        "Frontend reads isCloud from status API on page load and applies warning state to Ollama provider cards",
+        "settings-ai-models.js: add cloud check when rendering provider cards",
+        "CSS: add .lc-disabled and yellow badge styles if not already present"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-019",
+      "title": "Add capability menu hint to first-contact greeting",
+      "priority": 7,
+      "description": "As a first-time guest messaging Rainbow on WhatsApp, I want to receive a brief menu of what Rainbow can help with so I know how to interact. The current greeting is a plain welcome with no hints. Add a capability list to the greeting for new contacts (conversation history length = 0).",
+      "acceptanceCriteria": [
+        "Locate the greeting intent's static reply in RainbowAI/src/assistant/data/ (settings.json or static-replies config)",
+        "Update the en variant to include the capability menu: 'Hi! I'm Rainbow 🌈 I can help with:\\n• 🏨 Check-in / Check-out\\n• 💰 Pricing & availability\\n• 📍 Location & directions\\n• 🛁 Facilities & WiFi\\n• 🙋 Or just ask me anything!'",
+        "Add ms (Malay) variant: 'Hai! Saya Rainbow 🌈 Boleh bantu dengan:\\n• 🏨 Check-in / Check-out\\n• 💰 Harga & ketersediaan\\n• 📍 Lokasi & arah\\n• 🛁 Kemudahan & WiFi\\n• 🙋 Atau tanya apa sahaja!'",
+        "Add zh (Chinese) variant with equivalent content",
+        "The hint is shown only when conversation history length is 0 (true first contact) — verify the message router checks this condition",
+        "For returning guests (history exists), the greeting remains the original shorter version",
+        "50-scenario accuracy test maintains 100% pass rate after this change",
+        "TypeScript compiles with zero errors",
+        "Verify in Chat Simulator: send 'hi' from a fresh conversation, confirm capability hint appears"
+      ],
+      "technicalNotes": [
+        "Greeting reply config: likely in RainbowAI/src/assistant/data/settings.json under staticReplies.greeting",
+        "First-contact detection: RainbowAI/src/assistant/message-router.ts — check if conversationHistory.length === 0 before routing greeting",
+        "If first-contact detection doesn't exist: add check in the greeting action handler to select between full hint vs short reply",
+        "The greeting response may be in routing.json as a static_reply action — trace the full flow from greeting intent → routing → reply"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-021",
+      "title": "Improve booking workflow naturalness and Malay translations",
+      "priority": 9,
+      "description": "As a guest going through the booking process, I want Rainbow to ask questions directly without a preamble filler message, and in natural conversational Malay. Current booking_payment_handler sends a preamble step ('I'll help you with your booking...') before asking the actual question, adding an unnecessary round-trip.",
+      "acceptanceCriteria": [
+        "Locate booking_payment_handler workflow in RainbowAI/src/assistant/data/workflows.json",
+        "Collapse the preamble step: merge Step 1 (preamble) and Step 2 (first question) into a single opening message",
+        "en opening: 'Happy to help with your booking! How many guests will be staying?'",
+        "ms opening: 'Boleh bantu! Berapa orang tetamu nak check in?'",
+        "zh opening: '好的，我来帮您办理！请问几位客人入住？'",
+        "Review all other ms variants in this workflow for literal translations and rewrite unnatural ones (payment method, confirmation messages)",
+        "Only ONE message is sent before the guest can respond (verified in Chat Simulator)",
+        "50-scenario accuracy test maintains 100% pass rate after this change",
+        "TypeScript compiles with zero errors",
+        "Verify in Chat Simulator: trigger booking workflow, confirm only one opening message before guest response"
+      ],
+      "technicalNotes": [
+        "Workflow definitions: RainbowAI/src/assistant/data/workflows.json",
+        "Find booking_payment_handler workflow, look at steps array",
+        "Natural Malaysian Malay markers: 'nak' (want to), 'lah' (particle), 'boleh' (can), 'dah' (already), 'berapa' (how many)",
+        "Avoid literal translation of 'guests will be staying' → 'tetamu nak check in' is more natural",
+        "This is a JSON-only change — no TypeScript files need modification"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-022",
+      "title": "Expand copilot auto-approve intent list from 3 to 11 intents",
+      "priority": 8,
+      "description": "As a hostel manager using copilot mode, I want Rainbow to auto-approve replies for all low-risk informational intents so guests don't wait 30 minutes for staff manual approval. Currently only greeting, thanks, and wifi are auto-approved. All 11 informational intents are safe to auto-approve.",
+      "acceptanceCriteria": [
+        "Locate auto_approve_intents config in RainbowAI/src/assistant/data/settings.json (under copilot key)",
+        "Update the list to: ['greeting', 'thanks', 'wifi', 'directions', 'checkin_info', 'checkout_info', 'facilities_info', 'rules_policy', 'payment_info', 'luggage_storage', 'extra_amenity_request']",
+        "Verify all 11 intent names exist in intent-keywords.json and routing.json (no typos, no missing intents)",
+        "In copilot mode, a message classified as checkin_info is auto-approved and sent without staff action",
+        "50-scenario accuracy test maintains 100% pass rate after this change",
+        "TypeScript compiles with zero errors",
+        "Verify in Chat Simulator: enable copilot mode, ask 'what time is check in?', confirm Rainbow replies without staff approval step"
+      ],
+      "technicalNotes": [
+        "Settings file: RainbowAI/src/assistant/data/settings.json — look for copilot.auto_approve_intents array",
+        "Cross-check intent names: grep intent-keywords.json for each of the 11 intent names to confirm they exist",
+        "Cross-check routing: grep routing.json for each intent name",
+        "This is a JSON-only change — no TypeScript modification needed",
+        "The copilot mode logic that reads this list is in message-router.ts or response-processor.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-020",
+      "title": "Fix workflow dead ends — cancel intent and routing gaps",
+      "priority": 10,
+      "description": "As a guest mid-workflow, I want to say 'cancel' or 'nevermind' and have Rainbow gracefully exit, so I don't get confused responses. Three gaps: (1) no cancel_workflow intent, (2) climate_control_complaint routes to static_reply instead of complaint_handling workflow, (3) billing_dispute routes to static_reply instead of escalate workflow.",
+      "acceptanceCriteria": [
+        "Add cancel_workflow intent to intent-keywords.json with keywords: 'cancel', 'nevermind', 'stop', 'forget it', 'batal', 'tak nak', '算了' (and common variations)",
+        "The workflow executor (workflow-executor.ts or action-dispatch.ts) checks for cancel_workflow intent at each step and exits gracefully",
+        "Graceful exit message (en): 'No problem! Is there anything else I can help you with?' with ms and zh variants",
+        "Update routing.json: climate_control_complaint action changed from static_reply to workflow with workflow_id: complaint_handling",
+        "Update routing.json: billing_dispute action changed from static_reply to workflow with workflow_id: escalate",
+        "Verify complaint_handling and escalate workflows exist in workflows.json (create minimal 2-step versions if missing)",
+        "50-scenario accuracy test maintains 100% pass rate after routing changes",
+        "TypeScript compiles with zero errors",
+        "Verify in Chat Simulator: send 'cancel' mid-booking-workflow, confirm graceful exit message"
+      ],
+      "technicalNotes": [
+        "Intent keywords: RainbowAI/src/assistant/data/intent-keywords.json",
+        "Routing: RainbowAI/src/assistant/data/routing.json — find climate_control_complaint and billing_dispute entries",
+        "Workflow executor: RainbowAI/src/assistant/pipeline/stages/action-dispatch.ts or a workflow-executor.ts file",
+        "Cancel check location: add at the top of the workflow step handler — if classified intent === 'cancel_workflow', call exitWorkflow()",
+        "Workflows file: RainbowAI/src/assistant/data/workflows.json — verify complaint_handling and escalate exist"
       ],
       "dependencies": [],
       "estimatedComplexity": "medium",
       "passes": true
     },
     {
-      "id": "US-183",
-      "title": "WhatsApp-style message bubbles with timestamps and read receipts",
-      "priority": 4,
-      "description": "Update renderMessageBubble() in chat-renderer.js and the associated CSS to produce WhatsApp-accurate message bubbles. Guest messages should be white with left tail, AI messages should be green with right tail. Each bubble must show HH:MM timestamp in bottom-right, and bot messages should show double-checkmark read receipt. Consecutive messages from the same sender should have tighter spacing without repeated tails.",
+      "id": "US-007",
+      "title": "Colored initials avatar for contacts without profile picture",
+      "priority": 11,
+      "description": "As a staff member, I want contacts without a profile picture to show a colored circle with their initials (e.g. 'AF' for Alston Foo) instead of a blank grey circle, making conversations visually distinguishable at a glance.",
       "acceptanceCriteria": [
-        "Guest messages: white (#fff) bubbles, left-aligned, pointed tail on top-left",
-        "AI/bot messages: light green (#d9fdd3) bubbles, right-aligned, pointed tail on top-right",
-        "Each bubble shows timestamp in bottom-right corner (HH:MM format, small gray text)",
-        "Bot messages show double-checkmark read receipt icon next to timestamp",
-        "Manual replies show a Manual indicator next to timestamp",
-        "Long messages wrap naturally with max-width ~65%",
-        "Consecutive messages from same sender have reduced spacing (2px gap, no repeated tail)",
+        "When a contact has no profile picture, avatar is a filled circle with a deterministic background color derived from contact's phone number (same number = same color always)",
+        "Initials: first letter(s) of display name (e.g. 'Alston Foo' → 'AF', 'Jay' → 'J')",
+        "Color palette uses at least 8 distinct, readable colors — not red or green (avoid confusion with status indicators)",
+        "White or near-white text on dark backgrounds for legibility",
+        "Applied in: conversation list avatars, chat header avatar, and message thread avatars",
+        "Contacts with actual profile pictures are unaffected",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
+        "Verify in browser using agent-browser: open #live-chat, confirm contacts without photos show colored initials"
       ],
       "technicalNotes": [
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js renderMessageBubble() lines 214-356",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-core.css — .lc-bubble, .lc-bubble.guest, .lc-bubble.bot",
-        "Bubble tails: use CSS ::before pseudo-element with border trick (WhatsApp uses 8px triangles)",
-        "Timestamp + checkmark layout: absolute position bottom-right inside bubble, or float right with padding",
-        "Double checkmark SVG: small inline SVG or Unicode characters (✓✓ in blue #53bdeb for read)",
-        "Grouped messages: detect consecutive same-sender in real-chat-core.js rendering loop, add .bubble-continuation class",
-        "Keep existing rc-bubble and lc-bubble class compatibility — both prefixes may be used in different tabs",
-        "No nested template literals — use string concatenation for HTML in JS"
+        "Avatar rendering: RainbowAI/src/public/js/modules/live-chat-panels.js and live-chat-core.js — find where avatar img tags are created",
+        "Color hash: sum = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0); color = palette[sum % palette.length]",
+        "Palette suggestion: ['#1abc9c','#3498db','#9b59b6','#e67e22','#e91e63','#00bcd4','#ff5722','#607d8b']",
+        "If profile picture 404s or src is empty/null, show initials div instead of broken img",
+        "Add CSS class .avatar-initials with display:flex, align-items:center, justify-content:center, border-radius:50%",
+        "CSS target file: RainbowAI/src/public/css/rainbow-livechat-core.css or rainbow-livechat-ui.css"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Redesign chat filter bar to WhatsApp-style pill chips",
+      "priority": 12,
+      "description": "As a staff member, I want the Tags and Unit filter icons in #live-chat to look like WhatsApp's horizontal pill chip row (All | Unread | Favourites | Groups | Tags ▾ | Unit ▾) instead of icon-based buttons, making the interface familiar and visually consistent.",
+      "acceptanceCriteria": [
+        "Filter row shows: All | Unread | Favourites | Groups | Tags ▾ | Unit ▾ as horizontal scrollable pill chips",
+        "All chip has a filled/active style (green background matching Image #1) when no filter is active",
+        "Tags and Unit chips show a downward chevron (▾) indicating they open a dropdown",
+        "Active filter chip has a distinct active style (filled background, different from inactive)",
+        "Chips are scrollable horizontally on narrow viewports without wrapping to a second line",
+        "Existing icon-based Tags/Unit buttons are replaced (not kept alongside new chips)",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: open #live-chat, confirm pill chip row matches WhatsApp style"
+      ],
+      "technicalNotes": [
+        "Current filter HTML: RainbowAI/src/public/templates/tabs/live-chat.html (lines 111-125 — tag/unit filter buttons)",
+        "Replace icon buttons with a <div class='lc-filter-chips'> containing <button class='lc-chip'> elements",
+        "CSS: RainbowAI/src/public/css/rainbow-livechat-core.css or rainbow-livechat-ui.css",
+        "Chip active state: .lc-chip.active { background: #25d366; color: #fff; }",
+        "Horizontal scroll: .lc-filter-chips { display:flex; overflow-x:auto; gap:8px; padding:8px; scrollbar-width:none; }",
+        "This story is visual only — dropdown wiring is in US-004"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Wire Tags and Unit filter chips to backend conversation filtering",
+      "priority": 13,
+      "description": "As a staff member, I want clicking a Tags or Unit chip to actually filter the conversation list, showing only conversations with that tag or unit assignment. Dropdowns fetch data from backend APIs.",
+      "acceptanceCriteria": [
+        "Clicking Tags ▾ opens a dropdown listing all available tags fetched from GET /api/rainbow/tags",
+        "Selecting a tag filters the conversation list to show only conversations with that tag",
+        "Clicking Unit ▾ opens a dropdown listing all capsule units fetched from GET /api/rainbow/capsules or contacts",
+        "Selecting a unit filters the conversation list to show only conversations with that unit assignment",
+        "Multiple filters can be active simultaneously (Tags AND Unit combined)",
+        "A clear/reset option appears when any filter is active, restoring full conversation list",
+        "Filter state persists during the browser session (not wiped on tab switch)",
+        "Dropdown closes when clicking anywhere outside it",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: select a tag filter, confirm conversation list updates"
+      ],
+      "technicalNotes": [
+        "Existing filter code: RainbowAI/src/public/js/modules/live-chat-panels.js (lines 773-883: _renderTagFilterDropdown, _renderUnitFilterDropdown)",
+        "Core filtering: RainbowAI/src/public/js/modules/live-chat-core.js (lines 433-449)",
+        "Tags API: GET /api/rainbow/tags (RainbowAI/src/routes/admin/tags.ts)",
+        "Capsules API: GET /api/rainbow/capsules (RainbowAI/src/routes/admin/capsules.ts)",
+        "Root cause from Phase 5: $.contactTagsMap and $.contactUnitsMap not populated — ensure loadContactTagsMap() and loadContactUnitsMap() are called in initialization",
+        "Wire the new chip click events (US-003) to the existing dropdown render functions"
       ],
       "dependencies": [
-        "US-182"
+        "US-003"
       ],
       "estimatedComplexity": "medium",
       "passes": true
     },
     {
-      "id": "US-184",
-      "title": "WhatsApp-style input area with attachment and send button",
-      "priority": 5,
-      "description": "Update the Live Simulation input area (below the message pane) to match WhatsApp's design: rounded pill input, attachment button on left, green circular send button on right. The existing functionality (auto-resize, Enter/Shift+Enter, file upload, translation preview) must be preserved — this is a visual-only change.",
+      "id": "US-005",
+      "title": "Reposition message action menu near message bubble (WhatsApp style)",
+      "priority": 14,
+      "description": "As a staff member, I want the message action menu (Like, Love, Haha, Wow, Sad, Thanks, Reply, Copy, Forward) to appear adjacent to the clicked message bubble, not in a fixed or off-position location, matching WhatsApp Web's context menu behaviour.",
       "acceptanceCriteria": [
-        "Input area has WhatsApp's light gray background (#f0f2f5)",
-        "Text input is rounded pill-shape with no visible border",
-        "Attachment button on the left side of input",
-        "Green circular send button (42x42px, #00a884) on the right",
-        "Input auto-resizes from 1 to 5 rows as text grows",
-        "Enter sends message, Shift+Enter adds newline",
-        "File preview bar appears above input when file is attached",
-        "Translation preview appears below input when translation mode is active",
+        "When the downward chevron on a message is clicked, the action menu appears immediately adjacent to that message bubble",
+        "Right-aligned for outgoing messages, left-aligned for incoming messages",
+        "Emoji reactions (Like, Love, Haha, Wow, Sad, Thanks) appear in a horizontal icon row at the top of the menu",
+        "Text actions (Reply, Copy, Forward) appear below the emoji row",
+        "If the menu would overflow the bottom of the viewport, it opens upward from the chevron instead",
+        "Clicking anywhere outside the menu closes it",
+        "Works correctly for both incoming and outgoing message bubbles",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
+        "Verify in browser using agent-browser: click message chevron, confirm menu appears near that bubble"
       ],
       "technicalNotes": [
-        "HTML: RainbowAI/src/public/templates/tabs/chat-simulator.html lines 465-500 (Live Simulation input area)",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-ui.css — .rc-input-area, .rc-input-box, .rc-send-btn, .rc-attach-btn",
-        "Existing JS logic in real-chat-messaging.js (sendManualReply, autoResizeInput, handleInputKeydown) — do NOT change",
-        "The send button already uses #00a884 green — verify it's 42x42px circular",
-        "Input pill shape: border-radius: 21px (half of height), background: white, no border, subtle box-shadow",
-        "Attachment popup menu (.rc-attach-menu) should still appear above the attachment button",
-        "File preview and translation preview bars must not break with new input styling"
+        "Message action menu: RainbowAI/src/public/js/modules/live-chat-actions.js — find the menu render/position code",
+        "Current issue: menu likely uses position:fixed or a detached absolute div not anchored to the message",
+        "Fix: use getBoundingClientRect() on the chevron element to get absolute position, then set menu top/left accordingly",
+        "Overflow check: if (menuTop + menuHeight > window.innerHeight) { menuTop = chevronRect.top - menuHeight; }",
+        "CSS: menu should be position:absolute inside a relative-positioned container, or position:fixed with calculated coordinates",
+        "WhatsApp Web reference: renders menu as absolute-positioned div with emoji row + text row, flips vertically on overflow"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-008",
+      "title": "Improve schedule message picker with full date-time editing",
+      "priority": 15,
+      "description": "As a staff member, I want to edit the exact hour, minute, and second when scheduling a message, so I can schedule precisely (e.g., exactly at check-in time 14:00:00). The current modal only allows date editing via a datetime-local input.",
+      "acceptanceCriteria": [
+        "Schedule Message modal shows separate editable fields for: Date, Hour (00-23), Minute (00-59), Second (00-59)",
+        "Users can type directly into each field or use up/down arrows to increment/decrement values",
+        "A human-readable preview shows the composed datetime: 'Will send: 19 Mar 2026 at 02:30:45'",
+        "Validation prevents scheduling in the past — inline error shown if datetime < now",
+        "The existing datetime-local input is replaced or augmented with the separate fields",
+        "Repeat (None / Daily / Weekly) dropdown remains unchanged",
+        "Schedule button submits the full datetime including seconds to the backend",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: open Schedule Message modal, edit hour/minute/second fields, confirm they work"
+      ],
+      "technicalNotes": [
+        "Schedule modal: RainbowAI/src/public/templates/tabs/live-chat.html — search for 'Schedule Message' modal",
+        "Frontend scheduling logic: RainbowAI/src/public/js/modules/live-chat-panels.js — find lcScheduleMessage() or similar",
+        "Replace <input type='datetime-local'> with three <input type='number'> fields for HH, MM, SS plus a <input type='date'>",
+        "Combine into ISO string: new Date(`${date}T${hh}:${mm}:${ss}`).toISOString()",
+        "Scheduled messages route: RainbowAI/src/routes/admin/scheduled-messages.ts — verify it accepts seconds in the datetime"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-014",
+      "title": "Add date-jump to in-conversation message search",
+      "priority": 16,
+      "description": "As a staff member searching messages, I want a 'Jump to date' calendar button beside the search bar so I can navigate to messages from a specific date without scrolling, matching WhatsApp Web's date-jump behaviour.",
+      "acceptanceCriteria": [
+        "The in-conversation search bar has a calendar icon button beside it",
+        "Clicking the calendar icon opens a date picker (date only, not datetime)",
+        "Selecting a date scrolls the message thread to the nearest message on or after that date",
+        "A date separator is highlighted to indicate the jump destination",
+        "If no messages exist for the selected date, a toast shows: 'No messages found for [date]'",
+        "The existing ▲ / ▼ navigation arrows for keyword search results are not affected",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: open a conversation, use date-jump to navigate to an older date"
+      ],
+      "technicalNotes": [
+        "Search bar: RainbowAI/src/public/templates/tabs/live-chat.html — find the search messages input",
+        "Search logic: RainbowAI/src/public/js/modules/live-chat-core.js — find message search and navigation",
+        "Date jump: find the message element closest to the target date (messages should have data-timestamp attributes or similar)",
+        "Use element.scrollIntoView({ behavior: 'smooth', block: 'start' }) to scroll to the date",
+        "Date separator: messages are grouped by date — find or create the date separator element and highlight it temporarily",
+        "Use <input type='date'> in a small popover triggered by the calendar icon button"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-009",
+      "title": "Add 'Ask AI — Prisma' entry to conversation 3-dot menu",
+      "priority": 17,
+      "description": "As a staff member, I want an 'Ask AI' option in the conversation's 3-dot (⋮) menu so I can launch the Prisma AI assistant without leaving the chat. This is the entry point for the Prisma floating window (built in US-010).",
+      "acceptanceCriteria": [
+        "The 3-dot (⋮) menu in the conversation header includes a new item: 'Ask AI — Prisma' with a sparkle icon (✦ or similar)",
+        "Clicking it opens/focuses the Prisma floating chat window (to be implemented in US-010 — create empty placeholder div for now)",
+        "If Prisma window is already open, clicking again focuses it (does not open duplicate)",
+        "The menu item is clearly distinguishable from other menu items (icon + label)",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: open a conversation, click 3-dot menu, confirm 'Ask AI — Prisma' item is visible"
+      ],
+      "technicalNotes": [
+        "3-dot menu: RainbowAI/src/public/templates/tabs/live-chat.html — find the vertical ellipsis menu in the chat header",
+        "Menu JS: RainbowAI/src/public/js/modules/live-chat-actions.js or live-chat-panels.js",
+        "Add menu item that calls window.openPrismaWindow() (to be implemented in US-010)",
+        "For now: show an alert or empty div if Prisma window doesn't exist yet"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-010",
+      "title": "Build Prisma AI floating chat window UI",
+      "priority": 18,
+      "description": "As a staff member, I want a draggable Prisma AI floating chat panel with a source selector and conversation history so I can ask questions without leaving the live chat. The panel is launched from the Ask AI menu entry (US-009).",
+      "acceptanceCriteria": [
+        "A floating panel appears with: title 'Prisma AI ✦', close (✕) button, source selector chips, message input, send button, scrollable response history",
+        "Source selector shows 4 chip options: Knowledge Base | MCP Server | All History | Internet (default: Knowledge Base)",
+        "Conversation history within the panel persists for the current browser session (JS in-memory state)",
+        "User messages appear right-aligned; Prisma responses appear left-aligned with avatar",
+        "A loading indicator (typing dots) appears while waiting for a response",
+        "Panel can be minimised to a floating 'Ask Prisma ✦' button at bottom-right corner",
+        "Panel does NOT interfere with the main guest message input area",
+        "Responses use mock/placeholder text until US-011 wires up the backend",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: launch Prisma panel, select source, type a question, confirm UI renders"
+      ],
+      "technicalNotes": [
+        "Create new JS module: RainbowAI/src/public/js/modules/prisma-ai.js (or add to live-chat-actions.js)",
+        "CSS: Add floating panel styles to rainbow-livechat-ui.css — position:fixed, bottom:80px, right:20px, z-index:1000",
+        "Draggable: use mousedown/mousemove/mouseup events on the panel header to implement drag",
+        "Minimise: toggle between full panel and compact button using CSS class toggle",
+        "window.openPrismaWindow() / window.closePrismaWindow() global functions for US-009 integration",
+        "Session history: module-level array var prismaHistory = [] that resets when panel is closed"
       ],
       "dependencies": [
-        "US-182"
+        "US-009"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-011",
+      "title": "Wire Prisma AI to Knowledge Base and AI provider",
+      "priority": 19,
+      "description": "As a staff member using Prisma with 'Knowledge Base' source, I want Prisma to answer from the Rainbow KB files so I get accurate hostel-specific answers. This story adds the backend endpoint and wires it to the UI.",
+      "acceptanceCriteria": [
+        "New admin API endpoint POST /api/rainbow/prisma/ask added and mounted in RainbowAI/src/routes/admin/index.ts",
+        "Endpoint accepts { question, source, conversationHistory } and returns { answer, sourceUsed }",
+        "When source = 'knowledge_base', endpoint queries existing KB (knowledge-base.ts / .rainbow-kb/) and passes relevant chunks to active AI provider",
+        "Response includes which KB topic files were consulted (for transparency in the UI)",
+        "Errors return graceful fallback: 'I couldn't find an answer in the knowledge base. Try asking differently or choose a different source.'",
+        "Prisma UI (US-010) calls this endpoint and renders the response in the chat panel",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser using agent-browser: ask Prisma a hostel question with KB source, confirm a real answer appears"
+      ],
+      "technicalNotes": [
+        "New route file: RainbowAI/src/routes/admin/prisma.ts (or add to conversations.ts)",
+        "KB access: import { loadRelevantKBContent } from '../../../assistant/knowledge-base' or equivalent",
+        "AI call: use existing chatWithFallback() or callAI() from ai-client.ts",
+        "Endpoint must be authenticated: check X-Admin-Key header in production (RAINBOW_ROLE=primary)",
+        "Mount in: RainbowAI/src/routes/admin/index.ts — app.use('/prisma', prismaRouter)"
+      ],
+      "dependencies": [
+        "US-010"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-012",
+      "title": "Add MCP Server, All History, and Internet sources to Prisma AI",
+      "priority": 20,
+      "description": "As a staff member, I want to select MCP Server, All History, or Internet as Prisma's source to get context-aware answers beyond the knowledge base. Each source adds different context to the AI prompt.",
+      "acceptanceCriteria": [
+        "When source = 'mcp_server': Prisma calls available MCP tools (booking lookup, capsule availability) and includes tool results in the answer",
+        "When source = 'all_history': Prisma receives the full conversation history of the currently open conversation as context",
+        "When source = 'internet': Prisma uses an internet-capable AI provider or performs a web search if configured — cites sources in answer",
+        "Source label appears in each Prisma response bubble so staff know what was consulted",
+        "If a source is unavailable (no internet provider configured), the chip is greyed out with tooltip explaining why",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser: test each source type, confirm responses reference the correct context"
+      ],
+      "technicalNotes": [
+        "Extend POST /api/rainbow/prisma/ask endpoint (US-011) to handle source: 'mcp_server' | 'all_history' | 'internet'",
+        "MCP tools: check RainbowAI/src/tools/ for available tool definitions to call for mcp_server source",
+        "All history: the frontend sends the currently loaded conversation messages along with the question",
+        "Internet: if the active AI provider supports web search (e.g. Perplexity, or a provider with search), use it; otherwise return unavailable message",
+        "The frontend prisma-ai.js should include currentConversationMessages when source = all_history"
+      ],
+      "dependencies": [
+        "US-011"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-013",
+      "title": "Prisma AI session conversation memory",
+      "priority": 21,
+      "description": "As a staff member having a multi-turn conversation with Prisma, I want Prisma to remember earlier messages in the session so follow-up questions work naturally (e.g. 'what about weekends?' after 'what is the check-in time?').",
+      "acceptanceCriteria": [
+        "POST /api/rainbow/prisma/ask accepts a conversationHistory array (role/content pairs) and includes it in the AI prompt",
+        "Frontend sends the full session history on each new message (prismaHistory array from US-010)",
+        "After 20 exchanges, history is trimmed to the last 20 messages (client-side) to avoid token overflow",
+        "Closing Prisma window (✕) and re-opening resets the session history to empty",
+        "Follow-up questions in the same session demonstrate context awareness in responses",
+        "TypeScript compiles with zero errors",
+        "Server starts and dashboard loads without errors",
+        "Verify in browser: ask Prisma a question, then ask a follow-up referencing the first answer, confirm it responds correctly"
+      ],
+      "technicalNotes": [
+        "Client-side: prisma-ai.js already has prismaHistory array (US-010) — pass it as conversationHistory in each POST request",
+        "Trim: if (prismaHistory.length > 40) prismaHistory = prismaHistory.slice(-40); // 40 role/content items = 20 exchanges",
+        "Server-side: prepend conversationHistory to the AI messages array before calling the provider",
+        "Reset on close: prismaHistory = [] when the panel close (✕) button is clicked",
+        "No server-side storage needed — purely stateless endpoint that receives history each time"
+      ],
+      "dependencies": [
+        "US-011"
       ],
       "estimatedComplexity": "small",
       "passes": true
     },
     {
-      "id": "US-185",
-      "title": "Developer metadata overlay (collapsible panel in Dev Mode)",
-      "priority": 6,
-      "description": "Enhance the Dev Mode toggle in Live Simulation to show AI classification details as a collapsible metadata panel below each AI response bubble. When Dev Mode is OFF, messages look exactly like WhatsApp. When ON, each AI bubble gets a subtle expandable panel showing: Detection Tier, Intent, Confidence %, Provider/Model, Response Time, Routing Action, Sentiment, KB files. Dev mode state persists in localStorage.",
+      "id": "US-015",
+      "title": "Mirror all Phase 3 features in chat-simulator/live-simulation",
+      "priority": 22,
+      "description": "As a staff member testing via Chat Simulator live-simulation mode, I want all new live-chat features to also work in that tab so I can test the full experience without switching tabs. All features from US-003 through US-014 must be mirrored.",
       "acceptanceCriteria": [
-        "Dev button in chat header toggles developer mode on/off",
-        "When OFF: messages look exactly like WhatsApp (clean, no metadata visible)",
-        "When ON: each AI response bubble shows a collapsible metadata panel below the message text",
-        "Metadata panel shows all 8 fields: Detection Tier badge, Intent name, Confidence %, AI Provider/Model, Response Time, Routing Action, Sentiment, KB files used",
-        "Metadata panel uses subtle styling (muted colors, smaller font, light background)",
-        "Inline edit buttons (Edit, Add example) appear in dev mode only",
-        "Dev mode state persists in localStorage across page loads",
+        "WhatsApp-style filter chips (US-003/US-004) appear and function in the simulator's conversation list panel",
+        "Message action menu (US-005) appears correctly positioned in the simulator's message thread",
+        "Translate toggle (US-006) works in the simulator",
+        "Colored initials avatars (US-007) render in the simulator's contact list",
+        "Schedule message with full datetime editing (US-008) works in the simulator",
+        "'Ask AI — Prisma' menu entry (US-009) and full Prisma window (US-010 to US-013) are accessible from the simulator",
+        "Date-jump search (US-014) works in the simulator",
+        "All features reuse the same JS modules as live-chat (no code duplication)",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser"
+        "Verify in browser using agent-browser: open #chat-simulator/live-simulation, confirm each feature is present and functional"
       ],
       "technicalNotes": [
-        "Metadata badges: RainbowAI/src/public/js/components/metadata-badges.js (getTierBadge, getConfidenceBadge, etc.)",
-        "Chat renderer: RainbowAI/src/public/js/components/chat-renderer.js — devMode option already exists in renderMessageBubble()",
-        "Current dev mode: toggled by toggleDevMode() in real-chat-core.js, stored as devModeEnabled in module state",
-        "Change from inline footer badges to a collapsible panel: add a clickable chevron below the bubble that expands/collapses the metadata section",
-        "Panel CSS: background-color: rgba(0,0,0,0.03), border-top: 1px solid rgba(0,0,0,0.06), font-size: 11px",
-        "localStorage key: 'rainbow-dev-mode' (check existing implementation)",
-        "Ensure metadata panel doesn't break the WhatsApp bubble styling from US-183",
-        "No nested template literals — use string concatenation"
+        "Chat simulator template: RainbowAI/src/public/templates/tabs/chat-simulator.html",
+        "Live simulation sub-tab: find the live-simulation section within chat-simulator.html",
+        "Shared modules: all features built in US-003 to US-014 use JS modules that should already be loaded in chat-simulator context",
+        "Verify module-chunks: RainbowAI/src/public/js/module-chunks/ — check if live-chat modules are bundled into chat-simulator chunk",
+        "If any feature is chat-simulator-specific HTML missing, add the required DOM elements (filter bar, search bar, action menus)",
+        "CSS: all styles are global in rainbow-livechat-core.css and rainbow-livechat-ui.css — no extra CSS needed"
       ],
       "dependencies": [
-        "US-183"
+        "US-003",
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008",
+        "US-009",
+        "US-010",
+        "US-011",
+        "US-012",
+        "US-013",
+        "US-014"
       ],
-      "estimatedComplexity": "medium",
+      "estimatedComplexity": "large",
       "passes": true
     },
     {
-      "id": "US-186",
-      "title": "Environment compatibility audit (localhost + Lightsail)",
-      "priority": 7,
-      "description": "Audit all changes from US-180 through US-185 for environment compatibility. Verify no hardcoded localhost URLs exist, SSE works through both direct access and Vite proxy, and CSS/JS assets load correctly on Lightsail. Fix any issues found.",
+      "id": "US-023",
+      "title": "Fix admin auth blocking Rainbow AI dashboard tabs at production IP",
+      "priority": 1,
+      "description": "As a staff member accessing the Rainbow AI dashboard at http://18.142.14.142:3002, I want all tabs (#dashboard, #live-chat, #understanding) to load without 'Failed to load X tab' errors. Root cause: the adminAuth middleware in the production dist requires an X-Admin-Key header for all remote (non-localhost) requests, but the browser JS was not sending it. Secondary cause: tabs.js, template-loader.js, help.js all use raw fetch() calls that bypass the api() utility which sends the header.",
       "acceptanceCriteria": [
-        "No hardcoded localhost URLs in any modified JS/TS files — all API calls use relative paths or window.location.origin",
-        "SSE activity stream works when accessed at localhost:3002 (direct)",
-        "SSE activity stream works when proxied through Vite at localhost:3000 (dev mode via proxy config)",
-        "Chat Simulator Live Simulation renders correctly on both environments",
-        "CSS/JS assets load correctly (no 404s on either environment)",
-        "WhatsApp doodle background pattern renders (CSS-only, no external asset dependency)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors"
+        "Set RAINBOW_ADMIN_KEY=pelangi-admin-2026 in /var/www/pelangi/RainbowAI/.env",
+        "Set CORS_ORIGIN=http://18.142.14.142:3002 in /var/www/pelangi/RainbowAI/.env",
+        "Inject window.__ADMIN_KEY__ + fetch interceptor into served HTML via getDashboardHtml() in index.ts",
+        "Fetch interceptor auto-adds X-Admin-Key header to ALL /api/rainbow/* requests including raw fetch() calls",
+        "Navigate to http://18.142.14.142:3002/#dashboard — tab loads without 'Failed to load' error",
+        "Navigate to http://18.142.14.142:3002/#live-chat — loads cleanly",
+        "Navigate to http://18.142.14.142:3002/#understanding — loads cleanly"
       ],
       "technicalNotes": [
-        "Grep all modified files for 'localhost', '127.0.0.1', 'http://' hardcoded URLs",
-        "Vite proxy config: vite.config.ts — /api/rainbow/* proxies to port 3002",
-        "Lightsail nginx config: port 3002 is open directly (not proxied through nginx port 80)",
-        "SSE through Vite proxy: Vite dev server should pass through text/event-stream responses — verify",
-        "PM2 on Lightsail uses ecosystem.config.cjs with fork mode — ESM imports work correctly",
-        "If SSE doesn't work through Vite proxy, add SSE-specific proxy config in vite.config.ts"
+        "Real root cause: adminAuth middleware blocks remote IPs unless X-Admin-Key header matches RAINBOW_ADMIN_KEY env var",
+        "CORS was a secondary symptom (also fixed via CORS_ORIGIN env var)",
+        "tabs.js, template-loader.js, help.js, intent-manager.js all use raw fetch() not api() — so utils.js header injection alone is insufficient",
+        "Fix: inject a window.fetch interceptor in getDashboardHtml() that auto-adds X-Admin-Key to all /api/rainbow/ requests",
+        "Production dist patched: dist/public/rainbow-admin.html has fetch interceptor injected; dist/index.js restored from bak2 + watchdog no-op",
+        "Local source updated: index.ts getDashboardHtml() now injects full fetch interceptor (not just window.__ADMIN_KEY__)"
       ],
-      "dependencies": [
-        "US-180",
-        "US-181",
-        "US-182",
-        "US-183",
-        "US-184",
-        "US-185"
-      ],
+      "dependencies": [],
       "estimatedComplexity": "small",
       "passes": true
     }
   ],
   "technicalContext": {
     "affectedAreas": [
-      "RainbowAI/src/lib/activity-tracker.ts",
-      "RainbowAI/src/routes/admin/activity.ts",
-      "RainbowAI/src/routes/admin/index.ts",
-      "RainbowAI/src/public/js/modules/dashboard.js",
-      "RainbowAI/src/public/js/modules/dashboard-helpers.js",
-      "RainbowAI/src/public/js/module-chunks/dashboard-chunk.js",
-      "RainbowAI/src/public/templates/tabs/dashboard.html",
+      "RainbowAI/src/public/js/modules/live-chat-actions.js",
+      "RainbowAI/src/public/js/modules/live-chat-core.js",
+      "RainbowAI/src/public/js/modules/live-chat-panels.js",
+      "RainbowAI/src/public/js/modules/live-chat.js",
+      "RainbowAI/src/public/js/modules/settings-ai-models.js",
+      "RainbowAI/src/public/js/modules/prisma-ai.js",
+      "RainbowAI/src/public/templates/tabs/live-chat.html",
+      "RainbowAI/src/public/templates/tabs/settings.html",
       "RainbowAI/src/public/templates/tabs/chat-simulator.html",
-      "RainbowAI/src/public/js/components/chat-renderer.js",
-      "RainbowAI/src/public/js/components/metadata-badges.js",
-      "RainbowAI/src/public/js/modules/real-chat-core.js",
-      "RainbowAI/src/public/js/modules/real-chat-messaging.js",
       "RainbowAI/src/public/css/rainbow-livechat-core.css",
       "RainbowAI/src/public/css/rainbow-livechat-ui.css",
-      "RainbowAI/src/public/css/rainbow-base.css"
+      "RainbowAI/src/routes/admin/index.ts",
+      "RainbowAI/src/routes/admin/intent-analytics.ts",
+      "RainbowAI/src/routes/admin/conversations.ts",
+      "RainbowAI/src/routes/admin/tags.ts",
+      "RainbowAI/src/routes/admin/capsules.ts",
+      "RainbowAI/src/routes/admin/prisma.ts",
+      "RainbowAI/src/assistant/data/settings.json",
+      "RainbowAI/src/assistant/data/routing.json",
+      "RainbowAI/src/assistant/data/workflows.json",
+      "RainbowAI/src/assistant/data/intent-keywords.json",
+      "RainbowAI/src/assistant/message-router.ts",
+      "RainbowAI/src/assistant/knowledge-base.ts",
+      "RainbowAI/src/assistant/pipeline/stages/action-dispatch.ts",
+      "server/index.ts",
+      "server/routes/"
     ],
-    "testingStrategy": "TypeScript compilation + curl SSE endpoint verification + agent-browser dashboard visual verification for each UI story",
-    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/public/ RainbowAI/src/lib/activity-tracker.ts RainbowAI/src/routes/admin/activity.ts"
+    "newFiles": [
+      "RainbowAI/src/routes/admin/prisma.ts",
+      "RainbowAI/src/public/js/modules/prisma-ai.js"
+    ],
+    "testingStrategy": "Bug fixes verified via agent-browser before marking complete. Intent/workflow changes run 50-scenario accuracy test. UI changes verified in both #live-chat and #chat-simulator/live-simulation. TypeScript compilation check after every story.",
+    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/public/ RainbowAI/src/routes/ RainbowAI/src/assistant/data/ server/index.ts",
+    "crossCuttingConcerns": {
+      "agentBrowserVerification": "All UI stories must be verified using agent-browser before marking complete",
+      "accuracyTest": "All intent and workflow changes must maintain 100% on 50-scenario accuracy test",
+      "importBoundaries": "RainbowAI/ must have ZERO imports from server/, client/, or shared/ — HTTP fetch only for cross-module data",
+      "atomicWrites": "All new JSON data files use config-store.ts atomic write pattern (.tmp then renameSync)",
+      "cssConvention": "All new UI components use existing CSS files — no inline styles, no new stylesheet files"
+    }
   }
 }

@@ -33,6 +33,7 @@ export interface IPipelineContext {
   buildSystemPrompt: (basePersona: string, topicFiles: string[]) => string;
   getTimeContext: () => string;
   getStaticReply: (intent: string, lang: 'en' | 'ms' | 'zh') => string | null;
+  getStaticReplyImageUrl: (intent: string) => string | null;
   getTemplate: (key: string, lang: 'en' | 'ms' | 'zh') => string;
 
   // ─── Conversation Management ──────────────────────────────────────
@@ -110,7 +111,7 @@ export async function createPipelineContext(routerContext: RouterContext): Promi
   // Dynamic imports to prevent circular dependency issues
   const { configStore } = await import('../config-store.js');
   const { guessTopicFiles, buildSystemPrompt, getTimeContext } = await import('../knowledge-base.js');
-  const { getStaticReply } = await import('../knowledge.js');
+  const { getStaticReply, getStaticReplyImageUrl } = await import('../knowledge.js');
   const { getTemplate, detectLanguage } = await import('../formatter.js');
   const {
     getOrCreate, addMessage, updateBookingState, updateWorkflowState,
@@ -148,6 +149,7 @@ export async function createPipelineContext(routerContext: RouterContext): Promi
     buildSystemPrompt,
     getTimeContext,
     getStaticReply,
+    getStaticReplyImageUrl,
     getTemplate,
 
     // Conversation Management

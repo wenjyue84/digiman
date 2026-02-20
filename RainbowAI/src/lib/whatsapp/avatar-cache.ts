@@ -1,16 +1,14 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { whatsappManager } from './index.js';
 import { formatPhoneNumber } from './manager.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const AVATAR_DIR = path.resolve(__dirname, '../../../data/avatars');
+const AVATAR_DIR = path.join(process.cwd(), 'data', 'avatars');
 const META_FILE = path.join(AVATAR_DIR, '_meta.json');
 
 const CACHE_TTL = 24 * 60 * 60 * 1000;      // 24 hours for avatars we have
 const NO_AVATAR_TTL = 60 * 60 * 1000;        // 1 hour retry for missing avatars
-const inFlight = new Set<string>();
+const inFlight = new Map<string, Promise<void>>();
 
 interface AvatarMeta {
   [phone: string]: { fetchedAt: number; hasAvatar: boolean };
@@ -38,10 +36,14 @@ function cleanPhone(phone: string): string {
   return formatPhoneNumber(phone.replace(/@s\.whatsapp\.net$/i, ''));
 }
 
-/** Fire-and-forget: fetch + cache avatar if needed. Never throws. */
+/** Fetch + cache avatar if needed. Concurrent calls for the same phone await the same promise. */
 export async function ensureAvatar(phone: string): Promise<void> {
   const clean = cleanPhone(phone);
-  if (!clean || inFlight.has(clean)) return;
+  if (!clean) return;
+
+  // If already in-flight, await the existing promise (no duplicate fetches)
+  const existing = inFlight.get(clean);
+  if (existing) return existing;
 
   const meta = loadMeta();
   const entry = meta[clean];
@@ -51,38 +53,42 @@ export async function ensureAvatar(phone: string): Promise<void> {
     if (age < ttl) return; // still fresh
   }
 
-  inFlight.add(clean);
-  try {
-    const url = await whatsappManager.fetchProfilePictureUrl(clean);
-    if (!url) {
-      meta[clean] = { fetchedAt: Date.now(), hasAvatar: false };
+  const work = (async () => {
+    try {
+      const url = await whatsappManager.fetchProfilePictureUrl(clean);
+      if (!url) {
+        meta[clean] = { fetchedAt: Date.now(), hasAvatar: false };
+        saveMeta(meta);
+        return;
+      }
+
+      // Download image
+      const res = await fetch(url);
+      if (!res.ok) {
+        meta[clean] = { fetchedAt: Date.now(), hasAvatar: false };
+        saveMeta(meta);
+        return;
+      }
+
+      if (!fs.existsSync(AVATAR_DIR)) {
+        fs.mkdirSync(AVATAR_DIR, { recursive: true });
+      }
+      const buffer = Buffer.from(await res.arrayBuffer());
+      const filePath = path.join(AVATAR_DIR, clean + '.jpg');
+      fs.writeFileSync(filePath, buffer);
+
+      meta[clean] = { fetchedAt: Date.now(), hasAvatar: true };
       saveMeta(meta);
-      return;
+      console.log(`[AvatarCache] Saved avatar for ${clean}`);
+    } catch (err: any) {
+      console.warn(`[AvatarCache] Failed to fetch avatar for ${clean}: ${err.message}`);
+    } finally {
+      inFlight.delete(clean);
     }
+  })();
 
-    // Download image
-    const res = await fetch(url);
-    if (!res.ok) {
-      meta[clean] = { fetchedAt: Date.now(), hasAvatar: false };
-      saveMeta(meta);
-      return;
-    }
-
-    if (!fs.existsSync(AVATAR_DIR)) {
-      fs.mkdirSync(AVATAR_DIR, { recursive: true });
-    }
-    const buffer = Buffer.from(await res.arrayBuffer());
-    const filePath = path.join(AVATAR_DIR, clean + '.jpg');
-    fs.writeFileSync(filePath, buffer);
-
-    meta[clean] = { fetchedAt: Date.now(), hasAvatar: true };
-    saveMeta(meta);
-    console.log(`[AvatarCache] Saved avatar for ${clean}`);
-  } catch (err: any) {
-    console.warn(`[AvatarCache] Failed to fetch avatar for ${clean}: ${err.message}`);
-  } finally {
-    inFlight.delete(clean);
-  }
+  inFlight.set(clean, work);
+  return work;
 }
 
 /** Returns absolute file path if cached avatar exists, or null. */

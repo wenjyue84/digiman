@@ -28,8 +28,8 @@ function isDatabaseError(message: string | undefined): boolean {
 }
 
 export function LoginForm() {
-  const [email, setEmail] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useLocation();
   const { login, loginWithGoogle, isAuthenticated } = useAuth();

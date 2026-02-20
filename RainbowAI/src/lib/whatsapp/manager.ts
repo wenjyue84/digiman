@@ -1,16 +1,16 @@
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { EventEmitter } from 'events';
 import { WhatsAppInstance } from './instance.js';
 import type { WhatsAppInstanceStatus, InstanceConfig, InstancesFile, MessageHandler } from './types.js';
 import { notifyAdminUnlink } from '../admin-notifier.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = process.env.WHATSAPP_DATA_DIR || path.resolve(__dirname, '../../../whatsapp-data');
-const LEGACY_AUTH_DIR = process.env.WHATSAPP_AUTH_DIR || path.resolve(__dirname, '../../../whatsapp-auth');
+// Use process.cwd() (= RainbowAI/) — __dirname is dist/ in esbuild bundle
+const DATA_DIR = process.env.WHATSAPP_DATA_DIR || path.resolve(process.cwd(), 'whatsapp-data');
+const LEGACY_AUTH_DIR = process.env.WHATSAPP_AUTH_DIR || path.resolve(process.cwd(), 'whatsapp-auth');
 const INSTANCES_FILE = path.join(DATA_DIR, 'instances.json');
 
-export class WhatsAppManager {
+export class WhatsAppManager extends EventEmitter {
   private instances = new Map<string, WhatsAppInstance>();
   private messageHandler: MessageHandler | null = null;
 
@@ -71,6 +71,11 @@ export class WhatsAppManager {
     if (this.messageHandler) {
       instance.setMessageHandler(this.messageHandler);
     }
+
+    // Wire message status handler for read receipts (US-017)
+    instance.setMessageStatusHandler((event) => {
+      this.emit('message_status', event);
+    });
 
     this.instances.set(cfg.id, instance);
     await instance.start(this.notifyUnlinkedInstance.bind(this));

@@ -5,7 +5,8 @@
   "description": "MCP server for PelangiManager hostel management system",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --ignore src/public src/index.ts",
+    "build:dashboard": "vite build",
     "build": "tsc && node -e \"require('fs').cpSync('src/assistant/data','dist/assistant/data',{recursive:true});require('fs').cpSync('src/public','dist/public',{recursive:true})\"",
     "start": "node dist/index.js",
     "test": "vitest",
@@ -53,11 +54,13 @@
     "express-rate-limit": "^8.2.1",
     "fuse.js": "^7.1.0",
     "groq-sdk": "^0.37.0",
+    "helmet": "^8.1.0",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "typescript": "^5.3.3",
+    "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.18.0",
     "zod": "^4.3.6"
   },
@@ -69,6 +72,7 @@
     "jsdom": "^28.0.0",
     "promptfoo": "^0.120.23",
     "tsx": "^4.7.0",
+    "vite": "^7.3.1",
     "vitest": "^4.0.18"
   }
 }

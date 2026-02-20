@@ -1,0 +1,1335 @@
+[
+  {
+    "id": "evt-787-1771393245347",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"I want to checkout\"",
+    "timestamp": "2026-02-18T05:40:45.347Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "I want to checkout"
+    }
+  },
+  {
+    "id": "evt-788-1771393245359",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"checkout_now\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T05:40:45.359Z",
+    "metadata": {
+      "intent": "checkout_now",
+      "confidence": 0.9999999850988388,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-789-1771393245359",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 12ms (llm_reply)",
+    "timestamp": "2026-02-18T05:40:45.359Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 12
+    }
+  },
+  {
+    "id": "evt-790-1771393245361",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Saya nak checkout\"",
+    "timestamp": "2026-02-18T05:40:45.361Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Saya nak checkout"
+    }
+  },
+  {
+    "id": "evt-791-1771393245372",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"checkout_now\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T05:40:45.372Z",
+    "metadata": {
+      "intent": "checkout_now",
+      "confidence": 0.999999999071256,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-792-1771393245372",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 11ms (llm_reply)",
+    "timestamp": "2026-02-18T05:40:45.372Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 11
+    }
+  },
+  {
+    "id": "evt-793-1771393245374",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"我要退房\"",
+    "timestamp": "2026-02-18T05:40:45.374Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "我要退房"
+    }
+  },
+  {
+    "id": "evt-794-1771393245379",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"checkout_now\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T05:40:45.379Z",
+    "metadata": {
+      "intent": "checkout_now",
+      "confidence": 0.9999999999999998,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-795-1771393245379",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 5ms (llm_reply)",
+    "timestamp": "2026-02-18T05:40:45.379Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 5
+    }
+  },
+  {
+    "id": "evt-796-1771393572578",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Hi there!\"",
+    "timestamp": "2026-02-18T05:46:12.578Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Hi there!"
+    }
+  },
+  {
+    "id": "evt-797-1771393575992",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"greeting\" (90% via llm)",
+    "timestamp": "2026-02-18T05:46:15.992Z",
+    "metadata": {
+      "intent": "greeting",
+      "confidence": 0.9,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-798-1771393575992",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 3414ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:15.992Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 3414
+    }
+  },
+  {
+    "id": "evt-799-1771393576005",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Selamat pagi\"",
+    "timestamp": "2026-02-18T05:46:16.005Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Selamat pagi"
+    }
+  },
+  {
+    "id": "evt-800-1771393578932",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"greeting\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T05:46:18.932Z",
+    "metadata": {
+      "intent": "greeting",
+      "confidence": 0.999999999991431,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-801-1771393578932",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 2927ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:18.932Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 2927
+    }
+  },
+  {
+    "id": "evt-802-1771393578935",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Thank you!\"",
+    "timestamp": "2026-02-18T05:46:18.935Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Thank you!"
+    }
+  },
+  {
+    "id": "evt-803-1771393582303",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"thanks\" (99% via llm)",
+    "timestamp": "2026-02-18T05:46:22.303Z",
+    "metadata": {
+      "intent": "thanks",
+      "confidence": 0.99,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-804-1771393582303",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 3368ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:22.303Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 3368
+    }
+  },
+  {
+    "id": "evt-805-1771393582307",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"I need to speak to staff\"",
+    "timestamp": "2026-02-18T05:46:22.307Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "I need to speak to staff"
+    }
+  },
+  {
+    "id": "evt-806-1771393588529",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"contact_staff\" (95% via llm)",
+    "timestamp": "2026-02-18T05:46:28.529Z",
+    "metadata": {
+      "intent": "contact_staff",
+      "confidence": 0.95,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-807-1771393588529",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 6222ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:28.529Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 6222
+    }
+  },
+  {
+    "id": "evt-808-1771393588532",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"How much is a room?\"",
+    "timestamp": "2026-02-18T05:46:28.532Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "How much is a room?"
+    }
+  },
+  {
+    "id": "evt-809-1771393595027",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"pricing\" (90% via llm)",
+    "timestamp": "2026-02-18T05:46:35.027Z",
+    "metadata": {
+      "intent": "pricing",
+      "confidence": 0.9,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-810-1771393595027",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 6495ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:35.027Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 6495
+    }
+  },
+  {
+    "id": "evt-811-1771393595030",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Do you have rooms on June 15th?\"",
+    "timestamp": "2026-02-18T05:46:35.030Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Do you have rooms on June 15th?"
+    }
+  },
+  {
+    "id": "evt-812-1771393598880",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"unknown\" (0% via llm)",
+    "timestamp": "2026-02-18T05:46:38.880Z",
+    "metadata": {
+      "intent": "unknown",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-813-1771393598880",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 3850ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:38.880Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 3850
+    }
+  },
+  {
+    "id": "evt-814-1771393598883",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"How do I book?\"",
+    "timestamp": "2026-02-18T05:46:38.883Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "How do I book?"
+    }
+  },
+  {
+    "id": "evt-815-1771393603191",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (90% via llm)",
+    "timestamp": "2026-02-18T05:46:43.191Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 0.9,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-816-1771393603191",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 4308ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:43.191Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 4308
+    }
+  },
+  {
+    "id": "evt-817-1771393603195",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"How do I get from the airport?\"",
+    "timestamp": "2026-02-18T05:46:43.195Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "How do I get from the airport?"
+    }
+  },
+  {
+    "id": "evt-818-1771393607357",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"directions\" (95% via llm)",
+    "timestamp": "2026-02-18T05:46:47.357Z",
+    "metadata": {
+      "intent": "directions",
+      "confidence": 0.95,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-819-1771393607357",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 4162ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:47.357Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 4162
+    }
+  },
+  {
+    "id": "evt-820-1771393607362",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"What facilities do you have?\"",
+    "timestamp": "2026-02-18T05:46:47.362Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "What facilities do you have?"
+    }
+  },
+  {
+    "id": "evt-821-1771393611689",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"unknown\" (0% via llm)",
+    "timestamp": "2026-02-18T05:46:51.689Z",
+    "metadata": {
+      "intent": "unknown",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-822-1771393611689",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 4327ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:51.689Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 4327
+    }
+  },
+  {
+    "id": "evt-823-1771393611693",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"What are the rules?\"",
+    "timestamp": "2026-02-18T05:46:51.693Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "What are the rules?"
+    }
+  },
+  {
+    "id": "evt-824-1771393617025",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"unknown\" (0% via llm)",
+    "timestamp": "2026-02-18T05:46:57.025Z",
+    "metadata": {
+      "intent": "unknown",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-825-1771393617025",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 5332ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:57.025Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 5332
+    }
+  },
+  {
+    "id": "evt-826-1771393617029",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Are pets allowed?\"",
+    "timestamp": "2026-02-18T05:46:57.029Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Are pets allowed?"
+    }
+  },
+  {
+    "id": "evt-827-1771393618757",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"rules_policy\" (81% via fuzzy)",
+    "timestamp": "2026-02-18T05:46:58.757Z",
+    "metadata": {
+      "intent": "rules_policy",
+      "confidence": 0.8050016339180537,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-828-1771393618757",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 1728ms (llm_reply)",
+    "timestamp": "2026-02-18T05:46:58.757Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 1728
+    }
+  },
+  {
+    "id": "evt-829-1771393618759",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"What payment methods do you accept?\"",
+    "timestamp": "2026-02-18T05:46:58.759Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "What payment methods do you accept?"
+    }
+  },
+  {
+    "id": "evt-830-1771393624482",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"billing_inquiry\" (95% via llm)",
+    "timestamp": "2026-02-18T05:47:04.482Z",
+    "metadata": {
+      "intent": "billing_inquiry",
+      "confidence": 0.95,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-831-1771393624482",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 5723ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:04.482Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 5723
+    }
+  },
+  {
+    "id": "evt-832-1771393624484",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"I already paid via bank transfer\"",
+    "timestamp": "2026-02-18T05:47:04.484Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "I already paid via bank transfer"
+    }
+  },
+  {
+    "id": "evt-833-1771393629186",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"unknown\" (0% via llm)",
+    "timestamp": "2026-02-18T05:47:09.186Z",
+    "metadata": {
+      "intent": "unknown",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-834-1771393629186",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 4702ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:09.186Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 4702
+    }
+  },
+  {
+    "id": "evt-835-1771393629189",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"What time can I check in?\"",
+    "timestamp": "2026-02-18T05:47:09.189Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "What time can I check in?"
+    }
+  },
+  {
+    "id": "evt-836-1771393634421",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"check_in_arrival\" (0% via llm)",
+    "timestamp": "2026-02-18T05:47:14.421Z",
+    "metadata": {
+      "intent": "check_in_arrival",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-837-1771393634421",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 5232ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:14.421Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 5232
+    }
+  },
+  {
+    "id": "evt-838-1771393634424",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"When is checkout?\"",
+    "timestamp": "2026-02-18T05:47:14.424Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "When is checkout?"
+    }
+  },
+  {
+    "id": "evt-839-1771393639572",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"unknown\" (0% via llm)",
+    "timestamp": "2026-02-18T05:47:19.572Z",
+    "metadata": {
+      "intent": "unknown",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-840-1771393639572",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 5148ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:19.572Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 5148
+    }
+  },
+  {
+    "id": "evt-841-1771393639574",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"I want to check in\"",
+    "timestamp": "2026-02-18T05:47:19.574Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "I want to check in"
+    }
+  },
+  {
+    "id": "evt-842-1771393642969",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"check_in_arrival\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T05:47:22.969Z",
+    "metadata": {
+      "intent": "check_in_arrival",
+      "confidence": 0.9999998993395701,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-843-1771393642969",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 3395ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:22.969Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 3395
+    }
+  },
+  {
+    "id": "evt-844-1771393642972",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Can I get a lower deck?\"",
+    "timestamp": "2026-02-18T05:47:22.972Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Can I get a lower deck?"
+    }
+  },
+  {
+    "id": "evt-845-1771393648067",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"unknown\" (0% via llm)",
+    "timestamp": "2026-02-18T05:47:28.067Z",
+    "metadata": {
+      "intent": "unknown",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-846-1771393648067",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 5095ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:28.067Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 5095
+    }
+  },
+  {
+    "id": "evt-847-1771393648069",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"What is the WiFi password?\"",
+    "timestamp": "2026-02-18T05:47:28.069Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "What is the WiFi password?"
+    }
+  },
+  {
+    "id": "evt-848-1771393652875",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"wifi\" (99% via llm)",
+    "timestamp": "2026-02-18T05:47:32.875Z",
+    "metadata": {
+      "intent": "wifi",
+      "confidence": 0.99,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-849-1771393652875",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 4806ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:32.875Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 4806
+    }
+  },
+  {
+    "id": "evt-850-1771393652878",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Quick Test: \"Where is the bathroom?\"",
+    "timestamp": "2026-02-18T05:47:32.878Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "textPreview": "Where is the bathroom?"
+    }
+  },
+  {
+    "id": "evt-851-1771393658557",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"directions\" (95% via llm)",
+    "timestamp": "2026-02-18T05:47:38.557Z",
+    "metadata": {
+      "intent": "directions",
+      "confidence": 0.95,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-852-1771393658557",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Quick Test in 5679ms (llm_reply)",
+    "timestamp": "2026-02-18T05:47:38.557Z",
+    "metadata": {
+      "phone": "simulator@test",
+      "pushName": "Quick Test",
+      "action": "llm_reply",
+      "responseTime": 5679
+    }
+  },
+  {
+    "id": "evt-853-1771399182210",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"hi\"",
+    "timestamp": "2026-02-18T07:19:42.210Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "hi"
+    }
+  },
+  {
+    "id": "evt-854-1771399183446",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"greeting\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T07:19:43.446Z",
+    "metadata": {
+      "intent": "greeting",
+      "confidence": 0.9999999999999998,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-855-1771399183447",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 1236ms (llm_reply)",
+    "timestamp": "2026-02-18T07:19:43.447Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 1236
+    }
+  },
+  {
+    "id": "evt-856-1771399192232",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"how ar eyou?\"",
+    "timestamp": "2026-02-18T07:19:52.232Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "how ar eyou?"
+    }
+  },
+  {
+    "id": "evt-857-1771399194649",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"greeting\" (90% via llm)",
+    "timestamp": "2026-02-18T07:19:54.649Z",
+    "metadata": {
+      "intent": "greeting",
+      "confidence": 0.9,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-858-1771399194650",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 2417ms (llm_reply)",
+    "timestamp": "2026-02-18T07:19:54.650Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 2417
+    }
+  },
+  {
+    "id": "evt-859-1771399251316",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"I wan to check in\"",
+    "timestamp": "2026-02-18T07:20:51.316Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "I wan to check in"
+    }
+  },
+  {
+    "id": "evt-860-1771399252633",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"check_in_arrival\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T07:20:52.633Z",
+    "metadata": {
+      "intent": "check_in_arrival",
+      "confidence": 0.9999998993395701,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-861-1771399252633",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 1317ms (llm_reply)",
+    "timestamp": "2026-02-18T07:20:52.633Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 1317
+    }
+  },
+  {
+    "id": "evt-862-1771399297777",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"can i check in now?\"",
+    "timestamp": "2026-02-18T07:21:37.777Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "can i check in now?"
+    }
+  },
+  {
+    "id": "evt-863-1771399300856",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"check_in_arrival\" (0% via llm)",
+    "timestamp": "2026-02-18T07:21:40.856Z",
+    "metadata": {
+      "intent": "check_in_arrival",
+      "confidence": 0,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-864-1771399300856",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3079ms (llm_reply)",
+    "timestamp": "2026-02-18T07:21:40.856Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 3079
+    }
+  },
+  {
+    "id": "evt-865-1771399480498",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"hello\"",
+    "timestamp": "2026-02-18T07:24:40.498Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "hello"
+    }
+  },
+  {
+    "id": "evt-866-1771399482203",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"greeting\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T07:24:42.203Z",
+    "metadata": {
+      "intent": "greeting",
+      "confidence": 0.9999999999999998,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-867-1771399482203",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 1705ms (llm_reply)",
+    "timestamp": "2026-02-18T07:24:42.203Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 1705
+    }
+  },
+  {
+    "id": "evt-868-1771399497336",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"your wifi?\"",
+    "timestamp": "2026-02-18T07:24:57.336Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "your wifi?"
+    }
+  },
+  {
+    "id": "evt-869-1771399499394",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"wifi\" (90% via llm)",
+    "timestamp": "2026-02-18T07:24:59.394Z",
+    "metadata": {
+      "intent": "wifi",
+      "confidence": 0.9,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-870-1771399499394",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 2058ms (llm_reply)",
+    "timestamp": "2026-02-18T07:24:59.394Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 2058
+    }
+  },
+  {
+    "id": "evt-871-1771399507598",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"wifi?\"",
+    "timestamp": "2026-02-18T07:25:07.598Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "wifi?"
+    }
+  },
+  {
+    "id": "evt-872-1771399511067",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"wifi\" (95% via llm)",
+    "timestamp": "2026-02-18T07:25:11.067Z",
+    "metadata": {
+      "intent": "wifi",
+      "confidence": 0.95,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-873-1771399511067",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3469ms (llm_reply)",
+    "timestamp": "2026-02-18T07:25:11.067Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 3469
+    }
+  },
+  {
+    "id": "evt-874-1771400099121",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"i wan to check in\"",
+    "timestamp": "2026-02-18T07:34:59.121Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "i wan to check in"
+    }
+  },
+  {
+    "id": "evt-875-1771400103535",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"check_in_arrival\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T07:35:03.535Z",
+    "metadata": {
+      "intent": "check_in_arrival",
+      "confidence": 0.9999998993395701,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-876-1771400103536",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 4414ms (llm_reply)",
+    "timestamp": "2026-02-18T07:35:03.536Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 4414
+    }
+  },
+  {
+    "id": "evt-877-1771400511998",
+    "type": "whatsapp_connected",
+    "category": "connection",
+    "icon": "📱",
+    "message": "WhatsApp connected: Pelangi Capsule Hostel (60103084289)",
+    "timestamp": "2026-02-18T07:41:51.998Z",
+    "metadata": {
+      "instanceId": "default",
+      "name": "Pelangi Capsule Hostel",
+      "phoneNumber": "60103084289"
+    }
+  },
+  {
+    "id": "evt-878-1771400520410",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"i wan to check in\"",
+    "timestamp": "2026-02-18T07:42:00.410Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "i wan to check in"
+    }
+  },
+  {
+    "id": "evt-879-1771400520434",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"check_in_arrival\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T07:42:00.434Z",
+    "metadata": {
+      "intent": "check_in_arrival",
+      "confidence": 0.9999998993395701,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-880-1771400520435",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 24ms (workflow)",
+    "timestamp": "2026-02-18T07:42:00.435Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 24
+    }
+  },
+  {
+    "id": "evt-881-1771400529729",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"hello\"",
+    "timestamp": "2026-02-18T07:42:09.729Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "hello"
+    }
+  },
+  {
+    "id": "evt-882-1771400529737",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"greeting\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T07:42:09.737Z",
+    "metadata": {
+      "intent": "greeting",
+      "confidence": 0.9999999999999998,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-883-1771400529737",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 8ms (static_reply)",
+    "timestamp": "2026-02-18T07:42:09.737Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 8
+    }
+  },
+  {
+    "id": "evt-884-1771400540045",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"how much per night\"",
+    "timestamp": "2026-02-18T07:42:20.045Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "how much per night"
+    }
+  },
+  {
+    "id": "evt-885-1771400540064",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"pricing\" (100% via fuzzy)",
+    "timestamp": "2026-02-18T07:42:20.064Z",
+    "metadata": {
+      "intent": "pricing",
+      "confidence": 0.9999999850988388,
+      "source": "fuzzy"
+    }
+  },
+  {
+    "id": "evt-886-1771400540064",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 19ms (static_reply)",
+    "timestamp": "2026-02-18T07:42:20.064Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 19
+    }
+  }
+]

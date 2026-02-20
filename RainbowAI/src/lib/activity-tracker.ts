@@ -8,12 +8,9 @@
 
 import { EventEmitter } from 'events';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const DATA_DIR = join(__dirname, '..', '..', 'data');
+const DATA_DIR = join(process.cwd(), 'data');
 const ACTIVITY_FILE = join(DATA_DIR, 'recent-activity.json');
 
 export type ActivityCategory = 'message' | 'reply' | 'connection' | 'classified' | 'system';

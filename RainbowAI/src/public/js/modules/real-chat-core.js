@@ -9,6 +9,13 @@ import { refreshActiveChat } from './real-chat-messaging.js';
 const api = window.api;
 const linkifyUrls = window.linkifyUrls || function(h) { return h; };
 
+// US-001: Format token count for display (1234 → '1.2K', 89 → '89')
+function fmtTokenCount(n) {
+  if (n == null) return 'N/A';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+}
+
 // ─── SSE fallback polling interval (US-159) ─────────────────────
 const SSE_FALLBACK_POLL_MS = 15000; // 15s polling when SSE is disconnected
 
@@ -87,11 +94,17 @@ function updateRcConnectionStatus(statusData) {
   if (!bar) return;
   const instances = (statusData && statusData.whatsappInstances) || [];
   const connected = instances.some(i => i.state === 'open');
-  bar.classList.remove('wa-connected', 'wa-disconnected');
-  bar.classList.add(connected ? 'wa-connected' : 'wa-disconnected');
+  const connecting = !connected && instances.some(i => i.state === 'connecting');
+
+  bar.classList.remove('wa-connected', 'wa-disconnected', 'wa-connecting');
+  const barClass = connected ? 'wa-connected' : connecting ? 'wa-connecting' : 'wa-disconnected';
+  bar.classList.add(barClass);
+
   const text = bar.querySelector('.wa-connection-text');
   if (text) {
-    text.textContent = connected ? 'WhatsApp Connected' : 'Disconnected';
+    text.textContent = connected ? 'WhatsApp Connected'
+      : connecting ? 'Connecting...'
+      : 'Disconnected';
   }
   if ($.waWasConnected === true && !connected) {
     $.waWasConnected = false;
@@ -290,6 +303,9 @@ export async function loadRealChat() {
     $.lastRefreshAt = Date.now();
     updateRefreshTimestamp();
 
+    // US-015: Load contact tags + units for filter chips (mirrors US-004)
+    loadRcContactMaps();
+
     if ($.conversations.length > 0 && $.activePhone === null) {
       openConversation($.conversations[0].phone);
     }
@@ -384,6 +400,20 @@ export function renderConversationList(conversations) {
     );
   }
 
+  // US-015: Apply chip filter (mirrors US-003/US-004)
+  if ($.activeFilter === 'waiting') {
+    filtered = filtered.filter(c => c.lastMessageRole === 'user');
+  }
+  if ($.tagFilter && $.tagFilter.length > 0) {
+    filtered = filtered.filter(c => {
+      var tags = $.contactTagsMap[c.phone] || [];
+      return $.tagFilter.some(t => tags.indexOf(t) >= 0);
+    });
+  }
+  if ($.unitFilter) {
+    filtered = filtered.filter(c => $.contactUnitsMap[c.phone] === $.unitFilter);
+  }
+
   if (!filtered.length) {
     list.innerHTML = '<div class="rc-sidebar-empty"><p>No matching conversations.</p></div>';
     return;
@@ -423,6 +453,84 @@ export function filterConversations() {
     console.log('[RealChat] Filter triggered');
     renderConversationList($.conversations);
   }, 300);
+}
+
+// ─── US-015: Filter Chips (mirrors US-003/US-004) ───────────────
+
+/** Load contact tags + units maps from API */
+async function loadRcContactMaps() {
+  try {
+    const [tagsMap, unitsMap] = await Promise.all([
+      api('/contacts/tags-map').catch(() => ({})),
+      api('/contacts/units-map').catch(() => ({}))
+    ]);
+    $.contactTagsMap = tagsMap || {};
+    $.contactUnitsMap = unitsMap || {};
+  } catch (e) {
+    console.warn('[RealChat] Failed to load contact maps:', e);
+  }
+}
+
+export function setRcFilter(filter) {
+  $.activeFilter = filter;
+  // Update chip UI
+  document.querySelectorAll('#rc-filter-bar .lc-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.filter === filter);
+  });
+  renderConversationList($.conversations);
+}
+
+export function toggleRcTagDropdown() {
+  var dd = document.getElementById('rc-tag-dropdown');
+  if (!dd) return;
+  if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+  // Build tag list from contactTagsMap
+  var tagSet = new Set();
+  Object.values($.contactTagsMap).forEach(function(tags) {
+    if (Array.isArray(tags)) tags.forEach(function(t) { tagSet.add(t); });
+  });
+  var tags = Array.from(tagSet).sort();
+  dd.innerHTML = tags.length === 0
+    ? '<div style="padding:8px 12px;font-size:12px;color:#9ca3af;">No tags found</div>'
+    : tags.map(function(t) {
+      var isActive = $.tagFilter.indexOf(t) >= 0;
+      return '<button onclick="toggleRcTag(\'' + escapeAttr(t) + '\')" style="display:block;width:100%;text-align:left;padding:6px 12px;font-size:12px;border:none;background:' + (isActive ? '#e7fce3' : 'transparent') + ';cursor:pointer;">' + escapeHtml(t) + (isActive ? ' ✓' : '') + '</button>';
+    }).join('');
+  dd.style.display = '';
+}
+
+export function toggleRcTag(tag) {
+  var idx = $.tagFilter.indexOf(tag);
+  if (idx >= 0) $.tagFilter.splice(idx, 1); else $.tagFilter.push(tag);
+  var chip = document.getElementById('rc-tag-chip');
+  if (chip) chip.textContent = $.tagFilter.length ? 'Tags (' + $.tagFilter.length + ')' : 'Tags ▾';
+  if ($.tagFilter.length) chip.classList.add('active'); else chip.classList.remove('active');
+  toggleRcTagDropdown(); // refresh dropdown
+  renderConversationList($.conversations);
+}
+
+export function toggleRcUnitDropdown() {
+  var dd = document.getElementById('rc-unit-dropdown');
+  if (!dd) return;
+  if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+  var unitSet = new Set(Object.values($.contactUnitsMap));
+  var units = Array.from(unitSet).sort();
+  dd.innerHTML = '<button onclick="setRcUnit(\'\')" style="display:block;width:100%;text-align:left;padding:6px 12px;font-size:12px;border:none;background:' + (!$.unitFilter ? '#e7fce3' : 'transparent') + ';cursor:pointer;">All Units</button>'
+    + (units.length === 0
+      ? '<div style="padding:8px 12px;font-size:12px;color:#9ca3af;">No units found</div>'
+      : units.map(function(u) {
+        return '<button onclick="setRcUnit(\'' + escapeAttr(u) + '\')" style="display:block;width:100%;text-align:left;padding:6px 12px;font-size:12px;border:none;background:' + ($.unitFilter === u ? '#e7fce3' : 'transparent') + ';cursor:pointer;">' + escapeHtml(u) + '</button>';
+      }).join(''));
+  dd.style.display = '';
+}
+
+export function setRcUnit(unit) {
+  $.unitFilter = unit;
+  var chip = document.getElementById('rc-unit-chip');
+  if (chip) chip.textContent = unit ? unit : 'Unit ▾';
+  if (unit) chip.classList.add('active'); else chip.classList.remove('active');
+  document.getElementById('rc-unit-dropdown').style.display = 'none';
+  renderConversationList($.conversations);
 }
 
 // ─── Chat View ───────────────────────────────────────────────────
@@ -485,7 +593,8 @@ export function renderChatView(log) {
     const msg = log.messages[i];
     const msgDate = new Date(msg.timestamp).toLocaleDateString('en-MY', { year: 'numeric', month: 'short', day: 'numeric' });
     if (msgDate !== lastDate) {
-      html += '<div class="rc-date-sep"><span>' + msgDate + '</span></div>';
+      const isoDate = new Date(msg.timestamp).toISOString().slice(0, 10);
+      html += '<div class="rc-date-sep" data-date="' + isoDate + '"><span>' + msgDate + '</span></div>';
       lastDate = msgDate;
       lastSide = '';
     }
@@ -542,6 +651,17 @@ export function renderChatView(log) {
         if (msg.responseTime) panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Time</span><span class="rc-dev-panel-value">' + MetadataBadges.getResponseTimeBadge(msg.responseTime) + '</span></div>');
         if (msg.routedAction) panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Action</span><span class="rc-dev-panel-value">' + escapeHtml(msg.routedAction) + '</span></div>');
         if (msg.sentiment) panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Sentiment</span><span class="rc-dev-panel-value">' + escapeHtml(msg.sentiment) + '</span></div>');
+        // US-001: Token usage row
+        if (msg.usage && (msg.usage.prompt_tokens || msg.usage.completion_tokens)) {
+          var pt = msg.usage.prompt_tokens || 0;
+          var ct = msg.usage.completion_tokens || 0;
+          var tt = msg.usage.total_tokens || (pt + ct);
+          var tokenText = fmtTokenCount(pt) + ' in / ' + fmtTokenCount(ct) + ' out';
+          if (msg.contextCount != null) tokenText += ' | ' + msg.contextCount + ' msgs context';
+          panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Tokens</span><span class="rc-dev-panel-value"><span class="rc-dev-token-badge">' + tokenText + '</span></span></div>');
+        } else if (msg.source === 'llm') {
+          panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Tokens</span><span class="rc-dev-panel-value" style="opacity:0.5;">N/A</span></div>');
+        }
         if (msg.kbFiles && msg.kbFiles.length > 0) {
           var chips = msg.kbFiles.map(function(f) {
             return '<span class="rc-dev-panel-kb-chip" onclick="openKBFileFromPreview(\'' + escapeHtml(f) + '\')" title="View ' + escapeHtml(f) + '">' + escapeHtml(f) + '</span>';
@@ -556,6 +676,14 @@ export function renderChatView(log) {
         if (msg.model) panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Provider</span><span class="rc-dev-panel-value">' + escapeHtml(msg.model) + '</span></div>');
         if (msg.responseTime) panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Time</span><span class="rc-dev-panel-value">' + (msg.responseTime / 1000).toFixed(2) + 's</span></div>');
         if (msg.routedAction) panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Action</span><span class="rc-dev-panel-value">' + escapeHtml(msg.routedAction) + '</span></div>');
+        // US-001: Token usage (fallback path)
+        if (msg.usage && (msg.usage.prompt_tokens || msg.usage.completion_tokens)) {
+          var pt2 = msg.usage.prompt_tokens || 0;
+          var ct2 = msg.usage.completion_tokens || 0;
+          var tokenText2 = fmtTokenCount(pt2) + ' in / ' + fmtTokenCount(ct2) + ' out';
+          if (msg.contextCount != null) tokenText2 += ' | ' + msg.contextCount + ' msgs context';
+          panelRows.push('<div class="rc-dev-panel-row"><span class="rc-dev-panel-label">Tokens</span><span class="rc-dev-panel-value">' + tokenText2 + '</span></div>');
+        }
       }
 
       if (panelRows.length > 0) {
@@ -573,11 +701,18 @@ export function renderChatView(log) {
     const displayContent = formatMessage(msg.content);
     const systemClass = isSystem ? ' lc-system-msg' : '';
 
+    // US-002: Robot icon prefix for AI-generated replies (not manual staff)
+    let botAvatarPrefix = '';
+    if (!isGuest && !msg.manual) {
+      const avatarEmoji = window._botAvatar || '\uD83E\uDD16';
+      botAvatarPrefix = '<span class="lc-bot-avatar">' + avatarEmoji + ' </span>';
+    }
+
     const textExtra = canEdit ? ' rc-bubble-text-editable cursor-pointer hover:opacity-90' : '';
     const textOnclick = canEdit ? ' onclick="openRcEditModal(' + i + ')"' : '';
     html += '<div class="rc-bubble-wrap ' + side + continuationClass + '">' +
       '<div class="rc-bubble ' + side + systemClass + '">' +
-      '<div class="rc-bubble-text' + textExtra + '"' + textOnclick + ' title="' + (canEdit ? 'Click to edit and save to Responses' : '') + '">' + displayContent + '</div>' +
+      '<div class="rc-bubble-text' + textExtra + '"' + textOnclick + ' title="' + (canEdit ? 'Click to edit and save to Responses' : '') + '">' + botAvatarPrefix + displayContent + '</div>' +
       '<div class="rc-bubble-footer">' + footerInner + '</div>' +
       actionsHtml +
       devMeta +

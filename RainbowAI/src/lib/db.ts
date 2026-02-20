@@ -34,6 +34,7 @@ pool.on('error', (err) => {
   console.error('[DB] ⚠️ Unexpected pool error:', err.message);
 });
 
+export { pool };
 export const db = drizzle(pool, { schema });
 
 // Test connection on startup with retry

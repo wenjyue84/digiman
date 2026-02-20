@@ -7,44 +7,35 @@
         {
           "id": "s1",
           "message": {
-            "en": "I'll help you with your booking or payment. Let me gather some information first.",
-            "ms": "Saya akan membantu anda dengan tempahan atau pembayaran. Biar saya kumpul maklumat dahulu.",
-            "zh": "我会帮您处理预订或付款。让我先收集一些信息。"
+            "en": "Happy to help with your booking! How many guests will be staying?",
+            "ms": "Boleh bantu! Berapa orang tetamu nak check in?",
+            "zh": "好的，我来帮您办理！请问几位客人入住？"
           },
-          "waitForReply": false
+          "waitForReply": true
         },
         {
           "id": "s2",
           "message": {
-            "en": "How many guests will be staying?",
-            "ms": "Berapa orang tetamu?",
-            "zh": "请问有几位客人入住？"
+            "en": "What are your check-in and check-out dates?",
+            "ms": "Tarikh check-in dan check-out?",
+            "zh": "您的入住和退房日期是什么时候？"
           },
           "waitForReply": true
         },
         {
           "id": "s3",
           "message": {
-            "en": "What are your check-in and check-out dates?",
-            "ms": "Apakah tarikh daftar masuk dan daftar keluar anda?",
-            "zh": "您的入住和退房日期是什么时候？"
+            "en": "If you have made a payment, please share your payment receipt. Otherwise, I'll forward this conversation to our admin at +60127088789 for further assistance.",
+            "ms": "Kalau dah bayar, boleh share resit. Kalau belum, saya forward ke admin kami di +60127088789 untuk bantuan lanjut.",
+            "zh": "如果您已付款，请分享您的付款收据。否则，我会将此对话转发给我们的管理员 +60127088789 以获得进一步帮助。"
           },
           "waitForReply": true
         },
         {
           "id": "s4",
           "message": {
-            "en": "If you have made a payment, please share your payment receipt. Otherwise, I'll forward this conversation to our admin at +60127088789 for further assistance.",
-            "ms": "Jika anda sudah buat pembayaran, sila kongsi resit pembayaran. Jika tidak, saya akan hantar perbualan ini ke admin kami di +60127088789 untuk bantuan lanjut.",
-            "zh": "如果您已付款，请分享您的付款收据。否则，我会将此对话转发给我们的管理员 +60127088789 以获得进一步帮助。"
-          },
-          "waitForReply": true
-        },
-        {
-          "id": "s5",
-          "message": {
             "en": "Thank you! I'm forwarding your booking details and payment information to our admin at +60127088789. They will contact you shortly to confirm your reservation.",
-            "ms": "Terima kasih! Saya menghantar butiran tempahan dan maklumat pembayaran anda ke admin kami di +60127088789. Mereka akan hubungi anda tidak lama lagi untuk sahkan tempahan.",
+            "ms": "Terima kasih! Dah forward butiran tempahan dan pembayaran ke admin kami di +60127088789. Mereka akan hubungi tak lama lagi untuk sahkan tempahan.",
             "zh": "谢谢！我正在将您的预订详情和付款信息转发给我们的管理员 +60127088789。他们会尽快与您联系确认预订。"
           },
           "waitForReply": false,
@@ -53,31 +44,18 @@
           }
         },
         {
-          "id": "s6",
+          "id": "s5",
           "message": {
             "en": "✅ Message sent to admin (+60127088789). They will review your booking and contact you soon!",
-            "ms": "✅ Mesej dihantar ke admin (+60127088789). Mereka akan semak tempahan anda dan hubungi anda tidak lama lagi!",
+            "ms": "✅ Mesej dah dihantar ke admin (+60127088789). Mereka akan semak tempahan dan hubungi tak lama lagi!",
             "zh": "✅ 消息已发送给管理员 (+60127088789)。他们会审核您的预订并尽快联系您！"
           },
           "waitForReply": false
         }
       ],
       "format": "nodes",
-      "startNodeId": "booking_welcome_msg",
+      "startNodeId": "wait_guest_count",
       "nodes": [
-        {
-          "id": "booking_welcome_msg",
-          "type": "message",
-          "label": "Booking welcome",
-          "config": {
-            "message": {
-              "en": "I'll help you with your booking or payment. Let me gather some information first.",
-              "ms": "Saya akan membantu anda dengan tempahan atau pembayaran. Biar saya kumpul maklumat dahulu.",
-              "zh": "我会帮您处理预订或付款。让我先收集一些信息。"
-            }
-          },
-          "next": "wait_guest_count"
-        },
         {
           "id": "wait_guest_count",
           "type": "wait_reply",
@@ -85,9 +63,9 @@
           "config": {
             "storeAs": "guest_count",
             "prompt": {
-              "en": "How many guests will be staying?",
-              "ms": "Berapa orang tetamu?",
-              "zh": "请问有几位客人入住？"
+              "en": "Happy to help with your booking! How many guests will be staying?",
+              "ms": "Boleh bantu! Berapa orang tetamu nak check in?",
+              "zh": "好的，我来帮您办理！请问几位客人入住？"
             }
           },
           "next": "wait_booking_dates"
@@ -100,7 +78,7 @@
             "storeAs": "booking_dates",
             "prompt": {
               "en": "What are your check-in and check-out dates?",
-              "ms": "Apakah tarikh daftar masuk dan daftar keluar anda?",
+              "ms": "Tarikh check-in dan check-out?",
               "zh": "您的入住和退房日期是什么时候？"
             }
           },
@@ -114,7 +92,7 @@
             "storeAs": "payment_info",
             "prompt": {
               "en": "If you have made a payment, please share your payment receipt. Otherwise, I'll forward this conversation to our admin at +60127088789 for further assistance.",
-              "ms": "Jika anda sudah buat pembayaran, sila kongsi resit pembayaran. Jika tidak, saya akan hantar perbualan ini ke admin kami di +60127088789 untuk bantuan lanjut.",
+              "ms": "Kalau dah bayar, boleh share resit. Kalau belum, saya forward ke admin kami di +60127088789 untuk bantuan lanjut.",
               "zh": "如果您已付款，请分享您的付款收据。否则，我会将此对话转发给我们的管理员 +60127088789 以获得进一步帮助。"
             }
           },
@@ -127,7 +105,7 @@
           "config": {
             "message": {
               "en": "Thank you! I'm forwarding your booking details and payment information to our admin. They will contact you shortly to confirm your reservation.",
-              "ms": "Terima kasih! Saya menghantar butiran tempahan dan maklumat pembayaran anda ke admin kami. Mereka akan hubungi anda tidak lama lagi untuk sahkan tempahan.",
+              "ms": "Terima kasih! Dah forward butiran tempahan dan pembayaran ke admin kami. Mereka akan hubungi tak lama lagi untuk sahkan tempahan.",
               "zh": "谢谢！我正在将您的预订详情和付款信息转发给我们的管理员。他们会尽快与您联系确认预订。"
             }
           },
@@ -1369,6 +1347,53 @@
               "zh": "✅ 请求已转发给工作人员。他们会尽快送达。还需要其他东西吗？"
             }
           }
+        }
+      ]
+    },
+    {
+      "id": "capsule_conflict_handling",
+      "name": "Capsule Conflict Resolution",
+      "description": "Handles cases where a guest finds someone already in their assigned capsule",
+      "steps": [
+        {
+          "id": "s1",
+          "message": {
+            "en": "I'm sorry to hear someone is in your capsule! 😟 This is unusual and we'll sort it out right away. Could you tell me **which capsule number** you were assigned to?",
+            "ms": "Maaf mendengar ada orang dalam kapsul anda! 😟 Ini tidak biasa dan kami akan selesaikan segera. Boleh beritahu **nombor kapsul** yang ditugaskan kepada anda?",
+            "zh": "很遗憾听到有人占了您的胶囊！😟 这很不寻常，我们会立刻处理。能告诉我您被分配的是**哪个胶囊号码**吗？"
+          },
+          "waitForReply": true
+        },
+        {
+          "id": "s2",
+          "message": {
+            "en": "Thank you. I'm immediately notifying our staff about the capsule conflict. 🔔 Please stay nearby and our team will assist you within a few minutes. They will verify the assignment and find a resolution — either by moving the other person or assigning you an alternative capsule.",
+            "ms": "Terima kasih. Saya segera memaklumkan staf kami tentang konflik kapsul ini. 🔔 Sila berada berdekatan dan pasukan kami akan membantu anda dalam beberapa minit. Mereka akan mengesahkan penugasan dan mencari penyelesaian — sama ada dengan mengalihkan orang lain atau memberikan anda kapsul alternatif.",
+            "zh": "谢谢。我立即通知我们的工作人员关于胶囊冲突的情况。🔔 请您留在附近，我们的团队将在几分钟内协助您。他们将核实分配情况并找到解决方案——要么让另一位移离，要么为您安排另一个胶囊。"
+          },
+          "waitForReply": false,
+          "action": {
+            "type": "notify_staff",
+            "message": "🚨 CAPSULE CONFLICT: Guest reports someone already in their assigned capsule. Please check and resolve immediately."
+          }
+        },
+        {
+          "id": "s3",
+          "message": {
+            "en": "Our staff has been notified. 📣 While you wait, could you let me know: is the person in the capsule currently **awake** or **asleep**? This will help our team approach the situation appropriately.",
+            "ms": "Staf kami telah diberitahu. 📣 Sementara menunggu, boleh beritahu saya: adakah orang dalam kapsul itu sedang **terjaga** atau **tidur**? Ini akan membantu pasukan kami mendekati situasi dengan sewajarnya.",
+            "zh": "我们的工作人员已收到通知。📣 在等待期间，能告诉我：胶囊里的人目前是**醒着**还是**睡着**了？这将帮助我们的团队以适当的方式处理这种情况。"
+          },
+          "waitForReply": true
+        },
+        {
+          "id": "s4",
+          "message": {
+            "en": "Understood. Our staff member is on the way to resolve this. I'll keep you informed. If you need immediate assistance, you can also call reception directly. We sincerely apologize for this inconvenience. 🙏",
+            "ms": "Difahami. Staf kami sedang dalam perjalanan untuk menyelesaikan ini. Saya akan memaklumkan anda. Jika anda memerlukan bantuan segera, anda juga boleh menghubungi penerimaan secara langsung. Kami dengan tulus memohon maaf atas ketidakselesaan ini. 🙏",
+            "zh": "明白了。我们的工作人员正在赶来解决此事。我会及时通知您。如有需要立即帮助，您也可以直接联系前台。我们真诚地为这次不便道歉。🙏"
+          },
+          "waitForReply": false
         }
       ]
     }

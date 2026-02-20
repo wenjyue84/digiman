@@ -688,16 +688,28 @@ async function kbTestSend() {
     kbTestHistory.push({ role: 'user', content: question });
     kbTestHistory.push({ role: 'assistant', content: data.answer });
 
-    // Build dev info
+    // Build dev info (US-010: detailed token breakdown)
     var di = data.devInfo || {};
-    var devHtml = '<div class="mt-1 text-xs text-neutral-400 space-x-2">' +
-      '<span>' + (di.responseTime || 0) + 'ms</span>' +
-      (di.tokensUsed ? '<span>&middot; ' + di.tokensUsed + ' tokens</span>' : '') +
-      (di.provider ? '<span>&middot; ' + esc(di.provider) + '</span>' : '') +
-      '</div>';
-    if (di.kbFilesMatched && di.kbFilesMatched.length > 0) {
-      devHtml += '<div class="mt-0.5 text-xs text-neutral-400">KB files: ' + di.kbFilesMatched.map(function(f) { return esc(f); }).join(', ') + '</div>';
-    }
+    var devHtml = '<details class="mt-1">' +
+      '<summary class="text-xs text-neutral-400 cursor-pointer select-none">' +
+      (di.responseTime || 0) + 'ms' +
+      (di.provider ? ' &middot; ' + esc(di.provider) : '') +
+      (di.tokensUsed ? ' &middot; ' + di.tokensUsed + ' tokens' : '') +
+      ' <span class="text-neutral-300">(details)</span>' +
+      '</summary>' +
+      '<div class="mt-1 text-xs text-neutral-500 bg-neutral-50 border border-neutral-200 rounded-lg p-2 space-y-0.5">' +
+      '<div class="flex justify-between"><span>Provider:</span><span class="font-mono">' + esc(di.provider || '—') + '</span></div>' +
+      '<div class="flex justify-between"><span>Model:</span><span class="font-mono text-xs">' + esc(di.model || '—') + '</span></div>' +
+      '<div class="flex justify-between"><span>Response time:</span><span>' + (di.responseTime || 0) + 'ms</span></div>' +
+      '<div class="border-t border-neutral-200 my-1"></div>' +
+      '<div class="flex justify-between font-semibold"><span>Total tokens:</span><span>' + (di.tokensUsed || '—') + '</span></div>' +
+      '<div class="flex justify-between text-neutral-400"><span>↳ Prompt tokens:</span><span>' + (di.promptTokens || '—') + '</span></div>' +
+      '<div class="flex justify-between text-neutral-400"><span>↳ Completion tokens:</span><span>' + (di.completionTokens || '—') + '</span></div>' +
+      (di.kbFilesMatched && di.kbFilesMatched.length > 0
+        ? '<div class="border-t border-neutral-200 my-1"></div><div><span>KB files matched (' + di.kbFilesMatched.length + '):</span><div class="mt-0.5 font-mono text-xs text-neutral-400">' + di.kbFilesMatched.map(function(f) { return esc(f); }).join('<br>') + '</div></div>'
+        : '<div class="text-neutral-400">No KB files matched (used full KB)</div>') +
+      '</div>' +
+      '</details>';
 
     // Add assistant message to UI
     msgContainer.innerHTML += '<div class="flex justify-start mb-2">' +

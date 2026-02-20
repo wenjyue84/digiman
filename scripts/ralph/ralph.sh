@@ -115,6 +115,7 @@ fi
 
 run_quality_checks() {
   local story_id="$1"
+  local pre_story_ts_errors="$2"  # Captured before Claude ran — dynamic baseline
   local checks_passed=true
 
   echo ""
@@ -122,18 +123,18 @@ run_quality_checks() {
   echo "  ────────────────────────"
 
   # Gate 1: TypeScript compilation (RainbowAI)
-  # Uses error-count baseline to avoid failing on pre-existing errors.
-  # Only fails if NEW errors are introduced (count exceeds baseline).
-  local TS_BASELINE=222  # Known pre-existing errors as of 2026-02-17 (drift from 20→222 due to new modules: intent-analytics, conversation-logger, feedback, state-persistence)
+  # Uses pre-story error count as baseline (captured before Claude spawned).
+  # Only fails if NEW errors are introduced (count exceeds pre-story count).
+  # This avoids the hardcoded-number drift problem: baseline is always fresh.
   echo -n "  [1/3] TypeScript (RainbowAI)... "
   local ts_output
   ts_output=$(cd RainbowAI && npx tsc --noEmit --pretty false 2>&1 || true)
   local ts_errors
   ts_errors=$(echo "$ts_output" | grep -c "error TS" || true)
-  if [[ "$ts_errors" -le "$TS_BASELINE" ]]; then
-    echo "PASS ($ts_errors errors, baseline $TS_BASELINE)"
+  if [[ "$ts_errors" -le "$pre_story_ts_errors" ]]; then
+    echo "PASS ($ts_errors errors, pre-story baseline $pre_story_ts_errors)"
   else
-    echo "FAIL ($ts_errors errors, baseline $TS_BASELINE — $((ts_errors - TS_BASELINE)) new)"
+    echo "FAIL ($ts_errors errors vs pre-story $pre_story_ts_errors — $((ts_errors - pre_story_ts_errors)) new)"
     checks_passed=false
   fi
 
@@ -220,12 +221,19 @@ while [[ $ITERATION -lt $MAX_ITERATIONS ]]; do
     exit 1
   fi
 
+  # Capture TS error baseline BEFORE Claude makes any changes.
+  # This is the dynamic baseline used by run_quality_checks to detect regressions.
+  echo -n "  [baseline] Counting pre-story TS errors... "
+  PRE_STORY_TS_ERRORS=$(cd RainbowAI && npx tsc --noEmit --pretty false 2>&1 | grep -c "error TS" || true)
+  echo "$PRE_STORY_TS_ERRORS errors"
+
   # Spawn fresh AI instance
   echo "[spawn] Fresh $AI_TOOL instance..."
   if [[ "$AI_TOOL" == "claude" ]]; then
     claude -p "$(cat "$PROMPT_FILE")" \
       --allowedTools "Edit,Write,Read,Glob,Grep,Bash" \
-      --max-turns 50
+      --max-turns 50 \
+      --dangerously-skip-permissions
   else
     amp --prompt-file "$PROMPT_FILE"
   fi
@@ -238,8 +246,8 @@ while [[ $ITERATION -lt $MAX_ITERATIONS ]]; do
     echo ""
     echo "[done] Story completed: $STORY_TITLE"
 
-    # Run quality checks
-    if run_quality_checks "$NEXT_STORY"; then
+    # Run quality checks (pass pre-story TS baseline for delta comparison)
+    if run_quality_checks "$NEXT_STORY" "$PRE_STORY_TS_ERRORS"; then
       # Commit changes
       git add -A
       git commit -m "feat: $NEXT_STORY - $STORY_TITLE

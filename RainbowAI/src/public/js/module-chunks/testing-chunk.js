@@ -50,7 +50,8 @@ import {
   exportHistoricalReport,
   clearAutotestHistoryUI,
   toggleExportDropdown,
-  exportAutotestReport
+  exportAutotestReport,
+  updateScenarioCount
 } from '/public/js/modules/autotest-ui.js';
 
 // ─── Window globals ──────────────────────────────────────────────
@@ -76,7 +77,7 @@ window.updateHistoryButtonVisibility = updateHistoryButtonVisibility;
 window.getAutotestHistory = getAutotestHistory;
 window.getImportedReports = getImportedReports;
 window.addToAutotestHistory = addToAutotestHistory;
-window.clearAutotestHistory = clearAutotestHistory;
+window.clearAutotestHistoryData = clearAutotestHistory;
 window.clearImportedReports = clearImportedReports;
 
 // Phase 31: Autotest Execution Core
@@ -96,6 +97,7 @@ window.testIntentClassifier = testIntentClassifier;
 
 // Phase 32: Autotest Scenarios Data
 window.AUTOTEST_SCENARIOS = AUTOTEST_SCENARIOS;
+updateScenarioCount();
 
 // Phase 33: Autotest UI (clearAutotestHistory overrides Phase 30's version)
 window.renderScenarioCard = renderScenarioCard;
@@ -107,5 +109,11 @@ window.exportHistoricalReport = exportHistoricalReport;
 window.clearAutotestHistory = clearAutotestHistoryUI;
 window.toggleExportDropdown = toggleExportDropdown;
 window.exportAutotestReport = exportAutotestReport;
+
+// Load autotest history from localStorage on chunk load
+// Must happen AFTER window registrations so autotest-ui.js auto-init can find them
+loadAutotestHistory().then(() => {
+  updateHistoryButtonVisibility();
+});
 
 console.log('[LazyChunk] Testing modules registered');

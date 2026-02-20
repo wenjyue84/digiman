@@ -143,10 +143,11 @@
 
 .rc-header-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;  /* US-005: min 8px between buttons to prevent visual overlap */
   color: #54656f;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;  /* US-005: prevent wrapping that caused delete/fullscreen overlap */
+  flex-shrink: 0;
 }
 
 .rc-header-actions button {
@@ -160,6 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;  /* US-005: prevent buttons from being squeezed together */
 }
 
 .rc-header-actions button:hover {
@@ -641,6 +643,18 @@
 
 .rc-dev-panel-value .rb-badge {
   vertical-align: middle;
+}
+
+/* US-001: Token usage badge in dev panel */
+.rc-dev-token-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
 }
 
 .rc-dev-panel-kb {
@@ -1142,6 +1156,48 @@
 .rc-scroll-bottom svg {
   width: 20px;
   height: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* WhatsApp Floating Status Bar (US-007)                          */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.wa-floating-status {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+  background: #e5e7eb;
+  color: #6b7280;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.wa-floating-status .wa-icon {
+  font-size: 14px;
+}
+
+.wa-floating-status.wa-connected {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.wa-floating-status.wa-connecting {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.wa-floating-status.wa-disconnected {
+  background: #fde2e2;
+  color: #991b1b;
 }
 
 /* Responsive */

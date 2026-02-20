@@ -4,6 +4,7 @@ import { storage } from "../storage";
 import { insertUserSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware, validators } from "../validation";
 import { authenticateToken } from "./middleware/auth";
+import { hashPassword } from "../lib/password";
 
 const router = Router();
 
@@ -62,6 +63,11 @@ router.post(
         if (existingUsername) {
           return res.status(409).json({ message: "User with this username already exists" });
         }
+      }
+
+      // Hash password before storage
+      if (userData.password) {
+        userData.password = await hashPassword(userData.password);
       }
 
       const user = await storage.createUser(userData);
@@ -132,6 +138,8 @@ router.patch("/:id", authenticateToken, async (req: any, res) => {
           issues: passwordCheck.issues,
         });
       }
+      // Hash the new password before storage
+      updates.password = await hashPassword(updates.password);
     }
 
     // Validate email uniqueness if being updated

@@ -1,9 +1,9 @@
 import { EventEmitter } from 'events';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import type { ZodType } from 'zod';
 import { getDefaultConfig } from './default-configs.js';
+import { loadConfigFromDB, saveConfigToDB } from '../lib/config-db.js';
 
 // Types are now defined via Zod schemas in schemas.ts
 // Re-export so existing consumers don't break
@@ -25,10 +25,9 @@ import {
 } from './schemas.js';
 
 // ─── Resolve data directory ─────────────────────────────────────────
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const DATA_DIR = join(__dirname, 'data');
+// Use process.cwd() (= RainbowAI/) instead of __dirname because esbuild
+// bundles everything into dist/index.js, making __dirname = dist/ (wrong).
+const DATA_DIR = join(process.cwd(), 'src', 'assistant', 'data');
 
 // ─── Config Store ───────────────────────────────────────────────────
 
@@ -56,7 +55,7 @@ class ConfigStore extends EventEmitter {
     this.corruptedFiles = [];
   }
 
-  init(): void {
+  async init(): Promise<void> {
     if (!existsSync(DATA_DIR)) {
       mkdirSync(DATA_DIR, { recursive: true });
     }
@@ -64,14 +63,14 @@ class ConfigStore extends EventEmitter {
     // Clear corrupted files list from previous init
     this.corruptedFiles = [];
 
-    // Load all configs (may use defaults if corrupted)
-    this.knowledge = this.loadJSON<KnowledgeData>('knowledge.json', knowledgeDataSchema);
-    this.intents = this.loadJSON<IntentsData>('intents.json', intentsDataSchema);
-    this.templates = this.loadJSON<TemplatesData>('templates.json', templatesDataSchema);
-    this.settings = this.loadJSON<SettingsData>('settings.json', settingsDataSchema);
-    this.workflow = this.loadJSON<WorkflowData>('workflow.json', workflowDataSchema);
-    this.workflows = this.loadJSON<WorkflowsData>('workflows.json', workflowsDataSchema);
-    this.routing = this.loadJSON<RoutingData>('routing.json', routingDataSchema);
+    // Load all configs: try DB first, fall back to local JSON files
+    this.knowledge = await this.loadJSONAsync<KnowledgeData>('knowledge.json', knowledgeDataSchema);
+    this.intents = await this.loadJSONAsync<IntentsData>('intents.json', intentsDataSchema);
+    this.templates = await this.loadJSONAsync<TemplatesData>('templates.json', templatesDataSchema);
+    this.settings = await this.loadJSONAsync<SettingsData>('settings.json', settingsDataSchema);
+    this.workflow = await this.loadJSONAsync<WorkflowData>('workflow.json', workflowDataSchema);
+    this.workflows = await this.loadJSONAsync<WorkflowsData>('workflows.json', workflowsDataSchema);
+    this.routing = await this.loadJSONAsync<RoutingData>('routing.json', routingDataSchema);
 
     if (this.corruptedFiles.length > 0) {
       console.warn(`[ConfigStore] ⚠️ ${this.corruptedFiles.length} config file(s) failed to load — using defaults`);
@@ -132,77 +131,87 @@ class ConfigStore extends EventEmitter {
   setKnowledge(data: KnowledgeData): void {
     this.validateOrThrow(data, knowledgeDataSchema, 'knowledge');
     this.knowledge = data;
-    this.saveJSON('knowledge.json', data);
+    this.saveJSONAndDB('knowledge.json', data);
     this.emit('reload', 'knowledge');
   }
 
   setIntents(data: IntentsData): void {
     this.validateOrThrow(data, intentsDataSchema, 'intents');
     this.intents = data;
-    this.saveJSON('intents.json', data);
+    this.saveJSONAndDB('intents.json', data);
     this.emit('reload', 'intents');
   }
 
   setTemplates(data: TemplatesData): void {
     this.validateOrThrow(data, templatesDataSchema, 'templates');
     this.templates = data;
-    this.saveJSON('templates.json', data);
+    this.saveJSONAndDB('templates.json', data);
     this.emit('reload', 'templates');
   }
 
   setSettings(data: SettingsData): void {
     this.validateOrThrow(data, settingsDataSchema, 'settings');
     this.settings = data;
-    this.saveJSON('settings.json', data);
+    this.saveJSONAndDB('settings.json', data);
     this.emit('reload', 'settings');
   }
 
   setWorkflow(data: WorkflowData): void {
     this.validateOrThrow(data, workflowDataSchema, 'workflow');
     this.workflow = data;
-    this.saveJSON('workflow.json', data);
+    this.saveJSONAndDB('workflow.json', data);
     this.emit('reload', 'workflow');
   }
 
   setWorkflows(data: WorkflowsData): void {
     this.validateOrThrow(data, workflowsDataSchema, 'workflows');
     this.workflows = data;
-    this.saveJSON('workflows.json', data);
+    this.saveJSONAndDB('workflows.json', data);
     this.emit('reload', 'workflows');
   }
 
   setRouting(data: RoutingData): void {
     this.validateOrThrow(data, routingDataSchema, 'routing');
     this.routing = data;
-    this.saveJSON('routing.json', data);
+    this.saveJSONAndDB('routing.json', data);
     this.emit('reload', 'routing');
   }
 
-  // ─── Force reload all from disk ────────────────────────────────
+  // ─── Force reload all (DB-first, then disk) ───────────────────
 
-  forceReload(): void {
-    this.knowledge = this.loadJSON<KnowledgeData>('knowledge.json', knowledgeDataSchema);
-    this.intents = this.loadJSON<IntentsData>('intents.json', intentsDataSchema);
-    this.templates = this.loadJSON<TemplatesData>('templates.json', templatesDataSchema);
-    this.settings = this.loadJSON<SettingsData>('settings.json', settingsDataSchema);
-    this.workflow = this.loadJSON<WorkflowData>('workflow.json', workflowDataSchema);
-    this.workflows = this.loadJSON<WorkflowsData>('workflows.json', workflowsDataSchema);
-    this.routing = this.loadJSON<RoutingData>('routing.json', routingDataSchema);
+  async forceReload(): Promise<void> {
+    this.knowledge = await this.loadJSONAsync<KnowledgeData>('knowledge.json', knowledgeDataSchema);
+    this.intents = await this.loadJSONAsync<IntentsData>('intents.json', intentsDataSchema);
+    this.templates = await this.loadJSONAsync<TemplatesData>('templates.json', templatesDataSchema);
+    this.settings = await this.loadJSONAsync<SettingsData>('settings.json', settingsDataSchema);
+    this.workflow = await this.loadJSONAsync<WorkflowData>('workflow.json', workflowDataSchema);
+    this.workflows = await this.loadJSONAsync<WorkflowsData>('workflows.json', workflowsDataSchema);
+    this.routing = await this.loadJSONAsync<RoutingData>('routing.json', routingDataSchema);
+
+    // Write DB state back to local files so fallback is always fresh
+    this.saveJSONToFile('knowledge.json', this.knowledge);
+    this.saveJSONToFile('intents.json', this.intents);
+    this.saveJSONToFile('templates.json', this.templates);
+    this.saveJSONToFile('settings.json', this.settings);
+    this.saveJSONToFile('workflow.json', this.workflow);
+    this.saveJSONToFile('workflows.json', this.workflows);
+    this.saveJSONToFile('routing.json', this.routing);
+
     this.emit('reload', 'all');
-    console.log('[ConfigStore] Force reloaded all config files');
+    console.log('[ConfigStore] Force reloaded all config files (DB-first, files synced to DB state)');
   }
 
   // ─── File I/O helpers ──────────────────────────────────────────
 
   /**
-   * Load and optionally validate a JSON config file.
+   * Load and optionally validate a JSON config file from local disk.
    * On any failure (missing file, malformed JSON, validation error):
    * - Logs error details
    * - Returns safe default config
    * - Tracks corrupted file for admin notification
    * - NEVER crashes startup
    */
-  private loadJSON<T>(filename: string, schema?: ZodType<T>): T {
+  private loadJSONFromFile<T>(filename: string, schema?: ZodType<T>): T {
     const filepath = join(DATA_DIR, filename);
 
     try {
@@ -256,11 +265,51 @@ class ConfigStore extends EventEmitter {
     }
   }
 
-  private saveJSON(filename: string, data: unknown): void {
+  /**
+   * Async loader: tries DB first, falls back to local file.
+   * DB data is authoritative when available (shared across servers).
+   */
+  private async loadJSONAsync<T>(filename: string, schema?: ZodType<T>): Promise<T> {
+    try {
+      const dbData = await loadConfigFromDB(filename);
+      if (dbData !== null) {
+        // Validate DB data against schema
+        if (schema) {
+          const result = schema.safeParse(dbData);
+          if (result.success) {
+            console.log(`[ConfigStore] ✅ Loaded ${filename} from DB`);
+            return result.data;
+          }
+          console.warn(`[ConfigStore] ⚠️ DB data for ${filename} failed validation, falling back to file`);
+        } else {
+          console.log(`[ConfigStore] ✅ Loaded ${filename} from DB (no schema)`);
+          return dbData as T;
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[ConfigStore] ⚠️ DB load for ${filename} failed: ${err.message}, falling back to file`);
+    }
+    return this.loadJSONFromFile<T>(filename, schema);
+  }
+
+  private saveJSONToFile(filename: string, data: unknown): void {
     const filepath = join(DATA_DIR, filename);
     const tmpPath = filepath + '.tmp';
     writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
     renameSync(tmpPath, filepath);
+  }
+
+  /**
+   * Dual-write: sync to local file + fire-and-forget async to DB.
+   * Setters call this to stay synchronous while keeping DB in sync.
+   */
+  private saveJSONAndDB(filename: string, data: unknown): void {
+    // Sync: write to local file (immediate consistency)
+    this.saveJSONToFile(filename, data);
+    // Async: replicate to DB (fire-and-forget)
+    saveConfigToDB(filename, data, process.env.RAINBOW_ROLE || 'unknown').catch(err => {
+      console.error(`[ConfigStore] ⚠️ DB write for ${filename} failed:`, err.message);
+    });
   }
 
   /**

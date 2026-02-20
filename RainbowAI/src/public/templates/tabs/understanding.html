@@ -510,6 +510,17 @@
   </div>
 
   <div id="t4-content" class="hidden">
+    <!-- US-011: Link to consolidated AI model settings -->
+    <div class="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-sm text-blue-700">
+        <span>🤖</span>
+        <span>AI model provider list &amp; OCR model settings are managed in <strong>Settings → AI Models</strong></span>
+      </div>
+      <a href="#" onclick="switchTab('settings');return false"
+        class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition flex-shrink-0">
+        Open Settings →
+      </a>
+    </div>
     <p class="text-sm text-neutral-500 mb-4">Configure LLM behavior when regex, fuzzy, and semantic tiers don't match.
     </p>
     <div class="space-y-4">

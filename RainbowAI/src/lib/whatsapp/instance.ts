@@ -3,7 +3,7 @@ import fs from 'fs';
 import type { IncomingMessage, MessageType } from '../../assistant/types.js';
 import { trackWhatsAppConnected, trackWhatsAppDisconnected, trackWhatsAppUnlinked } from '../activity-tracker.js';
 import { notifyAdminDisconnection, notifyAdminReconnect } from '../admin-notifier.js';
-import type { WhatsAppInstanceStatus, MessageHandler } from './types.js';
+import type { WhatsAppInstanceStatus, MessageHandler, MessageStatusHandler } from './types.js';
 import { LidMapper } from './lid-mapper.js';
 import { ensureAvatar } from './avatar-cache.js';
 
@@ -22,9 +22,15 @@ export class WhatsAppInstance {
   private reconnectAttempts: number = 0;
   private static readonly MAX_RECONNECT_ATTEMPTS = 3;
   private messageHandler: MessageHandler | null = null;
+  private messageStatusHandler: MessageStatusHandler | null = null;
   private lidMapper: LidMapper;
   private unlinkNotificationSent: boolean = false;
   private onFirstConnect: (() => void) | null = null;
+
+  // Dedup: Baileys can fire messages.upsert multiple times for the same message
+  private static readonly DEDUP_CACHE_SIZE = 500;
+  private static readonly DEDUP_TTL_MS = 60_000; // 60 seconds
+  private _processedMsgIds = new Map<string, number>(); // msgId → timestamp
 
   constructor(id: string, label: string, authDir: string) {
     this.id = id;
@@ -35,6 +41,10 @@ export class WhatsAppInstance {
 
   setMessageHandler(handler: MessageHandler): void {
     this.messageHandler = handler;
+  }
+
+  setMessageStatusHandler(handler: MessageStatusHandler): void {
+    this.messageStatusHandler = handler;
   }
 
   setOnFirstConnect(cb: () => void): void {
@@ -64,6 +74,7 @@ export class WhatsAppInstance {
     this.sock = makeWASocket({
       auth: state,
       printQRInTerminal: false,
+      keepAliveIntervalMs: 10_000, // 10s keepalives — prevents socket from appearing silent during idle periods
       browser: ['PelangiManager', 'Chrome', '1.0.0']
     });
 
@@ -127,6 +138,31 @@ export class WhatsAppInstance {
 
       for (const msg of upsert.messages) {
         await this.handleIncomingMessage(msg);
+      }
+    });
+
+    // ─── Read Receipts / Message Status (US-017) ────────────────────
+    this.sock.ev.on('messages.update', (updates: any[]) => {
+      if (!this.messageStatusHandler) return;
+
+      for (const update of updates) {
+        const key = update.key;
+        const status = update.update?.status;
+        if (!key || status == null) continue;
+
+        const remoteJid = key.remoteJid || '';
+        if (remoteJid === 'status@broadcast' || remoteJid.endsWith('@g.us')) continue;
+
+        // Extract phone number from JID
+        const phone = remoteJid.replace(/@s\.whatsapp\.net$/i, '').replace(/@lid$/i, '');
+        if (!phone) continue;
+
+        this.messageStatusHandler({
+          phone,
+          messageId: key.id || '',
+          status: status as 0 | 1 | 2 | 3 | 4,
+          instanceId: this.id,
+        });
       }
     });
   }
@@ -208,6 +244,33 @@ export class WhatsAppInstance {
       if (msg.key.fromMe) return;
       if (msg.key.remoteJid === 'status@broadcast') return;
 
+      // Dedup: skip if this message ID was already processed (Baileys double-fire)
+      const msgId = msg.key.id;
+      if (msgId && this._processedMsgIds.has(msgId)) {
+        console.log(`[Baileys:${this.id}] Skipping duplicate message: ${msgId}`);
+        return;
+      }
+      if (msgId) {
+        this._processedMsgIds.set(msgId, Date.now());
+        // Evict old entries to prevent memory leak
+        if (this._processedMsgIds.size > WhatsAppInstance.DEDUP_CACHE_SIZE) {
+          const now = Date.now();
+          for (const [id, ts] of this._processedMsgIds) {
+            if (now - ts > WhatsAppInstance.DEDUP_TTL_MS) {
+              this._processedMsgIds.delete(id);
+            }
+          }
+          // If still over limit after TTL eviction, remove oldest entries
+          if (this._processedMsgIds.size > WhatsAppInstance.DEDUP_CACHE_SIZE) {
+            const entries = [...this._processedMsgIds.entries()].sort((a, b) => a[1] - b[1]);
+            const excess = entries.length - WhatsAppInstance.DEDUP_CACHE_SIZE;
+            for (let i = 0; i < excess; i++) {
+              this._processedMsgIds.delete(entries[i][0]);
+            }
+          }
+        }
+      }
+
       const m = msg.message;
       let text = m?.conversation || m?.extendedTextMessage?.text || '';
       let messageType: MessageType = 'text';
@@ -276,6 +339,7 @@ export class WhatsAppInstance {
     if (this.sock) {
       this.sock.ev.removeAllListeners('connection.update');
       this.sock.ev.removeAllListeners('messages.upsert');
+      this.sock.ev.removeAllListeners('messages.update');
       this.sock.ev.removeAllListeners('creds.update');
       this.sock.end(undefined);
       this.sock = null;
