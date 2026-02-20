@@ -17,7 +17,14 @@ import environmentRoutes from "./environment";
 import rainbowKBRoutes from "./rainbow-kb";
 import intentManagerRoutes from "./intent-manager";
 
+import { getBusinessConfig } from "../lib/business-config";
+
 export function registerModularRoutes(app: Express) {
+  // Unauthenticated business config (needed for login page)
+  app.get("/api/business-config", (_req, res) => {
+    res.json(getBusinessConfig());
+  });
+
   // Register auth routes
   app.use("/api/auth", authRoutes);
 

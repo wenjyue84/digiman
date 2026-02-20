@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { shouldShowDemoFeatures } from "@shared/utils";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 
 declare global {
   interface Window {
@@ -34,6 +35,7 @@ export function LoginForm() {
   const [location, setLocation] = useLocation();
   const { login, loginWithGoogle, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const business = useBusinessConfig();
 
   const [isStartingBackend, setIsStartingBackend] = useState(false);
   const [backendStartError, setBackendStartError] = useState<string | null>(null);
@@ -275,7 +277,7 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50 px-4 py-8">
       <Card className="w-full max-w-sm sm:max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-orange-700">Pelangi Capsule Hostel</CardTitle>
+          <CardTitle className="text-2xl font-bold text-orange-700">{business.name}</CardTitle>
           <CardDescription>Management System Login</CardDescription>
 
           {/* Backend Connection Error with Start Button */}
