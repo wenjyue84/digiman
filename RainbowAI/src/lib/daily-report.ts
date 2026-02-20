@@ -4,7 +4,7 @@ import { sendWhatsAppMessage, getWhatsAppStatus } from './baileys-client.js';
 
 const JAY_PHONE = '60127088789';
 
-interface CapsuleData {
+interface UnitData {
   id: string;
   number: string;
   section: string;
@@ -16,7 +16,7 @@ interface CapsuleData {
 interface GuestData {
   id: string;
   name: string;
-  capsuleNumber: string;
+  unitNumber: string;
   expectedCheckoutDate: string | null;
   isPaid: boolean;
   paymentAmount: string | null;
@@ -30,7 +30,7 @@ const SECTION_CONFIG: { key: string; label: string; emoji: string }[] = [
   { key: 'back', label: 'ROOM', emoji: '\u{1F6CF}\u{FE0F}' },
 ];
 
-function capsuleNumSort(a: string, b: string): number {
+function unitNumSort(a: string, b: string): number {
   const numA = parseInt(a.replace(/\D/g, ''), 10);
   const numB = parseInt(b.replace(/\D/g, ''), 10);
   return numA - numB;
@@ -43,8 +43,8 @@ function formatDate(dateStr: string | null): string {
 }
 
 export async function buildDailyReport(): Promise<string> {
-  const [capsules, guestResponse] = await Promise.all([
-    callAPI<CapsuleData[]>('GET', '/api/capsules'),
+  const [units, guestResponse] = await Promise.all([
+    callAPI<UnitData[]>('GET', '/api/units'),
     callAPI<any>('GET', '/api/guests/checked-in?page=1&limit=100'),
   ]);
 
@@ -52,36 +52,36 @@ export async function buildDailyReport(): Promise<string> {
     ? guestResponse
     : guestResponse?.data || [];
 
-  // Map capsuleNumber -> guest (only checked-in guests)
-  const guestByCapsule = new Map<string, GuestData>();
+  // Map unitNumber -> guest (only checked-in guests)
+  const guestByUnit = new Map<string, GuestData>();
   for (const g of guests) {
     if (g.isCheckedIn !== false) {
-      guestByCapsule.set(g.capsuleNumber, g);
+      guestByUnit.set(g.unitNumber, g);
     }
   }
 
-  // Group capsules by section
-  const capsulesBySection = new Map<string, CapsuleData[]>();
-  for (const c of capsules) {
-    const list = capsulesBySection.get(c.section) || [];
+  // Group units by section
+  const unitsBySection = new Map<string, UnitData[]>();
+  for (const c of units) {
+    const list = unitsBySection.get(c.section) || [];
     list.push(c);
-    capsulesBySection.set(c.section, list);
+    unitsBySection.set(c.section, list);
   }
 
   // Build message
-  let msg = '\u{1F3E8} *PELANGI CAPSULE STATUS* \u{1F3E8}\n\n';
+  let msg = '\u{1F3E8} *PELANGI UNIT STATUS* \u{1F3E8}\n\n';
 
   for (const sec of SECTION_CONFIG) {
-    const sectionCapsules = capsulesBySection.get(sec.key) || [];
-    if (sectionCapsules.length === 0) continue;
+    const sectionUnits = unitsBySection.get(sec.key) || [];
+    if (sectionUnits.length === 0) continue;
 
-    sectionCapsules.sort((a, b) => capsuleNumSort(a.number, b.number));
+    sectionUnits.sort((a, b) => unitNumSort(a.number, b.number));
 
     msg += `${sec.emoji} *${sec.label}* ${sec.emoji}\n`;
 
-    for (const cap of sectionCapsules) {
+    for (const cap of sectionUnits) {
       const num = cap.number.replace(/^C/i, '');
-      const guest = guestByCapsule.get(cap.number);
+      const guest = guestByUnit.get(cap.number);
 
       if (guest) {
         const paid = guest.isPaid;

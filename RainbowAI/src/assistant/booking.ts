@@ -197,7 +197,7 @@ async function handleCancelAttempt(
   conversationHistory: ChatMessage[]
 ): Promise<BookingStepResult> {
   const aiSave = await aiBookingResponse(
-    "The guest wants to cancel their booking. Ask them why (genuinely curious, not pushy). Suggest maybe different dates would work, or mention our advantages: RM45/night, free WiFi, aircon capsules, shared kitchen, great Taman Pelangi location. Try ONE gentle save attempt. If they already gave a reason, acknowledge it warmly and let them go.",
+    "The guest wants to cancel their booking. Ask them why (genuinely curious, not pushy). Suggest maybe different dates would work, or mention our advantages: RM45/night, free WiFi, aircon units, shared kitchen, great Taman Pelangi location. Try ONE gentle save attempt. If they already gave a reason, acknowledge it warmly and let them go.",
     input,
     lang,
     conversationHistory
@@ -262,7 +262,7 @@ async function handleInquiryStage(
 
   // No dates extracted -- ask conversationally
   const aiResponse = await aiBookingResponse(
-    "The guest wants to book a capsule. Ask them when they'd like to check in and for how many nights. Be warm and natural \u2014 don't say 'please use format X'. Just ask conversationally like 'When are you planning to arrive?' Mention we have capsules from RM45/night.",
+    "The guest wants to book a unit. Ask them when they'd like to check in and for how many nights. Be warm and natural \u2014 don't say 'please use format X'. Just ask conversationally like 'When are you planning to arrive?' Mention we have units from RM45/night.",
     input,
     lang,
     conversationHistory

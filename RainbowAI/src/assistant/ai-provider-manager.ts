@@ -236,7 +236,7 @@ export async function providerChat(
     headers['Authorization'] = `Bearer ${apiKey}`;
   }
   if (provider.base_url?.includes('openrouter.ai')) {
-    headers['Referer'] = process.env.OPENROUTER_REFERER || 'https://pelangi-capsule.local';
+    headers['Referer'] = process.env.OPENROUTER_REFERER || 'https://pelangi-unit.local';
     headers['X-Title'] = process.env.OPENROUTER_APP_TITLE || 'Rainbow AI Pelangi';
   }
 

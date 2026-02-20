@@ -73,12 +73,12 @@ export async function searchGuests(args: any): Promise<MCPToolResult> {
       if (args.field === 'name') {
         return g.name?.toLowerCase().includes(searchValue);
       } else if (args.field === 'capsule') {
-        return g.capsuleNumber?.toString().includes(searchValue);
+        return g.unitNumber?.toString().includes(searchValue);
       } else if (args.field === 'nationality') {
         return g.nationality?.toLowerCase().includes(searchValue);
       } else {
         return g.name?.toLowerCase().includes(searchValue) ||
-               g.capsuleNumber?.toString().includes(searchValue) ||
+               g.unitNumber?.toString().includes(searchValue) ||
                g.nationality?.toLowerCase().includes(searchValue);
       }
     });

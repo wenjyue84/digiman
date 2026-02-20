@@ -3,8 +3,8 @@ import { MCPTool, MCPToolResult } from '../types/mcp.js';
 
 export const analyticsTools: MCPTool[] = [
   {
-    name: 'pelangi_capsule_utilization',
-    description: 'Get capsule utilization statistics and trends',
+    name: 'pelangi_unit_utilization',
+    description: 'Get unit utilization statistics and trends',
     inputSchema: {
       type: 'object',
       properties: {}
@@ -30,11 +30,11 @@ export const analyticsTools: MCPTool[] = [
   }
 ];
 
-export async function capsuleUtilization(args: any): Promise<MCPToolResult> {
+export async function unitUtilization(args: any): Promise<MCPToolResult> {
   try {
     const [occupancy, capsules] = await Promise.all([
       callAPI('GET', '/api/occupancy'),
-      callAPI('GET', '/api/capsules')
+      callAPI('GET', '/api/units')
     ]);
 
     const capsulesArray = capsules as any[];
@@ -49,7 +49,7 @@ export async function capsuleUtilization(args: any): Promise<MCPToolResult> {
           available: (occupancy as any).available,
           needsCleaning,
           utilizationRate: (occupancy as any).occupancyRate,
-          capsulesNeedingCleaning: capsulesArray.filter(c => c.needsCleaning).map(c => c.number)
+          unitsNeedingCleaning: capsulesArray.filter(c => c.needsCleaning).map(c => c.number)
         }, null, 2)
       }]
     };
@@ -128,7 +128,7 @@ export async function exportGuestsCSV(args: any): Promise<MCPToolResult> {
       g.nationality || '',
       g.phoneNumber || '',
       g.email || '',
-      g.capsuleNumber || '',
+      g.unitNumber || '',
       g.checkinTime || '',
       g.expectedCheckoutDate || '',
       g.paymentAmount || '',

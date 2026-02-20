@@ -27,7 +27,7 @@ import {
 
 import {
   analyticsTools,
-  capsuleUtilization,
+  unitUtilization,
   guestStatistics,
   exportGuestsCSV
 } from './analytics.js';
@@ -83,7 +83,7 @@ class ToolRegistry {
     this.register(problemWriteTools[0], getProblemSummary);
 
     // Phase 2: Analytics & reporting (3 tools)
-    this.register(analyticsTools[0], capsuleUtilization);
+    this.register(analyticsTools[0], unitUtilization);
     this.register(analyticsTools[1], guestStatistics);
     this.register(analyticsTools[2], exportGuestsCSV);
 

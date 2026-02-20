@@ -97,7 +97,7 @@ export function buildClassifySystemPrompt(
     });
   }
 
-  return `You are an intent classifier for a capsule hostel WhatsApp bot.
+  return `You are an intent classifier for a unit hostel WhatsApp bot.
 Given the user message, classify it into exactly ONE category and extract entities.
 
 Categories: ${categoriesList}
@@ -131,7 +131,7 @@ export async function getSystemPrompt(): Promise<string> {
     return cachedSystemPrompt;
   } catch (error) {
     console.error('[AI] Failed to load intent data, using fallback prompt:', error);
-    return `You are an intent classifier for a capsule hostel WhatsApp bot.
+    return `You are an intent classifier for a unit hostel WhatsApp bot.
 Given the user message, classify it into exactly ONE category and extract entities.
 
 Categories: greeting, thanks, wifi, directions, checkin_info, checkout_info, pricing, availability, booking, complaint, contact_staff, facilities, rules, payment, general, unknown

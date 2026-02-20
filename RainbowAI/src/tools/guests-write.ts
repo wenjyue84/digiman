@@ -14,7 +14,7 @@ export const guestWriteTools: MCPTool[] = [
         phoneNumber: { type: 'string', description: 'Contact phone number' },
         email: { type: 'string', description: 'Email address (optional)' },
         expectedCheckoutDate: { type: 'string', description: 'Expected checkout date (YYYY-MM-DD)' },
-        capsuleNumber: { type: 'number', description: 'Specific capsule to assign (optional, auto-assigned if not provided)' },
+        unitNumber: { type: 'number', description: 'Specific capsule to assign (optional, auto-assigned if not provided)' },
         paymentAmount: { type: 'number', description: 'Payment amount' },
         paymentMethod: { type: 'string', description: 'Payment method (cash, card, online)' }
       },
