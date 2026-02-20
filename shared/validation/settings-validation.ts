@@ -5,7 +5,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import {
   PHONE_REGEX,
-  CAPSULE_FORMAT_REGEX,
+  UNIT_FORMAT_REGEX,
   TIMEZONE_REGEX,
 } from "../validation-patterns";
 import { adminNotifications, pushSubscriptions } from "../schema-tables";
@@ -69,7 +69,7 @@ export const updateSettingsSchema = z.object({
   guideShowCheckin: z.boolean().default(true),
   guideShowOther: z.boolean().default(true),
   guideShowFaq: z.boolean().default(true),
-  guideShowCapsuleIssues: z.boolean().default(true),
+  guideShowUnitIssues: z.boolean().default(true),
   guideShowSelfCheckinMessage: z.boolean().default(true),
   guideShowHostelPhotos: z.boolean().default(true),
   guideShowGoogleMaps: z.boolean().default(true),
@@ -82,16 +82,16 @@ export const updateSettingsSchema = z.object({
     .min(0, "Maximum payment amount must be positive")
     .max(99999.99, "Maximum payment amount cannot exceed RM 99,999.99")
     .default(9999.99),
-  totalCapsules: z.number()
-    .min(1, "Total capsules must be at least 1")
-    .max(100, "Total capsules cannot exceed 100")
-    .int("Total capsules must be a whole number")
+  totalUnits: z.number()
+    .min(1, "Total units must be at least 1")
+    .max(100, "Total units cannot exceed 100")
+    .int("Total units must be a whole number")
     .default(24),
-  capsuleSections: z.array(z.string())
-    .min(1, "At least one capsule section is required")
+  unitSections: z.array(z.string())
+    .min(1, "At least one unit section is required")
     .default(["front", "middle", "back"]),
-  capsuleNumberFormat: z.string()
-    .regex(CAPSULE_FORMAT_REGEX, "Capsule format must be like A01, B02, etc.")
+  unitNumberFormat: z.string()
+    .regex(UNIT_FORMAT_REGEX, "Unit format must be like A01, B02, Studio-A, etc.")
     .default("A01"),
   notificationRetentionDays: z.number()
     .min(1, "Notification retention must be at least 1 day")
@@ -128,9 +128,9 @@ export const updateSettingsSchema = z.object({
     .max(120, "Maximum age cannot exceed 120")
     .int("Maximum age must be a whole number")
     .default(120),
-  showAllCapsules: z.boolean()
+  showAllUnits: z.boolean()
     .default(false)
-    .describe("Show all capsules (including empty ones) in the dashboard by default"),
+    .describe("Show all units (including empty ones) in the dashboard by default"),
   defaultAdminEmail: z.string()
     .email("Default admin email must be a valid email address")
     .default("admin@pelangicapsule.com"),

@@ -9,7 +9,7 @@
  *   - validation/common.ts            — Reusable field validators, search/bulk, pagination, utilities
  *   - validation/user-validation.ts   — User registration, login, auth schemas
  *   - validation/guest-validation.ts  — Guest check-in, check-out, self-check-in schemas
- *   - validation/capsule-validation.ts — Capsule CRUD, cleaning, problem schemas
+ *   - validation/unit-validation.ts    — Unit CRUD, cleaning, problem schemas
  *   - validation/token-validation.ts  — Self-checkin token schemas
  *   - validation/settings-validation.ts — App settings, notification schemas
  *   - validation/expense-validation.ts — Expense tracking schemas
