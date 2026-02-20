@@ -1,4 +1,4 @@
-import type { Guest, Capsule } from "@shared/schema";
+import type { Guest, Unit } from "@shared/schema";
 
 // Date and time utilities
 export function getCurrentDateTime() {
@@ -47,47 +47,47 @@ export function getDefaultCollector(user: any): string {
   return user.email || "";
 }
 
-// Capsule assignment rules type (mirrors server/routes/settings.ts)
-export interface CapsuleAssignmentRules {
+// Unit assignment rules type (mirrors server/routes/settings.ts)
+export interface UnitAssignmentRules {
   deckPriority: boolean;
-  excludedCapsules: string[];
+  excludedUnits: string[];
   genderRules: {
     female: { preferred: string[]; fallbackToOther: boolean };
     male: { preferred: string[]; fallbackToOther: boolean };
   };
   maintenanceDeprioritize: boolean;
-  deprioritizedCapsules: string[];
+  deprioritizedUnits: string[];
 }
 /** @deprecated Use UnitAssignmentRules */
-export type UnitAssignmentRules = CapsuleAssignmentRules;
+export type UnitAssignmentRules = UnitAssignmentRules;
 
-// Rules-driven capsule assignment logic
-export function getRecommendedCapsule(gender: string, availableCapsules: any[], rules?: CapsuleAssignmentRules | null): string {
-  if (!availableCapsules || availableCapsules.length === 0) {
+// Rules-driven Unit assignment logic
+export function getRecommendedUnit(gender: string, availableUnits: any[], rules?: UnitAssignmentRules | null): string {
+  if (!availableUnits || availableUnits.length === 0) {
     return "";
   }
 
-  const assignableCapsules = availableCapsules.filter(capsule =>
-    capsule.isAvailable && capsule.toRent !== false
+  const assignableUnits = availableUnits.filter(Unit =>
+    Unit.isAvailable && Unit.toRent !== false
   );
 
-  if (assignableCapsules.length === 0) {
+  if (assignableUnits.length === 0) {
     return "";
   }
 
   // Apply rules-based assignment
-  const excludedList = rules?.excludedCapsules || [];
+  const excludedList = rules?.excludedUnits || [];
   const deckPriority = rules?.deckPriority !== false;
   const maintenanceDeprioritize = rules?.maintenanceDeprioritize !== false;
-  const deprioritizedList = rules?.deprioritizedCapsules || [];
+  const deprioritizedList = rules?.deprioritizedUnits || [];
   const genderPreferred = rules?.genderRules?.[gender as 'male' | 'female']?.preferred || [];
   const fallbackToOther = rules?.genderRules?.[gender as 'male' | 'female']?.fallbackToOther !== false;
 
-  // Filter out excluded capsules
-  let candidates = assignableCapsules.filter(c => !excludedList.includes(c.number));
-  if (candidates.length === 0) candidates = assignableCapsules;
+  // Filter out excluded Units
+  let candidates = assignableUnits.filter(c => !excludedList.includes(c.number));
+  if (candidates.length === 0) candidates = assignableUnits;
 
-  // Gender preference: try preferred capsules first
+  // Gender preference: try preferred Units first
   if (genderPreferred.length > 0) {
     const preferred = candidates.filter(c => genderPreferred.includes(c.number));
     if (preferred.length > 0) {
@@ -102,7 +102,7 @@ export function getRecommendedCapsule(gender: string, availableCapsules: any[], 
     const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
     const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
 
-    // Deprioritize maintenance capsules
+    // Deprioritize maintenance Units
     if (maintenanceDeprioritize) {
       const aDepri = deprioritizedList.includes(a.number) ? 1 : 0;
       const bDepri = deprioritizedList.includes(b.number) ? 1 : 0;
@@ -126,4 +126,4 @@ export function getRecommendedCapsule(gender: string, availableCapsules: any[], 
 }
 
 /** @deprecated Use getRecommendedUnit */
-export const getRecommendedUnit = getRecommendedCapsule;
+export const getRecommendedUnit = getRecommendedUnit;

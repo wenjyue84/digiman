@@ -176,9 +176,8 @@ const DEFAULT_UNIT_RULES = {
 router.get("/unit-rules", async (_req, res) => {
   try {
     let rules = DEFAULT_UNIT_RULES;
-    // Try new key first, fall back to legacy key for backward compat
-    const setting = await storage.getSetting(UNIT_RULES_KEY)
-      || await storage.getSetting('capsuleAssignmentRules');
+    // Try new key
+    const setting = await storage.getSetting(UNIT_RULES_KEY);
     if (setting) {
       try {
         rules = JSON.parse(setting.value);
@@ -212,10 +211,6 @@ router.get("/unit-rules", async (_req, res) => {
     res.status(500).json({ message: "Failed to fetch unit rules" });
   }
 });
-
-// Backward-compat: old capsule-rules endpoint redirects to unit-rules
-router.get("/capsule-rules", (req, res) => res.redirect(307, '/api/settings/unit-rules'));
-router.put("/capsule-rules", (req, res) => res.redirect(307, '/api/settings/unit-rules'));
 
 // PUT /api/settings/unit-rules — Auth required to modify
 router.put("/unit-rules",

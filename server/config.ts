@@ -2,7 +2,7 @@ import { type AppSetting, type InsertAppSetting, updateSettingsSchema, type Upda
 import { type IStorage } from "./storage";
 
 // Default configuration values
-export const DEFAULT_CONFIG: UpdateSettings = {
+export const DEFAULT_CONFIG: Partial<UpdateSettings> = {
   // Token and Session Settings
   sessionExpirationHours: 168,
   
@@ -45,7 +45,7 @@ export const DEFAULT_CONFIG: UpdateSettings = {
 };
 
 // Configuration setting descriptions
-export const CONFIG_DESCRIPTIONS: Record<keyof UpdateSettings, string> = {
+export const CONFIG_DESCRIPTIONS: Partial<Record<keyof UpdateSettings, string>> = {
   sessionExpirationHours: "User session duration before auto-logout (hours)",
   defaultUserRole: "Default role assigned to new users",
   maxGuestStayDays: "Maximum number of days a guest can stay",
@@ -101,7 +101,7 @@ export class ConfigService {
         value = this.parseValue(key, setting.value);
       } else {
         // Use default value and store it in the database
-        value = DEFAULT_CONFIG[key];
+        value = (DEFAULT_CONFIG[key] as UpdateSettings[K]) ?? value;
         await this.set(key, value);
       }
 
@@ -112,7 +112,7 @@ export class ConfigService {
       return value;
     } catch (error) {
       console.error(`Error getting config value for ${key}:`, error);
-      return DEFAULT_CONFIG[key];
+      return (DEFAULT_CONFIG[key] as UpdateSettings[K]) ?? (undefined as UpdateSettings[K]);
     }
   }
 
@@ -131,7 +131,7 @@ export class ConfigService {
       const settingData: InsertAppSetting = {
         key,
         value: this.stringifyValue(value),
-        description: CONFIG_DESCRIPTIONS[key],
+        description: CONFIG_DESCRIPTIONS[key] ?? `Configuration value for ${String(key)}`,
         updatedBy: updatedBy,
       };
 
@@ -172,7 +172,7 @@ export class ConfigService {
     // Update each setting
     for (const [key, value] of Object.entries(validated)) {
       if (value !== undefined) {
-        await this.set(key as keyof UpdateSettings, value, updatedBy);
+        await this.set(key as keyof UpdateSettings, value as any, updatedBy);
       }
     }
   }
@@ -232,7 +232,7 @@ export class ConfigService {
       result.push({
         key,
         value: currentValue,
-        description: CONFIG_DESCRIPTIONS[key],
+        description: CONFIG_DESCRIPTIONS[key] ?? `Configuration value for ${String(key)}`,
         defaultValue: DEFAULT_CONFIG[key],
         updatedAt: setting?.updatedAt,
         updatedBy: setting?.updatedBy || undefined,
@@ -249,7 +249,7 @@ export class ConfigService {
     key: K,
     value: string
   ): UpdateSettings[K] {
-    const defaultValue = DEFAULT_CONFIG[key];
+    const defaultValue = DEFAULT_CONFIG[key] as UpdateSettings[K] | undefined;
     
     try {
       if (typeof defaultValue === 'number') {
@@ -267,7 +267,7 @@ export class ConfigService {
       return value as UpdateSettings[K];
     } catch (error) {
       console.error(`Error parsing config value for ${key}:`, error);
-      return defaultValue;
+      return (defaultValue as UpdateSettings[K]) ?? (value as UpdateSettings[K]);
     }
   }
 
