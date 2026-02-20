@@ -19,7 +19,7 @@ interface SuccessScreenProps {
     position: string;
   } | null;
   settings: any;
-  assignedCapsuleNumber: string | null;
+  assignedunitNumber: string | null;
   capsuleIssues: any[];
   canEdit: boolean;
   editExpiresAt: Date | null;
@@ -46,7 +46,7 @@ interface SuccessScreenProps {
 export default function SuccessScreen({
   guestInfo,
   settings,
-  assignedCapsuleNumber,
+  assignedunitNumber,
   capsuleIssues,
   canEdit,
   editExpiresAt,
@@ -65,8 +65,8 @@ export default function SuccessScreen({
   const [showExtendDialog, setShowExtendDialog] = useState(false);
   
   // Derive a reliable capsule number
-  const storedCapsuleNumber = (typeof window !== 'undefined') ? localStorage.getItem('lastAssignedCapsule') : null;
-  const displayCapsuleNumber = assignedCapsuleNumber || guestInfo?.unitNumber || storedCapsuleNumber || "";
+  const storedunitNumber = (typeof window !== 'undefined') ? localStorage.getItem('lastAssignedUnit') : null;
+  const displayunitNumber = assignedunitNumber || guestInfo?.unitNumber || storedunitNumber || "";
   
   // Get current token for extend functionality
   const getCurrentToken = () => {
@@ -76,17 +76,17 @@ export default function SuccessScreen({
   if (process.env.NODE_ENV !== 'production') {
     // Lightweight debug to help diagnose missing capsule numbers during development
     console.log('[SuccessScreen] capsule numbers', {
-      assignedCapsuleNumber,
+      assignedunitNumber,
       guestInfoCapsule: guestInfo?.unitNumber,
-      storedCapsuleNumber,
-      displayCapsuleNumber,
+      storedunitNumber,
+      displayunitNumber,
     });
   }
 
   // Handle share action
   const handleShare = () => {
     const guestName = guestInfo?.guestName || 'Guest';
-    const capsule = displayCapsuleNumber || '';
+    const capsule = displayunitNumber || '';
     const checkinTime = settings?.guideCheckinTime || "3:00 PM";
     const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
     const doorPassword = settings?.guideDoorPassword || "1270#";
@@ -143,7 +143,7 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
         viewMode="desktop"
         isPreview={false}
         guestInfo={guestInfo}
-        assignedCapsuleNumber={assignedCapsuleNumber}
+        assignedunitNumber={assignedunitNumber}
         capsuleIssues={capsuleIssues}
         settings={settings}
         actions={{
