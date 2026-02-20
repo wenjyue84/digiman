@@ -1090,3 +1090,10 @@ Completed: Rename capsules table to units in schema definitions (ID: US-001)
 - `getUnitOccupancy()` is the correct method, not `getOccupancyStats()`. Returns `{ total, occupied, available, occupancyRate }`.
 - TS error baseline is now ~98 (down from ~188 at US-006). Pre-existing errors are in MemNotificationStore.ts (capsuleNumber), client files (pending US-008/009), and RainbowAI tools (pending US-011).
 
+
+## Iteration 27 - Sat, Feb 21, 2026 12:30:19 AM
+Incomplete: Rename client component files (ID: US-008) — attempt 1/3
+
+## Iteration 28 - Sat, Feb 21, 2026 12:30:57 AM
+Incomplete: Rename client component files (ID: US-008) — attempt 2/3
+
