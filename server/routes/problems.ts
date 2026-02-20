@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
-import { createCapsuleProblemSchema, resolveProblemSchema } from "@shared/schema";
+import { createUnitProblemSchema, resolveProblemSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware } from "../validation";
 import { authenticateToken } from "./middleware/auth";
 
@@ -32,29 +32,29 @@ router.get("/active", authenticateToken, async (req, res) => {
 });
 
 // Report new problem
-router.post("/", 
+router.post("/",
   securityValidationMiddleware,
-  authenticateToken, 
-  validateData(createCapsuleProblemSchema, 'body'),
+  authenticateToken,
+  validateData(createUnitProblemSchema, 'body'),
   async (req: any, res) => {
   try {
     const validatedData = req.body;
-    
-    // Check if capsule already has an active problem
-    const existingProblems = await storage.getCapsuleProblems(validatedData.capsuleNumber);
+
+    // Check if unit already has an active problem
+    const existingProblems = await storage.getUnitProblems(validatedData.unitNumber);
     const hasActiveProblem = existingProblems.some(p => !p.isResolved);
-    
+
     if (hasActiveProblem) {
-      return res.status(400).json({ 
-        message: "This capsule already has an active problem. Please resolve it first." 
+      return res.status(400).json({
+        message: "This unit already has an active problem. Please resolve it first."
       });
     }
-    
-    const problem = await storage.createCapsuleProblem({
+
+    const problem = await storage.createUnitProblem({
       ...validatedData,
       reportedBy: req.user.username || req.user.email || "Unknown",
     });
-    
+
     res.json(problem);
   } catch (error: any) {
     console.error("Error creating problem:", error);
@@ -67,10 +67,10 @@ router.patch("/:id/resolve", authenticateToken, async (req: any, res) => {
   try {
     const { id } = req.params;
     const { notes } = req.body;
-    
+
     const resolvedBy = req.user.username || req.user.email || "Unknown";
     const problem = await storage.resolveProblem(id, resolvedBy, notes);
-    
+
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
@@ -83,41 +83,41 @@ router.patch("/:id/resolve", authenticateToken, async (req: any, res) => {
 });
 
 // Update problem details
-router.put("/:id", 
+router.put("/:id",
   securityValidationMiddleware,
-  authenticateToken, 
-  validateData(createCapsuleProblemSchema, 'body'),
+  authenticateToken,
+  validateData(createUnitProblemSchema, 'body'),
   async (req: any, res) => {
   try {
     const { id } = req.params;
     const validatedData = req.body;
-    
+
     // Check if the problem exists
     const existingProblems = await storage.getAllProblems({ page: 1, limit: 1000 });
     const existingProblem = existingProblems.data.find(p => p.id === id);
-    
+
     if (!existingProblem) {
       return res.status(404).json({ message: "Problem not found" });
     }
-    
-    // If capsule number is being changed, check for active problems on the new capsule
-    if (validatedData.capsuleNumber !== existingProblem.capsuleNumber) {
-      const newCapsuleProblems = await storage.getCapsuleProblems(validatedData.capsuleNumber);
-      const hasActiveProblem = newCapsuleProblems.some(p => !p.isResolved && p.id !== id);
-      
+
+    // If unit number is being changed, check for active problems on the new unit
+    if (validatedData.unitNumber !== existingProblem.unitNumber) {
+      const newUnitProblems = await storage.getUnitProblems(validatedData.unitNumber);
+      const hasActiveProblem = newUnitProblems.some(p => !p.isResolved && p.id !== id);
+
       if (hasActiveProblem) {
-        return res.status(400).json({ 
-          message: "The target capsule already has an active problem. Please resolve it first." 
+        return res.status(400).json({
+          message: "The target unit already has an active problem. Please resolve it first."
         });
       }
     }
-    
+
     const updatedProblem = await storage.updateProblem(id, validatedData);
-    
+
     if (!updatedProblem) {
       return res.status(404).json({ message: "Problem not found" });
     }
-    
+
     res.json(updatedProblem);
   } catch (error: any) {
     console.error("Error updating problem:", error);
@@ -129,9 +129,9 @@ router.put("/:id",
 router.delete("/:id", authenticateToken, async (req: any, res) => {
   try {
     const { id } = req.params;
-    
+
     const deleted = await storage.deleteProblem(id);
-    
+
     if (!deleted) {
       return res.status(404).json({ message: "Problem not found" });
     }

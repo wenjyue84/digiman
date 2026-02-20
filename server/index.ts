@@ -156,62 +156,62 @@ app.use((req, res, next) => {
     }
   }
 
-  // Initialize capsules if none exist
+  // Initialize units if none exist
   try {
-    const capsules = await storage.getAllCapsules();
-    if (capsules.length === 0) {
-      console.log("Initializing capsules...");
-      
+    const units = await storage.getAllUnits();
+    if (units.length === 0) {
+      console.log("Initializing units...");
+
       // Back section: C1-C6
       for (let i = 1; i <= 6; i++) {
-        await storage.createCapsule({
+        await storage.createUnit({
           number: `C${i}`,
           section: 'back',
           isAvailable: true,
           cleaningStatus: 'cleaned',
         } as any);
       }
-      
+
       // Middle section: C25, C26
       for (const num of [25, 26]) {
-        await storage.createCapsule({
+        await storage.createUnit({
           number: `C${num}`,
           section: 'middle',
           isAvailable: true,
           cleaningStatus: 'cleaned',
         } as any);
       }
-      
+
       // Front section: C11-C24
       for (let i = 11; i <= 24; i++) {
-        await storage.createCapsule({
+        await storage.createUnit({
           number: `C${i}`,
           section: 'front',
           isAvailable: true,
           cleaningStatus: 'cleaned',
         } as any);
       }
-      
-      console.log("✅ Initialized 22 capsules");
+
+      console.log("✅ Initialized 22 units");
     }
   } catch (e) {
-    console.warn("Warning: could not initialize capsules:", e);
+    console.warn("Warning: could not initialize units:", e);
   }
 
-  // Seed a few active capsule problems if none exist
+  // Seed a few active unit problems if none exist
   try {
     const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1 });
     if ((activeProblems.pagination.total || 0) === 0) {
-      const candidates = await storage.getAllCapsules();
-      const sampleCaps = candidates.slice(0, 3).map(c => c.number);
+      const candidates = await storage.getAllUnits();
+      const sampleUnits = candidates.slice(0, 3).map(c => c.number);
       const descriptions = [
         "Light not working properly",
         "Keycard sensor intermittent",
         "Air ventilation is weak",
       ];
-      for (let i = 0; i < sampleCaps.length; i++) {
-        await storage.createCapsuleProblem({
-          capsuleNumber: sampleCaps[i],
+      for (let i = 0; i < sampleUnits.length; i++) {
+        await storage.createUnitProblem({
+          unitNumber: sampleUnits[i],
           description: descriptions[i] || "Minor maintenance required",
           reportedBy: "System",
         } as any);
@@ -225,11 +225,11 @@ app.use((req, res, next) => {
   // to avoid being caught by the catch-all route
   app.get("/health", async (req, res) => {
     try {
-      const capsules = await storage.getAllCapsules();
+      const units = await storage.getAllUnits();
       res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
-        capsulesCount: capsules.length,
+        unitsCount: units.length,
         storageType: process.env.DATABASE_URL ? "database" : "memory"
       });
     } catch (error: any) {

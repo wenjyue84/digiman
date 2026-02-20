@@ -157,26 +157,28 @@ router.post("/import",
   }
 });
 
-// ─── Capsule Assignment Rules ────────────────────────────────────────
+// ─── Unit Assignment Rules ───────────────────────────────────────────
 
-const CAPSULE_RULES_KEY = 'capsuleAssignmentRules';
+const UNIT_RULES_KEY = 'unitAssignmentRules';
 
-const DEFAULT_CAPSULE_RULES = {
-  deckPriority: true,              // Prefer even-numbered capsules (lower deck)
-  excludedCapsules: ['J1','J2','J3','J4','R1','R2','R3','R4','R5','R6'],
+const DEFAULT_UNIT_RULES = {
+  deckPriority: true,              // Prefer even-numbered units (lower deck)
+  excludedUnits: ['J1','J2','J3','J4','R1','R2','R3','R4','R5','R6'],
   genderRules: {
     female: { preferred: ['C1','C2','C3','C4','C5','C6'], fallbackToOther: true },
     male: { preferred: [] as string[], fallbackToOther: true },
   },
   maintenanceDeprioritize: true,
-  deprioritizedCapsules: [] as string[],
+  deprioritizedUnits: [] as string[],
 };
 
-// GET /api/settings/capsule-rules — No auth required (MCP tool + frontend both read this)
-router.get("/capsule-rules", async (_req, res) => {
+// GET /api/settings/unit-rules — No auth required (MCP tool + frontend both read this)
+router.get("/unit-rules", async (_req, res) => {
   try {
-    let rules = DEFAULT_CAPSULE_RULES;
-    const setting = await storage.getSetting(CAPSULE_RULES_KEY);
+    let rules = DEFAULT_UNIT_RULES;
+    // Try new key first, fall back to legacy key for backward compat
+    const setting = await storage.getSetting(UNIT_RULES_KEY)
+      || await storage.getSetting('capsuleAssignmentRules');
     if (setting) {
       try {
         rules = JSON.parse(setting.value);
@@ -185,34 +187,38 @@ router.get("/capsule-rules", async (_req, res) => {
       }
     } else {
       // First access: persist defaults
-      await storage.setSetting(CAPSULE_RULES_KEY, JSON.stringify(DEFAULT_CAPSULE_RULES), 'Default capsule assignment rules');
+      await storage.setSetting(UNIT_RULES_KEY, JSON.stringify(DEFAULT_UNIT_RULES), 'Default unit assignment rules');
     }
 
-    // Auto-link capsules with active problems into deprioritized list
-    let autoLinkedCapsules: string[] = [];
+    // Auto-link units with active problems into deprioritized list
+    let autoLinkedUnits: string[] = [];
     try {
       const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
-      autoLinkedCapsules = [...new Set(activeProblems.data.map(p => p.capsuleNumber))];
+      autoLinkedUnits = [...new Set(activeProblems.data.map(p => p.unitNumber))];
     } catch {
       // If problems fetch fails, return rules without auto-link
     }
 
-    const manualCapsules: string[] = rules.deprioritizedCapsules || [];
-    const mergedCapsules = [...new Set([...manualCapsules, ...autoLinkedCapsules])];
+    const manualUnits: string[] = rules.deprioritizedUnits || [];
+    const mergedUnits = [...new Set([...manualUnits, ...autoLinkedUnits])];
 
     res.json({
       ...rules,
-      deprioritizedCapsules: mergedCapsules,
-      autoLinkedCapsules,
+      deprioritizedUnits: mergedUnits,
+      autoLinkedUnits,
     });
   } catch (error) {
-    console.error("Error fetching capsule rules:", error);
-    res.status(500).json({ message: "Failed to fetch capsule rules" });
+    console.error("Error fetching unit rules:", error);
+    res.status(500).json({ message: "Failed to fetch unit rules" });
   }
 });
 
-// PUT /api/settings/capsule-rules — Auth required to modify
-router.put("/capsule-rules",
+// Backward-compat: old capsule-rules endpoint redirects to unit-rules
+router.get("/capsule-rules", (req, res) => res.redirect(307, '/api/settings/unit-rules'));
+router.put("/capsule-rules", (req, res) => res.redirect(307, '/api/settings/unit-rules'));
+
+// PUT /api/settings/unit-rules — Auth required to modify
+router.put("/unit-rules",
   authenticateToken,
   async (req: any, res) => {
   try {
@@ -222,20 +228,20 @@ router.put("/capsule-rules",
     if (typeof rules !== 'object' || rules === null) {
       return res.status(400).json({ message: 'Rules must be a JSON object' });
     }
-    if (rules.excludedCapsules && !Array.isArray(rules.excludedCapsules)) {
-      return res.status(400).json({ message: 'excludedCapsules must be an array' });
+    if (rules.excludedUnits && !Array.isArray(rules.excludedUnits)) {
+      return res.status(400).json({ message: 'excludedUnits must be an array' });
     }
-    if (rules.deprioritizedCapsules && !Array.isArray(rules.deprioritizedCapsules)) {
-      return res.status(400).json({ message: 'deprioritizedCapsules must be an array' });
+    if (rules.deprioritizedUnits && !Array.isArray(rules.deprioritizedUnits)) {
+      return res.status(400).json({ message: 'deprioritizedUnits must be an array' });
     }
 
     const updatedBy = req.user?.username || req.user?.email || 'Unknown';
-    await storage.setSetting(CAPSULE_RULES_KEY, JSON.stringify(rules), 'Capsule assignment rules', updatedBy);
+    await storage.setSetting(UNIT_RULES_KEY, JSON.stringify(rules), 'Unit assignment rules', updatedBy);
 
     res.json({ success: true, rules });
   } catch (error: any) {
-    console.error("Error saving capsule rules:", error);
-    res.status(500).json({ message: error.message || "Failed to save capsule rules" });
+    console.error("Error saving unit rules:", error);
+    res.status(500).json({ message: error.message || "Failed to save unit rules" });
   }
 });
 

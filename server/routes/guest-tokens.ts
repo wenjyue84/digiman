@@ -4,10 +4,10 @@ import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 import { storage } from "../storage";
-import { 
+import {
   guestSelfCheckinSchema,
   createTokenSchema,
-  updateGuestTokenCapsuleSchema
+  updateGuestTokenUnitSchema
 } from "@shared/schema";
 import { calculateAgeFromIC } from "@shared/utils";
 import { validateData, securityValidationMiddleware, sanitizers, validators } from "../validation";
@@ -16,7 +16,7 @@ import { authenticateToken } from "./middleware/auth";
 import sgMail from "@sendgrid/mail";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
 import { handleDatabaseError, handleFeatureNotImplementedError } from "../lib/errorHandler";
-import { notifyOperatorMaintenanceCapsule } from "../lib/maintenanceNotify";
+import { notifyOperatorMaintenanceUnit } from "../lib/maintenanceNotify";
 
 const router = Router();
 
@@ -95,38 +95,38 @@ router.post("/internal",
     try {
       const { guestName, phoneNumber, expectedCheckoutDate } = req.body;
 
-      // Auto-assign a capsule using rules from settings
-      const availableCapsules = await storage.getAvailableCapsules();
+      // Auto-assign a unit using rules from settings
+      const availableUnits = await storage.getAvailableUnits();
 
-      if (availableCapsules.length === 0) {
+      if (availableUnits.length === 0) {
         return res.status(200).json({
           success: false,
-          message: 'No capsules available',
+          message: 'No units available',
           availableCount: 0
         });
       }
 
-      // Fetch capsule assignment rules from settings
+      // Fetch unit assignment rules from settings
       let rules: any = null;
       try {
-        const rulesSetting = await storage.getSetting('capsuleAssignmentRules');
+        const rulesSetting = await storage.getSetting('unitAssignmentRules');
         if (rulesSetting) rules = JSON.parse(rulesSetting.value);
       } catch { /* use defaults below */ }
 
-      const excludedList: string[] = rules?.excludedCapsules || [];
+      const excludedList: string[] = rules?.excludedUnits || [];
       const deckPriority: boolean = rules?.deckPriority !== false; // default true
       const maintenanceDeprioritize: boolean = rules?.maintenanceDeprioritize !== false;
-      const deprioritizedList: string[] = rules?.deprioritizedCapsules || [];
+      const deprioritizedList: string[] = rules?.deprioritizedUnits || [];
 
-      // Filter out excluded capsules
-      let candidates = availableCapsules.filter(c => !excludedList.includes(c.number));
-      if (candidates.length === 0) candidates = availableCapsules; // fallback if all excluded
+      // Filter out excluded units
+      let candidates = availableUnits.filter(c => !excludedList.includes(c.number));
+      if (candidates.length === 0) candidates = availableUnits; // fallback if all excluded
 
       // Sort by priority: back (1-6) > middle (25-26) > front (11-24), prefer even (bottom bunk)
       const sorted = candidates.sort((a, b) => {
         const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
         const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
-        // Deprioritize maintenance capsules
+        // Deprioritize maintenance units
         if (maintenanceDeprioritize) {
           const aDepri = deprioritizedList.includes(a.number) ? 1 : 0;
           const bDepri = deprioritizedList.includes(b.number) ? 1 : 0;
@@ -142,7 +142,7 @@ router.post("/internal",
         return aNum - bNum;
       });
 
-      const assignedCapsule = sorted[0].number;
+      const assignedUnit = sorted[0].number;
       const token = randomUUID();
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
@@ -158,7 +158,7 @@ router.post("/internal",
         token,
         createdBy: adminUser.id,
         expiresAt,
-        capsuleNumber: assignedCapsule,
+        unitNumber: assignedUnit,
         autoAssign: true,
         guestName: guestName || null,
         phoneNumber: phoneNumber || null,
@@ -171,25 +171,25 @@ router.post("/internal",
       const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
       const link = `${baseUrl}/guest-checkin?token=${token}`;
 
-      console.log(`[Internal Token] Created for ${guestName || 'Guest'} → ${assignedCapsule} | ${link}`);
+      console.log(`[Internal Token] Created for ${guestName || 'Guest'} → ${assignedUnit} | ${link}`);
 
-      // US-144: Notify operator if maintenance capsule assigned with no alternatives
+      // US-144: Notify operator if maintenance unit assigned with no alternatives
       try {
         const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
-        const capsuleProblems = activeProblems.data.filter(
-          p => p.capsuleNumber === assignedCapsule && !p.isResolved
+        const unitProblems = activeProblems.data.filter(
+          p => p.unitNumber === assignedUnit && !p.isResolved
         );
-        if (capsuleProblems.length > 0) {
-          const maintenanceCapsuleNumbers = new Set(activeProblems.data.map(p => p.capsuleNumber));
+        if (unitProblems.length > 0) {
+          const maintenanceUnitNumbers = new Set(activeProblems.data.map(p => p.unitNumber));
           const hasCleanAlternative = candidates.some(
-            c => c.number !== assignedCapsule && !maintenanceCapsuleNumbers.has(c.number)
+            c => c.number !== assignedUnit && !maintenanceUnitNumbers.has(c.number)
           );
           if (!hasCleanAlternative) {
-            notifyOperatorMaintenanceCapsule({
-              capsuleNumber: assignedCapsule,
+            notifyOperatorMaintenanceUnit({
+              unitNumber: assignedUnit,
               guestName: guestName || 'Guest',
               guestPhone: phoneNumber,
-              problems: capsuleProblems.map(p => p.description),
+              problems: unitProblems.map(p => p.description),
             });
           }
         }
@@ -201,9 +201,9 @@ router.post("/internal",
         success: true,
         token: createdToken.token,
         link,
-        capsuleNumber: assignedCapsule,
+        unitNumber: assignedUnit,
         guestName: guestName || 'Guest',
-        availableCount: availableCapsules.length,
+        availableCount: availableUnits.length,
         expiresAt: createdToken.expiresAt,
       });
     } catch (error: any) {
@@ -227,49 +227,49 @@ router.post("/",
     console.log('🎯 [Guest Token Creation] User:', req.user?.email || 'Unknown');
     console.log('🎯 [Guest Token Creation] Request data:', {
       autoAssign: validatedData.autoAssign,
-      capsuleNumber: validatedData.capsuleNumber,
+      unitNumber: validatedData.unitNumber,
       guestName: validatedData.guestName ? `"${validatedData.guestName}"` : 'Not provided',
       hasPhoneNumber: !!validatedData.phoneNumber,
       hasEmail: !!validatedData.email,
       expectedCheckoutDate: validatedData.expectedCheckoutDate,
       timestamp: new Date().toISOString()
     });
-    
+
     if (validatedData.autoAssign) {
       console.log('🤖 [Guest Token Creation] Auto-assign mode requested');
     } else {
-      console.log('🎯 [Guest Token Creation] Specific capsule requested:', validatedData.capsuleNumber);
+      console.log('🎯 [Guest Token Creation] Specific unit requested:', validatedData.unitNumber);
     }
-    
-    // Determine capsule assignment
-    let assignedCapsule: string | null = null;
+
+    // Determine unit assignment
+    let assignedUnit: string | null = null;
     let autoAssignCandidates: any[] = []; // track candidates for maintenance notification
 
     if (validatedData.autoAssign) {
-      // Auto-assign logic: get available capsules and pick the best one
-      const availableCapsules = await storage.getAvailableCapsules();
+      // Auto-assign logic: get available units and pick the best one
+      const availableUnits = await storage.getAvailableUnits();
 
-      if (availableCapsules.length === 0) {
-        return res.status(400).json({ message: "No capsules available for assignment" });
+      if (availableUnits.length === 0) {
+        return res.status(400).json({ message: "No units available for assignment" });
       }
 
-      // Apply capsule assignment rules from settings
+      // Apply unit assignment rules from settings
       let rules: any = null;
       try {
-        const rulesSetting = await storage.getSetting('capsuleAssignmentRules');
+        const rulesSetting = await storage.getSetting('unitAssignmentRules');
         if (rulesSetting) rules = JSON.parse(rulesSetting.value);
       } catch { /* use defaults */ }
 
-      const excludedList: string[] = rules?.excludedCapsules || [];
+      const excludedList: string[] = rules?.excludedUnits || [];
       const deckPriority: boolean = rules?.deckPriority !== false;
       const maintenanceDeprioritize: boolean = rules?.maintenanceDeprioritize !== false;
-      const deprioritizedList: string[] = rules?.deprioritizedCapsules || [];
+      const deprioritizedList: string[] = rules?.deprioritizedUnits || [];
 
-      let candidates = availableCapsules.filter(c => !excludedList.includes(c.number));
-      if (candidates.length === 0) candidates = availableCapsules;
+      let candidates = availableUnits.filter(c => !excludedList.includes(c.number));
+      if (candidates.length === 0) candidates = availableUnits;
       autoAssignCandidates = candidates;
 
-      const sortedCapsules = candidates.sort((a, b) => {
+      const sortedUnits = candidates.sort((a, b) => {
         const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
         const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
         if (maintenanceDeprioritize) {
@@ -286,17 +286,17 @@ router.post("/",
         return aNum - bNum;
       });
 
-      assignedCapsule = sortedCapsules[0].number;
-    } else if (validatedData.capsuleNumber) {
-      // Verify specific capsule is available
-      const capsule = await storage.getCapsule(validatedData.capsuleNumber);
-      if (!capsule) {
-        return res.status(400).json({ message: "Specified capsule not found" });
+      assignedUnit = sortedUnits[0].number;
+    } else if (validatedData.unitNumber) {
+      // Verify specific unit is available
+      const unit = await storage.getUnit(validatedData.unitNumber);
+      if (!unit) {
+        return res.status(400).json({ message: "Specified unit not found" });
       }
-      if (!capsule.isAvailable) {
-        return res.status(400).json({ message: "Specified capsule is not available" });
+      if (!unit.isAvailable) {
+        return res.status(400).json({ message: "Specified unit is not available" });
       }
-      assignedCapsule = validatedData.capsuleNumber;
+      assignedUnit = validatedData.unitNumber;
     }
     
     // Create guest token
@@ -307,7 +307,7 @@ router.post("/",
     const guestToken = {
       id: randomUUID(),
       token,
-      capsuleNumber: assignedCapsule,
+      unitNumber: assignedUnit,
       guestName: validatedData.guestName || null,
       phoneNumber: validatedData.phoneNumber || null,
       email: validatedData.email || null,
@@ -334,7 +334,7 @@ router.post("/",
       token: guestToken.token,
       createdBy: req.user.id,  // ✅ FIXED: Use authenticated user ID
       expiresAt: guestToken.expiresAt,
-      capsuleNumber: guestToken.capsuleNumber,
+      unitNumber: guestToken.unitNumber,
       autoAssign: validatedData.autoAssign || false,
       guestName: guestToken.guestName,
       phoneNumber: guestToken.phoneNumber,
@@ -352,31 +352,31 @@ router.post("/",
     console.log('✅ [Guest Token Creation] Response data:', {
       tokenId: createdToken.token.substring(0, 8) + '...',
       link: link,
-      capsuleNumber: assignedCapsule,
+      unitNumber: assignedUnit,
       guestName: createdToken.guestName || 'None',
       expiresAt: createdToken.expiresAt,
       timestamp: new Date().toISOString()
     });
     console.log('🚀 [Guest Token Creation] Sending response to client...');
 
-    // US-144: Notify operator if maintenance capsule assigned with no alternatives
-    if (assignedCapsule && validatedData.autoAssign && autoAssignCandidates.length > 0) {
+    // US-144: Notify operator if maintenance unit assigned with no alternatives
+    if (assignedUnit && validatedData.autoAssign && autoAssignCandidates.length > 0) {
       try {
         const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
-        const capsuleProblems = activeProblems.data.filter(
-          (p: any) => p.capsuleNumber === assignedCapsule && !p.isResolved
+        const unitProblems = activeProblems.data.filter(
+          (p: any) => p.unitNumber === assignedUnit && !p.isResolved
         );
-        if (capsuleProblems.length > 0) {
-          const maintenanceCapsuleNumbers = new Set(activeProblems.data.map((p: any) => p.capsuleNumber));
+        if (unitProblems.length > 0) {
+          const maintenanceUnitNumbers = new Set(activeProblems.data.map((p: any) => p.unitNumber));
           const hasCleanAlternative = autoAssignCandidates.some(
-            (c: any) => c.number !== assignedCapsule && !maintenanceCapsuleNumbers.has(c.number)
+            (c: any) => c.number !== assignedUnit && !maintenanceUnitNumbers.has(c.number)
           );
           if (!hasCleanAlternative) {
-            notifyOperatorMaintenanceCapsule({
-              capsuleNumber: assignedCapsule,
+            notifyOperatorMaintenanceUnit({
+              unitNumber: assignedUnit,
               guestName: validatedData.guestName || 'Guest',
               guestPhone: validatedData.phoneNumber,
-              problems: capsuleProblems.map((p: any) => p.description),
+              problems: unitProblems.map((p: any) => p.description),
             });
           }
         }
@@ -388,7 +388,7 @@ router.post("/",
     res.json({
       token: createdToken.token,
       link,
-      capsuleNumber: assignedCapsule,
+      unitNumber: assignedUnit,
       guestName: validatedData.guestName || "Guest",
       expiresAt: createdToken.expiresAt,
     });
@@ -403,7 +403,7 @@ router.post("/",
       timestamp: new Date().toISOString(),
       requestData: {
         autoAssign: req.body?.autoAssign,
-        capsuleNumber: req.body?.capsuleNumber,
+        unitNumber: req.body?.unitNumber,
         hasGuestName: !!req.body?.guestName
       }
     });
@@ -417,7 +417,7 @@ router.post("/",
   }
 });
 
-// Get active guest tokens (reserved capsules)
+// Get active guest tokens (reserved units)
 router.get("/active", async (req, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -455,10 +455,10 @@ router.get("/:token", async (req, res) => {
       // For used tokens, check if there's a completed check-in (guest record)
       try {
         const guests = await storage.getAllGuests({ page: 1, limit: 1000 });
-        const guestRecord = guests.data.find(guest => 
-          guest.name === guestToken.guestName || 
+        const guestRecord = guests.data.find(guest =>
+          guest.name === guestToken.guestName ||
           guest.phoneNumber === guestToken.phoneNumber ||
-          guest.capsuleNumber === guestToken.capsuleNumber
+          guest.unitNumber === guestToken.unitNumber
         );
         
         if (guestRecord && successPage) {
@@ -469,7 +469,7 @@ router.get("/:token", async (req, res) => {
             guestData: {
               id: guestRecord.id,
               name: guestRecord.name,
-              capsuleNumber: guestRecord.capsuleNumber,
+              unitNumber: guestRecord.unitNumber,
               phoneNumber: guestRecord.phoneNumber,
               email: guestRecord.email,
               checkinTime: guestRecord.checkinTime,
@@ -552,14 +552,14 @@ router.post("/checkin/:token",
       return res.status(400).json({ message: "Token has expired" });
     }
 
-    // Check if assigned capsule is still available
-    if (guestToken.capsuleNumber) {
-      const availableCapsules = await storage.getAvailableCapsules();
-      const availableCapsuleNumbers = availableCapsules.map(c => c.number);
-      
-              if (!availableCapsuleNumbers.includes(guestToken.capsuleNumber)) {
-        return res.status(400).json({ 
-          message: `Assigned capsule ${guestToken.capsuleNumber} is no longer available` 
+    // Check if assigned unit is still available
+    if (guestToken.unitNumber) {
+      const availableUnits = await storage.getAvailableUnits();
+      const availableUnitNumbers = availableUnits.map(c => c.number);
+
+      if (!availableUnitNumbers.includes(guestToken.unitNumber)) {
+        return res.status(400).json({
+          message: `Assigned unit ${guestToken.unitNumber} is no longer available`
         });
       }
     }
@@ -576,7 +576,7 @@ router.post("/checkin/:token",
     const guestData = {
       ...validatedData,
       name: validatedData.nameAsInDocument,
-      capsuleNumber: guestToken.capsuleNumber!,
+      unitNumber: guestToken.unitNumber!,
       checkinTime: new Date(),
       expectedCheckoutDate: validatedData.checkOutDate,
       guestType: 'self_checkin' as const,
@@ -600,7 +600,7 @@ router.post("/checkin/:token",
     try {
       const notificationPayload = createNotificationPayload.guestCheckIn(
         guest.name,
-        `Capsule ${guest.capsuleNumber}`
+        `Unit ${guest.unitNumber}`
       );
 
       await pushNotificationService.sendToAdmins(notificationPayload);
@@ -619,7 +619,7 @@ router.post("/checkin/:token",
         body: JSON.stringify({
           guestName: guest.name,
           phoneNumber: guest.phoneNumber || validatedData.phoneNumber,
-          capsuleNumber: guest.capsuleNumber,
+          unitNumber: guest.unitNumber,
           checkInDate: guest.checkinTime?.toISOString(),
           checkOutDate: guest.expectedCheckoutDate,
           idNumber: guest.idNumber,
@@ -638,7 +638,7 @@ router.post("/checkin/:token",
     res.status(201).json({
       success: true,
       guest,
-      capsuleNumber: guest.capsuleNumber,
+      unitNumber: guest.unitNumber,
       message: "Check-in completed successfully"
     });
   } catch (error) {
@@ -708,138 +708,138 @@ router.patch("/:id/cancel", authenticateToken, async (req: any, res) => {
   }
 });
 
-// Update guest token capsule assignment
-router.patch("/:tokenId/capsule", 
+// Update guest token unit assignment
+router.patch("/:tokenId/unit",
   securityValidationMiddleware,
   authenticateToken,
-  validateData(updateGuestTokenCapsuleSchema, 'body'),
+  validateData(updateGuestTokenUnitSchema, 'body'),
   async (req: any, res) => {
   try {
     const { tokenId } = req.params;
     const validatedData = req.body;
-    
-    console.log('🔄 [Guest Token Capsule Update] Request received');
-    console.log('🔄 [Guest Token Capsule Update] User:', req.user?.email || 'Unknown');
-    console.log('🔄 [Guest Token Capsule Update] Token ID:', tokenId);
-    console.log('🔄 [Guest Token Capsule Update] Request data:', {
+
+    console.log('[Guest Token Unit Update] Request received');
+    console.log('[Guest Token Unit Update] User:', req.user?.email || 'Unknown');
+    console.log('[Guest Token Unit Update] Token ID:', tokenId);
+    console.log('[Guest Token Unit Update] Request data:', {
       autoAssign: validatedData.autoAssign,
-      capsuleNumber: validatedData.capsuleNumber,
+      unitNumber: validatedData.unitNumber,
       timestamp: new Date().toISOString()
     });
-    
+
     // Get the existing guest token to check if it can be updated
     const existingToken = await storage.getGuestTokenById(tokenId);
     if (!existingToken) {
       return res.status(404).json({ message: "Guest token not found" });
     }
-    
+
     // Prevent updating already used tokens
     if (existingToken.isUsed) {
-      return res.status(400).json({ 
-        message: "Cannot update capsule assignment for already used guest token" 
+      return res.status(400).json({
+        message: "Cannot update unit assignment for already used guest token"
       });
     }
-    
+
     // Check if token is expired
     if (existingToken.expiresAt && new Date() > existingToken.expiresAt) {
       return res.status(400).json({ message: "Cannot update expired guest token" });
     }
-    
-    // Store the previous capsule for response
-    const previousCapsule = existingToken.capsuleNumber;
-    
-    // Determine new capsule assignment
-    let newCapsuleNumber: string | null = null;
-    
+
+    // Store the previous unit for response
+    const previousUnit = existingToken.unitNumber;
+
+    // Determine new unit assignment
+    let newUnitNumber: string | null = null;
+
     if (validatedData.autoAssign) {
-      // Auto-assign logic: get available capsules and pick the best one
-      const availableCapsules = await storage.getAvailableCapsules();
-      
-      if (availableCapsules.length === 0) {
-        return res.status(400).json({ message: "No capsules available for auto-assignment" });
+      // Auto-assign logic: get available units and pick the best one
+      const availableUnits = await storage.getAvailableUnits();
+
+      if (availableUnits.length === 0) {
+        return res.status(400).json({ message: "No units available for auto-assignment" });
       }
-      
+
       // Use the same priority logic as token creation
-      const sortedCapsules = availableCapsules.sort((a, b) => {
-        const aNum = parseInt(a.number.replace('C', ''));
-        const bNum = parseInt(b.number.replace('C', ''));
-        
+      const sortedUnits = availableUnits.sort((a, b) => {
+        const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
+        const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
+
         // Section priority: back (1-6) > middle (25-26) > front (11-24)
         const getSectionPriority = (num: number) => {
           if (num >= 1 && num <= 6) return 1; // back
           if (num >= 25 && num <= 26) return 2; // middle
           return 3; // front
         };
-        
+
         const aSectionPriority = getSectionPriority(aNum);
         const bSectionPriority = getSectionPriority(bNum);
-        
+
         if (aSectionPriority !== bSectionPriority) {
           return aSectionPriority - bSectionPriority;
         }
-        
+
         // Within same section, prefer even numbers (bottom bunks)
         const aIsEven = aNum % 2 === 0;
         const bIsEven = bNum % 2 === 0;
-        
+
         if (aIsEven && !bIsEven) return -1;
         if (!aIsEven && bIsEven) return 1;
-        
+
         // Same parity, sort by number
         return aNum - bNum;
       });
-      
-      newCapsuleNumber = sortedCapsules[0].number;
-    } else if (validatedData.capsuleNumber) {
-      // Verify specific capsule is available
-      const capsule = await storage.getCapsule(validatedData.capsuleNumber);
-      if (!capsule) {
-        return res.status(400).json({ message: "Specified capsule not found" });
+
+      newUnitNumber = sortedUnits[0].number;
+    } else if (validatedData.unitNumber) {
+      // Verify specific unit is available
+      const unit = await storage.getUnit(validatedData.unitNumber);
+      if (!unit) {
+        return res.status(400).json({ message: "Specified unit not found" });
       }
-      if (!capsule.isAvailable) {
-        return res.status(400).json({ message: "Specified capsule is not available" });
+      if (!unit.isAvailable) {
+        return res.status(400).json({ message: "Specified unit is not available" });
       }
-      newCapsuleNumber = validatedData.capsuleNumber;
+      newUnitNumber = validatedData.unitNumber;
     }
-    
+
     // Update the guest token
-    const updatedToken = await storage.updateGuestTokenCapsule(
-      tokenId, 
-      newCapsuleNumber, 
+    const updatedToken = await storage.updateGuestTokenUnit(
+      tokenId,
+      newUnitNumber,
       validatedData.autoAssign || false
     );
-    
+
     if (!updatedToken) {
-      return res.status(500).json({ message: "Failed to update guest token capsule assignment" });
+      return res.status(500).json({ message: "Failed to update guest token unit assignment" });
     }
-    
-    console.log('✅ [Guest Token Capsule Update] Update successful');
-    console.log('✅ [Guest Token Capsule Update] Response data:', {
+
+    console.log('[Guest Token Unit Update] Update successful');
+    console.log('[Guest Token Unit Update] Response data:', {
       tokenId: updatedToken.id?.substring(0, 8) + '...',
-      previousCapsule: previousCapsule,
-      newCapsule: newCapsuleNumber,
+      previousUnit: previousUnit,
+      newUnit: newUnitNumber,
       autoAssign: validatedData.autoAssign || false,
       timestamp: new Date().toISOString()
     });
-    
+
     res.json({
       success: true,
       updatedToken: {
         id: updatedToken.id,
         token: updatedToken.token,
-        capsuleNumber: updatedToken.capsuleNumber,
+        unitNumber: updatedToken.unitNumber,
         autoAssign: updatedToken.autoAssign,
         guestName: updatedToken.guestName,
         expiresAt: updatedToken.expiresAt,
         isUsed: updatedToken.isUsed
       },
-      previousCapsule: previousCapsule,
-      message: `Capsule assignment updated ${previousCapsule ? `from ${previousCapsule}` : ''} to ${newCapsuleNumber || 'auto-assign'}`
+      previousUnit: previousUnit,
+      message: `Unit assignment updated ${previousUnit ? `from ${previousUnit}` : ''} to ${newUnitNumber || 'auto-assign'}`
     });
-    
+
   } catch (error: any) {
-    console.error("❌ [Guest Token Capsule Update] Error occurred during update");
-    console.error("❌ [Guest Token Capsule Update] Error details:", {
+    console.error("[Guest Token Unit Update] Error occurred during update");
+    console.error("[Guest Token Unit Update] Error details:", {
       message: error.message,
       stack: error.stack?.split('\n')[0],
       code: error.code,
@@ -847,12 +847,12 @@ router.patch("/:tokenId/capsule",
       tokenId: req.params?.tokenId,
       requestData: {
         autoAssign: req.body?.autoAssign,
-        capsuleNumber: req.body?.capsuleNumber
+        unitNumber: req.body?.unitNumber
       }
     });
-    
-    res.status(500).json({ 
-      message: error.message || "Failed to update guest token capsule assignment",
+
+    res.status(500).json({
+      message: error.message || "Failed to update guest token unit assignment",
       details: "Check server logs for more information",
       timestamp: new Date().toISOString()
     });

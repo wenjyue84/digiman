@@ -1,7 +1,7 @@
 /**
- * Maintenance Capsule Assignment Notification (US-144)
+ * Maintenance Unit Assignment Notification (US-144)
  *
- * Sends a WhatsApp notification to the primary operator when a capsule with
+ * Sends a WhatsApp notification to the primary operator when a unit with
  * active maintenance problems is assigned to a guest AND no non-maintenance
  * alternatives were available.
  *
@@ -9,20 +9,20 @@
  */
 
 interface NotifyParams {
-  capsuleNumber: string;
+  unitNumber: string;
   guestName: string;
   guestPhone?: string;
   problems: string[];
 }
 
 /**
- * Notify the primary operator via WhatsApp that a maintenance capsule was
+ * Notify the primary operator via WhatsApp that a maintenance unit was
  * assigned because no clean alternatives existed.
  *
  * Non-blocking: logs errors but never throws.
  */
-export async function notifyOperatorMaintenanceCapsule(params: NotifyParams): Promise<void> {
-  const { capsuleNumber, guestName, guestPhone, problems } = params;
+export async function notifyOperatorMaintenanceUnit(params: NotifyParams): Promise<void> {
+  const { unitNumber, guestName, guestPhone, problems } = params;
 
   try {
     const rainbowPort = process.env.RAINBOW_PORT || 3002;
@@ -38,7 +38,7 @@ export async function notifyOperatorMaintenanceCapsule(params: NotifyParams): Pr
     const notifData = await notifRes.json();
     const operators: { phone: string; label: string }[] = notifData?.operators || [];
     if (operators.length === 0 || !operators[0].phone) {
-      console.warn('[MaintenanceNotify] No primary operator configured — skipping notification');
+      console.warn('[MaintenanceNotify] No primary operator configured \u2014 skipping notification');
       return;
     }
 
@@ -49,14 +49,14 @@ export async function notifyOperatorMaintenanceCapsule(params: NotifyParams): Pr
     const phoneDisplay = guestPhone ? ` (${guestPhone})` : '';
 
     const text = [
-      '\u26a0\ufe0f Maintenance Capsule Assigned',
+      '\u26a0\ufe0f Maintenance Unit Assigned',
       '',
-      `Capsule ${capsuleNumber} has been assigned to ${guestName}${phoneDisplay}.`,
+      `Unit ${unitNumber} has been assigned to ${guestName}${phoneDisplay}.`,
       '',
       'Active issues:',
       problemList,
       '',
-      'This capsule was assigned because no other capsules were available.',
+      'This unit was assigned because no other units were available.',
       'Please ensure the issues are addressed.',
     ].join('\n');
 
@@ -68,7 +68,7 @@ export async function notifyOperatorMaintenanceCapsule(params: NotifyParams): Pr
     });
 
     if (sendRes.ok) {
-      console.log(`[MaintenanceNotify] WhatsApp sent to ${operatorPhone} for capsule ${capsuleNumber}`);
+      console.log(`[MaintenanceNotify] WhatsApp sent to ${operatorPhone} for unit ${unitNumber}`);
     } else {
       console.warn(`[MaintenanceNotify] WhatsApp send failed: ${sendRes.status}`);
     }
@@ -76,3 +76,6 @@ export async function notifyOperatorMaintenanceCapsule(params: NotifyParams): Pr
     console.error('[MaintenanceNotify] Error (non-blocking):', error.message || error);
   }
 }
+
+/** @deprecated Use notifyOperatorMaintenanceUnit */
+export const notifyOperatorMaintenanceCapsule = notifyOperatorMaintenanceUnit;

@@ -23,7 +23,7 @@ router.get("/occupancy", authenticateToken, asyncRouteHandler(async (_req: any, 
   // Cache occupancy data for 30 seconds
   res.set('Cache-Control', 'public, max-age=30');
   const storage = await getStorage();
-  const occupancy = await storage.getCapsuleOccupancy();
+  const occupancy = await storage.getUnitOccupancy();
   res.json(occupancy);
 }));
 
@@ -41,7 +41,7 @@ router.get("/dashboard", authenticateToken, asyncRouteHandler(async (req: any, r
     activeTokensResponse,
     unreadNotificationsResponse
   ] = await Promise.all([
-    storage.getCapsuleOccupancy(),
+    storage.getUnitOccupancy(),
     storage.getCheckedInGuests(),
     storage.getActiveGuestTokens(),
     storage.getUnreadAdminNotifications()
@@ -85,7 +85,7 @@ router.get("/calendar/occupancy/:year/:month", authenticateToken, asyncRouteHand
         checkouts: [],
         expectedCheckouts: [],
         occupancy: 0,
-        totalCapsules: 22
+        totalUnits: 22
       };
     }
     return res.json(emptyCalendar);
@@ -102,7 +102,7 @@ router.get("/calendar/occupancy/:year/:month", authenticateToken, asyncRouteHand
       checkouts: [],
       expectedCheckouts: [],
       occupancy: 0,
-      totalCapsules: 22
+      totalUnits: 22
     };
   }
 
