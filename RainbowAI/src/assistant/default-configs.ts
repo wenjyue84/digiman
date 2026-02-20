@@ -132,7 +132,7 @@ export const DEFAULT_WORKFLOW: WorkflowData = {
   },
   payment: {
     enabled: true,
-    forward_to: "+60127088789" // Jay's number
+    forward_to: process.env.STAFF_PRIMARY_PHONE || "+60127088789"
   },
   booking: {
     enabled: false // Disable booking in safe mode
