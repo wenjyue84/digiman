@@ -1,17 +1,35 @@
 #!/bin/bash
 # PelangiManager Lightsail Deployment Script
-# Usage: ./deploy.sh [--skip-build] [--skip-rainbow]
+# Usage: ./deploy.sh [target] [--skip-build] [--skip-rainbow]
+# Targets: pelangi (default), southern
 #
 # Builds locally, packages artifacts, uploads to Lightsail, installs deps, restarts PM2.
 # .env files are NOT transferred — create them manually on the instance.
 
 set -euo pipefail
 
+# --- Target Selection ---
+TARGET=${1:-pelangi}
+# If first arg is a flag, default target to pelangi
+if [[ "$TARGET" == --* ]]; then
+  TARGET="pelangi"
+else
+  # Consume the first argument
+  shift || true
+fi
+
+TARGET_ENV="deploy/targets/${TARGET}.env"
+
+if [ ! -f "$TARGET_ENV" ]; then
+  echo "ERROR: Target configuration not found: $TARGET_ENV"
+  echo "Available targets: $(ls deploy/targets/*.env | xargs -n 1 basename | sed 's/\.env//g' | xargs)"
+  exit 1
+fi
+
+# Source target config
+source "$TARGET_ENV"
+
 # --- Config ---
-INSTANCE_IP="18.142.14.142"
-SSH_KEY="$HOME/.ssh/LightsailDefaultKeyPair.pem"
-SSH_USER="ubuntu"
-REMOTE_DIR="/var/www/pelangi"
 SSH_CMD="ssh -i $SSH_KEY $SSH_USER@$INSTANCE_IP"
 SCP_CMD="scp -i $SSH_KEY"
 
@@ -25,7 +43,7 @@ for arg in "$@"; do
   esac
 done
 
-echo "=== PelangiManager Deployment ==="
+echo "=== PelangiManager Deployment [$TARGET] ==="
 echo "Target: $SSH_USER@$INSTANCE_IP:$REMOTE_DIR"
 echo ""
 
@@ -60,7 +78,10 @@ fi
 echo "  All build outputs verified."
 
 # --- Phase 3: Package tarball ---
-echo "[3/5] Creating deployment tarball..."
+echo "[3/5] Preparing ecosystem config and creating deployment tarball..."
+# Copy the right ecosystem file to root for the tarball
+cp "deploy/targets/${TARGET}.ecosystem.cjs" ecosystem.config.cjs
+
 TAR_ARGS="dist/ package.json package-lock.json ecosystem.config.cjs"
 if [ "$SKIP_RAINBOW" = false ]; then
   TAR_ARGS="$TAR_ARGS RainbowAI/dist/ RainbowAI/package.json RainbowAI/package-lock.json"
@@ -74,14 +95,14 @@ echo "  Tarball created: pelangi-deploy.tar.gz ($TARBALL_SIZE)"
 # --- Phase 4: Upload + extract ---
 echo "[4/5] Uploading to Lightsail..."
 $SCP_CMD pelangi-deploy.tar.gz $SSH_USER@$INSTANCE_IP:/tmp/
-$SSH_CMD "cd $REMOTE_DIR && tar xzf /tmp/pelangi-deploy.tar.gz && rm /tmp/pelangi-deploy.tar.gz"
+$SSH_CMD "mkdir -p $REMOTE_DIR && cd $REMOTE_DIR && tar xzf /tmp/pelangi-deploy.tar.gz && rm /tmp/pelangi-deploy.tar.gz"
 echo "  Upload and extraction complete."
 
 # --- Phase 5: Install deps + restart ---
 echo "[5/5] Installing dependencies and restarting..."
-$SSH_CMD << 'REMOTE_EOF'
+$SSH_CMD << REMOTE_EOF
 set -e
-cd /var/www/pelangi
+cd $REMOTE_DIR
 
 echo "  Installing root dependencies..."
 NODE_OPTIONS="--max-old-space-size=256" npm install --omit=dev --ignore-scripts 2>&1 | tail -3

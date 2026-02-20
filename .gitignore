@@ -17,6 +17,8 @@ out/
 .env.production
 .env.development
 .env.*.local
+deploy/targets/*.env
+!deploy/targets/example.env.template
 
 # Local development
 .local/
