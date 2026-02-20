@@ -9,7 +9,7 @@ interface GuestSuccessPageTemplateProps {
   
   // Guest-specific data (for actual success page)
   guestInfo?: {
-    capsuleNumber?: string;
+    unitNumber?: string;
     guestName: string;
     phoneNumber: string;
     email?: string;
@@ -123,9 +123,9 @@ export default function GuestSuccessPageTemplate({
 
   const { address: streetAddress, phone, email } = parseAddress(effectiveContent.address);
 
-  const capsuleNumber = isPreview 
+  const unitNumber = isPreview 
     ? 'Assigned based on availability'
-    : (assignedCapsuleNumber || guestInfo?.capsuleNumber || 'C01');
+    : (assignedCapsuleNumber || guestInfo?.unitNumber || 'C01');
 
   return (
     <div className={`${viewMode === 'mobile' ? 'max-w-sm' : 'max-w-2xl'} mx-auto ${isPreview ? '' : 'px-4'}`}>
@@ -310,7 +310,7 @@ export default function GuestSuccessPageTemplate({
                     <span className="text-green-600">🛌</span>
                     <span className="font-medium">Capsule:</span>
                     <span className="font-bold text-lg text-orange-600 bg-white px-2 py-1 rounded border">
-                      {capsuleNumber}
+                      {unitNumber}
                     </span>
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export default function GuestSuccessPageTemplate({
                   <div className="flex items-center gap-2">
                     <span className="text-lg">💊</span>
                     <span className="font-medium text-gray-800">Capsule No:</span>
-                    <span className="font-bold text-lg text-orange-600">{capsuleNumber}</span>
+                    <span className="font-bold text-lg text-orange-600">{unitNumber}</span>
                   </div>
                 </div>
               </div>

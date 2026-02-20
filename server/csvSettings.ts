@@ -55,7 +55,7 @@ export class CsvSettingsManager {
   private createDefaultSettings(): void {
     console.log('📝 Creating default settings CSV file...');
     const defaultSettings: CsvSetting[] = [
-      { key: 'accommodationType', value: 'capsule', description: 'Type of accommodation (capsule/room/house)', updated_by: 'system', updated_at: new Date().toISOString() },
+      { key: 'accommodationType', value: 'unit', description: 'Type of accommodation (capsule/room/house)', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideIntro', value: 'Welcome to Pelangi Capsule Hostel! Enjoy private sleeping pods with fresh linens, personal light, and power socket. Shared bathrooms are cleaned multiple times daily. Quiet hours are from 10:00 PM to 7:00 AM. Reception is available from 8:00 AM–10:00 PM; night staff is on call.', description: 'Guest guide introduction', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideAddress', value: '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\\nPhone: +60 12-345 6789\\nEmail: info@pelangicapsule.com', description: 'Hostel address and contact info', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideWifiName', value: 'Pelangi_Guest', description: 'WiFi network name', updated_by: 'system', updated_at: new Date().toISOString() },
@@ -76,7 +76,7 @@ export class CsvSettingsManager {
       { key: 'guideShowCheckin', value: 'true', description: 'Show check-in guidance', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowOther', value: 'true', description: 'Show other guidance', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowFaq', value: 'true', description: 'Show FAQ', updated_by: 'system', updated_at: new Date().toISOString() },
-      { key: 'guideShowCapsuleIssues', value: 'false', description: 'Show capsule issues', updated_by: 'system', updated_at: new Date().toISOString() },
+      { key: 'guideShowUnitIssues', value: 'false', description: 'Show unit issues', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowSelfCheckinMessage', value: 'true', description: 'Show self check-in message', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowHostelPhotos', value: 'true', description: 'Show hostel photos link', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowGoogleMaps', value: 'true', description: 'Show Google Maps link', updated_by: 'system', updated_at: new Date().toISOString() },

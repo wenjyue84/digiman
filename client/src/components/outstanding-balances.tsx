@@ -345,7 +345,7 @@ export function OutstandingBalances() {
 
                     {/* Capsule Number */}
                     <TableCell>
-                      <Badge variant="outline">{guest.capsuleNumber}</Badge>
+                      <Badge variant="outline">{guest.unitNumber}</Badge>
                     </TableCell>
 
                     {/* Total Amount */}
@@ -451,7 +451,7 @@ export function OutstandingBalances() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Capsule</Label>
-                  <div className="text-sm">{selectedGuest.capsuleNumber}</div>
+                  <div className="text-sm">{selectedGuest.unitNumber}</div>
                 </div>
                 {selectedGuest.phoneNumber && (
                   <div>

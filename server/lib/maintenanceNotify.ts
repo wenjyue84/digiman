@@ -78,4 +78,4 @@ export async function notifyOperatorMaintenanceUnit(params: NotifyParams): Promi
 }
 
 /** @deprecated Use notifyOperatorMaintenanceUnit */
-export const notifyOperatorMaintenanceCapsule = notifyOperatorMaintenanceUnit;
+export const notifyOperatorMaintenanceUnit = notifyOperatorMaintenanceUnit;

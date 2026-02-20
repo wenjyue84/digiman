@@ -24,6 +24,8 @@ export interface QueueManager {
   sync: () => Promise<SyncResult[]>;
   getQueueSize: () => Promise<number>;
   isOnline: () => boolean;
+  addListener: (callback: (queue: QueuedRequest[]) => void) => void;
+  removeListener: (callback: (queue: QueuedRequest[]) => void) => void;
 }
 
 export interface SyncResult {

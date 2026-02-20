@@ -356,7 +356,7 @@ export default function OccupancyCalendar() {
                         {selectedDateData.checkins.map((guest) => (
                           <div key={guest.id} className="flex items-center justify-between text-sm">
                             <span className="font-medium">{guest.name}</span>
-                            <Badge variant="outline">{guest.capsuleNumber}</Badge>
+                            <Badge variant="outline">{guest.unitNumber}</Badge>
                           </div>
                         ))}
                       </div>
@@ -374,7 +374,7 @@ export default function OccupancyCalendar() {
                         {selectedDateData.checkouts.map((guest) => (
                           <div key={guest.id} className="flex items-center justify-between text-sm">
                             <span className="font-medium">{guest.name}</span>
-                            <Badge variant="outline">{guest.capsuleNumber}</Badge>
+                            <Badge variant="outline">{guest.unitNumber}</Badge>
                           </div>
                         ))}
                       </div>
@@ -392,7 +392,7 @@ export default function OccupancyCalendar() {
                         {selectedDateData.expectedCheckouts.map((guest) => (
                           <div key={guest.id} className="flex items-center justify-between text-sm">
                             <span className="font-medium">{guest.name}</span>
-                            <Badge variant="outline">{guest.capsuleNumber}</Badge>
+                            <Badge variant="outline">{guest.unitNumber}</Badge>
                           </div>
                         ))}
                       </div>

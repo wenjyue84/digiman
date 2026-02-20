@@ -227,8 +227,9 @@ export const useBundleAnalyzer = () => {
       const analyzeBundle = async () => {
         const chunks = [];
         const scripts = document.querySelectorAll('script[src]');
-        
-        for (const script of scripts) {
+        const scriptList = Array.from(scripts) as HTMLScriptElement[];
+
+        for (const script of scriptList) {
           const src = (script as HTMLScriptElement).src;
           if (src.includes('localhost')) {
             chunks.push({

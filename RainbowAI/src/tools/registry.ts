@@ -34,7 +34,7 @@ import {
 
 import {
   settingsTools,
-  getUnitRules
+  getCapsuleRules
 } from './settings-tools.js';
 
 // Phase 3: WhatsApp integration tools

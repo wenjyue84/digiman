@@ -18,8 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 type SortField = "capsule" | "date" | "reportedBy";
 type SortDirection = "asc" | "desc";
 
-function extractCapsuleNumber(capsuleNumber: string): number {
-  const match = capsuleNumber.match(/\d+/);
+function extractCapsuleNumber(unitNumber: string): number {
+  const match = unitNumber.match(/\d+/);
   return match ? parseInt(match[0], 10) : 0;
 }
 
@@ -29,7 +29,7 @@ function sortProblems(problems: CapsuleProblem[], sortField: SortField, sortDire
     
     switch (sortField) {
       case "capsule":
-        comparison = extractCapsuleNumber(a.capsuleNumber) - extractCapsuleNumber(b.capsuleNumber);
+        comparison = extractCapsuleNumber(a.unitNumber) - extractCapsuleNumber(b.unitNumber);
         break;
       case "date":
         comparison = new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime();
@@ -54,7 +54,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
 
   const createProblemForm = useForm({
     defaultValues: {
-      capsuleNumber: "",
+      unitNumber: "",
       description: "",
       reportedBy: "Staff",
     },
@@ -69,7 +69,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
 
   const editProblemForm = useForm({
     defaultValues: {
-      capsuleNumber: "",
+      unitNumber: "",
       description: "",
       reportedBy: "",
     },
@@ -167,7 +167,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
     setSelectedProblem(problem);
     // Pre-populate the edit form with current problem data
     editProblemForm.reset({
-      capsuleNumber: problem.capsuleNumber,
+      unitNumber: problem.unitNumber,
       description: problem.description,
       reportedBy: problem.reportedBy || "Staff",
     });
@@ -224,7 +224,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
         month: "short"
       });
       
-      message += `${index + 1}. *${problem.capsuleNumber}*\n`;
+      message += `${index + 1}. *${problem.unitNumber}*\n`;
       message += `   📝 ${problem.description}\n`;
       message += `   👤 ${problem.reportedBy} | 📅 ${reportedDate}\n\n`;
     });
@@ -281,8 +281,8 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                     </DialogHeader>
                     <form onSubmit={createProblemForm.handleSubmit((data) => createProblemMutation.mutate(data))} className="space-y-4">
                       <div>
-                        <Label htmlFor="capsuleNumber">{labels.singular} Number</Label>
-                        <Select value={createProblemForm.watch("capsuleNumber")} onValueChange={(value) => createProblemForm.setValue("capsuleNumber", value)}>
+                        <Label htmlFor="unitNumber">{labels.singular} Number</Label>
+                        <Select value={createProblemForm.watch("unitNumber")} onValueChange={(value) => createProblemForm.setValue("unitNumber", value)}>
                           <SelectTrigger>
                             <SelectValue placeholder={`Select ${labels.singular.toLowerCase()}`} />
                           </SelectTrigger>
@@ -387,7 +387,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                       <tbody>
                         {activeProblem.map((problem: CapsuleProblem) => (
                           <tr key={problem.id} className="border-t">
-                            <td className="px-4 py-2 font-medium">{problem.capsuleNumber}</td>
+                            <td className="px-4 py-2 font-medium">{problem.unitNumber}</td>
                             <td className="px-4 py-2">{problem.description}</td>
                             <td className="px-4 py-2">{problem.reportedBy}</td>
                             <td className="px-4 py-2">{new Date(problem.reportedAt).toLocaleDateString()}</td>
@@ -416,7 +416,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div>
-                              <h4 className="font-semibold text-lg">{problem.capsuleNumber}</h4>
+                              <h4 className="font-semibold text-lg">{problem.unitNumber}</h4>
                               <Badge variant="destructive">Active Problem</Badge>
                             </div>
                             <div className="flex gap-2">
@@ -453,7 +453,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h4 className="font-semibold text-lg">{problem.capsuleNumber}</h4>
+                            <h4 className="font-semibold text-lg">{problem.unitNumber}</h4>
                             <Badge variant="default" className="bg-green-600">Resolved</Badge>
                           </div>
                         </div>
@@ -477,13 +477,13 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Maintenance Record - {selectedProblem?.capsuleNumber}</DialogTitle>
+            <DialogTitle>Edit Maintenance Record - {selectedProblem?.unitNumber}</DialogTitle>
           </DialogHeader>
           {selectedProblem && (
             <form onSubmit={editProblemForm.handleSubmit((data) => updateProblemMutation.mutate({ id: selectedProblem.id, data }))} className="space-y-4">
               <div>
-                <Label htmlFor="capsuleNumber">{labels.singular} Number</Label>
-                <Select value={editProblemForm.watch("capsuleNumber")} onValueChange={(value) => editProblemForm.setValue("capsuleNumber", value)}>
+                <Label htmlFor="unitNumber">{labels.singular} Number</Label>
+                <Select value={editProblemForm.watch("unitNumber")} onValueChange={(value) => editProblemForm.setValue("unitNumber", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder={`Select ${labels.singular.toLowerCase()}`} />
                   </SelectTrigger>
@@ -521,7 +521,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
       <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Resolve Problem - {selectedProblem?.capsuleNumber}</DialogTitle>
+            <DialogTitle>Resolve Problem - {selectedProblem?.unitNumber}</DialogTitle>
           </DialogHeader>
           {selectedProblem && (
             <div className="space-y-4">

@@ -58,7 +58,7 @@ export default function CheckOut() {
     setFilters,
     hasActiveFilters,
     filteredGuests,
-    uniqueCapsules,
+    uniqueUnits,
     availableNationalities,
     setCheckinDateShortcut,
     setExpectedCheckoutDateShortcut,
@@ -75,21 +75,21 @@ export default function CheckOut() {
   } = useBulkCheckout();
 
   // Mark capsule as cleaned (used in checkout success toast)
-  const handleMarkCleaned = async (capsuleNumber: string) => {
+  const handleMarkCleaned = async (unitNumber: string) => {
     try {
-      await apiRequest("POST", `/api/capsules/${capsuleNumber}/mark-cleaned`, {
+      await apiRequest("POST", `/api/units/${unitNumber}/mark-cleaned`, {
         cleanedBy: "Staff",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       toast({
         title: "Success",
-        description: `${labels.singular} ${capsuleNumber} marked as cleaned successfully`,
+        description: `${labels.singular} ${unitNumber} marked as cleaned successfully`,
       });
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to mark capsule as cleaned",
+        description: error.message || "Failed to mark unit as cleaned",
         variant: "destructive",
       });
     }
@@ -105,7 +105,7 @@ export default function CheckOut() {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/available"] });
 
       const guest = guests.find(g => g.id === guestId);
 
@@ -113,7 +113,7 @@ export default function CheckOut() {
         pushNotificationManager.showLocalNotification(
           "Guest Check-Out",
           {
-            body: `${guest.name} has checked out from ${labels.capsule} ${guest.capsuleNumber}`,
+            body: `${guest.name} has checked out from ${labels.singular} ${guest.unitNumber}`,
             icon: "/icon-192.png",
             badge: "/icon-192.png",
             tag: `checkout-${guestId}`,
@@ -122,7 +122,7 @@ export default function CheckOut() {
               type: "checkout",
               guestId,
               guestName: guest.name,
-              capsuleNumber: guest.capsuleNumber,
+              unitNumber: guest.unitNumber,
             },
           }
         ).catch(error => {
@@ -146,7 +146,7 @@ export default function CheckOut() {
                 </button>{' '}
                 section to{' '}
                 <button
-                  onClick={() => handleMarkCleaned(guest.capsuleNumber)}
+                  onClick={() => handleMarkCleaned(guest.unitNumber)}
                   className="text-green-600 hover:text-green-800 underline cursor-pointer font-medium"
                 >
                   mark cleaned
@@ -256,7 +256,7 @@ export default function CheckOut() {
                       filters={filters}
                       setFilters={setFilters}
                       hasActiveFilters={hasActiveFilters}
-                      uniqueCapsules={uniqueCapsules}
+                      uniqueUnits={uniqueUnits}
                       availableNationalities={availableNationalities}
                       setCheckinDateShortcut={setCheckinDateShortcut}
                       setExpectedCheckoutDateShortcut={setExpectedCheckoutDateShortcut}

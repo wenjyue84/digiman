@@ -55,7 +55,7 @@ export default function SortableGuestTable() {
   const { data: activeTokensResponse } = useVisibilityQuery<PaginatedResponse<{
     id: string;
     token: string;
-    capsuleNumber: string;
+    unitNumber: string;
     guestName: string | null;
     phoneNumber: string | null;
     createdAt: string;
@@ -222,7 +222,7 @@ export default function SortableGuestTable() {
           onOpenChange={mutations.setShowCheckoutConfirmation}
           onConfirm={mutations.confirmCheckout}
           guestName={mutations.checkoutGuest.name}
-          capsuleNumber={mutations.checkoutGuest.capsuleNumber}
+          unitNumber={mutations.checkoutGuest.unitNumber}
           isLoading={mutations.checkoutMutation.isPending}
         />
       )}
@@ -233,7 +233,7 @@ export default function SortableGuestTable() {
           onOpenChange={mutations.setShowUndoConfirmation}
           onConfirm={mutations.confirmUndo}
           title="Undo Checkout"
-          description={`Are you sure you want to undo check-out for capsule ${mutations.undoGuest.capsuleNumber} ${mutations.undoGuest.name}?`}
+          description={`Are you sure you want to undo check-out for capsule ${mutations.undoGuest.unitNumber} ${mutations.undoGuest.name}?`}
           confirmText="Undo"
           cancelText="Cancel"
           variant="info"

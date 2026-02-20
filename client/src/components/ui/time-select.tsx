@@ -37,7 +37,7 @@ const generateTimeOptions = () => {
 const timeOptions = generateTimeOptions()
 
 // Build a set of common time values for quick lookup
-const commonTimeValues = new Set(([
+const commonTimeValues: Set<string> = new Set(([
   { label: "12:00 AM (Midnight)", value: "12:00 AM" },
   { label: "1:00 AM", value: "1:00 AM" },
   { label: "2:00 AM", value: "2:00 AM" },

@@ -15,9 +15,9 @@ export const DEFAULT_CONFIG: UpdateSettings = {
   maxPaymentAmount: 9999.99,
   
   // Capsule Settings
-  totalCapsules: 24,
-  capsuleSections: ["front", "middle", "back"],
-  capsuleNumberFormat: "A01",
+  totalUnits: 24,
+  unitSections: ["front", "middle", "back"],
+  unitNumberFormat: "A01",
   
   // Notification Settings
   notificationRetentionDays: 30,
@@ -51,9 +51,9 @@ export const CONFIG_DESCRIPTIONS: Record<keyof UpdateSettings, string> = {
   maxGuestStayDays: "Maximum number of days a guest can stay",
   defaultPaymentMethod: "Default payment method selected in forms",
   maxPaymentAmount: "Maximum payment amount allowed per transaction (RM)",
-  totalCapsules: "Total number of capsules in the hostel",
-  capsuleSections: "Available capsule sections/areas",
-  capsuleNumberFormat: "Format pattern for capsule numbers",
+  totalUnits: "Total number of capsules in the hostel",
+  unitSections: "Available capsule sections/areas",
+  unitNumberFormat: "Format pattern for capsule numbers",
   notificationRetentionDays: "How long to keep notifications before auto-deletion (days)",
   cacheTimeMinutes: "How long to cache frequently accessed data (minutes)",
   queryRefreshIntervalSeconds: "Auto-refresh interval for live data (seconds)",
@@ -374,8 +374,8 @@ export class ConfigUtils {
   /**
    * Get capsule number pattern for validation
    */
-  async getCapsuleNumberPattern(): Promise<RegExp> {
-    const format = await this.config.get('capsuleNumberFormat');
+  async getUnitNumberPattern(): Promise<RegExp> {
+    const format = await this.config.get('unitNumberFormat');
     // Convert format like "A01" to regex pattern like "^[A-Z]\d{2}$"
     const pattern = format.replace(/[A-Z]/g, '[A-Z]').replace(/\d/g, '\\d');
     return new RegExp(`^${pattern}$`);

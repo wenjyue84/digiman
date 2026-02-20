@@ -20,7 +20,7 @@ export class MemNotificationStore implements INotificationStorage {
       title: notification.title,
       message: notification.message,
       guestId: notification.guestId || null,
-      capsuleNumber: notification.capsuleNumber || null,
+      unitNumber: notification.unitNumber || null,
       isRead: false,
       createdAt: new Date(),
     };

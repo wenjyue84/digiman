@@ -90,16 +90,16 @@ export class AppConfig {
   }
 
   // Accommodation and capsule configuration
-  static async getTotalCapsules(): Promise<number> {
-    return this.config!.get('totalCapsules');
+  static async getTotalUnits(): Promise<number> {
+    return this.config!.get('totalUnits');
   }
 
-  static async getCapsuleSections(): Promise<string[]> {
-    return this.config!.get('capsuleSections');
+  static async getUnitSections(): Promise<string[]> {
+    return this.config!.get('unitSections');
   }
 
-  static async getCapsuleNumberFormat(): Promise<string> {
-    return this.config!.get('capsuleNumberFormat');
+  static async getUnitNumberFormat(): Promise<string> {
+    return this.config!.get('unitNumberFormat');
   }
 
   // Performance and caching configuration

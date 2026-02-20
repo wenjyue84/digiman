@@ -58,6 +58,8 @@ export interface CapsuleAssignmentRules {
   maintenanceDeprioritize: boolean;
   deprioritizedCapsules: string[];
 }
+/** @deprecated Use UnitAssignmentRules */
+export type UnitAssignmentRules = CapsuleAssignmentRules;
 
 // Rules-driven capsule assignment logic
 export function getRecommendedCapsule(gender: string, availableCapsules: any[], rules?: CapsuleAssignmentRules | null): string {
@@ -122,3 +124,6 @@ export function getRecommendedCapsule(gender: string, availableCapsules: any[], 
 
   return sorted[0]?.number || "";
 }
+
+/** @deprecated Use getRecommendedUnit */
+export const getRecommendedUnit = getRecommendedCapsule;

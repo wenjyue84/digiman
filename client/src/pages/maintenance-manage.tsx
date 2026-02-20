@@ -28,7 +28,7 @@ export default function MaintenanceManage() {
   const [filters, setFilters] = useState<MaintenanceFiltersType>({
     dateFrom: '',
     dateTo: '',
-    capsuleNumber: '',
+    unitNumber: '',
     reportedBy: '',
     showResolved: false,
   });
@@ -69,8 +69,8 @@ export default function MaintenanceManage() {
       problems = problems.filter(p => new Date(p.reportedAt) <= toDate);
     }
     
-    if (filters.capsuleNumber) {
-      problems = problems.filter(p => p.capsuleNumber === filters.capsuleNumber);
+    if (filters.unitNumber) {
+      problems = problems.filter(p => p.unitNumber === filters.unitNumber);
     }
     
     if (filters.reportedBy) {
@@ -88,9 +88,9 @@ export default function MaintenanceManage() {
   }, [allProblems]);
 
   const reportProblemMutation = useMutation({
-    mutationFn: async ({ capsuleNumber, description }: { capsuleNumber: string; description: string }) => {
+    mutationFn: async ({ unitNumber, description }: { unitNumber: string; description: string }) => {
       const response = await apiRequest("POST", "/api/problems", {
-        capsuleNumber,
+        unitNumber,
         description,
         reportedBy: currentUser?.username || currentUser?.email || "Unknown",
       });
@@ -170,7 +170,7 @@ export default function MaintenanceManage() {
       return;
     }
     reportProblemMutation.mutate({
-      capsuleNumber: selectedCapsule,
+      unitNumber: selectedCapsule,
       description: problemDescription,
     });
   };
@@ -203,7 +203,7 @@ export default function MaintenanceManage() {
   };
 
   const availableCapsules = capsules.filter(c => {
-    const hasActiveProblem = activeProblems.some(p => p.capsuleNumber === c.number);
+    const hasActiveProblem = activeProblems.some(p => p.unitNumber === c.number);
     return !hasActiveProblem;
   });
 
@@ -222,7 +222,7 @@ export default function MaintenanceManage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={problem.isResolved ? "outline" : "destructive"}>
-                      {problem.capsuleNumber}
+                      {problem.unitNumber}
                     </Badge>
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                       <User className="h-3 w-3" />
@@ -402,7 +402,7 @@ export default function MaintenanceManage() {
                     <div className="text-center py-8 text-gray-500">
                       <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
                       <p>No active maintenance issues found</p>
-                      {filters.dateFrom || filters.dateTo || filters.capsuleNumber || filters.reportedBy ? (
+                      {filters.dateFrom || filters.dateTo || filters.unitNumber || filters.reportedBy ? (
                         <p className="text-sm text-gray-400 mt-2">Try adjusting your filters</p>
                       ) : null}
                     </div>
@@ -415,7 +415,7 @@ export default function MaintenanceManage() {
                   {filteredProblems.filter(p => p.isResolved).length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <p>No resolved issues found</p>
-                      {filters.dateFrom || filters.dateTo || filters.capsuleNumber || filters.reportedBy ? (
+                      {filters.dateFrom || filters.dateTo || filters.unitNumber || filters.reportedBy ? (
                         <p className="text-sm text-gray-400 mt-2">Try adjusting your filters</p>
                       ) : null}
                     </div>
@@ -480,7 +480,7 @@ export default function MaintenanceManage() {
               <div>
                 <p className="text-sm text-gray-600">Affected Capsules</p>
                 <p className="text-2xl font-bold text-gray-700">
-                  {new Set(activeProblems.map(p => p.capsuleNumber)).size}
+                  {new Set(activeProblems.map(p => p.unitNumber)).size}
                 </p>
               </div>
               <AlertCircle className="h-8 w-8 text-gray-300" />
@@ -495,7 +495,7 @@ export default function MaintenanceManage() {
           open={showResolveConfirmation}
           onOpenChange={setShowResolveConfirmation}
           title="Resolve Maintenance Issue"
-          description={`Are you sure you want to mark the maintenance issue for capsule ${problemToResolve.capsuleNumber} as resolved?`}
+          description={`Are you sure you want to mark the maintenance issue for capsule ${problemToResolve.unitNumber} as resolved?`}
           confirmText="Resolve Issue"
           cancelText="Cancel"
           onConfirm={confirmResolveProblem}

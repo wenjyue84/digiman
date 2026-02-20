@@ -48,8 +48,8 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
   const allItems = Array.isArray(capsules) ? capsules : [];
   
   // Helper function to extract numeric part from capsule number for natural sorting
-  const extractCapsuleNumber = (capsuleNumber: string): number => {
-    const match = capsuleNumber.match(/\d+/);
+  const extractCapsuleNumber = (unitNumber: string): number => {
+    const match = unitNumber.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   };
   
@@ -73,10 +73,10 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     if (problemsResponse?.data) {
       const problemsMap: Record<string, any[]> = {};
       problemsResponse.data.forEach(problem => {
-        if (!problemsMap[problem.capsuleNumber]) {
-          problemsMap[problem.capsuleNumber] = [];
+        if (!problemsMap[problem.unitNumber]) {
+          problemsMap[problem.unitNumber] = [];
         }
-        problemsMap[problem.capsuleNumber].push(problem);
+        problemsMap[problem.unitNumber].push(problem);
       });
       setProblemsByCapsule(problemsMap);
     }
@@ -218,12 +218,12 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     }
   };
 
-  const getProblemsForCapsule = (capsuleNumber: string) => {
-    return problemsByCapsule[capsuleNumber] || [];
+  const getProblemsForCapsule = (unitNumber: string) => {
+    return problemsByCapsule[unitNumber] || [];
   };
 
-  const getActiveProblemsCount = (capsuleNumber: string) => {
-    const problems = getProblemsForCapsule(capsuleNumber);
+  const getActiveProblemsCount = (unitNumber: string) => {
+    const problems = getProblemsForCapsule(unitNumber);
     return problems.filter(p => !p.isResolved).length;
   };
 

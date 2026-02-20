@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserPlus, User, Bed, Phone, Mail, CreditCard, Calendar, Users } from "lucide-react";
-import { insertGuestSchema, type InsertGuest, type Capsule, type Guest } from "@shared/schema";
+import { insertGuestSchema, type InsertGuest, type Unit, type Guest } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { extractDetailedError, createErrorToast } from "@/lib/errorHandler";
@@ -31,8 +31,8 @@ import {
   getNextDayDate,
   getNextGuestNumber,
   getDefaultCollector,
-  getRecommendedCapsule,
-  type CapsuleAssignmentRules
+  getRecommendedUnit,
+  type UnitAssignmentRules
 } from "@/components/check-in/utils";
 import { getClientEnvironment } from "@shared/utils";
 import PaymentInformationSection from "@/components/check-in/PaymentInformationSection";
@@ -40,7 +40,7 @@ import ContactInformationSection from "@/components/check-in/ContactInformationS
 import IdentificationPersonalSection from "@/components/check-in/IdentificationPersonalSection";
 import EmergencyContactSection from "@/components/check-in/EmergencyContactSection";
 import AdditionalNotesSection from "@/components/check-in/AdditionalNotesSection";
-import CapsuleAssignmentSection from "@/components/check-in/CapsuleAssignmentSection";
+import UnitAssignmentSection from "@/components/check-in/UnitAssignmentSection";
 import CheckInDetailsSection from "@/components/check-in/CheckInDetailsSection";
 import SmartFeaturesSection from "@/components/check-in/SmartFeaturesSection";
 import StepProgressIndicator from "@/components/check-in/StepProgressIndicator";
@@ -58,42 +58,42 @@ export default function CheckIn() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string>("");
   const [showSuccessPage, setShowSuccessPage] = useState(false);
   const [checkedInGuest, setCheckedInGuest] = useState<any>(null);
-  const [assignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
+  const [assignedUnitNumber, setAssignedUnitNumber] = useState<string | null>(null);
   
-  // Add new state for capsule assignment warnings
-  const [showCapsuleWarning, setShowCapsuleWarning] = useState(false);
-  const [capsuleWarningMessage, setCapsuleWarningMessage] = useState("");
+  // Add new state for unit assignment warnings
+  const [showUnitWarning, setShowUnitWarning] = useState(false);
+  const [unitWarningMessage, setUnitWarningMessage] = useState("");
 
-  // Add state for pre-selected capsule from Dashboard
-  const [preSelectedCapsule, setPreSelectedCapsule] = useState<string | null>(null);
-  const [isCapsuleLocked, setIsCapsuleLocked] = useState(false);
+  // Add state for pre-selected unit from Dashboard
+  const [preSelectedUnit, setPreSelectedUnit] = useState<string | null>(null);
+  const [isUnitLocked, setIsUnitLocked] = useState(false);
 
-  // Check for pre-selected capsule from URL parameters
+  // Check for pre-selected unit from URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const capsuleParam = urlParams.get('capsule');
-    if (capsuleParam) {
-      setPreSelectedCapsule(capsuleParam);
-      setIsCapsuleLocked(true);
+    const unitParam = urlParams.get('unit');
+    if (unitParam) {
+      setPreSelectedUnit(unitParam);
+      setIsUnitLocked(true);
       // Show toast to inform user
       toast({
-        title: "Capsule Pre-selected",
-        description: `${labels.singular} ${capsuleParam} has been pre-selected from Dashboard. You can now enter guest information.`,
+        title: "Unit Pre-selected",
+        description: `${labels.singular} ${unitParam} has been pre-selected from Dashboard. You can now enter guest information.`,
       });
     }
   }, [toast, labels.singular]);
 
-  const { data: availableCapsules = [], isLoading: capsulesLoading } = useVisibilityQuery<(Capsule & { canAssign: boolean })[]>({
-    queryKey: ["/api/capsules/available-with-status"],
+  const { data: availableUnits = [], isLoading: unitsLoading } = useVisibilityQuery<(Unit & { canAssign: boolean })[]>({
+    queryKey: ["/api/units/available-with-status"],
     // Uses smart config: nearRealtime (30s stale, 60s refetch)
   });
 
-  // Fetch capsule assignment rules from settings API
-  const { data: capsuleRules } = useQuery<CapsuleAssignmentRules>({
-    queryKey: ["/api/settings/capsule-rules"],
+  // Fetch unit assignment rules from settings API
+  const { data: unitRules } = useQuery<UnitAssignmentRules>({
+    queryKey: ["/api/settings/unit-rules"],
     queryFn: async () => {
-      const res = await fetch("/api/settings/capsule-rules");
-      if (!res.ok) throw new Error("Failed to fetch capsule rules");
+      const res = await fetch("/api/settings/unit-rules");
+      if (!res.ok) throw new Error("Failed to fetch unit rules");
       return res.json();
     },
     staleTime: 5 * 60 * 1000, // Rules change rarely, 5 min stale
@@ -122,7 +122,7 @@ export default function CheckIn() {
     guideAddress?: string;
     guideWifiName?: string;
     guideWifiPassword?: string;
-    guideShowCapsuleIssues?: boolean;
+    guideShowUnitIssues?: boolean;
     guideIntro?: string;
     guideCheckin?: string;
     guideOther?: string;
@@ -147,7 +147,7 @@ export default function CheckIn() {
     resolver: zodResolver(insertGuestSchema),
     defaultValues: {
       name: "",
-      capsuleNumber: "",
+      unitNumber: "",
               paymentAmount: "45", // Default to RM45 per night
       paymentMethod: "cash" as const,
       paymentCollector: defaultCollector,
@@ -178,17 +178,17 @@ export default function CheckIn() {
     }
   }, [user, form, defaultCollector, nextGuestNumber]);
 
-  // Auto-assign capsule when form loads with default gender
+  // Auto-assign unit when form loads with default gender
   useEffect(() => {
     const currentGender = form.getValues("gender");
-    const currentCapsule = form.getValues("capsuleNumber");
+    const currentUnit = form.getValues("unitNumber");
     
-    // If we have a pre-selected capsule from Dashboard, use that instead of auto-assignment
-    if (preSelectedCapsule && availableCapsules.length > 0) {
-      const capsuleExists = availableCapsules.some(capsule => capsule.number === preSelectedCapsule);
-      if (capsuleExists) {
-        form.setValue("capsuleNumber", preSelectedCapsule);
-        return; // Skip auto-assignment when capsule is pre-selected
+    // If we have a pre-selected unit from Dashboard, use that instead of auto-assignment
+    if (preSelectedUnit && availableUnits.length > 0) {
+      const unitExists = availableUnits.some(unit => unit.number === preSelectedUnit);
+      if (unitExists) {
+        form.setValue("unitNumber", preSelectedUnit);
+        return; // Skip auto-assignment when unit is pre-selected
       }
     }
     
@@ -199,54 +199,54 @@ export default function CheckIn() {
       isReplit: env.isReplit,
       hostname: env.hostname,
       currentGender,
-      currentCapsule,
-      availableCapsulesCount: availableCapsules?.length || 0
+      currentUnit,
+      availableUnitsCount: availableUnits?.length || 0
     });
 
-    // Auto-assign capsule if we have a gender (default "male") but no capsule selected
-    if (currentGender && availableCapsules.length > 0 && !currentCapsule) {
+    // Auto-assign unit if we have a gender (default "male") but no unit selected
+    if (currentGender && availableUnits.length > 0 && !currentUnit) {
       console.log('🤖 Attempting smart assignment for gender:', currentGender);
       
-      // Only recommend capsules that can be assigned (cleaned)
-      const assignableCapsules = availableCapsules.filter(capsule => capsule.canAssign);
-      console.log('✅ Assignable capsules for smart assignment:', assignableCapsules.length);
+      // Only recommend units that can be assigned (cleaned)
+      const assignableUnits = availableUnits.filter(unit => unit.canAssign);
+      console.log('✅ Assignable units for smart assignment:', assignableUnits.length);
       
-      const recommendedCapsule = getRecommendedCapsule(currentGender, assignableCapsules, capsuleRules);
-      if (recommendedCapsule) {
-        console.log('🎯 Smart assignment result:', recommendedCapsule);
-        form.setValue("capsuleNumber", recommendedCapsule);
+      const recommendedUnit = getRecommendedUnit(currentGender, assignableUnits, unitRules);
+      if (recommendedUnit) {
+        console.log('🎯 Smart assignment result:', recommendedUnit);
+        form.setValue("unitNumber", recommendedUnit);
       } else {
-        console.warn('⚠️ No capsule recommended by smart assignment');
+        console.warn('⚠️ No unit recommended by smart assignment');
       }
     }
-  }, [availableCapsules, form, preSelectedCapsule, capsuleRules]);
+  }, [availableUnits, form, preSelectedUnit, unitRules]);
 
-  // Auto-assign capsule based on gender changes
+  // Auto-assign unit based on gender changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      // Skip auto-assignment if capsule is locked from Dashboard
-      if (isCapsuleLocked) return;
+      // Skip auto-assignment if unit is locked from Dashboard
+      if (isUnitLocked) return;
       
-      if (name === "gender" && value.gender && availableCapsules.length > 0) {
+      if (name === "gender" && value.gender && availableUnits.length > 0) {
         console.log('🔄 Gender changed to:', value.gender);
         
-        // Always suggest a new capsule when gender changes
-        // Only recommend capsules that can be assigned (cleaned)
-        const assignableCapsules = availableCapsules.filter(capsule => capsule.canAssign);
-        console.log('✅ Available capsules for gender change assignment:', assignableCapsules.length);
+        // Always suggest a new unit when gender changes
+        // Only recommend units that can be assigned (cleaned)
+        const assignableUnits = availableUnits.filter(unit => unit.canAssign);
+        console.log('✅ Available units for gender change assignment:', assignableUnits.length);
         
-        const recommendedCapsule = getRecommendedCapsule(value.gender, assignableCapsules, capsuleRules);
+        const recommendedUnit = getRecommendedUnit(value.gender, assignableUnits, unitRules);
 
-        if (recommendedCapsule && recommendedCapsule !== form.getValues("capsuleNumber")) {
-          console.log('🎯 Gender-based assignment result:', recommendedCapsule);
-          form.setValue("capsuleNumber", recommendedCapsule);
+        if (recommendedUnit && recommendedUnit !== form.getValues("unitNumber")) {
+          console.log('🎯 Gender-based assignment result:', recommendedUnit);
+          form.setValue("unitNumber", recommendedUnit);
         } else {
-          console.warn('⚠️ No new capsule recommended for gender change');
+          console.warn('⚠️ No new unit recommended for gender change');
         }
       }
     });
     return () => subscription.unsubscribe();
-  }, [availableCapsules, form, isCapsuleLocked, capsuleRules]);
+  }, [availableUnits, form, isUnitLocked, unitRules]);
 
   const checkinMutation = useMutation({
     mutationFn: async (data: InsertGuest) => {
@@ -256,20 +256,20 @@ export default function CheckIn() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/available"] });
       
-      // Set capsule number and show success page
-      setAssignedCapsuleNumber(result.capsuleNumber || checkedInGuest?.capsuleNumber || null);
+      // Set unit number and show success page
+      setAssignedUnitNumber(result.unitNumber || checkedInGuest?.unitNumber || null);
       setShowSuccessPage(true);
       setCompleted(true);
       
       // Show push notification for check-in
       const guestName = result.name || "Guest";
-      const capsuleNumber = result.capsuleNumber || "Unknown";
+      const unitNumber = result.unitNumber || "Unknown";
       pushNotificationManager.showLocalNotification(
         "New Guest Check-In",
         {
-          body: `${guestName} has checked into ${labels.capsule} ${capsuleNumber}`,
+          body: `${guestName} has checked into ${labels.unit} ${unitNumber}`,
           icon: "/icon-192.png",
           badge: "/icon-192.png",
           tag: `checkin-${result.id}`,
@@ -278,7 +278,7 @@ export default function CheckIn() {
             type: "checkin",
             guestId: result.id,
             guestName: guestName,
-            capsuleNumber: capsuleNumber
+            unitNumber: unitNumber
           }
         }
       ).catch(error => {
@@ -304,25 +304,25 @@ export default function CheckIn() {
   });
 
   const onSubmit = (data: InsertGuest) => {
-    // Check if selected capsule has issues
-    const selectedCapsule = availableCapsules.find(c => c.number === data.capsuleNumber);
+    // Check if selected unit has issues
+    const selectedUnit = availableUnits.find(c => c.number === data.unitNumber);
     
-    if (selectedCapsule && !selectedCapsule.canAssign) {
+    if (selectedUnit && !selectedUnit.canAssign) {
       // Show warning but allow admin to proceed
       let warningMessage = "";
       
-      if (selectedCapsule.cleaningStatus === "to_be_cleaned") {
-        warningMessage = `⚠️ WARNING: ${selectedCapsule.number} needs cleaning before it can be assigned. Are you sure you want to proceed with manual assignment?`;
-      } else if (selectedCapsule.toRent === false) {
-        warningMessage = `🚫 WARNING: ${selectedCapsule.number} is marked as "Not Suitable for Rent" due to major maintenance issues. Are you sure you want to assign it manually?`;
-      } else if (!selectedCapsule.isAvailable) {
-        warningMessage = `⚠️ WARNING: ${selectedCapsule.number} is currently unavailable. Are you sure you want to proceed with manual assignment?`;
+      if (selectedUnit.cleaningStatus === "to_be_cleaned") {
+        warningMessage = `⚠️ WARNING: ${selectedUnit.number} needs cleaning before it can be assigned. Are you sure you want to proceed with manual assignment?`;
+      } else if (selectedUnit.toRent === false) {
+        warningMessage = `🚫 WARNING: ${selectedUnit.number} is marked as "Not Suitable for Rent" due to major maintenance issues. Are you sure you want to assign it manually?`;
+      } else if (!selectedUnit.isAvailable) {
+        warningMessage = `⚠️ WARNING: ${selectedUnit.number} is currently unavailable. Are you sure you want to proceed with manual assignment?`;
       } else {
-        warningMessage = `⚠️ WARNING: ${selectedCapsule.number} has some issues but can be manually assigned. Are you sure you want to proceed?`;
+        warningMessage = `⚠️ WARNING: ${selectedUnit.number} has some issues but can be manually assigned. Are you sure you want to proceed?`;
       }
       
-      setCapsuleWarningMessage(warningMessage);
-      setShowCapsuleWarning(true);
+      setUnitWarningMessage(warningMessage);
+      setShowUnitWarning(true);
       return;
     }
     
@@ -332,11 +332,11 @@ export default function CheckIn() {
     setCurrentStep(2);
   };
 
-  const confirmCapsuleWarning = () => {
+  const confirmUnitWarning = () => {
     if (formDataToSubmit) {
-      setShowCapsuleWarning(false);
-      setCapsuleWarningMessage("");
-      // Proceed with check-in despite capsule issues
+      setShowUnitWarning(false);
+      setUnitWarningMessage("");
+      // Proceed with check-in despite unit issues
       setShowCheckinConfirmation(true);
       setCurrentStep(2);
     }
@@ -364,7 +364,7 @@ export default function CheckIn() {
   const confirmClear = () => {
     form.reset({
       name: getNextGuestNumber(guestData.data || []),
-      capsuleNumber: "",
+      unitNumber: "",
               paymentAmount: "45", // Reset to default RM45 per night
       paymentMethod: "cash" as const,
       paymentCollector: getDefaultCollector(user),
@@ -389,12 +389,12 @@ export default function CheckIn() {
   const handleBackToForm = () => {
     setShowSuccessPage(false);
     setCheckedInGuest(null);
-    setAssignedCapsuleNumber(null);
+    setAssignedUnitNumber(null);
     setCurrentStep(1);
     setCompleted(false);
     form.reset({
       name: getNextGuestNumber(guestData.data || []),
-      capsuleNumber: "",
+      unitNumber: "",
       paymentAmount: "45",
       paymentMethod: "cash" as const,
       paymentCollector: getDefaultCollector(user),
@@ -435,7 +435,7 @@ export default function CheckIn() {
     }
 
     const guestName = checkedInGuest?.name || 'Guest';
-    const capsule = assignedCapsuleNumber || checkedInGuest?.capsuleNumber || '';
+    const unit = assignedUnitNumber || checkedInGuest?.unitNumber || '';
     const checkinTime = settings?.guideCheckinTime || "3:00 PM";
     const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
     const doorPassword = settings?.guideDoorPassword || "1270#";
@@ -445,7 +445,7 @@ export default function CheckIn() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Check-in Information - Pelangi Capsule Hostel</title>
+        <title>Check-in Information - Pelangi Unit Hostel</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
           .header { text-align: center; margin-bottom: 30px; }
@@ -462,7 +462,7 @@ export default function CheckIn() {
       </head>
       <body>
         <div class="header">
-          <div class="logo">🌈 PELANGI CAPSULE HOSTEL</div>
+          <div class="logo">🌈 PELANGI UNIT HOSTEL</div>
           <h1>Guest Information</h1>
           <p>Generated on ${new Date().toLocaleDateString()}</p>
         </div>
@@ -475,8 +475,8 @@ export default function CheckIn() {
               <div class="value">${guestName}</div>
             </div>
             <div class="info-item">
-              <div class="label">Capsule:</div>
-              <div class="value">${capsule}</div>
+              <div class="label">Unit:</div>
+              <div class="value">${unit}</div>
             </div>
           </div>
         </div>
@@ -515,7 +515,7 @@ export default function CheckIn() {
 
         <div class="footer">
           <p>For assistance, please contact reception</p>
-          <p>Enjoy your stay at Pelangi Capsule Hostel! 💼🌟</p>
+          <p>Enjoy your stay at Pelangi Unit Hostel! 💼🌟</p>
         </div>
       </body>
       </html>
@@ -536,22 +536,22 @@ export default function CheckIn() {
 
   const handleEmail = () => {
     const guestName = checkedInGuest?.name || 'Guest';
-    const capsule = assignedCapsuleNumber || checkedInGuest?.capsuleNumber || '';
+    const unit = assignedUnitNumber || checkedInGuest?.unitNumber || '';
     const checkinTime = settings?.guideCheckinTime || "3:00 PM";
     const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
     const doorPassword = settings?.guideDoorPassword || "1270#";
     const importantReminders = settings?.guideImportantReminders || "• Please keep your room key safe\n• Quiet hours are from 10:00 PM to 7:00 AM\n• No smoking inside the building";
 
-    const subject = encodeURIComponent('Your Stay Information - Pelangi Capsule Hostel');
+    const subject = encodeURIComponent('Your Stay Information - Pelangi Unit Hostel');
     const body = encodeURIComponent(`
 Dear ${guestName},
 
-Welcome to Pelangi Capsule Hostel! Here is your stay information:
+Welcome to Pelangi Unit Hostel! Here is your stay information:
 
-🏨 PELANGI CAPSULE HOSTEL - GUEST INFORMATION
+🏨 PELANGI UNIT HOSTEL - GUEST INFORMATION
 
 Guest Name: ${guestName}
-Capsule Number: ${capsule}
+Unit Number: ${unit}
 Arrival Time: ${checkinTime}
 Departure Time: ${checkoutTime}
 Door Password: ${doorPassword}
@@ -562,10 +562,10 @@ ${importantReminders}
 📍 Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
 
 For any assistance, please contact reception.
-Enjoy your stay at Pelangi Capsule Hostel! 💼🌟
+Enjoy your stay at Pelangi Unit Hostel! 💼🌟
 
 ---
-This email was generated by Pelangi Capsule Hostel Management System
+This email was generated by Pelangi Unit Hostel Management System
     `);
 
     const mailtoLink = `mailto:${checkedInGuest?.email || ''}?subject=${subject}&body=${body}`;
@@ -579,26 +579,26 @@ This email was generated by Pelangi Capsule Hostel Management System
 
   const handleShare = () => {
     const guestName = checkedInGuest?.name || 'Guest';
-    const capsule = assignedCapsuleNumber || checkedInGuest?.capsuleNumber || '';
+    const unit = assignedUnitNumber || checkedInGuest?.unitNumber || '';
     const checkinTime = settings?.guideCheckinTime || "3:00 PM";
     const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
     const doorPassword = settings?.guideDoorPassword || "1270#";
 
-    const shareText = `🏨 Pelangi Capsule Hostel - Guest Information
+    const shareText = `🏨 Pelangi Unit Hostel - Guest Information
 
 Name: ${guestName}
-Capsule: ${capsule}
+Unit: ${unit}
 Arrival: ${checkinTime}
 Departure: ${checkoutTime}
 Door Password: ${doorPassword}
 
 Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
 
-Welcome to Pelangi Capsule Hostel! 🌈`;
+Welcome to Pelangi Unit Hostel! 🌈`;
 
     if (navigator.share) {
       navigator.share({
-        title: 'Pelangi Capsule Hostel - Guest Information',
+        title: 'Pelangi Unit Hostel - Guest Information',
         text: shareText,
       }).catch(() => {
         // Fallback to copying to clipboard
@@ -672,14 +672,14 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
           viewMode="desktop"
           isPreview={false}
           guestInfo={{
-            capsuleNumber: assignedCapsuleNumber || undefined,
+            unitNumber: assignedUnitNumber || undefined,
             guestName: checkedInGuest.name,
             phoneNumber: checkedInGuest.phoneNumber,
             email: checkedInGuest.email,
             expectedCheckoutDate: checkedInGuest.expectedCheckoutDate,
           }}
-          assignedCapsuleNumber={assignedCapsuleNumber}
-          capsuleIssues={[]}
+          assignedUnitNumber={assignedUnitNumber}
+          unitIssues={[]}
           settings={settings}
           actions={{
             onPrint: handlePrint,
@@ -701,7 +701,7 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
             <p className="text-gray-600 mt-2">Smart check-in with auto-assignment and preset payment options</p>
             <StepProgressIndicator currentStep={currentStep} completed={completed} />
             <div className="flex justify-center mt-4">
-              <GuestTokenGenerator onTokenCreated={() => queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] })} />
+              <GuestTokenGenerator onTokenCreated={() => queryClient.invalidateQueries({ queryKey: ["/api/units/available"] })} />
             </div>
           </div>
         </CardHeader>
@@ -746,18 +746,18 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
               )}
             </div>
 
-            {/* Gender Selection - Moved here for smart capsule assignment */}
+            {/* Gender Selection - Moved here for smart unit assignment */}
             <div>
               <Label htmlFor="gender" className="flex items-center text-sm font-medium text-hostel-text mb-2">
                 <Users className="mr-2 h-4 w-4" />
-                Gender <span className="text-gray-500 text-xs ml-2">(For smart capsule assignment)</span>
+                Gender <span className="text-gray-500 text-xs ml-2">(For smart unit assignment)</span>
               </Label>
               <Select
                 value={form.watch("gender") || ""}
                 onValueChange={(value) => form.setValue("gender", value as "male" | "female" | "other" | "prefer-not-to-say")}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select gender to enable smart capsule assignment" />
+                  <SelectValue placeholder="Select gender to enable smart unit assignment" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="male">Male (Front section preferred)</SelectItem>
@@ -771,11 +771,11 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
               )}
             </div>
 
-            <CapsuleAssignmentSection 
+            <UnitAssignmentSection 
               form={form} 
-              availableCapsules={availableCapsules} 
-              capsulesLoading={capsulesLoading}
-              isCapsuleLocked={isCapsuleLocked}
+              availableUnits={availableUnits} 
+              unitsLoading={unitsLoading}
+              isUnitLocked={isUnitLocked}
             />
 
             <PaymentInformationSection form={form} defaultCollector={defaultCollector} />
@@ -794,16 +794,16 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
 
             <CheckInDetailsSection form={form} />
 
-            {/* Add warning message when no capsules can be auto-assigned */}
-            {availableCapsules.filter(capsule => capsule.canAssign).length === 0 && (
+            {/* Add warning message when no units can be auto-assigned */}
+            {availableUnits.filter(unit => unit.canAssign).length === 0 && (
               <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <div className="flex items-center gap-2 text-orange-700">
                   <Bed className="h-4 w-4" />
-                  <span className="text-sm font-medium">No Capsules Available for Auto-Assignment</span>
+                  <span className="text-sm font-medium">No Units Available for Auto-Assignment</span>
                 </div>
                 <p className="text-xs text-orange-600 mt-1">
-                  All available capsules need cleaning, maintenance, or have other issues. 
-                  You can still manually assign a capsule by selecting one from the dropdown above, 
+                  All available units need cleaning, maintenance, or have other issues. 
+                  You can still manually assign a unit by selecting one from the dropdown above, 
                   but please ensure the guest is aware of any potential issues.
                 </p>
               </div>
@@ -824,7 +824,7 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Process guest check-in and assign capsule</p>
+                  <p>Process guest check-in and assign unit</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -878,15 +878,15 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
         variant="warning"
       />
       
-      {/* Add capsule assignment warning dialog */}
+      {/* Add unit assignment warning dialog */}
       <ConfirmationDialog
-        open={showCapsuleWarning}
-        onOpenChange={setShowCapsuleWarning}
-        title="Capsule Assignment Warning"
-        description={capsuleWarningMessage}
+        open={showUnitWarning}
+        onOpenChange={setShowUnitWarning}
+        title="Unit Assignment Warning"
+        description={unitWarningMessage}
         confirmText="Yes, Proceed with Manual Assignment"
-        cancelText="Cancel and Choose Different Capsule"
-        onConfirm={confirmCapsuleWarning}
+        cancelText="Cancel and Choose Different Unit"
+        onConfirm={confirmUnitWarning}
         variant="warning"
         icon={<Bed className="h-6 w-6 text-orange-600" />}
       />

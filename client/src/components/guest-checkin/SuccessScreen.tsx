@@ -10,7 +10,7 @@ import GuestExtendDialog from "@/components/guest-success/GuestExtendDialog";
 
 interface SuccessScreenProps {
   guestInfo: {
-    capsuleNumber?: string;
+    unitNumber?: string;
     autoAssign?: boolean;
     guestName: string;
     phoneNumber: string;
@@ -34,7 +34,7 @@ interface SuccessScreenProps {
   guestData?: {
     id: string;
     name: string;
-    capsuleNumber: string;
+    unitNumber: string;
     expectedCheckoutDate: string;
     paymentAmount?: string;
     notes?: string;
@@ -66,7 +66,7 @@ export default function SuccessScreen({
   
   // Derive a reliable capsule number
   const storedCapsuleNumber = (typeof window !== 'undefined') ? localStorage.getItem('lastAssignedCapsule') : null;
-  const displayCapsuleNumber = assignedCapsuleNumber || guestInfo?.capsuleNumber || storedCapsuleNumber || "";
+  const displayCapsuleNumber = assignedCapsuleNumber || guestInfo?.unitNumber || storedCapsuleNumber || "";
   
   // Get current token for extend functionality
   const getCurrentToken = () => {
@@ -77,7 +77,7 @@ export default function SuccessScreen({
     // Lightweight debug to help diagnose missing capsule numbers during development
     console.log('[SuccessScreen] capsule numbers', {
       assignedCapsuleNumber,
-      guestInfoCapsule: guestInfo?.capsuleNumber,
+      guestInfoCapsule: guestInfo?.unitNumber,
       storedCapsuleNumber,
       displayCapsuleNumber,
     });
