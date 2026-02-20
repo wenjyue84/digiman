@@ -54,6 +54,7 @@
     "express-rate-limit": "^8.2.1",
     "fuse.js": "^7.1.0",
     "groq-sdk": "^0.37.0",
+    "helmet": "^8.1.0",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "qrcode": "^1.5.4",
