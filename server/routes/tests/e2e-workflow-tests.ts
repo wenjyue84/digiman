@@ -30,7 +30,7 @@ export const e2eWorkflowTests: SystemTest[] = [
 
         // STEP 3: Guest Check-in Process
         results.push("👤 Step 3: Processing Guest Check-in...");
-        const guestData = {
+        const guestData: any = {
           name: "Workflow Test Guest",
           email: "workflow.test@pelangi.com",
           phoneNumber: "012-3456789",
@@ -79,25 +79,25 @@ export const e2eWorkflowTests: SystemTest[] = [
 
         // STEP 7: Unit Cleaning Mark
         results.push("🧹 Step 7: Marking Unit for Cleaning...");
-        await storage.markUnitNeedsCleaning(testUnit.number, "Checkout cleaning required");
+        await storage.markUnitNeedsCleaning(testUnit.number);
         const unitNeedsCleaning = await storage.getUnit(testUnit.number);
-        if (unitNeedsCleaning.cleaningStatus !== "to_be_cleaned") {
+        if (!unitNeedsCleaning || unitNeedsCleaning.cleaningStatus !== "to_be_cleaned") {
           throw new Error("Unit not properly marked for cleaning");
         }
         results.push(`   ✅ Unit ${testUnit.number} marked as needs cleaning`);
 
         // STEP 8: Complete Cleaning Process
         results.push("✨ Step 8: Completing Cleaning Process...");
-        await storage.markUnitAsCleaned(testUnit.number, "Cleaned and ready for next guest");
+        await storage.markUnitCleaned(testUnit.number, "Cleaned and ready for next guest");
         const cleanedUnit = await storage.getUnit(testUnit.number);
-        if (cleanedUnit.cleaningStatus !== "cleaned" || !cleanedUnit.isAvailable) {
+        if (!cleanedUnit || cleanedUnit.cleaningStatus !== "cleaned" || !cleanedUnit.isAvailable) {
           throw new Error("Unit not properly marked as cleaned and available");
         }
         results.push(`   ✅ Unit ${testUnit.number} cleaned and available for next guest`);
 
         // STEP 9: Occupancy Statistics Verification
         results.push("📈 Step 9: Verifying Occupancy Statistics...");
-        const occupancyStats = await storage.getOccupancyStats();
+        const occupancyStats = await storage.getUnitOccupancy();
         if (!occupancyStats || typeof occupancyStats.total !== 'number') {
           throw new Error("Occupancy statistics not properly calculated");
         }
@@ -170,7 +170,7 @@ export const e2eWorkflowTests: SystemTest[] = [
 
         // STEP 3: Self Check-in Form Submission
         results.push("📝 Step 3: Processing Self Check-in Form...");
-        const selfCheckinData = {
+        const selfCheckinData: any = {
           name: "Self Checkin Test Guest",
           email: "selfcheckin.test@guest.com",
           phoneNumber: "019-8765432",
@@ -179,7 +179,8 @@ export const e2eWorkflowTests: SystemTest[] = [
           age: "25",
           unitNumber: guestToken.unitNumber,
           paymentAmount: "45",
-          paymentMethod: "online",
+          paymentMethod: "cash",
+          paymentCollector: "Self",
           isPaid: true,
           selfCheckinToken: guestToken.token,
           checkinTime: new Date()
