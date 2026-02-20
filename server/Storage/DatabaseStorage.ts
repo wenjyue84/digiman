@@ -1,5 +1,5 @@
-import type { User, InsertUser, Guest, InsertGuest, Capsule, InsertCapsule, Session, GuestToken, InsertGuestToken, CapsuleProblem, InsertCapsuleProblem, AdminNotification, InsertAdminNotification, PushSubscription, InsertPushSubscription, AppSetting, InsertAppSetting, PaginationParams, PaginatedResponse, Expense, InsertExpense, UpdateExpense } from "../../shared/schema";
-import { capsules } from "../../shared/schema";
+import type { User, InsertUser, Guest, InsertGuest, Unit, InsertUnit, Session, GuestToken, InsertGuestToken, UnitProblem, InsertUnitProblem, AdminNotification, InsertAdminNotification, PushSubscription, InsertPushSubscription, AppSetting, InsertAppSetting, PaginationParams, PaginatedResponse, Expense, InsertExpense, UpdateExpense } from "../../shared/schema";
+import { units } from "../../shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
 import { neon } from "@neondatabase/serverless";
@@ -14,7 +14,7 @@ import {
   DbUserQueries,
   DbSessionQueries,
   DbGuestQueries,
-  DbCapsuleQueries,
+  DbUnitQueries,
   DbProblemQueries,
   DbTokenQueries,
   DbNotificationQueries,
@@ -26,7 +26,7 @@ import {
  * Database storage facade.
  *
  * Delegates all domain operations to entity-specific query files under `./db/`.
- * Cross-entity methods (checkout, occupancy, available capsules) are
+ * Cross-entity methods (checkout, occupancy, available units) are
  * coordinated here in the facade layer.
  */
 export class DatabaseStorage implements IStorage {
@@ -34,7 +34,7 @@ export class DatabaseStorage implements IStorage {
   private readonly userQueries: DbUserQueries;
   private readonly sessionQueries: DbSessionQueries;
   private readonly guestQueries: DbGuestQueries;
-  private readonly capsuleQueries: DbCapsuleQueries;
+  private readonly unitQueries: DbUnitQueries;
   private readonly problemQueries: DbProblemQueries;
   private readonly tokenQueries: DbTokenQueries;
   private readonly notificationQueries: DbNotificationQueries;
@@ -68,7 +68,7 @@ export class DatabaseStorage implements IStorage {
     this.userQueries = new DbUserQueries(this.db);
     this.sessionQueries = new DbSessionQueries(this.db);
     this.guestQueries = new DbGuestQueries(this.db);
-    this.capsuleQueries = new DbCapsuleQueries(this.db);
+    this.unitQueries = new DbUnitQueries(this.db);
     this.problemQueries = new DbProblemQueries(this.db);
     this.tokenQueries = new DbTokenQueries(this.db);
     this.notificationQueries = new DbNotificationQueries(this.db);
@@ -100,17 +100,17 @@ export class DatabaseStorage implements IStorage {
   getGuest(id: string) { return this.guestQueries.getGuest(id); }
   getAllGuests(pagination?: PaginationParams) { return this.guestQueries.getAllGuests(pagination); }
   getCheckedInGuests(pagination?: PaginationParams) { return this.guestQueries.getCheckedInGuests(pagination); }
-  getGuestHistory(pagination?: PaginationParams, sortBy?: string, sortOrder?: 'asc' | 'desc', filters?: { search?: string; nationality?: string; capsule?: string }) {
+  getGuestHistory(pagination?: PaginationParams, sortBy?: string, sortOrder?: 'asc' | 'desc', filters?: { search?: string; nationality?: string; unit?: string }) {
     return this.guestQueries.getGuestHistory(pagination, sortBy, sortOrder, filters);
   }
   updateGuest(id: string, updates: Partial<Guest>) { return this.guestQueries.updateGuest(id, updates); }
   getGuestsWithCheckoutToday() { return this.guestQueries.getGuestsWithCheckoutToday(); }
   getRecentlyCheckedOutGuest() { return this.guestQueries.getRecentlyCheckedOutGuest(); }
-  getGuestByCapsuleAndName(capsuleNumber: string, name: string) { return this.guestQueries.getGuestByCapsuleAndName(capsuleNumber, name); }
+  getGuestByUnitAndName(unitNumber: string, name: string) { return this.guestQueries.getGuestByUnitAndName(unitNumber, name); }
   getGuestByToken(token: string) { return this.guestQueries.getGuestByToken(token); }
   getGuestsByDateRange(start: Date, end: Date) { return this.guestQueries.getGuestsByDateRange(start, end); }
 
-  /** Cross-entity: checkout guest then update capsule cleaning status */
+  /** Cross-entity: checkout guest then update unit cleaning status */
   async checkoutGuest(id: string): Promise<Guest | undefined> {
     // Update guest checkout status
     const guest = await this.guestQueries.getGuest(id);
@@ -121,91 +121,91 @@ export class DatabaseStorage implements IStorage {
       isCheckedIn: false,
     });
 
-    // Mark capsule as needing cleaning after checkout
-    if (result?.capsuleNumber) {
-      await this.db.update(capsules).set({
+    // Mark unit as needing cleaning after checkout
+    if (result?.unitNumber) {
+      await this.db.update(units).set({
         cleaningStatus: "to_be_cleaned",
         isAvailable: true,
-      }).where(eq(capsules.number, result.capsuleNumber));
+      }).where(eq(units.number, result.unitNumber));
     }
 
     return result;
   }
 
-  /** Cross-entity: occupancy requires guest + capsule data */
-  async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
-    // Count only capsules that are available for rent (toRent = true)
-    const allCapsules = await this.capsuleQueries.getAllCapsules();
-    const rentableCapsules = allCapsules.filter(c => c.toRent === true);
-    const totalCapsules = rentableCapsules.length;
-    const rentableCapsuleNumbers = new Set(rentableCapsules.map(c => c.number));
+  /** Cross-entity: occupancy requires guest + unit data */
+  async getUnitOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
+    // Count only units that are available for rent (toRent = true)
+    const allUnits = await this.unitQueries.getAllUnits();
+    const rentableUnits = allUnits.filter(u => u.toRent === true);
+    const totalUnits = rentableUnits.length;
+    const rentableUnitNumbers = new Set(rentableUnits.map(u => u.number));
 
-    // Count only guests in rentable capsules
+    // Count only guests in rentable units
     const checkedInGuestsResponse = await this.getCheckedInGuests();
-    const occupied = checkedInGuestsResponse.data.filter(g => rentableCapsuleNumbers.has(g.capsuleNumber)).length;
+    const occupied = checkedInGuestsResponse.data.filter(g => rentableUnitNumbers.has(g.unitNumber)).length;
 
     // Clamp values to prevent invalid metrics
-    const available = Math.max(0, totalCapsules - occupied);
-    const occupancyRate = totalCapsules > 0 ? Math.min(100, Math.round((occupied / totalCapsules) * 100)) : 0;
+    const available = Math.max(0, totalUnits - occupied);
+    const occupancyRate = totalUnits > 0 ? Math.min(100, Math.round((occupied / totalUnits) * 100)) : 0;
 
     return {
-      total: totalCapsules,
+      total: totalUnits,
       occupied,
       available,
       occupancyRate,
     };
   }
 
-  /** Cross-entity: available capsules requires guest + capsule data */
-  async getAvailableCapsules(): Promise<Capsule[]> {
+  /** Cross-entity: available units requires guest + unit data */
+  async getAvailableUnits(): Promise<Unit[]> {
     const checkedInGuests = await this.getCheckedInGuests();
-    const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
+    const occupiedUnits = new Set(checkedInGuests.data.map(guest => guest.unitNumber));
 
-    const allCapsules = await this.capsuleQueries.getAllCapsules();
-    return allCapsules.filter(capsule =>
-      capsule.isAvailable &&
-      !occupiedCapsules.has(capsule.number) &&
-      capsule.cleaningStatus === "cleaned" &&
-      capsule.toRent === true
+    const allUnits = await this.unitQueries.getAllUnits();
+    return allUnits.filter(unit =>
+      unit.isAvailable &&
+      !occupiedUnits.has(unit.number) &&
+      unit.cleaningStatus === "cleaned" &&
+      unit.toRent === true
     );
   }
 
-  /** Cross-entity: uncleaned available capsules requires guest + capsule data */
-  async getUncleanedAvailableCapsules(): Promise<Capsule[]> {
+  /** Cross-entity: uncleaned available units requires guest + unit data */
+  async getUncleanedAvailableUnits(): Promise<Unit[]> {
     const checkedInGuests = await this.getCheckedInGuests();
-    const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
+    const occupiedUnits = new Set(checkedInGuests.data.map(guest => guest.unitNumber));
 
-    const allCapsules = await this.capsuleQueries.getAllCapsules();
-    return allCapsules.filter(capsule =>
-      capsule.isAvailable &&
-      !occupiedCapsules.has(capsule.number) &&
-      capsule.cleaningStatus === "to_be_cleaned" &&
-      capsule.toRent === true
+    const allUnits = await this.unitQueries.getAllUnits();
+    return allUnits.filter(unit =>
+      unit.isAvailable &&
+      !occupiedUnits.has(unit.number) &&
+      unit.cleaningStatus === "to_be_cleaned" &&
+      unit.toRent === true
     );
   }
 
-  // ─── ICapsuleStorage (delegates to DbCapsuleQueries) ───────────────────────
+  // ─── IUnitStorage (delegates to DbUnitQueries) ─────────────────────────────
 
-  getAllCapsules() { return this.capsuleQueries.getAllCapsules(); }
-  getCapsule(number: string) { return this.capsuleQueries.getCapsule(number); }
-  getCapsuleById(id: string) { return this.capsuleQueries.getCapsuleById(id); }
-  updateCapsule(number: string, updates: Partial<Capsule>) { return this.capsuleQueries.updateCapsule(number, updates); }
-  createCapsule(capsule: InsertCapsule) { return this.capsuleQueries.createCapsule(capsule); }
-  deleteCapsule(number: string) { return this.capsuleQueries.deleteCapsule(number); }
-  markCapsuleCleaned(capsuleNumber: string, cleanedBy: string) { return this.capsuleQueries.markCapsuleCleaned(capsuleNumber, cleanedBy); }
-  markCapsuleNeedsCleaning(capsuleNumber: string) { return this.capsuleQueries.markCapsuleNeedsCleaning(capsuleNumber); }
-  getCapsulesByCleaningStatus(status: "cleaned" | "to_be_cleaned") { return this.capsuleQueries.getCapsulesByCleaningStatus(status); }
+  getAllUnits() { return this.unitQueries.getAllUnits(); }
+  getUnit(number: string) { return this.unitQueries.getUnit(number); }
+  getUnitById(id: string) { return this.unitQueries.getUnitById(id); }
+  updateUnit(number: string, updates: Partial<Unit>) { return this.unitQueries.updateUnit(number, updates); }
+  createUnit(unit: InsertUnit) { return this.unitQueries.createUnit(unit); }
+  deleteUnit(number: string) { return this.unitQueries.deleteUnit(number); }
+  markUnitCleaned(unitNumber: string, cleanedBy: string) { return this.unitQueries.markUnitCleaned(unitNumber, cleanedBy); }
+  markUnitNeedsCleaning(unitNumber: string) { return this.unitQueries.markUnitNeedsCleaning(unitNumber); }
+  getUnitsByCleaningStatus(status: "cleaned" | "to_be_cleaned") { return this.unitQueries.getUnitsByCleaningStatus(status); }
 
-  /** Cross-entity: getGuestsByCapsule queries guests by capsule number */
-  getGuestsByCapsule(capsuleNumber: string) { return this.guestQueries.getGuestsByCapsule(capsuleNumber); }
+  /** Cross-entity: getGuestsByUnit queries guests by unit number */
+  getGuestsByUnit(unitNumber: string) { return this.guestQueries.getGuestsByUnit(unitNumber); }
 
   // ─── IProblemStorage (delegates to DbProblemQueries) ───────────────────────
 
-  createCapsuleProblem(problem: InsertCapsuleProblem) { return this.problemQueries.createCapsuleProblem(problem); }
-  getCapsuleProblems(capsuleNumber: string) { return this.problemQueries.getCapsuleProblems(capsuleNumber); }
+  createUnitProblem(problem: InsertUnitProblem) { return this.problemQueries.createUnitProblem(problem); }
+  getUnitProblems(unitNumber: string) { return this.problemQueries.getUnitProblems(unitNumber); }
   getActiveProblems(pagination?: PaginationParams) { return this.problemQueries.getActiveProblems(pagination); }
   getAllProblems(pagination?: PaginationParams) { return this.problemQueries.getAllProblems(pagination); }
-  updateProblem(problemId: string, updates: Partial<InsertCapsuleProblem>) { return this.problemQueries.updateProblem(problemId, updates); }
+  updateProblem(problemId: string, updates: Partial<InsertUnitProblem>) { return this.problemQueries.updateProblem(problemId, updates); }
   resolveProblem(problemId: string, resolvedBy: string, notes?: string) { return this.problemQueries.resolveProblem(problemId, resolvedBy, notes); }
   deleteProblem(problemId: string) { return this.problemQueries.deleteProblem(problemId); }
 
@@ -216,7 +216,7 @@ export class DatabaseStorage implements IStorage {
   getGuestTokenById(id: string) { return this.tokenQueries.getGuestTokenById(id); }
   getActiveGuestTokens(pagination?: PaginationParams) { return this.tokenQueries.getActiveGuestTokens(pagination); }
   markTokenAsUsed(token: string) { return this.tokenQueries.markTokenAsUsed(token); }
-  updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean) { return this.tokenQueries.updateGuestTokenCapsule(tokenId, capsuleNumber, autoAssign); }
+  updateGuestTokenUnit(tokenId: string, unitNumber: string | null, autoAssign: boolean) { return this.tokenQueries.updateGuestTokenUnit(tokenId, unitNumber, autoAssign); }
   deleteGuestToken(id: string) { return this.tokenQueries.deleteGuestToken(id); }
   cleanExpiredTokens() { return this.tokenQueries.cleanExpiredTokens(); }
 

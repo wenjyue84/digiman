@@ -1,7 +1,7 @@
 export { DbUserQueries } from "./DbUserQueries";
 export { DbSessionQueries } from "./DbSessionQueries";
 export { DbGuestQueries } from "./DbGuestQueries";
-export { DbCapsuleQueries } from "./DbCapsuleQueries";
+export { DbUnitQueries } from "./DbUnitQueries";
 export { DbProblemQueries } from "./DbProblemQueries";
 export { DbTokenQueries } from "./DbTokenQueries";
 export { DbNotificationQueries } from "./DbNotificationQueries";

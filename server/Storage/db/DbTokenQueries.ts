@@ -48,9 +48,9 @@ export class DbTokenQueries implements ITokenStorage {
     return result[0];
   }
 
-  async updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined> {
+  async updateGuestTokenUnit(tokenId: string, unitNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined> {
     const result = await this.db.update(guestTokens).set({
-      capsuleNumber: capsuleNumber,
+      unitNumber: unitNumber,
       autoAssign: autoAssign,
     }).where(eq(guestTokens.id, tokenId)).returning();
     return result[0];

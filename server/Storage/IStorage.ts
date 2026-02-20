@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Unit, type InsertUnit, type Session, type GuestToken, type InsertGuestToken, type UnitProblem, type InsertUnitProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
 
 // ─── Domain Sub-Interfaces (Interface Segregation Principle) ─────────────────
 
@@ -32,43 +32,43 @@ export interface IGuestStorage {
     pagination?: PaginationParams,
     sortBy?: string,
     sortOrder?: 'asc' | 'desc',
-    filters?: { search?: string; nationality?: string; capsule?: string }
+    filters?: { search?: string; nationality?: string; unit?: string }
   ): Promise<PaginatedResponse<Guest>>;
   checkoutGuest(id: string): Promise<Guest | undefined>;
   updateGuest(id: string, updates: Partial<Guest>): Promise<Guest | undefined>;
   getGuestsWithCheckoutToday(): Promise<Guest[]>;
   getRecentlyCheckedOutGuest(): Promise<Guest | undefined>;
-  getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }>;
-  getAvailableCapsules(): Promise<Capsule[]>;
-  getUncleanedAvailableCapsules(): Promise<Capsule[]>;
-  getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined>;
+  getUnitOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }>;
+  getAvailableUnits(): Promise<Unit[]>;
+  getUncleanedAvailableUnits(): Promise<Unit[]>;
+  getGuestByUnitAndName(unitNumber: string, name: string): Promise<Guest | undefined>;
   getGuestByToken(token: string): Promise<Guest | undefined>;
   /** Get guests whose stay overlaps the given date range (checkinTime <= end AND (checkoutTime >= start OR still checked in)) */
   getGuestsByDateRange(start: Date, end: Date): Promise<Guest[]>;
 }
 
-/** Capsule CRUD, availability, and cleaning status */
-export interface ICapsuleStorage {
-  getAllCapsules(): Promise<Capsule[]>;
-  getCapsule(number: string): Promise<Capsule | undefined>;
-  getCapsuleById(id: string): Promise<Capsule | undefined>;
-  updateCapsule(number: string, updates: Partial<Capsule>): Promise<Capsule | undefined>;
-  createCapsule(capsule: InsertCapsule): Promise<Capsule>;
-  deleteCapsule(number: string): Promise<boolean>;
-  markCapsuleCleaned(capsuleNumber: string, cleanedBy: string): Promise<Capsule | undefined>;
-  markCapsuleNeedsCleaning(capsuleNumber: string): Promise<Capsule | undefined>;
-  getCapsulesByCleaningStatus(status: "cleaned" | "to_be_cleaned"): Promise<Capsule[]>;
-  getGuestsByCapsule(capsuleNumber: string): Promise<Guest[]>;
+/** Unit CRUD, availability, and cleaning status */
+export interface IUnitStorage {
+  getAllUnits(): Promise<Unit[]>;
+  getUnit(number: string): Promise<Unit | undefined>;
+  getUnitById(id: string): Promise<Unit | undefined>;
+  updateUnit(number: string, updates: Partial<Unit>): Promise<Unit | undefined>;
+  createUnit(unit: InsertUnit): Promise<Unit>;
+  deleteUnit(number: string): Promise<boolean>;
+  markUnitCleaned(unitNumber: string, cleanedBy: string): Promise<Unit | undefined>;
+  markUnitNeedsCleaning(unitNumber: string): Promise<Unit | undefined>;
+  getUnitsByCleaningStatus(status: "cleaned" | "to_be_cleaned"): Promise<Unit[]>;
+  getGuestsByUnit(unitNumber: string): Promise<Guest[]>;
 }
 
-/** Capsule problem reporting and resolution */
+/** Unit problem reporting and resolution */
 export interface IProblemStorage {
-  createCapsuleProblem(problem: InsertCapsuleProblem): Promise<CapsuleProblem>;
-  getCapsuleProblems(capsuleNumber: string): Promise<CapsuleProblem[]>;
-  getActiveProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>>;
-  getAllProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>>;
-  updateProblem(problemId: string, updates: Partial<InsertCapsuleProblem>): Promise<CapsuleProblem | undefined>;
-  resolveProblem(problemId: string, resolvedBy: string, notes?: string): Promise<CapsuleProblem | undefined>;
+  createUnitProblem(problem: InsertUnitProblem): Promise<UnitProblem>;
+  getUnitProblems(unitNumber: string): Promise<UnitProblem[]>;
+  getActiveProblems(pagination?: PaginationParams): Promise<PaginatedResponse<UnitProblem>>;
+  getAllProblems(pagination?: PaginationParams): Promise<PaginatedResponse<UnitProblem>>;
+  updateProblem(problemId: string, updates: Partial<InsertUnitProblem>): Promise<UnitProblem | undefined>;
+  resolveProblem(problemId: string, resolvedBy: string, notes?: string): Promise<UnitProblem | undefined>;
   deleteProblem(problemId: string): Promise<boolean>;
 }
 
@@ -79,7 +79,7 @@ export interface ITokenStorage {
   getGuestTokenById(id: string): Promise<GuestToken | undefined>;
   getActiveGuestTokens(pagination?: PaginationParams): Promise<PaginatedResponse<GuestToken>>;
   markTokenAsUsed(token: string): Promise<GuestToken | undefined>;
-  updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined>;
+  updateGuestTokenUnit(tokenId: string, unitNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined>;
   deleteGuestToken(id: string): Promise<boolean>;
   cleanExpiredTokens(): Promise<void>;
 }
@@ -132,7 +132,7 @@ export interface IStorage extends
   IUserStorage,
   ISessionStorage,
   IGuestStorage,
-  ICapsuleStorage,
+  IUnitStorage,
   IProblemStorage,
   ITokenStorage,
   INotificationStorage,
