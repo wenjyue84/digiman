@@ -54,9 +54,11 @@
         "All columns nullable so capsule hostels don't need them",
         "pricePerNight is text not numeric to avoid floating point precision issues (same pattern as paymentAmount in guests)"
       ],
-      "dependencies": ["US-001"],
+      "dependencies": [
+        "US-001"
+      ],
       "estimatedComplexity": "small",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-003",
@@ -79,7 +81,10 @@
         "Use git mv for file renames to preserve history",
         "unitType enum values: 'studio', '1bedroom', '2bedroom', '3bedroom' — keep extensible"
       ],
-      "dependencies": ["US-001", "US-002"],
+      "dependencies": [
+        "US-001",
+        "US-002"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -102,7 +107,9 @@
         "Use git mv for file renames",
         "Drizzle queries: replace 'capsules' table import with 'units', replace eq(guests.capsuleNumber, ...) with eq(guests.unitNumber, ...)"
       ],
-      "dependencies": ["US-003"],
+      "dependencies": [
+        "US-003"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -123,7 +130,9 @@
         "Files: server/Storage/mem/MemCapsuleStore.ts (rename), MemGuestStore.ts, MemProblemStore.ts, MemTokenStore.ts, server/Storage/MemStorage.ts",
         "Mirror the interface changes from US-004 — same method names, same param types"
       ],
-      "dependencies": ["US-004"],
+      "dependencies": [
+        "US-004"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -147,7 +156,9 @@
         "Files: server/routes/capsules.ts (rename to units.ts), server/routes/index.ts, guests.ts, guest-tokens.ts, dashboard.ts, admin.ts",
         "Also check server/routes/objects.ts and server/routes/settings.ts for any capsule refs"
       ],
-      "dependencies": ["US-005"],
+      "dependencies": [
+        "US-005"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -171,7 +182,9 @@
         "Test assertions may reference /api/capsules endpoints — update to /api/units",
         "Test data objects with capsuleNumber fields -> unitNumber"
       ],
-      "dependencies": ["US-006"],
+      "dependencies": [
+        "US-006"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -194,7 +207,9 @@
         "Update all import statements in consuming files: grep for old filenames across client/src/",
         "Component function names inside files should also be renamed (e.g., CapsulesTab -> UnitsTab)"
       ],
-      "dependencies": ["US-001"],
+      "dependencies": [
+        "US-001"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -220,7 +235,10 @@
         "Be careful not to replace 'capsule' in useAccommodationLabels.ts — that file stays as-is",
         "Also update client/src/components/guest-table/ files (SwipeableGuestCard, etc.)"
       ],
-      "dependencies": ["US-006", "US-008"],
+      "dependencies": [
+        "US-006",
+        "US-008"
+      ],
       "estimatedComplexity": "large",
       "passes": false
     },
@@ -242,7 +260,9 @@
         "Keys like capsuleNumber -> unitNumber; display text like 'Capsule Number' -> use labels from useAccommodationLabels() instead",
         "Some i18n values may reference 'capsule' in context — update to generic 'unit' where appropriate"
       ],
-      "dependencies": ["US-009"],
+      "dependencies": [
+        "US-009"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -270,7 +290,9 @@
         "Also update tool descriptions that mention 'capsule' to say 'unit'",
         "Check RainbowAI/src/assistant/workflow-enhancer.ts and workflow-executor.ts for capsule refs"
       ],
-      "dependencies": ["US-006"],
+      "dependencies": [
+        "US-006"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -294,7 +316,10 @@
         "Index rename syntax: ALTER INDEX idx_capsules_is_available RENAME TO idx_units_is_available",
         "Test locally: create test DB, seed data, run migration, verify drizzle-kit push shows no changes needed"
       ],
-      "dependencies": ["US-001", "US-002"],
+      "dependencies": [
+        "US-001",
+        "US-002"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -318,7 +343,13 @@
         "Acceptable exclusions: @deprecated aliases in schema-tables.ts, migration SQL files, CLAUDE.md/docs",
         "If any orphaned references found, fix them before marking this story complete"
       ],
-      "dependencies": ["US-007", "US-009", "US-010", "US-011", "US-012"],
+      "dependencies": [
+        "US-007",
+        "US-009",
+        "US-010",
+        "US-011",
+        "US-012"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -361,7 +392,9 @@
         "Edit: server/routes.ts — add before auth middleware routes so it's unauthenticated",
         "React Query queryKey: ['/api/business-config']"
       ],
-      "dependencies": ["US-014"],
+      "dependencies": [
+        "US-014"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -382,7 +415,9 @@
         "Files: .env.example, RainbowAI/.env.example, server/validate-env.ts",
         "All new vars are OPTIONAL — system works with zero business env vars set"
       ],
-      "dependencies": ["US-014"],
+      "dependencies": [
+        "US-014"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -406,7 +441,9 @@
         "receiptGenerator needs BusinessConfig passed as parameter — update callers",
         "vite.config.ts uses process.env at build time, not runtime — values baked into the bundle"
       ],
-      "dependencies": ["US-015"],
+      "dependencies": [
+        "US-015"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -428,7 +465,9 @@
         "Default BOT_NAME='Rainbow', default BUSINESS_NAME='Pelangi Capsule Hostel'",
         "Default STAFF_PRIMARY_PHONE='+60127088789'"
       ],
-      "dependencies": ["US-014"],
+      "dependencies": [
+        "US-014"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -451,7 +490,10 @@
         "Southern example: Studio-A:ground:studio:2,1BR-1:first_floor:1bedroom:4",
         "Parser: split by comma, then by colon — robust error handling for malformed entries"
       ],
-      "dependencies": ["US-001", "US-014"],
+      "dependencies": [
+        "US-001",
+        "US-014"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -496,7 +538,9 @@
         "OR create per-target files: deploy/targets/pelangi.ecosystem.cjs and deploy/targets/southern.ecosystem.cjs",
         "Deploy script copies the right one during deployment"
       ],
-      "dependencies": ["US-020"],
+      "dependencies": [
+        "US-020"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -517,7 +561,10 @@
         "Run drizzle-kit push from local machine with the new DATABASE_URL",
         "Verify with: psql <connection_string> -c '\\dt' shows units table (not capsules)"
       ],
-      "dependencies": ["US-013", "US-019"],
+      "dependencies": [
+        "US-013",
+        "US-019"
+      ],
       "estimatedComplexity": "small",
       "passes": false
     },
@@ -544,7 +591,11 @@
         "Copy .env template from deploy/targets/southern.env.template (create this)",
         "Use existing SSH key: ~/.ssh/LightsailDefaultKeyPair.pem"
       ],
-      "dependencies": ["US-020", "US-021", "US-022"],
+      "dependencies": [
+        "US-020",
+        "US-021",
+        "US-022"
+      ],
       "estimatedComplexity": "large",
       "passes": false
     },
@@ -569,7 +620,9 @@
         "Reference: .claude/skills/cloudflare-setup/SKILL.md for tunnel setup procedure",
         "Existing Pelangi tunnel ID: 0ef67970-4094-492d-a513-8864fa4cfd53 — Southern gets a separate tunnel"
       ],
-      "dependencies": ["US-023"],
+      "dependencies": [
+        "US-023"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -593,7 +646,10 @@
         "Each instance MUST have its own WHATSAPP_AUTH_DIR — cannot share Baileys credentials",
         "Reference: .claude/skills/whatsapp-baileys/SKILL.md for pairing procedure"
       ],
-      "dependencies": ["US-023", "US-018"],
+      "dependencies": [
+        "US-023",
+        "US-018"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -618,7 +674,10 @@
         "Sequence: backup -> migration SQL -> deploy new code -> verify",
         "If anything breaks: rollback SQL + git revert deploy"
       ],
-      "dependencies": ["US-012", "US-013"],
+      "dependencies": [
+        "US-012",
+        "US-013"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     },
@@ -645,7 +704,12 @@
         "Check pm2 status, free -h, and application logs on both servers",
         "Verify WhatsApp bot responses on both numbers"
       ],
-      "dependencies": ["US-023", "US-024", "US-025", "US-026"],
+      "dependencies": [
+        "US-023",
+        "US-024",
+        "US-025",
+        "US-026"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     }

@@ -91,6 +91,9 @@ export const units = pgTable("units", {
   position: text("position"), // 'top' or 'bottom' for stacked capsules
   remark: text("remark"), // Additional notes about the unit
   branch: text("branch"), // Branch location identifier
+  unitType: text("unit_type"), // 'studio', '1bedroom', '2bedroom', '3bedroom', or null for capsules
+  maxOccupancy: integer("max_occupancy"), // Max guests per unit
+  pricePerNight: text("price_per_night"), // Base price as decimal string (text for precision)
 }, (table) => ([
   index("idx_units_is_available").on(table.isAvailable),
   index("idx_units_section").on(table.section),
