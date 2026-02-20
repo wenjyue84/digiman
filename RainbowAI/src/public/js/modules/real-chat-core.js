@@ -303,6 +303,9 @@ export async function loadRealChat() {
     $.lastRefreshAt = Date.now();
     updateRefreshTimestamp();
 
+    // US-015: Load contact tags + units for filter chips (mirrors US-004)
+    loadRcContactMaps();
+
     if ($.conversations.length > 0 && $.activePhone === null) {
       openConversation($.conversations[0].phone);
     }
@@ -397,6 +400,20 @@ export function renderConversationList(conversations) {
     );
   }
 
+  // US-015: Apply chip filter (mirrors US-003/US-004)
+  if ($.activeFilter === 'waiting') {
+    filtered = filtered.filter(c => c.lastMessageRole === 'user');
+  }
+  if ($.tagFilter && $.tagFilter.length > 0) {
+    filtered = filtered.filter(c => {
+      var tags = $.contactTagsMap[c.phone] || [];
+      return $.tagFilter.some(t => tags.indexOf(t) >= 0);
+    });
+  }
+  if ($.unitFilter) {
+    filtered = filtered.filter(c => $.contactUnitsMap[c.phone] === $.unitFilter);
+  }
+
   if (!filtered.length) {
     list.innerHTML = '<div class="rc-sidebar-empty"><p>No matching conversations.</p></div>';
     return;
@@ -436,6 +453,84 @@ export function filterConversations() {
     console.log('[RealChat] Filter triggered');
     renderConversationList($.conversations);
   }, 300);
+}
+
+// ─── US-015: Filter Chips (mirrors US-003/US-004) ───────────────
+
+/** Load contact tags + units maps from API */
+async function loadRcContactMaps() {
+  try {
+    const [tagsMap, unitsMap] = await Promise.all([
+      api('/contacts/tags-map').catch(() => ({})),
+      api('/contacts/units-map').catch(() => ({}))
+    ]);
+    $.contactTagsMap = tagsMap || {};
+    $.contactUnitsMap = unitsMap || {};
+  } catch (e) {
+    console.warn('[RealChat] Failed to load contact maps:', e);
+  }
+}
+
+export function setRcFilter(filter) {
+  $.activeFilter = filter;
+  // Update chip UI
+  document.querySelectorAll('#rc-filter-bar .lc-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.filter === filter);
+  });
+  renderConversationList($.conversations);
+}
+
+export function toggleRcTagDropdown() {
+  var dd = document.getElementById('rc-tag-dropdown');
+  if (!dd) return;
+  if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+  // Build tag list from contactTagsMap
+  var tagSet = new Set();
+  Object.values($.contactTagsMap).forEach(function(tags) {
+    if (Array.isArray(tags)) tags.forEach(function(t) { tagSet.add(t); });
+  });
+  var tags = Array.from(tagSet).sort();
+  dd.innerHTML = tags.length === 0
+    ? '<div style="padding:8px 12px;font-size:12px;color:#9ca3af;">No tags found</div>'
+    : tags.map(function(t) {
+      var isActive = $.tagFilter.indexOf(t) >= 0;
+      return '<button onclick="toggleRcTag(\'' + escapeAttr(t) + '\')" style="display:block;width:100%;text-align:left;padding:6px 12px;font-size:12px;border:none;background:' + (isActive ? '#e7fce3' : 'transparent') + ';cursor:pointer;">' + escapeHtml(t) + (isActive ? ' ✓' : '') + '</button>';
+    }).join('');
+  dd.style.display = '';
+}
+
+export function toggleRcTag(tag) {
+  var idx = $.tagFilter.indexOf(tag);
+  if (idx >= 0) $.tagFilter.splice(idx, 1); else $.tagFilter.push(tag);
+  var chip = document.getElementById('rc-tag-chip');
+  if (chip) chip.textContent = $.tagFilter.length ? 'Tags (' + $.tagFilter.length + ')' : 'Tags ▾';
+  if ($.tagFilter.length) chip.classList.add('active'); else chip.classList.remove('active');
+  toggleRcTagDropdown(); // refresh dropdown
+  renderConversationList($.conversations);
+}
+
+export function toggleRcUnitDropdown() {
+  var dd = document.getElementById('rc-unit-dropdown');
+  if (!dd) return;
+  if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+  var unitSet = new Set(Object.values($.contactUnitsMap));
+  var units = Array.from(unitSet).sort();
+  dd.innerHTML = '<button onclick="setRcUnit(\'\')" style="display:block;width:100%;text-align:left;padding:6px 12px;font-size:12px;border:none;background:' + (!$.unitFilter ? '#e7fce3' : 'transparent') + ';cursor:pointer;">All Units</button>'
+    + (units.length === 0
+      ? '<div style="padding:8px 12px;font-size:12px;color:#9ca3af;">No units found</div>'
+      : units.map(function(u) {
+        return '<button onclick="setRcUnit(\'' + escapeAttr(u) + '\')" style="display:block;width:100%;text-align:left;padding:6px 12px;font-size:12px;border:none;background:' + ($.unitFilter === u ? '#e7fce3' : 'transparent') + ';cursor:pointer;">' + escapeHtml(u) + '</button>';
+      }).join(''));
+  dd.style.display = '';
+}
+
+export function setRcUnit(unit) {
+  $.unitFilter = unit;
+  var chip = document.getElementById('rc-unit-chip');
+  if (chip) chip.textContent = unit ? unit : 'Unit ▾';
+  if (unit) chip.classList.add('active'); else chip.classList.remove('active');
+  document.getElementById('rc-unit-dropdown').style.display = 'none';
+  renderConversationList($.conversations);
 }
 
 // ─── Chat View ───────────────────────────────────────────────────
@@ -498,7 +593,8 @@ export function renderChatView(log) {
     const msg = log.messages[i];
     const msgDate = new Date(msg.timestamp).toLocaleDateString('en-MY', { year: 'numeric', month: 'short', day: 'numeric' });
     if (msgDate !== lastDate) {
-      html += '<div class="rc-date-sep"><span>' + msgDate + '</span></div>';
+      const isoDate = new Date(msg.timestamp).toISOString().slice(0, 10);
+      html += '<div class="rc-date-sep" data-date="' + isoDate + '"><span>' + msgDate + '</span></div>';
       lastDate = msgDate;
       lastSide = '';
     }

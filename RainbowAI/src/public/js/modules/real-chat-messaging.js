@@ -304,3 +304,112 @@ async function sendRcMedia() {
     btn.disabled = false;
   }
 }
+
+// ─── Date Jump for Live Simulation (US-015) ──────────────────────────
+
+export function toggleRcDateJump() {
+  var pop = document.getElementById('rc-date-jump-popover');
+  if (!pop) return;
+  var isOpen = pop.style.display !== 'none';
+  pop.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    var inp = document.getElementById('rc-date-jump-input');
+    if (inp) inp.focus();
+    setTimeout(function () {
+      function onOutside(e) {
+        var wrap = document.querySelector('.rc-msg-search-date-wrap');
+        if (wrap && !wrap.contains(e.target)) {
+          pop.style.display = 'none';
+          document.removeEventListener('click', onOutside);
+        }
+      }
+      document.addEventListener('click', onOutside);
+    }, 0);
+  }
+}
+
+export function jumpToRcDate(dateStr) {
+  var pop = document.getElementById('rc-date-jump-popover');
+  if (pop) pop.style.display = 'none';
+  if (!dateStr) return;
+  var seps = document.querySelectorAll('#rc-messages .rc-date-sep[data-date]');
+  var found = null;
+  for (var i = 0; i < seps.length; i++) {
+    if (seps[i].getAttribute('data-date') >= dateStr) {
+      found = seps[i];
+      break;
+    }
+  }
+  var dateOpts = { day: 'numeric', month: 'short', year: 'numeric' };
+  var displayDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', dateOpts);
+  if (!found) {
+    if (window.toast) window.toast('No messages found for ' + displayDate, 'info');
+    return;
+  }
+  found.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  found.classList.add('lc-date-jump-highlight');
+  setTimeout(function () { found.classList.remove('lc-date-jump-highlight'); }, 2000);
+}
+
+// ─── Schedule Message for Live Simulation (US-015, mirrors US-008) ──
+
+export function toggleRcSchedule() {
+  var pop = document.getElementById('rc-schedule-popover');
+  if (!pop) return;
+  var isOpen = pop.style.display !== 'none';
+  pop.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    // Pre-fill with tomorrow, current time
+    var now = new Date();
+    now.setDate(now.getDate() + 1);
+    var dateInput = document.getElementById('rc-schedule-date');
+    if (dateInput) dateInput.value = now.toISOString().slice(0, 10);
+    var hhInput = document.getElementById('rc-schedule-hh');
+    var mmInput = document.getElementById('rc-schedule-mm');
+    if (hhInput) hhInput.value = String(new Date().getHours()).padStart(2, '0');
+    if (mmInput) mmInput.value = String(new Date().getMinutes()).padStart(2, '0');
+    updateRcSchedulePreview();
+  }
+  $.scheduleOpen = !isOpen;
+}
+
+export function updateRcSchedulePreview() {
+  var dateVal = (document.getElementById('rc-schedule-date') || {}).value || '';
+  var hh = (document.getElementById('rc-schedule-hh') || {}).value || '0';
+  var mm = (document.getElementById('rc-schedule-mm') || {}).value || '0';
+  var ss = (document.getElementById('rc-schedule-ss') || {}).value || '0';
+  var preview = document.getElementById('rc-schedule-preview');
+  if (!preview || !dateVal) return;
+  var d = new Date(dateVal + 'T' + hh.padStart(2, '0') + ':' + mm.padStart(2, '0') + ':' + ss.padStart(2, '0'));
+  if (isNaN(d.getTime())) { preview.textContent = ''; return; }
+  preview.textContent = 'Will send: ' + d.toLocaleString('en-MY', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+export async function confirmRcSchedule() {
+  if (!$.activePhone) { if (window.toast) window.toast('Select a conversation first', 'error'); return; }
+  var input = document.getElementById('rc-input-box');
+  var message = (input ? input.value : '').trim();
+  if (!message) { if (window.toast) window.toast('Type a message to schedule', 'error'); return; }
+  var dateVal = (document.getElementById('rc-schedule-date') || {}).value;
+  var hh = (document.getElementById('rc-schedule-hh') || {}).value || '0';
+  var mm = (document.getElementById('rc-schedule-mm') || {}).value || '0';
+  var ss = (document.getElementById('rc-schedule-ss') || {}).value || '0';
+  if (!dateVal) { if (window.toast) window.toast('Pick a date', 'error'); return; }
+  var scheduledAt = new Date(dateVal + 'T' + hh.padStart(2, '0') + ':' + mm.padStart(2, '0') + ':' + ss.padStart(2, '0'));
+  if (isNaN(scheduledAt.getTime()) || scheduledAt <= new Date()) {
+    if (window.toast) window.toast('Schedule time must be in the future', 'error');
+    return;
+  }
+  var log = $.conversations.find(function(c) { return c.phone === $.activePhone; });
+  try {
+    await api('/scheduled-messages', {
+      method: 'POST',
+      body: { phone: $.activePhone, message: message, scheduledAt: scheduledAt.toISOString(), instanceId: log?.instanceId }
+    });
+    if (window.toast) window.toast('Message scheduled for ' + scheduledAt.toLocaleString('en-MY', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), 'success');
+    if (input) input.value = '';
+    toggleRcSchedule();
+  } catch (err) {
+    if (window.toast) window.toast('Failed to schedule: ' + (err.message || 'Unknown error'), 'error');
+  }
+}

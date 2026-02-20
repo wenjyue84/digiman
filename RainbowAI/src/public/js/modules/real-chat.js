@@ -16,14 +16,17 @@ import {
   toggleDevMode, toggleRcSearch, loadRealChat,
   filterConversations, openConversation,
   toggleMetaDetails, toggleDevPanel, deleteActiveChat,
-  cleanup as cleanupRealChat
+  cleanup as cleanupRealChat,
+  setRcFilter, toggleRcTagDropdown, toggleRcTag, toggleRcUnitDropdown, setRcUnit
 } from './real-chat-core.js';
 import {
   toggleTranslateMode, handleLangChange,
   closeTranslateModal, confirmTranslation,
   sendManualReply, sendOriginalMessage, refreshActiveChat,
   autoResizeInput, handleInputKeydown,
-  toggleRcAttachMenu, pickRcFile, rcFileSelected, clearRcFile
+  toggleRcAttachMenu, pickRcFile, rcFileSelected, clearRcFile,
+  toggleRcDateJump, jumpToRcDate,
+  toggleRcSchedule, updateRcSchedulePreview, confirmRcSchedule
 } from './real-chat-messaging.js';
 import {
   openRcEditModal, closeRcEditModal, saveRcEdit,
@@ -59,4 +62,15 @@ window.toggleRcAttachMenu = toggleRcAttachMenu;
 window.pickRcFile = pickRcFile;
 window.rcFileSelected = rcFileSelected;
 window.clearRcFile = clearRcFile;
+window.toggleRcDateJump = toggleRcDateJump;
+window.jumpToRcDate = jumpToRcDate;
 window.cleanupRealChat = cleanupRealChat;
+// US-015: Filter chips + schedule message (mirrors live-chat features)
+window.setRcFilter = setRcFilter;
+window.toggleRcTagDropdown = toggleRcTagDropdown;
+window.toggleRcTag = toggleRcTag;
+window.toggleRcUnitDropdown = toggleRcUnitDropdown;
+window.setRcUnit = setRcUnit;
+window.toggleRcSchedule = toggleRcSchedule;
+window.updateRcSchedulePreview = updateRcSchedulePreview;
+window.confirmRcSchedule = confirmRcSchedule;

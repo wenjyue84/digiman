@@ -20,7 +20,19 @@ export const $ = {
   /** @type {EventSource|null} SSE connection for real-time conversation updates (US-159) */
   eventSource: null,
   /** @type {boolean} Whether SSE is connected (false = using polling fallback) */
-  sseConnected: false
+  sseConnected: false,
+  /** @type {string} Active filter chip for conversation list (US-015) */
+  activeFilter: 'all',
+  /** @type {Object<string, string[]>} phone→tags[] map for tag filtering (US-015, mirrors US-004) */
+  contactTagsMap: {},
+  /** @type {string[]} Currently selected tags for filtering (US-015) */
+  tagFilter: [],
+  /** @type {Object<string, string>} phone→unit map for unit filtering (US-015) */
+  contactUnitsMap: {},
+  /** @type {string} Currently selected unit for filtering (US-015) */
+  unitFilter: '',
+  /** @type {boolean} Schedule popover open state (US-015, mirrors US-008) */
+  scheduleOpen: false
 };
 
 // Translation helper (shared module with live-chat)
