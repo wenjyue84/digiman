@@ -16,13 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import { Building, Plus, Edit, Trash2, Filter, Download } from "lucide-react";
 
 import { apiRequest } from "@/lib/queryClient";
-import { type CapsuleProblem, type PaginatedResponse } from "@shared/schema";
+import { type UnitProblem, type PaginatedResponse } from "@shared/schema";
 
-// Schema for capsule form validation
-const capsuleFormSchema = z.object({
+// Schema for Unit form validation
+const UnitFormSchema = z.object({
   number: z.string()
-    .min(1, "Capsule number is required")
-    .regex(/^C\d+$/, "Capsule number must be in format like C1, C2, C24"),
+    .min(1, "Unit number is required")
+    .regex(/^C\d+$/, "Unit number must be in format like C1, C2, C24"),
   section: z.enum(["back", "middle", "front"], {
     required_error: "Section must be 'back', 'middle', or 'front'",
   }),
@@ -33,38 +33,38 @@ const capsuleFormSchema = z.object({
   remark: z.string().max(500, "Remark must not exceed 500 characters").optional(),
 });
 
-type CapsuleFormData = z.infer<typeof capsuleFormSchema>;
+type UnitFormData = z.infer<typeof UnitFormSchema>;
 
-export default function CapsulesTab({ capsules, queryClient, toast, labels }: any) {
-  console.log('CapsulesTab rendered with:', { capsules: capsules?.length, labels });
+export default function UnitsTab({ Units, queryClient, toast, labels }: any) {
+  console.log('UnitsTab rendered with:', { Units: Units?.length, labels });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedCapsule, setSelectedCapsule] = useState<any>(null);
-  const [problemsByCapsule, setProblemsByCapsule] = useState<Record<string, any[]>>({});
+  const [selectedUnit, setSelectedUnit] = useState<any>(null);
+  const [problemsByUnit, setProblemsByUnit] = useState<Record<string, any[]>>({});
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('table');
   const [toRentFilter, setToRentFilter] = useState<'all' | 'yes' | 'no'>('all');
 
-  const allItems = Array.isArray(capsules) ? capsules : [];
+  const allItems = Array.isArray(Units) ? Units : [];
   
-  // Helper function to extract numeric part from capsule number for natural sorting
-  const extractCapsuleNumber = (unitNumber: string): number => {
+  // Helper function to extract numeric part from Unit number for natural sorting
+  const extractUnitNumber = (unitNumber: string): number => {
     const match = unitNumber.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   };
   
-  // Filter items based on toRent status and sort by capsule number ascending
+  // Filter items based on toRent status and sort by Unit number ascending
   const items = allItems
-    .filter(capsule => {
+    .filter(Unit => {
       if (toRentFilter === 'all') return true;
-      if (toRentFilter === 'yes') return capsule.toRent !== false; // Default to true if undefined
-      if (toRentFilter === 'no') return capsule.toRent === false;
+      if (toRentFilter === 'yes') return Unit.toRent !== false; // Default to true if undefined
+      if (toRentFilter === 'no') return Unit.toRent === false;
       return true;
     })
-    .sort((a, b) => extractCapsuleNumber(a.number) - extractCapsuleNumber(b.number));
+    .sort((a, b) => extractUnitNumber(a.number) - extractUnitNumber(b.number));
 
-  // Fetch problems for capsules
-  const { data: problemsResponse } = useQuery<PaginatedResponse<CapsuleProblem>>({
+  // Fetch problems for Units
+  const { data: problemsResponse } = useQuery<PaginatedResponse<UnitProblem>>({
     queryKey: ["/api/problems"],
     enabled: true,
   });
@@ -78,12 +78,12 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
         }
         problemsMap[problem.unitNumber].push(problem);
       });
-      setProblemsByCapsule(problemsMap);
+      setProblemsByUnit(problemsMap);
     }
   }, [problemsResponse]);
 
-  const createCapsuleForm = useForm<CapsuleFormData>({
-    resolver: zodResolver(capsuleFormSchema),
+  const createUnitForm = useForm<UnitFormData>({
+    resolver: zodResolver(UnitFormSchema),
     defaultValues: {
       number: "",
       section: "middle",
@@ -95,8 +95,8 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     },
   });
 
-  const editCapsuleForm = useForm<CapsuleFormData>({
-    resolver: zodResolver(capsuleFormSchema),
+  const editUnitForm = useForm<UnitFormData>({
+    resolver: zodResolver(UnitFormSchema),
     defaultValues: {
       number: "",
       section: "middle",
@@ -108,131 +108,131 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     },
   });
 
-  const createCapsuleMutation = useMutation({
-    mutationFn: async (data: CapsuleFormData) => {
-      const response = await apiRequest("POST", "/api/capsules", {
+  const createUnitMutation = useMutation({
+    mutationFn: async (data: UnitFormData) => {
+      const response = await apiRequest("POST", "/api/Units", {
         ...data,
         purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/Units"] });
       setCreateDialogOpen(false);
-      createCapsuleForm.reset();
+      createUnitForm.reset();
       toast({
-        title: "Capsule Added",
-        description: "The capsule has been added successfully.",
+        title: "Unit Added",
+        description: "The Unit has been added successfully.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to add capsule",
+        description: error.message || "Failed to add Unit",
         variant: "destructive",
       });
     },
   });
 
-  const updateCapsuleMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: CapsuleFormData }) => {
-      const response = await apiRequest("PATCH", `/api/capsules/${id}`, {
+  const updateUnitMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UnitFormData }) => {
+      const response = await apiRequest("PATCH", `/api/Units/${id}`, {
         ...data,
         purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/Units"] });
       setEditDialogOpen(false);
-      setSelectedCapsule(null);
-      editCapsuleForm.reset();
+      setSelectedUnit(null);
+      editUnitForm.reset();
       toast({
-        title: "Capsule Updated",
-        description: "The capsule has been updated successfully.",
+        title: "Unit Updated",
+        description: "The Unit has been updated successfully.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to update capsule",
+        description: error.message || "Failed to update Unit",
         variant: "destructive",
       });
     },
   });
 
-  const deleteCapsuleMutation = useMutation({
+  const deleteUnitMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/capsules/${id}`);
+      await apiRequest("DELETE", `/api/Units/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/Units"] });
       setDeleteDialogOpen(false);
-      setSelectedCapsule(null);
+      setSelectedUnit(null);
       toast({
-        title: "Capsule Deleted",
-        description: "The capsule has been deleted successfully.",
+        title: "Unit Deleted",
+        description: "The Unit has been deleted successfully.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to delete capsule",
+        description: error.message || "Failed to delete Unit",
         variant: "destructive",
       });
     },
   });
 
-  const handleCreateCapsule = (data: CapsuleFormData) => {
-    createCapsuleMutation.mutate(data);
+  const handleCreateUnit = (data: UnitFormData) => {
+    createUnitMutation.mutate(data);
   };
 
-  const handleEditCapsule = (capsule: any) => {
-    setSelectedCapsule(capsule);
-    editCapsuleForm.reset({
-      number: capsule.number,
-      section: capsule.section,
-      toRent: capsule.toRent !== undefined ? capsule.toRent : true,
-      color: capsule.color || "",
-      purchaseDate: capsule.purchaseDate ? new Date(capsule.purchaseDate).toISOString().split('T')[0] : "",
-      position: capsule.position || "",
-      remark: capsule.remark || "",
+  const handleEditUnit = (Unit: any) => {
+    setSelectedUnit(Unit);
+    editUnitForm.reset({
+      number: Unit.number,
+      section: Unit.section,
+      toRent: Unit.toRent !== undefined ? Unit.toRent : true,
+      color: Unit.color || "",
+      purchaseDate: Unit.purchaseDate ? new Date(Unit.purchaseDate).toISOString().split('T')[0] : "",
+      position: Unit.position || "",
+      remark: Unit.remark || "",
     });
     setEditDialogOpen(true);
   };
 
-  const handleUpdateCapsule = (data: CapsuleFormData) => {
-    if (selectedCapsule) {
-      updateCapsuleMutation.mutate({ id: selectedCapsule.id, data });
+  const handleUpdateUnit = (data: UnitFormData) => {
+    if (selectedUnit) {
+      updateUnitMutation.mutate({ id: selectedUnit.id, data });
     }
   };
 
-  const handleDeleteCapsule = (capsule: any) => {
-    setSelectedCapsule(capsule);
+  const handleDeleteUnit = (Unit: any) => {
+    setSelectedUnit(Unit);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = () => {
-    if (selectedCapsule) {
-      deleteCapsuleMutation.mutate(selectedCapsule.id);
+    if (selectedUnit) {
+      deleteUnitMutation.mutate(selectedUnit.id);
     }
   };
 
-  const getProblemsForCapsule = (unitNumber: string) => {
-    return problemsByCapsule[unitNumber] || [];
+  const getProblemsForUnit = (unitNumber: string) => {
+    return problemsByUnit[unitNumber] || [];
   };
 
   const getActiveProblemsCount = (unitNumber: string) => {
-    const problems = getProblemsForCapsule(unitNumber);
+    const problems = getProblemsForUnit(unitNumber);
     return problems.filter(p => !p.isResolved).length;
   };
 
-  const exportCapsulesToCSV = () => {
+  const exportUnitsToCSV = () => {
     console.log('Export button clicked, items:', items.length);
     if (items.length === 0) {
       toast({
         title: "No Data",
-        description: "There are no capsules to export.",
+        description: "There are no Units to export.",
         variant: "destructive",
       });
       return;
@@ -240,7 +240,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
 
     // Prepare CSV data
     const csvHeaders = [
-      "Capsule Number",
+      "Unit Number",
       "Section", 
       "Position",
       "To Rent",
@@ -250,15 +250,15 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
       "Active Problems"
     ];
 
-    const csvData = items.map(capsule => [
-      capsule.number,
-      capsule.section,
-      capsule.position || "",
-      capsule.toRent !== false ? "Yes" : "No",
-      capsule.color || "",
-      capsule.purchaseDate ? new Date(capsule.purchaseDate).toLocaleDateString() : "",
-      capsule.remark || "",
-      getActiveProblemsCount(capsule.number)
+    const csvData = items.map(Unit => [
+      Unit.number,
+      Unit.section,
+      Unit.position || "",
+      Unit.toRent !== false ? "Yes" : "No",
+      Unit.color || "",
+      Unit.purchaseDate ? new Date(Unit.purchaseDate).toLocaleDateString() : "",
+      Unit.remark || "",
+      getActiveProblemsCount(Unit.number)
     ]);
 
     // Combine headers and data
@@ -271,7 +271,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `capsules_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `Units_export_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -279,7 +279,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
 
     toast({
       title: "Export Successful",
-      description: `Exported ${items.length} capsules to CSV file.`,
+      description: `Exported ${items.length} Units to CSV file.`,
     });
   };
 
@@ -363,7 +363,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               {/* Export Button */}
               <Button 
                 variant="outline" 
-                onClick={exportCapsulesToCSV} 
+                onClick={exportUnitsToCSV} 
                 className="flex items-center gap-2 bg-red-500 text-white hover:bg-red-600 font-bold px-6 py-3 text-lg"
                 disabled={items.length === 0}
                 style={{ minWidth: '150px', border: '3px solid red' }}
@@ -436,7 +436,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEditCapsule(c)}
+                            onClick={() => handleEditUnit(c)}
                             className="flex-1"
                           >
                             <Edit className="h-3 w-3 mr-1" />
@@ -445,7 +445,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleDeleteCapsule(c)}
+                            onClick={() => handleDeleteUnit(c)}
                             className="flex-1"
                           >
                             <Trash2 className="h-3 w-3 mr-1" />
@@ -511,7 +511,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleEditCapsule(c)}
+                              onClick={() => handleEditUnit(c)}
                             >
                               <Edit className="h-3 w-3 mr-1" />
                               Edit
@@ -519,7 +519,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => handleDeleteCapsule(c)}
+                              onClick={() => handleDeleteUnit(c)}
                             >
                               <Trash2 className="h-3 w-3 mr-1" />
                               Delete
@@ -606,7 +606,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleEditCapsule(c)}
+                                onClick={() => handleEditUnit(c)}
                               >
                                 <Edit className="h-3 w-3 mr-1" />
                                 Edit
@@ -614,7 +614,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => handleDeleteCapsule(c)}
+                                onClick={() => handleDeleteUnit(c)}
                               >
                                 <Trash2 className="h-3 w-3 mr-1" />
                                 Delete
@@ -632,20 +632,20 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
         </CardContent>
       </Card>
 
-      {/* Create Capsule Dialog */}
+      {/* Create Unit Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Add New {labels.singular}</DialogTitle>
           </DialogHeader>
-          <Form {...createCapsuleForm}>
-            <form onSubmit={createCapsuleForm.handleSubmit((data: CapsuleFormData) => handleCreateCapsule(data))} className="space-y-4">
+          <Form {...createUnitForm}>
+            <form onSubmit={createUnitForm.handleSubmit((data: UnitFormData) => handleCreateUnit(data))} className="space-y-4">
               <FormField
-                control={createCapsuleForm.control}
+                control={createUnitForm.control}
                 name="number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Capsule Number *</FormLabel>
+                    <FormLabel>Unit Number *</FormLabel>
                     <FormControl>
                       <Input placeholder="C1, C2, C24..." {...field} />
                     </FormControl>
@@ -655,7 +655,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={createCapsuleForm.control}
+                control={createUnitForm.control}
                 name="section"
                 render={({ field }) => (
                   <FormItem>
@@ -678,7 +678,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={createCapsuleForm.control}
+                control={createUnitForm.control}
                 name="toRent"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -693,7 +693,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                         To Rent
                       </FormLabel>
                       <p className="text-sm text-muted-foreground">
-                        Check if this capsule is suitable for rent (uncheck if it has major maintenance issues)
+                        Check if this Unit is suitable for rent (uncheck if it has major maintenance issues)
                       </p>
                     </div>
                   </FormItem>
@@ -701,7 +701,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={createCapsuleForm.control}
+                control={createUnitForm.control}
                 name="color"
                 render={({ field }) => (
                   <FormItem>
@@ -715,7 +715,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={createCapsuleForm.control}
+                control={createUnitForm.control}
                 name="purchaseDate"
                 render={({ field }) => (
                   <FormItem>
@@ -729,7 +729,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={createCapsuleForm.control}
+                control={createUnitForm.control}
                 name="position"
                 render={({ field }) => (
                   <FormItem>
@@ -751,13 +751,13 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={createCapsuleForm.control}
+                control={createUnitForm.control}
                 name="remark"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Remark</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Additional notes about the capsule..." {...field} />
+                      <Textarea placeholder="Additional notes about the Unit..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -768,8 +768,8 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                 <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createCapsuleMutation.isPending}>
-                  {createCapsuleMutation.isPending ? "Adding..." : "Add Capsule"}
+                <Button type="submit" disabled={createUnitMutation.isPending}>
+                  {createUnitMutation.isPending ? "Adding..." : "Add Unit"}
                 </Button>
               </DialogFooter>
             </form>
@@ -777,20 +777,20 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
         </DialogContent>
       </Dialog>
 
-      {/* Edit Capsule Dialog */}
+      {/* Edit Unit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit {labels.singular}</DialogTitle>
           </DialogHeader>
-          <Form {...editCapsuleForm}>
-            <form onSubmit={editCapsuleForm.handleSubmit((data: CapsuleFormData) => handleUpdateCapsule(data))} className="space-y-4">
+          <Form {...editUnitForm}>
+            <form onSubmit={editUnitForm.handleSubmit((data: UnitFormData) => handleUpdateUnit(data))} className="space-y-4">
               <FormField
-                control={editCapsuleForm.control}
+                control={editUnitForm.control}
                 name="number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Capsule Number *</FormLabel>
+                    <FormLabel>Unit Number *</FormLabel>
                     <FormControl>
                       <Input placeholder="C1, C2, C24..." {...field} />
                     </FormControl>
@@ -800,7 +800,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={editCapsuleForm.control}
+                control={editUnitForm.control}
                 name="section"
                 render={({ field }) => (
                   <FormItem>
@@ -823,7 +823,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={editCapsuleForm.control}
+                control={editUnitForm.control}
                 name="toRent"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -838,7 +838,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                         To Rent
                       </FormLabel>
                       <p className="text-sm text-muted-foreground">
-                        Check if this capsule is suitable for rent (uncheck if it has major maintenance issues)
+                        Check if this Unit is suitable for rent (uncheck if it has major maintenance issues)
                       </p>
                     </div>
                   </FormItem>
@@ -846,7 +846,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={editCapsuleForm.control}
+                control={editUnitForm.control}
                 name="color"
                 render={({ field }) => (
                   <FormItem>
@@ -860,7 +860,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={editCapsuleForm.control}
+                control={editUnitForm.control}
                 name="purchaseDate"
                 render={({ field }) => (
                   <FormItem>
@@ -874,7 +874,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={editCapsuleForm.control}
+                control={editUnitForm.control}
                 name="position"
                 render={({ field }) => (
                   <FormItem>
@@ -896,13 +896,13 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               />
               
               <FormField
-                control={editCapsuleForm.control}
+                control={editUnitForm.control}
                 name="remark"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Remark</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Additional notes about the capsule..." {...field} />
+                      <Textarea placeholder="Additional notes about the Unit..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -913,8 +913,8 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
                 <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={updateCapsuleMutation.isPending}>
-                  {updateCapsuleMutation.isPending ? "Updating..." : "Update Capsule"}
+                <Button type="submit" disabled={updateUnitMutation.isPending}>
+                  {updateUnitMutation.isPending ? "Updating..." : "Update Unit"}
                 </Button>
               </DialogFooter>
             </form>
@@ -929,7 +929,7 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
             <DialogTitle>Delete {labels.singular}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p>Are you sure you want to delete capsule <strong>{selectedCapsule?.number}</strong>?</p>
+            <p>Are you sure you want to delete Unit <strong>{selectedUnit?.number}</strong>?</p>
             <p className="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
           </div>
           <DialogFooter>
@@ -940,9 +940,9 @@ export default function CapsulesTab({ capsules, queryClient, toast, labels }: an
               type="button" 
               variant="destructive" 
               onClick={confirmDelete}
-              disabled={deleteCapsuleMutation.isPending}
+              disabled={deleteUnitMutation.isPending}
             >
-              {deleteCapsuleMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteUnitMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

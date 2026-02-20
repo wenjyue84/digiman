@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 type SortField = "capsule" | "date" | "reportedBy";
 type SortDirection = "asc" | "desc";
 
-function extractCapsuleNumber(unitNumber: string): number {
+function extractunitNumber(unitNumber: string): number {
   const match = unitNumber.match(/\d+/);
   return match ? parseInt(match[0], 10) : 0;
 }
@@ -29,7 +29,7 @@ function sortProblems(problems: CapsuleProblem[], sortField: SortField, sortDire
     
     switch (sortField) {
       case "capsule":
-        comparison = extractCapsuleNumber(a.unitNumber) - extractCapsuleNumber(b.unitNumber);
+        comparison = extractunitNumber(a.unitNumber) - extractunitNumber(b.unitNumber);
         break;
       case "date":
         comparison = new Date(a.reportedAt).getTime() - new Date(b.reportedAt).getTime();
