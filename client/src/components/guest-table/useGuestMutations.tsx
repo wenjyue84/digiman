@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { extractDetailedError, createErrorToast } from "@/lib/errorHandler";
-import type { Guest, PaginatedResponse, UpdateGuestTokenCapsule } from "@shared/schema";
+import type { Guest, PaginatedResponse, UpdateGuestTokenUnit } from "@shared/schema";
 import { isGuestPaid, getGuestBalance } from "@/lib/guest";
 import { formatShortDate } from "./utils";
 import { compareUnitNumbers } from "./useGuestSorting";
@@ -243,7 +243,7 @@ export function useGuestMutations({ guests, exportUnits, exportCapsules, activeT
   });
 
   const updateTokenUnitMutation = useMutation({
-    mutationFn: async ({ tokenId, updateData }: { tokenId: string; updateData: UpdateGuestTokenCapsule }) => {
+    mutationFn: async ({ tokenId, updateData }: { tokenId: string; updateData: UpdateGuestTokenUnit }) => {
       const response = await apiRequest("PATCH", `/api/guest-tokens/${tokenId}/unit`, updateData);
       return response.json();
     },
@@ -358,7 +358,7 @@ export function useGuestMutations({ guests, exportUnits, exportCapsules, activeT
       setTimeout(() => { window.location.href = '/login'; }, 1000);
       return;
     }
-    const updateData: UpdateGuestTokenCapsule = autoAssign
+    const updateData: UpdateGuestTokenUnit = autoAssign
       ? { autoAssign: true }
       : { unitNumber: unitNumber! };
     updateTokenUnitMutation.mutate({ tokenId, updateData });
@@ -469,68 +469,68 @@ export function useGuestMutations({ guests, exportUnits, exportCapsules, activeT
 
     let whatsappText = "*PELANGI UNIT STATUS*\n\n";
 
-    // Handle FRONT SECTION (capsules 11-24)
+    // Handle FRONT SECTION (units 11-24)
     whatsappText += '*FRONT SECTION*\n';
-    const frontSectionUnits = exportUnitsData.filter(capsule => {
-      const num = parseInt(capsule.number.replace('C', ''));
+    const frontSectionUnits = exportUnitsData.filter(unit => {
+      const num = parseInt(unit.number.replace('C', ''));
       return num >= 11 && num <= 24;
     }).sort((a, b) => compareUnitNumbers(a.number, b.number));
 
-    frontSectionUnits.forEach(capsule => {
-      const guest = checkedInGuests.find(g => g.unitNumber === capsule.number);
+    frontSectionUnits.forEach(unit => {
+      const guest = checkedInGuests.find(g => g.unitNumber === unit.number);
       if (guest) {
         const isPaid = isGuestPaid(guest);
         const checkoutDate = guest.expectedCheckoutDate ? formatShortDate(guest.expectedCheckoutDate) : '';
         const paymentStatus = isPaid ? 'PAID' : 'UNPAID';
         const balance = getGuestBalance(guest);
         const outstandingText = balance > 0 ? ` (Outstanding RM${balance})` : '';
-        whatsappText += `${capsule.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
+        whatsappText += `${unit.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
       } else {
-        whatsappText += `${capsule.number.replace('C', '')})\n`;
+        whatsappText += `${unit.number.replace('C', '')})\n`;
       }
     });
 
     whatsappText += '\n';
 
-    // Handle special sections - Living Room (capsules 25, 26)
+    // Handle special sections - Living Room (units 25, 26)
     whatsappText += '*LIVING ROOM*\n';
-    const livingRoomUnits = exportUnitsData.filter(capsule => {
-      const num = parseInt(capsule.number.replace('C', ''));
+    const livingRoomUnits = exportUnitsData.filter(unit => {
+      const num = parseInt(unit.number.replace('C', ''));
       return num === 25 || num === 26;
     }).sort((a, b) => compareUnitNumbers(a.number, b.number));
 
-    livingRoomUnits.forEach(capsule => {
-      const guest = checkedInGuests.find(g => g.unitNumber === capsule.number);
+    livingRoomUnits.forEach(unit => {
+      const guest = checkedInGuests.find(g => g.unitNumber === unit.number);
       if (guest) {
         const isPaid = isGuestPaid(guest);
         const checkoutDate = guest.expectedCheckoutDate ? formatShortDate(guest.expectedCheckoutDate) : '';
         const paymentStatus = isPaid ? 'PAID' : 'UNPAID';
         const balance = getGuestBalance(guest);
         const outstandingText = balance > 0 ? ` (Outstanding RM${balance})` : '';
-        whatsappText += `${capsule.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
+        whatsappText += `${unit.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
       } else {
-        whatsappText += `${capsule.number.replace('C', '')})\n`;
+        whatsappText += `${unit.number.replace('C', '')})\n`;
       }
     });
 
-    // Handle special sections - Room (capsules 1-6)
+    // Handle special sections - Room (units 1-6)
     whatsappText += '\n*ROOM*\n';
-    const roomUnits = exportUnitsData.filter(capsule => {
-      const num = parseInt(capsule.number.replace('C', ''));
+    const roomUnits = exportUnitsData.filter(unit => {
+      const num = parseInt(unit.number.replace('C', ''));
       return num >= 1 && num <= 6;
     }).sort((a, b) => compareUnitNumbers(a.number, b.number));
 
-    roomUnits.forEach(capsule => {
-      const guest = checkedInGuests.find(g => g.unitNumber === capsule.number);
+    roomUnits.forEach(unit => {
+      const guest = checkedInGuests.find(g => g.unitNumber === unit.number);
       if (guest) {
         const isPaid = isGuestPaid(guest);
         const checkoutDate = guest.expectedCheckoutDate ? formatShortDate(guest.expectedCheckoutDate) : '';
         const paymentStatus = isPaid ? 'PAID' : 'UNPAID';
         const balance = getGuestBalance(guest);
         const outstandingText = balance > 0 ? ` (Outstanding RM${balance})` : '';
-        whatsappText += `${capsule.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
+        whatsappText += `${unit.number.replace('C', '')}) ${guest.name} ${paymentStatus}${checkoutDate}${outstandingText}\n`;
       } else {
-        whatsappText += `${capsule.number.replace('C', '')})\n`;
+        whatsappText += `${unit.number.replace('C', '')})\n`;
       }
     });
 

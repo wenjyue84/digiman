@@ -1,7 +1,11 @@
 import type { Guest } from "@shared/schema";
 
-export type SortField = 'name' | 'unitNumber' | 'unitNumber' | 'checkinTime' | 'expectedCheckoutDate';
-export type SortOrder = 'asc' | 'desc';
+export type SortField =
+  | "name"
+  | "unitNumber"
+  | "checkinTime"
+  | "expectedCheckoutDate";
+export type SortOrder = "asc" | "desc";
 
 export interface SortConfig {
   field: SortField;
@@ -9,8 +13,8 @@ export interface SortConfig {
 }
 
 export interface GuestFilters {
-  gender: 'any' | 'male' | 'female';
-  nationality: 'any' | 'malaysian' | 'non-malaysian';
+  gender: "any" | "male" | "female";
+  nationality: "any" | "malaysian" | "non-malaysian";
   outstandingOnly: boolean;
   checkoutTodayOnly: boolean;
 }
@@ -19,7 +23,8 @@ export interface PendingData {
   id: string;
   name: string;
   unitNumber: string;
-  unitNumber?: string;
+  /** @deprecated Use unitNumber */
+  capsuleNumber?: string;
   createdAt: string;
   expiresAt: string;
   phoneNumber: string | null;
@@ -29,7 +34,8 @@ export interface EmptyData {
   id: string;
   name: string;
   unitNumber: string;
-  unitNumber?: string;
+  /** @deprecated Use unitNumber */
+  capsuleNumber?: string;
   checkinTime: null;
   expectedCheckoutDate: null;
   phoneNumber: null;
@@ -58,9 +64,9 @@ export interface EmptyData {
 }
 
 export type CombinedDataItem =
-  | { type: 'guest'; data: Guest }
-  | { type: 'pending'; data: PendingData }
-  | { type: 'empty'; data: EmptyData };
+  | { type: "guest"; data: Guest }
+  | { type: "pending"; data: PendingData }
+  | { type: "empty"; data: EmptyData };
 
 export interface AvailableUnit {
   id: string;

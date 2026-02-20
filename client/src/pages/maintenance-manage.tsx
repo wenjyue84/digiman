@@ -16,13 +16,13 @@ import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { ViewToggle } from "@/components/ui/view-toggle";
 import { MaintenanceFilters, type MaintenanceFilters as MaintenanceFiltersType } from "@/components/ui/maintenance-filters";
 import { MaintenanceProblemCard } from "@/components/ui/maintenance-problem-card";
-import type { Capsule, CapsuleProblem, PaginatedResponse } from "@shared/schema";
+import type { Capsule, UnitProblem, PaginatedResponse } from "@shared/schema";
 
 export default function MaintenanceManage() {
   const [selectedUnit, setselectedUnit] = useState<string>("");
   const [problemDescription, setProblemDescription] = useState("");
   const [expandedProblems, setExpandedProblems] = useState<Set<string>>(new Set());
-  const [problemToResolve, setProblemToResolve] = useState<CapsuleProblem | null>(null);
+  const [problemToResolve, setProblemToResolve] = useState<UnitProblem | null>(null);
   const [showResolveConfirmation, setShowResolveConfirmation] = useState(false);
   const [isCondensedView, setIsCondensedView] = useState(false);
   const [filters, setFilters] = useState<MaintenanceFiltersType>({
@@ -42,13 +42,13 @@ export default function MaintenanceManage() {
     queryKey: ["/api/units"],
   });
 
-  const { data: allProblemsResponse, isLoading: isLoadingProblems } = useQuery<PaginatedResponse<CapsuleProblem>>({
+  const { data: allProblemsResponse, isLoading: isLoadingProblems } = useQuery<PaginatedResponse<UnitProblem>>({
     queryKey: ["/api/problems"],
   });
   
   const allProblems = allProblemsResponse?.data || [];
 
-  const { data: activeProblemsResponse } = useQuery<PaginatedResponse<CapsuleProblem>>({
+  const { data: activeProblemsResponse } = useQuery<PaginatedResponse<UnitProblem>>({
     queryKey: ["/api/problems/active"],
   });
   
@@ -156,7 +156,7 @@ export default function MaintenanceManage() {
     if (!selectedUnit) {
       toast({
         title: "Error",
-        description: "Please select a capsule",
+        description: "Please select a unit",
         variant: "destructive",
       });
       return;
@@ -202,7 +202,7 @@ export default function MaintenanceManage() {
     });
   };
 
-  const availableCapsules = capsules.filter(c => {
+  const availableUnits = capsules.filter(c => {
     const hasActiveProblem = activeProblems.some(p => p.unitNumber === c.number);
     return !hasActiveProblem;
   });
@@ -212,7 +212,7 @@ export default function MaintenanceManage() {
   const resolvedProblemsCount = resolvedProblems.length;
 
   // Render problems based on view mode
-  const renderProblems = (problems: CapsuleProblem[]) => {
+  const renderProblems = (problems: UnitProblem[]) => {
     if (isCondensedView) {
       return (
         <div className="space-y-3">
@@ -296,7 +296,7 @@ export default function MaintenanceManage() {
     <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Maintenance Management</h1>
-        <p className="text-gray-600 mt-1">Report and track capsule maintenance issues</p>
+        <p className="text-gray-600 mt-1">Report and track unit maintenance issues</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -310,21 +310,21 @@ export default function MaintenanceManage() {
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
             <div>
-              <Label htmlFor="capsule">Select Capsule</Label>
+              <Label htmlFor="unit">Select Unit</Label>
               <Select value={selectedUnit} onValueChange={setselectedUnit}>
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Choose a capsule" />
+                  <SelectValue placeholder="Choose a unit" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableCapsules.map((capsule) => (
-                    <SelectItem key={capsule.id} value={capsule.number}>
-                      {capsule.number} - {capsule.section}
+                  {availableUnits.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.number}>
+                      {unit.number} - {unit.section}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {availableCapsules.length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">All capsules have active problems</p>
+              {availableUnits.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">All units have active problems</p>
               )}
             </div>
 
@@ -368,7 +368,7 @@ export default function MaintenanceManage() {
                   <MaintenanceFilters
                     filters={filters}
                     onFiltersChange={setFilters}
-                    capsules={capsules.map(c => ({ number: c.number, section: c.section }))}
+                    units={capsules.map(c => ({ number: c.number, section: c.section }))}
                     reporters={uniqueReporters}
                   />
                   
@@ -478,7 +478,7 @@ export default function MaintenanceManage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Affected Capsules</p>
+                <p className="text-sm text-gray-600">Affected Units</p>
                 <p className="text-2xl font-bold text-gray-700">
                   {new Set(activeProblems.map(p => p.unitNumber)).size}
                 </p>
@@ -495,7 +495,7 @@ export default function MaintenanceManage() {
           open={showResolveConfirmation}
           onOpenChange={setShowResolveConfirmation}
           title="Resolve Maintenance Issue"
-          description={`Are you sure you want to mark the maintenance issue for capsule ${problemToResolve.unitNumber} as resolved?`}
+          description={`Are you sure you want to mark the maintenance issue for unit ${problemToResolve.unitNumber} as resolved?`}
           confirmText="Resolve Issue"
           cancelText="Cancel"
           onConfirm={confirmResolveProblem}

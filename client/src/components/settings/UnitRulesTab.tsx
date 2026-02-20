@@ -11,11 +11,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-interface CapsuleRulesTabProps {
+interface UnitRulesTabProps {
   onSwitchTab?: (tab: string) => void;
 }
 
-interface CapsuleRules {
+interface UnitRules {
   deckPriority: boolean;
   excludedCapsules: string[];
   genderRules: {
@@ -66,11 +66,11 @@ function ChipInput({ values, onChange, placeholder }: { values: string[]; onChan
   );
 }
 
-export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = {}) {
+export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: rules, isLoading } = useQuery<CapsuleRules>({
+  const { data: rules, isLoading } = useQuery<UnitRules>({
     queryKey: ["/api/settings/capsule-rules"],
     queryFn: async () => {
       const res = await fetch("/api/settings/capsule-rules");
@@ -79,7 +79,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
     },
   });
 
-  const [local, setLocal] = useState<CapsuleRules | null>(null);
+  const [local, setLocal] = useState<UnitRules | null>(null);
   const [dirty, setDirty] = useState(false);
 
   // Track auto-linked capsules separately (from server response)
@@ -95,7 +95,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
     }
   }, [rules, local]);
 
-  const update = <K extends keyof CapsuleRules>(key: K, value: CapsuleRules[K]) => {
+  const update = <K extends keyof UnitRules>(key: K, value: UnitRules[K]) => {
     if (!local) return;
     setLocal({ ...local, [key]: value });
     setDirty(true);
@@ -114,7 +114,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
   };
 
   const saveMutation = useMutation({
-    mutationFn: async (data: CapsuleRules) => {
+    mutationFn: async (data: UnitRules) => {
       // Only send manual capsules — server re-merges auto-linked on next GET
       const { autoLinkedCapsules, ...payload } = data;
       const res = await apiRequest("PUT", "/api/settings/capsule-rules", payload);
@@ -124,7 +124,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
       setLocal(null); // Reset so useEffect picks up fresh merged data from refetch
       queryClient.invalidateQueries({ queryKey: ["/api/settings/capsule-rules"] });
       setDirty(false);
-      toast({ title: "Rules Saved", description: "Capsule assignment rules updated successfully." });
+      toast({ title: "Rules Saved", description: "Unit assignment rules updated successfully." });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message || "Failed to save rules", variant: "destructive" });
@@ -154,7 +154,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
           <div className="flex items-center justify-between">
             <div>
               <Label className="font-medium">Prefer lower deck (even numbers)</Label>
-              <p className="text-sm text-gray-500">Assigns even-numbered capsules first (lower deck preferred by guests)</p>
+              <p className="text-sm text-gray-500">Assigns even-numbered units first (lower deck preferred by guests)</p>
             </div>
             <Switch checked={local.deckPriority} onCheckedChange={(v) => update("deckPriority", v)} />
           </div>
@@ -166,11 +166,11 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Shield className="h-4 w-4 text-red-600" />
-            Excluded Capsules
+            Excluded Units
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-gray-500">These capsules will never be auto-assigned to guests</p>
+          <p className="text-sm text-gray-500">These units will never be auto-assigned to guests</p>
           <ChipInput
             values={local.excludedCapsules}
             onChange={(v) => update("excludedCapsules", v)}
@@ -191,7 +191,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
           {/* Female */}
           <div className="space-y-3 p-4 bg-pink-50 rounded-lg border border-pink-100">
             <Label className="font-medium text-pink-800">Female Guests</Label>
-            <p className="text-sm text-gray-600">Preferred capsules for female guests</p>
+            <p className="text-sm text-gray-600">Preferred units for female guests</p>
             <ChipInput
               values={local.genderRules.female.preferred}
               onChange={(v) => updateGender("female", "preferred", v)}
@@ -202,14 +202,14 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
                 checked={local.genderRules.female.fallbackToOther}
                 onCheckedChange={(v) => updateGender("female", "fallbackToOther", v)}
               />
-              <Label className="text-sm">Allow fallback to other capsules if preferred are occupied</Label>
+              <Label className="text-sm">Allow fallback to other units if preferred are occupied</Label>
             </div>
           </div>
 
           {/* Male */}
           <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
             <Label className="font-medium text-blue-800">Male Guests</Label>
-            <p className="text-sm text-gray-600">Preferred capsules for male guests (leave empty for no preference)</p>
+            <p className="text-sm text-gray-600">Preferred units for male guests (leave empty for no preference)</p>
             <ChipInput
               values={local.genderRules.male.preferred}
               onChange={(v) => updateGender("male", "preferred", v)}
@@ -220,7 +220,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
                 checked={local.genderRules.male.fallbackToOther}
                 onCheckedChange={(v) => updateGender("male", "fallbackToOther", v)}
               />
-              <Label className="text-sm">Allow fallback to other capsules if preferred are occupied</Label>
+              <Label className="text-sm">Allow fallback to other units if preferred are occupied</Label>
             </div>
           </div>
         </CardContent>
@@ -237,8 +237,8 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label className="font-medium">Deprioritize capsules with maintenance issues</Label>
-              <p className="text-sm text-gray-500">These capsules will only be assigned when no better options exist</p>
+              <Label className="font-medium">Deprioritize units with maintenance issues</Label>
+              <p className="text-sm text-gray-500">These units will only be assigned when no better options exist</p>
             </div>
             <Switch
               checked={local.maintenanceDeprioritize}
@@ -255,8 +255,8 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
                   </Label>
                   <div className="flex flex-wrap gap-1.5">
                     <TooltipProvider>
-                      {autoLinked.map((capsule) => (
-                        <Tooltip key={capsule}>
+                      {autoLinked.map((unit) => (
+                        <Tooltip key={unit}>
                           <TooltipTrigger asChild>
                             <Badge
                               variant="outline"
@@ -264,7 +264,7 @@ export default function CapsuleRulesTab({ onSwitchTab }: CapsuleRulesTabProps = 
                               onClick={() => onSwitchTab?.("maintenance")}
                             >
                               <Lock className="h-3 w-3" />
-                              {capsule}
+                              {unit}
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>Click to view in Maintenance tab</TooltipContent>

@@ -40,9 +40,8 @@ export function registerModularRoutes(app: Express) {
   // Register guest self-checkin routes (using guest-tokens route handlers)
   app.use("/api/guest-checkin", guestTokenRoutes);
 
-  // Register unit routes (backward-compat: also mount on /api/capsules)
+  // Register unit routes
   app.use("/api/units", unitRoutes);
-  app.use("/api/capsules", unitRoutes);
 
   // Register admin routes
   app.use("/api/admin", adminRoutes);

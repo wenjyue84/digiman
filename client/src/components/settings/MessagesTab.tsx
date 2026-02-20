@@ -25,14 +25,14 @@ export default function MessagesTab({ settings, queryClient, toast }: any) {
   const messageForm = useForm<SelfCheckinMessageData>({
     resolver: zodResolver(selfCheckinMessageSchema),
     defaultValues: {
-      successMessage: settings?.selfCheckinSuccessMessage || "Thank you for checking in! Your capsule is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.",
+      successMessage: settings?.selfCheckinSuccessMessage || "Thank you for checking in! Your unit is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.",
     },
   });
 
   // Update form when settings are loaded
-  if (settings && messageForm.getValues().successMessage !== (settings.selfCheckinSuccessMessage || "Thank you for checking in! Your capsule is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.")) {
+  if (settings && messageForm.getValues().successMessage !== (settings.selfCheckinSuccessMessage || "Thank you for checking in! Your unit is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.")) {
     messageForm.reset({
-      successMessage: settings.selfCheckinSuccessMessage || "Thank you for checking in! Your capsule is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.",
+      successMessage: settings.selfCheckinSuccessMessage || "Thank you for checking in! Your unit is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.",
     });
   }
 
@@ -60,7 +60,7 @@ export default function MessagesTab({ settings, queryClient, toast }: any) {
   });
 
   const resetToDefault = () => {
-    const defaultMessage = "Thank you for checking in! Your capsule is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.";
+    const defaultMessage = "Thank you for checking in! Your unit is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.";
     messageForm.setValue("successMessage", defaultMessage);
   };
 
@@ -86,7 +86,7 @@ export default function MessagesTab({ settings, queryClient, toast }: any) {
                   <h5 className="font-medium text-green-800 mb-2">Current Message:</h5>
                   <p className="text-green-700">
                     {settings?.selfCheckinSuccessMessage ||
-                      "Thank you for checking in! Your capsule is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel."}
+                      "Thank you for checking in! Your unit is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel."}
                   </p>
                 </div>
                 <Button onClick={() => setIsEditing(true)} className="flex items-center gap-2">
@@ -160,7 +160,7 @@ export default function MessagesTab({ settings, queryClient, toast }: any) {
                   {isEditing
                     ? messageForm.watch("successMessage")
                     : (settings?.selfCheckinSuccessMessage ||
-                        "Thank you for checking in! Your capsule is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.")}
+                        "Thank you for checking in! Your unit is ready. Please keep your belongings secure and enjoy your stay at Pelangi Capsule Hostel.")}
                 </p>
               </div>
             </div>

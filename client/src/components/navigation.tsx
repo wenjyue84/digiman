@@ -30,7 +30,7 @@ const navigationItems = [
     icon: UserPlus,
     color: "text-green-600 bg-green-50",
     requireAuth: true,
-    tooltip: "Register new guests and assign capsules"
+    tooltip: "Register new guests and assign units"
   },
   {
     path: "/check-out",
@@ -38,7 +38,7 @@ const navigationItems = [
     icon: UserX,
     color: "text-red-600 bg-red-50",
     requireAuth: true,
-    tooltip: "Process guest departures and free capsules"
+    tooltip: "Process guest departures and free units"
   },
   {
     path: "/cleaning",
@@ -46,7 +46,7 @@ const navigationItems = [
     icon: ListChecks,
     color: "text-emerald-600 bg-emerald-50",
     requireAuth: true,
-    tooltip: "Manage capsule cleaning status and maintenance tasks"
+    tooltip: "Manage unit cleaning status and maintenance tasks"
   },
   {
     path: "/finance",

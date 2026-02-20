@@ -12,10 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Wrench, Plus, Edit, Trash2, ArrowUpDown, Share2 } from "lucide-react";
-import { type CapsuleProblem } from "@shared/schema";
+import { type UnitProblem } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
-type SortField = "capsule" | "date" | "reportedBy";
+type SortField = "unit" | "date" | "reportedBy";
 type SortDirection = "asc" | "desc";
 
 function extractunitNumber(unitNumber: string): number {
@@ -23,12 +23,12 @@ function extractunitNumber(unitNumber: string): number {
   return match ? parseInt(match[0], 10) : 0;
 }
 
-function sortProblems(problems: CapsuleProblem[], sortField: SortField, sortDirection: SortDirection): CapsuleProblem[] {
+function sortProblems(problems: UnitProblem[], sortField: SortField, sortDirection: SortDirection): UnitProblem[] {
   return [...problems].sort((a, b) => {
     let comparison = 0;
     
     switch (sortField) {
-      case "capsule":
+      case "unit":
         comparison = extractunitNumber(a.unitNumber) - extractunitNumber(b.unitNumber);
         break;
       case "date":
@@ -43,13 +43,13 @@ function sortProblems(problems: CapsuleProblem[], sortField: SortField, sortDire
   });
 }
 
-export default function MaintenanceTab({ problems, capsules, isLoading, queryClient, toast, labels }: any) {
+export default function MaintenanceTab({ problems, units, isLoading, queryClient, toast, labels }: any) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
-  const [selectedProblem, setSelectedProblem] = useState<CapsuleProblem | null>(null);
+  const [selectedProblem, setSelectedProblem] = useState<UnitProblem | null>(null);
   const [concise, setConcise] = useState(true);
-  const [sortField, setSortField] = useState<SortField>("capsule");
+  const [sortField, setSortField] = useState<SortField>("unit");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const createProblemForm = useForm({
@@ -163,7 +163,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
     },
   });
 
-  const handleEditProblem = (problem: CapsuleProblem) => {
+  const handleEditProblem = (problem: UnitProblem) => {
     setSelectedProblem(problem);
     // Pre-populate the edit form with current problem data
     editProblemForm.reset({
@@ -174,7 +174,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
     setEditDialogOpen(true);
   };
 
-  const handleResolveProblem = (problem: CapsuleProblem) => {
+  const handleResolveProblem = (problem: UnitProblem) => {
     setSelectedProblem(problem);
     setResolveDialogOpen(true);
   };
@@ -195,8 +195,8 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
 
   const exportToWhatsApp = () => {
     const activeProblemsForExport = sortProblems(
-      Array.isArray(problems) ? problems.filter((p: CapsuleProblem) => !p.isResolved) : [],
-      "capsule",
+      Array.isArray(problems) ? problems.filter((p: UnitProblem) => !p.isResolved) : [],
+      "unit",
       "asc"
     );
     
@@ -218,7 +218,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
     message += `📅 ${today}\n`;
     message += `━━━━━━━━━━━━━━━━━━\n\n`;
     
-    activeProblemsForExport.forEach((problem: CapsuleProblem, index: number) => {
+    activeProblemsForExport.forEach((problem: UnitProblem, index: number) => {
       const reportedDate = new Date(problem.reportedAt).toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "short"
@@ -251,8 +251,8 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
     });
   };
 
-  const activeProblemsRaw = Array.isArray(problems) ? problems.filter((p: CapsuleProblem) => !p.isResolved) : [];
-  const resolvedProblemsRaw = Array.isArray(problems) ? problems.filter((p: CapsuleProblem) => p.isResolved) : [];
+  const activeProblemsRaw = Array.isArray(problems) ? problems.filter((p: UnitProblem) => !p.isResolved) : [];
+  const resolvedProblemsRaw = Array.isArray(problems) ? problems.filter((p: UnitProblem) => p.isResolved) : [];
   
   const activeProblem = useMemo(() => sortProblems(activeProblemsRaw, sortField, sortDirection), [activeProblemsRaw, sortField, sortDirection]);
   const resolvedProblems = useMemo(() => sortProblems(resolvedProblemsRaw, sortField, sortDirection), [resolvedProblemsRaw, sortField, sortDirection]);
@@ -287,9 +287,9 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                             <SelectValue placeholder={`Select ${labels.singular.toLowerCase()}`} />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.isArray(capsules) && capsules.map((capsule) => (
-                              <SelectItem key={capsule.number} value={capsule.number}>
-                                {capsule.number}
+                            {Array.isArray(units) && units.map((unit) => (
+                              <SelectItem key={unit.number} value={unit.number}>
+                                {unit.number}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -336,12 +336,12 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                 Sort by:
               </span>
               <Button
-                variant={sortField === "capsule" ? "default" : "outline"}
+                variant={sortField === "unit" ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleSort("capsule")}
-                data-testid="sort-capsule"
+                onClick={() => handleSort("unit")}
+                data-testid="sort-unit"
               >
-                Capsule{getSortIndicator("capsule")}
+                {labels?.singular ?? "Unit"}{getSortIndicator("unit")}
               </Button>
               <Button
                 variant={sortField === "date" ? "default" : "outline"}
@@ -385,7 +385,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                         </tr>
                       </thead>
                       <tbody>
-                        {activeProblem.map((problem: CapsuleProblem) => (
+                        {activeProblem.map((problem: UnitProblem) => (
                           <tr key={problem.id} className="border-t">
                             <td className="px-4 py-2 font-medium">{problem.unitNumber}</td>
                             <td className="px-4 py-2">{problem.description}</td>
@@ -411,7 +411,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
-                    {activeProblem.map((problem: CapsuleProblem) => (
+                    {activeProblem.map((problem: UnitProblem) => (
                       <Card key={problem.id} className="border-red-200 bg-red-50">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-2">
@@ -448,7 +448,7 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
               <div>
                 <h3 className="text-lg font-semibold text-green-600 mb-4">Recently Resolved ({resolvedProblems.length})</h3>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {resolvedProblems.slice(0, 4).map((problem: CapsuleProblem) => (
+                  {resolvedProblems.slice(0, 4).map((problem: UnitProblem) => (
                     <Card key={problem.id} className="border-green-200 bg-green-50">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
@@ -488,9 +488,9 @@ export default function MaintenanceTab({ problems, capsules, isLoading, queryCli
                     <SelectValue placeholder={`Select ${labels.singular.toLowerCase()}`} />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.isArray(capsules) && capsules.map((capsule) => (
-                      <SelectItem key={capsule.number} value={capsule.number}>
-                        {capsule.number}
+                    {Array.isArray(units) && units.map((unit) => (
+                      <SelectItem key={unit.number} value={unit.number}>
+                        {unit.number}
                       </SelectItem>
                     ))}
                   </SelectContent>

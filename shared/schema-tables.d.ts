@@ -330,8 +330,8 @@ export declare const guests: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        capsuleNumber: import("drizzle-orm/pg-core").PgColumn<{
-            name: "capsule_number";
+        unitNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "unit_number";
             tableName: "guests";
             dataType: "string";
             columnType: "PgText";
@@ -960,8 +960,8 @@ export declare const capsuleProblems: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {
             length: number | undefined;
         }>;
-        capsuleNumber: import("drizzle-orm/pg-core").PgColumn<{
-            name: "capsule_number";
+        unitNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "unit_number";
             tableName: "capsule_problems";
             dataType: "string";
             columnType: "PgText";
@@ -1139,8 +1139,8 @@ export declare const guestTokens: import("drizzle-orm/pg-core").PgTableWithColum
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        capsuleNumber: import("drizzle-orm/pg-core").PgColumn<{
-            name: "capsule_number";
+        unitNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "unit_number";
             tableName: "guest_tokens";
             dataType: "string";
             columnType: "PgText";
@@ -1424,8 +1424,8 @@ export declare const adminNotifications: import("drizzle-orm/pg-core").PgTableWi
         }, {}, {
             length: number | undefined;
         }>;
-        capsuleNumber: import("drizzle-orm/pg-core").PgColumn<{
-            name: "capsule_number";
+        unitNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "unit_number";
             tableName: "admin_notifications";
             dataType: "string";
             columnType: "PgText";

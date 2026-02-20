@@ -18,17 +18,17 @@ export interface MaintenanceFilters {
 interface MaintenanceFiltersProps {
   filters: MaintenanceFilters;
   onFiltersChange: (filters: MaintenanceFilters) => void;
-  capsules: Array<{ number: string; section: string }>;
+  units: Array<{ number: string; section: string }>;
   reporters: string[];
   className?: string;
 }
 
-export function MaintenanceFilters({ 
-  filters, 
-  onFiltersChange, 
-  capsules, 
-  reporters, 
-  className = '' 
+export function MaintenanceFilters({
+  filters,
+  onFiltersChange,
+  units,
+  reporters,
+  className = ''
 }: MaintenanceFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -116,21 +116,21 @@ export function MaintenanceFilters({
             </div>
           </div>
 
-          {/* Capsule Filter */}
+          {/* Unit Filter */}
           <div className="space-y-2">
-            <Label htmlFor="capsule-filter" className="text-xs font-medium flex items-center gap-1">
+            <Label htmlFor="unit-filter" className="text-xs font-medium flex items-center gap-1">
               <Building2 className="h-3 w-3" />
-              Capsule
+              Unit
             </Label>
             <Select value={filters.unitNumber} onValueChange={(value) => updateFilter('unitNumber', value)}>
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="All capsules" />
+                <SelectValue placeholder="All units" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All capsules</SelectItem>
-                {capsules.map((capsule) => (
-                  <SelectItem key={capsule.number} value={capsule.number}>
-                    {capsule.number} - {capsule.section}
+                <SelectItem value="">All units</SelectItem>
+                {units.map((unit) => (
+                  <SelectItem key={unit.number} value={unit.number}>
+                    {unit.number} - {unit.section}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -189,7 +189,7 @@ export function MaintenanceFilters({
                 )}
                 {filters.unitNumber && (
                   <Badge variant="outline" className="text-xs">
-                    Capsule: {filters.unitNumber}
+                    Unit: {filters.unitNumber}
                   </Badge>
                 )}
                 {filters.reportedBy && (

@@ -295,7 +295,7 @@ export function OutstandingBalances() {
                 <TableRow>
                   <TableHead>Guest</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Capsule</TableHead>
+                  <TableHead>Unit</TableHead>
                   <TableHead>Total Amount</TableHead>
                   <TableHead>Amount Paid</TableHead>
                   <TableHead>Balance</TableHead>
@@ -343,7 +343,7 @@ export function OutstandingBalances() {
                       </div>
                     </TableCell>
 
-                    {/* Capsule Number */}
+                    {/* Unit Number */}
                     <TableCell>
                       <Badge variant="outline">{guest.unitNumber}</Badge>
                     </TableCell>
@@ -450,7 +450,7 @@ export function OutstandingBalances() {
                   <div className="text-sm">{selectedGuest.name}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Capsule</Label>
+                  <Label className="text-sm font-medium">Unit</Label>
                   <div className="text-sm">{selectedGuest.unitNumber}</div>
                 </div>
                 {selectedGuest.phoneNumber && (
