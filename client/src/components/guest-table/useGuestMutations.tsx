@@ -9,6 +9,7 @@ import type { Guest, PaginatedResponse, UpdateGuestTokenUnit } from "@shared/sch
 import { isGuestPaid, getGuestBalance } from "@/lib/guest";
 import { formatShortDate } from "./utils";
 import { compareUnitNumbers } from "./useGuestSorting";
+import { DEFAULT_BUSINESS_CONFIG } from "@shared/business-config";
 
 // Define proper context interface for checkout mutation
 interface CheckoutMutationContext {
@@ -467,7 +468,7 @@ export function useGuestMutations({ guests, exportUnits, exportCapsules, activeT
   const handleWhatsAppExport = useCallback(() => {
     const checkedInGuests = guests || [];
 
-    let whatsappText = "*PELANGI UNIT STATUS*\n\n";
+    let whatsappText = `*${DEFAULT_BUSINESS_CONFIG.shortName.toUpperCase()} UNIT STATUS*\n\n`;
 
     // Handle FRONT SECTION (units 11-24)
     whatsappText += '*FRONT SECTION*\n';

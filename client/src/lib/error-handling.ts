@@ -1,5 +1,5 @@
 /**
- * Consolidated Error Handling Module for PelangiManager
+ * Consolidated Error Handling Module for digiman
  *
  * Merges errorHandler.ts (detailed API error parsing, toast creation, fetch wrapper)
  * and errorUtils.ts (AppError type, retry logic, error boundary utilities, reporting).
@@ -248,15 +248,15 @@ function enhanceErrorWithContext(error: DetailedError): DetailedError {
 
   if (enhanced.endpoint?.includes('/api/guest-tokens')) {
     if (enhanced.statusCode === 400) {
-      enhanced.details = enhanced.details || "The guest token creation failed due to invalid data or capsule unavailability.";
-      enhanced.solution = "Check if the selected capsule is available and all required fields are filled correctly.";
+      enhanced.details = enhanced.details || "The guest token creation failed due to invalid data or unit unavailability.";
+      enhanced.solution = "Check if the selected unit is available and all required fields are filled correctly.";
     }
   }
 
   if (enhanced.endpoint?.includes('/api/guests/checkin')) {
     if (enhanced.statusCode === 400) {
-      enhanced.details = enhanced.details || "Guest check-in failed due to validation errors or capsule conflicts.";
-      enhanced.solution = "Verify all guest information is correct and the selected capsule is available.";
+      enhanced.details = enhanced.details || "Guest check-in failed due to validation errors or unit conflicts.";
+      enhanced.solution = "Verify all guest information is correct and the selected unit is available.";
     }
   }
 

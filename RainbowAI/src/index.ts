@@ -35,8 +35,12 @@ import { initPricingFromDB } from './assistant/pricing.js';
 const __filename_main = fileURLToPath(import.meta.url);
 const __dirname_main = dirname(__filename_main);
 
-// Single source for AI keys (OPENROUTER_API_KEY, etc.): RainbowAI/.env. Then cwd so repo root .env can add vars without overriding.
-dotenv.config({ path: join(__dirname_main, '..', '.env') });
+// Env loading: dotenv-cli pre-loads .env.southern.local for the Southern instance.
+// For Pelangi (npm run dev / start-rainbow.bat), we load .env.pelangi.local explicitly.
+// cwd dotenv() picks up any remaining vars from repo root .env without overriding.
+if (!process.env.BUSINESS_NAME) {
+  dotenv.config({ path: join(__dirname_main, '..', '.env.pelangi.local') });
+}
 dotenv.config();
 
 // Startup env validation — warn about missing keys that will cause silent failures
@@ -228,13 +232,23 @@ app.get('/health/ready', async (req, res) => {
       : 'All configs loaded'
   };
 
+  // 5. Failover status
+  const { failoverCoordinator } = await import('./lib/failover-coordinator.js');
+  const failoverStatus = failoverCoordinator.getStatus();
+  checks.failover = {
+    ok: true,
+    detail: `Role: ${failoverStatus.role}, Active: ${failoverStatus.isActive}`
+  };
+
   const allHealthy = Object.values(checks).every(c => c.ok);
   // WhatsApp can be disconnected and system still works (manual mode)
-  // Backend is critical — without it, MCP tools fail
   const critical = checks.backend.ok && checks.config.ok;
+  const status = critical ? (allHealthy ? 'ready' : 'degraded') : 'unhealthy';
 
-  res.status(critical ? 200 : 503).json({
-    status: critical ? (allHealthy ? 'ready' : 'degraded') : 'unhealthy',
+  // Always return 200 when the process is up and responding, so monitors (e.g. Fleet Manager)
+  // that only check HTTP status show "Online" when the server is reachable. Details go in the body.
+  res.status(200).json({
+    status,
     checks,
     timestamp: new Date().toISOString()
   });
@@ -283,6 +297,13 @@ window.__ADMIN_KEY__=${JSON.stringify(adminKey)};
 }
 
 // Rainbow Admin Dashboard - Root path only
+// Backward compatibility: redirect old /admin/rainbow routes to hash-based dashboard.
+app.get(['/admin/rainbow', '/admin/rainbow/*'], (req, res) => {
+  const subPath = req.path.replace(/^\/admin\/rainbow\/?/, '');
+  const hash = subPath ? `#${subPath}` : '#dashboard';
+  res.redirect(`/${hash}`);
+});
+
 app.get('/', async (req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -366,12 +387,12 @@ app.post('/mcp', mcpLimiter, createMCPHandler());
 // Start server - listen on 0.0.0.0 for Docker containers
 server.listen(PORT, '0.0.0.0', () => {
   const apiUrl = getApiBaseUrl();
-  console.log(`Pelangi MCP Server running on http://0.0.0.0:${PORT}`);
+  console.log(`digiman MCP Server running on http://0.0.0.0:${PORT}`);
   console.log(`MCP endpoint: http://0.0.0.0:${PORT}/mcp`);
   console.log(`Health check: http://0.0.0.0:${PORT}/health`);
-  console.log(`API URL: ${apiUrl}${process.env.PELANGI_MANAGER_HOST ? ' (internal host)' : ''}`);
+  console.log(`API URL: ${apiUrl}${process.env.DIGIMAN_MANAGER_HOST || process.env.PELANGI_MANAGER_HOST ? ' (internal host)' : ''}`);
 
-  // Startup connectivity check: warn if PelangiManager API is unreachable
+  // Startup connectivity check: warn if digiman API is unreachable
   setImmediate(async () => {
     try {
       try {
@@ -379,15 +400,15 @@ server.listen(PORT, '0.0.0.0', () => {
       } catch {
         await apiClient.get('/api/occupancy');
       }
-      console.log('PelangiManager API reachable');
+      console.log('digiman API reachable');
     } catch (err: any) {
       const status = err.response?.status;
       const url = `${apiUrl}/api/health`;
       console.warn('');
-      console.warn('PelangiManager API not reachable.');
+      console.warn('digiman API not reachable.');
       console.warn(`   URL: ${url}`);
       if (status) console.warn(`   Response: ${status} ${err.response?.statusText || ''}`);
-      console.warn('   Set PELANGI_API_URL in Zeabur to your deployed PelangiManager URL.');
+      console.warn('   Set DIGIMAN_API_URL (or legacy PELANGI_API_URL) in Zeabur to your deployed digiman API URL.');
       console.warn('   MCP tools will fail until the API is reachable.');
       console.warn('');
     }
@@ -421,10 +442,10 @@ server.listen(PORT, '0.0.0.0', () => {
     const { notifyAdminFailoverActivated, notifyAdminFailoverDeactivated } =
       await import('./lib/admin-notifier.js');
     failoverCoordinator.on('activated', () => {
-      notifyAdminFailoverActivated().catch(() => {});
+      notifyAdminFailoverActivated().catch(() => { });
     });
     failoverCoordinator.on('deactivated', () => {
-      notifyAdminFailoverDeactivated().catch(() => {});
+      notifyAdminFailoverDeactivated().catch(() => { });
     });
 
     // Update coordinator when settings are hot-reloaded

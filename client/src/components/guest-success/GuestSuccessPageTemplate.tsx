@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MapPin, Wifi, Camera, Globe, Video, Clock, CheckCircle, Phone, Mail, Printer, Send, Download, Share, Calendar } from "lucide-react";
+import { DEFAULT_BUSINESS_CONFIG } from "@shared/business-config";
 
 interface GuestSuccessPageTemplateProps {
   // Display mode
   viewMode?: 'mobile' | 'desktop';
   isPreview?: boolean;
-  
+
   // Guest-specific data (for actual success page)
   guestInfo?: {
     unitNumber?: string;
@@ -19,12 +20,10 @@ interface GuestSuccessPageTemplateProps {
   /** @deprecated Use assignedUnitNumber */
   assignedunitNumber?: string | null;
   unitIssues?: any[];
-  /** @deprecated Use unitIssues */
-  capsuleIssues?: any[];
-  
+
   // Settings data
   settings: any;
-  
+
   // Visibility settings (for preview)
   visibility?: {
     showIntro?: boolean;
@@ -39,7 +38,7 @@ interface GuestSuccessPageTemplateProps {
     showGoogleMaps?: boolean;
     showCheckinVideo?: boolean;
   };
-  
+
   // Content (for preview)
   content?: {
     intro?: string;
@@ -57,7 +56,7 @@ interface GuestSuccessPageTemplateProps {
     checkoutTime?: string;
     doorPassword?: string;
   };
-  
+
   // Actions (for actual success page)
   actions?: {
     onHostelPhotos?: () => void;
@@ -78,18 +77,17 @@ export default function GuestSuccessPageTemplate({
   assignedUnitNumber,
   assignedunitNumber,
   unitIssues = [],
-  capsuleIssues = [],
   settings,
   visibility = {},
   content = {},
   actions = {}
 }: GuestSuccessPageTemplateProps) {
-  const mergedUnitIssues = unitIssues.length ? unitIssues : capsuleIssues;
-  
+  const mergedUnitIssues = unitIssues;
+
   // Use content from props for preview, or settings for actual page
   const effectiveContent = {
     intro: content.intro || settings?.guideIntro || '',
-    address: content.address || settings?.guideAddress || '26a jalan perang taman pelangi 80400 johor bahru',
+    address: content.address || settings?.guideAddress || DEFAULT_BUSINESS_CONFIG.address,
     wifiName: content.wifiName || settings?.guideWifiName || 'your wifi name',
     wifiPassword: content.wifiPassword || settings?.guideWifiPassword || 'your wifi password',
     checkin: content.checkin || settings?.guideCheckin || '',
@@ -130,7 +128,7 @@ export default function GuestSuccessPageTemplate({
 
   const { address: streetAddress, phone, email } = parseAddress(effectiveContent.address);
 
-  const unitNumber = isPreview 
+  const unitNumber = isPreview
     ? 'Assigned based on availability'
     : (assignedUnitNumber || assignedunitNumber || guestInfo?.unitNumber || 'C01');
 
@@ -149,9 +147,9 @@ export default function GuestSuccessPageTemplate({
           {effectiveVisibility.showIntro && effectiveContent.intro && (
             <div className={`bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl ${viewMode === 'mobile' ? 'p-4' : 'p-6'} mb-6`}>
               <h2 className={`${viewMode === 'mobile' ? 'text-lg' : 'text-xl'} font-bold text-gray-800 mb-4 flex items-center justify-center gap-2`}>
-                Welcome to your wifi name Hostel <span className={`${viewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>🌈</span>
+                Welcome to {DEFAULT_BUSINESS_CONFIG.name} <span className={`${viewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>🌈</span>
               </h2>
-              
+
               {/* Essential Information Grid */}
               <div className="grid grid-cols-1 gap-4 text-sm">
                 {/* Address Section */}
@@ -234,8 +232,8 @@ export default function GuestSuccessPageTemplate({
           {(effectiveVisibility.showHostelPhotos || effectiveVisibility.showGoogleMaps || effectiveVisibility.showCheckinVideo) && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               {effectiveVisibility.showHostelPhotos && effectiveContent.hostelPhotosUrl && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="flex items-center gap-2 h-auto py-3 px-4"
                   onClick={actions.onHostelPhotos || (() => window.open(effectiveContent.hostelPhotosUrl, '_blank'))}
                 >
@@ -243,10 +241,10 @@ export default function GuestSuccessPageTemplate({
                   <span className="text-sm">Hostel Photos</span>
                 </Button>
               )}
-              
+
               {effectiveVisibility.showGoogleMaps && effectiveContent.googleMapsUrl && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="flex items-center gap-2 h-auto py-3 px-4"
                   onClick={actions.onGoogleMaps || (() => window.open(effectiveContent.googleMapsUrl, '_blank'))}
                 >
@@ -254,10 +252,10 @@ export default function GuestSuccessPageTemplate({
                   <span className="text-sm">Google Maps</span>
                 </Button>
               )}
-              
+
               {effectiveVisibility.showCheckinVideo && effectiveContent.checkinVideoUrl && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="flex items-center gap-2 h-auto py-3 px-4"
                   onClick={actions.onCheckinVideo || (() => window.open(effectiveContent.checkinVideoUrl, '_blank'))}
                 >
@@ -265,14 +263,14 @@ export default function GuestSuccessPageTemplate({
                   <span className="text-sm">How-to Video</span>
                 </Button>
               )}
-              
-              {(!effectiveVisibility.showHostelPhotos || !effectiveContent.hostelPhotosUrl) && 
-               (!effectiveVisibility.showGoogleMaps || !effectiveContent.googleMapsUrl) && 
-               (!effectiveVisibility.showCheckinVideo || !effectiveContent.checkinVideoUrl) && isPreview && (
-                <div className="col-span-3 text-center text-gray-500 text-sm py-4">
-                  No quick links configured or visible. Add URLs in the Quick Links Configuration section above.
-                </div>
-              )}
+
+              {(!effectiveVisibility.showHostelPhotos || !effectiveContent.hostelPhotosUrl) &&
+                (!effectiveVisibility.showGoogleMaps || !effectiveContent.googleMapsUrl) &&
+                (!effectiveVisibility.showCheckinVideo || !effectiveContent.checkinVideoUrl) && isPreview && (
+                  <div className="col-span-3 text-center text-gray-500 text-sm py-4">
+                    No quick links configured or visible. Add URLs in the Quick Links Configuration section above.
+                  </div>
+                )}
             </div>
           )}
 
@@ -345,7 +343,7 @@ export default function GuestSuccessPageTemplate({
                       ))}
                     </div>
                     <div className="mt-3 text-xs text-yellow-700">
-                      <strong>Note:</strong> These issues have been reported and are being addressed. 
+                      <strong>Note:</strong> These issues have been reported and are being addressed.
                       You may choose to accept this unit or contact reception for alternatives.
                     </div>
                   </div>
@@ -554,7 +552,7 @@ export default function GuestSuccessPageTemplate({
           {!isPreview && (
             <div className="text-center text-gray-600 text-sm mt-6">
               For any assistance, please contact reception.<br />
-              Enjoy your stay at your wifi name Hostel! 💼🌟
+              Enjoy your stay at {DEFAULT_BUSINESS_CONFIG.name}! 💼🌟
             </div>
           )}
         </div>

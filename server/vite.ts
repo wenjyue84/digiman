@@ -78,11 +78,15 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // In production build, __dirname is dist/, so public/ is at ./public
-  // In development, __dirname is server/, so we need ../dist/public
+  // Path resolution for production: dist/server/index.js → __dirname = dist/server/
+  //   - Legacy: dist/server/public (old build structure, kept for backwards compat)
+  //   - Current: dist/public (standard esbuild outdir=dist layout)
+  // Dev is handled by Vite middleware above; this path is only reached in production.
   const distPath = fs.existsSync(path.resolve(__dirname, "public"))
-    ? path.resolve(__dirname, "public")
-    : path.resolve(__dirname, "../dist/public");
+    ? path.resolve(__dirname, "public")         // legacy: dist/server/public
+    : fs.existsSync(path.resolve(__dirname, "../public"))
+      ? path.resolve(__dirname, "../public")    // current: dist/public
+      : path.resolve(__dirname, "../dist/public"); // fallback (unlikely in production)
 
   if (!fs.existsSync(distPath)) {
     throw new Error(

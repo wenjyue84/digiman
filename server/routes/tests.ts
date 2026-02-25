@@ -131,7 +131,7 @@ router.post("/run", async (req, res) => {
 
     if (failed === 0) {
       output += `\n🎉 EXCELLENT! All tests passed successfully!\n`;
-      output += `   Your PelangiManager system is functioning correctly.\n`;
+      output += `   Your digiman system is functioning correctly.\n`;
     } else {
       output += `\n⚠️  ATTENTION: ${failed} test(s) require attention.\n`;
       output += `   Review the troubleshooting suggestions above for fixes.\n`;

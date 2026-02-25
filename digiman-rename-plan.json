@@ -1,0 +1,59 @@
+{
+  "project": "digiman rebrand",
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-21",
+  "goals": [
+    "Rename user-facing system branding from PelangiManager to digiman",
+    "Keep runtime compatibility for existing PELANGI_* environment variables",
+    "Avoid breaking MCP tool IDs that external automations may depend on"
+  ],
+  "userStories": [
+    {
+      "id": "DG-001",
+      "title": "As an admin, I see digiman branding in web and PWA surfaces",
+      "status": "done",
+      "acceptanceCriteria": [
+        "App title and manifest use digiman",
+        "Service worker push fallback uses digiman",
+        "Help/onboarding text references digiman"
+      ]
+    },
+    {
+      "id": "DG-002",
+      "title": "As an operator, health and MCP server metadata identify as digiman",
+      "status": "done",
+      "acceptanceCriteria": [
+        "/api/health service identifier is digiman",
+        "MCP initialize serverInfo.name is digiman"
+      ]
+    },
+    {
+      "id": "DG-003",
+      "title": "As a deployer, I can migrate env vars safely",
+      "status": "done",
+      "acceptanceCriteria": [
+        "DIGIMAN_API_URL and DIGIMAN_API_TOKEN are supported",
+        "Legacy PELANGI_API_URL and PELANGI_API_TOKEN still work",
+        "DIGIMAN_MANAGER_HOST and legacy PELANGI_MANAGER_HOST are both supported"
+      ]
+    },
+    {
+      "id": "DG-004",
+      "title": "As a maintainer, docs reflect digiman naming",
+      "status": "done",
+      "acceptanceCriteria": [
+        "Top-level and module READMEs use digiman branding",
+        "RainbowAI env docs point to DIGIMAN_* vars and mention legacy fallback"
+      ]
+    },
+    {
+      "id": "DG-005",
+      "title": "As an integration owner, existing MCP tool names remain stable",
+      "status": "done",
+      "acceptanceCriteria": [
+        "pelangi_* MCP tool IDs are not renamed in this change set",
+        "Only descriptions/messages are rebranded"
+      ]
+    }
+  ]
+}

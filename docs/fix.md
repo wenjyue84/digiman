@@ -1232,3 +1232,79 @@ npx kill-port 3000 5000 3002 && npm run dev:clean && cd RainbowAI && npm run dev
 - ✅ Always restart MCP server after `.env` changes
 - ✅ Keep health check one-liner in clipboard for quick verification
 - ✅ Use incognito mode when testing changes to avoid cache issues
+
+---
+
+## Issue: Fleet Manager (localhost:9999) – Down Services (2026-02-21)
+
+### Symptom
+- Fleet Manager at `http://localhost:9999/` shows one or more services as **Down** (red badge).
+- Local Pelangi or Local Southern groups show "Down" for API, Vite, or Rainbow.
+
+### Root cause
+The dashboard polls health URLs. If a local server isn’t running, that service is reported as down.
+
+| Service | Health URL | How to start |
+|--------|------------|--------------|
+| **Local Pelangi – Rainbow** | `http://localhost:3002/health/ready` | `cd RainbowAI && npm run dev` |
+| **Local Southern – Rainbow** | `http://localhost:8002/health/ready` | `cd RainbowAI && npx dotenv-cli -e .env.southern.local -- npx tsx watch --ignore src/public src/index.ts` |
+| Local Pelangi API/DB/WhatsApp | `http://localhost:5000/api/health` | `npm run dev:clean` (or `npm run dev`) |
+| Local Pelangi Vite | `http://localhost:3000/` | Same as above (Vite + backend) |
+| Local Southern API/DB/WhatsApp | `http://localhost:8001/api/health` | See **Fix: Get localhost:8001 (Southern Manager API)** below |
+| Local Southern Vite | `http://localhost:8000/` | `start-southern.bat` (or Vite on 8000) |
+
+### Fix: Get localhost:3002 (Pelangi Rainbow) running
+
+```bash
+# If something is already on 3002, kill it first
+npx kill-port 3002
+
+# Start Pelangi Rainbow AI (default port 3002)
+cd RainbowAI && npm run dev
+```
+
+Run in a separate terminal or use `start-all.bat` to start the full fleet.
+
+### Fix: Get localhost:8001 (Southern Manager API) running
+
+```bash
+# From repo root; .env.southern.local must have PORT=8001
+npx kill-port 8001 2>nul
+npx dotenv-cli -e .env.southern.local -- npx cross-env SKIP_VITE_MIDDLEWARE=true tsx watch --clear-screen=false server/index.ts
+```
+
+Run in a separate terminal. Database and WhatsApp status in Fleet Manager depend on this API being up.
+
+### Fix: Get localhost:8002 (Southern Rainbow) running
+
+```bash
+# From repo root; uses RainbowAI/.env.southern.local (MCP_SERVER_PORT=8002)
+cd RainbowAI && npx dotenv-cli -e .env.southern.local -- npx tsx watch --ignore src/public src/index.ts
+```
+
+Or run `start-southern.bat` to start Southern Manager + Southern Rainbow.
+
+### Verify
+- Check ports: `netstat -ano | findstr "3002 8002"` (should show LISTENING).
+- Refresh Fleet Manager; after the next poll (~30s or refresh) down count should drop.
+- Pelangi Rainbow: `http://localhost:3002/health/ready` → 200.
+- Southern Rainbow: `http://localhost:8002/health/ready` → 200.
+
+### Root cause of “Pelangi Local (or Southern Local) down” after health-proxy change (2026-02-21)
+
+**What changed:** The dashboard was updated to send all **localhost** health checks through the Fleet Manager server (`/api/health-proxy?url=...`) to avoid CORS. So the **Node process** (Fleet Manager on 9999) now does the outbound request to e.g. `localhost:5000`.
+
+**Why that broke things:** Node’s `http.request({ hostname: 'localhost' })` uses the OS to resolve `localhost`. On Windows this often resolves to **IPv6 first** (`::1`). The dev servers, however, bind inconsistently:
+
+- Pelangi API (Express): **127.0.0.1:5000** only  
+- Pelangi Vite: **[::1]:3000** only  
+- Rainbow: **0.0.0.0:3002** (both)
+
+When the proxy used `hostname: 'localhost'`, Node could try `::1:5000` first → nothing listening there → **connection refused** → 502 → Fleet Manager showed Pelangi Local as down even though the servers were running.
+
+**Why this was a mistake:** The dashboard was working when the right processes were running. The only fix needed for "Southern Local down" was to **start 8001 and 8002**. Routing localhost through the proxy was an unnecessary "improvement" that moved the request from the browser (which was working) to Node (different localhost resolution → regression). Lesson: fix the actual problem (missing processes); don't change a working code path without proof it's broken.
+
+**Fix applied:** Dashboard **reverted to direct fetch only** (no proxy for localhost). Back to the previous working behaviour: browser fetches each health URL directly. The health-proxy remains in `fleet-manager/server.js` (with 127.0.0.1 then ::1) for possible future use; the dashboard does not use it.
+
+### Memory (for agents)
+When Fleet Manager shows down services: identify which port (e.g. 3002 vs 8002), then start the matching Rainbow or Manager stack. Pelangi = 3002 + default env; Southern = 8002 + `.env.southern.local`. If local servers are running but the dashboard still shows them down, the cause is often the health-proxy and IPv4/IPv6 (see “Root cause of Pelangi Local down” above); dashboard uses direct fetch only; do not use the health-proxy for localhost.

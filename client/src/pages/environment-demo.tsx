@@ -83,7 +83,7 @@ export default function EnvironmentDemoPage() {
         </div>
         <p className="text-gray-600 max-w-2xl mx-auto">
           This page demonstrates the comprehensive environment detection and configuration system 
-          for PelangiManager, showing how it automatically adapts to different deployment environments.
+          for digiman, showing how it automatically adapts to different deployment environments.
         </p>
         {getEnvironmentBadge()}
       </div>
@@ -214,7 +214,7 @@ export default function EnvironmentDemoPage() {
                   <Cloud className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">
                     You're currently not running on Replit. This guide shows setup instructions 
-                    for deploying PelangiManager on Replit with Neon database and object storage.
+                    for deploying digiman on Replit with Neon database and object storage.
                   </p>
                   <Badge variant="secondary">
                     Current Environment: {config?.environment || 'Unknown'}

@@ -6,9 +6,11 @@ if (!process.env.DATABASE_URL) {
 
 export default defineConfig({
   out: "./migrations",
-  schema: "./shared/schema.ts",
+  schema: "./shared/schema-tables.ts",
   dialect: "postgresql",
   dbCredentials: {
     url: process.env.DATABASE_URL,
   },
+  // Exclude tables managed outside Drizzle (raw pg config tables + sessions)
+  tablesFilter: ["!rainbow_configs", "!rainbow_kb_files", "!rainbow_config_audit", "!sessions"],
 });

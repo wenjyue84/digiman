@@ -226,13 +226,13 @@ export default function History() {
   const totalGuests = guestHistoryResponse?.pagination?.total || 0;
   const totalPages = guestHistoryResponse?.pagination?.totalPages || 0;
 
-  // Extract unique nationalities and capsules for filter dropdowns from current page
+  // Extract unique nationalities and units for filter dropdowns from current page
   // Note: This shows options from currently loaded data; users can search for others
   const uniqueNationalities = Array.from(
     new Set(guestHistory.map(g => g.nationality).filter(Boolean))
   ).sort();
   
-  // Sort capsules with numeric awareness (C1, C2, ..., C10, C11 not C1, C10, C11, C2)
+  // Sort units with numeric awareness (C1, C2, ..., C10, C11 not C1, C10, C11, C2)
   const uniqueUnits = Array.from(
     new Set(guestHistory.map(g => g.unitNumber).filter(Boolean))
   ).sort((a, b) => {

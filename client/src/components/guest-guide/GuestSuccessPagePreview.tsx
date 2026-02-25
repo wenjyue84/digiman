@@ -10,6 +10,7 @@ import GuestSuccessPageTemplate from '@/components/guest-success/GuestSuccessPag
 import { Button } from '@/components/ui/button';
 import { Monitor, Smartphone, RotateCcw } from 'lucide-react';
 import { PREVIEW_CONFIGURATIONS } from '@/lib/types/guest-guide';
+import { DEFAULT_BUSINESS_CONFIG } from '@shared/business-config';
 
 interface GuestSuccessPagePreviewProps {
   className?: string;
@@ -30,12 +31,12 @@ const GuestSuccessPagePreview: React.FC<GuestSuccessPagePreviewProps> = ({
   showTitle = true,
   guestInfo = null
 }) => {
-  const { 
-    settings, 
-    previewMode, 
-    setPreviewMode, 
+  const {
+    settings,
+    previewMode,
+    setPreviewMode,
     isLoading,
-    error 
+    error
   } = useGuestGuide();
 
   const previewConfig = PREVIEW_CONFIGURATIONS[previewMode];
@@ -112,14 +113,14 @@ const GuestSuccessPagePreview: React.FC<GuestSuccessPagePreviewProps> = ({
       <div className="relative">
         {previewConfig.showFrame ? (
           /* Mobile Frame with Device Mockup */
-          <div className="mx-auto bg-gray-900 rounded-[2.5rem] p-4 shadow-2xl" 
-               style={{ width: previewConfig.width + 40, height: previewConfig.height + 80 }}>
+          <div className="mx-auto bg-gray-900 rounded-[2.5rem] p-4 shadow-2xl"
+            style={{ width: previewConfig.width + 40, height: previewConfig.height + 80 }}>
             <div className="bg-white rounded-[2rem] overflow-hidden h-full relative">
               {/* Mobile Status Bar Mockup */}
               <div className="bg-gray-100 h-6 flex items-center justify-between px-4 text-xs text-gray-600">
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-2 bg-gray-300 rounded-full"></div>
-                  <span>Pelangi</span>
+                  <span>{DEFAULT_BUSINESS_CONFIG.shortName}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span>100%</span>
@@ -128,7 +129,7 @@ const GuestSuccessPagePreview: React.FC<GuestSuccessPagePreviewProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               {/* Content Area */}
               <div className="h-[calc(100%-24px)] overflow-auto">
                 <GuestSuccessPageTemplate
@@ -153,7 +154,7 @@ const GuestSuccessPagePreview: React.FC<GuestSuccessPagePreviewProps> = ({
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                 </div>
                 <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
-                  🌐 guest-success.pelangicapsule.com
+                  🌐 {window.location.hostname}
                 </div>
               </div>
               <div className="text-xs text-gray-500">
@@ -186,7 +187,7 @@ const GuestSuccessPagePreview: React.FC<GuestSuccessPagePreviewProps> = ({
       {showControls && (
         <div className="text-xs text-gray-500 text-center p-2 bg-blue-50 rounded-lg">
           <p>
-            This preview updates in real-time as you make changes. 
+            This preview updates in real-time as you make changes.
             The actual guest success page will look exactly like this preview.
           </p>
         </div>

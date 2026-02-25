@@ -406,7 +406,7 @@ class PushNotificationManager {
         // Fallback: Show a local notification instead
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification('Test Notification', {
-            body: 'This is a test notification from Pelangi Manager',
+            body: 'This is a test notification from digiman',
             icon: '/icon-192.png',
             tag: 'test-notification',
           });

@@ -53,13 +53,13 @@ try {
     exit 1
 }
 
-Write-Host "=== STEP 2: Setting PELANGI_API_URL Environment Variable ===" -ForegroundColor Cyan
+Write-Host "=== STEP 2: Setting DIGIMAN_API_URL Environment Variable ===" -ForegroundColor Cyan
 
 # Set environment variable - try different mutation names
 $mutations = @(
-    'saveServiceVariables(serviceID: \"' + $SERVICE_ID + '\", variables: [{key: \"PELANGI_API_URL\", value: \"https://pelangi-manager.zeabur.app\"}])',
-    'updateServiceVariable(serviceID: \"' + $SERVICE_ID + '\", key: \"PELANGI_API_URL\", value: \"https://pelangi-manager.zeabur.app\")',
-    'setEnvironmentVariable(serviceID: \"' + $SERVICE_ID + '\", key: \"PELANGI_API_URL\", value: \"https://pelangi-manager.zeabur.app\")'
+    'saveServiceVariables(serviceID: \"' + $SERVICE_ID + '\", variables: [{key: \"DIGIMAN_API_URL\", value: \"https://admin.southern-homestay.com\"}])',
+    'updateServiceVariable(serviceID: \"' + $SERVICE_ID + '\", key: \"DIGIMAN_API_URL\", value: \"https://admin.southern-homestay.com\")',
+    'setEnvironmentVariable(serviceID: \"' + $SERVICE_ID + '\", key: \"DIGIMAN_API_URL\", value: \"https://admin.southern-homestay.com\")'
 )
 
 $success = $false
@@ -82,7 +82,7 @@ try {
     }
 
     Write-Host "Environment variable set successfully!" -ForegroundColor Green
-    Write-Host "  PELANGI_API_URL = https://pelangi-manager.zeabur.app" -ForegroundColor Gray
+    Write-Host "  DIGIMAN_API_URL = https://admin.southern-homestay.com" -ForegroundColor Gray
     Write-Host ""
 
 } catch {

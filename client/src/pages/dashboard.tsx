@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import OccupancyCalendar from "@/components/occupancy-calendar";
+import SetupChecklist from "@/components/SetupChecklist";
 
 const SortableGuestTable = React.lazy(
   () => import("@/components/sortable-guest-table")
@@ -45,6 +46,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <SetupChecklist />
       <div ref={table.ref}>
         {table.visible && (
           <Suspense fallback={<Skeleton className="h-40 w-full" />}>

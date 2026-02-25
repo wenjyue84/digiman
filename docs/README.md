@@ -9,6 +9,7 @@
 | **Doc map (AI agents)** | [INDEX.md](INDEX.md) — hierarchical index, read first |
 | Something's broken | [MASTER_TROUBLESHOOTING_GUIDE.md](MASTER_TROUBLESHOOTING_GUIDE.md) |
 | Development setup / architecture | [DEVELOPMENT_REFERENCE.md](DEVELOPMENT_REFERENCE.md) |
+| **Fleet Manager (http://localhost:9999)** | [FLEET-MANAGER.md](FLEET-MANAGER.md) — local fleet status dashboard |
 | Deployment / operations | [DEPLOYMENT_OPERATIONS.md](DEPLOYMENT_OPERATIONS.md) |
 | Inter-module API reference | [API-CONTRACT.md](API-CONTRACT.md) |
 | PWA features | [PWA_IMPLEMENTATION_GUIDE.md](PWA_IMPLEMENTATION_GUIDE.md) |
@@ -25,6 +26,12 @@ Each module has its own README with boundary docs:
 | MCP Server | [mcp-server/README.md](../mcp-server/README.md) |
 | MCP Deployment | [mcp-server/DEPLOYMENT.md](../mcp-server/DEPLOYMENT.md) |
 
+## Local services
+
+| Service | URL | Doc |
+|---------|-----|-----|
+| Fleet Manager | http://localhost:9999 | [FLEET-MANAGER.md](FLEET-MANAGER.md) |
+
 ## Specialized Docs
 
 | Topic | File |
@@ -38,6 +45,7 @@ Each module has its own README with boundary docs:
 ## Emergency Quick Start
 
 ```bash
+# Requires Node.js 18+
 # Clean restart (fixes 90% of issues)
 npm run dev:clean
 

@@ -237,7 +237,7 @@ export async function providerChat(
   }
   if (provider.base_url?.includes('openrouter.ai')) {
     headers['Referer'] = process.env.OPENROUTER_REFERER || 'https://pelangi-unit.local';
-    headers['X-Title'] = process.env.OPENROUTER_APP_TITLE || 'Rainbow AI Pelangi';
+    headers['X-Title'] = process.env.OPENROUTER_APP_TITLE || 'Rainbow AI digiman';
   }
 
   const res = await axios.post(`${provider.base_url}/chat/completions`, body, {

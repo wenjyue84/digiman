@@ -1,11 +1,11 @@
-# PelangiManager
+# digiman
 
-Capsule hotel management system with AI-powered WhatsApp assistant.
+Digital manpower and operations management system with AI-powered WhatsApp assistant.
 
 ## Architecture
 
 ```
-PelangiManager-Zeabur/
+digiman/
 ├── client/          # React frontend (port 3000)
 ├── server/          # Express backend (port 5000)
 ├── shared/          # Shared types (Drizzle schemas, Zod)
@@ -42,6 +42,7 @@ See [docs/API-CONTRACT.md](docs/API-CONTRACT.md) for inter-module communication 
 ## Quick Start
 
 ```bash
+# Requires Node.js 18+ (Vite 5 uses top-level await)
 # Install dependencies
 npm install
 

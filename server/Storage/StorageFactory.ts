@@ -32,10 +32,17 @@ export function createStorage(): IStorage {
  * This ensures backward compatibility when deploying to new environments
  */
 async function initializeStorageWithMigration(): Promise<IStorage> {
-  const storage = createStorage();
+  let storage = createStorage();
   
   // Run migration checks for database storage
-  if (process.env.DATABASE_URL) {
+  if (storage instanceof DatabaseStorage) {
+    const healthy = await storage.healthCheck();
+    if (!healthy) {
+      console.warn("⚠️ Database not reachable, switching to in-memory storage");
+      storage = new MemStorage();
+      return storage;
+    }
+
     try {
       console.log("🔧 Running database migration checks...");
       const migrationHelper = new MigrationHelper(storage);
@@ -50,10 +57,18 @@ async function initializeStorageWithMigration(): Promise<IStorage> {
 
 // Create the storage instance with migration support
 let storagePromise: Promise<IStorage> | null = null;
+let currentStorageName = process.env.DATABASE_URL ? "DatabaseStorage" : "MemStorage";
 
 export function getStorage(): Promise<IStorage> {
   if (!storagePromise) {
     storagePromise = initializeStorageWithMigration();
+    storagePromise
+      .then((storage) => {
+        currentStorageName = storage.constructor.name;
+      })
+      .catch(() => {
+        currentStorageName = "MemStorage";
+      });
   }
   return storagePromise;
 }
@@ -68,4 +83,18 @@ export function resetStorage(): void {
 }
 
 // For immediate access (backward compatibility)
-export const storage = createStorage();
+// Lazily resolve the real storage instance to allow DB health checks and fallback.
+export const storage: IStorage = new Proxy({} as IStorage, {
+  get(_target, prop) {
+    if (prop === "then") return undefined;
+    if (prop === "constructor") return { name: currentStorageName } as any;
+    return async (...args: any[]) => {
+      const realStorage = await getStorage();
+      const value = (realStorage as any)[prop];
+      if (typeof value === "function") {
+        return value.apply(realStorage, args);
+      }
+      return value;
+    };
+  }
+});

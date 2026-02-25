@@ -11,7 +11,7 @@ npx kill-port 3002
 echo.
 echo [2/2] Starting Rainbow AI MCP Server...
 cd RainbowAI
-start "Rainbow AI MCP Server" cmd /k "npm run dev"
+start "Rainbow AI MCP Server" cmd /k "npx dotenv-cli -e .env.pelangi.local -- npx tsx watch --ignore src/public src/index.ts"
 
 echo.
 echo ================================================

@@ -33,7 +33,7 @@ export function createMCPHandler() {
             tools: {}
           },
           serverInfo: {
-            name: 'pelangi-manager',
+            name: 'digiman',
             version: '1.0.0'
           }
         };

@@ -59,10 +59,12 @@ When fixing database queries, be careful about column name casing. The database 
 
 | Task              | Command                                           |
 | ----------------- | ------------------------------------------------- |
-| **Start all (local dev)** | `start-all.bat` ⭐ (starts ports 3000/5000/3002 locally) |
+| **Start all (full fleet)** | `start-all.bat` ⭐ (starts Pelangi :3000/:5000/:3002 + Southern :8000/:8001/:8002 + Fleet :9999) |
+| **Start Pelangi only** | `npm run dev:clean` (kills ports 3000/5000 first) |
+| **Start Southern standby** | `start-southern.bat` (ports 8000/8001/8002) |
+| **Fleet Manager** | `cd fleet-manager && node server.js` → http://localhost:9999 |
 | **Check health**  | `check-health.bat` (verify all local servers running)   |
-| Start website dev | `npm run dev:clean` (kills ports 3000/5000 first) |
-| Start Rainbow AI  | `cd RainbowAI && npm run dev`                     |
+| Start Pelangi Rainbow AI | `cd RainbowAI && npm run dev`                 |
 | Build             | `npm run build`                                   |
 | Test              | `npm test`                                        |
 | Clear cache       | `rm -rf node_modules/.vite && npm run dev`        |
@@ -70,7 +72,17 @@ When fixing database queries, be careful about column name casing. The database 
 | **Deploy website** | `./deploy.sh` (builds + uploads to Lightsail)   |
 | **Deploy Rainbow** | `./deploy.sh` (same script, Lightsail primary) |
 
-**⚠️ LOCAL DEV ONLY:** `start-all.bat` starts ports 3000/5000/3002 for local development. In production, the website is served by Lightsail. You only need all 3 running locally to work on the Rainbow AI dashboard.
+**⚠️ LOCAL DEV ONLY:** All local servers are STANDBY only. Local Rainbow AI instances use `RAINBOW_ROLE=standby` and will NOT reply to WhatsApp guests unless the corresponding Lightsail instance is unreachable for 60+ seconds.
+
+**Local port map:**
+```
+LOCAL PC
+├── Pelangi Manager  — Vite :3000 → Express :5000   (Pelangi standby)
+├── Pelangi Rainbow  — :3002  RAINBOW_ROLE=standby
+├── Southern Manager — Vite :8000 → Express :8001   (Southern standby, start-southern.bat)
+├── Southern Rainbow — :8002  RAINBOW_ROLE=standby  (start-southern.bat)
+└── Fleet Manager    — :9999  standalone             (fleet-manager/server.js)
+```
 
 If dashboard shows "Loading..." → verify all 3 servers running locally, then hard refresh browser (`Ctrl+Shift+R`). See `fix.md` for full troubleshooting.
 
@@ -121,7 +133,7 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 
 **Full reference:** `RainbowAI/README.md` (pipeline, tiers, KB, workflows, providers, data files)
 **Live config:** `RainbowAI/src/assistant/data/settings.json` (providers, routing, rate limits, staff phones)
-**Dashboard:** `http://localhost:3002/admin/rainbow` (Connect / Train / Test / Monitor sections)
+**Dashboard:** `https://rainbow.pelangicapsulehostel.com/admin/rainbow` (prod) or `http://localhost:3002/admin/rainbow` (local)
 
 ### Rainbow Conventions (Must Follow)
 
@@ -150,6 +162,8 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | `RainbowAI/reports/autotest/`    | Rainbow autotest HTML reports                    |
 | `RainbowAI/docs/`                | Rainbow documentation                            |
 | `docs/`                          | Project-wide documentation                       |
+| `docs/FLEET-MANAGER.md`          | Fleet Manager (http://localhost:9999)            |
+| `fleet-manager/`                 | Fleet Manager app (server.js + public dashboard)  |
 | `scripts/`                       | Project-wide utility scripts                     |
 | `archive/`                       | Archived files (gitignored)                      |
 | `deploy.sh`                      | Lightsail full deployment script                 |
@@ -202,10 +216,12 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 
 | Service | URL | Served By | Always On? |
 | ------- | --- | --------- | ---------- |
-| **Frontend** | `http://18.142.14.142/` | nginx (port 80) → static `dist/public` | ✅ Lightsail always |
-| **API** | `http://18.142.14.142/api/*` | nginx → PM2 `pelangi-api` (port 5000) | ✅ Lightsail always |
-| **Rainbow AI Dashboard** | `http://18.142.14.142:3002/` | PM2 `rainbow-ai` (primary mode) | ✅ Lightsail always |
+| **Frontend (Pelangi)** | `https://admin.pelangicapsulehostel.com/` | Cloudflare → nginx → `dist/public` | ✅ |
+| **Frontend (Southern)** | `https://admin.southern-homestay.com/` | Cloudflare → nginx → `dist/public` | ✅ |
+| **API** | `https://admin.pelangicapsulehostel.com/api/*` | Cloudflare → nginx → PM2 port 5000 | ✅ |
+| **Rainbow AI Dashboard** | `https://rainbow.pelangicapsulehostel.com/` | Cloudflare → PM2 `rainbow-ai` port 3002 | ✅ |
 | **Rainbow AI (local)** | `http://localhost:3002/` | Local dev server (standby) | When PC is on |
+| **Raw IP (fallback)** | `http://18.142.14.142/` | nginx direct | ✅ |
 
 **Note:** Port 3000 does NOT run in production — nginx on port 80 serves the pre-built frontend.
 
@@ -332,6 +348,7 @@ ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 logs --lines
 | Issue Type | Read First |
 | --- | --- |
 | **Doc map (progressive disclosure)** | `docs/INDEX.md` — read first to choose which doc to load |
+| **Fleet Manager (localhost:9999)** | `docs/FLEET-MANAGER.md` — fleet dashboard, start, endpoints |
 | Port conflicts, caching | `docs/MASTER_TROUBLESHOOTING_GUIDE.md` |
 | Storage/DB errors | `docs/Storage_System_Guide.md` |
 | Import/export errors | `docs/REFACTORING_TROUBLESHOOTING.md` |

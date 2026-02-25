@@ -9,7 +9,7 @@ import { MCPTool, MCPToolResult } from '../types';
  * Rainbow AI's admin API endpoints over HTTP.
  */
 
-const RAINBOW_URL = process.env.RAINBOW_AI_URL || 'http://localhost:3002';
+const RAINBOW_URL = process.env.RAINBOW_URL || 'http://localhost:3002';
 const ADMIN_KEY = process.env.RAINBOW_ADMIN_KEY || '';
 
 function rainbowHeaders() {
@@ -52,7 +52,7 @@ export const whatsappProxyTools: MCPTool[] = [
   },
   {
     name: 'pelangi_whatsapp_send_guest_status',
-    description: 'Fetch current guest/unit status from PelangiManager and send as WhatsApp message',
+    description: 'Fetch current guest/unit status from digiman and send as WhatsApp message',
     inputSchema: {
       type: 'object',
       properties: {

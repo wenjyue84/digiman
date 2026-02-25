@@ -242,7 +242,7 @@
     "description": "Automatically detect frustrated users and escalate to staff when they send consecutive negative messages"
   },
   "failover": {
-    "enabled": true,
+    "enabled": false,
     "heartbeatIntervalMs": 20000,
     "failoverThresholdMs": 60000,
     "handbackMode": "immediate",
@@ -266,15 +266,7 @@
       "auto_approve_intents": [
         "greeting",
         "thanks",
-        "wifi",
-        "directions",
-        "checkin_info",
-        "checkout_info",
-        "facilities_info",
-        "rules_policy",
-        "payment_info",
-        "luggage_storage",
-        "extra_amenity_request"
+        "wifi"
       ],
       "queue_timeout_minutes": 30,
       "auto_approve_confidence": 0.95

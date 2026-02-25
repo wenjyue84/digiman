@@ -141,6 +141,13 @@ export async function loadDashboard() {
       }
     }
 
+    // Update property name badge (from BUSINESS_NAME env via welcoming wizard)
+    const propBadge = document.getElementById('property-name-badge');
+    if (propBadge && statusData.propertyName) {
+      propBadge.textContent = statusData.propertyName;
+      propBadge.classList.remove('hidden');
+    }
+
     // Update Server connection (ports 3000, 5000, 3002)
     const serverStatusEl = document.getElementById('server-status');
     if (serverStatusEl) {
@@ -201,22 +208,22 @@ export async function loadDashboard() {
             <button type="button" id="dashboard-ai-more-toggle" onclick="toggleDashboardAiModels()" class="text-xs text-primary-500 hover:text-primary-600 mt-1 pl-4 cursor-pointer underline">+${aiProviders.length - 4} more models</button>
             <div id="dashboard-ai-more-list" class="hidden space-y-2 mt-2">
               ${aiProviders.slice(4).map(provider => {
-                const isDefault = provider.priority === 0;
-                const defaultBadge = isDefault
-                  ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded ml-1 font-bold uppercase tracking-wide border border-amber-200">Default</span>'
-                  : '';
-                return '<div class="flex items-center justify-between text-sm" data-provider-id="' + esc(provider.id) + '">'
-                  + '<div class="flex items-center gap-2 overflow-hidden">'
-                  + '<span class="w-2 h-2 rounded-full flex-shrink-0 ' + (provider.available ? 'bg-success-400' : 'bg-neutral-300') + '"></span>'
-                  + '<span class="text-neutral-700 truncate ' + (isDefault ? 'font-semibold' : '') + '">' + esc(provider.name || 'Unknown') + '</span>'
-                  + defaultBadge
-                  + '</div>'
-                  + '<span class="flex items-center gap-2 flex-shrink-0 ml-2">'
-                  + '<span class="' + (provider.available ? 'text-success-600' : 'text-neutral-400') + ' text-xs whitespace-nowrap">' + (provider.available ? '\u2713 Ready' : '\u2717 Not configured') + '</span>'
-                  + '<span id="dashboard-ai-time-' + esc(provider.id) + '" class="text-neutral-500 font-mono text-xs w-10 text-right" data-provider-id="' + esc(provider.id) + '"></span>'
-                  + '</span>'
-                  + '</div>';
-              }).join('')}
+          const isDefault = provider.priority === 0;
+          const defaultBadge = isDefault
+            ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded ml-1 font-bold uppercase tracking-wide border border-amber-200">Default</span>'
+            : '';
+          return '<div class="flex items-center justify-between text-sm" data-provider-id="' + esc(provider.id) + '">'
+            + '<div class="flex items-center gap-2 overflow-hidden">'
+            + '<span class="w-2 h-2 rounded-full flex-shrink-0 ' + (provider.available ? 'bg-success-400' : 'bg-neutral-300') + '"></span>'
+            + '<span class="text-neutral-700 truncate ' + (isDefault ? 'font-semibold' : '') + '">' + esc(provider.name || 'Unknown') + '</span>'
+            + defaultBadge
+            + '</div>'
+            + '<span class="flex items-center gap-2 flex-shrink-0 ml-2">'
+            + '<span class="' + (provider.available ? 'text-success-600' : 'text-neutral-400') + ' text-xs whitespace-nowrap">' + (provider.available ? '\u2713 Ready' : '\u2717 Not configured') + '</span>'
+            + '<span id="dashboard-ai-time-' + esc(provider.id) + '" class="text-neutral-500 font-mono text-xs w-10 text-right" data-provider-id="' + esc(provider.id) + '"></span>'
+            + '</span>'
+            + '</div>';
+        }).join('')}
             </div>
           ` : ''}
         </div>

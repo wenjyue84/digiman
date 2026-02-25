@@ -40,7 +40,7 @@ export async function exportWhatsappIssues(args: any): Promise<MCPToolResult> {
       };
     }
 
-    let message = '🔧 *Pelangi Maintenance Report*\n';
+    let message = '🔧 *digiman Maintenance Report*\n';
     message += `📅 ${new Date().toLocaleDateString()}\n`;
     message += `⚠️ ${problems.length} Active Issue(s)\n\n`;
 

@@ -107,11 +107,13 @@ describe('Basic Functionality Tests', () => {
 
   describe('PelangiManager Specific Logic', () => {
     it('should validate accommodation types', () => {
-      const accommodationTypes = ['capsule', 'room', 'house'];
+      const accommodationTypes = ['capsule', 'room', 'bed', 'unit', 'house'];
       expect(accommodationTypes).toContain('capsule');
       expect(accommodationTypes).toContain('room');
+      expect(accommodationTypes).toContain('bed');
+      expect(accommodationTypes).toContain('unit');
       expect(accommodationTypes).toContain('house');
-      expect(accommodationTypes.length).toBe(3);
+      expect(accommodationTypes.length).toBe(5);
     });
 
     it('should validate payment methods', () => {

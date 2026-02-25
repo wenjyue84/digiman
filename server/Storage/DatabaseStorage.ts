@@ -8,8 +8,8 @@ import { neon } from "@neondatabase/serverless";
 // Removing this causes "Cannot find module 'postgres'" startup errors
 // Last fixed: August 23, 2025 - Major system recovery
 import postgres from "postgres";
-import { eq } from "drizzle-orm";
-import { IStorage } from "./IStorage";
+import { eq, sql } from "drizzle-orm";
+import { IStorage, IDatabaseMetrics } from "./IStorage";
 import {
   DbUserQueries,
   DbSessionQueries,
@@ -48,7 +48,7 @@ export class DatabaseStorage implements IStorage {
 
     // Check if we're using Neon (cloud) or local PostgreSQL
     const isNeon = process.env.DATABASE_URL.includes('neon.tech') ||
-                    process.env.DATABASE_URL.includes('neon');
+      process.env.DATABASE_URL.includes('neon');
 
     if (isNeon) {
       // Neon database connection (HTTP-based, no pool needed)
@@ -74,6 +74,17 @@ export class DatabaseStorage implements IStorage {
     this.notificationQueries = new DbNotificationQueries(this.db);
     this.settingsQueries = new DbSettingsQueries(this.db);
     this.expenseQueries = new DbExpenseQueries(this.db);
+  }
+
+  // ─── Health Check ────────────────────────────────────────────────────────
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.db.execute(sql`SELECT 1`);
+      return true;
+    } catch (error) {
+      console.warn("⚠️ Database health check failed:", error);
+      return false;
+    }
   }
 
   // ─── IUserStorage (delegates to DbUserQueries) ─────────────────────────────
@@ -253,4 +264,32 @@ export class DatabaseStorage implements IStorage {
   addExpense(expense: InsertExpense & { createdBy: string }) { return this.expenseQueries.addExpense(expense); }
   updateExpense(expense: UpdateExpense) { return this.expenseQueries.updateExpense(expense); }
   deleteExpense(id: string) { return this.expenseQueries.deleteExpense(id); }
+
+  async getDatabaseMetrics(): Promise<IDatabaseMetrics | null> {
+    try {
+      let uptimeResult, connResult, sizeResult;
+
+      uptimeResult = await this.db.execute(sql`SELECT pg_postmaster_start_time() as start_time`) as any[];
+      connResult = await this.db.execute(sql`SELECT count(*) as total FROM pg_stat_activity`) as any[];
+      sizeResult = await this.db.execute(sql`SELECT pg_size_pretty(pg_database_size(current_database())) as size`) as any[];
+
+      const startTime = uptimeResult[0]?.start_time;
+      const uptime = startTime ? `${Math.floor((Date.now() - new Date(startTime).getTime()) / 1000 / 60)}m` : "unknown";
+
+      return {
+        status: "ok",
+        uptime,
+        connections: Number(connResult[0]?.total || 0),
+        size: sizeResult[0]?.size || "unknown"
+      };
+    } catch (error) {
+      console.error("Failed to fetch database metrics:", error);
+      return {
+        status: "error",
+        uptime: "unknown",
+        connections: 0,
+        size: "unknown"
+      };
+    }
+  }
 }

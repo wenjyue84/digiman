@@ -13,7 +13,10 @@ import {
   toggleHandbackGrace,
   saveFailoverSettings,
   failoverPromote,
-  failoverDemote
+  failoverDemote,
+  applyAppearancePrefs,
+  setAppearancePref,
+  resetAppearancePrefs
 } from '/public/js/modules/settings.js';
 
 import {
@@ -49,6 +52,9 @@ window.toggleHandbackGrace = toggleHandbackGrace;
 window.saveFailoverSettings = saveFailoverSettings;
 window.failoverPromote = failoverPromote;
 window.failoverDemote = failoverDemote;
+window.applyAppearancePrefs = applyAppearancePrefs;
+window.setAppearancePref = setAppearancePref;
+window.resetAppearancePrefs = resetAppearancePrefs;
 window.updateSystemAdminPhone = updateSystemAdminPhone;
 window.updateAdminNotifPrefs = updateAdminNotifPrefs;
 window.renderOperatorsList = renderOperatorsList;

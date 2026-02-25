@@ -61,7 +61,7 @@ const moreNavigationItems = [
     icon: HelpCircle,
     requireAuth: true,
     color: "text-cyan-600 bg-cyan-50",
-    tooltip: "Interactive guide to learn how to use PelangiManager"
+    tooltip: "Interactive guide to learn how to use digiman"
   },
 ];
 

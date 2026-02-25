@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fleet Manager</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-hover: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0ea5e9;
+      --primary-hover: #0284c7;
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.1);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.1);
+      --yellow: #f59e0b;
+      --yellow-bg: rgba(245, 158, 11, 0.1);
+      --radius: 12px;
+
+      --glow-green: 0 0 15px rgba(16, 185, 129, 0.4);
+      --glow-red: 0 0 15px rgba(239, 68, 68, 0.4);
+      --glow-yellow: 0 0 15px rgba(245, 158, 11, 0.4);
+
+      --color-pelangi: #2563eb;
+      --color-southern: #ea580c;
+      --color-local: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #f1f5f9;
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    aside {
+      width: 280px;
+      background: #ffffff;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      z-index: 10;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+    }
+
+    .brand {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+    }
+
+    .brand h1 span {
+      background: linear-gradient(135deg, var(--primary), #6366f1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-item {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: rgba(14, 165, 233, 0.08);
+      color: var(--primary);
+      border-color: rgba(14, 165, 233, 0.1);
+    }
+
+    /* Single status light per group in sidebar */
+    .nav-group-light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-left: auto;
+      flex-shrink: 0;
+      background: #e2e8f0;
+      transition: all 0.3s;
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+    .nav-group-light.ok {
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .nav-group-light.down {
+      background: var(--red);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+    .nav-group-light.checking {
+      background: var(--yellow);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Main Content */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    header {
+      padding: 20px 32px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 5;
+    }
+
+    .summary-bar {
+      display: flex;
+      gap: 12px;
+    }
+
+    .summary-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 30px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .dot::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: inherit;
+      filter: blur(4px);
+      opacity: 0.6;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 0.6;
+      }
+
+      50% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 0.6;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #countdown {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    progress {
+      width: 60px;
+      height: 6px;
+      border-radius: 10px;
+      border: none;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    progress::-webkit-progress-bar {
+      background: transparent;
+    }
+
+    progress::-webkit-progress-value {
+      background: linear-gradient(90deg, var(--primary), #6366f1);
+      transition: width 1s linear;
+    }
+
+    .btn {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .btn:hover {
+      background: #f8fafc;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-color: #cbd5e1;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+    }
+
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+      scroll-behavior: smooth;
+    }
+
+    /* Instance Groups */
+    .group {
+      margin-bottom: 32px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+
+    .group:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+      border-color: #cbd5e1;
+    }
+
+    .group-header {
+      padding: 20px 24px;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .group-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text);
+    }
+
+    .tag {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .toggle-icon {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: var(--text-muted);
+    }
+
+    .group.collapsed .toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .group.collapsed .group-body {
+      display: none;
+    }
+
+    /* Group Status Lights */
+    .group-status-lights {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      margin-right: 16px;
+      padding: 4px 12px;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .light {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .light.ok {
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .light.down {
+      background: var(--red);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .light.checking {
+      background: var(--yellow);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+
+    .light::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: inherit;
+      filter: blur(2px);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .light.ok::after,
+    .light.down::after,
+    .light.checking::after {
+      opacity: 0.4;
+    }
+
+    /* Rows */
+    .row {
+      display: grid;
+      grid-template-columns: 2.2fr 1fr 1fr 1.5fr;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .row:hover {
+      background: #f8fafc;
+    }
+
+    .icon-box {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: #f1f5f9;
+      color: var(--primary);
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+
+    .row-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .row-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .row-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .row-url {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 30px;
+      border: 1px solid transparent;
+      width: fit-content;
+      transition: all 0.3s;
+    }
+
+    .status-ok {
+      background: #ecfdf5;
+      color: #059669;
+      border-color: #10b98120;
+    }
+
+    .status-down {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #ef444420;
+    }
+
+    .status-checking {
+      background: #fffbeb;
+      color: #d97706;
+      border-color: #f59e0b20;
+    }
+
+    .status-ok .dot {
+      background: #10b981;
+      box-shadow: var(--glow-green);
+    }
+
+    .status-down .dot {
+      background: #ef4444;
+      box-shadow: var(--glow-red);
+    }
+
+    .status-checking .dot {
+      background: #f59e0b;
+      box-shadow: var(--glow-yellow);
+    }
+
+    .status-ok .dot,
+    .summary-badge.ok .dot {
+      background: var(--green);
+      box-shadow: var(--glow-green);
+    }
+
+    .status-down .dot,
+    .summary-badge.down .dot {
+      background: var(--red);
+      box-shadow: var(--glow-red);
+    }
+
+    .status-checking .dot,
+    .summary-badge.checking .dot {
+      background: var(--yellow);
+      box-shadow: var(--glow-yellow);
+    }
+
+    .row-metrics {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      color: var(--text-muted);
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    .row-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+
+    .btn-danger {
+      background: #fef2f2;
+      color: #ef4444;
+      border-color: #ef444430;
+    }
+
+    .btn-danger:hover {
+      background: #ef4444;
+      color: #ffffff;
+      border-color: #ef4444;
+    }
+
+    .group-pelangi {
+      border-left: 5px solid var(--color-pelangi);
+    }
+
+    .group-southern {
+      border-left: 5px solid var(--color-southern);
+    }
+
+    .group-local {
+      border-left: 5px solid var(--color-local);
+    }
+
+    .row-details {
+      grid-column: 1 / -1;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 14px;
+      padding: 14px 20px;
+      background: #f8fafc;
+      border-radius: 10px;
+      display: none;
+      border: 1px solid var(--border);
+    }
+
+    .row-details.has-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .row-details b {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .restart-log {
+      font-size: 11px;
+      margin-left: 8px;
+      display: none;
+    }
+
+    .restart-log.ok {
+      color: var(--green);
+      display: inline;
+    }
+
+    .restart-log.err {
+      color: var(--red);
+      display: inline;
+    }
+
+    /* Process & settings panel */
+    .group-process {
+      border-left: 5px solid var(--primary);
+    }
+
+    .process-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .process-metric {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 13px;
+    }
+
+    .process-metric label {
+      display: block;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .process-metric .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .settings-section {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .settings-section h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .settings-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      min-width: 120px;
+    }
+
+    .settings-row select {
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      background: #fff;
+      min-width: 100px;
+    }
+
+    .settings-row select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .pm2-readonly {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .pm2-readonly dt { font-weight: 700; color: var(--text); margin-top: 6px; }
+    .pm2-readonly dt:first-child { margin-top: 0; }
+    .pm2-readonly dd { margin-left: 0; margin-bottom: 2px; }
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <aside>
+    <div class="brand">
+      <h1>🌍 Fleet<span>Manager</span></h1>
+    </div>
+    <div class="nav-links">
+      <a href="#group-process" class="nav-item" onclick="scrollToGroup('group-process', this)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+        </svg>
+        <span>Process &amp; settings</span>
+        <span class="nav-group-light ok" id="nav-light-group-process" title="This dashboard"></span>
+      </a>
+      <a href="#group-pelangi" class="nav-item active" onclick="scrollToGroup('group-pelangi', this)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+        </svg>
+        <span>Pelangi Live</span>
+        <span class="nav-group-light checking" id="nav-light-group-pelangi" title="Group status"></span>
+      </a>
+      <a href="#group-southern" class="nav-item" onclick="scrollToGroup('group-southern', this)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>Southern Live</span>
+        <span class="nav-group-light checking" id="nav-light-group-southern" title="Group status"></span>
+      </a>
+      <a href="#group-local-pelangi" class="nav-item" onclick="scrollToGroup('group-local-pelangi', this)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <span>Local Pelangi</span>
+        <span class="nav-group-light checking" id="nav-light-group-local-pelangi" title="Group status"></span>
+      </a>
+      <a href="#group-local-southern" class="nav-item" onclick="scrollToGroup('group-local-southern', this)">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M20 7L12 3 4 7M20 7l-8 4-8-4M20 7v10l-8 4-8-4V7m8 4v10"></path>
+        </svg>
+        <span>Local Southern</span>
+        <span class="nav-group-light checking" id="nav-light-group-local-southern" title="Group status"></span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main>
+    <header>
+      <div class="summary-bar">
+        <div class="summary-badge ok">
+          <div class="dot"></div><span id="count-ok">0 online</span>
+        </div>
+        <div class="summary-badge down">
+          <div class="dot"></div><span id="count-down">0 down</span>
+        </div>
+        <div class="summary-badge checking">
+          <div class="dot"></div><span id="count-check">10 checking</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="countdown"></span>
+        <button class="btn btn-primary" onclick="pollAll()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+            </path>
+          </svg>
+          Refresh Now
+        </button>
+      </div>
+    </header>
+
+    <div class="content-area" id="main-scroll">
+
+      <!-- Process & settings -->
+      <div class="group group-process" id="group-process">
+        <div class="group-header" onclick="toggleGroup('group-process')">
+          <div class="group-title">
+            <svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+            </svg>
+            Process &amp; settings
+            <span class="tag">This dashboard</span>
+          </div>
+          <svg class="toggle-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+        <div class="group-body">
+          <div class="process-metrics" id="process-metrics">
+            <p class="process-metrics-hint" id="process-metrics-hint" style="grid-column:1/-1;font-size:12px;color:var(--text-muted);margin:0;"></p>
+            <div class="process-metric" title="Whether this dashboard’s backend is reachable. ‘ok’ = running; ‘Unreachable’ = server not running or wrong URL."><label>Status</label><span class="value" id="proc-status">—</span></div>
+            <div class="process-metric" title="How long this process has been running since it was last started."><label>Uptime</label><span class="value" id="proc-uptime">—</span></div>
+            <div class="process-metric" title="Process ID of this Node process (e.g. for Task Manager or debugging)."><label>PID</label><span class="value" id="proc-pid">—</span></div>
+            <div class="process-metric" title="Resident Set Size — total RAM used by this process (MB)."><label>Memory (RSS)</label><span class="value" id="proc-rss">—</span></div>
+            <div class="process-metric" title="V8 JavaScript heap in use (MB). High values may trigger a restart if near your memory limit."><label>Heap used</label><span class="value" id="proc-heap">—</span></div>
+            <div class="process-metric" title="Node.js version running this process."><label>Node</label><span class="value" id="proc-node">—</span></div>
+            <div class="process-metric" title="Local time when this process was started."><label>Started</label><span class="value" id="proc-started">—</span></div>
+          </div>
+          <div class="settings-section">
+            <h4>Dashboard settings</h4>
+            <div class="settings-row">
+              <label for="setting-poll-interval">Poll interval</label>
+              <select id="setting-poll-interval" onchange="savePollInterval(this.value)">
+                <option value="15">15 seconds</option>
+                <option value="30" selected>30 seconds</option>
+                <option value="60">60 seconds</option>
+              </select>
+              <span style="font-size:12px;color:var(--text-muted);">How often to check service health</span>
+            </div>
+          </div>
+          <div class="settings-section">
+            <h4>Process manager (PM2) — read-only</h4>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Configured in <code>ecosystem.config.cjs</code> / <code>ecosystem.local.cjs</code>. Restart PM2 after editing.</p>
+            <dl class="pm2-readonly" id="pm2-readonly">
+              <dt>max_memory_restart</dt><dd>150M</dd>
+              <dt>max_old_space_size</dt><dd>128</dd>
+              <dt>restart_delay</dt><dd>3000 ms</dd>
+              <dt>max_restarts</dt><dd>15</dd>
+              <dt>min_uptime</dt><dd>5s</dd>
+              <dt>listen_timeout</dt><dd>8000 ms</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lightsail: Pelangi -->
+      <div class="group group-pelangi" id="group-pelangi">
+        <div class="group-header" onclick="toggleGroup('group-pelangi')">
+          <div class="group-title">
+            <svg width="20" height="20" fill="none" stroke="var(--color-pelangi)" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+            </svg>
+            Pelangi Live
+            <span class="tag">Lightsail</span>
+            <span class="tag">18.142.14.142</span>
+          </div>
+          <div class="group-status-lights" id="lights-group-pelangi"></div>
+          <svg class="toggle-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+        <div class="group-body">
+          <div class="row" id="row-pelangi-api">
+            <div class="row-header">
+              <div class="icon-box"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Manager API</span>
+                <span class="row-url">admin.pelangicapsulehostel.com</span>
+              </div>
+            </div>
+            <div id="badge-pelangi-api" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-pelangi-api">⏱ —</span>
+              <span id="ts-pelangi-api">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="https://admin.pelangicapsulehostel.com" target="_blank" class="btn btn-sm">Open ↗</a>
+            </div>
+          </div>
+          <div class="row" id="row-pelangi-db">
+            <div class="row-header">
+              <div class="icon-box" style="color:#336791;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 21c-4.418 0-8-1.79-8-4V7c0-2.21 3.582-4 8-4s8 1.79 8 4v10c0 2.21-3.582 4-8 4z"></path>
+                  <path d="M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                  <path d="M4 12c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Database (Postgres)</span>
+                <span class="row-url">Internal Connection</span>
+              </div>
+            </div>
+            <div id="badge-pelangi-db" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-pelangi-db">⏱ —</span>
+              <span id="ts-pelangi-db">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Managed</span>
+            </div>
+          </div>
+          <div class="row" id="row-pelangi-whatsapp">
+            <div class="row-header">
+              <div class="icon-box" style="color:#25d366;"><svg width="16" height="16" fill="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">WhatsApp Connection</span>
+                <span class="row-url">Shared via Manager API</span>
+              </div>
+            </div>
+            <div id="badge-pelangi-whatsapp" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-pelangi-whatsapp">⏱ —</span>
+              <span id="ts-pelangi-whatsapp">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Dependent</span>
+            </div>
+          </div>
+          <div class="row" id="row-pelangi-rainbow">
+            <div class="row-header">
+              <div class="icon-box" style="color:#a855f7;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Rainbow AI</span>
+                <span class="row-url">rainbow.pelangicapsulehostel.com</span>
+              </div>
+            </div>
+            <div id="badge-pelangi-rainbow" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-pelangi-rainbow">⏱ —</span>
+              <span id="ts-pelangi-rainbow">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="restart-log" id="log-pelangi-rainbow"></span>
+              <button class="btn btn-sm btn-danger" id="btn-restart-rainbow-ai"
+                onclick="restartProcess('pelangi-rainbow', 'rainbow-ai')">Restart</button>
+              <a href="https://rainbow.pelangicapsulehostel.com/dashboard" target="_blank" class="btn btn-sm">Dash ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lightsail: Southern -->
+      <div class="group group-southern" id="group-southern">
+        <div class="group-header" onclick="toggleGroup('group-southern')">
+          <div class="group-title">
+            <svg width="20" height="20" fill="none" stroke="var(--color-southern)" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Southern Live
+            <span class="tag">Lightsail</span>
+            <span class="tag">47.131.133.180</span>
+          </div>
+          <div class="group-status-lights" id="lights-group-southern"></div>
+          <svg class="toggle-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+        <div class="group-body">
+          <div class="row" id="row-southern-db">
+            <div class="row-header">
+              <div class="icon-box" style="color:#336791;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 21c-4.418 0-8-1.79-8-4V7c0-2.21 3.582-4 8-4s8 1.79 8 4v10c0 2.21-3.582 4-8 4z"></path>
+                  <path d="M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                  <path d="M4 12c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Database (Postgres)</span>
+                <span class="row-url">Internal Connection</span>
+              </div>
+            </div>
+            <div id="badge-southern-db" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-southern-db">⏱ —</span>
+              <span id="ts-southern-db">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Managed</span>
+            </div>
+          </div>
+          <div class="row" id="row-southern-api">
+            <div class="row-header">
+              <div class="icon-box"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Manager API</span>
+                <span class="row-url">admin.southern-homestay.com</span>
+              </div>
+            </div>
+            <div id="badge-southern-api" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-southern-api">⏱ —</span>
+              <span id="ts-southern-api">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="https://admin.southern-homestay.com" target="_blank" class="btn btn-sm">Open ↗</a>
+            </div>
+          </div>
+          <div class="row" id="row-southern-whatsapp">
+            <div class="row-header">
+              <div class="icon-box" style="color:#25d366;"><svg width="16" height="16" fill="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">WhatsApp Connection</span>
+                <span class="row-url">Shared via Manager API</span>
+              </div>
+            </div>
+            <div id="badge-southern-whatsapp" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-southern-whatsapp">⏱ —</span>
+              <span id="ts-southern-whatsapp">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Dependent</span>
+            </div>
+          </div>
+          <div class="row" id="row-southern-rainbow">
+            <div class="row-header">
+              <div class="icon-box" style="color:#a855f7;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Rainbow AI</span>
+                <span class="row-url">rainbow.southern-homestay.com</span>
+              </div>
+            </div>
+            <div id="badge-southern-rainbow" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-southern-rainbow">⏱ —</span>
+              <span id="ts-southern-rainbow">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="restart-log" id="log-southern-rainbow-remote"></span>
+              <button class="btn btn-sm btn-danger" id="btn-restart-southern-rainbow"
+                onclick="restartProcess('southern-rainbow-remote', 'southern-rainbow')">Restart</button>
+              <a href="https://rainbow.southern-homestay.com/dashboard" target="_blank" class="btn btn-sm">Dash ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Local PC: Pelangi -->
+      <div class="group group-local" id="group-local-pelangi">
+        <div class="group-header" onclick="toggleGroup('group-local-pelangi')">
+          <div class="group-title">
+            <svg width="20" height="20" fill="none" stroke="var(--color-local)" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            Pelangi Local
+            <span class="tag">Standby</span>
+            <span class="tag">localhost</span>
+          </div>
+          <div class="group-status-lights" id="lights-group-local-pelangi"></div>
+          <svg class="toggle-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+        <div class="group-body">
+          <div class="row" id="row-local-pelangi-db">
+            <div class="row-header">
+              <div class="icon-box" style="color:#336791;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 21c-4.418 0-8-1.79-8-4V7c0-2.21 3.582-4 8-4s8 1.79 8 4v10c0 2.21-3.582 4-8 4z"></path>
+                  <path d="M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                  <path d="M4 12c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Database (Postgres)</span>
+                <span class="row-url">Internal Connection</span>
+              </div>
+            </div>
+            <div id="badge-local-pelangi-db" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-pelangi-db">⏱ —</span>
+              <span id="ts-local-pelangi-db">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Managed</span>
+            </div>
+          </div>
+          <div class="row" id="row-local-pelangi-api">
+            <div class="row-header">
+              <div class="icon-box"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Manager API</span>
+                <span class="row-url">localhost:5000</span>
+              </div>
+            </div>
+            <div id="badge-local-pelangi-api" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-pelangi-api">⏱ —</span>
+              <span id="ts-local-pelangi-api">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="http://localhost:5000" target="_blank" class="btn btn-sm">Open ↗</a>
+            </div>
+          </div>
+          <div class="row" id="row-local-pelangi-whatsapp">
+            <div class="row-header">
+              <div class="icon-box" style="color:#25d366;"><svg width="16" height="16" fill="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">WhatsApp Connection</span>
+                <span class="row-url">Shared via Manager API</span>
+              </div>
+            </div>
+            <div id="badge-local-pelangi-whatsapp" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-pelangi-whatsapp">⏱ —</span>
+              <span id="ts-local-pelangi-whatsapp">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Dependent</span>
+            </div>
+          </div>
+          <div class="row" id="row-local-pelangi-vite">
+            <div class="row-header">
+              <div class="icon-box"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Frontend (Vite)</span>
+                <span class="row-url">localhost:3000</span>
+              </div>
+            </div>
+            <div id="badge-local-pelangi-vite" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-pelangi-vite">⏱ —</span>
+              <span id="ts-local-pelangi-vite">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="http://localhost:3000" target="_blank" class="btn btn-sm">Open ↗</a>
+            </div>
+          </div>
+          <div class="row" id="row-local-pelangi-rainbow">
+            <div class="row-header">
+              <div class="icon-box" style="color:#a855f7;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Rainbow AI</span>
+                <span class="row-url">localhost:3002</span>
+              </div>
+            </div>
+            <div id="badge-local-pelangi-rainbow" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-pelangi-rainbow">⏱ —</span>
+              <span id="ts-local-pelangi-rainbow">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="http://localhost:3002/dashboard" target="_blank" class="btn btn-sm">Dash ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Local PC: Southern -->
+      <div class="group group-local" id="group-local-southern">
+        <div class="group-header" onclick="toggleGroup('group-local-southern')">
+          <div class="group-title">
+            <svg width="20" height="20" fill="none" stroke="var(--color-local)" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M20 7L12 3 4 7M20 7l-8 4-8-4M20 7v10l-8 4-8-4V7m8 4v10"></path>
+            </svg>
+            Southern Local
+            <span class="tag">Standby</span>
+            <span class="tag">localhost</span>
+          </div>
+          <div class="group-status-lights" id="lights-group-local-southern"></div>
+          <svg class="toggle-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+        <div class="group-body">
+          <div class="row" id="row-local-southern-db">
+            <div class="row-header">
+              <div class="icon-box" style="color:#336791;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 21c-4.418 0-8-1.79-8-4V7c0-2.21 3.582-4 8-4s8 1.79 8 4v10c0 2.21-3.582 4-8 4z"></path>
+                  <path d="M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                  <path d="M4 12c0 2.21 3.582 4 8 4s8-1.79 8-4"></path>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Database (Postgres)</span>
+                <span class="row-url">Internal Connection</span>
+              </div>
+            </div>
+            <div id="badge-local-southern-db" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-southern-db">⏱ —</span>
+              <span id="ts-local-southern-db">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Managed</span>
+            </div>
+          </div>
+          <div class="row" id="row-local-southern-api">
+            <div class="row-header">
+              <div class="icon-box"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Manager API</span>
+                <span class="row-url">localhost:8001</span>
+              </div>
+            </div>
+            <div id="badge-local-southern-api" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-southern-api">⏱ —</span>
+              <span id="ts-local-southern-api">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="http://localhost:8001" target="_blank" class="btn btn-sm">Open ↗</a>
+            </div>
+          </div>
+          <div class="row" id="row-local-southern-whatsapp">
+            <div class="row-header">
+              <div class="icon-box" style="color:#25d366;"><svg width="16" height="16" fill="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">WhatsApp Connection</span>
+                <span class="row-url">Shared via Manager API</span>
+              </div>
+            </div>
+            <div id="badge-local-southern-whatsapp" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-southern-whatsapp">⏱ —</span>
+              <span id="ts-local-southern-whatsapp">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <span class="btn btn-sm btn-na" style="opacity:0.5;cursor:default;">Service Dependent</span>
+            </div>
+          </div>
+          <div class="row" id="row-local-southern-vite">
+            <div class="row-header">
+              <div class="icon-box"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                  viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Frontend (Vite)</span>
+                <span class="row-url">localhost:8000</span>
+              </div>
+            </div>
+            <div id="badge-local-southern-vite" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-southern-vite">⏱ —</span>
+              <span id="ts-local-southern-vite">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="http://localhost:8000" target="_blank" class="btn btn-sm">Open ↗</a>
+            </div>
+          </div>
+          <div class="row" id="row-local-southern-rainbow">
+            <div class="row-header">
+              <div class="icon-box" style="color:#a855f7;"><svg width="16" height="16" fill="none" stroke="currentColor"
+                  stroke-width="2" viewBox="0 0 24 24">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg></div>
+              <div class="row-info">
+                <span class="row-name">Rainbow AI</span>
+                <span class="row-url">localhost:8002</span>
+              </div>
+            </div>
+            <div id="badge-local-southern-rainbow" class="status-badge status-checking">
+              <div class="dot"></div>Checking
+            </div>
+            <div class="row-metrics">
+              <span id="lat-local-southern-rainbow">⏱ —</span>
+              <span id="ts-local-southern-rainbow">🕐 —</span>
+            </div>
+            <div class="row-actions">
+              <a href="http://localhost:8002/dashboard" target="_blank" class="btn btn-sm">Dash ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // ─── Config ────────────────────────────────────────────────────────────
+    const POLL_INTERVAL_KEY = 'fleet_manager_poll_interval';
+    let POLL_INTERVAL = parseInt(localStorage.getItem(POLL_INTERVAL_KEY) || '30', 10);
+    if (![15, 30, 60].includes(POLL_INTERVAL)) POLL_INTERVAL = 30;
+
+    const ADMIN_KEYS = {
+      pelangi: 'pelangi-admin-2026',
+      southern: 'southern-admin-2026',
+    };
+
+    const SERVICES = [
+      { id: 'pelangi-api', healthUrl: 'https://admin.pelangicapsulehostel.com/api/health', timeout: 8000 },
+      { id: 'pelangi-db', healthUrl: 'https://admin.pelangicapsulehostel.com/api/health', timeout: 8000 },
+      { id: 'pelangi-whatsapp', healthUrl: 'https://admin.pelangicapsulehostel.com/api/health', timeout: 8000 },
+      { id: 'pelangi-rainbow', healthUrl: 'https://rainbow.pelangicapsulehostel.com/health/ready', timeout: 8000 },
+      { id: 'southern-api', healthUrl: 'https://admin.southern-homestay.com/api/health', timeout: 8000 },
+      { id: 'southern-db', healthUrl: 'https://admin.southern-homestay.com/api/health', timeout: 8000 },
+      { id: 'southern-whatsapp', healthUrl: 'https://admin.southern-homestay.com/api/health', timeout: 8000 },
+      { id: 'southern-rainbow', healthUrl: 'https://rainbow.southern-homestay.com/health/ready', timeout: 8000 },
+      { id: 'local-pelangi-api', healthUrl: 'http://localhost:5000/api/health', timeout: 3000 },
+      { id: 'local-pelangi-db', healthUrl: 'http://localhost:5000/api/health', timeout: 3000 },
+      { id: 'local-pelangi-whatsapp', healthUrl: 'http://localhost:5000/api/health', timeout: 3000 },
+      { id: 'local-pelangi-vite', healthUrl: 'http://localhost:3000/', timeout: 3000 },
+      { id: 'local-pelangi-rainbow', healthUrl: 'http://localhost:3002/health/ready', timeout: 3000 },
+      { id: 'local-southern-api', healthUrl: 'http://localhost:8001/api/health', timeout: 3000 },
+      { id: 'local-southern-db', healthUrl: 'http://localhost:8001/api/health', timeout: 3000 },
+      { id: 'local-southern-whatsapp', healthUrl: 'http://localhost:8001/api/health', timeout: 3000 },
+      { id: 'local-southern-vite', healthUrl: 'http://localhost:8000/', timeout: 3000 },
+      { id: 'local-southern-rainbow', healthUrl: 'http://localhost:8002/health/ready', timeout: 3000 },
+    ];
+
+    const RESTART_TARGETS = {
+      'pelangi-rainbow': {
+        url: 'https://rainbow.pelangicapsulehostel.com/api/rainbow/fleet/restart',
+        adminKey: ADMIN_KEYS.pelangi,
+        process: 'rainbow-ai',
+      },
+      'southern-rainbow-remote': {
+        url: 'https://rainbow.southern-homestay.com/api/rainbow/fleet/restart',
+        adminKey: ADMIN_KEYS.southern,
+        process: 'southern-rainbow',
+      },
+    };
+
+    // ─── State ─────────────────────────────────────────────────────────────
+    const statuses = {};
+    let countdownVal = POLL_INTERVAL;
+    let countdownTimer;
+
+    // ─── UI Logic ──────────────────────────────────────────────────────────
+    function toggleGroup(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('collapsed');
+      localStorage.setItem(`collapse_${id}`, el.classList.contains('collapsed'));
+    }
+
+    function scrollToGroup(id, navItem) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if (navItem) navItem.classList.add('active');
+      const groupEl = document.getElementById(id);
+      if (groupEl) groupEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Restore collapse state
+    document.querySelectorAll('.group').forEach(el => {
+      if (localStorage.getItem(`collapse_${el.id}`) === 'true') {
+        el.classList.add('collapsed');
+      }
+    });
+
+    // Active nav logic on scroll
+    const scrollContainer = document.getElementById('main-scroll');
+    scrollContainer.addEventListener('scroll', () => {
+      let currentId = '';
+      document.querySelectorAll('.group').forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= 120) {
+          currentId = el.id;
+        }
+      });
+      if (currentId) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        const navItem = document.querySelector(`.nav-item[href="#${currentId}"]`);
+        if (navItem) navItem.classList.add('active');
+      }
+    });
+
+    // ─── Polling ───────────────────────────────────────────────────────────
+    // Route ALL localhost health checks through the Fleet Manager proxy. The browser
+    // resolves "localhost" OS-dependent (often IPv6 ::1 first); services bind
+    // inconsistently (Express on 127.0.0.1 only, Vite on ::1, etc.). Direct fetch
+    // can then fail (e.g. browser → ::1, server only on 127.0.0.1) and show "Down".
+    // The proxy tries 127.0.0.1 then ::1, so status matches reality.
+    function useProxyForUrl(url) {
+      try {
+        const u = new URL(url);
+        return u.hostname === 'localhost' || u.hostname === '127.0.0.1' || u.hostname === '::1';
+      } catch { return false; }
+    }
+
+    async function pollService(svc) {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), svc.timeout);
+      const start = Date.now();
+      const url = useProxyForUrl(svc.healthUrl)
+        ? `/api/health-proxy?url=${encodeURIComponent(svc.healthUrl)}&timeout=${svc.timeout}`
+        : svc.healthUrl;
+
+      try {
+        const res = await fetch(url, { signal: controller.signal, cache: 'no-store', mode: useProxyForUrl(svc.healthUrl) ? 'same-origin' : 'cors' });
+        clearTimeout(t);
+        const latency = Date.now() - start;
+        let ts = '—';
+        let body = null;
+        try {
+          body = await res.json();
+          ts = new Date(body.timestamp || Date.now()).toLocaleTimeString();
+        } catch { ts = new Date().toLocaleTimeString(); }
+        updateCard(svc.id, res.ok ? 'ok' : 'down', latency, ts, body);
+      } catch (err) {
+        clearTimeout(t);
+        updateCard(svc.id, 'down', null, null, null);
+      }
+    }
+
+    function pollAll() {
+      refreshProcessMetrics();
+      SERVICES.forEach(pollService);
+      setTimeout(() => {
+        updateSummary();
+        updateHeaderLights();
+      }, 2000); // Allow time for fetches to settle
+      resetCountdown();
+    }
+
+    // ─── Lights ───────────────────────────────────────────────────────────
+    const GROUP_MAPPING = {
+      'group-pelangi': ['pelangi-api', 'pelangi-db', 'pelangi-whatsapp', 'pelangi-rainbow'],
+      'group-southern': ['southern-api', 'southern-db', 'southern-whatsapp', 'southern-rainbow'],
+      'group-local-pelangi': ['local-pelangi-api', 'local-pelangi-db', 'local-pelangi-whatsapp', 'local-pelangi-vite', 'local-pelangi-rainbow'],
+      'group-local-southern': ['local-southern-api', 'local-southern-db', 'local-southern-whatsapp', 'local-southern-vite', 'local-southern-rainbow']
+    };
+
+    function updateHeaderLights() {
+      Object.entries(GROUP_MAPPING).forEach(([groupId, serviceIds]) => {
+        const container = document.getElementById(`lights-${groupId}`);
+        if (!container) return;
+
+        let html = '';
+        serviceIds.forEach(svcId => {
+          const status = statuses[svcId] || 'checking';
+          html += `<div class="light ${status}" title="${svcId}: ${status}"></div>`;
+        });
+        container.innerHTML = html;
+      });
+      updateNavLights();
+    }
+
+    function updateNavLights() {
+      Object.entries(GROUP_MAPPING).forEach(([groupId, serviceIds]) => {
+        const el = document.getElementById(`nav-light-${groupId}`);
+        if (!el) return;
+        const list = serviceIds.map(svcId => statuses[svcId] || 'checking');
+        const hasDown = list.some(s => s === 'down');
+        const allOk = list.length > 0 && list.every(s => s === 'ok');
+        const status = hasDown ? 'down' : (allOk ? 'ok' : 'checking');
+        el.className = `nav-group-light ${status}`;
+        el.title = hasDown ? 'One or more services down' : (allOk ? 'All services online' : 'Checking…');
+      });
+    }
+
+    // ─── Updates ──────────────────────────────────────────────────────────
+    function updateCard(id, status, latencyMs, timestamp, body = null) {
+      // Specialized status for WhatsApp
+      if (id.endsWith('-whatsapp') && body?.checks?.whatsapp) {
+        status = body.checks.whatsapp.status === 'ok' ? 'ok' : 'down';
+      }
+
+      // Specialized status for Database
+      if (id.endsWith('-db') && body?.database) {
+        status = body.database.status === 'ok' ? 'ok' : 'down';
+      }
+
+      statuses[id] = status;
+      const b = document.getElementById(`badge-${id}`);
+      if (!b) return;
+
+      const labels = { ok: 'Online', down: 'Down', checking: 'Checking' };
+      b.className = `status-badge status-${status}`;
+      b.innerHTML = `<div class="dot"></div>${labels[status]}`;
+
+      const l = document.getElementById(`lat-${id}`);
+      if (l) l.textContent = latencyMs != null ? `⏱ ${latencyMs}ms` : '⏱ —';
+
+      const t = document.getElementById(`ts-${id}`);
+      if (t) t.textContent = timestamp ? `🕐 ${timestamp}` : '🕐 —';
+
+      // Advanced metrics
+      const row = document.getElementById(`row-${id}`);
+      if (row) {
+        let detailsEl = document.getElementById(`details-${id}`);
+        if (!detailsEl) {
+          detailsEl = document.createElement('div');
+          detailsEl.id = `details-${id}`;
+          detailsEl.className = 'row-details';
+          row.appendChild(detailsEl);
+        }
+
+        let html = '';
+        if (body?.checks) {
+          const c = body.checks;
+          if (c.whatsapp) html += `<div><b>WhatsApp:</b> ${c.whatsapp.detail}</div>`;
+          if (c.failover) html += `<div><b>Failover:</b> ${c.failover.detail}</div>`;
+          if (c.aiProviders) html += `<div><b>AI:</b> ${c.aiProviders.detail}</div>`;
+          if (c.config) html += `<div><b>Config:</b> ${c.config.detail}</div>`;
+        } else if (body?.storageType && !id.endsWith('-whatsapp')) {
+          html += `<div><b>Storage:</b> ${body.storageType} (${body.unitsCount} units)</div>`;
+          if (body.memory) html += `<div><b>Mem:</b> ${(body.memory / 1024 / 1024).toFixed(1)} MB</div>`;
+          if (body.uptime !== undefined) html += `<div><b>Uptime:</b> ${Math.floor(body.uptime / 60)}m</div>`;
+        } else if (id.endsWith('-db') && body?.database) {
+          const db = body.database;
+          html += `<div><b>Uptime:</b> ${db.uptime}</div>`;
+          html += `<div><b>Conn:</b> ${db.connections}</div>`;
+          html += `<div><b>Size:</b> ${db.size}</div>`;
+        }
+
+        if (html) {
+          detailsEl.innerHTML = html;
+          detailsEl.classList.add('has-content');
+        } else {
+          detailsEl.innerHTML = '';
+          detailsEl.classList.remove('has-content');
+        }
+      }
+
+      updateHeaderLights();
+    }
+
+    function updateSummary() {
+      const vals = Object.values(statuses);
+      const ok = vals.filter(s => s === 'ok').length;
+      const down = vals.filter(s => s === 'down').length;
+      document.getElementById('count-ok').textContent = `${ok} online`;
+      document.getElementById('count-down').textContent = `${down} down`;
+      document.getElementById('count-check').textContent = `${SERVICES.length - ok - down} checking`;
+    }
+
+    // ─── Restart ───────────────────────────────────────────────────────────
+    async function restartProcess(cardId, processName) {
+      const target = RESTART_TARGETS[cardId];
+      if (!target) return;
+
+      const btn = document.getElementById(`btn-restart-${processName}`);
+      const log = document.getElementById(`log-${cardId}`);
+
+      btn.disabled = true;
+      btn.textContent = 'Wait...';
+      log.className = 'restart-log';
+      log.textContent = '';
+
+      try {
+        const res = await fetch(target.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Key': target.adminKey },
+          body: JSON.stringify({ process: target.process }),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          log.className = 'restart-log ok'; log.textContent = 'Restarted!';
+        } else {
+          log.className = 'restart-log err'; log.textContent = `Fail: ${data.error || res.status}`;
+        }
+      } catch (err) {
+        log.className = 'restart-log err'; log.textContent = 'Network err';
+      } finally {
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Restart'; log.textContent = ''; }, 6000);
+        setTimeout(() => pollAll(), 5000);
+      }
+    }
+
+    // ─── Countdown ─────────────────────────────────────────────────────────
+    function resetCountdown() {
+      clearInterval(countdownTimer);
+      countdownVal = POLL_INTERVAL;
+      const el = document.getElementById('countdown');
+      countdownTimer = setInterval(() => {
+        countdownVal--;
+        el.innerHTML = `<progress value="${countdownVal}" max="${POLL_INTERVAL}"></progress> ${countdownVal}s`;
+        if (countdownVal <= 0) {
+          clearInterval(countdownTimer);
+          pollAll();
+        }
+      }, 1000);
+    }
+
+    // ─── Process & settings ──────────────────────────────────────────────────
+    function savePollInterval(val) {
+      const n = parseInt(val, 10);
+      if (![15, 30, 60].includes(n)) return;
+      POLL_INTERVAL = n;
+      localStorage.setItem(POLL_INTERVAL_KEY, String(n));
+      resetCountdown();
+    }
+
+    function loadSavedPollInterval() {
+      const sel = document.getElementById('setting-poll-interval');
+      if (sel) sel.value = String(POLL_INTERVAL);
+    }
+
+    async function refreshProcessMetrics() {
+      const ids = ['proc-status', 'proc-uptime', 'proc-pid', 'proc-rss', 'proc-heap', 'proc-node', 'proc-started'];
+      ids.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+      const hintEl = document.getElementById('process-metrics-hint');
+      try {
+        const res = await fetch('/health', { cache: 'no-store' });
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+        set('proc-status', data.status || '—');
+        set('proc-uptime', data.uptime_human || (data.uptime_seconds + 's') || '—');
+        set('proc-pid', data.pid != null ? String(data.pid) : '—');
+        set('proc-rss', data.memory?.rss_mb != null ? data.memory.rss_mb + ' MB' : '—');
+        set('proc-heap', data.memory?.heapUsed_mb != null ? data.memory.heapUsed_mb + ' MB' : '—');
+        set('proc-node', data.node || '—');
+        set('proc-started', data.started_at ? new Date(data.started_at).toLocaleString() : '—');
+        if (hintEl) hintEl.textContent = '';
+      } catch (_) {
+        const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+        set('proc-status', 'Unreachable');
+        if (hintEl) hintEl.textContent = 'This dashboard cannot reach its own /health. Open this page at http://localhost:9999 and ensure Fleet Manager is running (e.g. fleet-manager-startup.bat or cd fleet-manager && node server.js).';
+      }
+    }
+
+    // ─── Init ───────────────────────────────────────────────────────────────
+    loadSavedPollInterval();
+    refreshProcessMetrics();
+    pollAll();
+    setInterval(refreshProcessMetrics, 15000); // refresh process metrics every 15s
+  </script>
+</body>
+
+</html>

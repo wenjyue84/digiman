@@ -12,6 +12,7 @@ import {
   MemSettingsStore,
   MemExpenseStore,
 } from "./mem";
+import { DEFAULT_BUSINESS_CONFIG } from "../../shared/business-config";
 
 /** Storage seed data constants */
 export const STORAGE_CONSTANTS = {
@@ -65,7 +66,7 @@ export class MemStorage implements IStorage {
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
     const adminUser: User = {
       id: randomUUID(),
-      email: "admin@pelangi.com",
+      email: DEFAULT_BUSINESS_CONFIG.email,
       username: "admin",
       password: bcrypt.hashSync(adminPassword, 10),
       googleId: null,
@@ -188,9 +189,9 @@ export class MemStorage implements IStorage {
     this.settingsStore.setSetting('guestTokenExpirationHours', '24', 'Hours before guest check-in tokens expire');
     this.settingsStore.setSetting('accommodationType', 'unit', 'Type of accommodation (capsule, room, or house)');
     this.settingsStore.setSetting('guideIntro', 'Pelangi Capsule Hostel is a modern, innovative accommodation designed to provide guests with comfort, privacy, and convenience at an affordable price. Our contemporary unit concept offers private sleeping pods with essential amenities in a clean, safe, and friendly environment. Communal spaces encourage social interaction while maintaining personal privacy.', 'Guest guide introduction');
-    this.settingsStore.setSetting('guideAddress', '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\nPhone: +60 12-345 6789\nEmail: info@pelangicapsule.com\nWebsite: www.pelangicapsule.com', 'Hostel address and contacts');
-    this.settingsStore.setSetting('guideWifiName', 'Pelangi_Guest', 'WiFi SSID');
-    this.settingsStore.setSetting('guideWifiPassword', 'Pelangi2024!', 'WiFi password');
+    this.settingsStore.setSetting('guideAddress', `${DEFAULT_BUSINESS_CONFIG.address}\nPhone: ${DEFAULT_BUSINESS_CONFIG.phone}\nEmail: ${DEFAULT_BUSINESS_CONFIG.email}\nWebsite: ${DEFAULT_BUSINESS_CONFIG.website}`, 'Hostel address and contacts');
+    this.settingsStore.setSetting('guideWifiName', process.env.DEFAULT_WIFI_NAME || `${DEFAULT_BUSINESS_CONFIG.shortName}_Guest`, 'WiFi SSID');
+    this.settingsStore.setSetting('guideWifiPassword', process.env.DEFAULT_WIFI_PASSWORD || 'Welcome2024!', 'WiFi password');
     this.settingsStore.setSetting('guideCheckin', 'Check-In Time: 2:00 PM\nCheck-Out Time: 12:00 PM\n\nHow to check in:\n1) Present a valid ID/passport at the front desk.\n2) If you have a self-check-in token, show it to staff.\n3) Early check-in / late check-out may be available upon request (subject to availability and charges).', 'Check-in and check-out guidance');
     this.settingsStore.setSetting('guideOther', 'House rules and guidance:\n- Quiet hours: [insert time] to [insert time]\n- Keep shared spaces clean\n- No smoking inside the premises\n- Follow staff instructions for safety\n\nAmenities overview:\n- Private units with light, power outlet, and privacy screen\n- Air conditioning throughout\n- Free high-speed Wi-Fi\n- Clean shared bathrooms with toiletries\n- Secure lockers\n- Lounge area\n- Pantry/kitchenette with microwave, kettle, and fridge\n- Self-service laundry (paid)\n- 24-hour security and CCTV\n- Reception assistance and local tips', 'Other guest guidance and rules');
     this.settingsStore.setSetting('guideFaq', 'Q: What are the check-in and check-out times?\nA: Standard check-in is at [insert time], and check-out is at [insert time]. Early/late options may be arranged based on availability.\n\nQ: Are towels and toiletries provided?\nA: Yes, fresh towels and basic toiletries are provided.\n\nQ: Is there parking available?\nA: [Insert parking information].\n\nQ: Can I store my luggage after check-out?\nA: Yes, complimentary luggage storage is available at the front desk.\n\nQ: Are there quiet hours?\nA: Yes, quiet hours are observed from [insert time] to [insert time].', 'Frequently asked questions');
@@ -202,7 +203,7 @@ export class MemStorage implements IStorage {
     this.settingsStore.setSetting('guideShowFaq', 'true', 'Show FAQ');
     this.settingsStore.setSetting('guideCheckinTime', '3:00 PM', 'Check-in time');
     this.settingsStore.setSetting('guideCheckoutTime', '12:00 PM', 'Check-out time');
-    this.settingsStore.setSetting('guideDoorPassword', '1270#', 'Door access password');
+    this.settingsStore.setSetting('guideDoorPassword', process.env.DEFAULT_DOOR_PASSWORD || '1234#', 'Door access password');
     this.settingsStore.setSetting('guideImportantReminders', 'Please keep your room key safe. Quiet hours are from 10:00 PM to 7:00 AM. No smoking inside the building. Keep shared spaces clean.', 'Important reminders for guests');
   }
 
@@ -280,9 +281,9 @@ export class MemStorage implements IStorage {
     const allUnits = await this.unitStore.getAllUnits();
     const availableUnits = allUnits.filter(
       unit => unit.isAvailable &&
-                  !occupiedUnits.has(unit.number) &&
-                  unit.cleaningStatus === "cleaned" &&
-                  unit.toRent !== false
+        !occupiedUnits.has(unit.number) &&
+        unit.cleaningStatus === "cleaned" &&
+        unit.toRent !== false
     );
 
     return availableUnits.sort((a, b) => {
@@ -300,9 +301,9 @@ export class MemStorage implements IStorage {
     const allUnits = await this.unitStore.getAllUnits();
     return allUnits.filter(
       unit => unit.isAvailable &&
-                  !occupiedUnits.has(unit.number) &&
-                  unit.cleaningStatus === "to_be_cleaned" &&
-                  unit.toRent !== false
+        !occupiedUnits.has(unit.number) &&
+        unit.cleaningStatus === "to_be_cleaned" &&
+        unit.toRent !== false
     );
   }
 
@@ -375,4 +376,13 @@ export class MemStorage implements IStorage {
   addExpense(expense: InsertExpense & { createdBy: string }) { return this.expenseStore.addExpense(expense); }
   updateExpense(expense: UpdateExpense) { return this.expenseStore.updateExpense(expense); }
   deleteExpense(id: string) { return this.expenseStore.deleteExpense(id); }
+
+  async getDatabaseMetrics() {
+    return {
+      status: "ok" as const,
+      uptime: "in-memory",
+      connections: 0,
+      size: "in-memory"
+    };
+  }
 }

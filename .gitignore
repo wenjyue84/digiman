@@ -18,6 +18,7 @@ out/
 .env.development
 .env.*.local
 deploy/targets/*.env
+.env.prod-migrations      # Production DB URLs for migrate-all (never commit!)
 !deploy/targets/example.env.template
 
 # Local development

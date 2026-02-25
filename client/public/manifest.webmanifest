@@ -1,7 +1,7 @@
 {
-  "name": "Pelangi Manager",
-  "short_name": "Pelangi",
-  "description": "Hostel management system for Pelangi Capsule Hostel",
+  "name": "digiman",
+  "short_name": "digiman",
+  "description": "Digital manpower and operations management system",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

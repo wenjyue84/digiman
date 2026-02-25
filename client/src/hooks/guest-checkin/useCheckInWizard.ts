@@ -165,11 +165,11 @@ export function useCheckInWizard() {
       const response = await fetch(`/api/guest-tokens/${tokenValue}`);
       if (response.ok) {
         const data = await response.json();
-        let position = 'Available capsule will be assigned';
+        let position = 'Available unit will be assigned';
         
         if (data.unitNumber) {
-          const capsuleNum = parseInt(data.unitNumber.replace('C', ''));
-          position = capsuleNum % 2 === 0 ? 'Bottom (Preferred)' : 'Top';
+          const unitNum = parseInt(data.unitNumber.replace('C', ''));
+          position = unitNum % 2 === 0 ? 'Bottom (Preferred)' : 'Top';
         }
         
         setGuestInfo({
@@ -250,7 +250,7 @@ export function useCheckInWizard() {
         setAssignedunitNumber(result.unitNumber);
         toast({
           title: t.checkInSuccess,
-          description: `${t.checkInSuccessDesc} ${result.unitNumber || 'your assigned capsule'}.`,
+          description: `${t.checkInSuccessDesc} ${result.unitNumber || 'your assigned unit'}.`,
         });
       } else {
         const errorData = await response.json();

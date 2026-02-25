@@ -31,8 +31,8 @@ export const updateSettingsSchema = z.object({
     .max(168, "Session expiration cannot exceed 168 hours (7 days)")
     .int("Session expiration must be a whole number of hours")
     .default(24),
-  accommodationType: z.enum(["capsule", "room", "house"], {
-    required_error: "Accommodation type must be capsule, room, or house",
+  accommodationType: z.enum(["capsule", "room", "bed", "unit", "house"], {
+    required_error: "Accommodation type must be capsule, room, bed, unit, or house",
   }).default("capsule"),
   defaultUserRole: z.enum(["admin", "staff"], {
     required_error: "Default user role must be either 'admin' or 'staff'",
@@ -144,6 +144,9 @@ export const updateSettingsSchema = z.object({
     .min(1, "Hostel name is required")
     .max(100, "Hostel name cannot exceed 100 characters")
     .default("Pelangi Capsule Hostel"),
+  appTitle: z.string()
+    .max(100, "App title cannot exceed 100 characters")
+    .default(""),
   timezone: z.string()
     .regex(TIMEZONE_REGEX, "Timezone must be in format like Asia/Kuala_Lumpur")
     .default("Asia/Kuala_Lumpur"),

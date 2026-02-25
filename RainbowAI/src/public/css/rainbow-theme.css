@@ -1,0 +1,98 @@
+/* ═══════════════════════════════════════════════════════════════ */
+/* Rainbow Theme — Dynamic Appearance Overrides                    */
+/* ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  --app-border: #e2e8f0;
+  --sidebar-bg: #f8fafc;
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+}
+
+.dark {
+  --app-bg: #1a1a2e;
+  --app-surface: #16213e;
+  --app-text: #e2e8f0;
+  --app-text-muted: #94a3b8;
+  --app-border: rgba(255,255,255,0.1);
+  --sidebar-bg: #0f3460;
+}
+
+/* Base Background and Text */
+body {
+  background-color: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+/* Surface Contexts */
+.bg-white, .bg-neutral-50, .dark .bg-neutral-100, .tab-content > section > div {
+  background-color: var(--app-surface) !important;
+}
+
+/* Sidebar Override */
+.app-sidebar {
+  background-color: var(--sidebar-bg) !important;
+}
+.app-sidebar .sidebar-group-label {
+  color: var(--app-text-muted) !important;
+}
+
+/* Text Colors */
+.text-slate-800, .text-neutral-800, h1, h2, h3, h4, .text-neutral-700 {
+  color: var(--app-text) !important;
+}
+.text-slate-600, .text-neutral-500, .text-neutral-600, p {
+  color: var(--app-text-muted) !important;
+}
+
+/* Borders */
+.border, .border-b, .border-t, .border-l, .border-r, .border-neutral-200, .border-neutral-100 {
+  border-color: var(--app-border) !important;
+}
+
+/* Inputs and Forms */
+input[type="text"], input[type="tel"], input[type="number"], select, textarea {
+  background-color: var(--app-surface) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Primary Color Dynamic Mapping */
+.text-primary-600, .text-primary-500 {
+  color: var(--color-primary-600) !important;
+}
+.bg-primary-500, .bg-primary-600 {
+  background-color: var(--color-primary-500) !important;
+}
+.border-primary-500 {
+  border-color: var(--color-primary-500) !important;
+}
+.ring-primary-500 {
+  --tw-ring-color: var(--color-primary-500) !important;
+}
+.hover\:bg-primary-50:hover, .bg-primary-50 {
+  background-color: var(--color-primary-50) !important;
+}
+.text-blue-600 {
+  color: var(--color-primary-600) !important;
+}
+.bg-blue-600 {
+  background-color: var(--color-primary-600) !important;
+}
+.border-blue-500 {
+  border-color: var(--color-primary-500) !important;
+}
+
+/* Fixes for dark mode exceptions */
+.dark .text-white {
+  color: #fff !important;
+}
+.dark .bg-primary-500, .dark .bg-blue-600 {
+  color: #fff !important;
+}

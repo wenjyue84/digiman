@@ -166,6 +166,20 @@ echo %DATABASE_URL%      # Command Prompt
 }
 ```
 
+### **Local development ports and services**
+
+| Port | Service | Notes |
+|------|---------|--------|
+| 3000 | Vite (Pelangi client) | Proxies API to 5000 |
+| 5000 | Express (Pelangi API) | Main web backend |
+| 3002 | Rainbow AI (Pelangi) | MCP + WhatsApp |
+| 8000 | Vite (Southern client) | `start-southern.bat` |
+| 8001 | Express (Southern API) | Southern backend |
+| 8002 | Rainbow AI (Southern) | Southern Rainbow |
+| **9999** | **Fleet Manager** | Local fleet status dashboard — [FLEET-MANAGER.md](FLEET-MANAGER.md) |
+
+**Fleet Manager** at [http://localhost:9999](http://localhost:9999) shows health of all local services. Start with `cd fleet-manager && node server.js` or `start-all.bat`. See [FLEET-MANAGER.md](FLEET-MANAGER.md) for endpoints and npm scripts.
+
 ### **PWA Configuration**
 The application includes Progressive Web App capabilities with the following features:
 

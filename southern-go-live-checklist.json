@@ -1,0 +1,228 @@
+{
+  "name": "southern-go-live-checklist",
+  "target": "southern",
+  "lastUpdated": "2026-02-21",
+  "goal": "Bring Southern Homestay to stable production with complete infrastructure, config, and operations setup.",
+  "notes": [
+    "Current known state: admin domain is reachable.",
+    "Canonical domain should be standardized in all env and templates before full go-live."
+  ],
+  "automation": {
+    "preflightScript": "scripts/preflight-southern.sh",
+    "localCommand": "scripts/preflight-southern.sh",
+    "fullCommand": "scripts/preflight-southern.sh --remote --with-tests"
+  },
+  "phases": [
+    {
+      "id": "phase-0",
+      "name": "Config Consistency",
+      "items": [
+        {
+          "id": "cfg-001",
+          "title": "Standardize canonical admin and rainbow domains",
+          "status": "pending",
+          "owner": "user",
+          "verify": "grep -R --line-number \"admin.southern\" deploy/targets",
+          "successCriteria": "Only one admin domain variant is used everywhere."
+        },
+        {
+          "id": "cfg-002",
+          "title": "Validate southern target env file",
+          "status": "pending",
+          "owner": "user",
+          "verify": "scripts/preflight-southern.sh",
+          "successCriteria": "No FAIL checks in local preflight."
+        },
+        {
+          "id": "cfg-003",
+          "title": "Validate server and Rainbow .env on Lightsail",
+          "status": "pending",
+          "owner": "user",
+          "verify": "scripts/preflight-southern.sh --remote",
+          "successCriteria": "Remote checks pass; no placeholder values remain."
+        }
+      ]
+    },
+    {
+      "id": "phase-1",
+      "name": "Compute and Processes",
+      "items": [
+        {
+          "id": "ops-001",
+          "title": "Ensure PM2 processes are healthy",
+          "status": "pending",
+          "owner": "user",
+          "verify": "pm2 status",
+          "successCriteria": "Both southern-api and southern-rainbow are online and stable."
+        },
+        {
+          "id": "ops-002",
+          "title": "Ensure system resources are sufficient",
+          "status": "pending",
+          "owner": "user",
+          "verify": "free -h && df -h",
+          "successCriteria": "No memory pressure or disk exhaustion under normal load."
+        },
+        {
+          "id": "ops-003",
+          "title": "Verify local service health endpoints",
+          "status": "pending",
+          "owner": "user",
+          "verify": "curl -fsS http://localhost:5000/api/health && curl -fsS http://localhost:3002/api/health",
+          "successCriteria": "Both health endpoints return success."
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Network and Security",
+      "items": [
+        {
+          "id": "net-001",
+          "title": "CORS and session domain correctness",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Check /var/www/southern/.env values for CORS_ORIGIN, PUBLIC_URL, PRODUCTION_URL",
+          "successCriteria": "No auth loop or cross-origin credential failures."
+        },
+        {
+          "id": "net-002",
+          "title": "Cloudflare DNS/tunnel mapping completeness",
+          "status": "pending",
+          "owner": "user",
+          "verify": "cloudflared tunnel info southern-homestay",
+          "successCriteria": "admin and rainbow hostnames resolve and route to expected internal services."
+        },
+        {
+          "id": "net-003",
+          "title": "TLS and public health checks",
+          "status": "pending",
+          "owner": "user",
+          "verify": "curl -I https://admin.southern-homestay.com && curl -I https://rainbow.southern-homestay.com",
+          "successCriteria": "HTTPS responds with valid certificates and reachable endpoints."
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Database and Data",
+      "items": [
+        {
+          "id": "db-001",
+          "title": "Confirm Southern uses isolated Neon database",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Print DATABASE_URL host from /var/www/southern/.env and compare to Pelangi",
+          "successCriteria": "Southern and Pelangi use different Neon projects/DBs."
+        },
+        {
+          "id": "db-002",
+          "title": "Validate schema is units-based",
+          "status": "pending",
+          "owner": "user",
+          "verify": "psql \"$DATABASE_URL\" -c \"\\dt\"",
+          "successCriteria": "units and unit_problems exist; no capsules tables in Southern DB."
+        },
+        {
+          "id": "db-003",
+          "title": "Validate seed inventory and assignment behavior",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Check units in UI and run one check-in assignment",
+          "successCriteria": "SEED_UNITS parses correctly and assignments are valid."
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Rainbow AI and WhatsApp",
+      "items": [
+        {
+          "id": "wa-001",
+          "title": "Complete WhatsApp pairing for Southern number",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Rainbow admin status endpoint and test inbound/outbound message",
+          "successCriteria": "State is open and messages are handled end-to-end."
+        },
+        {
+          "id": "wa-002",
+          "title": "Persist WhatsApp auth directory",
+          "status": "pending",
+          "owner": "user",
+          "verify": "ls -la /var/www/southern/RainbowAI/.whatsapp-auth",
+          "successCriteria": "Auth directory exists, survives restart, and is backed up."
+        },
+        {
+          "id": "wa-003",
+          "title": "Confirm Southern branding in bot behavior",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Send prompts asking for business name, location, and contact",
+          "successCriteria": "Bot replies with Southern-specific content only."
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Business Validation",
+      "items": [
+        {
+          "id": "ux-001",
+          "title": "Verify business-config endpoint and branding",
+          "status": "pending",
+          "owner": "user",
+          "verify": "curl -fsS https://admin.southern-homestay.com/api/business-config",
+          "successCriteria": "Returned name/tagline/accommodationType match Southern."
+        },
+        {
+          "id": "ux-002",
+          "title": "Run manual flow: login, check-in, check-out, receipt",
+          "status": "pending",
+          "owner": "user",
+          "verify": "UI walkthrough",
+          "successCriteria": "Core operations succeed without console or API errors."
+        },
+        {
+          "id": "ux-003",
+          "title": "Verify data isolation against Pelangi",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Create test guest in Southern and confirm absent in Pelangi",
+          "successCriteria": "No cross-instance data leakage."
+        }
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "Operational Safety",
+      "items": [
+        {
+          "id": "safe-001",
+          "title": "Set up backups and restore drill",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Neon backup policy + test restore record",
+          "successCriteria": "A documented and tested restore path exists."
+        },
+        {
+          "id": "safe-002",
+          "title": "Set up uptime and restart alerts",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Alert test for /api/health and PM2 restart",
+          "successCriteria": "You receive alerts on failures quickly."
+        },
+        {
+          "id": "safe-003",
+          "title": "Prepare rollback playbook",
+          "status": "pending",
+          "owner": "user",
+          "verify": "Documented rollback steps for deploy and DB",
+          "successCriteria": "Rollback can be executed in under 15 minutes."
+        }
+      ]
+    }
+  ]
+}
+

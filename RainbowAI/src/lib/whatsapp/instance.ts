@@ -75,7 +75,7 @@ export class WhatsAppInstance {
       auth: state,
       printQRInTerminal: false,
       keepAliveIntervalMs: 10_000, // 10s keepalives — prevents socket from appearing silent during idle periods
-      browser: ['PelangiManager', 'Chrome', '1.0.0']
+      browser: ['digiman', 'Chrome', '1.0.0']
     });
 
     this.sock.ev.on('creds.update', saveCreds);

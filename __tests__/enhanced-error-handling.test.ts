@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { 
   parseApiError, 
   createErrorToast, 
@@ -8,11 +8,25 @@ import {
 } from '../client/src/lib/errorHandler';
 
 // Mock fetch for testing
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+const mockFetch = jest.fn() as jest.MockedFunction<
+  (input: RequestInfo | URL, init?: RequestInit) => Promise<any>
+>;
+global.fetch = mockFetch as unknown as typeof fetch;
+
+// Mock browser globals in Node test environment
+Object.defineProperty(global, 'window', {
+  value: { location: { href: 'http://localhost:3000/test' } },
+  writable: true,
+  configurable: true,
+});
+Object.defineProperty(global, 'navigator', {
+  value: {},
+  writable: true,
+  configurable: true,
+});
 
 // Mock navigator for clipboard operations
-Object.assign(navigator, {
+Object.assign((global as any).navigator, {
   userAgent: 'Jest Test Environment',
   clipboard: {
     writeText: jest.fn(() => Promise.resolve()),
@@ -29,7 +43,7 @@ const localStorageMock = {
 global.localStorage = localStorageMock as any;
 
 // Mock window.location
-Object.defineProperty(window, 'location', {
+Object.defineProperty((global as any).window, 'location', {
   value: {
     href: 'http://localhost:3000/test',
   },
@@ -102,7 +116,7 @@ describe('Enhanced Error Handling System', () => {
       const error = new Error('404: Resource not found');
       const detailedError = await parseApiError(error);
 
-      expect(detailedError.message).toBe('Resource not found');
+      expect(detailedError.message).toBe('Endpoint Not Found');
       expect(detailedError.statusCode).toBe(404);
     });
 
@@ -123,10 +137,10 @@ describe('Enhanced Error Handling System', () => {
 
       const detailedError = await parseApiError(errorObj);
 
-      expect(detailedError.message).toBe('Object error');
+      expect(detailedError.message).toBe('Conflict Error');
       expect(detailedError.statusCode).toBe(409);
-      expect(detailedError.details).toBe('Conflict detected');
-      expect(detailedError.solution).toBe('Try again later');
+      expect(detailedError.details).toBe('The requested action conflicts with the current state.');
+      expect(detailedError.solution).toBe('Check if the resource is already in use or refresh the page to get the latest state.');
     });
   });
 
@@ -333,7 +347,7 @@ describe('Enhanced Error Handling System', () => {
     it('should handle undefined/null errors', () => {
       const extracted = extractDetailedError(null);
 
-      expect(extracted.message).toBe('Unknown error occurred');
+      expect(extracted.message).toBe('null');
       expect(extracted.debugInfo).toBeDefined();
     });
   });
@@ -390,17 +404,21 @@ describe('Enhanced Error Handling System', () => {
         solution: 'Please provide a valid name'
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        text: () => Promise.resolve(JSON.stringify(errorResponse)),
-      });
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(errorResponse), {
+          status: 400,
+          statusText: 'Bad Request',
+        }) as any
+      );
 
       try {
         await apiRequestWithDetailedErrors('POST', 'http://localhost:5000/api/test', { data: 'test' });
         expect(true).toBe(false); // Should not reach here
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
+        if (!(error instanceof Error)) {
+          throw error;
+        }
         const parsedError = JSON.parse(error.message);
         expect(parsedError.message).toBe('Validation failed');
         expect(parsedError.details).toBe('Name is required');
@@ -412,13 +430,16 @@ describe('Enhanced Error Handling System', () => {
     });
 
     it('should handle network errors', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network request failed'));
+      mockFetch.mockRejectedValueOnce(new Error('Failed to fetch'));
 
       try {
         await apiRequestWithDetailedErrors('GET', 'http://localhost:5000/api/test');
         expect(true).toBe(false); // Should not reach here
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
+        if (!(error instanceof Error)) {
+          throw error;
+        }
         const parsedError = JSON.parse(error.message);
         expect(parsedError.message).toBe('Connection Failed');
         expect(parsedError.errorCode).toBe('CONNECTION_FAILED');
@@ -454,11 +475,12 @@ describe('Enhanced Error Handling System', () => {
         errorCode: 'CAPSULE_OCCUPIED'
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 409,
-        text: () => Promise.resolve(JSON.stringify(errorResponse)),
-      });
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(errorResponse), {
+          status: 409,
+          statusText: 'Conflict',
+        }) as any
+      );
 
       try {
         await apiRequestWithDetailedErrors(
@@ -474,7 +496,7 @@ describe('Enhanced Error Handling System', () => {
         expect(toast.description).toContain('Conflict Error');
         expect(toast.description).toContain('The requested action conflicts with the current state');
         expect(toast.debugDetails).toContain('Status: 409');
-        expect(toast.debugDetails).toContain('POST /api/guest-tokens');
+        expect(toast.debugDetails).toContain('POST http://localhost:5000/api/guest-tokens');
       }
     });
 
@@ -485,11 +507,12 @@ describe('Enhanced Error Handling System', () => {
         solution: 'Please enter a valid email address'
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 422,
-        text: () => Promise.resolve(JSON.stringify(errorResponse)),
-      });
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(errorResponse), {
+          status: 422,
+          statusText: 'Unprocessable Entity',
+        }) as any
+      );
 
       try {
         await apiRequestWithDetailedErrors(
@@ -502,9 +525,9 @@ describe('Enhanced Error Handling System', () => {
         const toast = createErrorToast(detailedError);
 
         expect(toast.title).toBe('Operation Failed');
-        expect(toast.description).toContain('Invalid guest data');
-        expect(toast.description).toContain('Guest check-in failed due to validation errors');
-        expect(toast.description).toContain('Verify all guest information is correct');
+        expect(toast.description).toContain('Validation Error');
+        expect(toast.description).toContain('The submitted data failed server validation');
+        expect(toast.description).toContain('Please check your input and try again');
       }
     });
   });

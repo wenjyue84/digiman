@@ -1,0 +1,92 @@
+# Memory Sync Round 6 Progress Log - Fri, Feb 21, 2026
+Extracting facts from Notion workspace into Mem0 Cloud — Round 6 (Arising, Government Grants, Interns, Coaching & Commercial Properties)
+Starting Mem0 count: 1,497
+
+## Patterns
+- Use ToolSearch to load notion-search and notion-fetch before each iteration
+- Push facts via python3 urllib.request with 0.3s sleep between calls
+- Search Mem0 first to check for existing facts before pushing
+- Mem0 deduplicates automatically — overlapping facts get merged
+- Always add encoding='utf-8' to file operations on Windows
+- Use ssl.create_default_context() for HTTPS calls
+- Use "infer": false in POST body for synchronous direct memory addition
+- PRD path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-prd-6.json
+- Progress path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-progress-6.txt
+
+---
+
+## Wave 1 — Arising, Smart Tech Up, Interns, Daniel Coaching (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS6-001 | Arising Packaging & Associated Companies (RSE/RSP/JSE) | 10 | Arising company, annual revenue, SSM pages, West Port expansion |
+| MS6-002 | Smart Tech Up, CI Registration & Government Grants | 10 | Smart Tech Up portal, CI submission, capital market funding, GDPM grant, fund consultancy proposal |
+| MS6-003 | Prisma Intern Pipeline & HR SOPs | 14 | 9 intern profiles, interview SOP, self-assessment, hiring tasks |
+| MS6-004 | Business Coaching with Daniel Stellar | 8 | Daniel contact, online meeting, March 2024 review, yearly summary, Jas Teo profile |
+**Subtotal: 42 facts**
+
+## Wave 2 — Teratai Property, Federation Oil, Life Milestones, Staff Ops (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS6-005 | Taman Teratai Commercial Property & Century Jin Do | 11 | 8 pages: rent agreements, renovation, toilet leak, ground floor listing, stamp duty, Century Jin Do |
+| MS6-006 | Federation Oil Factory & Additional Prisma Leads | 8 | Federation Oil, Poly Spring, Smart Tech Communication, RSE catalog |
+| MS6-007 | Yearly Summaries & Important Life Milestones | 12 | Yearly summary, life milestones since birth, business checklist, active companies list |
+| MS6-008 | Staff Operations — Attendance, Payroll & Recruitment | 10 | Attendance calculator, Su Mon SOP, Myanmar recruitment, Ninso handover, employee portal, handbook, ZK Teco |
+**Subtotal: 41 facts**
+
+## Wave 3 — Juggernaut Labs, Language Learning (2 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS6-009 | Juggernaut Labs Process & Presentation to APU | 8 | Juggernaut overview, team meeting, APU presentation, test juggernaut |
+| MS6-010 | Language Learning, Courses & Personal Knowledge | 12 | Vietnamese, Japanese, language DB, Stanford CS146S, Coursera Psychology, Photography, Andrew Ng AI, ISO Alison, platform comparison |
+**Subtotal: 20 facts**
+
+---
+
+## Round 6 Final Summary
+
+| Metric | Value |
+|--------|-------|
+| Stories completed | 10/10 |
+| Total raw facts pushed | 103 |
+| Starting Mem0 count | 1,497 |
+| Final Mem0 count | 1,600 |
+| Net new memories | +103 |
+| Waves executed | 3 (4+4+2 agents) |
+| PRD race conditions | 0 |
+
+### Domain Coverage Added in Round 6
+1. **Arising Packaging** — Founded July 2024 by Jas Teo, RM17M revenue, blow molding for palm oil exports, West Port Klang RM4M expansion
+2. **RSE/RSP/JSE** — RSE RM3.7M, RSP RM12.6M, JSE RM1.6M annual revenues, associated companies under Jas Teo
+3. **Smart Tech Up** — NIMP 2030 Mission 2, 50:50 matching grant up to RM500K, CI registration under DMT review
+4. **GDPM** — Prisma certified Digitalisation Partner (May 2025-2026), RM5K-10K SME grants via BSN/Funding Societies
+5. **CoSIF** — RM131.5M government co-investment fund, 7 approved ECF/P2P platforms, 1:2 ratio up to RM10M
+6. **Prisma Interns** — 9 profiles (Sirajum, Tawfiq, Chen Pui, Dwain, Andy, Qi An, Shuqing, Sum Pei Ling, Wong Zhong Han), 7-phase interview SOP
+7. **Daniel Stellar** — Business coach, non-directive methodology, 12-month bi-monthly coaching plan with Jay and Jas Teo
+8. **Taman Teratai** — 31 Jalan Enau double-storey shoplot, Classy Family Sdn Bhd, ground floor RM2,500/month wan tan mee, 2nd floor RM1,000/month restaurant
+9. **Century Jin Do** — Restaurant bought RM10K (Jun 2023), sold RM14K (Jan 2024), 89 Jalan Dato Sulaiman
+10. **Federation Oil** — Edible oil manufacturer, RM9K IoT ultrasonic sensor deal (Sep 2023)
+11. **Life Milestones** — Born 16 Aug 1984 JB, Campbell University 2006 (Math CGPA 3.33), I-Skill 2010-2021, 6 active SSM companies
+12. **Staff Operations** — POS attendance + ZK Teco biometric, 4 teams (Production/Technical/QC/Support), Myanmar recruitment, Ninso 15% revenue-sharing
+13. **Juggernaut Labs** — AI orchestration by Kenoye Naku (Kitchener, Canada), decision-tree methodology, SaaS + services model
+14. **APU Presentation** — Jay + Mr. Chang presented to APU students Jan 25, 2024 via Zoom, recruitment/engagement initiative
+15. **Language Learning** — Vietnamese + Japanese active study, 8 languages in Notion, IELTS 7.0, trilingual (Mandarin/English/BM)
+16. **Online Courses** — Stanford CS146S, Coursera Psychology/Photography, Andrew Ng AI, ISO 9001 Alison, AWS CCP prep
+
+### Cumulative Totals Across All 6 Rounds
+| Round | Stories | Raw Facts | Mem0 Start | Mem0 End | Net New |
+|-------|---------|-----------|------------|----------|---------|
+| Round 1 | 18 | ~180 | ~605 | ~819 | ~214 |
+| Round 2 | 12 | ~120 | 819 | 975 | 156 |
+| Round 3 | 10 | 101 | 975 | 1,127 | 152 |
+| Round 4 | 10 | 99 | 1,127 | 1,397 | 270 |
+| Round 5 | 10 | 100 | 1,397 | 1,497 | 100 |
+| Round 6 | 10 | 103 | 1,497 | 1,600 | 103 |
+| **Total** | **70** | **~703** | **605** | **1,600** | **995** |
+
+### Technical Notes
+- All 3 waves launched without waiting — maximum throughput per user's "nonstop" instruction
+- No PRD race conditions in Round 6 (clean run, consistent with Rounds 4-5)
+- Net new (+103) closely matches raw facts (103) — minimal deduplication overlap, indicating Round 6 covered genuinely new domains
+- Credentials on "Test juggernaut" page intentionally excluded per no-credentials rule
+- Sensitive data (salary amounts, bank accounts, NRIC) excluded from staff operations facts
+- Round 6 completed the deepest coverage yet: personal biography, commercial property transactions, government grants pipeline, intern pipeline, and multilingual learning journey

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import { shouldShowDemoFeatures } from "@shared/utils";
 import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 
@@ -16,7 +17,8 @@ declare global {
   }
 }
 
-const DB_MESSAGE_KEY = "pelangi-login-db-message";
+import { DEFAULT_BUSINESS_CONFIG } from "@shared/business-config";
+const DB_MESSAGE_KEY = `${DEFAULT_BUSINESS_CONFIG.shortName.toLowerCase()}-login-db-message`;
 
 function isDatabaseError(message: string | undefined): boolean {
   if (!message) return false;
@@ -51,8 +53,9 @@ export function LoginForm() {
   });
 
   // Get storage info to determine if we should auto-fill credentials
-  const { data: storageInfo, isLoading: isStorageLoading, error: storageError, refetch: refetchStorageInfo } = useQuery<{type: string; isDatabase: boolean; label: string}>({
+  const { data: storageInfo, isLoading: isStorageLoading, error: storageError, refetch: refetchStorageInfo } = useQuery<{ type: string; isDatabase: boolean; label: string }>({
     queryKey: ["/api/storage/info"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     staleTime: 60000, // Cache for 1 minute
     retry: false // Don't retry if it fails
   });
@@ -93,9 +96,9 @@ export function LoginForm() {
         setTimeout(() => {
           const element = document.getElementById("google-signin-button");
           if (element) {
-            window.google.accounts.id.renderButton(element, { 
-              theme: "outline", 
-              size: "large", 
+            window.google.accounts.id.renderButton(element, {
+              theme: "outline",
+              size: "large",
               text: "signin_with",
               shape: "rectangular"
             });
@@ -120,7 +123,7 @@ export function LoginForm() {
       isDatabase: storageInfo?.isDatabase,
       type: storageInfo?.type
     });
-    
+
     if (storageInfo && !storageInfo.isDatabase) {
       console.log("Auto-filling credentials for memory storage");
       // Using memory storage - auto-fill credentials for development convenience
@@ -142,7 +145,7 @@ export function LoginForm() {
     setIsLoading(true);
 
     const result = await login(email, password);
-    
+
     if (result.success) {
       toast({
         title: "🎉 Login Successful!",
@@ -177,10 +180,10 @@ export function LoginForm() {
         setDatabaseMessage(msg);
         try {
           sessionStorage.setItem(DB_MESSAGE_KEY, msg);
-        } catch {}
+        } catch { }
       }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -188,7 +191,7 @@ export function LoginForm() {
     setDatabaseMessage(null);
     try {
       sessionStorage.removeItem(DB_MESSAGE_KEY);
-    } catch {}
+    } catch { }
   };
 
   const handleGoogleSignIn = async (response: any) => {
@@ -370,19 +373,19 @@ export function LoginForm() {
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-          
+
           <div className="my-4 flex items-center">
             <hr className="flex-1 border-gray-300" />
             <span className="px-3 text-sm text-gray-500">or</span>
             <hr className="flex-1 border-gray-300" />
           </div>
-          
+
           <div id="google-signin-button" className="w-full"></div>
-          
+
           {typeof window !== 'undefined' &&
             shouldShowDemoFeatures() && (
               <div className="mt-4 text-sm text-gray-600 text-center">
-                <p>Demo Login: admin@pelangi.com / admin123</p>
+                <p>Demo Login: {business.email} / admin123</p>
               </div>
             )}
         </CardContent>

@@ -2,35 +2,36 @@
  * Core TypeScript types for Guest Guide Content Management System
  * Provides comprehensive type safety and intellisense for the guest success page editor
  */
+import { DEFAULT_BUSINESS_CONFIG } from "@shared/business-config";
 
 export interface GuestGuideContent {
   // Basic intro and welcome content
   intro: string;
-  
+
   // Contact and location information
   address: string;
-  
+
   // Connectivity information
   wifiName: string;
   wifiPassword: string;
-  
+
   // Check-in guidance
   checkin: string;
-  
+
   // Additional guidance and information
   other: string;
-  
+
   // Frequently asked questions
   faq: string;
-  
+
   // Critical reminders and notices
   importantReminders: string;
-  
+
   // External resources and quick links
   hostelPhotosUrl: string;
   googleMapsUrl: string;
   checkinVideoUrl: string;
-  
+
   // Time and access configuration
   checkinTime: string;
   checkoutTime: string;
@@ -84,10 +85,10 @@ export type GuestGuideContextValue = GuestGuideContextState & GuestGuideActions;
 // Default content for initial setup
 export const DEFAULT_GUEST_GUIDE_CONTENT: GuestGuideContent = {
   intro: 'Welcome to our establishment! We are thrilled to have you stay with us.',
-  address: '26A, Jalan Perang, Taman Pelangi\n80400 Johor Bahru, Johor, Malaysia\nPhone: +60 7-354 8888\nEmail: info@pelangicapsule.com',
-  wifiName: 'Pelangi-Guest',
+  address: `${DEFAULT_BUSINESS_CONFIG.address}\nPhone: ${DEFAULT_BUSINESS_CONFIG.phone}\nEmail: ${DEFAULT_BUSINESS_CONFIG.email}`,
+  wifiName: `${DEFAULT_BUSINESS_CONFIG.shortName}-Guest`,
   wifiPassword: 'welcome123',
-  checkin: 'Welcome! Here are your check-in instructions:\n\n1. Arrive at the main entrance\n2. Use the intercom to contact reception\n3. Present your booking confirmation\n4. Collect your access card\n5. Proceed to your assigned capsule',
+  checkin: 'Welcome! Here are your check-in instructions:\n\n1. Arrive at the main entrance\n2. Use the intercom to contact reception\n3. Present your booking confirmation\n4. Collect your access card\n5. Proceed to your assigned unit',
   other: 'Additional services available:\n\n• 24/7 reception support\n• Luggage storage facilities\n• Common area with kitchenette\n• Laundry facilities\n• Tour booking assistance',
   faq: 'Frequently Asked Questions:\n\nQ: What time is check-in?\nA: Check-in is available from 3:00 PM onwards.\n\nQ: Is there a curfew?\nA: No curfew, 24/7 access with your key card.\n\nQ: Are towels provided?\nA: Yes, towels and basic amenities are included.',
   importantReminders: '⚠️ IMPORTANT REMINDERS:\n\n• Keep your access card safe - replacement fee applies\n• Respect quiet hours (10 PM - 8 AM)\n• No smoking inside the premises\n• No outside food in Unit areas\n• Check-out by 12:00 PM to avoid late fees',
@@ -136,11 +137,11 @@ export const validateGuestGuideContent = (content: Partial<GuestGuideContent>): 
   if (!content.intro?.trim()) {
     errors.push('Introduction text is required');
   }
-  
+
   if (!content.address?.trim()) {
     errors.push('Address information is required');
   }
-  
+
   if (!content.doorPassword?.trim()) {
     errors.push('Door password is required');
   }

@@ -23,6 +23,7 @@ import customMessagesRoutes from './custom-messages.js';
 import scheduledMessagesRoutes from './scheduled-messages.js';
 import paymentRemindersRoutes from './payment-reminders.js';
 import latencyRoutes from '../test/latency.js';
+import fleetRoutes from './fleet.js';
 
 const router = Router();
 
@@ -100,6 +101,7 @@ router.use(customMessagesRoutes);
 router.use(scheduledMessagesRoutes);
 router.use(paymentRemindersRoutes);
 router.use('/test', latencyRoutes);
+router.use(fleetRoutes);
 
 // Ensure unmatched /api/rainbow/* returns JSON 404 (never HTML)
 router.use((_req: Request, res: Response) => {

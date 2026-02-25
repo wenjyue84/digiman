@@ -37,7 +37,7 @@ self.addEventListener('push', function(event) {
     
     // Fallback notification
     event.waitUntil(
-      self.registration.showNotification('Pelangi Manager', {
+      self.registration.showNotification('digiman', {
         body: 'You have a new notification',
         icon: '/icon-192.png',
         badge: '/icon-192.png',

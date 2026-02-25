@@ -17,7 +17,7 @@ import {
  * Accessed by AI Models tab via getter/setter (backed by same cache keys).
  */
 const SETTINGS_CACHE_KEYS = {
-  config:      'settings.config',
+  config: 'settings.config',
   adminNotifs: 'settings.adminNotifs',
 };
 
@@ -95,6 +95,7 @@ export function switchSettingsTab(tabId, updateHash = true) {
   else if (tabId === 'operators') renderOperatorsTab(container);
   else if (tabId === 'bot-avatar') renderBotAvatarTab(container);
   else if (tabId === 'failover') renderFailoverTab(container);
+  else if (tabId === 'appearance') renderAppearanceTab(container);
 }
 window.switchSettingsTab = switchSettingsTab;
 
@@ -107,38 +108,38 @@ function renderBotAvatarTab(container) {
 
   container.innerHTML =
     '<div class="bg-white border rounded-2xl p-6">' +
-      '<h3 class="font-semibold text-lg mb-2">Bot Avatar</h3>' +
-      '<p class="text-sm text-neutral-500 mb-6 font-medium">Customize the icon shown before AI-generated messages in Live Chat. Human staff replies will not have this icon.</p>' +
+    '<h3 class="font-semibold text-lg mb-2">Bot Avatar</h3>' +
+    '<p class="text-sm text-neutral-500 mb-6 font-medium">Customize the icon shown before AI-generated messages in Live Chat. Human staff replies will not have this icon.</p>' +
 
-      '<div class="mb-6">' +
-        '<label class="block text-sm font-bold text-neutral-800 mb-3">Current Avatar</label>' +
-        '<div class="flex items-center gap-4 p-4 bg-neutral-50 rounded-xl border">' +
-          '<span id="bot-avatar-preview" class="text-4xl">' + esc(currentAvatar) + '</span>' +
-          '<div>' +
-            '<div class="text-sm font-medium text-neutral-800">Preview in chat bubble:</div>' +
-            '<div class="text-sm text-neutral-500 mt-1"><span id="bot-avatar-inline">' + esc(currentAvatar) + '</span> Hello! Welcome to Pelangi Capsule Hostel...</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
+    '<div class="mb-6">' +
+    '<label class="block text-sm font-bold text-neutral-800 mb-3">Current Avatar</label>' +
+    '<div class="flex items-center gap-4 p-4 bg-neutral-50 rounded-xl border">' +
+    '<span id="bot-avatar-preview" class="text-4xl">' + esc(currentAvatar) + '</span>' +
+    '<div>' +
+    '<div class="text-sm font-medium text-neutral-800">Preview in chat bubble:</div>' +
+    '<div class="text-sm text-neutral-500 mt-1"><span id="bot-avatar-inline">' + esc(currentAvatar) + '</span> Hello! Welcome to Pelangi Capsule Hostel...</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
 
-      '<div class="mb-6">' +
-        '<label class="block text-sm font-bold text-neutral-800 mb-3">Quick Presets</label>' +
-        '<div class="flex flex-wrap gap-2">' +
-          presets.map(function(emoji) {
-            var isActive = emoji === currentAvatar ? ' ring-2 ring-primary-500 ring-offset-2' : '';
-            return '<button onclick="selectBotAvatar(\'' + emoji + '\')" class="w-12 h-12 text-2xl rounded-xl border hover:bg-neutral-50 transition flex items-center justify-center' + isActive + '">' + emoji + '</button>';
-          }).join('') +
-        '</div>' +
-      '</div>' +
+    '<div class="mb-6">' +
+    '<label class="block text-sm font-bold text-neutral-800 mb-3">Quick Presets</label>' +
+    '<div class="flex flex-wrap gap-2">' +
+    presets.map(function (emoji) {
+      var isActive = emoji === currentAvatar ? ' ring-2 ring-primary-500 ring-offset-2' : '';
+      return '<button onclick="selectBotAvatar(\'' + emoji + '\')" class="w-12 h-12 text-2xl rounded-xl border hover:bg-neutral-50 transition flex items-center justify-center' + isActive + '">' + emoji + '</button>';
+    }).join('') +
+    '</div>' +
+    '</div>' +
 
-      '<div class="mb-6">' +
-        '<label class="block text-sm font-bold text-neutral-800 mb-3">Custom Emoji / Text</label>' +
-        '<div class="flex gap-2">' +
-          '<input type="text" id="bot-avatar-custom" value="' + esc(currentAvatar) + '" placeholder="Type emoji or short text" class="flex-1 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition bg-white shadow-soft text-lg" maxlength="4" />' +
-          '<button onclick="saveBotAvatar()" class="px-8 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-medium font-bold">Save</button>' +
-        '</div>' +
-        '<p class="text-[11px] text-neutral-500 mt-2">Enter any emoji or up to 4 characters. This will appear before every AI message in Live Chat.</p>' +
-      '</div>' +
+    '<div class="mb-6">' +
+    '<label class="block text-sm font-bold text-neutral-800 mb-3">Custom Emoji / Text</label>' +
+    '<div class="flex gap-2">' +
+    '<input type="text" id="bot-avatar-custom" value="' + esc(currentAvatar) + '" placeholder="Type emoji or short text" class="flex-1 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition bg-white shadow-soft text-lg" maxlength="4" />' +
+    '<button onclick="saveBotAvatar()" class="px-8 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-medium font-bold">Save</button>' +
+    '</div>' +
+    '<p class="text-[11px] text-neutral-500 mt-2">Enter any emoji or up to 4 characters. This will appear before every AI message in Live Chat.</p>' +
+    '</div>' +
     '</div>';
 }
 
@@ -744,3 +745,283 @@ export async function failoverDemote() {
   }
 }
 window.failoverDemote = failoverDemote;
+
+// ─── Appearance Tab ────────────────────────────────────────────────
+
+/**
+ * All appearance prefs live in localStorage under one key to avoid
+ * polluting settings API with purely cosmetic, per-device preferences.
+ */
+const APPEARANCE_KEY = 'rainbow.appearance';
+
+function _loadAppearancePrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(APPEARANCE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function _saveAppearancePrefs(prefs) {
+  localStorage.setItem(APPEARANCE_KEY, JSON.stringify(prefs));
+}
+
+/**
+ * Apply persisted appearance settings to the document.
+ * Call once on page load and after every change.
+ */
+export function applyAppearancePrefs() {
+  const prefs = _loadAppearancePrefs();
+  const root = document.documentElement;
+
+  // ── Theme ──
+  const theme = prefs.theme || 'light';
+  if (theme === 'dark') {
+    root.classList.add('dark');
+    root.style.setProperty('--app-bg', prefs.bgColor || '#1a1a2e');
+    root.style.setProperty('--app-surface', prefs.surfaceColor || '#16213e');
+    root.style.setProperty('--app-text', '#e2e8f0');
+    root.style.setProperty('--app-text-muted', '#94a3b8');
+    root.style.setProperty('--app-border', 'rgba(255,255,255,0.1)');
+  } else {
+    root.classList.remove('dark');
+    root.style.setProperty('--app-bg', prefs.bgColor || '#f8fafc');
+    root.style.setProperty('--app-surface', prefs.surfaceColor || '#ffffff');
+    root.style.setProperty('--app-text', '#0f172a');
+    root.style.setProperty('--app-text-muted', '#64748b');
+    root.style.setProperty('--app-border', '#e2e8f0');
+  }
+
+  // ── Accent colour ──
+  if (prefs.accentHue) {
+    root.style.setProperty('--color-primary-500', `hsl(${prefs.accentHue}, 70%, 55%)`);
+    root.style.setProperty('--color-primary-600', `hsl(${prefs.accentHue}, 70%, 47%)`);
+    root.style.setProperty('--color-primary-100', `hsl(${prefs.accentHue}, 80%, 93%)`);
+    root.style.setProperty('--color-primary-50', `hsl(${prefs.accentHue}, 80%, 97%)`);
+  }
+
+  // ── Sidebar ──
+  if (prefs.sidebarColor) {
+    root.style.setProperty('--sidebar-bg', prefs.sidebarColor);
+  }
+
+  // ── Font size ──
+  if (prefs.fontSize) {
+    root.style.fontSize = prefs.fontSize + 'px';
+  }
+
+  // ── Background image / gradient ──
+  const mainEl = document.querySelector('#main-content') || document.querySelector('main') || document.body;
+  if (prefs.bgGradient && prefs.bgGradient !== 'none') {
+    mainEl.style.backgroundImage = prefs.bgGradient;
+    mainEl.style.backgroundAttachment = 'fixed';
+  } else {
+    mainEl.style.backgroundImage = '';
+  }
+}
+window.applyAppearancePrefs = applyAppearancePrefs;
+
+function renderAppearanceTab(container) {
+  const prefs = _loadAppearancePrefs();
+
+  const ACCENT_PRESETS = [
+    { name: 'Indigo', hue: 239 },
+    { name: 'Violet', hue: 262 },
+    { name: 'Blue', hue: 217 },
+    { name: 'Cyan', hue: 188 },
+    { name: 'Teal', hue: 168 },
+    { name: 'Emerald', hue: 145 },
+    { name: 'Rose', hue: 347 },
+    { name: 'Orange', hue: 25 },
+    { name: 'Amber', hue: 43 },
+  ];
+
+  const GRADIENTS = [
+    { name: 'None', value: 'none' },
+    { name: 'Subtle Blue', value: 'linear-gradient(135deg,#f0f4ff 0%,#fafafa 100%)' },
+    { name: 'Lavender', value: 'linear-gradient(135deg,#f3f0ff 0%,#fafafa 100%)' },
+    { name: 'Mint', value: 'linear-gradient(135deg,#f0fff4 0%,#fafafa 100%)' },
+    { name: 'Peach', value: 'linear-gradient(135deg,#fff5f0 0%,#fafafa 100%)' },
+    { name: 'Deep Ocean', value: 'linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%)' },
+    { name: 'Night Sky', value: 'linear-gradient(135deg,#0d0d1e 0%,#1a0533 100%)' },
+  ];
+
+  const accentHue = prefs.accentHue ?? 239;
+  const theme = prefs.theme || 'light';
+  const fontSize = prefs.fontSize || 14;
+  const bgColor = prefs.bgColor || (theme === 'dark' ? '#1a1a2e' : '#f8fafc');
+  const sidebarColor = prefs.sidebarColor || '';
+  const bgGradient = prefs.bgGradient || 'none';
+
+  const accentBtns = ACCENT_PRESETS.map(p => {
+    const isActive = p.hue === accentHue;
+    return `<button
+      title="${esc(p.name)}"
+      onclick="setAppearancePref('accentHue', ${p.hue}); event.currentTarget.closest('#appearance-tab').querySelectorAll('.accent-swatch').forEach(el=>el.classList.remove('ring-2','ring-offset-2','ring-primary-500')); event.currentTarget.classList.add('ring-2','ring-offset-2','ring-primary-500');"
+      class="accent-swatch w-8 h-8 rounded-full border-2 border-white shadow transition hover:scale-110 ${isActive ? 'ring-2 ring-offset-2 ring-primary-500' : ''}"
+      style="background:hsl(${p.hue},70%,55%)"
+    ></button>`;
+  }).join('');
+
+  const gradientBtns = GRADIENTS.map(g => {
+    const isActive = (prefs.bgGradient || 'none') === g.value;
+    const bgStyle = g.value === 'none' ? 'background:#f1f5f9' : `background:${g.value}`;
+    return `<button
+      title="${esc(g.name)}"
+      onclick="setAppearancePref('bgGradient','${g.value.replace(/'/g, '\\\'')}'); event.currentTarget.closest('#appearance-tab').querySelectorAll('.gradient-swatch').forEach(el=>el.classList.remove('ring-2','ring-offset-2','ring-primary-500')); event.currentTarget.classList.add('ring-2','ring-offset-2','ring-primary-500');"
+      class="gradient-swatch w-10 h-10 rounded-xl border shadow transition hover:scale-105 ${isActive ? 'ring-2 ring-offset-2 ring-primary-500' : ''}"
+      style="${bgStyle}"
+    ></button>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div id="appearance-tab" class="space-y-4">
+
+      <!-- Theme -->
+      <div class="bg-white border rounded-2xl p-6">
+        <h3 class="font-semibold text-lg mb-1">🌓 Theme</h3>
+        <p class="text-sm text-neutral-500 mb-5">Choose how the dashboard looks. Dark mode reduces eye strain in low-light environments.</p>
+        <div class="flex gap-3 flex-wrap">
+          ${['light', 'dark'].map(t => `
+            <label class="flex-1 min-w-[120px] cursor-pointer">
+              <input type="radio" name="app-theme" value="${t}" ${theme === t ? 'checked' : ''}
+                onchange="setAppearancePref('theme', this.value)" class="sr-only">
+              <div class="border-2 rounded-2xl p-4 text-center transition hover:border-primary-400 ${theme === t ? 'border-primary-500 bg-primary-50' : 'border-neutral-200'}">
+                <div class="text-2xl mb-1">${t === 'light' ? '☀️' : '🌙'}</div>
+                <div class="text-sm font-medium capitalize">${t}</div>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Accent Color -->
+      <div class="bg-white border rounded-2xl p-6">
+        <h3 class="font-semibold text-lg mb-1">🎨 Accent Color</h3>
+        <p class="text-sm text-neutral-500 mb-4">Changes buttons, links, and highlights throughout the dashboard.</p>
+        <div class="flex gap-3 flex-wrap items-center">
+          ${accentBtns}
+          <div class="flex items-center gap-2 ml-2">
+            <label class="text-xs text-neutral-500">Custom:</label>
+            <input type="color"
+              value="${`hsl(${accentHue},70%,55%)`}"
+              id="accent-custom-color"
+              oninput="setAppearancePref('accentHue', null, this.value)"
+              class="w-8 h-8 rounded-full border cursor-pointer"
+              title="Pick any color">
+          </div>
+        </div>
+      </div>
+
+      <!-- Background -->
+      <div class="bg-white border rounded-2xl p-6">
+        <h3 class="font-semibold text-lg mb-1">🖼 Background</h3>
+        <p class="text-sm text-neutral-500 mb-4">Set a solid background color or pick a gradient for the main content area.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-xs font-medium text-neutral-600 mb-2">Background Color</label>
+            <div class="flex items-center gap-3">
+              <input type="color" id="bg-color-picker" value="${esc(bgColor)}"
+                oninput="setAppearancePref('bgColor', this.value)"
+                class="w-10 h-10 rounded-xl border cursor-pointer">
+              <input type="text" id="bg-color-text" value="${esc(bgColor)}"
+                oninput="document.getElementById('bg-color-picker').value=this.value; setAppearancePref('bgColor', this.value)"
+                class="flex-1 px-3 py-2 border rounded-xl text-sm font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-neutral-600 mb-2">Sidebar Color</label>
+            <div class="flex items-center gap-3">
+              <input type="color" id="sidebar-color-picker" value="${esc(sidebarColor || '#1e293b')}"
+                oninput="setAppearancePref('sidebarColor', this.value)"
+                class="w-10 h-10 rounded-xl border cursor-pointer">
+              <input type="text" id="sidebar-color-text" value="${esc(sidebarColor || '#1e293b')}"
+                oninput="document.getElementById('sidebar-color-picker').value=this.value; setAppearancePref('sidebarColor', this.value)"
+                class="flex-1 px-3 py-2 border rounded-xl text-sm font-mono focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+            </div>
+          </div>
+        </div>
+        <div class="mt-5">
+          <label class="block text-xs font-medium text-neutral-600 mb-2">Background Gradient</label>
+          <div class="flex gap-3 flex-wrap">${gradientBtns}</div>
+        </div>
+      </div>
+
+      <!-- Font Size -->
+      <div class="bg-white border rounded-2xl p-6">
+        <h3 class="font-semibold text-lg mb-1">🔤 Font Size</h3>
+        <p class="text-sm text-neutral-500 mb-4">Adjusts the base text size across the dashboard.</p>
+        <div class="flex items-center gap-4">
+          <span class="text-xs text-neutral-400">A</span>
+          <input type="range" min="12" max="18" step="1" value="${fontSize}" id="font-size-slider"
+            oninput="document.getElementById('font-size-label').textContent=this.value+'px'; setAppearancePref('fontSize', parseInt(this.value))"
+            class="flex-1 accent-primary">
+          <span class="text-lg text-neutral-600">A</span>
+          <span id="font-size-label" class="text-sm font-mono text-neutral-600 w-10">${fontSize}px</span>
+        </div>
+      </div>
+
+      <!-- Reset -->
+      <div class="flex justify-end">
+        <button onclick="resetAppearancePrefs()" class="text-sm text-neutral-500 hover:text-red-500 border hover:border-red-200 px-4 py-2 rounded-xl transition">
+          Reset to Defaults
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+
+export function setAppearancePref(key, value, colorHex) {
+  const prefs = _loadAppearancePrefs();
+
+  if (key === 'accentHue' && colorHex) {
+    // Convert hex to approximate hue
+    const r = parseInt(colorHex.slice(1, 3), 16) / 255;
+    const g = parseInt(colorHex.slice(3, 5), 16) / 255;
+    const b = parseInt(colorHex.slice(5, 7), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0;
+    if (d !== 0) {
+      if (max === r) h = ((g - b) / d % 6) * 60;
+      else if (max === g) h = ((b - r) / d + 2) * 60;
+      else h = ((r - g) / d + 4) * 60;
+    }
+    prefs.accentHue = Math.round((h + 360) % 360);
+  } else {
+    prefs[key] = value;
+  }
+
+  _saveAppearancePrefs(prefs);
+  applyAppearancePrefs();
+
+  // Sync text input to color picker and vice-versa
+  if (key === 'bgColor') {
+    const txt = document.getElementById('bg-color-text');
+    if (txt) txt.value = value;
+  }
+  if (key === 'sidebarColor') {
+    const txt = document.getElementById('sidebar-color-text');
+    if (txt) txt.value = value;
+  }
+}
+window.setAppearancePref = setAppearancePref;
+
+export function resetAppearancePrefs() {
+  if (!confirm('Reset all appearance settings to defaults?')) return;
+  localStorage.removeItem(APPEARANCE_KEY);
+  // Clear custom CSS vars
+  const root = document.documentElement;
+  ['--app-bg', '--app-surface', '--app-text', '--app-text-muted', '--app-border',
+    '--color-primary-500', '--color-primary-600', '--color-primary-100', '--color-primary-50',
+    '--sidebar-bg'].forEach(v => root.style.removeProperty(v));
+  root.classList.remove('dark');
+  root.style.fontSize = '';
+  const mainEl = document.querySelector('#main-content') || document.querySelector('main') || document.body;
+  mainEl.style.backgroundImage = '';
+  // Re-render tab
+  const c = document.getElementById('settings-tab-content');
+  if (c && window.activeSettingsTab === 'appearance') renderAppearanceTab(c);
+  toast('Appearance reset to defaults');
+}
+window.resetAppearancePrefs = resetAppearancePrefs;

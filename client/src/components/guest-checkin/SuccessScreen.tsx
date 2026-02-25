@@ -65,11 +65,11 @@ export default function SuccessScreen({
   const { t } = useI18n();
   const business = useBusinessConfig();
   const [showExtendDialog, setShowExtendDialog] = useState(false);
-  
+
   // Derive a reliable unit number
   const storedUnitNumber = (typeof window !== 'undefined') ? localStorage.getItem('lastAssignedUnit') : null;
   const displayUnitNumber = assignedUnitNumber || guestInfo?.unitNumber || storedUnitNumber || "";
-  
+
   // Get current token for extend functionality
   const getCurrentToken = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -101,7 +101,7 @@ Arrival: ${checkinTime}
 Departure: ${checkoutTime}
 Door Password: ${doorPassword}
 
-Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
+Address: ${settings?.guideAddress || business.address}
 
 Welcome to ${business.name}! 🌈`;
 
@@ -128,7 +128,7 @@ Welcome to ${business.name}! 🌈`;
   const handleExtend = () => {
     setShowExtendDialog(true);
   };
-  
+
   // Handle extend success (refresh the page data)
   const handleExtendSuccess = () => {
     if (onRefresh) {
@@ -171,9 +171,9 @@ Welcome to ${business.name}! 🌈`;
             <p className="text-xs text-yellow-700">
               {t.editUntil} {editExpiresAt.toLocaleTimeString()}.
             </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="mt-2"
               onClick={() => {
                 // Navigate back to edit form
@@ -186,7 +186,7 @@ Welcome to ${business.name}! 🌈`;
         </div>
       )}
 
-      
+
       {/* Email Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent className="max-w-md">
@@ -226,7 +226,7 @@ Welcome to ${business.name}! 🌈`;
           </div>
         </DialogContent>
       </Dialog>
-      
+
       {/* Extend Stay Dialog */}
       <GuestExtendDialog
         guest={guestData}

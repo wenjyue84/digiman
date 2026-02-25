@@ -26,3 +26,5 @@ guideShowHostelPhotos,true,Show hostel photos link,system,2026-02-11T16:20:58.96
 guideShowGoogleMaps,true,Show Google Maps link,system,2026-02-11T16:20:58.967Z
 guideShowCheckinVideo,true,Show check-in video link,system,2026-02-11T16:20:58.967Z
 guideShowTimeAccess,true,Show time and access info,system,2026-02-11T16:20:58.967Z
+testKey1,testValue1,Test description 1,test-user,2026-02-20T22:49:26.590Z
+testKey2,testValue2,Test description 2,test-user,2026-02-20T22:49:26.591Z

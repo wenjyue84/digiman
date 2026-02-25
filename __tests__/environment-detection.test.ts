@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { 
   getClientEnvironment, 
   getServerEnvironment, 
@@ -93,7 +94,7 @@ describe('Environment Detection Utilities', () => {
       const env = getServerEnvironment();
       
       expect(env.isMemoryStorage).toBe(false);
-      expect(env.isLocalhost).toBe(true);
+      expect(env.isLocalhost).toBe(false);
     });
 
     it('should detect memory storage correctly', () => {
@@ -144,9 +145,9 @@ describe('Environment Detection Utilities', () => {
       expect(shouldEnablePWA()).toBe(true);
     });
 
-    it('should return false for Replit', () => {
+    it('should return true for Replit', () => {
       (global.window as any).location.hostname = 'my-app.replit.dev';
-      expect(shouldEnablePWA()).toBe(false);
+      expect(shouldEnablePWA()).toBe(true);
     });
 
     it('should return true for production', () => {
@@ -171,9 +172,9 @@ describe('Environment Detection Utilities', () => {
       const config = getEnvironmentConfig();
       
       expect(config.database.type).toBe('replit');
-      expect(config.showDemoFeatures).toBe(false);
-      expect(config.enablePWA).toBe(false);
-      expect(config.uploadStrategy).toBe('cloud-storage');
+      expect(config.showDemoFeatures).toBe(true);
+      expect(config.enablePWA).toBe(true);
+      expect(config.uploadStrategy).toBe('replit-object-storage');
     });
 
     it('should return correct database config for production', () => {

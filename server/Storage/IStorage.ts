@@ -121,7 +121,12 @@ export interface IExpenseStorage {
   deleteExpense(id: string): Promise<boolean>;
 }
 
-// ─── Composed Interface ──────────────────────────────────────────────────────
+export interface IDatabaseMetrics {
+  status: "ok" | "error";
+  uptime: string;
+  connections: number;
+  size: string;
+}
 
 /**
  * Full storage interface — extends all domain sub-interfaces.
@@ -137,4 +142,6 @@ export interface IStorage extends
   ITokenStorage,
   INotificationStorage,
   ISettingsStorage,
-  IExpenseStorage {}
+  IExpenseStorage {
+  getDatabaseMetrics(): Promise<IDatabaseMetrics | null>;
+}

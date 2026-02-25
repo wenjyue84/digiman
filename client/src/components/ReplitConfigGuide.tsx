@@ -137,7 +137,7 @@ export function ReplitConfigGuide({ config }: ReplitConfigGuideProps) {
           Replit Configuration Guide
         </CardTitle>
         <CardDescription>
-          Complete setup guide for running PelangiManager on Replit with Neon database
+          Complete setup guide for running digiman on Replit with Neon database
         </CardDescription>
       </CardHeader>
       <CardContent>

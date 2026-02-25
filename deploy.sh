@@ -1,5 +1,5 @@
 #!/bin/bash
-# PelangiManager Lightsail Deployment Script
+# digiman Lightsail Deployment Script
 # Usage: ./deploy.sh [target] [--skip-build] [--skip-rainbow]
 # Targets: pelangi (default), southern
 #
@@ -43,7 +43,7 @@ for arg in "$@"; do
   esac
 done
 
-echo "=== PelangiManager Deployment [$TARGET] ==="
+echo "=== digiman Deployment [$TARGET] ==="
 echo "Target: $SSH_USER@$INSTANCE_IP:$REMOTE_DIR"
 echo ""
 

@@ -78,7 +78,7 @@ async function attemptStart(config: SupervisorConfig): Promise<void> {
         callAPI,
         getWhatsAppStatus
       });
-      console.log('[BaileysSupervisor] Pelangi Assistant initialized — WhatsApp auto-reply active');
+      console.log('[BaileysSupervisor] digiman Assistant initialized — WhatsApp auto-reply active');
     } catch (assistantErr: any) {
       // Assistant failure is non-fatal — WhatsApp still works for manual tools
       console.warn(`[BaileysSupervisor] Assistant init failed: ${assistantErr.message}`);

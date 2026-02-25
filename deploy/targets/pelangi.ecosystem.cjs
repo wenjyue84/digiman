@@ -9,8 +9,8 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 5000,
-        CORS_ORIGIN: 'http://18.142.14.142',
-        PUBLIC_URL: 'http://18.142.14.142',
+        CORS_ORIGIN: 'https://admin.pelangicapsulehostel.com,http://18.142.14.142',
+        PUBLIC_URL: 'https://admin.pelangicapsulehostel.com',
       },
       autorestart: true,
       max_restarts: 10,

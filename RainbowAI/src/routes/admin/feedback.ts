@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { db } from '../../lib/db.js';
+import { db, dbReady } from '../../lib/db.js';
 import { rainbowFeedback, insertRainbowFeedbackSchema } from '../../../../shared/schema.js';
 import { desc, eq, and, gte, lte, sql } from 'drizzle-orm';
 import { badRequest, serverError } from './http-utils.js';
@@ -41,6 +41,27 @@ router.post('/feedback', async (req: Request, res: Response) => {
 // US-165: 10-second in-memory cache to avoid redundant DB queries
 router.get('/feedback/stats', async (req: Request, res: Response) => {
   try {
+    const isConnected = await dbReady;
+    if (!isConnected) {
+      return res.json({
+        success: true,
+        stats: {
+          overall: {
+            totalFeedback: 0,
+            thumbsUp: 0,
+            thumbsDown: 0,
+            avgConfidence: null,
+            avgResponseTime: null,
+            satisfactionRate: '0.00',
+          },
+          byIntent: [],
+          byTier: [],
+          dailyTrend: [],
+        },
+        warning: 'Database connection unavailable. Showing empty feedback stats.',
+      });
+    }
+
     const { startDate, endDate, intent } = req.query;
 
     // Build a cache key from query params
@@ -174,6 +195,20 @@ router.get('/feedback/stats', async (req: Request, res: Response) => {
 // Get recent feedback entries (for review dashboard)
 router.get('/feedback/recent', async (req: Request, res: Response) => {
   try {
+    const isConnected = await dbReady;
+    if (!isConnected) {
+      return res.json({
+        success: true,
+        feedback: [],
+        pagination: {
+          limit: parseInt(req.query.limit as string) || 50,
+          offset: parseInt(req.query.offset as string) || 0,
+          total: 0,
+        },
+        warning: 'Database connection unavailable. Showing empty feedback list.',
+      });
+    }
+
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
     const ratingFilter = req.query.rating as string; // '1', '-1', or undefined (all)
@@ -215,6 +250,15 @@ router.get('/feedback/recent', async (req: Request, res: Response) => {
 // Get thumbs-down feedback for review (quality improvement)
 router.get('/feedback/low-rated', async (req: Request, res: Response) => {
   try {
+    const isConnected = await dbReady;
+    if (!isConnected) {
+      return res.json({
+        success: true,
+        feedback: [],
+        warning: 'Database connection unavailable. Showing empty low-rated feedback.',
+      });
+    }
+
     const limit = parseInt(req.query.limit as string) || 50;
     const intent = req.query.intent as string | undefined;
 

@@ -9,7 +9,7 @@ export interface BusinessConfig {
   name: string;
   shortName: string;
   tagline: string;
-  accommodationType: "capsule" | "room" | "house";
+  accommodationType: "capsule" | "room" | "bed" | "unit" | "house";
   address: string;
   phone: string;
   email: string;

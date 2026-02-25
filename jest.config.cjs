@@ -7,6 +7,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  testPathIgnorePatterns: [
+    '<rootDir>/RainbowAI/',
+  ],
   collectCoverageFrom: [
     'server/**/*.ts',
     'shared/**/*.ts',

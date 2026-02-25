@@ -182,8 +182,8 @@ export const clientValidation = {
       return { isValid: false, message: "unit number is required" };
     }
     
-    const capsuleRegex = /^[A-Z]\d{2}$/;
-    if (!capsuleRegex.test(unitNumber.toUpperCase())) {
+    const unitRegex = /^[A-Z]\d{2}$/;
+    if (!unitRegex.test(unitNumber.toUpperCase())) {
       return { isValid: false, message: "unit number must be in format A01, B02, etc." };
     }
     
@@ -783,9 +783,9 @@ export const bulkValidation = {
     if (!data.unitNumber || data.unitNumber.trim() === "") {
       errors.unitNumber = "unit number is required";
     } else {
-      const capsuleResult = clientValidation.validateunitNumber(data.unitNumber);
-      if (!capsuleResult.isValid && capsuleResult.message) {
-        errors.unitNumber = capsuleResult.message;
+      const unitResult = clientValidation.validateunitNumber(data.unitNumber);
+      if (!unitResult.isValid && unitResult.message) {
+        errors.unitNumber = unitResult.message;
       }
     }
     

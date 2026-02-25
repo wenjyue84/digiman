@@ -61,7 +61,7 @@ export function ReplitDeploymentWizard({ onComplete, autoOpen = false }: ReplitD
     {
       id: "overview",
       title: "Welcome to Replit Deployment",
-      description: "Let's get your PelangiManager running smoothly on Replit",
+      description: "Let's get your digiman system running smoothly on Replit",
       completed: false
     },
     {
@@ -233,7 +233,7 @@ export function ReplitDeploymentWizard({ onComplete, autoOpen = false }: ReplitD
               <h3 className="text-2xl font-bold text-gray-900">Ready to Deploy on Replit?</h3>
               <p className="text-gray-600 max-w-md mx-auto">
                 This wizard will guide you through setting up your database and environment variables 
-                to make your PelangiManager deployment smooth and hassle-free.
+                to make your digiman deployment smooth and hassle-free.
               </p>
             </div>
 

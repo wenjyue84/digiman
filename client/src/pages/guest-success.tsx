@@ -22,10 +22,10 @@ const EnhancedGuestSuccessPage: React.FC<{
 }> = ({ guestInfo, settings }) => {
   const { settings: contextSettings, isLoading: contextLoading, error } = useGuestGuide();
   const business = useBusinessConfig();
-  
+
   // Use context settings if available (same as preview), fallback to API settings
   const useContextSettings = !contextLoading && !error && contextSettings?.content;
-  
+
   // Handler functions for success screen actions
   const handlePrint = () => {
     window.print();
@@ -46,7 +46,7 @@ const EnhancedGuestSuccessPage: React.FC<{
     const checkinTime = getContentWithFallback(contentToUse, 'checkinTime', '3:00 PM');
     const checkoutTime = getContentWithFallback(contentToUse, 'checkoutTime', '12:00 PM');
     const doorPassword = getContentWithFallback(contentToUse, 'doorPassword', '1270#');
-    const address = getContentWithFallback(contentToUse, 'address', '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia');
+    const address = getContentWithFallback(contentToUse, 'address', business.address);
 
     const shareText = `🏨 ${business.name} - My Stay Information
 

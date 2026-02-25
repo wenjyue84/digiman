@@ -38,7 +38,13 @@ Choose one branch; load only the files listed under that branch.
 |-------|-----|----------|
 | 1 | [API-CONTRACT.md](API-CONTRACT.md) | Inter-module HTTP APIs (client ↔ server ↔ MCP/Rainbow). |
 
-### 3. Deployment and operations
+### 3. Fleet Manager (localhost:9999)
+
+| Order | Doc | Use when |
+|-------|-----|----------|
+| 1 | [FLEET-MANAGER.md](FLEET-MANAGER.md) | Fleet status dashboard at http://localhost:9999 — how to start, endpoints (/health, /metrics, /api/health-proxy), npm scripts, local-only access. |
+
+### 4. Deployment and operations
 
 > **Architecture summary:** Website (`client/` + `server/`) → **always Lightsail**. Rainbow AI → **local PC (primary) + Lightsail (standby)** with automatic failover.
 
@@ -48,7 +54,7 @@ Choose one branch; load only the files listed under that branch.
 | 2 | [DEPLOYMENT_OPERATIONS.md](DEPLOYMENT_OPERATIONS.md) | Legacy/general ops reference (storage, backup, monitoring). |
 | 3 | [REPLIT_DEPLOYMENT_FALLBACK_SYSTEM.md](REPLIT_DEPLOYMENT_FALLBACK_SYSTEM.md) | Replit-specific deployment (historical). |
 
-### 4. Rainbow AI: intents and classification
+### 5. Rainbow AI: intents and classification
 
 | Order | Doc | Use when |
 |-------|-----|----------|
@@ -62,14 +68,14 @@ Choose one branch; load only the files listed under that branch.
 | 8 | [IMPROVEMENT-2-INTENT-ACCURACY.md](IMPROVEMENT-2-INTENT-ACCURACY.md) | Intent accuracy improvement 2. |
 | 9 | [IMPROVEMENT-3-INTENT-ACCURACY.md](IMPROVEMENT-3-INTENT-ACCURACY.md) | Intent accuracy improvement 3. |
 
-### 5. Rainbow AI: intent manager and templates
+### 6. Rainbow AI: intent manager and templates
 
 | Order | Doc | Use when |
 |-------|-----|----------|
 | 1 | [INTENT-MANAGER-TEMPLATES.md](INTENT-MANAGER-TEMPLATES.md) | Intent manager UI and templates. |
 | 2 | [INTENT-MANAGER-TEMPLATES-IMPLEMENTATION.md](INTENT-MANAGER-TEMPLATES-IMPLEMENTATION.md) | Implementation details. |
 
-### 6. Rainbow AI: configuration and settings
+### 7. Rainbow AI: configuration and settings
 
 | Order | Doc | Use when |
 |-------|-----|----------|
@@ -81,14 +87,14 @@ Choose one branch; load only the files listed under that branch.
 | 6 | [README-CONFIGURATION-RESEARCH.md](README-CONFIGURATION-RESEARCH.md) | Configuration research overview. |
 | 7 | [LLM-SETTINGS-CONSOLIDATION-OPTIONS.md](LLM-SETTINGS-CONSOLIDATION-OPTIONS.md) | LLM settings consolidation. |
 
-### 7. Rainbow AI: settings UI and templates (implementation)
+### 8. Rainbow AI: settings UI and templates (implementation)
 
 | Order | Doc | Use when |
 |-------|-----|----------|
 | 1 | [SETTINGS-TEMPLATES-IMPLEMENTATION.md](SETTINGS-TEMPLATES-IMPLEMENTATION.md) | How settings templates were implemented. |
 | 2 | [SETTINGS-TEMPLATES-VERIFICATION.md](SETTINGS-TEMPLATES-VERIFICATION.md) | Verification of templates. |
 
-### 8. Sentiment and hallucination
+### 9. Sentiment and hallucination
 
 | Order | Doc | Use when |
 |-------|-----|----------|
@@ -105,7 +111,7 @@ Choose one branch; load only the files listed under that branch.
 | 11 | [OPTION-B-IMPLEMENTATION-SUMMARY.md](OPTION-B-IMPLEMENTATION-SUMMARY.md) | Option B implementation. |
 | 12 | [OPTION-B-TEST-RESULTS.md](OPTION-B-TEST-RESULTS.md) | Option B test results. |
 
-### 9. Rainbow AI Failover (Primary/Standby)
+### 10. Rainbow AI Failover (Primary/Standby)
 
 | Order | Doc | Use when |
 |-------|-----|----------|
@@ -115,14 +121,14 @@ Choose one branch; load only the files listed under that branch.
 
 **Quick facts:** Primary (local PC) → heartbeat every 20s. Standby (Lightsail) → activates after 60s silence. Handback → immediate when primary resumes. Both servers must have the same `RAINBOW_FAILOVER_SECRET`.
 
-### 10. WhatsApp
+### 11. WhatsApp
 
 | Order | Doc | Use when |
 |-------|-----|----------|
 | 1 | [whatsapp-unlink-detection.md](whatsapp-unlink-detection.md) | Unlink detection behavior. |
 | 2 | [whatsapp-unlink-testing-guide.md](whatsapp-unlink-testing-guide.md) | How to test unlink. |
 
-### 11. Frontend and environment
+### 12. Frontend and environment
 
 | Order | Doc | Use when |
 |-------|-----|----------|
@@ -131,14 +137,14 @@ Choose one branch; load only the files listed under that branch.
 | 3 | [ENVIRONMENT_DETECTION_GUIDE.md](ENVIRONMENT_DETECTION_GUIDE.md) | Environment detection usage. |
 | 4 | [ENVIRONMENT_DETECTION_SUMMARY.md](ENVIRONMENT_DETECTION_SUMMARY.md) | Summary. |
 
-### 12. Testing and tooling
+### 13. Testing and tooling
 
 | Order | Doc | Use when |
 |-------|-----|----------|
 | 1 | [TEST-SUITE-ORGANIZATION.md](TEST-SUITE-ORGANIZATION.md) | How tests are organized. |
 | 2 | [AGENT-BROWSER-MULTI-WINDOW-SETUP.md](AGENT-BROWSER-MULTI-WINDOW-SETUP.md) | Multi-window browser setup for agents. |
 
-### 13. Requirements and project notes
+### 14. Requirements and project notes
 
 | Order | Doc | Use when |
 |-------|-----|----------|
@@ -156,6 +162,7 @@ docs/
 ├── INDEX.md                          ← You are here (entry point)
 ├── README.md                          Layer 0: quick nav
 ├── DEVELOPMENT_REFERENCE.md           Layer 0: architecture & setup
+├── FLEET-MANAGER.md                   Fleet Manager (localhost:9999)
 ├── API-CONTRACT.md                    APIs
 ├── DEPLOYMENT_OPERATIONS.md           Deployment
 ├── REPLIT_DEPLOYMENT_FALLBACK_SYSTEM.md

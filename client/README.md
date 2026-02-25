@@ -1,4 +1,4 @@
-# PelangiManager — Frontend (client/)
+# digiman — Frontend (client/)
 
 React SPA for capsule hotel management.
 
@@ -39,6 +39,7 @@ React SPA for capsule hotel management.
 ## Development
 
 ```bash
+# Requires Node.js 18+ (Vite 5 uses top-level await)
 # Frontend only (from project root)
 npm run dev:frontend    # Vite on port 3000
 

@@ -1,0 +1,89 @@
+# Memory Sync Round 5 Progress Log - Fri, Feb 21, 2026
+Extracting facts from Notion workspace into Mem0 Cloud — Round 5 (Prisma Clients, Community Leadership & Digital Operations)
+Starting Mem0 count: 1,397
+
+## Patterns
+- Use ToolSearch to load notion-search and notion-fetch before each iteration
+- Push facts via python3 urllib.request with 0.3s sleep between calls
+- Search Mem0 first to check for existing facts before pushing
+- Mem0 deduplicates automatically — overlapping facts get merged
+- Always add encoding='utf-8' to file operations on Windows
+- Use ssl.create_default_context() for HTTPS calls
+- Use "infer": false in POST body for synchronous direct memory addition
+- PRD path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-prd-5.json
+- Progress path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-progress-5.txt
+
+---
+
+## Wave 1 — Starfox, EPPI, Prent/SUNLIG/Lima Bintang, JBSBA (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS5-001 | Starfox Industry & MIDA Grant | 12 | Starfox project, timeline, payment progress, MIDA appeal, Jian Sin quotations |
+| MS5-002 | EPPI MES System | 10 | EPPI project docs, technical proposal, factory prep, accounting SRS, work breakdown |
+| MS5-003 | Prent, SUNLIG & Lima Bintang | 12 | Prent meeting minutes + site visit, SUNLIG MES meeting + proposal, Lima Bintang logistics + contacts |
+| MS5-004 | JBSBA Community Leadership | 12 | JBSBA introduction, committee minutes, anniversary planning, activities, key people |
+**Subtotal: 46 facts**
+
+## Wave 2 — Toastmaster, MM2H, Prisma Team, Cafe Content (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS5-005 | Toastmaster & Public Speaking | 8 | Journey timeline, JBSBA Toastmaster pages, cultural events |
+| MS5-006 | MM2H & Immigration Cases | 10 | MM2H meeting, immigration case, compound, Le visa, Arianne visa |
+| MS5-007 | Prisma Team Structure | 12 | Prisma Technology main, diary, Miyo profile, team backup, Juggernaut Labs |
+| MS5-008 | Cafe Content Strategy | 8 | Menu design workflow, QR code, stock take, social posting tasks |
+**Subtotal: 38 facts**
+
+## Wave 3 — Notion Consulting, 151 Property (2 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS5-009 | Notion Consulting & KCLEGAL | 8 | Rui Sin Plastic plan, KC quotation, SengLiy AI, AI-LiveChat manual, Justin meeting |
+| MS5-010 | 151 Property & Smart Home / Digital Banking | 8 | House rules, Mi Home, Xiaomi, GXBank, Pelangi website Vercel |
+**Subtotal: 16 facts**
+
+---
+
+## Round 5 Final Summary
+
+| Metric | Value |
+|--------|-------|
+| Stories completed | 10/10 |
+| Total raw facts pushed | 100 |
+| Starting Mem0 count | 1,397 |
+| Final Mem0 count | 1,497 |
+| Net new memories | +100 |
+| Waves executed | 3 (4+4+2 agents) |
+| PRD race conditions | 0 |
+
+### Domain Coverage Added in Round 5
+1. **Starfox** — RM790K IoT/barcode project, MIDA grant appeal, Jian Sin subcontractor RM130K, Jay's RM100K personal advances
+2. **EPPI** — Eastern Poly Packaging Industries, MES system (5 items), 1584h/9-month work breakdown, AutoCount integration
+3. **Prent** — IoT facility monitoring Senai, RM48K first quotation, 42-48 monitoring points, 3-phase plan
+4. **SUNLIG** — CNC machining (5 factories, 240 machines), Light MES RM50K budget, project CANCELLED Dec 2025
+5. **Lima Bintang** — Logistics/customs brokerage, OCR/AI document system, 6 doc types, 8-12 week timeline
+6. **JBSBA** — Jay as Asst Secretary-General on 45th committee, 67-year-old association, HQ at 113 Jalan Sri Pelangi
+7. **Toastmaster** — 11-year journey (2014-2025), Best Table Topics Award 2017, M1 District
+8. **MM2H** — Packages RM40K-70K, 151 immigration raid, Le's overstay case, Arianne visa
+9. **Prisma Team** — Jas Teo 80%/Jay 10%/SC Chang 10% shareholding, Advancement Avengers, Juggernaut Labs
+10. **Cafe Content** — 6-phase menu design with Lovart AI, 7 customer personas, GrabFood optimization
+11. **KCLEGAL** — RM18,750 multi-platform app, quotation PQ-250190, team Dhai/Leon/Thina/Thiha
+12. **SengLiy** — AWS-based agentic AI platform, VSTECS partnership, USD 581.12/month
+13. **Notion Consulting** — Rui Sin Plastic PARA workspace (10 users), AI-LiveChat PKMS onboarding
+14. **Smart Home** — Xiaomi Mi Home ecosystem (CCTV, smart locks, sensors), two accounts (business + personal)
+15. **Digital Banking** — GXBank digital business account under Kafe Makan Moments
+16. **Website** — pelangicapsulehostel.com on Vercel, founded Jan 2023, RM45/night RM594/month
+
+### Cumulative Totals Across All 5 Rounds
+| Round | Stories | Raw Facts | Mem0 Start | Mem0 End | Net New |
+|-------|---------|-----------|------------|----------|---------|
+| Round 1 | 18 | ~180 | ~605 | ~819 | ~214 |
+| Round 2 | 12 | ~120 | 819 | 975 | 156 |
+| Round 3 | 10 | 101 | 975 | 1,127 | 152 |
+| Round 4 | 10 | 99 | 1,127 | 1,397 | 270 |
+| Round 5 | 10 | 100 | 1,397 | 1,497 | 100 |
+| **Total** | **60** | **~600** | **605** | **1,497** | **892** |
+
+### Technical Notes
+- All 3 waves launched without waiting — maximum throughput per user's "nonstop" instruction
+- No PRD race conditions in Round 5 (clean run, consistent with Round 4)
+- Net new (+100) is lower than raw facts (100) — suggests Mem0 deduplication is catching overlaps with previous rounds (e.g., Prisma team details partially synced in Round 4)
+- Round 5 focused on Prisma's extended client portfolio and community/personal domains missed in Rounds 1-4

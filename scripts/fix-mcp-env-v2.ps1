@@ -71,9 +71,12 @@ Write-Host "2. Click on the 'zeabur-pelangi-mcp' service" -ForegroundColor White
 Write-Host ""
 Write-Host "3. Go to the 'Variables' tab" -ForegroundColor White
 Write-Host ""
-Write-Host "4. Add or update this environment variable:" -ForegroundColor White
-Write-Host "   Key:   PELANGI_API_URL" -ForegroundColor Yellow
-Write-Host "   Value: https://pelangi-manager.zeabur.app" -ForegroundColor Yellow
+Write-Host "4. Add or update these environment variables:" -ForegroundColor White
+Write-Host "   Key:   DIGIMAN_API_URL" -ForegroundColor Yellow
+Write-Host "   Value: https://admin.southern-homestay.com" -ForegroundColor Yellow
+Write-Host "   Key:   DIGIMAN_API_TOKEN" -ForegroundColor Yellow
+Write-Host "   Value: <admin API token from /settings/security>" -ForegroundColor Yellow
+Write-Host "   (Optional legacy fallback: PELANGI_API_URL / PELANGI_API_TOKEN)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "5. Click 'Save' or 'Redeploy'" -ForegroundColor White
 Write-Host ""

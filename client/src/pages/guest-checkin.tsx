@@ -52,7 +52,7 @@ export default function GuestCheckin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const business = useBusinessConfig();
-  
+
   // Add error handling for useI18n
   let t: any;
   try {
@@ -64,7 +64,7 @@ export default function GuestCheckin() {
     t = {
       invalidLink: "Invalid Link",
       invalidLinkDesc: "This link is invalid or expired",
-      expiredLink: "Expired Link", 
+      expiredLink: "Expired Link",
       expiredLinkDesc: "This link has expired",
       error: "Error",
       validationError: "Validation failed",
@@ -75,7 +75,7 @@ export default function GuestCheckin() {
       fullNameLabel: "Full Name",
       fullNamePlaceholder: "Enter your full name",
       nameHint: "Enter name as shown on ID",
-      contactNumberLabel: "Contact Number", 
+      contactNumberLabel: "Contact Number",
       contactNumberPlaceholder: "Enter phone number",
       phoneHint: "Include country code",
       genderLabel: "Gender",
@@ -94,7 +94,7 @@ export default function GuestCheckin() {
   const [passportDocumentUrl, setPassportDocumentUrl] = useState<string>("");
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailForSlip, setEmailForSlip] = useState("");
-  
+
   // Local state for submission results
   const [localEditToken, setEditToken] = useState<string>("");
   const [localEditExpiresAt, setEditExpiresAt] = useState<Date | null>(null);
@@ -212,13 +212,13 @@ export default function GuestCheckin() {
     }
   };
   const plannedCheckinDateTime = computeCheckinDateTime();
-  
+
   // Determine which fields should be disabled based on mutual exclusivity
   const isIcFieldDisabled = !!(watchedPassportNumber && watchedPassportNumber.trim().length > 0);
   const isPassportFieldDisabled = !!(watchedIcNumber && watchedIcNumber.trim().length > 0);
-  
+
   // Validate check-out date is after check-in date
-  const isCheckOutDateValid = !watchedCheckInDate || !watchedCheckOutDate || 
+  const isCheckOutDateValid = !watchedCheckInDate || !watchedCheckOutDate ||
     new Date(watchedCheckOutDate) > new Date(watchedCheckInDate);
 
   // Use custom hooks for token validation and auto-save
@@ -231,7 +231,7 @@ export default function GuestCheckin() {
     canEdit,
     assignedunitNumber
   } = useTokenValidation({ t, form });
-  
+
   useAutoSave({ form, token });
 
   // Clean check-in form - no pre-filled document handling needed
@@ -350,16 +350,16 @@ export default function GuestCheckin() {
         return;
       }
       // Update document URLs based on what's uploaded
-      const submitData = { 
-        ...data, 
+      const submitData = {
+        ...data,
         icDocumentUrl: icDocumentUrl || undefined,
         passportDocumentUrl: passportDocumentUrl || undefined,
       };
-      
+
       // Log submission data for debugging
       console.log("Submitting data:", submitData);
       console.log("Form errors:", form.formState.errors);
-      
+
       const response = await fetch(`/api/guest-checkin/checkin/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -368,7 +368,7 @@ export default function GuestCheckin() {
 
       if (response.ok) {
         const result = await response.json();
-        
+
         // Redirect to permanent success page that can be accessed forever
         const urlParams = new URLSearchParams(window.location.search);
         const currentToken = urlParams.get('token');
@@ -377,7 +377,7 @@ export default function GuestCheckin() {
           window.location.href = `/guest-success?token=${currentToken}`;
           return;
         }
-        
+
         // Fallback to old behavior if no token
         setIsSuccess(true);
         setEditToken(result.editToken);
@@ -385,7 +385,7 @@ export default function GuestCheckin() {
         setCanEdit(true);
         setunitIssues(result.unitIssues || []);
         setAssignedunitNumber(result.unitNumber);
-        try { localStorage.setItem('lastAssignedUnit', result.unitNumber || ''); } catch {}
+        try { localStorage.setItem('lastAssignedUnit', result.unitNumber || ''); } catch { }
         toast({
           title: t.checkInSuccess,
           description: `${t.checkInSuccessDesc} ${result.unitNumber || 'your assigned capsule'}.`,
@@ -560,7 +560,7 @@ export default function GuestCheckin() {
 
         <div class="section">
           <div class="section-title">Address</div>
-          <p>26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia</p>
+          <p>${business.address}</p>
         </div>
 
         <div class="important">
@@ -613,7 +613,7 @@ export default function GuestCheckin() {
     };
 
     const { checkinTime, checkoutTime, doorPassword, importantReminders } = getCheckinTimes();
-    
+
     // Create email content
     const subject = encodeURIComponent(`Your Check-in Slip - ${business.name}`);
     const body = encodeURIComponent(`
@@ -633,7 +633,7 @@ Capsule Access Card: Placed on your pillow
 ⚠️ IMPORTANT REMINDERS:
 ${importantReminders}
 
-📍 Address: 26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru
+📍 Address: ${business.address}
 
 For any assistance, please contact reception.
 Enjoy your stay at ${business.name}! 💼🌟
@@ -644,21 +644,21 @@ This email was generated by ${business.name} Management System
 
     // Create mailto link
     const mailtoLink = `mailto:${emailForSlip}?subject=${subject}&body=${body}`;
-    
+
     // Open default email client
     window.open(mailtoLink, '_blank');
-    
+
     // Update guest email if different
     if (guestInfo?.email !== emailForSlip) {
       // Store the email for future reference (could be sent to backend if needed)
       localStorage.setItem('lastGuestEmail', emailForSlip);
     }
-    
+
     toast({
       title: "Email Client Opened",
       description: `Your default email client has opened with the check-in slip ready to send to ${emailForSlip}`,
     });
-    
+
     setShowEmailDialog(false);
   };
 
@@ -778,166 +778,166 @@ This email was generated by ${business.name} Management System
             </Accordion>
 
             {!isEarlyWindow && (
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Manually set document URLs in form before validation
-              if (icDocumentUrl) {
-                form.setValue("icDocumentUrl", icDocumentUrl);
-              }
-              if (passportDocumentUrl) {
-                form.setValue("passportDocumentUrl", passportDocumentUrl);
-              }
-              
-              // Validate required document uploads based on nationality
-              const nat = form.getValues("nationality");
-              if (nat === 'Malaysian') {
-                if (!icDocumentUrl) {
-                  toast({
-                    title: "IC Upload Required",
-                    description: "Please upload a photo of your IC to continue.",
-                    variant: "destructive",
-                  });
-                  return;
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                // Manually set document URLs in form before validation
+                if (icDocumentUrl) {
+                  form.setValue("icDocumentUrl", icDocumentUrl);
                 }
-              } else {
-                if (!icDocumentUrl && !passportDocumentUrl) {
-                  toast({
-                    title: "Document Upload Required",
-                    description: "Please upload a photo of your IC or passport. This is mandatory for check-in.",
-                    variant: "destructive",
-                  });
-                  return;
+                if (passportDocumentUrl) {
+                  form.setValue("passportDocumentUrl", passportDocumentUrl);
                 }
-              }
-              
-              form.handleSubmit(onSubmit, onInvalid)(e);
-            }} className="space-y-6">
-              {/* Personal Information */}
-              <GuestInfoStep
-                form={form}
-                errors={form.formState.errors}
-                t={t}
-              />
 
-              {/* Identity Documents */}
-              {showDocumentUpload ? (
-                <Suspense fallback={
-                  <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-6 w-6" />
-                      <Skeleton className="h-6 w-32" />
-                    </div>
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                }>
-                  <LazyDocumentUploadSection 
-                    form={form}
-                    errors={form.formState.errors}
-                    t={t}
-                    isMalaysian={isMalaysian}
-                    icDocumentUrl={icDocumentUrl}
-                    passportDocumentUrl={passportDocumentUrl}
-                    onIcDocumentUpload={handleIcDocumentUpload}
-                    onPassportDocumentUpload={handlePassportDocumentUpload}
-                  />
-                </Suspense>
-              ) : (
-                <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                  <div className="text-center text-gray-600">
-                    <Clock className="h-8 w-8 mx-auto mb-2" />
-                    <p>Document upload section loading...</p>
-                  </div>
-                </div>
-              )}
+                // Validate required document uploads based on nationality
+                const nat = form.getValues("nationality");
+                if (nat === 'Malaysian') {
+                  if (!icDocumentUrl) {
+                    toast({
+                      title: "IC Upload Required",
+                      description: "Please upload a photo of your IC to continue.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                } else {
+                  if (!icDocumentUrl && !passportDocumentUrl) {
+                    toast({
+                      title: "Document Upload Required",
+                      description: "Please upload a photo of your IC or passport. This is mandatory for check-in.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                }
 
-              {/* Emergency Contact */}
-              <EmergencyContactSection 
-                form={form}
-                errors={form.formState.errors}
-                t={t}
-              />
-
-              {/* Additional Notes */}
-              <AdditionalNotesSection 
-                form={form}
-                errors={form.formState.errors}
-                t={t}
-              />
-
-              {/* Payment Information */}
-              {showPaymentSection ? (
-                <PaymentInformationSection 
+                form.handleSubmit(onSubmit, onInvalid)(e);
+              }} className="space-y-6">
+                {/* Personal Information */}
+                <GuestInfoStep
                   form={form}
                   errors={form.formState.errors}
                   t={t}
-                  watchedPaymentMethod={watchedPaymentMethod}
                 />
-              ) : (
-                <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                  <div className="text-center text-gray-600">
-                    <Clock className="h-8 w-8 mx-auto mb-2" />
-                    <p>Payment section will appear after filling basic information...</p>
-                  </div>
-                </div>
-              )}
 
-              {/* Help & FAQ */}
-              <HelpFAQSection t={t} />
-
-              <div className="sticky bottom-0 left-0 right-0 z-10 -mx-6 px-6 py-3 bg-gradient-to-t from-background via-background/95 to-transparent">
-                {/* Document upload reminder */}
-                {((isMalaysian && !icDocumentUrl) || (!isMalaysian && !passportDocumentUrl)) && (
-                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-700">
-                      <Upload className="h-4 w-4" />
-                      <span className="text-sm font-medium">{isMalaysian ? 'IC Upload Required' : 'Document Upload Required'}</span>
+                {/* Identity Documents */}
+                {showDocumentUpload ? (
+                  <Suspense fallback={
+                    <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-6 w-6" />
+                        <Skeleton className="h-6 w-32" />
+                      </div>
+                      <Skeleton className="h-24 w-full" />
+                      <Skeleton className="h-10 w-full" />
                     </div>
-                    <p className="text-xs text-red-600 mt-1">
-                      <span className="hidden sm:inline">{isMalaysian ? 'Please upload a photo of your IC before completing check-in.' : 'Please upload a photo of your passport before completing check-in.'}</span>
-                      <span className="sm:hidden">{isMalaysian ? 'Please upload your IC photo to continue.' : 'Please upload your passport photo to continue.'}</span>
-                    </p>
+                  }>
+                    <LazyDocumentUploadSection
+                      form={form}
+                      errors={form.formState.errors}
+                      t={t}
+                      isMalaysian={isMalaysian}
+                      icDocumentUrl={icDocumentUrl}
+                      passportDocumentUrl={passportDocumentUrl}
+                      onIcDocumentUpload={handleIcDocumentUpload}
+                      onPassportDocumentUpload={handlePassportDocumentUpload}
+                    />
+                  </Suspense>
+                ) : (
+                  <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="text-center text-gray-600">
+                      <Clock className="h-8 w-8 mx-auto mb-2" />
+                      <p>Document upload section loading...</p>
+                    </div>
                   </div>
                 )}
-                
-                {/* Check-out date validation reminder */}
-                {!isCheckOutDateValid && (
-                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-700">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm font-medium">Invalid Check-out Date</span>
+
+                {/* Emergency Contact */}
+                <EmergencyContactSection
+                  form={form}
+                  errors={form.formState.errors}
+                  t={t}
+                />
+
+                {/* Additional Notes */}
+                <AdditionalNotesSection
+                  form={form}
+                  errors={form.formState.errors}
+                  t={t}
+                />
+
+                {/* Payment Information */}
+                {showPaymentSection ? (
+                  <PaymentInformationSection
+                    form={form}
+                    errors={form.formState.errors}
+                    t={t}
+                    watchedPaymentMethod={watchedPaymentMethod}
+                  />
+                ) : (
+                  <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="text-center text-gray-600">
+                      <Clock className="h-8 w-8 mx-auto mb-2" />
+                      <p>Payment section will appear after filling basic information...</p>
                     </div>
-                    <p className="text-xs text-red-600 mt-1">
-                      Please ensure your check-out date is after your check-in date.
-                    </p>
                   </div>
                 )}
-                
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 text-base bg-orange-600 hover:bg-orange-700"
-                  disabled={isSubmitting || (isMalaysian ? !icDocumentUrl : !passportDocumentUrl) || !isCheckOutDateValid || isEarlyWindow}
-                  isLoading={isSubmitting}
-                >
-                  <span className="hidden sm:inline">Complete Check-in</span>
-                  <span className="sm:hidden">Complete</span>
-                </Button>
-              </div>
-              
-              {/* Show validation errors summary if form was submitted */}
-              {form.formState.isSubmitted && Object.keys(form.formState.errors).length > 0 && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm font-medium text-red-800 mb-2">Please fix the following errors:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    {Object.entries(form.formState.errors).map(([field, error]) => (
-                      <li key={field} className="text-sm text-red-600">
-                        {error?.message || `Error in ${field} field`}
-                      </li>
-                    ))}
-                  </ul>
+
+                {/* Help & FAQ */}
+                <HelpFAQSection t={t} />
+
+                <div className="sticky bottom-0 left-0 right-0 z-10 -mx-6 px-6 py-3 bg-gradient-to-t from-background via-background/95 to-transparent">
+                  {/* Document upload reminder */}
+                  {((isMalaysian && !icDocumentUrl) || (!isMalaysian && !passportDocumentUrl)) && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-red-700">
+                        <Upload className="h-4 w-4" />
+                        <span className="text-sm font-medium">{isMalaysian ? 'IC Upload Required' : 'Document Upload Required'}</span>
+                      </div>
+                      <p className="text-xs text-red-600 mt-1">
+                        <span className="hidden sm:inline">{isMalaysian ? 'Please upload a photo of your IC before completing check-in.' : 'Please upload a photo of your passport before completing check-in.'}</span>
+                        <span className="sm:hidden">{isMalaysian ? 'Please upload your IC photo to continue.' : 'Please upload your passport photo to continue.'}</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Check-out date validation reminder */}
+                  {!isCheckOutDateValid && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-red-700">
+                        <Calendar className="h-4 w-4" />
+                        <span className="text-sm font-medium">Invalid Check-out Date</span>
+                      </div>
+                      <p className="text-xs text-red-600 mt-1">
+                        Please ensure your check-out date is after your check-in date.
+                      </p>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base bg-orange-600 hover:bg-orange-700"
+                    disabled={isSubmitting || (isMalaysian ? !icDocumentUrl : !passportDocumentUrl) || !isCheckOutDateValid || isEarlyWindow}
+                    isLoading={isSubmitting}
+                  >
+                    <span className="hidden sm:inline">Complete Check-in</span>
+                    <span className="sm:hidden">Complete</span>
+                  </Button>
                 </div>
-              )}
-            </form>
+
+                {/* Show validation errors summary if form was submitted */}
+                {form.formState.isSubmitted && Object.keys(form.formState.errors).length > 0 && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm font-medium text-red-800 mb-2">Please fix the following errors:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {Object.entries(form.formState.errors).map(([field, error]) => (
+                        <li key={field} className="text-sm text-red-600">
+                          {error?.message || `Error in ${field} field`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </form>
             )}
 
             {isEarlyWindow && (

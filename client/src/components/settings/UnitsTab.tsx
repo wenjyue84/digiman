@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building, Plus, Edit, Trash2, Filter, Download } from "lucide-react";
 
 import { apiRequest } from "@/lib/queryClient";
-import { type UnitProblem, type PaginatedResponse } from "@shared/schema";
+import { type Unit, type UnitProblem, type PaginatedResponse } from "@shared/schema";
 
 // Schema for Unit form validation
 const UnitFormSchema = z.object({
@@ -35,8 +35,20 @@ const UnitFormSchema = z.object({
 
 type UnitFormData = z.infer<typeof UnitFormSchema>;
 
-export default function UnitsTab({ Units, queryClient, toast, labels }: any) {
-  console.log('UnitsTab rendered with:', { Units: Units?.length, labels });
+interface UnitsTabProps {
+  units: Unit[];
+  queryClient: any;
+  toast: (opts: { title: string; description: string; variant?: "default" | "destructive" }) => void;
+  labels: {
+    singular: string;
+    plural: string;
+    lowerSingular: string;
+    lowerPlural: string;
+  };
+}
+
+export default function UnitsTab({ units, queryClient, toast, labels }: UnitsTabProps) {
+  console.log('UnitsTab rendered with:', { units: units?.length, labels });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -45,7 +57,7 @@ export default function UnitsTab({ Units, queryClient, toast, labels }: any) {
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('table');
   const [toRentFilter, setToRentFilter] = useState<'all' | 'yes' | 'no'>('all');
 
-  const allItems = Array.isArray(Units) ? Units : [];
+  const allItems = Array.isArray(units) ? units : [];
   
   // Helper function to extract numeric part from Unit number for natural sorting
   const extractUnitNumber = (unitNumber: string): number => {
@@ -110,14 +122,14 @@ export default function UnitsTab({ Units, queryClient, toast, labels }: any) {
 
   const createUnitMutation = useMutation({
     mutationFn: async (data: UnitFormData) => {
-      const response = await apiRequest("POST", "/api/Units", {
+      const response = await apiRequest("POST", "/api/units", {
         ...data,
         purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/Units"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       setCreateDialogOpen(false);
       createUnitForm.reset();
       toast({
@@ -136,14 +148,14 @@ export default function UnitsTab({ Units, queryClient, toast, labels }: any) {
 
   const updateUnitMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UnitFormData }) => {
-      const response = await apiRequest("PATCH", `/api/Units/${id}`, {
+      const response = await apiRequest("PATCH", `/api/units/${id}`, {
         ...data,
         purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/Units"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       setEditDialogOpen(false);
       setSelectedUnit(null);
       editUnitForm.reset();
@@ -163,10 +175,10 @@ export default function UnitsTab({ Units, queryClient, toast, labels }: any) {
 
   const deleteUnitMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/Units/${id}`);
+      await apiRequest("DELETE", `/api/units/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/Units"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       setDeleteDialogOpen(false);
       setSelectedUnit(null);
       toast({
@@ -381,9 +393,18 @@ export default function UnitsTab({ Units, queryClient, toast, labels }: any) {
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Building className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>No {labels.lowerPlural} found. Add your first {labels.lowerSingular} to get started.</p>
+            <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-lg">
+              <Building className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No {labels.lowerPlural} yet</h3>
+              <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+                Add your first {labels.lowerSingular} to start managing guests. This takes about 2 minutes.
+              </p>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Add Your First {labels.singular}
+              </Button>
+              <p className="text-xs text-gray-400 mt-4">
+                💡 Tip: You can edit details like type, price, and capacity anytime.
+              </p>
             </div>
           ) : (
             <>

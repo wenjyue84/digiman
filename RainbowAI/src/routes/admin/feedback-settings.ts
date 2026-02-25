@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { db } from '../../lib/db.js';
+import { db, dbReady } from '../../lib/db.js';
 import { appSettings, updateFeedbackSettingsSchema } from '../../../../shared/schema.js';
 import { eq, sql } from 'drizzle-orm';
 import { configStore } from '../../assistant/config-store.js';
@@ -12,11 +12,6 @@ const router = Router();
 // Get current feedback settings
 router.get('/feedback/settings', async (_req: Request, res: Response) => {
   try {
-    const settings = await db
-      .select()
-      .from(appSettings)
-      .where(sql`${appSettings.key} LIKE 'rainbow_feedback_%'`);
-
     const config: any = {
       enabled: true,
       frequency_minutes: 30,
@@ -28,6 +23,20 @@ router.get('/feedback/settings', async (_req: Request, res: Response) => {
         zh: '这个回答有帮助吗？👍 👎'
       }
     };
+
+    const isConnected = await dbReady;
+    if (!isConnected) {
+      return res.json({
+        success: true,
+        settings: config,
+        warning: 'Database connection unavailable. Using default feedback settings.',
+      });
+    }
+
+    const settings = await db
+      .select()
+      .from(appSettings)
+      .where(sql`${appSettings.key} LIKE 'rainbow_feedback_%'`);
 
     for (const setting of settings) {
       const shortKey = setting.key.replace('rainbow_feedback_', '');
@@ -55,6 +64,11 @@ router.get('/feedback/settings', async (_req: Request, res: Response) => {
 // Update feedback settings (hot-reload)
 router.patch('/feedback/settings', async (req: Request, res: Response) => {
   try {
+    const isConnected = await dbReady;
+    if (!isConnected) {
+      return serverError(res, 'Database not connected');
+    }
+
     const validated = updateFeedbackSettingsSchema.parse(req.body);
 
     // Update each setting in the database

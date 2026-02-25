@@ -1,6 +1,6 @@
 <div class="mb-4">
   <h2 class="text-xl font-bold text-neutral-800">Settings</h2>
-  <p class="text-sm text-neutral-500 mt-1">AI models, notifications, and operator management.</p>
+  <p class="text-sm text-neutral-500 mt-1">AI models, notifications, operator management, and appearance.</p>
 </div>
 
 <!-- Sub-tab Navigation (same style as Responses) -->
@@ -30,6 +30,11 @@
       class="settings-tab-btn px-4 py-2.5 text-sm font-medium text-neutral-500 border-b-2 border-transparent hover:text-neutral-700 hover:border-neutral-300 transition cursor-help"
       title="Primary/standby coordination — controls which server replies to WhatsApp messages.">
       🔁 Failover
+    </button>
+    <button onclick="switchSettingsTab('appearance')" data-settings-tab="appearance"
+      class="settings-tab-btn px-4 py-2.5 text-sm font-medium text-neutral-500 border-b-2 border-transparent hover:text-neutral-700 hover:border-neutral-300 transition cursor-help"
+      title="Customize theme, colors, and visual design of this admin dashboard.">
+      🎨 Appearance
     </button>
   </div>
 </div>

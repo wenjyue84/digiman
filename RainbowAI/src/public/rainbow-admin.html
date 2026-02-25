@@ -24,6 +24,50 @@
       }
     })();
   </script>
+  <!-- Apply Appearance Prefs immediately to prevent FOUC -->
+  <script>
+    (function () {
+      try {
+        var prefs = JSON.parse(localStorage.getItem('rainbow.appearance') || '{}');
+        var root = document.documentElement;
+        var theme = prefs.theme || 'light';
+        if (theme === 'dark') {
+          root.classList.add('dark');
+          root.style.setProperty('--app-bg', prefs.bgColor || '#1a1a2e');
+          root.style.setProperty('--app-surface', prefs.surfaceColor || '#16213e');
+          root.style.setProperty('--app-text', '#e2e8f0');
+          root.style.setProperty('--app-text-muted', '#94a3b8');
+          root.style.setProperty('--app-border', 'rgba(255,255,255,0.1)');
+        } else {
+          root.classList.remove('dark');
+          root.style.setProperty('--app-bg', prefs.bgColor || '#f8fafc');
+          root.style.setProperty('--app-surface', prefs.surfaceColor || '#ffffff');
+          root.style.setProperty('--app-text', '#0f172a');
+          root.style.setProperty('--app-text-muted', '#64748b');
+          root.style.setProperty('--app-border', '#e2e8f0');
+        }
+        if (prefs.accentHue) {
+          root.style.setProperty('--color-primary-500', 'hsl(' + prefs.accentHue + ', 70%, 55%)');
+          root.style.setProperty('--color-primary-600', 'hsl(' + prefs.accentHue + ', 70%, 47%)');
+          root.style.setProperty('--color-primary-100', 'hsl(' + prefs.accentHue + ', 80%, 93%)');
+          root.style.setProperty('--color-primary-50', 'hsl(' + prefs.accentHue + ', 80%, 97%)');
+        }
+        if (prefs.sidebarColor) {
+          root.style.setProperty('--sidebar-bg', prefs.sidebarColor);
+        }
+        if (prefs.fontSize) {
+          root.style.fontSize = prefs.fontSize + 'px';
+        }
+        window.addEventListener('DOMContentLoaded', function () {
+          var mainEl = document.querySelector('#main-content') || document.querySelector('main') || document.body;
+          if (prefs.bgGradient && prefs.bgGradient !== 'none') {
+            mainEl.style.backgroundImage = prefs.bgGradient;
+            mainEl.style.backgroundAttachment = 'fixed';
+          }
+        });
+      } catch (e) { console.error('Error applying appearance prefs:', e); }
+    })();
+  </script>
   <link rel="stylesheet" href="/public/css/tailwind.min.css">
 
   <!-- Rainbow Dashboard Styles -->
@@ -172,8 +216,11 @@
         <!-- Placeholder for potential breadcrumbs -->
       </div>
 
-      <div class="flex items-center gap-4">
-        <!-- Status Badge -->
+      <div class="flex items-center gap-3">
+        <!-- Property Short Name (from welcoming wizard BUSINESS_NAME) -->
+        <span id="property-name-badge"
+          class="hidden text-xs font-semibold text-neutral-600 bg-neutral-100 border border-neutral-200 px-2.5 py-1 rounded-full tracking-wide"></span>
+        <!-- WA Status Badge -->
         <span id="wa-badge"
           class="text-xs px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-500 border border-neutral-200 font-medium">Connecting...</span>
       </div>

@@ -6,13 +6,19 @@ import { AuthContext } from "../lib/auth";
 import { NetworkStatusBadge, PWAInstallButton } from "@/components/ui/offline-indicator";
 
 import { useBusinessConfig } from "@/hooks/useBusinessConfig";
+import { useSettings } from "@/hooks/useSettings";
+import { getInitials } from "@/lib/utils";
 
 export default function Header() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user || null;
-  const logout = authContext?.logout || (() => {});
+  const logout = authContext?.logout || (() => { });
   const isAuthenticated = authContext?.isAuthenticated || false;
   const business = useBusinessConfig();
+  const { data: settings } = useSettings();
+
+  const appTitle = settings?.appTitle || "";
+  const propertyInitials = getInitials(appTitle);
 
   return (
     // US-007: Improved mobile header layout with reduced padding and collapsible user info
@@ -51,6 +57,22 @@ export default function Header() {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            {/* Property Initials - Top Right Display */}
+            {propertyInitials && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-orange-700 text-white font-bold text-sm shadow-sm hover:bg-orange-800 transition-colors cursor-help">
+                      {propertyInitials}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Property: {appTitle}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
 
             <TooltipProvider>
               <Tooltip>

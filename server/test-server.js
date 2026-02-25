@@ -21,7 +21,7 @@ app.get('/api/database/config', (req, res) => {
 // API test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ 
-    message: 'PelangiManager API is working!',
+    message: 'digiman API is working!',
     version: '2.0.0-test',
     environment: process.env.NODE_ENV || 'development'
   });
@@ -33,7 +33,7 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 PelangiManager Test Server running on port ${PORT}`);
+  console.log(`🚀 digiman Test Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 

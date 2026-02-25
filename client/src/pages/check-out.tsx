@@ -74,7 +74,7 @@ export default function CheckOut() {
     confirmBulkCheckout,
   } = useBulkCheckout();
 
-  // Mark capsule as cleaned (used in checkout success toast)
+  // Mark unit as cleaned (used in checkout success toast)
   const handleMarkCleaned = async (unitNumber: string) => {
     try {
       await apiRequest("POST", `/api/units/${unitNumber}/mark-cleaned`, {

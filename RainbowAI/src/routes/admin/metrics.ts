@@ -101,7 +101,8 @@ router.get('/status', async (_req: Request, res: Response) => {
     },
     config_files: ['knowledge', 'intents', 'templates', 'settings', 'workflow', 'workflows', 'routing'],
     response_modes: settings.response_modes || { default_mode: 'autopilot' },
-    isCloud: process.env.RAINBOW_ROLE === 'primary'
+    isCloud: process.env.RAINBOW_ROLE === 'primary',
+    propertyName: process.env.BUSINESS_NAME || ''
   });
 });
 

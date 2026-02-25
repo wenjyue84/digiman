@@ -14,6 +14,11 @@ import { initializeConfig, AppConfig, getConfig, getConfigUtils } from "./config
 import { storage } from "./storage";
 
 const app = express();
+
+// Trust the first proxy (nginx / Cloudflare Tunnel) so that express-rate-limit
+// can correctly identify real client IPs from X-Forwarded-For headers.
+app.set('trust proxy', 1);
+
 app.use(compression());
 
 // Security headers via helmet

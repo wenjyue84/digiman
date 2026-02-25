@@ -8,6 +8,10 @@ import { devControlPlugin } from './vite-plugin-dev-control';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Configurable ports — defaults preserve existing behaviour
+const VITE_PORT = parseInt(process.env.VITE_PORT || '3000', 10);
+const BACKEND_PORT = process.env.BACKEND_PORT || '5000';
+
 export default defineConfig({
   plugins: [
     react(),
@@ -89,9 +93,9 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: process.env.BUSINESS_NAME || 'Pelangi Capsule Manager',
-        short_name: process.env.BUSINESS_SHORT_NAME || 'PelangiManager',
-        description: process.env.BUSINESS_TAGLINE || 'Hostel management system for Pelangi Capsule Hostel',
+        name: process.env.BUSINESS_NAME || 'digiman',
+        short_name: process.env.BUSINESS_SHORT_NAME || 'digiman',
+        description: process.env.BUSINESS_TAGLINE || 'Digital manpower and operations management system',
         theme_color: process.env.BUSINESS_PRIMARY_COLOR || '#3b82f6',
         background_color: '#ffffff',
         display: 'standalone',
@@ -166,13 +170,13 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port: 3000,
+    port: VITE_PORT,
     hmr: {
       overlay: false // Disable runtime error overlay
     },
     proxy: {
       '/api/rainbow-kb': {
-        target: 'http://localhost:5000',
+        target: `http://localhost:${BACKEND_PORT}`,
         changeOrigin: true
       },
       '/api/rainbow': {
@@ -180,11 +184,11 @@ export default defineConfig({
         changeOrigin: true
       },
       '/api': {
-        target: 'http://localhost:5000',
+        target: `http://localhost:${BACKEND_PORT}`,
         changeOrigin: true
       },
       '/objects': {
-        target: 'http://localhost:5000',
+        target: `http://localhost:${BACKEND_PORT}`,
         changeOrigin: true
       }
     },

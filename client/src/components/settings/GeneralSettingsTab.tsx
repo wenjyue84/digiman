@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building, Save } from "lucide-react";
+import { Building, Globe, Save } from "lucide-react";
 import PushNotificationSettings from "@/components/ui/push-notification-settings";
 
 export default function GeneralSettingsTab({ settings, isLoading, form, onSubmit, resetToDefault, updateSettingsMutation }: any) {
@@ -78,6 +79,48 @@ export default function GeneralSettingsTab({ settings, isLoading, form, onSubmit
                       className="flex items-center gap-2"
                     >
                       Reset
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Browser Tab Title */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-blue-600" />
+                    Browser Tab Title
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name={"appTitle" as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tab Title</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="e.g. Homestay Manager"
+                            className="max-w-xs"
+                          />
+                        </FormControl>
+                        <div className="text-sm text-gray-600">
+                          Shown in the browser tab. Leave blank to use the default title.
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      type="submit"
+                      disabled={updateSettingsMutation.isPending}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      {updateSettingsMutation.isPending ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </CardContent>

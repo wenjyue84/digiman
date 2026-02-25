@@ -10,9 +10,11 @@ export default function AdminRainbow() {
   const [location] = useLocation();
 
   useEffect(() => {
-    // Extract the sub-path after /admin/rainbow (e.g., /status, /kb, etc.)
-    const subPath = location.replace('/admin/rainbow', '');
-    window.location.href = `http://localhost:3002/admin/rainbow${subPath}`;
+    // Extract the sub-path after /admin/rainbow (e.g., /dashboard, /responses, etc.)
+    const subPath = location.replace('/admin/rainbow', '').replace(/^\//, '');
+    const hash = subPath ? `#${subPath}` : '#dashboard';
+    const RAINBOW_URL = import.meta.env.VITE_RAINBOW_URL || "http://localhost:3002";
+    window.location.href = `${RAINBOW_URL}/${hash}`;
   }, [location]);
 
   return (

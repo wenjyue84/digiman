@@ -35,7 +35,8 @@ export interface SyncResult {
   response?: any;
 }
 
-const STORAGE_KEY = 'pelangi-offline-queue';
+import { DEFAULT_BUSINESS_CONFIG } from "@shared/business-config";
+const STORAGE_KEY = `${DEFAULT_BUSINESS_CONFIG.shortName.toLowerCase()}-offline-queue`;
 const MAX_QUEUE_SIZE = 100;
 const DEFAULT_MAX_RETRIES = 3;
 
@@ -67,7 +68,7 @@ class OfflineQueueManager implements QueueManager {
     };
 
     const queue = await this.getQueue();
-    
+
     // Remove oldest items if queue is full
     if (queue.length >= MAX_QUEUE_SIZE) {
       queue.sort((a, b) => a.timestamp - b.timestamp);
@@ -76,7 +77,7 @@ class OfflineQueueManager implements QueueManager {
 
     queue.push(queuedRequest);
     await this.saveQueue(queue);
-    
+
     console.log(`Added request to offline queue: ${queuedRequest.type} - ${queuedRequest.method} ${queuedRequest.url}`);
     this.notifyListeners(queue);
 
@@ -92,13 +93,13 @@ class OfflineQueueManager implements QueueManager {
     const queue = await this.getQueue();
     const initialLength = queue.length;
     const filteredQueue = queue.filter(req => req.id !== id);
-    
+
     if (filteredQueue.length !== initialLength) {
       await this.saveQueue(filteredQueue);
       this.notifyListeners(filteredQueue);
       return true;
     }
-    
+
     return false;
   }
 
@@ -158,17 +159,17 @@ class OfflineQueueManager implements QueueManager {
             response: result,
           });
           successfulRequests.push(request.id);
-          
+
           console.log(`Successfully synced: ${request.type} - ${request.method} ${request.url}`);
-          
+
           // Small delay between requests to avoid overwhelming the server
           await new Promise(resolve => setTimeout(resolve, 100));
-          
+
         } catch (error) {
           console.error(`Sync failed for request ${request.id}:`, error);
-          
+
           request.retryCount++;
-          
+
           if (request.retryCount >= request.maxRetries) {
             // Max retries reached, remove from queue
             console.warn(`Removing request ${request.id} after ${request.maxRetries} failed attempts`);
@@ -177,7 +178,7 @@ class OfflineQueueManager implements QueueManager {
             // Keep in queue for retry
             failedRequests.push(request);
           }
-          
+
           results.push({
             requestId: request.id,
             success: false,
@@ -266,16 +267,16 @@ class OfflineQueueManager implements QueueManager {
     const queue = await this.getQueue();
     const now = Date.now();
     const oneDayAgo = now - (24 * 60 * 60 * 1000);
-    
+
     // Remove entries older than 1 day
     const filteredQueue = queue.filter(req => req.timestamp > oneDayAgo);
-    
+
     // If still too many, keep only the most recent 50
     if (filteredQueue.length > 50) {
       filteredQueue.sort((a, b) => b.timestamp - a.timestamp);
       filteredQueue.splice(50);
     }
-    
+
     await this.saveQueue(filteredQueue);
   }
 
@@ -322,7 +323,7 @@ export async function queueRequest(
   } = {}
 ): Promise<string> {
   const manager = getOfflineQueueManager();
-  
+
   return await manager.add({
     url,
     method,
@@ -358,7 +359,7 @@ export async function fetchWithOfflineQueue(
 
   // If offline or fetch failed, queue the request
   const { priority, type, maxRetries, ...fetchOptions } = options;
-  
+
   const requestId = await queueRequest(
     url,
     (fetchOptions.method as QueuedRequest['method']) || 'GET',
@@ -373,8 +374,8 @@ export async function fetchWithOfflineQueue(
 
   // Return a fake response indicating the request was queued
   return new Response(
-    JSON.stringify({ 
-      queued: true, 
+    JSON.stringify({
+      queued: true,
       requestId,
       message: 'Request queued for background sync'
     }),
@@ -425,7 +426,7 @@ export const queueDebug = {
     newestRequest?: Date;
   }> {
     const queue = await this.getQueue();
-    
+
     const stats = {
       totalRequests: queue.length,
       byType: {} as Record<string, number>,

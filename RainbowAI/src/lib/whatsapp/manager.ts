@@ -264,7 +264,7 @@ export class WhatsAppManager extends EventEmitter {
   }
 
   async notifyUnlinkedInstance(unlinkedId: string, unlinkedLabel: string): Promise<void> {
-    const MAINLINE_ID = '60103084289'; // Pelangi Capsule Hostel mainline
+    const MAINLINE_ID = '60103084289'; // Default mainline instance
     const unlinkedInstance = this.instances.get(unlinkedId);
     if (!unlinkedInstance) return;
 
@@ -301,7 +301,7 @@ export class WhatsAppManager extends EventEmitter {
     }
 
     const message = `⚠️ *WhatsApp Instance Unlinked*\n\n` +
-      `Your WhatsApp instance *"${unlinkedLabel}"* (${unlinkedPhone}) has been unlinked from PelangiManager.\n\n` +
+      `Your WhatsApp instance *"${unlinkedLabel}"* (${unlinkedPhone}) has been unlinked from digiman.\n\n` +
       `This may have been accidental. If you need to reconnect, please visit the admin panel and scan the QR code again.\n\n` +
       `🔗 Admin Panel: http://localhost:3002/admin/rainbow/dashboard\n\n` +
       `If this was intentional, you can safely ignore this message.`;

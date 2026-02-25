@@ -16,8 +16,10 @@ import databaseRoutes from "./database";
 import environmentRoutes from "./environment";
 import rainbowKBRoutes from "./rainbow-kb";
 import intentManagerRoutes from "./intent-manager";
+import setupRoutes from "./setup";
 
 import { getBusinessConfig } from "../lib/business-config";
+import { storage } from "../storage";
 
 export function registerModularRoutes(app: Express) {
   // Unauthenticated business config (needed for login page)
@@ -74,12 +76,36 @@ export function registerModularRoutes(app: Express) {
   // Register Intent Manager routes (Phase 4 - Keyword Editor UI)
   app.use("/api/intent-manager", intentManagerRoutes);
 
+  // Register setup/onboarding checklist routes
+  app.use("/api/setup", setupRoutes);
+
   // Register test routes
   app.use("/api/tests", testRoutes);
 
   // Top-level API health (for MCP server and load balancers)
-  app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", service: "pelangi-manager", timestamp: new Date().toISOString() });
+  app.get("/api/health", async (_req, res) => {
+    try {
+      const units = await storage.getAllUnits();
+      const dbMetrics = await storage.getDatabaseMetrics();
+      res.json({
+        status: "ok",
+        service: "digiman",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage().rss,
+        unitsCount: units.length,
+        storageType: process.env.DATABASE_URL ? "database" : "memory",
+        database: dbMetrics
+      });
+    } catch (error) {
+      res.json({
+        status: "error",
+        service: "digiman",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage().rss
+      });
+    }
   });
 
   // Error reporting endpoint (for global error boundary)

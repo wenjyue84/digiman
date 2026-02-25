@@ -17,14 +17,14 @@ interface UnitRulesTabProps {
 
 interface UnitRules {
   deckPriority: boolean;
-  excludedCapsules: string[];
+  excludedUnits: string[];
   genderRules: {
     female: { preferred: string[]; fallbackToOther: boolean };
     male: { preferred: string[]; fallbackToOther: boolean };
   };
   maintenanceDeprioritize: boolean;
-  deprioritizedCapsules: string[];
-  autoLinkedCapsules?: string[];
+  deprioritizedUnits: string[];
+  autoLinkedUnits?: string[];
 }
 
 function ChipInput({ values, onChange, placeholder }: { values: string[]; onChange: (v: string[]) => void; placeholder: string }) {
@@ -83,15 +83,15 @@ export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
   const [dirty, setDirty] = useState(false);
 
   // Track auto-linked capsules separately (from server response)
-  const autoLinked = rules?.autoLinkedCapsules || [];
+  const autoLinked = rules?.autoLinkedUnits || [];
 
   useEffect(() => {
     if (rules && !local) {
-      // Store only manual capsules in local state (exclude auto-linked)
-      const manual = (rules.deprioritizedCapsules || []).filter(
-        c => !(rules.autoLinkedCapsules || []).includes(c)
+      // Store only manual units in local state (exclude auto-linked)
+      const manual = (rules.deprioritizedUnits || []).filter(
+        c => !(rules.autoLinkedUnits || []).includes(c)
       );
-      setLocal({ ...rules, deprioritizedCapsules: manual });
+      setLocal({ ...rules, deprioritizedUnits: manual });
     }
   }, [rules, local]);
 
@@ -115,8 +115,8 @@ export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
 
   const saveMutation = useMutation({
     mutationFn: async (data: UnitRules) => {
-      // Only send manual capsules — server re-merges auto-linked on next GET
-      const { autoLinkedCapsules, ...payload } = data;
+      // Only send manual units — server re-merges auto-linked on next GET
+      const { autoLinkedUnits, ...payload } = data;
       const res = await apiRequest("PUT", "/api/settings/unit-rules", payload);
       return res.json();
     },
@@ -161,7 +161,7 @@ export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
         </CardContent>
       </Card>
 
-      {/* Excluded Capsules */}
+      {/* Excluded Units */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -172,8 +172,8 @@ export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
         <CardContent className="space-y-3">
           <p className="text-sm text-gray-500">These units will never be auto-assigned to guests</p>
           <ChipInput
-            values={local.excludedCapsules}
-            onChange={(v) => update("excludedCapsules", v)}
+            values={local.excludedUnits}
+            onChange={(v) => update("excludedUnits", v)}
             placeholder="e.g. J1, R3"
           />
         </CardContent>
@@ -277,12 +277,12 @@ export default function UnitRulesTab({ onSwitchTab }: UnitRulesTabProps = {}) {
                   </p>
                 </div>
               )}
-              {/* Manual deprioritized capsules */}
+              {/* Manual deprioritized units */}
               <div>
                 <Label className="text-sm font-medium mb-2 block">Manual Deprioritization</Label>
                 <ChipInput
-                  values={local.deprioritizedCapsules}
-                  onChange={(v) => update("deprioritizedCapsules", v)}
+                  values={local.deprioritizedUnits}
+                  onChange={(v) => update("deprioritizedUnits", v)}
                   placeholder="e.g. C10, C15"
                 />
               </div>

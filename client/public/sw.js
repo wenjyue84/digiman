@@ -1,9 +1,9 @@
-// Pelangi Capsule Hostel Service Worker
+// digiman Service Worker
 // Handles PWA functionality and push notifications
 
 // Version: 2024.11.31.1 - Force update with timestamp
-const CACHE_NAME = 'pelangi-hostel-v3-' + Date.now();
-const RUNTIME_CACHE = 'runtime-cache-v3';
+const CACHE_NAME = 'digiman-app-v1-' + Date.now();
+const RUNTIME_CACHE = 'digiman-runtime-cache-v1';
 
 // Assets to precache
 const STATIC_CACHE_URLS = [
@@ -227,11 +227,11 @@ self.addEventListener('push', (event) => {
   console.log('SW: Push notification received');
   
   let notificationData = {
-    title: 'Pelangi Capsule Hostel',
+    title: 'digiman',
     body: 'You have a new notification',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: 'hostel-notification',
+    tag: 'digiman-notification',
     requireInteraction: false,
     actions: [
       {

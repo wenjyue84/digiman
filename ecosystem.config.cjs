@@ -1,30 +1,29 @@
 module.exports = {
   apps: [
     {
-      name: 'pelangi-api',
+      name: 'southern-api',
       script: 'dist/server/index.js',
-      cwd: '/var/www/pelangi',
+      cwd: '/var/www/southern',
       node_args: '--max-old-space-size=350',
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         PORT: 5000,
-        CORS_ORIGIN: 'http://18.142.14.142',
-        PUBLIC_URL: 'http://18.142.14.142',
+        // CORS_ORIGIN and PUBLIC_URL should be set in .env on the server
       },
       autorestart: true,
       max_restarts: 10,
       restart_delay: 3000,
       max_memory_restart: '400M',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      error_file: '/var/www/pelangi/logs/pelangi-api-error.log',
-      out_file: '/var/www/pelangi/logs/pelangi-api-out.log',
+      error_file: '/var/www/southern/logs/southern-api-error.log',
+      out_file: '/var/www/southern/logs/southern-api-out.log',
       merge_logs: true,
     },
     {
-      name: 'rainbow-ai',
+      name: 'southern-rainbow',
       script: 'dist/index.js',
-      cwd: '/var/www/pelangi/RainbowAI',
+      cwd: '/var/www/southern/RainbowAI',
       node_args: '--max-old-space-size=450',
       exec_mode: 'fork',
       env: {
@@ -36,8 +35,8 @@ module.exports = {
       restart_delay: 5000,
       max_memory_restart: '500M',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      error_file: '/var/www/pelangi/logs/rainbow-ai-error.log',
-      out_file: '/var/www/pelangi/logs/rainbow-ai-out.log',
+      error_file: '/var/www/southern/logs/southern-rainbow-error.log',
+      out_file: '/var/www/southern/logs/southern-rainbow-out.log',
       merge_logs: true,
       wait_ready: true,
       listen_timeout: 15000,

@@ -1,0 +1,239 @@
+{
+  "productName": "Memory Sync Round 6 — Arising, Government Grants, Interns, Coaching & Commercial Properties",
+  "branchName": "main",
+  "overview": "Extract facts from Jay's Notion workspace covering Arising Packaging (Jas Teo's company), Smart Tech Up / government grant programmes, Prisma intern pipeline, business coaching with Daniel, Taman Teratai commercial property, Federation Oil Factory, yearly summaries & life milestones, staff operations, Juggernaut methodology, and language learning. Push atomic memories to Mem0 Cloud (api.mem0.ai). No code changes — purely API operations.",
+  "goals": [
+    "Document Arising Packaging company and associated entities (RSE, RSP, JSE)",
+    "Capture Smart Tech Up CI registration, RFP opportunities, and capital market funding",
+    "Record Prisma intern pipeline — names, roles, interview SOPs, onboarding",
+    "Map business coaching sessions with Daniel Stellar",
+    "Document Taman Teratai commercial property operations and tenants",
+    "Capture Federation Oil Factory as Prisma client",
+    "Extract yearly summaries and life milestones timeline",
+    "Record staff operations — attendance, payroll, Myanmar recruitment",
+    "Document Juggernaut Labs methodology and process",
+    "Each fact is atomic: one subject, one predicate, retrievable via semantic search"
+  ],
+  "userStories": [
+    {
+      "id": "MS6-001",
+      "title": "Arising Packaging & Associated Companies (RSE/RSP/JSE)",
+      "priority": 1,
+      "description": "Fetch Arising company page, annual revenue of RSE/RSP/JSE/Arising, and related pages. Extract: Arising founding details (Jas Teo, July 2024), blow molding manufacturing, West Port Klang expansion, RSE/RSP/JSE company codes, annual revenues, relationship to Prisma.",
+      "acceptanceCriteria": [
+        "Fetch Arising company page, annual revenue page, and related SSM pages",
+        "Extract: founding details, business type, revenues, expansion plans",
+        "Push 8-10 atomic facts about Arising and associated companies",
+        "Verify via Mem0 search for 'Arising' and 'RSE RSP JSE'"
+      ],
+      "notionSearchQueries": [
+        "Arising",
+        "annual revenue of rse, rsp, jse, arising",
+        "Arising Packaging",
+        "Sunny Packaging Industries"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS6-002",
+      "title": "Smart Tech Up, CI Registration & Government Grants",
+      "priority": 2,
+      "description": "Fetch Smart Tech Up CI Registration page, Crowd Innovator submission, capital market funding page, and GDPM/PKMS Grant Program page. Extract: NIMP Mission 2 programme, CI registration status, RFP notifications, capital market funding strategy, GDPM certification details.",
+      "acceptanceCriteria": [
+        "Fetch Smart Tech Up, CI submission, capital market, GDPM pages",
+        "Extract: programme details, registration status, funding strategy",
+        "Push 8-10 atomic facts about government grants and funding",
+        "Verify via Mem0 search for 'Smart Tech Up' and 'GDPM'"
+      ],
+      "notionSearchQueries": [
+        "Smart Tech Up CI Registration RFP Opportunities",
+        "Edit and modify Crowd Innovator CI submission presentation",
+        "apply capital market funding",
+        "GDPM PKMS Grant Program",
+        "Proposal for Business Fund Consultancy company"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS6-003",
+      "title": "Prisma Intern Pipeline & HR SOPs",
+      "priority": 3,
+      "description": "Fetch intern profiles (Sirajum, Chen Pui, Tawfiq, Dwain, Shuqing, Sum Pei Ling, Wong Zhong Han), Task SOP Interview Strategy, intern self-assessment pages. Extract: intern names/roles/universities, interview SOP process, onboarding workflow, intern-to-employee conversions.",
+      "acceptanceCriteria": [
+        "Fetch intern profiles, interview SOP, and hiring task pages",
+        "Extract: intern roster, interview process, onboarding steps",
+        "Push 10-12 atomic facts about Prisma intern pipeline",
+        "Verify via Mem0 search for 'intern' and 'Prisma hiring'"
+      ],
+      "notionSearchQueries": [
+        "sirajum intern",
+        "Tawfiq Intern programmer",
+        "Chen Pui Intern",
+        "Dwain intern",
+        "interview intern Sum pei ling",
+        "Qt interview intern shuqing",
+        "Follow up with intern Wong Zhong Han",
+        "Task SOP Interview Strategy",
+        "intern Self accessment"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS6-004",
+      "title": "Business Coaching with Daniel Stellar",
+      "priority": 4,
+      "description": "Fetch Daniel Stellar contact page, Meet Daniel online page, March 25 2024 review with Daniel, and yearly summary. Extract: Daniel's coaching methodology, 12-month coaching plan, session outcomes, Jas Teo collaboration, personal development insights.",
+      "acceptanceCriteria": [
+        "Fetch Daniel Stellar profile, meeting notes, and review pages",
+        "Extract: coaching plan, methodology, session outcomes",
+        "Push 5-8 atomic facts about business coaching",
+        "Verify via Mem0 search for 'Daniel Stellar' and 'coaching'"
+      ],
+      "notionSearchQueries": [
+        "Daniel stellar",
+        "Meet Daniel online",
+        "March 25 2024 review with daniel",
+        "Yearly summary from december 2023 to dec 2024"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS6-005",
+      "title": "Taman Teratai Commercial Property & Century Jin Do",
+      "priority": 5,
+      "description": "Fetch Taman Teratai shoplot pages (rent to restaurant, wan tan mee tenant, renovation, toilet leak, ground floor ad), Century Jin Do Restaurant page. Extract: property location, tenants, rental income, renovation details, restaurant ownership transfer history.",
+      "acceptanceCriteria": [
+        "Fetch Teratai shoplot pages, tenant agreements, Century Jin Do page",
+        "Extract: property details, tenants, rental terms, restaurant history",
+        "Push 8-10 atomic facts about commercial properties",
+        "Verify via Mem0 search for 'Teratai' and 'Century Jin Do'"
+      ],
+      "notionSearchQueries": [
+        "rent to restaurant for second floor",
+        "teratai tenancy agreement for wan tan mee tenant",
+        "Taman Teratai Renovation for Wan Tan Mee Tenant",
+        "Rent out shoplot Taman Teratai 31 Jalan Enau",
+        "Teratai toilet leak upstairs restaurant grease",
+        "Century Jin do Restaurant"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS6-006",
+      "title": "Federation Oil Factory & Additional Prisma Leads",
+      "priority": 6,
+      "description": "Fetch Federation Oil Factory page, Polyspring page, and any other Prisma sales pipeline leads. Extract: client industry, IoT solution proposed, quotation details, project status, sales person in charge.",
+      "acceptanceCriteria": [
+        "Fetch Federation Oil Factory and related sales pipeline pages",
+        "Extract: client details, proposed solutions, quotation status",
+        "Push 5-8 atomic facts about additional Prisma leads",
+        "Verify via Mem0 search for 'Federation Oil' and 'Prisma leads'"
+      ],
+      "notionSearchQueries": [
+        "Federation Oil Factory",
+        "Task CP 03 prepare catalog rse goods",
+        "Smart Tech Communication",
+        "Polyspring"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS6-007",
+      "title": "Yearly Summaries & Important Life Milestones",
+      "priority": 7,
+      "description": "Fetch Yearly Summary Dec 2023-Dec 2024, Important Milestones of My Life Since Birth, and Business Checklist pages. Extract: key accomplishments per year, career transitions, business launches, property acquisitions, family milestones. NO sensitive personal emotional content.",
+      "acceptanceCriteria": [
+        "Fetch yearly summary, life milestones, and business checklist pages",
+        "Extract: key accomplishments, career transitions, business launches",
+        "Push 8-12 atomic facts about life milestones and yearly summaries",
+        "Verify via Mem0 search for 'milestones' and 'yearly summary'"
+      ],
+      "notionSearchQueries": [
+        "Yearly summary from december 2023 to dec 2024",
+        "Important Milestones of My Life Since Birth",
+        "Business Checklist"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS6-008",
+      "title": "Staff Operations — Attendance, Payroll & Recruitment",
+      "priority": 8,
+      "description": "Fetch Staff Attendance Calculator, Su Mon salary payment SOP, Myanmar Worker Recruitment page, Ninso handover process, staff employee portal, and cafe staff task assignments. Extract: attendance tracking method, payroll process, recruitment channels, handover SOPs. NO salary amounts or bank account numbers.",
+      "acceptanceCriteria": [
+        "Fetch attendance, payroll, recruitment, and handover pages",
+        "Extract: tracking methods, payroll process, recruitment channels",
+        "Push 6-8 atomic facts about staff operations",
+        "Verify via Mem0 search for 'staff attendance' and 'recruitment'"
+      ],
+      "notionSearchQueries": [
+        "Staff Attendance Calculator Analyzer",
+        "Su Mon Salary Payment Process SOP",
+        "Myanmar Worker Recruitment Front Service",
+        "Ninso handover process by dre",
+        "Cafe Staff Employee Portal",
+        "Task assignment for each staff members"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS6-009",
+      "title": "Juggernaut Labs Process & Presentation to APU",
+      "priority": 9,
+      "description": "Fetch Juggernaut Process Overview Summary, Juggernaut Labs Team Meeting, and Presentation to APU Students pages. Extract: Juggernaut methodology, modular AI platform vision, APU presentation key points, university engagement approach.",
+      "acceptanceCriteria": [
+        "Fetch Juggernaut process, team meeting, and APU presentation pages",
+        "Extract: methodology, platform vision, university engagement",
+        "Push 5-8 atomic facts about Juggernaut and education outreach",
+        "Verify via Mem0 search for 'Juggernaut' and 'APU presentation'"
+      ],
+      "notionSearchQueries": [
+        "Juggernaut Process Overview Summary",
+        "Juggernaut Labs Team Meeting Objective Setting",
+        "Presentation to APU Students"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS6-010",
+      "title": "Language Learning, Courses & Personal Knowledge",
+      "priority": 10,
+      "description": "Fetch Learn Vietnamese, Learn Japanese, Professional Learning & Development, Stanford course, and Coursera Psychology pages. Extract: languages studied, course topics, learning platforms used, professional development areas. Skip generic learning theory content.",
+      "acceptanceCriteria": [
+        "Fetch language learning and course pages",
+        "Extract: languages studied, courses taken, platforms used",
+        "Push 5-8 atomic facts about learning and development",
+        "Verify via Mem0 search for 'language learning' and 'courses'"
+      ],
+      "notionSearchQueries": [
+        "Learn Vietnamese",
+        "learn Japanese",
+        "Professional Learning Development",
+        "Stanford course",
+        "Coursera Pychology",
+        "Language Learning 语言学习"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    }
+  ]
+}

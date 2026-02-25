@@ -1,0 +1,83 @@
+# Memory Sync Round 4 Progress Log - Fri, Feb 21, 2026
+Extracting facts from Notion workspace into Mem0 Cloud — Round 4 (Prisma Projects, Hostel Operations & Marketing)
+Starting Mem0 count: 1,127
+
+## Patterns
+- Use ToolSearch to load notion-search and notion-fetch before each iteration
+- Push facts via python3 urllib.request with 0.3s sleep between calls
+- Search Mem0 first to check for existing facts before pushing
+- Mem0 deduplicates automatically — overlapping facts get merged
+- Always add encoding='utf-8' to file operations on Windows
+- Use ssl.create_default_context() for HTTPS calls
+- Use "infer": false in POST body for synchronous direct memory addition
+- PRD path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-prd-4.json
+- Progress path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-progress-4.txt
+
+---
+
+## Wave 1 — Prisma Profile, Teong Hin, Pelangi Ops, Cafe Marketing (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS4-001 | Prisma Technology Company Profile & Products Catalog | 15 | Company Profile 2025, Products Catalog, Reference, GDPM cert |
+| MS4-002 | Teong Hin Industry4WRD Project | 12 | 7 pages (company, CRM, pipeline, tech proposal, project concept, Industry4WRD combine, MIDA notice) |
+| MS4-003 | Pelangi Capsule Hostel — Detailed Operations | 15 | Summary, Overview, Rates & Booking, Reviews, Operations Index, Landlord |
+| MS4-004 | Makan Moments Cafe Marketing Ecosystem | 12 | Marketing Summary, TikTok, Canva Analysis, Facebook, StoreHub POS, Online Sales |
+**Subtotal: 54 facts**
+
+## Wave 2 — Investments, Budget, Solar, AI Dev Stack (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS4-005 | Investments — Prudential & RHB Shares | 8 | Prudential Investment Link, RHB Invest Share, Assets DB |
+| MS4-006 | Monthly Budget & Savings Goals | 8 | Monthly Budget, Savings DB, Bank Statement Subscriptions |
+| MS4-007 | Solar Panel System — Property 341 | 5 | 341 Property Solar Panel System page |
+| MS4-008 | AI Dev Stack & Prompt Library | 9 | AI Dev Stack, Prompt Library Guide, Tech & AI Research |
+**Subtotal: 30 facts**
+
+## Wave 3 — HRDF Training, New Branch Expansion (2 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS4-009 | Prisma HRDF AI Training Course | 7 | HRDF AI Course Planning, Training AI pages |
+| MS4-010 | Pelangi Capsule — New Branch Expansion | 8 | SAJ/TNB application, Tenancy agreement, Booking.com setup, Landlord 221B, Bank details |
+**Subtotal: 15 facts**
+
+---
+
+## Round 4 Final Summary
+
+| Metric | Value |
+|--------|-------|
+| Stories completed | 10/10 |
+| Total raw facts pushed | 99 |
+| Starting Mem0 count | 1,127 |
+| Final Mem0 count | 1,397 |
+| Net new memories | +270 (Mem0 splits some multi-part facts) |
+| Waves executed | 3 (4+4+2 agents) |
+| PRD race conditions | 0 |
+
+### Domain Coverage Added in Round 4
+1. **Prisma Profile** — FY2024 revenue RM1.15M, GDPM certified, 3 directors, 4 product categories
+2. **Teong Hin Industry4WRD** — RM678.5K project, MIDA 70:30 matching grant, Prisma WMS role, fund stopped Sep 2023
+3. **Pelangi Hostel Ops** — Booking.com ID 10180543, OTA pricing tiers, review themes, 22 capsules, landlord Ng Ah Chai
+4. **Cafe Marketing** — TikTok/Facebook/Instagram accounts, StoreHub POS, Canva 200+ designs, delivery platforms
+5. **Investments** — PRUWealth Enrich (RM300/month), RHB Invest Direct account, 7 properties as assets
+6. **Budget/Savings** — Subscription audit (cancelled 3 services), savings targets, expense categories
+7. **Solar Panel** — RM20K system at Property 341, Zenith Solar installer, fault history
+8. **AI Dev Stack** — Prompt library (8 categories), AI subscriptions breakdown, dev stack implementation plan
+9. **HRDF Training** — 3 course tiers (Intro/Intermediate/Advanced), PSMB agreement, competitor benchmarking
+10. **New Branch** — 221B Jalan Sri Pelangi location, landlord terms, SAJ/TNB utility setup, Booking.com registration
+
+### Cumulative Totals Across All 4 Rounds
+| Round | Stories | Raw Facts | Mem0 Start | Mem0 End | Net New |
+|-------|---------|-----------|------------|----------|---------|
+| Round 1 | 18 | ~180 | ~605 | ~819 | ~214 |
+| Round 2 | 12 | ~120 | 819 | 975 | 156 |
+| Round 3 | 10 | 101 | 975 | 1,127 | 152 |
+| Round 4 | 10 | 99 | 1,127 | 1,397 | 270 |
+| **Total** | **50** | **~500** | **605** | **1,397** | **792** |
+
+### Technical Notes
+- All 3 waves launched without waiting — maximum throughput per user's "nonstop" instruction
+- No PRD race conditions in Round 4 (improvement over Round 3's MS3-005 issue)
+- Mem0 net new (+270) significantly exceeds raw facts (99) — indicates Mem0 is splitting multi-part facts into finer atomic units
+- Round 4 focused on business operations domains missed in Rounds 1-3 (Prisma corporate, manufacturing clients, marketing ecosystem, financial instruments)
+

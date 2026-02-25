@@ -1,0 +1,88 @@
+# Memory Sync Round 7 Progress Log - Fri, Feb 21, 2026
+Extracting facts from Notion workspace into Mem0 Cloud — Round 7 (JBCCCI Seminar, VSTECS Partnership, MyHackathon, Startup Ecosystem & Side Ventures)
+Starting Mem0 count: 1,600
+
+## Patterns
+- Use ToolSearch to load notion-search and notion-fetch before each iteration
+- Push facts via python3 urllib.request with 0.3s sleep between calls
+- Search Mem0 first to check for existing facts before pushing
+- Mem0 deduplicates automatically — overlapping facts get merged
+- Always add encoding='utf-8' to file operations on Windows
+- Use ssl.create_default_context() for HTTPS calls
+- Use "infer": false in POST body for synchronous direct memory addition
+- PRD path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-prd-7.json
+- Progress path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-progress-7.txt
+
+---
+
+## Wave 1 — JBCCCI Seminar, VSTECS AWS, MyHackathon, CRADLE/MPMA (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS7-001 | JBCCCI Industrial 4.0 Seminar (Aug 2023) | 10 | MIDF invitation, emcee script, process flow, committee tasks, invitation letter, organize seminar |
+| MS7-002 | VSTECS AWS Partnership & POC Grants | 10 | VSTECS profile, POC initiative, AI-LiveChat grant, SengLiy grant, Lawyer System grant, APN/CLF-C02 |
+| MS7-003 | MyHackathon 2024 Competition | 7 | 社团/公会/组织, yearly summary, Slack #myhackathon-2024, Kristy/Kaichian task threads |
+| MS7-004 | CRADLE Startup Roadshow & MPMA Events | 8 | CRADLE LIVE! roadshow, MPMA event 16/8/25, Mike Lam, YYC-MPMA, Facebook AWS posts, Pasir Gudang |
+**Subtotal: 35 facts**
+
+## Wave 2 — Zeta Tech, PetiKembara, Agreements, Farm Fresh (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS7-005 | Zeta Technology AWS Migration | 6 | Zeta project, Heyden profile, VSTECS POC initiative, AI-LiveChat POC grant |
+| MS7-006 | PetiKembara Luggage Business | 6 | Business plan, TikTok links, multi-platform accounts, Linh ordering sheet, Qiqi delivery, livecast task |
+| MS7-007 | Prisma Business Agreements | 8 | P&C agreement, Chong-Eddie JV, Foodpanda contract, StoreHub POS, pest control contract |
+| MS7-008 | Farm Fresh & Sales Pipeline Leads | 9 | Farm Fresh ticketing, Sunny Packaging 3-item quotation, 172 Gary electrical, MDB, MTECH Bernard letter |
+**Subtotal: 29 facts**
+
+## Wave 3 — AI-LiveChat, Prisma Marketing (2 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS7-009 | AI-LiveChat SaaS Product | 8 | QA testing, 8 PKMS chatbots, POC grant, GDPM program, self-setup manual |
+| MS7-010 | Prisma Digital Marketing | 6 | Facebook revival, 100+ followers, 5 AWS posts, branding update |
+**Subtotal: 14 facts**
+
+---
+
+## Round 7 Final Summary
+
+| Metric | Value |
+|--------|-------|
+| Stories completed | 10/10 |
+| Total raw facts pushed | 78 |
+| Starting Mem0 count | 1,600 |
+| Final Mem0 count | 1,678 |
+| Net new memories | +78 |
+| Waves executed | 3 (4+4+2 agents) |
+| PRD race conditions | 0 |
+
+### Domain Coverage Added in Round 7
+1. **JBCCCI I4.0 Seminar** — Jay as emcee/chief coordinator, 29 Aug 2023, Paragon International School, 4 speakers (Teddy, Zhang Ruri, Yang Zhimin, Dr Liu), MIDF invitation, HRD Corp session
+2. **VSTECS Partnership** — AWS distributor, Justin Koh contact, 10-POC customer initiative, 3 applications (AI-LiveChat $65K, SengLiy $10K, KC Lim), APN Consulting Partner, Select tier requirements
+3. **MyHackathon 2024** — Prisma team finalist Cohort 1, SISPAA 2.0 (PS5), 10+ team members, Sep 23-28 2024, live Facebook stream Nov 13
+4. **CRADLE Roadshow** — LIVE! Roadshow Johor Sep 2 2025, MYStartup/Cradle Grants, shared with JBCCCI
+5. **MPMA Events** — Aug 16 2025 with AWS, 40+ industry contacts, Mike Lam (Johor president, Sonfuat Precision), MPMA directory for lead gen
+6. **Zeta Technology** — Taiwan-to-AWS migration (cancelled), Heyden as boss, RM2K/month budget, Mark as contact
+7. **PetiKembara** — TikTok luggage livestream venture (mid-2023), co-founded with Lew Huey Wen + Zhang Ru Ri, 3 TikTok + Shopee + Lazada, abandoned late 2023
+8. **Prisma Agreements** — P&C (Aug 2023, 3-year non-compete), Industry AI JV (25%/75% with A Marketing), Foodpanda OQ-0008870626, StoreHub POS Starter, FBI Pest Control RM200/month
+9. **Farm Fresh** — RM7K ticketing system quotation; Sunny Packaging 3-item RM60K total; 172 Gary RM2.5K electrical; MDB RM2.95K; MTECH RM5K dispute
+10. **AI-LiveChat SaaS** — Multi-channel platform, ai-livechat.com, ASP.NET+React+Bedrock, 8 PKMS merchants at RM10K, GDPM certified, GitHub repos
+11. **Prisma Marketing** — Facebook page revival, 100+ followers in 4-6 weeks, 5 AWS showcase posts, vanity URL goal, social media inventory
+
+### Cumulative Totals Across All 7 Rounds
+| Round | Stories | Raw Facts | Mem0 Start | Mem0 End | Net New |
+|-------|---------|-----------|------------|----------|---------|
+| Round 1 | 18 | ~180 | ~605 | ~819 | ~214 |
+| Round 2 | 12 | ~120 | 819 | 975 | 156 |
+| Round 3 | 10 | 101 | 975 | 1,127 | 152 |
+| Round 4 | 10 | 99 | 1,127 | 1,397 | 270 |
+| Round 5 | 10 | 100 | 1,397 | 1,497 | 100 |
+| Round 6 | 10 | 103 | 1,497 | 1,600 | 103 |
+| Round 7 | 10 | 78 | 1,600 | 1,678 | 78 |
+| **Total** | **80** | **~781** | **605** | **1,678** | **1,073** |
+
+### Technical Notes
+- All 3 waves launched simultaneously per user's "nonstop" instruction
+- No PRD race conditions in Round 7 (clean run, consistent with Rounds 4-6)
+- Net new (+78) matches raw facts (78) exactly — zero deduplication overlap, confirming Round 7 covered entirely new domains
+- Credentials/passwords from PetiKembara TikTok accounts intentionally excluded per no-credentials rule
+- MTECH demand letter fact captures the dispute without legal-sensitive content
+- Round 7 raw facts (78) lower than Rounds 5-6 (~100) because several stories (Zeta, PetiKembara, Marketing) had limited Notion content — ventures that were explored briefly then abandoned

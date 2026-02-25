@@ -1,4 +1,4 @@
-# PelangiManager — Shared Types (shared/)
+# digiman — Shared Types (shared/)
 
 Shared type definitions and schemas used by both `client/` and `server/`.
 

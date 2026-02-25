@@ -1,4 +1,4 @@
-# PelangiManager — Backend (server/)
+# digiman — Backend (server/)
 
 Express API server for capsule hotel operations.
 
@@ -59,6 +59,7 @@ Express API server for capsule hotel operations.
 ## Development
 
 ```bash
+# Requires Node.js 18+
 # Backend only (from project root)
 npm run dev:server      # Express on port 5000
 

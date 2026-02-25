@@ -10,10 +10,10 @@ interface MaintenanceNotifyPayload {
  * This can be extended to send WhatsApp messages, emails, or push notifications.
  */
 export async function notifyOperatorMaintenanceUnit(payload: MaintenanceNotifyPayload) {
-  const problemSummary = payload.problems.join('; ');
-  console.log(`[Maintenance Notification] Unit ${payload.unitNumber} requires maintenance: ${problemSummary}` +
-    (payload.guestName ? ` (guest: ${payload.guestName})` : ''));
+  const problemList = payload.problems.join(', ');
+  const guestPart = payload.guestName ? ` (guest: ${payload.guestName})` : '';
+  console.log(`[Maintenance Notification] Unit ${payload.unitNumber} requires maintenance: ${problemList}${guestPart}`);
 
   // Future implementation: Send to Rainbow AI or staff group
-  // await sendToStaffGroup(`🛠️ Maintenance Needed: Unit ${payload.unitNumber}\nIssue: ${problemSummary}`);
+  // await sendToStaffGroup(`🛠️ Maintenance Needed: Unit ${payload.unitNumber}\nGuest: ${payload.guestName}\nIssues: ${problemList}`);
 }

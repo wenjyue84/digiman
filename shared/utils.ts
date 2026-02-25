@@ -121,7 +121,10 @@ export function getClientEnvironment(): EnvironmentInfo {
 
   const hostname = window.location.hostname;
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-  const isReplit = hostname.includes('.replit.dev') || hostname.includes('.replit.app') || !!import.meta.env.VITE_REPL_ID;
+  const isReplit =
+    hostname.includes('.replit.dev') ||
+    hostname.includes('.replit.app') ||
+    hostname.includes('.replit.co');
   const isProduction = process.env.NODE_ENV === 'production';
   const isDevelopment = !isProduction;
 

@@ -1,4 +1,5 @@
 import type { Guest } from "@shared/schema";
+import { DEFAULT_BUSINESS_CONFIG } from "@shared/business-config";
 
 // Date and time utilities
 export function getCurrentDateTime() {
@@ -41,7 +42,7 @@ export function getDefaultCollector(user: any): string {
   if (user.firstName && user.lastName) {
     return `${user.firstName} ${user.lastName}`;
   }
-  if (user.email === "admin@pelangi.com") {
+  if (user.email === DEFAULT_BUSINESS_CONFIG.email) {
     return "Admin";
   }
   return user.email || "";

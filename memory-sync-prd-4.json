@@ -1,0 +1,226 @@
+{
+  "productName": "Memory Sync Round 4 — Prisma Projects, Hostel Operations & Marketing Domains",
+  "branchName": "main",
+  "overview": "Extract facts from Jay's Notion workspace covering Prisma company profile, Teong Hin Industry4WRD project, Pelangi Capsule operations, Makan Moments marketing, investments, monthly budget, solar panel, AI dev stack, HRDF training, and hostel new branch expansion. Push atomic memories to Mem0 Cloud (api.mem0.ai). No code changes — purely API operations.",
+  "goals": [
+    "Capture Prisma Technology company profile, products catalog, and team structure",
+    "Document Teong Hin Industry4WRD project — Prisma's biggest manufacturing client",
+    "Record Pelangi Capsule Hostel detailed operations (OTA, rates, reviews, staff)",
+    "Extract Makan Moments Cafe marketing ecosystem (social media, Canva, TikTok)",
+    "Map investments (Prudential, RHB shares) and monthly budget/savings",
+    "Each fact is atomic: one subject, one predicate, retrievable via semantic search"
+  ],
+  "userStories": [
+    {
+      "id": "MS4-001",
+      "title": "Prisma Technology Company Profile & Products Catalog",
+      "priority": 1,
+      "description": "Fetch the 'Prisma Technology Company Profile 2025' and 'Prisma Products & Services Catalog' pages. Extract: company registration, directors, address, incorporation date, MD status, GDPM certification, product categories (Manufacturing/IoT, AI chatbot, website packages, Notion workspace management), service pricing tiers.",
+      "acceptanceCriteria": [
+        "Fetch Prisma company profile and products catalog pages",
+        "Extract: registration, directors, address, product categories, certifications",
+        "Push 10-15 atomic facts about Prisma as a company",
+        "Verify via Mem0 search for 'Prisma Technology'"
+      ],
+      "notionSearchQueries": [
+        "Prisma Technology Company Profile 2025",
+        "Prisma Products & Services Catalog",
+        "Prisma Technology Reference",
+        "PRISMA TECHNOLOGY SOLUTION SDN BHD"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS4-002",
+      "title": "Teong Hin Industry4WRD Project",
+      "priority": 2,
+      "description": "Fetch Teong Hin Plastic Industries pages, Industry4wrd combine, intervention fund template, and technical proposal. Extract: company background (Kluang, est. 1978), RA report status, Industry4WRD grant (70:30 matching up to RM500K), project scope (IoT/MES), Prisma's role, key contacts (Mike), MIDA funding status.",
+      "acceptanceCriteria": [
+        "Fetch Teong Hin company page, Industry4wrd combine, technical proposal",
+        "Extract: company details, grant structure, project scope, Prisma role",
+        "Push 8-12 atomic facts about Teong Hin project",
+        "Verify via Mem0 search for 'Teong Hin' and 'Industry4WRD'"
+      ],
+      "notionSearchQueries": [
+        "Teong Hin Plastic Industries Sdn Bhd",
+        "Industry4wrd combine",
+        "Teong Hin Intervention Fund Template Technical Proposal",
+        "Teong Hin Project Concept",
+        "Pipe Teong Hin"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS4-003",
+      "title": "Pelangi Capsule Hostel — Detailed Operations",
+      "priority": 3,
+      "description": "Fetch the Pelangi Capsule Hostel summary, overview, detailed description, rates & booking, reviews summary, and Hospitality Operations Index. Extract: OTA platforms (Booking.com, Hostelworld, Airbnb), pricing tiers, review themes, occupancy patterns, landlord details, staff structure, partner Alston Foo.",
+      "acceptanceCriteria": [
+        "Fetch Pelangi summary, overview, rates, reviews summary, operations index",
+        "Extract: OTA platforms, pricing, review themes, staff, landlord",
+        "Push 10-15 atomic facts about hostel operations",
+        "Verify via Mem0 search for 'Pelangi Capsule'"
+      ],
+      "notionSearchQueries": [
+        "Pelangi Capsule Hostel Summary",
+        "Detailed Description of Pelangi Capsule Hostel",
+        "Pelangi Capsule Rates Booking",
+        "Pelangi Capsule hostel Reviews summary",
+        "Hospitality Operations Index Southern Homestay Pelangi",
+        "Building Landlord 221B Jalan Sri Pelangi"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS4-004",
+      "title": "Makan Moments Cafe Marketing Ecosystem",
+      "priority": 4,
+      "description": "Fetch Makan Moments Marketing Summary, TikTok account page, Canva Design Analysis, Facebook page info, StoreHub POS agreement, and Improve Online Sales page. Extract: marketing channels, social media accounts, Canva designs inventory, POS system, content strategy, delivery platforms.",
+      "acceptanceCriteria": [
+        "Fetch marketing summary, TikTok, Canva, Facebook, StoreHub pages",
+        "Extract: channels, accounts, design assets, POS details, strategy",
+        "Push 8-12 atomic facts about cafe marketing",
+        "Verify via Mem0 search for 'Makan Moments marketing'"
+      ],
+      "notionSearchQueries": [
+        "Makan Moments Cafe Marketing Summary",
+        "Makan moments TikTok account",
+        "Canva Design Search Analysis August 2025",
+        "facebook for makan moments cafe account puan rohana",
+        "StoreHub POS Sales Service Agreement",
+        "Improve Online Sales for Makan Moments Cafe"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS4-005",
+      "title": "Investments — Prudential & RHB Shares",
+      "priority": 5,
+      "description": "Fetch Prudential Investment Link page, RHB Invest Share page, and Assets page. Extract: investment types, policy details, share portfolio, asset categories. NO login credentials or policy numbers.",
+      "acceptanceCriteria": [
+        "Fetch Prudential, RHB Invest, and Assets pages",
+        "Extract: investment types, asset categories, portfolio overview",
+        "Push 5-8 atomic facts about investments",
+        "Verify via Mem0 search for 'investment' and 'shares'"
+      ],
+      "notionSearchQueries": [
+        "Prudential Investment Link",
+        "Rhb invest share",
+        "My Assets",
+        "db Assets"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS4-006",
+      "title": "Monthly Budget & Savings Goals",
+      "priority": 6,
+      "description": "Fetch Monthly Budget pages and db Savings. Extract: budget categories, savings targets, expense breakdown, financial goals, subscription costs summary.",
+      "acceptanceCriteria": [
+        "Fetch monthly budget and savings pages",
+        "Extract: budget categories, savings targets, expense breakdown",
+        "Push 5-8 atomic facts about budgeting",
+        "Verify via Mem0 search for 'budget' and 'savings'"
+      ],
+      "notionSearchQueries": [
+        "Monthly budget",
+        "db Savings",
+        "review bank statement for monthly subscription"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS4-007",
+      "title": "Solar Panel System — Property 341",
+      "priority": 7,
+      "description": "Fetch the '341 Property Solar Panel System - Renewable Energy Investment' page. Extract: system specs, energy savings, installation date, cost, maintenance records, ROI calculations.",
+      "acceptanceCriteria": [
+        "Fetch solar panel system page",
+        "Extract: specs, savings, cost, installation details",
+        "Push 4-6 atomic facts about solar investment",
+        "Verify via Mem0 search for 'solar panel'"
+      ],
+      "notionSearchQueries": [
+        "341 Property Solar Panel System Renewable Energy Investment"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS4-008",
+      "title": "AI Dev Stack & Prompt Library",
+      "priority": 8,
+      "description": "Fetch AI Dev Stack Remaining Implementation page, AI Prompt Library Usage Guide, and Tech & AI Research page. Extract: dev tools used, prompt library categories, AI subscriptions breakdown (ChatGPT, Gemini, Claude, Cursor, Perplexity, Notion), technology research areas.",
+      "acceptanceCriteria": [
+        "Fetch AI dev stack, prompt library, and tech research pages",
+        "Extract: tools, prompt categories, subscription costs, research areas",
+        "Push 6-10 atomic facts about AI/tech stack",
+        "Verify via Mem0 search for 'AI tools' and 'subscriptions'"
+      ],
+      "notionSearchQueries": [
+        "AI Dev Stack Remaining Implementation Phase",
+        "AI Prompt Library Usage Guide Best Practices",
+        "Tech AI Research APIs Tools Plugins Development",
+        "review bank statement for subscription ChatGPT Claude Cursor"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS4-009",
+      "title": "Prisma HRDF AI Training Course",
+      "priority": 9,
+      "description": "Fetch Prisma HRDF AI Course Planning pages. Extract: course curriculum, target audience (SMEs), training modules, HRDF registration, pricing, AI tools covered.",
+      "acceptanceCriteria": [
+        "Fetch HRDF AI course planning pages",
+        "Extract: curriculum, modules, HRDF details, pricing",
+        "Push 5-8 atomic facts about HRDF training",
+        "Verify via Mem0 search for 'HRDF' and 'training'"
+      ],
+      "notionSearchQueries": [
+        "Prisma HRDF AI Course Planning",
+        "Training AI"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS4-010",
+      "title": "Pelangi Capsule — New Branch Expansion",
+      "priority": 10,
+      "description": "Fetch new branch related pages: Apply SAJ and TNB, Draft new tenancy agreement, Register new Booking.com account, Building Landlord 221B, JB Capsule Hostel bank details. Extract: new branch location, landlord details, utility applications, Booking.com setup, rental terms.",
+      "acceptanceCriteria": [
+        "Fetch new branch expansion pages",
+        "Extract: location, landlord, utilities, rental terms, OTA setup",
+        "Push 5-8 atomic facts about branch expansion",
+        "Verify via Mem0 search for 'new branch' and 'JB capsule'"
+      ],
+      "notionSearchQueries": [
+        "Apply SAJ TNB Pelangi Capsule Hostel New Branch",
+        "Draft new tenancy agreement Pelangi Capsule",
+        "Register new Booking.com account capsule branch",
+        "Building Landlord 221B Jalan Sri Pelangi",
+        "Add bank details JB Capsule Hostel Booking.com",
+        "Pay rental for Jb Capsule hostel"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    }
+  ]
+}

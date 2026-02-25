@@ -11,7 +11,7 @@ router.get("/storage/info", authenticateToken, asyncRouteHandler(async (_req: an
   const storage = await getStorage();
   const storageType = storage.constructor.name;
   const isDatabase = storageType === 'DatabaseStorage';
-  res.json({ 
+  res.json({
     type: storageType,
     isDatabase,
     label: isDatabase ? 'Database' : 'Memory'
@@ -31,9 +31,9 @@ router.get("/occupancy", authenticateToken, asyncRouteHandler(async (_req: any, 
 router.get("/dashboard", authenticateToken, asyncRouteHandler(async (req: any, res: any) => {
   // Cache dashboard data for 15 seconds
   res.set('Cache-Control', 'public, max-age=15');
-  
+
   const storage = await getStorage();
-  
+
   // Fetch all dashboard data concurrently for better performance
   const [
     occupancyData,
@@ -44,7 +44,15 @@ router.get("/dashboard", authenticateToken, asyncRouteHandler(async (req: any, r
     storage.getUnitOccupancy(),
     storage.getCheckedInGuests(),
     storage.getActiveGuestTokens(),
-    storage.getUnreadAdminNotifications()
+    storage.getUnreadAdminNotifications().catch(error => {
+      // Graceful fallback for missing admin_notifications table (Phase 4 addition)
+      if (error.message?.includes('relation "admin_notifications" does not exist') ||
+        error.message?.includes('admin_notifications')) {
+        console.warn('Dashboard: admin_notifications table missing, returning empty array');
+        return { data: [], pagination: { total: 0, page: 1, limit: 10, pages: 0 } };
+      }
+      throw error;
+    })
   ]);
 
   res.json({

@@ -17,7 +17,7 @@ export interface AppConfig {
   defaultPaymentMethod: string;
   maxPaymentAmount: number;
   
-  // Capsule Settings
+  // Unit Settings
   totalUnits: number;
   unitSections: string[];
   unitNumberFormat: string;
@@ -68,10 +68,10 @@ export const DEFAULT_CONFIG: AppConfig = {
   maxPageSize: 100,
   minGuestAge: 16,
   maxGuestAge: 120,
-  defaultAdminEmail: 'admin@pelangicapsule.com',
-  supportEmail: 'support@pelangicapsule.com',
+  defaultAdminEmail: 'admin@digiman.com',
+  supportEmail: 'support@digiman.com',
   supportPhone: '+60123456789',
-  hostelName: 'Pelangi Capsule Hostel',
+  hostelName: 'digiman',
   timezone: 'Asia/Kuala_Lumpur',
 };
 

@@ -1,4 +1,4 @@
-$dataDir = "C:\Users\Jyue\Desktop\Projects\PelangiManager-Zeabur\RainbowAI\src\assistant\data"
+$dataDir = "C:\Users\Jyue\Documents-projects\Projects\digiman\RainbowAI\src\assistant\data"
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
 Copy-Item "$dataDir\intent-examples.json" "$dataDir\intent-examples.json.backup.$timestamp"

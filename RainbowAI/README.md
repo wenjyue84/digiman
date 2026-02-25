@@ -1,8 +1,8 @@
-# Pelangi MCP Server
+# digiman MCP Server
 
-HTTP-based MCP server + Rainbow AI WhatsApp assistant for PelangiManager hostel management.
+HTTP-based MCP server + Rainbow AI WhatsApp assistant for digiman operations management.
 
-**⚠️ CRITICAL DEPENDENCY:** This MCP server requires the **main PelangiManager API server (port 5000)** to be running! The Rainbow dashboard fetches data from the main API. If only the MCP server is running, the dashboard will be stuck on "Loading..." with 500 errors.
+**⚠️ CRITICAL DEPENDENCY:** This MCP server requires the **main digiman API server (port 5000)** to be running! The Rainbow dashboard fetches data from the main API. If only the MCP server is running, the dashboard will be stuck on "Loading..." with 500 errors.
 
 **To start all required servers:**
 ```bash
@@ -57,7 +57,7 @@ mcp-server/
 │   │   └── workflow-enhancer.ts  # Real actions (WhatsApp forwarding, API calls)
 │   ├── lib/
 │   │   ├── baileys-client.ts # WhatsApp via Baileys (direct)
-│   │   ├── http-client.ts    # PelangiManager API client
+│   │   ├── http-client.ts    # digiman API client
 │   │   └── daily-report.ts   # Scheduled daily reports
 │   ├── routes/
 │   │   └── admin.ts          # /api/rainbow/* admin endpoints
@@ -82,7 +82,7 @@ mcp-server/
 
 ## Module Boundary
 
-- Communicates with PelangiManager web app **via HTTP API only** (no direct imports)
+- Communicates with digiman web app **via HTTP API only** (no direct imports)
 - Has its own types in `src/assistant/types.ts` and `src/types/mcp.ts`
 - Can be deployed independently on Zeabur
 - Does NOT import from `server/`, `client/`, or `shared/`
@@ -100,8 +100,8 @@ npm run dev             # Starts on port from .env (default 3002)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `PELANGI_API_URL` | Yes | PelangiManager API (e.g., `https://pelangi.zeabur.app`) |
-| `PELANGI_API_TOKEN` | Yes | Admin API token from Settings > Security |
+| `DIGIMAN_API_URL` | Yes | digiman API (e.g., `https://admin.southern-homestay.com`) |
+| `DIGIMAN_API_TOKEN` | Yes | Admin API token from Settings > Security |
 | `MCP_SERVER_PORT` | No | Server port (default: 3002) |
 | `NVIDIA_API_KEY` | No | For Kimi K2.5 AI provider |
 | `OPENROUTER_API_KEY` | No | For OpenRouter free models |
@@ -236,6 +236,6 @@ If you see `429` errors or rate limit warnings in logs, see [AI-PROVIDER-TROUBLE
 **Common Issues:**
 - MCP server not accessible → Check port 3002 is free, verify `.env` port setting
 - WhatsApp not connecting → Check phone has internet, QR code not expired
-- Tests failing → Ensure web app API is accessible at `PELANGI_API_URL`
+- Tests failing → Ensure web app API is accessible at `DIGIMAN_API_URL` (legacy `PELANGI_API_URL` still works)
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for Zeabur deployment instructions.

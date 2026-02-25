@@ -1,6 +1,8 @@
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { getQueryFn } from "./lib/queryClient";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalErrorBoundary } from "./components/global-error-boundary";
@@ -24,7 +26,7 @@ import GuestEdit from "./pages/guest-edit";
 import GuestSuccess from "./pages/guest-success";
 import GuestGuide from "./pages/guest-guide";
 // REMOVED: AdminRainbow - NO redirects from port 3000 to port 3002!
-// Rainbow admin is ONLY accessible at http://localhost:3002/admin/rainbow
+// Rainbow admin is ONLY accessible directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard)
 import IntentManager from "./pages/intent-manager";
 import Header from "./components/header";
 import Navigation from "./components/navigation";
@@ -33,6 +35,22 @@ import { VisibilityIndicator } from "./components/visibility-indicator";
 import { toast } from "@/hooks/use-toast";
 import GlobalTopProgress from "./components/global-top-progress";
 import { OfflineIndicator } from "./components/ui/offline-indicator";
+import FirstRunWizard from "./components/FirstRunWizard";
+
+/** Syncs document.title to the appTitle setting (falls back to "digiman") */
+function AppTitleSync() {
+  const { data: settings } = useQuery<{ appTitle?: string }>({
+    queryKey: ["/api/settings"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    staleTime: 60000,
+    retry: false,
+  });
+  useEffect(() => {
+    const title = settings?.appTitle?.trim();
+    document.title = title || "digiman";
+  }, [settings?.appTitle]);
+  return null;
+}
 
 /**
  * Main router component handling all application routes
@@ -99,7 +117,7 @@ function Router() {
             </ProtectedRoute>
           </Route>
           {/* REMOVED: /admin/rainbow route - NO redirects from port 3000 to port 3002! */}
-          {/* Access Rainbow admin directly at http://localhost:3002/admin/rainbow */}
+          {/* Access Rainbow admin directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard) */}
           <Route path="/login" component={LoginForm} />
           <Route component={NotFound} />
         </Switch>
@@ -107,6 +125,12 @@ function Router() {
       {!shouldHideNavigation && <MobileBottomNav />}
     </div>
   );
+}
+
+/** Reads auth state and passes it to FirstRunWizard — must be inside AuthProvider */
+function FirstRunWizardBridge() {
+  const { isAuthenticated } = useAuth();
+  return <FirstRunWizard isAuthenticated={isAuthenticated} />;
 }
 
 // Initialize internationalization provider for multi-language support
@@ -120,7 +144,7 @@ function App() {
   // Handle uncaught errors throughout the application
   const handleGlobalError = (error: Error) => {
     console.error('Global error caught:', error);
-    
+
     // Display user-friendly error message to prevent confusion
     toast({
       title: "Something went wrong",
@@ -136,6 +160,8 @@ function App() {
           <I18nProvider>
             <AuthProvider>
               <TooltipProvider>
+                <AppTitleSync />
+                <FirstRunWizardBridge />
                 <Router />
                 <Toaster />
                 <VisibilityIndicator />

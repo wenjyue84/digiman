@@ -5,6 +5,7 @@
 
 import { toast } from '@/hooks/use-toast';
 import React from 'react';
+import { DEFAULT_BUSINESS_CONFIG } from '@shared/business-config';
 
 // Error types for the Guest Guide system
 export enum GuestGuideErrorType {
@@ -53,7 +54,7 @@ class GuestGuideErrorLogger {
     };
 
     this.errors.unshift(enrichedError);
-    
+
     // Keep only the most recent errors
     if (this.errors.length > this.maxErrors) {
       this.errors = this.errors.slice(0, this.maxErrors);
@@ -87,7 +88,7 @@ class GuestGuideErrorLogger {
     // This would integrate with a monitoring service like Sentry, LogRocket, etc.
     // For now, just log to console
     console.error('[GuestGuide] Critical error detected:', error);
-    
+
     // Example integration:
     // if (window.Sentry) {
     //   window.Sentry.captureException(new Error(error.message), {
@@ -116,7 +117,7 @@ class GuestGuideErrorLogger {
     recent: number; // Errors in last hour
   } {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    
+
     return {
       total: this.errors.length,
       byType: this.errors.reduce((acc, error) => {
@@ -233,13 +234,14 @@ export const handleNetworkError = (message: string, details?: any): void => {
 // Recovery mechanisms
 export const attemptErrorRecovery = async (errorType: GuestGuideErrorType): Promise<boolean> => {
   const logger = GuestGuideErrorLogger.getInstance();
-  
+
   try {
     switch (errorType) {
       case GuestGuideErrorType.STORAGE_ERROR:
         // Try to clear corrupted localStorage data
-        localStorage.removeItem('pelangi-guest-guide-settings');
-        localStorage.removeItem('pelangi-guest-guide-backup');
+        const prefix = DEFAULT_BUSINESS_CONFIG.shortName.toLowerCase();
+        localStorage.removeItem(`${prefix}-guest-guide-settings`);
+        localStorage.removeItem(`${prefix}-guest-guide-backup`);
         toast({
           title: 'Recovery Attempt',
           description: 'Storage cleared. Please reconfigure your settings.',
@@ -274,7 +276,7 @@ export const attemptErrorRecovery = async (errorType: GuestGuideErrorType): Prom
 // Performance monitoring
 export const monitorPerformance = (operation: string, startTime: number): void => {
   const duration = performance.now() - startTime;
-  
+
   if (duration > 1000) { // Longer than 1 second
     GuestGuideErrorLogger.getInstance().log({
       type: GuestGuideErrorType.RENDER_ERROR,
@@ -331,7 +333,7 @@ export const withErrorHandling = <T extends (...args: any[]) => any>(
   return ((...args: Parameters<T>) => {
     try {
       const result = fn(...args);
-      
+
       // Handle async functions
       if (result instanceof Promise) {
         return result.catch(error => {
@@ -344,7 +346,7 @@ export const withErrorHandling = <T extends (...args: any[]) => any>(
           throw error;
         });
       }
-      
+
       return result;
     } catch (error) {
       GuestGuideErrorLogger.getInstance().log({
@@ -369,7 +371,7 @@ export const performHealthCheck = (): {
 } => {
   const logger = GuestGuideErrorLogger.getInstance();
   const stats = logger.getErrorStats();
-  
+
   const checks = {
     localStorage: (() => {
       try {
@@ -387,7 +389,7 @@ export const performHealthCheck = (): {
 
   const healthyChecks = Object.values(checks).filter(Boolean).length;
   const totalChecks = Object.keys(checks).length;
-  
+
   let status: 'healthy' | 'degraded' | 'unhealthy';
   if (healthyChecks === totalChecks) {
     status = 'healthy';

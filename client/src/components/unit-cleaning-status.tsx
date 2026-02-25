@@ -37,7 +37,7 @@ function MarkCleanedDialog({ Unit, onSuccess }: MarkCleanedDialogProps) {
 
   const mutation = useMutation({
     mutationFn: async (data: { UnitNumber: string }) => {
-      await apiRequest("POST", `/api/Units/${data.UnitNumber}/mark-cleaned`, {
+      await apiRequest("POST", `/api/units/${data.UnitNumber}/mark-cleaned`, {
         cleanedBy: "Staff"
       });
     },
@@ -118,7 +118,7 @@ function UndoCleanedDialog({ Unit, onSuccess }: UndoCleanedDialogProps) {
 
   const mutation = useMutation({
     mutationFn: async (data: { UnitNumber: string }) => {
-      await apiRequest("POST", `/api/Units/${data.UnitNumber}/undo-cleaned`, {});
+      await apiRequest("POST", `/api/units/${data.UnitNumber}/undo-cleaned`, {});
     },
     onSuccess: () => {
       toast({
@@ -298,7 +298,7 @@ export default function UnitCleaningStatus() {
   }, [isMobile]);
   
   const { data: UnitsToClean = [], isLoading: loadingToClean, refetch: refetchToClean } = useQuery<Unit[]>({
-    queryKey: ["/api/Units/needs-attention"],
+    queryKey: ["/api/units/needs-attention"],
     staleTime: 30000, // 30 seconds
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -306,7 +306,7 @@ export default function UnitCleaningStatus() {
   });
 
   const { data: cleanedUnits = [], isLoading: loadingCleaned, refetch: refetchCleaned } = useQuery<Unit[]>({
-    queryKey: ["/api/Units/cleaning-status/cleaned"],
+    queryKey: ["/api/units/cleaning-status/cleaned"],
     staleTime: 30000, // 30 seconds
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -318,9 +318,9 @@ export default function UnitCleaningStatus() {
     await Promise.all([
       refetchToClean(),
       refetchCleaned(),
-      queryClient.invalidateQueries({ queryKey: ["/api/Units/needs-attention"] }),
-      queryClient.invalidateQueries({ queryKey: ["/api/Units/cleaning-status/cleaned"] }),
-      queryClient.invalidateQueries({ queryKey: ["/api/Units"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/units/needs-attention"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/units/cleaning-status/cleaned"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] }),
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] }),
     ]);
   };
@@ -328,7 +328,7 @@ export default function UnitCleaningStatus() {
   const { toast } = useToast();
   const bulkCleanMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/Units/mark-cleaned-all", {});
+      const res = await apiRequest("POST", "/api/units/mark-cleaned-all", {});
       return res.json();
     },
     onSuccess: (data: any) => {

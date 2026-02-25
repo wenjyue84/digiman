@@ -12,12 +12,15 @@ import {
   validateGuestGuideContent
 } from '@/lib/types/guest-guide';
 
+import { DEFAULT_BUSINESS_CONFIG } from '@shared/business-config';
+const prefix = DEFAULT_BUSINESS_CONFIG.shortName.toLowerCase();
+
 // Storage configuration
 const STORAGE_KEYS = {
-  SETTINGS: 'pelangi-guest-guide-settings',
-  BACKUP: 'pelangi-guest-guide-backup',
-  VERSION: 'pelangi-guest-guide-version',
-  LAST_SYNC: 'pelangi-guest-guide-last-sync'
+  SETTINGS: `${prefix}-guest-guide-settings`,
+  BACKUP: `${prefix}-guest-guide-backup`,
+  VERSION: `${prefix}-guest-guide-version`,
+  LAST_SYNC: `${prefix}-guest-guide-last-sync`
 } as const;
 
 // Service interface for future backend integration
@@ -103,14 +106,14 @@ class LocalStorageGuestGuideService implements GuestGuideServiceInterface {
   async loadSettings(): Promise<GuestGuideSettings> {
     try {
       const stored = localStorage.getItem(this.storageKeys.SETTINGS);
-      
+
       if (!stored) {
         console.log('[GuestGuideService] No stored settings found, using defaults');
         return DEFAULT_GUEST_GUIDE_SETTINGS;
       }
 
       const parsed = JSON.parse(stored);
-      
+
       // Validate loaded settings
       const validation = await this.validateSettings(parsed);
       if (!validation.isValid) {
@@ -127,7 +130,7 @@ class LocalStorageGuestGuideService implements GuestGuideServiceInterface {
 
     } catch (error) {
       console.error('[GuestGuideService] Error loading settings:', error);
-      
+
       // Try to restore from backup
       const backup = await this.restoreFromBackup();
       if (backup) {
@@ -168,7 +171,7 @@ class LocalStorageGuestGuideService implements GuestGuideServiceInterface {
 
       const parsed = JSON.parse(backup);
       const validation = await this.validateSettings(parsed);
-      
+
       if (validation.isValid) {
         return {
           ...DEFAULT_GUEST_GUIDE_SETTINGS,
@@ -257,7 +260,7 @@ class LocalStorageGuestGuideService implements GuestGuideServiceInterface {
     const lastSyncStr = localStorage.getItem(this.storageKeys.LAST_SYNC);
     const lastSync = lastSyncStr ? new Date(lastSyncStr) : null;
     const version = localStorage.getItem(this.storageKeys.VERSION);
-    
+
     // Calculate storage size (rough estimate)
     let storageSize = 0;
     Object.values(this.storageKeys).forEach(key => {
@@ -352,7 +355,7 @@ export const importGuestGuideSettings = async (jsonString: string): Promise<Gues
   try {
     const settings = JSON.parse(jsonString);
     const validation = await guestGuideService.validateSettings(settings);
-    
+
     if (!validation.isValid) {
       throw new GuestGuideServiceError(
         'Invalid settings format',

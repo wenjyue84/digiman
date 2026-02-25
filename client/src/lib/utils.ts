@@ -8,3 +8,16 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Returns the initials of a given name.
+ * e.g. "Southern Homestay" -> "SH"
+ */
+export function getInitials(name: string): string {
+  if (!name) return "";
+  return name
+    .split(/\s+/)
+    .map((word) => word.charAt(0))
+    .join("")
+    .toUpperCase();
+}

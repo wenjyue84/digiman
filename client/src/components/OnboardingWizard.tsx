@@ -8,7 +8,7 @@ export const startTour = () => {
             {
                 element: "#nav-dashboard",
                 popover: {
-                    title: "Welcome to PelangiManager!",
+                    title: "Welcome to digiman!",
                     description: "This is your starting point. The Dashboard gives you a quick overview of today's occupancy and tasks.",
                     side: "bottom",
                     align: "start",

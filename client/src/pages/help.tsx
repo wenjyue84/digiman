@@ -40,16 +40,16 @@ interface TutorialStep {
 const tutorialSteps: TutorialStep[] = [
   {
     id: 1,
-    title: "Welcome to PelangiManager",
+    title: "Welcome to digiman",
     description: "Your comprehensive capsule hotel management system",
     icon: <Home className="h-8 w-8 text-blue-600" />,
     category: "overview",
     content: (
       <div className="space-y-4">
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">What is PelangiManager?</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">What is digiman?</h3>
           <p className="text-gray-700 leading-relaxed">
-            PelangiManager is a complete solution for managing capsule hotels, hostels, and accommodation facilities.
+            digiman is a complete solution for managing accommodation facilities and multi-site operations.
             It streamlines your operations from guest check-in to checkout, cleaning management, and guest communications.
           </p>
         </div>
@@ -450,7 +450,7 @@ const tutorialSteps: TutorialStep[] = [
   {
     id: 9,
     title: "Tips & Best Practices",
-    description: "Get the most out of PelangiManager",
+    description: "Get the most out of digiman",
     icon: <Sparkles className="h-8 w-8 text-yellow-600" />,
     category: "tips",
     content: (
@@ -458,7 +458,7 @@ const tutorialSteps: TutorialStep[] = [
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-lg border border-yellow-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Optimization Tips</h3>
           <p className="text-gray-700 leading-relaxed">
-            Here are some tips to help you run your accommodation more efficiently with PelangiManager.
+            Here are some tips to help you run your accommodation more efficiently with digiman.
           </p>
         </div>
 
@@ -549,7 +549,7 @@ const tutorialSteps: TutorialStep[] = [
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Congratulations!</h3>
           <p className="text-gray-700 leading-relaxed">
-            You've completed the PelangiManager tutorial. You now know how to use all the major features
+            You've completed the digiman tutorial. You now know how to use all the major features
             of the system. Remember, you can always come back to this guide anytime you need a refresher.
           </p>
         </div>
@@ -725,7 +725,7 @@ export default function HelpPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Interactive Help Guide</h1>
-              <p className="text-gray-600">Learn how to use PelangiManager effectively</p>
+              <p className="text-gray-600">Learn how to use digiman effectively</p>
             </div>
             <Button
               onClick={startTour}

@@ -11,11 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle, MoreHorizontal, Scale } from "lucide-react";
+import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle, MoreHorizontal, Scale, ChevronDown, RefreshCw } from "lucide-react";
 import { useLocation } from "wouter";
 import MaintenanceTab from "../components/settings/MaintenanceTab";
 import UsersTab from "../components/settings/UsersTab";
-import CapsulesTab from "../components/settings/CapsulesTab";
+import UnitsTab from "../components/settings/UnitsTab";
 import MessagesTab from "../components/settings/MessagesTab";
 import GeneralSettingsTab from "../components/settings/GeneralSettingsTab";
 import TestsTab from "../components/settings/TestsTab";
@@ -25,11 +25,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TimeSelect } from "@/components/ui/time-select";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ToastAction } from "@/components/ui/toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
+import { useSetupChecklist } from "@/hooks/useSetupChecklist";
 import { useToast } from "@/hooks/use-toast";
 import { AuthContext } from "@/lib/auth";
-import { updateSettingsSchema, type UpdateSettings, type UnitProblem, type User, type InsertUser, insertUserSchema, type PaginatedResponse, type Capsule, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
+import RainbowSetupChecklist from "../components/settings/RainbowSetupChecklist";
+import { useDatabaseHealth } from "@/hooks/useDatabaseHealth";
+import { updateSettingsSchema, type UpdateSettings, type UnitProblem, type User, type InsertUser, insertUserSchema, type PaginatedResponse, type Unit, insertUnitSchema, updateUnitSchema } from "@shared/schema";
 import { z } from "zod";
 
 export default function SettingsPage() {
@@ -39,7 +44,11 @@ export default function SettingsPage() {
   const isAuthenticated = authContext?.isAuthenticated || false;
   const [activeTab, setActiveTab] = useState("general");
   const labels = useAccommodationLabels();
+  const setupChecklist = useSetupChecklist();
   const [, setLocation] = useLocation();
+  const [healthOpen, setHealthOpen] = useState(false);
+  const [dbOpen, setDbOpen] = useState(false);
+  const { healthStatus, isChecking, checkDatabaseHealth } = useDatabaseHealth();
 
   // General settings queries
   const { data: settings, isLoading } = useQuery<{ accommodationType?: string; selfCheckinSuccessMessage?: string }>({
@@ -47,7 +56,7 @@ export default function SettingsPage() {
     enabled: isAuthenticated,
   });
 
-  // Capsule problems queries
+  // Unit problems queries
   const { data: problemsResponse, isLoading: problemsLoading } = useQuery<PaginatedResponse<UnitProblem>>({
     queryKey: ["/api/problems"],
     enabled: isAuthenticated && activeTab === "maintenance",
@@ -55,10 +64,10 @@ export default function SettingsPage() {
   
   const problems = problemsResponse?.data || [];
 
-  // Capsules query for dropdown and capsules management
-  const { data: capsules = [] } = useQuery<Capsule[]>({
+  // Units query for dropdown and unit management
+  const { data: units = [] } = useQuery<Unit[]>({
     queryKey: ["/api/units"],
-    enabled: isAuthenticated && (activeTab === "maintenance" || activeTab === "capsules"),
+    enabled: isAuthenticated && (activeTab === "maintenance" || activeTab === "units"),
   });
 
   // Users queries
@@ -118,6 +127,9 @@ export default function SettingsPage() {
         
         // UI Preferences
         showAllUnits: (settings as any).showAllUnits === true,
+
+        // App identity
+        appTitle: (settings as any).appTitle || "",
       } as any);
       console.log('✅ Form reset complete with CSV data');
     }
@@ -130,10 +142,26 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      toast({
-        title: "Settings Updated",
-        description: "Your settings have been saved successfully.",
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/setup/checklist"] });
+
+      // "What's Next" toast — suggest next incomplete step
+      const nextItem = setupChecklist.items.find((i) => !i.completed);
+      if (nextItem && !setupChecklist.isAllComplete) {
+        toast({
+          title: "Settings saved!",
+          description: `Next: ${nextItem.label}`,
+          action: (
+            <ToastAction altText="Go" onClick={() => setLocation(nextItem.href)}>
+              Go →
+            </ToastAction>
+          ),
+        });
+      } else {
+        toast({
+          title: "Settings Updated",
+          description: "Your settings have been saved successfully.",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -185,10 +213,112 @@ export default function SettingsPage() {
           <div className="h-9 w-9 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-sm">
             <Settings className="h-4 w-4 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
             <p className="text-gray-600 mt-1">Configure system settings and preferences</p>
           </div>
+
+          {/* Health Score (2E) */}
+          {!setupChecklist.isLoading && setupChecklist.totalCount > 0 && (
+            <Collapsible open={healthOpen} onOpenChange={setHealthOpen}>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  <span className="font-medium">
+                    System Readiness: {setupChecklist.completedCount}/{setupChecklist.totalCount}
+                  </span>
+                  <span className="flex gap-0.5">
+                    {setupChecklist.items.map((item) => (
+                      <span
+                        key={item.id}
+                        className={`inline-block h-2.5 w-2.5 rounded-full ${
+                          item.completed ? "bg-emerald-500" : "bg-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${healthOpen ? "rotate-180" : ""}`} />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+                  <Collapsible open={dbOpen} onOpenChange={setDbOpen}>
+                    <CollapsibleTrigger asChild>
+                      <button className="flex items-center justify-between gap-2 w-full text-left text-sm hover:bg-gray-100 rounded px-2 py-1 transition-colors">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className={`inline-block h-2 w-2 rounded-full shrink-0 ${
+                              isChecking ? "bg-blue-400" : healthStatus.isHealthy ? "bg-emerald-500" : "bg-red-500"
+                            }`}
+                          />
+                          <span className="text-gray-700">Database connection</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs ${healthStatus.isHealthy ? "text-emerald-700" : "text-red-700"}`}>
+                            {isChecking ? "Checking..." : healthStatus.isHealthy ? "Connected" : "Disconnected"}
+                          </span>
+                          <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${dbOpen ? "rotate-180" : ""}`} />
+                        </div>
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-2 pb-2 pt-1">
+                      <div className="bg-white border border-gray-200 rounded-md p-2 text-xs text-gray-600 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-gray-700">Status</span>
+                          <span>{healthStatus.isHealthy ? "Healthy" : "Issue detected"}</span>
+                        </div>
+                        {healthStatus.lastCheck && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-gray-700">Last check</span>
+                            <span>{healthStatus.lastCheck.toLocaleTimeString()}</span>
+                          </div>
+                        )}
+                        {!healthStatus.isHealthy && healthStatus.errorMessage && (
+                          <div className="text-red-600">
+                            {healthStatus.errorMessage}
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="text-gray-500">Retries: {healthStatus.retryCount}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              checkDatabaseHealth();
+                            }}
+                            disabled={isChecking}
+                          >
+                            <RefreshCw className={`h-3 w-3 mr-1 ${isChecking ? "animate-spin" : ""}`} />
+                            Check now
+                          </Button>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                  {setupChecklist.items.map((item) => (
+                    <button
+                      key={item.id}
+                      className="flex items-center gap-2 w-full text-left text-sm hover:bg-gray-100 rounded px-2 py-1 transition-colors"
+                      onClick={() => {
+                        // Parse tab from href like "/settings?tab=general"
+                        const tabMatch = item.href.match(/tab=(\w+)/);
+                        if (tabMatch) setActiveTab(tabMatch[1]);
+                        setHealthOpen(false);
+                      }}
+                    >
+                      <span className={`inline-block h-2 w-2 rounded-full shrink-0 ${item.completed ? "bg-emerald-500" : "bg-gray-300"}`} />
+                      <span className={item.completed ? "text-gray-400 line-through" : "text-gray-700"}>
+                        {item.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
       </div>
 
@@ -207,7 +337,7 @@ export default function SettingsPage() {
               </Tooltip>
               <span>General</span>
             </TabsTrigger>
-            <TabsTrigger value="capsules" className="flex items-center justify-start gap-2">
+            <TabsTrigger value="units" className="flex items-center justify-start gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
@@ -258,7 +388,7 @@ export default function SettingsPage() {
                     <Scale className="h-3 w-3 text-amber-600" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">Capsule assignment rules for auto-assignment</TooltipContent>
+                <TooltipContent side="bottom">Unit assignment rules for auto-assignment</TooltipContent>
               </Tooltip>
               <span>Rules</span>
             </TabsTrigger>
@@ -287,7 +417,7 @@ export default function SettingsPage() {
                 <TooltipContent side="bottom">General system settings and configuration</TooltipContent>
               </Tooltip>
             </TabsTrigger>
-            <TabsTrigger value="capsules" className="flex items-center justify-center gap-2">
+            <TabsTrigger value="units" className="flex items-center justify-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center justify-center h-5 w-5 rounded-full bg-purple-100">
@@ -366,11 +496,12 @@ export default function SettingsPage() {
             resetToDefault={resetToDefault}
             updateSettingsMutation={updateSettingsMutation}
           />
+          <RainbowSetupChecklist />
         </TabsContent>
 
-        <TabsContent value="capsules" className="space-y-6">
-          <CapsulesTab
-            capsules={capsules}
+        <TabsContent value="units" className="space-y-6">
+          <UnitsTab
+            units={units}
             queryClient={queryClient}
             toast={toast}
             labels={labels}
@@ -380,7 +511,7 @@ export default function SettingsPage() {
         <TabsContent value="maintenance" className="space-y-6">
           <MaintenanceTab
             problems={problems}
-            capsules={capsules}
+            units={units}
             isLoading={problemsLoading}
             queryClient={queryClient}
             toast={toast}

@@ -16,12 +16,13 @@ import {
   validateGuestGuideContent,
   PreviewDevice
 } from '@/lib/types/guest-guide';
-import { 
-  safeParseStoredSettings, 
+import {
+  safeParseStoredSettings,
   mapApiToGuestGuideSettings,
-  debugLog 
+  debugLog
 } from '@/lib/utils/guest-guide-utils';
 import { toast } from '@/hooks/use-toast';
+import { DEFAULT_BUSINESS_CONFIG } from '@shared/business-config';
 
 // Action types for state management
 type GuestGuideAction =
@@ -41,7 +42,7 @@ const guestGuideReducer = (state: GuestGuideContextState, action: GuestGuideActi
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
-    
+
     case 'SET_SETTINGS':
       return {
         ...state,
@@ -50,7 +51,7 @@ const guestGuideReducer = (state: GuestGuideContextState, action: GuestGuideActi
         isDirty: false,
         error: null
       };
-    
+
     case 'UPDATE_CONTENT':
       return {
         ...state,
@@ -61,7 +62,7 @@ const guestGuideReducer = (state: GuestGuideContextState, action: GuestGuideActi
         },
         isDirty: true
       };
-    
+
     case 'UPDATE_VISIBILITY':
       return {
         ...state,
@@ -72,33 +73,33 @@ const guestGuideReducer = (state: GuestGuideContextState, action: GuestGuideActi
         },
         isDirty: true
       };
-    
+
     case 'SET_PREVIEW_MODE':
       return { ...state, previewMode: action.payload };
-    
+
     case 'SET_IS_EDITING':
       return { ...state, isEditing: action.payload };
-    
+
     case 'SET_DIRTY':
       return { ...state, isDirty: action.payload };
-    
+
     case 'SET_ERROR':
       return { ...state, error: action.payload };
-    
+
     case 'RESET_SETTINGS':
       return {
         ...state,
         settings: { ...state.settings },
         isDirty: false
       };
-    
+
     case 'LOAD_DEFAULT_SETTINGS':
       return {
         ...state,
         settings: { ...DEFAULT_GUEST_GUIDE_SETTINGS, lastModified: new Date() },
         isDirty: true
       };
-    
+
     default:
       return state;
   }
@@ -118,8 +119,9 @@ const initialState: GuestGuideContextState = {
 const GuestGuideContext = createContext<GuestGuideContextValue | undefined>(undefined);
 
 // Storage keys for persistence
-const STORAGE_KEY = 'pelangi-guest-guide-settings';
-const BACKUP_STORAGE_KEY = 'pelangi-guest-guide-backup';
+const prefix = DEFAULT_BUSINESS_CONFIG.shortName.toLowerCase();
+const STORAGE_KEY = `${prefix}-guest-guide-settings`;
+const BACKUP_STORAGE_KEY = `${prefix}-guest-guide-backup`;
 
 // Guest Guide Provider Component
 interface GuestGuideProviderProps {
@@ -140,7 +142,7 @@ export const GuestGuideProvider: React.FC<GuestGuideProviderProps> = ({ children
   useEffect(() => {
     const loadInitialSettings = () => {
       dispatch({ type: 'SET_LOADING', payload: true });
-      
+
       try {
         // Try to load from localStorage first (for immediate loading)
         const storedSettings = localStorage.getItem(STORAGE_KEY);
@@ -220,14 +222,14 @@ export const GuestGuideProvider: React.FC<GuestGuideProviderProps> = ({ children
               debugLog('Context', 'Corrupted data found, not backing up', backupError);
             }
           }
-          
+
           // Validate settings before saving
           const settingsToSave = JSON.stringify(state.settings);
           JSON.parse(settingsToSave); // Test if it can be parsed back
-          
+
           // Save current settings
           localStorage.setItem(STORAGE_KEY, settingsToSave);
-          
+
           toast({
             title: 'Settings Auto-saved',
             description: 'Your changes have been saved locally',
@@ -235,7 +237,7 @@ export const GuestGuideProvider: React.FC<GuestGuideProviderProps> = ({ children
           });
         } catch (error) {
           console.error('Error saving settings:', error);
-          
+
           // Try to recover from backup
           const backupSettings = localStorage.getItem(BACKUP_STORAGE_KEY);
           if (backupSettings) {
@@ -251,7 +253,7 @@ export const GuestGuideProvider: React.FC<GuestGuideProviderProps> = ({ children
               return;
             }
           }
-          
+
           toast({
             title: 'Save Error',
             description: 'Failed to save settings. Changes may be lost.',
@@ -304,13 +306,13 @@ export const GuestGuideProvider: React.FC<GuestGuideProviderProps> = ({ children
   const saveSettings = useCallback(async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      
+
       // Here you would typically call an API to save settings
       // For now, we'll just save to localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings));
-      
+
       dispatch({ type: 'SET_DIRTY', payload: false });
-      
+
       toast({
         title: 'Settings Saved',
         description: 'Guest guide settings have been saved successfully',
@@ -342,7 +344,7 @@ export const GuestGuideProvider: React.FC<GuestGuideProviderProps> = ({ children
       } else {
         dispatch({ type: 'RESET_SETTINGS' });
       }
-      
+
       toast({
         title: 'Settings Reset',
         description: 'Changes have been discarded',

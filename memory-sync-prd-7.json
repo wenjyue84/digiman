@@ -1,0 +1,243 @@
+{
+  "productName": "Memory Sync Round 7 — JBCCCI Seminar, VSTECS Partnership, MyHackathon, Startup Ecosystem & Side Ventures",
+  "branchName": "main",
+  "overview": "Extract facts from Jay's Notion workspace covering JBCCCI I4.0 Seminar organization, VSTECS/AWS partnership and POC grants, MyHackathon 2024 competition, CRADLE/MPMA networking events, Zeta Technology project, PetiKembara luggage business, Prisma business agreements, Farm Fresh and uncaptured sales leads, AI-LiveChat SaaS product, and Prisma digital marketing strategy. Push atomic memories to Mem0 Cloud (api.mem0.ai). No code changes — purely API operations.",
+  "goals": [
+    "Document JBCCCI Industrial 4.0 Seminar event organization and outcomes",
+    "Capture VSTECS partnership, AWS POC grant applications, and APN registration",
+    "Record MyHackathon 2024 participation and team composition",
+    "Map CRADLE startup roadshow and MPMA networking events",
+    "Document Zeta Technology AWS migration project",
+    "Capture PetiKembara luggage livestream business venture",
+    "Record Prisma business agreements (P&C, Chong-Eddie, Foodpanda, StoreHub)",
+    "Document Farm Fresh and other uncaptured Prisma sales pipeline leads",
+    "Capture AI-LiveChat SaaS product details and domain setup",
+    "Each fact is atomic: one subject, one predicate, retrievable via semantic search"
+  ],
+  "userStories": [
+    {
+      "id": "MS7-001",
+      "title": "JBCCCI Industrial 4.0 Seminar Organization (Aug 2023)",
+      "priority": 1,
+      "description": "Fetch JBCCCI I4.0 Seminar task pages, emcee schedule, event brief, MIDF invitation letter, seminar process flow, sponsor voucher package. Extract: event date/venue, Jay as emcee, speakers (Teddy, Yang, Chong prompt engineering), MIDF invitation, Paragon International School venue, committee task assignments.",
+      "acceptanceCriteria": [
+        "Fetch seminar task pages, emcee schedule, event brief, invitation letters",
+        "Extract: event details, speakers, Jay's emcee role, venue, sponsors",
+        "Push 8-10 atomic facts about JBCCCI I4.0 seminar",
+        "Verify via Mem0 search for 'JBCCCI seminar' and 'Industrial 4.0 seminar'"
+      ],
+      "notionSearchQueries": [
+        "Task I4.0 Seminar 29/8",
+        "Emcee Schedule",
+        "Event Brief",
+        "Invitation to MIDF",
+        "Jbccci seminar invitation letter",
+        "jbccci seminar process flow 讲座流程",
+        "being emcee for ai seminar",
+        "slides Chong 提示工程seminar",
+        "Teddy prepared seminar slides",
+        "25/08 Seminar Jbccci -3 Sponsor Voucher Package"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS7-002",
+      "title": "VSTECS AWS Partnership & POC Grant Applications",
+      "priority": 2,
+      "description": "Fetch VSTECS company page, Vstech AWS POC Customer Initiative, AWS POC grant applications (AI-LiveChat, SengLiy, Lawyer System), APN registration page, AWS Partner Sales Accreditation. Extract: VSTECS as AWS distributor, Justin Koh as contact, POC grant amounts, APN consulting partner status, accreditation completion.",
+      "acceptanceCriteria": [
+        "Fetch VSTECS profile, POC initiative, 3 grant applications, APN registration",
+        "Extract: partnership details, POC funding amounts, APN status",
+        "Push 8-10 atomic facts about VSTECS/AWS partnership",
+        "Verify via Mem0 search for 'VSTECS' and 'AWS POC'"
+      ],
+      "notionSearchQueries": [
+        "VSTECS",
+        "Vstech AWS POC Customer Initiative",
+        "Apply for AWS POC grant for Prisma AI-LiveChat platform",
+        "Apply for AWS POC grant for SengLiy project",
+        "Apply AWS POC grant for Lawyer System",
+        "register for APN",
+        "Complete AWS Partner Sales Accreditation"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS7-003",
+      "title": "MyHackathon 2024 Competition & Prisma Team",
+      "priority": 3,
+      "description": "Fetch MyHackathon 2024 Slack channel content and related pages, 社团/公会/组织 page mentioning MyHackathon finalist. Extract: competition name, cohort, problem statement, team members and roles, finalist achievement, live demo showcase, presentation outcomes.",
+      "acceptanceCriteria": [
+        "Fetch MyHackathon Slack threads and related Notion pages",
+        "Extract: competition details, team roster, roles, achievement",
+        "Push 5-8 atomic facts about MyHackathon 2024",
+        "Verify via Mem0 search for 'MyHackathon' and 'hackathon'"
+      ],
+      "notionSearchQueries": [
+        "myhackathon 2024",
+        "社团/公会/组织",
+        "Organize JBCCCI Seminar"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS7-004",
+      "title": "CRADLE Startup Roadshow & MPMA Networking Events",
+      "priority": 4,
+      "description": "Fetch CRADLE LIVE! Roadshow Johor page, MPMA event pages (16/8/25), Mike Lam MPMA profile, YYC-MPMA pages. Extract: CRADLE event date/details/outcomes, MPMA event with AWS, Mike Lam as Johor president, lead generation from MPMA directory, Pasir Gudang seminar.",
+      "acceptanceCriteria": [
+        "Fetch CRADLE roadshow, MPMA event, Mike Lam, YYC-MPMA pages",
+        "Extract: event details, networking outcomes, key contacts",
+        "Push 5-8 atomic facts about startup/industry events",
+        "Verify via Mem0 search for 'CRADLE' and 'MPMA'"
+      ],
+      "notionSearchQueries": [
+        "Go cradle activity today",
+        "16/8/25 mpma event",
+        "Mike MPMA johor president",
+        "YYC - MPMA",
+        "go seminar in pasir gudang",
+        "Mpma Yap Zhi Wei"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS7-005",
+      "title": "Zeta Technology AWS Migration & Additional Client Projects",
+      "priority": 5,
+      "description": "Fetch Setup AWS server for Zeta Technology page, Heyden Zeta boss profile, prepare POC project with Vstech, Review AWS proposal for AI-LiveChat. Extract: Zeta Technology company details, Taiwan-to-AWS migration scope, RM2K/month budget, project cancellation status, Heyden as contact.",
+      "acceptanceCriteria": [
+        "Fetch Zeta Technology project, Heyden profile, POC preparation pages",
+        "Extract: client details, migration scope, budget, status",
+        "Push 5-6 atomic facts about Zeta and additional projects",
+        "Verify via Mem0 search for 'Zeta Technology' and 'AWS migration'"
+      ],
+      "notionSearchQueries": [
+        "Setup AWS server for Zeta Technology",
+        "Meet heyden at zeta technology",
+        "Heyden zeta boss",
+        "prepare POC project with Vstech",
+        "Review aws proposal for ai-livechat"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS7-006",
+      "title": "PetiKembara Luggage Business & TikTok Livestream Venture",
+      "priority": 6,
+      "description": "Fetch PetiKembara business plan, luggage business page, TikTok livecast planning, luggage ordering sheet. Extract: business name alternatives, TikTok livestream sales model, Shopee/Lazada channels, partnership with Linh for ordering, venture status (abandoned/paused).",
+      "acceptanceCriteria": [
+        "Fetch PetiKembara plan, luggage business, TikTok livecast pages",
+        "Extract: business model, channels, partners, venture status",
+        "Push 5-6 atomic facts about PetiKembara venture",
+        "Verify via Mem0 search for 'PetiKembara' and 'luggage business'"
+      ],
+      "notionSearchQueries": [
+        "PetiKembara 行李箱直播生意计划书",
+        "luggage business 行李箱 tit tok 直播",
+        "Start Livecast Sales Business on TikTok",
+        "Planning for livecast tiktok business",
+        "deliver luggage to qiqi"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS7-007",
+      "title": "Prisma Business Agreements & Service Contracts",
+      "priority": 7,
+      "description": "Fetch P&C agreement, Chong and Eddie 协议 (Industry AI), Foodpanda contract, StoreHub POS agreement, pest control contract. Extract: P&C agreement date/scope, Industry AI Sdn Bhd JV (25%/75%), Foodpanda contract number, StoreHub POS terms, pest control vendor. NO credentials or bank details.",
+      "acceptanceCriteria": [
+        "Fetch P&C agreement, Chong-Eddie JV, Foodpanda, StoreHub, pest control pages",
+        "Extract: agreement terms, partners, contract numbers, venture details",
+        "Push 6-8 atomic facts about business agreements",
+        "Verify via Mem0 search for 'P&C agreement' and 'Industry AI'"
+      ],
+      "notionSearchQueries": [
+        "P&C agreement",
+        "Chong and Eddie 协议",
+        "foodpanda contract signed",
+        "Cafe StoreHub POS Sales Service Agreement",
+        "pest control contract rm200"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS7-008",
+      "title": "Farm Fresh & Uncaptured Prisma Sales Pipeline Leads",
+      "priority": 8,
+      "description": "Fetch Farm Fresh ticketing system quotation, Sunny Packaging quotation, 172 Gary renovation quotation, MDB quotation, letter to Bernard (MTECH). Extract: each prospect's industry, proposed solution, quotation value, project status, key contacts.",
+      "acceptanceCriteria": [
+        "Fetch Farm Fresh, Sunny Packaging, 172 Gary, MDB, MTECH pages",
+        "Extract: prospect details, quotation values, project outcomes",
+        "Push 5-8 atomic facts about additional sales leads",
+        "Verify via Mem0 search for 'Farm Fresh' and 'Prisma quotation'"
+      ],
+      "notionSearchQueries": [
+        "Farm fresh quotation for ticketing system",
+        "task prepare quotation for Sunny Packaging",
+        "172 gary quotation for 3 new rooms",
+        "MDB quotation",
+        "letter to bernard"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS7-009",
+      "title": "AI-LiveChat SaaS Product & Client Onboarding",
+      "priority": 9,
+      "description": "Fetch System Testing & QA page, Create 8 customer chatbots (PKMS) page, Domain and Host pages, ai-livechat domain setup. Extract: AI-LiveChat as SaaS product, testing infrastructure, domain ai-livechat.com, 8-client target, PKMS onboarding workflow, GitHub repos.",
+      "acceptanceCriteria": [
+        "Fetch QA testing, customer chatbot target, domain hosting pages",
+        "Extract: product details, infrastructure, client targets, domain",
+        "Push 5-8 atomic facts about AI-LiveChat product",
+        "Verify via Mem0 search for 'AI-LiveChat SaaS' and 'ai-livechat.com'"
+      ],
+      "notionSearchQueries": [
+        "System Testing QA",
+        "Create 8 customer chatbots PKMS",
+        "Domain and Host",
+        "Domain Name for website"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS7-010",
+      "title": "Prisma Digital Marketing & Facebook Strategy",
+      "priority": 10,
+      "description": "Fetch Prisma Facebook Page Revival & Growth, Grow Facebook page followers to 100+, Update Prisma Facebook page, Create 5 Facebook posts pages, Prisma social media ad pages. Extract: Facebook growth strategy, 100+ followers target, AWS/VSTECS partnership showcase, content calendar, social media accounts.",
+      "acceptanceCriteria": [
+        "Fetch Facebook revival, growth target, content posting pages",
+        "Extract: marketing strategy, growth targets, content themes",
+        "Push 5-6 atomic facts about Prisma digital marketing",
+        "Verify via Mem0 search for 'Prisma Facebook' and 'digital marketing'"
+      ],
+      "notionSearchQueries": [
+        "Prisma Facebook Page Revival Growth",
+        "Grow Facebook page followers to 100+",
+        "Update Prisma Facebook page",
+        "Create and publish 5 Facebook posts showcasing AWS partnership"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    }
+  ]
+}

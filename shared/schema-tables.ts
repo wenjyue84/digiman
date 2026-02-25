@@ -79,7 +79,7 @@ export const guests = pgTable("guests", {
 
 export const units = pgTable("units", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  number: text("number").notNull().unique(),
+  number: text("unit_number").notNull().unique(),
   section: text("section").notNull(), // 'back', 'middle', 'front'
   isAvailable: boolean("is_available").notNull().default(true),
   cleaningStatus: text("cleaning_status").notNull().default("cleaned"), // 'cleaned', 'to_be_cleaned'

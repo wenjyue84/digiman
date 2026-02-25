@@ -157,6 +157,29 @@ router.post("/import",
   }
 });
 
+// ─── First-Run Wizard Completion ─────────────────────────────────────
+
+// GET /api/settings/setup-status — returns whether the first-run wizard has been completed
+router.get("/setup-status", authenticateToken, async (_req, res) => {
+  try {
+    const setting = await storage.getSetting("firstRunCompleted");
+    res.json({ completed: setting?.value === "true" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch setup status" });
+  }
+});
+
+// POST /api/settings/setup-complete — marks first-run wizard as done in the DB
+router.post("/setup-complete", authenticateToken, async (req: any, res) => {
+  try {
+    const updatedBy = req.user?.username || req.user?.email || "system";
+    await storage.setSetting("firstRunCompleted", "true", "First-run wizard completed", updatedBy);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to save setup status" });
+  }
+});
+
 // ─── Unit Assignment Rules ───────────────────────────────────────────
 
 const UNIT_RULES_KEY = 'unitAssignmentRules';
