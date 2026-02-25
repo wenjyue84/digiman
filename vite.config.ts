@@ -167,24 +167,26 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: '127.0.0.1',   // Explicit IPv4 — fixes localhost→::1 ambiguity on Windows
+    strictPort: true,
     hmr: {
       overlay: false // Disable runtime error overlay
     },
     proxy: {
       '/api/rainbow-kb': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true
       },
       '/api/rainbow': {
-        target: `http://localhost:${process.env.MCP_SERVER_PORT || '3002'}`,
+        target: `http://127.0.0.1:${process.env.MCP_SERVER_PORT || '3002'}`,
         changeOrigin: true
       },
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true
       },
       '/objects': {
-        target: 'http://localhost:5000',
+        target: 'http://127.0.0.1:5000',
         changeOrigin: true
       }
     },

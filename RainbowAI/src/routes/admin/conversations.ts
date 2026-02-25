@@ -154,6 +154,28 @@ router.get('/conversations/dates-map', async (_req: Request, res: Response) => {
   }
 });
 
+// ─── Custom Fields Map (Homestay) ────────────────────────────────────────
+
+router.get('/conversations/custom-fields-map', async (_req: Request, res: Response) => {
+  try {
+    const { pool: dbPool } = await import('../../lib/db.js');
+    if (!dbPool) return res.json({});
+    const result = await dbPool.query(
+      `SELECT phone, field_key, value FROM rainbow_custom_field_values WHERE value IS NOT NULL AND value != ''`
+    );
+    // Build { phone: { field_key: value, ... }, ... }
+    const map: Record<string, Record<string, string>> = {};
+    for (const row of result.rows) {
+      if (!map[row.phone]) map[row.phone] = {};
+      map[row.phone][row.field_key] = row.value;
+    }
+    res.json(map);
+  } catch (err: any) {
+    if (err.code === '42P01') return res.json({});
+    serverError(res, err);
+  }
+});
+
 // ─── Pin & Favourite ─────────────────────────────────────────────────
 
 router.patch('/conversations/:phone/pin', async (req: Request, res: Response) => {
@@ -432,7 +454,9 @@ router.post('/conversations/:phone/send-media', upload.single('file'), async (re
 // Trigger a workflow for a specific contact (US-016: // command palette)
 router.post('/conversations/:phone/trigger-workflow', async (req: Request, res: Response) => {
   try {
-    const phone = decodeURIComponent(req.params.phone);
+    const rawPhone = decodeURIComponent(req.params.phone);
+    // Normalize to JID format — conversation state uses full JID as key
+    const phone = rawPhone.includes('@') ? rawPhone : `${rawPhone}@s.whatsapp.net`;
     const { workflowId, instanceId, staffName } = req.body;
 
     if (!workflowId || typeof workflowId !== 'string') {
@@ -451,7 +475,7 @@ router.post('/conversations/:phone/trigger-workflow', async (req: Request, res: 
 
     // Create workflow state and execute first step
     const { createWorkflowState, executeWorkflowStep } = await import('../../assistant/workflow-executor.js');
-    const { updateWorkflowState } = await import('../../assistant/conversation-logger.js');
+    const { updateWorkflowState } = await import('../../assistant/conversation.js');
 
     const log = await getConversation(phone);
     const pushName = log?.pushName || 'Guest';
@@ -472,9 +496,13 @@ router.post('/conversations/:phone/trigger-workflow', async (req: Request, res: 
       }
     }
 
+    // Ensure conversation exists in memory so workflowState can be saved
+    const { getOrCreate } = await import('../../assistant/conversation.js');
+    const convo = getOrCreate(phone, pushName);
+
     const workflowState = createWorkflowState(workflowId);
     const result = await executeWorkflowStep(workflowState, null, {
-      language: 'en',
+      language: convo.language || 'en',
       phone,
       pushName,
       instanceId: targetInstanceId,
@@ -848,6 +876,72 @@ router.post('/conversations/:phone/mode', async (req: Request, res: Response) =>
 
     console.log(`[Mode Change] Set ${phone} to ${mode} mode${setAsGlobalDefault ? ' (and global default)' : ''}`);
     ok(res, { mode, globalDefaultUpdated: !!setAsGlobalDefault });
+  } catch (err: any) {
+    serverError(res, err);
+  }
+});
+
+// ─── Internal Comments (Staff Notes) ─────────────────────────────
+
+// GET comments for a conversation
+router.get('/conversations/:phone/comments', async (req: Request, res: Response) => {
+  try {
+    const phone = decodeURIComponent(req.params.phone);
+    const { pool: dbPool } = await import('../../lib/db.js');
+    if (!dbPool) return res.json([]);
+
+    const result = await dbPool.query(
+      `SELECT id, content, author, created_at FROM rainbow_conversation_comments
+       WHERE phone = $1 ORDER BY created_at ASC`,
+      [phone]
+    );
+    res.json(result.rows.map((r: any) => ({
+      id: r.id,
+      content: r.content,
+      author: r.author,
+      createdAt: r.created_at,
+    })));
+  } catch (err: any) {
+    if (err.code === '42P01') return res.json([]);
+    serverError(res, err);
+  }
+});
+
+// POST a new comment
+router.post('/conversations/:phone/comments', async (req: Request, res: Response) => {
+  try {
+    const phone = decodeURIComponent(req.params.phone);
+    const { content, author } = req.body;
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      return badRequest(res, 'content (string) required');
+    }
+    const { pool: dbPool } = await import('../../lib/db.js');
+    if (!dbPool) return res.status(503).json({ error: 'Database not configured' });
+
+    const result = await dbPool.query(
+      `INSERT INTO rainbow_conversation_comments (phone, content, author)
+       VALUES ($1, $2, $3) RETURNING id, content, author, created_at`,
+      [phone, content.trim(), (author && typeof author === 'string') ? author.trim() : 'Staff']
+    );
+    const row = result.rows[0];
+    ok(res, { id: row.id, content: row.content, author: row.author, createdAt: row.created_at });
+  } catch (err: any) {
+    serverError(res, err);
+  }
+});
+
+// DELETE a comment
+router.delete('/conversations/:phone/comments/:commentId', async (req: Request, res: Response) => {
+  try {
+    const { commentId } = req.params;
+    const { pool: dbPool } = await import('../../lib/db.js');
+    if (!dbPool) return res.status(503).json({ error: 'Database not configured' });
+
+    const result = await dbPool.query(
+      `DELETE FROM rainbow_conversation_comments WHERE id = $1 RETURNING id`, [commentId]
+    );
+    if (result.rows.length === 0) return notFound(res, 'Comment');
+    ok(res, { success: true });
   } catch (err: any) {
     serverError(res, err);
   }

@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle, MoreHorizontal, Scale } from "lucide-react";
+import { Settings, Clock, Save, RotateCcw, Wrench, Users, MessageSquare, Plus, Trash2, Edit, Building, Cog, UserCheck, BookOpen, TestTube, Eye, MapPin, Camera, Globe, Video, Smartphone, Monitor, Wifi, Printer, Send, FileText, CheckCircle, MoreHorizontal, Scale, CalendarClock, Tags } from "lucide-react";
 import { useLocation } from "wouter";
 import MaintenanceTab from "../components/settings/MaintenanceTab";
 import UsersTab from "../components/settings/UsersTab";
@@ -21,6 +21,8 @@ import GeneralSettingsTab from "../components/settings/GeneralSettingsTab";
 import TestsTab from "../components/settings/TestsTab";
 import GuestGuideTab from "../components/settings/GuestGuideTab";
 import CapsuleRulesTab from "../components/settings/CapsuleRulesTab";
+import ScheduledMessagesTab from "../components/settings/ScheduledMessagesTab";
+import ContactFieldsTab from "../components/settings/ContactFieldsTab";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TimeSelect } from "@/components/ui/time-select";
@@ -194,8 +196,8 @@ export default function SettingsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TooltipProvider>
-          {/* Desktop: Show all 7 tabs directly */}
-          <TabsList className="hidden md:grid w-full grid-cols-7">
+          {/* Desktop: Show all 9 tabs directly */}
+          <TabsList className="hidden md:grid w-full grid-cols-9">
             <TabsTrigger value="general" className="flex items-center justify-start gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -272,6 +274,28 @@ export default function SettingsPage() {
                 <TooltipContent side="bottom">System tests and development tools</TooltipContent>
               </Tooltip>
               <span>Tests</span>
+            </TabsTrigger>
+            <TabsTrigger value="scheduled" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-amber-100">
+                    <CalendarClock className="h-3 w-3 text-amber-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Scheduled WhatsApp messages based on check-in/out dates</TooltipContent>
+              </Tooltip>
+              <span>Scheduled</span>
+            </TabsTrigger>
+            <TabsTrigger value="fields" className="flex items-center justify-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full bg-violet-100">
+                    <Tags className="h-3 w-3 text-violet-600" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Define custom fields stored per contact</TooltipContent>
+              </Tooltip>
+              <span>Fields</span>
             </TabsTrigger>
           </TabsList>
 
@@ -351,6 +375,18 @@ export default function SettingsPage() {
                     </div>
                     <span>Tests</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setActiveTab("scheduled")} className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-4 w-4 rounded-full bg-amber-100">
+                      <CalendarClock className="h-2.5 w-2.5 text-amber-600" />
+                    </div>
+                    <span>Scheduled</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setActiveTab("fields")} className="flex items-center gap-2">
+                    <div className="flex items-center justify-center h-4 w-4 rounded-full bg-violet-100">
+                      <Tags className="h-2.5 w-2.5 text-violet-600" />
+                    </div>
+                    <span>Fields</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -415,6 +451,14 @@ export default function SettingsPage() {
 
         <TabsContent value="tests" className="space-y-6">
           <TestsTab />
+        </TabsContent>
+
+        <TabsContent value="scheduled" className="space-y-6">
+          <ScheduledMessagesTab />
+        </TabsContent>
+
+        <TabsContent value="fields" className="space-y-6">
+          <ContactFieldsTab />
         </TabsContent>
 
       </Tabs>

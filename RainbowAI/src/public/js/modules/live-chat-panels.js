@@ -264,6 +264,7 @@ export async function loadContactDetails() {
   loadGlobalTags(); // US-008: Fetch global tags for autocomplete
   loadCapsuleUnits(); // US-010: Fetch capsule units for dropdown
   loadPaymentReminder(); // US-022: Load payment reminder for this contact
+  loadCustomFields(); // Dynamic custom fields from contact_field_definitions
 }
 
 // US-088: Country detection from phone prefix
@@ -872,101 +873,10 @@ function _updateTagFilterBtnLabel() {
   }
 }
 
-// ─── Unit Filter (US-013) ────────────────────────────────────────
-
-export async function toggleUnitFilter() {
-  var dropdown = document.getElementById('lc-unit-filter-dropdown');
-  if (!dropdown) return;
-  var isOpen = dropdown.style.display !== 'none';
-  if (isOpen) {
-    dropdown.style.display = 'none';
-    return;
-  }
-  // US-006: Ensure unit/capsule data is loaded before rendering (handles race on first click)
-  if (Object.keys($.contactUnitsMap).length === 0 && _capsuleUnits.length === 0) {
-    await Promise.all([loadContactUnitsMap(), loadCapsuleUnits()]);
-  }
-  _renderUnitFilterDropdown();
-  dropdown.style.display = 'block';
-}
-
-function _renderUnitFilterDropdown() {
-  var dropdown = document.getElementById('lc-unit-filter-dropdown');
-  if (!dropdown) return;
-
-  // Collect all unique units from contactUnitsMap
-  var unitSet = {};
-  var phones = Object.keys($.contactUnitsMap);
-  for (var i = 0; i < phones.length; i++) {
-    var u = $.contactUnitsMap[phones[i]];
-    if (u) unitSet[u.toLowerCase()] = u;
-  }
-  // Also include capsule units from cache
-  for (var j = 0; j < _capsuleUnits.length; j++) {
-    var cu = _capsuleUnits[j];
-    if (cu && !unitSet[cu.toLowerCase()]) unitSet[cu.toLowerCase()] = cu;
-  }
-
-  var allUnits = Object.keys(unitSet).sort().map(function (k) { return unitSet[k]; });
-
-  if (allUnits.length === 0) {
-    dropdown.innerHTML = '<div class="lc-tag-filter-empty">No units assigned yet</div>';
-    return;
-  }
-
-  var html = '';
-  // Clear filter option (only if filter is active)
-  if ($.unitFilter) {
-    html += '<div class="lc-tag-filter-option lc-tag-filter-clear" onclick="lcClearUnitFilter()">' +
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
-      ' Clear filter</div>';
-  }
-
-  for (var m = 0; m < allUnits.length; m++) {
-    var unit = allUnits[m];
-    var isSelected = $.unitFilter === unit;
-    html += '<div class="lc-tag-filter-option' + (isSelected ? ' selected' : '') +
-      '" data-unit="' + escapeAttr(unit) + '" onclick="lcSelectUnitFilter(this)">' +
-      '<span class="lc-tag-filter-check">' + (isSelected ? '\u2713' : '') + '</span>' +
-      escapeHtml(unit) + '</div>';
-  }
-  dropdown.innerHTML = html;
-}
-
-export function selectUnitFilter(el) {
-  var unit = el.getAttribute('data-unit');
-  if (!unit) return;
-  // Toggle: if already selected, clear it
-  if ($.unitFilter === unit) {
-    $.unitFilter = '';
-  } else {
-    $.unitFilter = unit;
-  }
-  _renderUnitFilterDropdown();
-  _updateUnitFilterBtnLabel();
-  renderList($.conversations);
-}
-
-export function clearUnitFilter() {
-  $.unitFilter = '';
-  var dropdown = document.getElementById('lc-unit-filter-dropdown');
-  if (dropdown) dropdown.style.display = 'none';
-  _updateUnitFilterBtnLabel();
-  renderList($.conversations);
-}
-
-function _updateUnitFilterBtnLabel() {
-  var label = document.getElementById('lc-unit-filter-label');
-  var btn = document.getElementById('lc-unit-filter-btn');
-  if (!label) return;
-  if (!$.unitFilter) {
-    label.textContent = 'Unit';
-    if (btn) btn.classList.remove('active');
-  } else {
-    label.textContent = $.unitFilter;
-    if (btn) btn.classList.add('active');
-  }
-}
+// ─── Unit Filter (legacy stubs — UI moved to unified filter panel) ──
+export function toggleUnitFilter() { toggleFilterPanel(); }
+export function selectUnitFilter() {}
+export function clearUnitFilter() { $.unitFilter = ''; renderList($.conversations); }
 
 // ─── Response Mode Management (Autopilot/Copilot/Manual) ────────
 
@@ -1623,3 +1533,571 @@ export function addOverdueBadgeToList() {
     }
   }).catch(function () { /* silent */ });
 }
+
+// ─── Custom Fields (Dynamic Contact Fields) ──────────────────────
+
+var _customFieldDefs = [];
+var _customFieldValues = {};
+var _cfSaveTimer = null;
+
+export async function loadCustomFields() {
+  if (!$.activePhone) return;
+  try {
+    var defs = await api('/contact-fields/definitions');
+    _customFieldDefs = Array.isArray(defs) ? defs : [];
+  } catch (e) {
+    _customFieldDefs = [];
+  }
+
+  if (_customFieldDefs.length === 0) {
+    var section = document.getElementById('lc-custom-fields-section');
+    var divider = document.getElementById('lc-custom-fields-divider');
+    if (section) section.style.display = 'none';
+    if (divider) divider.style.display = 'none';
+    return;
+  }
+
+  try {
+    var vals = await api('/contact-fields/values/' + encodeURIComponent($.activePhone));
+    _customFieldValues = (vals && typeof vals === 'object' && !Array.isArray(vals)) ? vals : {};
+  } catch (e) {
+    _customFieldValues = {};
+  }
+
+  renderCustomFieldInputs();
+}
+
+function renderCustomFieldInputs() {
+  var container = document.getElementById('lc-custom-fields-container');
+  var section = document.getElementById('lc-custom-fields-section');
+  var divider = document.getElementById('lc-custom-fields-divider');
+  if (!container) return;
+
+  var defs = _customFieldDefs.filter(function (d) { return !d.isBuiltIn; });
+  if (defs.length === 0) {
+    if (section) section.style.display = 'none';
+    if (divider) divider.style.display = 'none';
+    return;
+  }
+
+  if (section) section.style.display = '';
+  if (divider) divider.style.display = '';
+
+  var html = '';
+  for (var i = 0; i < defs.length; i++) {
+    var def = defs[i];
+    var val = _customFieldValues[def.fieldKey] || '';
+    var inputId = 'lc-cf-' + def.fieldKey;
+    var escapedKey = escapeAttr(def.fieldKey);
+
+    html += '<div class="lc-custom-field-row" style="margin-bottom:8px;">';
+    html += '<label for="' + inputId + '" style="font-size:11px;color:#888;display:block;margin-bottom:2px;">' + escapeHtml(def.fieldLabel) + '</label>';
+
+    var opts = def.fieldOptions || def.options;
+    if (def.fieldType === 'select' && opts && Array.isArray(opts)) {
+      html += '<select id="' + inputId + '" data-field-key="' + escapedKey + '" class="lc-cf-input" onchange="lcCustomFieldChanged(\'' + escapedKey + '\')" style="width:100%;padding:6px 8px;border:1px solid #e2e2e2;border-radius:6px;font-size:13px;background:#fff;">';
+      html += '<option value="">\u2014</option>';
+      for (var j = 0; j < opts.length; j++) {
+        var selected = val === opts[j] ? ' selected' : '';
+        html += '<option value="' + escapeAttr(opts[j]) + '"' + selected + '>' + escapeHtml(opts[j]) + '</option>';
+      }
+      html += '</select>';
+    } else if (def.fieldType === 'date') {
+      html += '<input type="date" id="' + inputId + '" data-field-key="' + escapedKey + '" class="lc-cf-input" value="' + escapeAttr(val) + '" onchange="lcCustomFieldChanged(\'' + escapedKey + '\')" style="width:100%;padding:6px 8px;border:1px solid #e2e2e2;border-radius:6px;font-size:13px;">';
+    } else if (def.fieldType === 'number') {
+      html += '<input type="number" id="' + inputId + '" data-field-key="' + escapedKey + '" class="lc-cf-input" value="' + escapeAttr(val) + '" oninput="lcCustomFieldChanged(\'' + escapedKey + '\')" style="width:100%;padding:6px 8px;border:1px solid #e2e2e2;border-radius:6px;font-size:13px;">';
+    } else {
+      html += '<input type="text" id="' + inputId + '" data-field-key="' + escapedKey + '" class="lc-cf-input" value="' + escapeAttr(val) + '" oninput="lcCustomFieldChanged(\'' + escapedKey + '\')" placeholder="' + escapeAttr(def.fieldLabel) + '" style="width:100%;padding:6px 8px;border:1px solid #e2e2e2;border-radius:6px;font-size:13px;">';
+    }
+
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+export function customFieldChanged(fieldKey) {
+  clearTimeout(_cfSaveTimer);
+  showSaveIndicator('saving');
+  _cfSaveTimer = setTimeout(function () {
+    saveCustomFieldValue(fieldKey);
+  }, 500);
+}
+
+async function saveCustomFieldValue(fieldKey) {
+  if (!$.activePhone) return;
+  var el = document.getElementById('lc-cf-' + fieldKey);
+  if (!el) return;
+  var value = el.value;
+  _customFieldValues[fieldKey] = value;
+
+  try {
+    var body = {};
+    body[fieldKey] = value;
+    await api('/contact-fields/values/' + encodeURIComponent($.activePhone), {
+      method: 'PATCH',
+      body: body
+    });
+    showSaveIndicator('saved');
+  } catch (e) {
+    showSaveIndicator('error');
+  }
+}
+
+// ─── Custom Field Filter (Homestay) ──────────────────────────────
+
+/**
+ * Load phone → { field_key: value } map for filtering conversations by custom fields.
+ */
+export function loadCustomFieldsMap() {
+  return api('/conversations/custom-fields-map').then(function (data) {
+    $.contactCustomFieldsMap = (data && typeof data === 'object') ? data : {};
+  }).catch(function () { $.contactCustomFieldsMap = {}; });
+}
+
+// ─── Custom Field Filter (legacy stubs — UI moved to unified filter panel) ──
+export function toggleCustomFieldFilter() { toggleFilterPanel(); }
+export function selectCustomFieldKey() {}
+export function resetCustomFieldKey() {}
+export function selectCustomFieldValue() {}
+export function clearCustomFieldFilter() {
+  $.customFieldFilters = {};
+  renderList($.conversations);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Unified Filter Panel (replaces Unit/CF/Quick filter dropdowns)
+// ═══════════════════════════════════════════════════════════════════
+
+var _fpFieldDefs = null;
+var _fpClickOutsideHandler = null;
+var _FP_ORDER_KEY = 'lc_filter_order';
+
+function _fpLoadOrder() {
+  try { return JSON.parse(localStorage.getItem(_FP_ORDER_KEY) || '[]'); } catch(e) { return []; }
+}
+function _fpSaveOrder(order) {
+  localStorage.setItem(_FP_ORDER_KEY, JSON.stringify(order));
+}
+
+/** Build the list of filter items (quick presets + unit + custom fields) */
+function _fpBuildItems() {
+  var items = [
+    { id: 'favourites', label: 'Favourites', type: 'view' },
+    { id: 'groups', label: 'Groups Only', type: 'view' },
+    { id: 'tags', label: 'Tags', type: 'tags' },
+    { id: 'today_stay', label: 'Currently Staying', type: 'quick' },
+    { id: 'today_checkin', label: 'Check-in Today', type: 'quick' },
+    { id: 'today_checkout', label: 'Check-out Today', type: 'quick' },
+    { id: 'unit', label: 'Unit', type: 'unit' }
+  ];
+  var defs = _fpFieldDefs || [];
+  for (var i = 0; i < defs.length; i++) {
+    items.push({ id: 'cf_' + defs[i].fieldKey, label: defs[i].fieldLabel, type: 'field', fieldKey: defs[i].fieldKey, fieldType: defs[i].fieldType });
+  }
+  // Sort by saved order
+  var order = _fpLoadOrder();
+  if (order.length) {
+    items.sort(function(a, b) {
+      var ai = order.indexOf(a.id), bi = order.indexOf(b.id);
+      if (ai === -1) ai = 999;
+      if (bi === -1) bi = 999;
+      return ai - bi;
+    });
+  }
+  return items;
+}
+
+function _fpIsActive(item) {
+  if (item.type === 'view') return $.activeFilter === item.id;
+  if (item.type === 'tags') return $.tagFilter && $.tagFilter.length > 0;
+  if (item.type === 'quick') return $.quickFilters.indexOf(item.id) !== -1;
+  if (item.type === 'unit') return !!$.unitFilter;
+  if (item.type === 'field') return !!($.customFieldFilters || {})[item.fieldKey];
+  return false;
+}
+
+function _fpCountActive() {
+  var n = $.quickFilters.length;
+  if ($.activeFilter === 'favourites' || $.activeFilter === 'groups') n++;
+  if ($.tagFilter && $.tagFilter.length > 0) n++;
+  if ($.unitFilter) n++;
+  var cf = $.customFieldFilters || {};
+  var keys = Object.keys(cf);
+  for (var i = 0; i < keys.length; i++) { if (cf[keys[i]]) n++; }
+  return n;
+}
+
+export function updateFilterBadge() {
+  var badge = document.getElementById('lc-filter-badge');
+  var btn = document.getElementById('lc-filter-panel-btn');
+  var n = _fpCountActive();
+  if (badge) { badge.textContent = n; badge.style.display = n > 0 ? '' : 'none'; }
+  if (btn) btn.classList.toggle('active', n > 0);
+}
+
+/** Open/close the filter panel */
+export async function toggleFilterPanel() {
+  var panel = document.getElementById('lc-filter-panel');
+  if (!panel) return;
+  if (panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    if (_fpClickOutsideHandler) { document.removeEventListener('mousedown', _fpClickOutsideHandler); _fpClickOutsideHandler = null; }
+    return;
+  }
+  // Ensure data loaded
+  if (!_fpFieldDefs) {
+    try { _fpFieldDefs = await api('/contact-fields/definitions'); } catch(e) { _fpFieldDefs = []; }
+  }
+  if (Object.keys($.contactCustomFieldsMap || {}).length === 0) await loadCustomFieldsMap();
+  if (Object.keys($.contactUnitsMap || {}).length === 0) await Promise.all([loadContactUnitsMap(), loadCapsuleUnits()]);
+
+  renderFilterPanel();
+  panel.style.display = 'block';
+
+  // Close on click outside
+  setTimeout(function() {
+    _fpClickOutsideHandler = function(e) {
+      var wrap = document.getElementById('lc-filter-panel-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        panel.style.display = 'none';
+        document.removeEventListener('mousedown', _fpClickOutsideHandler);
+        _fpClickOutsideHandler = null;
+      }
+    };
+    document.addEventListener('mousedown', _fpClickOutsideHandler);
+  }, 0);
+}
+
+/** Render the filter panel contents */
+export function renderFilterPanel() {
+  var panel = document.getElementById('lc-filter-panel');
+  if (!panel) return;
+
+  var items = _fpBuildItems();
+  var activeCount = _fpCountActive();
+
+  var html = '<div class="lc-fp-header"><span class="lc-fp-title">Filters</span>';
+  if (activeCount > 0) {
+    html += '<button class="lc-fp-clear" onclick="lcClearAllFilters()">Clear all</button>';
+  }
+  html += '</div>';
+
+  for (var j = 0; j < items.length; j++) {
+    var item = items[j];
+    var active = _fpIsActive(item);
+    html += '<div class="lc-fp-row' + (active ? ' lc-fp-active' : '') + '" draggable="true" data-filter-id="' + item.id + '">';
+    html += '<span class="lc-fp-drag" title="Drag to reorder">\u2261</span>';
+    html += '<span class="lc-fp-label">' + escapeHtml(item.label) + '</span>';
+    html += '<div class="lc-fp-control">';
+
+    if (item.type === 'view') {
+      html += '<button class="lc-fp-toggle' + (active ? ' on' : '') +
+        '" onclick="lcTogglePanelView(\'' + item.id + '\')">' +
+        '<span class="lc-fp-toggle-knob"></span></button>';
+    } else if (item.type === 'tags') {
+      html += _fpRenderTagSelect();
+    } else if (item.type === 'quick') {
+      html += '<button class="lc-fp-toggle' + (active ? ' on' : '') +
+        '" onclick="lcTogglePanelQuick(\'' + item.id + '\')">' +
+        '<span class="lc-fp-toggle-knob"></span></button>';
+    } else if (item.type === 'unit') {
+      html += _fpRenderUnitSelect();
+    } else if (item.type === 'field') {
+      html += _fpRenderFieldSelect(item.fieldKey);
+    }
+
+    html += '</div></div>';
+  }
+
+  html += '<div class="lc-fp-footer">Drag \u2261 to reorder</div>';
+  panel.innerHTML = html;
+  _fpSetupDrag(panel);
+  updateFilterBadge();
+}
+
+function _fpRenderUnitSelect() {
+  var unitSet = {};
+  var phones = Object.keys($.contactUnitsMap || {});
+  for (var i = 0; i < phones.length; i++) {
+    var u = $.contactUnitsMap[phones[i]];
+    if (u) unitSet[u.toLowerCase()] = u;
+  }
+  for (var j = 0; j < _capsuleUnits.length; j++) {
+    var cu = _capsuleUnits[j];
+    if (cu && !unitSet[cu.toLowerCase()]) unitSet[cu.toLowerCase()] = cu;
+  }
+  var units = Object.keys(unitSet).sort().map(function(k) { return unitSet[k]; });
+  var html = '<select class="lc-fp-select" onchange="lcSelectPanelUnit(this.value)">';
+  html += '<option value="">All</option>';
+  for (var m = 0; m < units.length; m++) {
+    var sel = $.unitFilter === units[m] ? ' selected' : '';
+    html += '<option value="' + escapeAttr(units[m]) + '"' + sel + '>' + escapeHtml(units[m]) + '</option>';
+  }
+  html += '</select>';
+  return html;
+}
+
+function _fpRenderFieldSelect(fieldKey) {
+  var valueSet = {};
+  var phones = Object.keys($.contactCustomFieldsMap || {});
+  for (var i = 0; i < phones.length; i++) {
+    var fields = $.contactCustomFieldsMap[phones[i]];
+    if (fields && fields[fieldKey]) {
+      var v = fields[fieldKey];
+      valueSet[v] = (valueSet[v] || 0) + 1;
+    }
+  }
+  var values = Object.keys(valueSet).sort();
+  var currentVal = ($.customFieldFilters || {})[fieldKey] || '';
+  var html = '<select class="lc-fp-select" onchange="lcSelectPanelField(\'' + escapeAttr(fieldKey) + '\', this.value)">';
+  html += '<option value="">All</option>';
+  for (var j = 0; j < values.length; j++) {
+    var sel = currentVal === values[j] ? ' selected' : '';
+    html += '<option value="' + escapeAttr(values[j]) + '"' + sel + '>' + escapeHtml(values[j]) + ' (' + valueSet[values[j]] + ')</option>';
+  }
+  html += '</select>';
+  return html;
+}
+
+function _fpRenderTagSelect() {
+  // Collect all unique tags from contactTagsMap
+  var tagSet = {};
+  var phones = Object.keys($.contactTagsMap || {});
+  for (var i = 0; i < phones.length; i++) {
+    var tags = $.contactTagsMap[phones[i]] || [];
+    for (var j = 0; j < tags.length; j++) {
+      tagSet[tags[j]] = (tagSet[tags[j]] || 0) + 1;
+    }
+  }
+  var allTags = Object.keys(tagSet).sort();
+  var currentTag = ($.tagFilter && $.tagFilter.length === 1) ? $.tagFilter[0] : '';
+  var html = '<select class="lc-fp-select" onchange="lcSelectPanelTag(this.value)">';
+  html += '<option value="">All</option>';
+  for (var k = 0; k < allTags.length; k++) {
+    var sel = currentTag.toLowerCase() === allTags[k].toLowerCase() ? ' selected' : '';
+    html += '<option value="' + escapeAttr(allTags[k]) + '"' + sel + '>' + escapeHtml(allTags[k]) + ' (' + tagSet[allTags[k]] + ')</option>';
+  }
+  html += '</select>';
+  return html;
+}
+
+/** Toggle view mode filter (Favourites / Groups) */
+export function togglePanelView(id) {
+  if ($.activeFilter === id) {
+    $.activeFilter = 'all';
+  } else {
+    $.activeFilter = id;
+  }
+  // Sync the visible All/Unread chips
+  document.querySelectorAll('#lc-filter-chips .lc-chip[data-filter]').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.filter === $.activeFilter);
+  });
+  renderFilterPanel();
+  renderList($.conversations);
+}
+
+/** Select tag from panel dropdown */
+export function selectPanelTag(value) {
+  if (value) {
+    $.tagFilter = [value];
+  } else {
+    $.tagFilter = [];
+  }
+  renderFilterPanel();
+  renderList($.conversations);
+}
+
+/** Toggle a quick filter on/off (multiple allowed) */
+export function togglePanelQuick(id) {
+  var idx = $.quickFilters.indexOf(id);
+  if (idx !== -1) { $.quickFilters.splice(idx, 1); }
+  else { $.quickFilters.push(id); }
+  renderFilterPanel();
+  renderList($.conversations);
+}
+
+/** Select unit from panel dropdown */
+export function selectPanelUnit(value) {
+  $.unitFilter = value || '';
+  renderFilterPanel();
+  renderList($.conversations);
+}
+
+/** Select custom field value from panel dropdown */
+export function selectPanelField(fieldKey, value) {
+  if (!$.customFieldFilters) $.customFieldFilters = {};
+  if (value) { $.customFieldFilters[fieldKey] = value; }
+  else { delete $.customFieldFilters[fieldKey]; }
+  renderFilterPanel();
+  renderList($.conversations);
+}
+
+/** Clear all filters at once */
+export function clearAllFilters() {
+  $.activeFilter = 'all';
+  $.tagFilter = [];
+  $.quickFilters = [];
+  $.unitFilter = '';
+  $.customFieldFilters = {};
+  // Sync the visible All/Unread chips
+  document.querySelectorAll('#lc-filter-chips .lc-chip[data-filter]').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.filter === 'all');
+  });
+  renderFilterPanel();
+  renderList($.conversations);
+}
+
+/** Apply all unified filters (called from live-chat-core.js renderList) */
+export function applyUnifiedFilters(filtered) {
+  // Unit filter
+  if ($.unitFilter) {
+    filtered = filtered.filter(function(c) {
+      var contactUnit = $.contactUnitsMap[c.phone];
+      return contactUnit && contactUnit.toLowerCase() === $.unitFilter.toLowerCase();
+    });
+  }
+  // Custom field filters (multiple fields supported)
+  var cf = $.customFieldFilters || {};
+  var cfKeys = Object.keys(cf);
+  for (var i = 0; i < cfKeys.length; i++) {
+    var key = cfKeys[i], val = cf[key];
+    if (!val) continue;
+    filtered = filtered.filter(function(c) {
+      var fields = $.contactCustomFieldsMap[c.phone];
+      return fields && fields[key] === val;
+    });
+  }
+  // Quick filters (OR logic — show if matches ANY active quick filter)
+  if ($.quickFilters.length > 0) {
+    var now = new Date();
+    var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    filtered = filtered.filter(function(c) {
+      var fields = $.contactCustomFieldsMap[c.phone];
+      if (!fields) return false;
+      for (var q = 0; q < $.quickFilters.length; q++) {
+        var qf = $.quickFilters[q];
+        if (qf === 'today_checkin' && fields['arrival_date'] && fields['arrival_date'].slice(0, 10) === today) return true;
+        if (qf === 'today_checkout' && fields['checkout_date'] && fields['checkout_date'].slice(0, 10) === today) return true;
+        if (qf === 'today_stay') {
+          var ci = fields['arrival_date'] ? fields['arrival_date'].slice(0, 10) : '';
+          var co = fields['checkout_date'] ? fields['checkout_date'].slice(0, 10) : '';
+          if (ci && co && ci <= today && today <= co) return true;
+        }
+      }
+      return false;
+    });
+  }
+  return filtered;
+}
+
+// ─── Drag to Reorder ──────────────────────────────────────────────
+
+function _fpSetupDrag(panel) {
+  var rows = panel.querySelectorAll('.lc-fp-row');
+  var dragSrc = null;
+  rows.forEach(function(row) {
+    row.addEventListener('dragstart', function(e) {
+      dragSrc = this;
+      this.classList.add('lc-fp-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.dataset.filterId);
+    });
+    row.addEventListener('dragend', function() {
+      this.classList.remove('lc-fp-dragging');
+      panel.querySelectorAll('.lc-fp-row').forEach(function(r) { r.classList.remove('lc-fp-drag-over'); });
+      dragSrc = null;
+    });
+    row.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (this !== dragSrc) this.classList.add('lc-fp-drag-over');
+    });
+    row.addEventListener('dragleave', function() {
+      this.classList.remove('lc-fp-drag-over');
+    });
+    row.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('lc-fp-drag-over');
+      if (dragSrc && dragSrc !== this) {
+        // Reorder DOM
+        var parent = this.parentNode;
+        var allRows = Array.from(parent.querySelectorAll('.lc-fp-row'));
+        var fromIdx = allRows.indexOf(dragSrc);
+        var toIdx = allRows.indexOf(this);
+        if (fromIdx < toIdx) { parent.insertBefore(dragSrc, this.nextSibling); }
+        else { parent.insertBefore(dragSrc, this); }
+        // Save new order
+        var newOrder = [];
+        parent.querySelectorAll('.lc-fp-row').forEach(function(r) { newOrder.push(r.dataset.filterId); });
+        _fpSaveOrder(newOrder);
+      }
+    });
+  });
+}
+
+// Legacy stubs for backward compatibility
+export function toggleQuickFilter(chipId) { togglePanelQuick(chipId); }
+export function applyQuickFilter(filtered) { return applyUnifiedFilters(filtered); }
+
+// ═══════════════════════════════════════════════════════════════════
+// Internal Comments (Staff Notes)
+// ═══════════════════════════════════════════════════════════════════
+
+/** Load comments for the currently active conversation */
+export async function loadComments() {
+  if (!$.activePhone) { $.comments = []; return; }
+  try {
+    $.comments = await api('/conversations/' + encodeURIComponent($.activePhone) + '/comments');
+  } catch (e) {
+    $.comments = [];
+  }
+}
+
+/** Toggle note mode on/off */
+export function toggleNoteMode() {
+  $.noteMode = !$.noteMode;
+  var btn = document.getElementById('lc-note-btn');
+  var inputBox = document.getElementById('lc-input-box');
+  var sendBtn = document.getElementById('lc-send-btn');
+  if (btn) btn.classList.toggle('active', $.noteMode);
+  if (inputBox) {
+    inputBox.classList.toggle('lc-note-mode', $.noteMode);
+    inputBox.placeholder = $.noteMode
+      ? 'Type an internal note (only visible to staff)...'
+      : 'Type a message, / for templates, // for workflows';
+  }
+  if (sendBtn) sendBtn.classList.toggle('lc-note-mode', $.noteMode);
+}
+
+/** Save a comment (called from sendReply when noteMode is on) */
+export async function saveComment(content) {
+  if (!$.activePhone || !content) return;
+  try {
+    var result = await api('/conversations/' + encodeURIComponent($.activePhone) + '/comments', {
+      method: 'POST',
+      body: { content: content, author: $.staffName || 'Staff' }
+    });
+    $.comments.push(result);
+    // Re-render chat to show the new comment
+    if (window.lcRefreshChat) window.lcRefreshChat();
+  } catch (e) {
+    toast(e.message || 'Failed to save note', 'error');
+  }
+}
+
+/** Delete a comment */
+export async function deleteComment(commentId) {
+  if (!$.activePhone || !commentId) return;
+  if (!confirm('Delete this internal note?')) return;
+  try {
+    await api('/conversations/' + encodeURIComponent($.activePhone) + '/comments/' + commentId, {
+      method: 'DELETE'
+    });
+    $.comments = $.comments.filter(function(c) { return c.id !== commentId; });
+    if (window.lcRefreshChat) window.lcRefreshChat();
+  } catch (e) {
+    toast(e.message || 'Failed to delete note', 'error');
+  }
+}
+

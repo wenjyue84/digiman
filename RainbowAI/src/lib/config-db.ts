@@ -52,8 +52,64 @@ export async function ensureConfigTables(): Promise<void> {
         new_version INTEGER,
         created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      CREATE TABLE IF NOT EXISTS rainbow_custom_field_defs (
+        id          TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        name        TEXT NOT NULL,
+        field_key   TEXT NOT NULL UNIQUE,
+        field_label TEXT NOT NULL,
+        field_type  TEXT NOT NULL DEFAULT 'text',
+        options     JSONB,
+        field_options JSONB,
+        is_built_in BOOLEAN DEFAULT false,
+        sort_order  INTEGER DEFAULT 0,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS rainbow_custom_field_values (
+        phone       TEXT NOT NULL,
+        field_key   TEXT NOT NULL,
+        value       TEXT,
+        updated_by  TEXT,
+        updated_at  TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (phone, field_key)
+      );
+
+      CREATE TABLE IF NOT EXISTS rainbow_scheduled_rules (
+        id             TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        name           TEXT NOT NULL,
+        is_active      BOOLEAN DEFAULT true,
+        trigger_field  TEXT NOT NULL,
+        offset_hours   INTEGER NOT NULL,
+        messages       JSONB NOT NULL,
+        cooldown_hours INTEGER DEFAULT 24,
+        created_at     TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS rainbow_scheduled_logs (
+        id        TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        rule_id   TEXT NOT NULL,
+        phone     TEXT NOT NULL,
+        sent_at   TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
-    console.log('[ConfigDB] Tables ensured (rainbow_configs, rainbow_kb_files, rainbow_config_audit)');
+    // Conversation internal comments (staff notes)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rainbow_conversation_comments (
+        id         TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        phone      TEXT NOT NULL,
+        content    TEXT NOT NULL,
+        author     TEXT DEFAULT 'Staff',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    // Migration: add match_value column if not present (for non-date trigger fields)
+    await pool.query(`ALTER TABLE rainbow_scheduled_rules ADD COLUMN IF NOT EXISTS match_value TEXT`);
+    // Also relax offset_hours NOT NULL → allow 0 for match-value rules
+    await pool.query(`ALTER TABLE rainbow_scheduled_rules ALTER COLUMN offset_hours SET DEFAULT 0`);
+
+    console.log('[ConfigDB] Tables ensured (rainbow_configs, rainbow_kb_files, rainbow_config_audit, rainbow_custom_field_defs, rainbow_custom_field_values, rainbow_scheduled_rules, rainbow_scheduled_logs)');
   } catch (err: any) {
     console.error('[ConfigDB] Failed to create tables:', err.message);
   }

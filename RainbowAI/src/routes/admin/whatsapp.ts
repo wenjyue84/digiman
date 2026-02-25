@@ -107,6 +107,15 @@ router.get('/whatsapp/instances/:id/qr', async (req: Request, res: Response) => 
   }
 });
 
+router.post('/whatsapp/instances/:id/restart', async (req: Request, res: Response) => {
+  try {
+    await whatsappManager.startInstance(req.params.id);
+    ok(res, { message: `Instance "${req.params.id}" restarting` });
+  } catch (e: any) {
+    badRequest(res, e.message);
+  }
+});
+
 // ─── WhatsApp Avatar ─────────────────────────────────────────────────
 
 router.get('/whatsapp/avatar/:phone', async (req: Request, res: Response) => {

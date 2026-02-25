@@ -1353,7 +1353,6 @@
     {
       "id": "capsule_conflict_handling",
       "name": "Capsule Conflict Resolution",
-      "description": "Handles cases where a guest finds someone already in their assigned capsule",
       "steps": [
         {
           "id": "s1",
@@ -1373,8 +1372,7 @@
           },
           "waitForReply": false,
           "action": {
-            "type": "notify_staff",
-            "message": "🚨 CAPSULE CONFLICT: Guest reports someone already in their assigned capsule. Please check and resolve immediately."
+            "type": "notify_staff"
           }
         },
         {
@@ -1396,6 +1394,83 @@
           "waitForReply": false
         }
       ]
+    },
+    {
+      "id": "test_contact_update",
+      "name": "Test Contact Update",
+      "steps": [],
+      "format": "nodes",
+      "nodes": [
+        {
+          "id": "ask_name",
+          "type": "wait_reply",
+          "label": "Ask name",
+          "config": {
+            "storeAs": "guest_name",
+            "prompt": {
+              "en": "Hi! What is your full name?",
+              "ms": "Hai! Siapa nama penuh anda?",
+              "zh": "你好！请问你的全名是？"
+            }
+          },
+          "next": "ask_email"
+        },
+        {
+          "id": "ask_email",
+          "type": "wait_reply",
+          "label": "Ask email",
+          "config": {
+            "storeAs": "email",
+            "prompt": {
+              "en": "Thanks {{workflow.data.guest_name}}! What is your email?",
+              "ms": "Terima kasih {{workflow.data.guest_name}}! Apakah email anda?",
+              "zh": "谢谢 {{workflow.data.guest_name}}！请问你的电邮是？"
+            }
+          },
+          "next": "ask_checkin"
+        },
+        {
+          "id": "ask_checkin",
+          "type": "wait_reply",
+          "label": "Ask check-in date",
+          "config": {
+            "storeAs": "check_in_date",
+            "prompt": {
+              "en": "When would you like to check in? (e.g. 2026-03-01)",
+              "ms": "Bila anda ingin daftar masuk? (cth. 2026-03-01)",
+              "zh": "你什么时候入住？（例如 2026-03-01）"
+            }
+          },
+          "next": "ask_unit"
+        },
+        {
+          "id": "ask_unit",
+          "type": "wait_reply",
+          "label": "Ask unit preference",
+          "config": {
+            "storeAs": "unit",
+            "prompt": {
+              "en": "Any capsule preference? (e.g. C-12, or type \"any\")",
+              "ms": "Ada pilihan kapsul? (cth. C-12, atau taip \"any\")",
+              "zh": "有偏好的太空舱吗？（例如 C-12，或输入 \"any\"）"
+            }
+          },
+          "next": "confirm"
+        },
+        {
+          "id": "confirm",
+          "type": "message",
+          "label": "Confirmation",
+          "config": {
+            "message": {
+              "en": "✅ Got it! Here is your info:\n\n👤 Name: {{workflow.data.guest_name}}\n📧 Email: {{workflow.data.email}}\n📅 Check-in: {{workflow.data.check_in_date}}\n🏠 Unit: {{workflow.data.unit}}\n\nYour contact details have been updated!",
+              "ms": "✅ Terima kasih! Maklumat anda:\n\n👤 Nama: {{workflow.data.guest_name}}\n📧 Email: {{workflow.data.email}}\n📅 Daftar masuk: {{workflow.data.check_in_date}}\n🏠 Unit: {{workflow.data.unit}}\n\nMaklumat hubungan anda telah dikemas kini!",
+              "zh": "✅ 收到！你的信息如下：\n\n👤 姓名：{{workflow.data.guest_name}}\n📧 电邮：{{workflow.data.email}}\n📅 入住：{{workflow.data.check_in_date}}\n🏠 单元：{{workflow.data.unit}}\n\n你的联系信息已更新！"
+            }
+          }
+        }
+      ],
+      "startNodeId": "ask_name"
     }
   ]
 }

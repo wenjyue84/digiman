@@ -16,6 +16,8 @@ import databaseRoutes from "./database";
 import environmentRoutes from "./environment";
 import rainbowKBRoutes from "./rainbow-kb";
 import intentManagerRoutes from "./intent-manager";
+import contactFieldsRoutes from "./contact-fields";
+import scheduledMessagesRoutes from "./scheduled-messages";
 
 export function registerModularRoutes(app: Express) {
   // Register auth routes
@@ -66,6 +68,12 @@ export function registerModularRoutes(app: Express) {
 
   // Register Intent Manager routes (Phase 4 - Keyword Editor UI)
   app.use("/api/intent-manager", intentManagerRoutes);
+
+  // Register Contact Fields routes (Homestay Feature A)
+  app.use("/api/contact-fields", contactFieldsRoutes);
+
+  // Register Scheduled Messages routes (Homestay Feature D)
+  app.use("/api/scheduled-messages", scheduledMessagesRoutes);
 
   // Register test routes
   app.use("/api/tests", testRoutes);

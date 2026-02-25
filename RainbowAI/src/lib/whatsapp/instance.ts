@@ -1,4 +1,4 @@
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, isLidUser, jidNormalizedUser } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, isLidUser, jidNormalizedUser, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import fs from 'fs';
 import type { IncomingMessage, MessageType } from '../../assistant/types.js';
 import { trackWhatsAppConnected, trackWhatsAppDisconnected, trackWhatsAppUnlinked } from '../activity-tracker.js';
@@ -71,11 +71,22 @@ export class WhatsAppInstance {
 
     const { state, saveCreds } = await useMultiFileAuthState(this.authDir);
 
+    // Fetch latest WA Web version to avoid 405 rejection from outdated protocol
+    let version: [number, number, number] | undefined;
+    try {
+      const { version: v } = await fetchLatestBaileysVersion();
+      version = v;
+      console.log(`[Baileys:${this.id}] Using WA Web version: ${v.join('.')}`);
+    } catch (e: any) {
+      console.warn(`[Baileys:${this.id}] Failed to fetch latest version, using default: ${e.message}`);
+    }
+
     this.sock = makeWASocket({
       auth: state,
       printQRInTerminal: false,
       keepAliveIntervalMs: 10_000, // 10s keepalives — prevents socket from appearing silent during idle periods
-      browser: ['PelangiManager', 'Chrome', '1.0.0']
+      browser: ['PelangiManager', 'Chrome', '1.0.0'],
+      ...(version && { version })
     });
 
     this.sock.ev.on('creds.update', saveCreds);

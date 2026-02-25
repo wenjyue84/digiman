@@ -11,7 +11,7 @@
  * - Isolates Baileys errors from the main Express process
  */
 
-import { initBaileys, registerMessageHandler, sendWhatsAppMessage, getWhatsAppStatus } from './baileys-client.js';
+import { initBaileys, registerMessageHandler, sendWhatsAppMessage, getWhatsAppStatus, whatsappManager } from './baileys-client.js';
 import { initAssistant } from '../assistant/index.js';
 import { callAPI } from './http-client.js';
 import { startDailyReportScheduler } from './daily-report.js';
@@ -67,7 +67,12 @@ async function attemptStart(config: SupervisorConfig): Promise<void> {
 
     // Initialize Admin Notifier (for system admin alerts)
     initAdminNotifier({
-      sendMessage: sendWhatsAppMessage
+      sendMessage: sendWhatsAppMessage,
+      getConnectedInstance: () => {
+        const statuses = whatsappManager.getAllStatuses();
+        const connected = statuses.find(s => s.state === 'open');
+        return connected ? { id: connected.id, state: connected.state } : null;
+      }
     });
 
     // Initialize AI Assistant (auto-reply to WhatsApp messages)

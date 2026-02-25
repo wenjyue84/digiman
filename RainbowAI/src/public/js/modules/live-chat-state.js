@@ -90,5 +90,17 @@ export var $ = {
   /** @type {Object<string, {checkIn: string, checkOut: string}>} phone→dates map for date suffix display (US-014) */
   contactDatesMap: {},
   /** @type {string} Current staff display name for manual message attribution (US-011) */
-  staffName: 'Staff'
+  staffName: 'Staff',
+  /** @type {Object<string, Object<string, string>>} phone→{ field_key: value } map for custom field filtering (Homestay) */
+  contactCustomFieldsMap: {},
+  /** @type {Object<string, string>} Unified custom field filters: { fieldKey: value } */
+  customFieldFilters: {},
+  /** @type {boolean} Note mode — input sends internal comment instead of WhatsApp message */
+  noteMode: false,
+  /** @type {Array} Loaded comments for current conversation */
+  comments: [],
+  /** @type {string[]} Active quick filters: ['today_stay', 'today_checkin', ...] */
+  quickFilters: [],
+  /** @type {boolean} Filter panel open/closed */
+  filterPanelOpen: false
 };

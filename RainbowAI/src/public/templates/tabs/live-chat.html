@@ -111,23 +111,18 @@
     <div class="lc-filter-chips" id="lc-filter-chips">
       <button class="lc-chip active" data-filter="all" onclick="lcSetFilter('all')">All</button>
       <button class="lc-chip" data-filter="unread" onclick="lcSetFilter('unread')">Unread</button>
-      <button class="lc-chip" data-filter="favourites" onclick="lcSetFilter('favourites')">Favourites</button>
-      <button class="lc-chip" data-filter="groups" onclick="lcSetFilter('groups')">Groups</button>
-      <!-- US-009: Tag filter -->
-      <div class="lc-tag-filter-wrap" id="lc-tag-filter-wrap">
-        <button class="lc-chip lc-tag-filter-btn" id="lc-tag-filter-btn" onclick="lcToggleTagFilter()" title="Filter by tags">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          <span id="lc-tag-filter-label">Tags</span>
-        </button>
+      <!-- Hidden tag dropdown (still used by panel tag select) -->
+      <div class="lc-tag-filter-wrap" id="lc-tag-filter-wrap" style="display:none">
         <div class="lc-tag-filter-dropdown" id="lc-tag-filter-dropdown" style="display:none;"></div>
       </div>
-      <!-- US-013: Unit filter -->
-      <div class="lc-tag-filter-wrap" id="lc-unit-filter-wrap">
-        <button class="lc-chip lc-tag-filter-btn" id="lc-unit-filter-btn" onclick="lcToggleUnitFilter()" title="Filter by unit/capsule">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          <span id="lc-unit-filter-label">Unit</span>
+      <!-- Unified Filter Panel (All filters consolidated) -->
+      <div class="lc-filter-panel-wrap" id="lc-filter-panel-wrap">
+        <button class="lc-chip lc-filter-panel-btn" id="lc-filter-panel-btn" onclick="lcToggleFilterPanel()" title="Filter conversations">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+          <span>Filters</span>
+          <span class="lc-filter-badge" id="lc-filter-badge" style="display:none">0</span>
         </button>
-        <div class="lc-tag-filter-dropdown" id="lc-unit-filter-dropdown" style="display:none;"></div>
+        <div class="lc-filter-panel" id="lc-filter-panel" style="display:none"></div>
       </div>
     </div>
     <div class="lc-chat-list" id="lc-chat-list">
@@ -178,8 +173,8 @@
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
         </button>
-        <div class="lc-header-avatar" id="lc-header-avatar">?</div>
-        <div class="lc-header-info">
+        <div class="lc-header-avatar" id="lc-header-avatar" onclick="lcToggleContactPanel()" style="cursor:pointer" title="View contact details">?</div>
+        <div class="lc-header-info" onclick="lcToggleContactPanel()" style="cursor:pointer" title="View contact details">
           <div class="lc-header-name" id="lc-header-name">Guest</div>
           <div class="lc-header-phone" id="lc-header-phone">+60...</div>
         </div>
@@ -639,6 +634,13 @@
             <button class="lc-schedule-confirm" onclick="lcConfirmSchedule()">Schedule</button>
           </div>
         </div>
+        <!-- Internal note mode toggle -->
+        <button class="lc-note-btn" id="lc-note-btn" onclick="lcToggleNoteMode()" title="Internal note (staff only)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0110 0v4"></path>
+          </svg>
+        </button>
         <button class="lc-send-btn" id="lc-send-btn" onclick="lcSendReply()" title="Send">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
@@ -820,6 +822,17 @@
           autocomplete="off">
         <div class="lc-tag-dropdown" id="lc-tag-dropdown" style="display:none;"></div>
       </div>
+
+      <!-- Custom Fields (dynamic, from contact_field_definitions) -->
+      <div class="lc-field" id="lc-custom-fields-section" style="display:none;">
+        <label class="lc-field-label" style="display:flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83"/><circle cx="12" cy="12" r="3"/></svg>
+          Custom Fields
+        </label>
+        <div id="lc-custom-fields-container"></div>
+      </div>
+
+      <div class="lc-field-divider" id="lc-custom-fields-divider" style="display:none;"></div>
 
       <!-- Notes (US-090) -->
       <div class="lc-field">

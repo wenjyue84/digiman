@@ -5,7 +5,7 @@
  * Validation schemas live in schema-validation.ts.
  */
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, date, index, integer, real, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, date, index, integer, real, serial, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 
 // ─── User & Auth ─────────────────────────────────────────────────────
 
@@ -363,4 +363,73 @@ export type InsertRainbowConversationState = typeof rainbowConversationState.$in
 export type RainbowConversation = typeof rainbowConversations.$inferSelect;
 export type InsertRainbowConversation = typeof rainbowConversations.$inferInsert;
 export type RainbowMessage = typeof rainbowMessages.$inferSelect;
+
+// ─── Contact Fields (Homestay Feature A) ────────────────────────────
+
+export const contactFieldDefinitions = pgTable("contact_field_definitions", {
+  id: serial("id").primaryKey(),
+  fieldKey: text("field_key").notNull().unique(),
+  fieldLabel: text("field_label").notNull(),
+  fieldType: text("field_type").notNull(),        // 'date' | 'text' | 'number' | 'select'
+  fieldOptions: jsonb("field_options"),            // string[] for type='select'
+  isBuiltIn: boolean("is_built_in").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const contactFieldValues = pgTable("contact_field_values", {
+  id: serial("id").primaryKey(),
+  phone: text("phone").notNull(),                  // FK → rainbow_conversations.phone
+  fieldKey: text("field_key").notNull(),           // FK → contact_field_definitions.field_key
+  value: text("value"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedBy: text("updated_by"),                   // 'system' | 'staff:name' | 'workflow:id'
+}, (table) => ([
+  uniqueIndex("idx_cfv_phone_field_key").on(table.phone, table.fieldKey),
+  index("idx_cfv_phone").on(table.phone),
+  index("idx_cfv_field_key").on(table.fieldKey),
+]));
+
+// ─── Scheduled Messages (Homestay Feature D) ────────────────────────
+
+export const scheduledMessageRules = pgTable("scheduled_message_rules", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  triggerField: text("trigger_field").notNull(),           // 'check_in_date' | 'check_out_date' | 'booking_date'
+  triggerOffsetHours: integer("trigger_offset_hours").notNull(), // negative = before, positive = after
+  triggerTimeExact: text("trigger_time_exact"),            // optional 'HH:MM' to pin send time
+  filterRules: jsonb("filter_rules"),                      // optional audience filter
+  messageEn: text("message_en").notNull(),
+  messageMs: text("message_ms"),
+  messageZh: text("message_zh"),
+  cooldownHours: integer("cooldown_hours").notNull().default(0),
+  createdBy: varchar("created_by", { length: 64 }),        // FK → users.id (nullable)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const scheduledMessageLogs = pgTable("scheduled_message_logs", {
+  id: serial("id").primaryKey(),
+  ruleId: integer("rule_id").notNull(),
+  phone: text("phone").notNull(),
+  guestName: text("guest_name"),
+  status: text("status").notNull(),                // 'sent' | 'failed' | 'skipped'
+  errorMsg: text("error_msg"),
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+}, (table) => ([
+  index("idx_sml_rule_id").on(table.ruleId),
+  index("idx_sml_phone").on(table.phone),
+  index("idx_sml_sent_at").on(table.sentAt),
+]));
+
+export type ContactFieldDef    = typeof contactFieldDefinitions.$inferSelect;
+export type InsertContactFieldDef = typeof contactFieldDefinitions.$inferInsert;
+export type ContactFieldValue  = typeof contactFieldValues.$inferSelect;
+export type InsertContactFieldValue = typeof contactFieldValues.$inferInsert;
+export type ScheduledMessageRule   = typeof scheduledMessageRules.$inferSelect;
+export type InsertScheduledMessageRule = typeof scheduledMessageRules.$inferInsert;
+export type ScheduledMessageLog    = typeof scheduledMessageLogs.$inferSelect;
+export type InsertScheduledMessageLog = typeof scheduledMessageLogs.$inferInsert;
 export type InsertRainbowMessage = typeof rainbowMessages.$inferInsert;

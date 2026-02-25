@@ -95,6 +95,8 @@ export function switchSettingsTab(tabId, updateHash = true) {
   else if (tabId === 'operators') renderOperatorsTab(container);
   else if (tabId === 'bot-avatar') renderBotAvatarTab(container);
   else if (tabId === 'failover') renderFailoverTab(container);
+  else if (tabId === 'scheduled-rules') renderScheduledRulesTab(container);
+  else if (tabId === 'custom-fields') renderCustomFieldsTab(container);
 }
 window.switchSettingsTab = switchSettingsTab;
 
@@ -744,3 +746,464 @@ export async function failoverDemote() {
   }
 }
 window.failoverDemote = failoverDemote;
+
+// ─── Scheduled Rules Tab ──────────────────────────────────────────
+
+let _scheduledRules = [];
+
+export async function renderScheduledRulesTab(container) {
+  container.innerHTML =
+    '<div class="bg-white border rounded-2xl p-6">' +
+      '<div class="flex items-center justify-between mb-1">' +
+        '<h3 class="font-semibold text-lg flex items-center gap-2">' +
+          '<span>⏰</span> Scheduled Messages' +
+        '</h3>' +
+        '<button onclick="showScheduledRuleForm()" class="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-bold text-sm">+ New Rule</button>' +
+      '</div>' +
+      '<p class="text-sm text-neutral-500 mb-6 font-medium">Auto-send WhatsApp messages based on contact date fields (e.g. check-in reminders, checkout thank-you).</p>' +
+      '<div id="sr-list" class="space-y-3"><div class="text-sm text-neutral-400 text-center py-8">Loading rules...</div></div>' +
+      '<div id="sr-form-modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"></div>' +
+    '</div>';
+  await loadScheduledRules();
+}
+window.renderScheduledRulesTab = renderScheduledRulesTab;
+
+async function loadScheduledRules() {
+  try {
+    _scheduledRules = await api('/scheduled-rules');
+    renderRulesList();
+  } catch (e) {
+    var el = document.getElementById('sr-list');
+    if (el) el.innerHTML = '<div class="text-sm text-red-500 text-center py-4">Failed to load rules: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderRulesList() {
+  var el = document.getElementById('sr-list');
+  if (!el) return;
+  if (!_scheduledRules.length) {
+    el.innerHTML = '<div class="text-sm text-neutral-400 text-center py-8">No scheduled rules yet. Click "+ New Rule" to create one.</div>';
+    return;
+  }
+  el.innerHTML = _scheduledRules.map(function(r) {
+    var statusBadge = r.isActive
+      ? '<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">Active</span>'
+      : '<span class="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500 text-xs font-bold">Paused</span>';
+    var conditionLabel;
+    if (r.matchValue) {
+      conditionLabel = 'equals <span class="font-medium text-primary-600">"' + esc(r.matchValue) + '"</span>';
+    } else {
+      var oh = r.offsetHours || 0;
+      conditionLabel = oh >= 0 ? oh + 'h after' : Math.abs(oh) + 'h before';
+    }
+    var msgs = r.messages || {};
+    var langCount = Object.keys(msgs).filter(function(k) { return k !== 'matchValue' && msgs[k]; }).length;
+    return '<div class="p-4 border rounded-xl hover:shadow-sm transition">' +
+      '<div class="flex items-center justify-between mb-2">' +
+        '<div class="flex items-center gap-2">' +
+          '<span class="font-medium text-sm text-neutral-800">' + esc(r.name) + '</span>' +
+          statusBadge +
+        '</div>' +
+        '<div class="flex gap-1">' +
+          '<button onclick="toggleScheduledRule(' + r.id + ')" class="px-2 py-1 text-xs rounded-lg border hover:bg-neutral-50 transition" title="' + (r.isActive ? 'Pause' : 'Activate') + '">' +
+            (r.isActive ? '⏸️' : '▶️') +
+          '</button>' +
+          '<button onclick="editScheduledRule(' + r.id + ')" class="px-2 py-1 text-xs rounded-lg border hover:bg-neutral-50 transition" title="Edit">✏️</button>' +
+          '<button onclick="deleteScheduledRule(' + r.id + ')" class="px-2 py-1 text-xs rounded-lg border hover:bg-red-50 text-red-500 transition" title="Delete">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="text-xs text-neutral-500 space-y-1">' +
+        '<div>Trigger: <span class="font-medium text-neutral-700">' + esc(r.triggerField) + '</span> → ' + conditionLabel + '</div>' +
+        '<div>Languages: ' + langCount + ' | Cooldown: ' + (r.cooldownHours || 24) + 'h</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+export function showScheduledRuleForm(editId) {
+  var rule = editId ? _scheduledRules.find(function(r) { return r.id === editId; }) : null;
+  var modal = document.getElementById('sr-form-modal');
+  if (!modal) return;
+
+  // Fetch custom field definitions to populate trigger field dropdown
+  api('/contact-fields/definitions').then(function(defs) {
+    var allFields = defs || [];
+    // Store for onchange lookup
+    window._srFieldDefs = allFields;
+
+    var fieldOptions = allFields.map(function(d) {
+      var sel = rule && rule.triggerField === d.fieldKey ? ' selected' : '';
+      var typeHint = d.fieldType === 'date' ? ' \u2705' : ' (' + d.fieldType + ')';
+      return '<option value="' + esc(d.fieldKey) + '" data-type="' + esc(d.fieldType) + '"' + sel + '>' + esc(d.fieldLabel) + typeHint + '</option>';
+    }).join('');
+    if (!fieldOptions) fieldOptions = '<option value="">No fields defined — create in Fields tab</option>';
+
+    var msgs = rule ? (rule.messages || {}) : {};
+    var ruleMatchValue = rule ? (rule.matchValue || '') : '';
+
+    // Determine initial field type for showing offset vs match value
+    var initialFieldKey = rule ? rule.triggerField : (allFields.length ? allFields[0].fieldKey : '');
+    var initialDef = allFields.find(function(d) { return d.fieldKey === initialFieldKey; });
+    var isDate = initialDef && initialDef.fieldType === 'date';
+
+    // Build select options for match value (if field is select type)
+    var matchSelectOpts = '';
+    if (initialDef && initialDef.fieldType === 'select' && initialDef.fieldOptions) {
+      matchSelectOpts = initialDef.fieldOptions.map(function(o) {
+        var sel2 = ruleMatchValue === o ? ' selected' : '';
+        return '<option value="' + esc(o) + '"' + sel2 + '>' + esc(o) + '</option>';
+      }).join('');
+    }
+
+    modal.innerHTML =
+      '<div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">' +
+        '<h3 class="font-semibold text-lg mb-4">' + (rule ? 'Edit Rule' : 'New Scheduled Rule') + '</h3>' +
+        '<div class="space-y-4">' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-neutral-600 mb-1">Rule Name</label>' +
+            '<input type="text" id="sr-name" value="' + (rule ? esc(rule.name) : '') + '" placeholder="e.g. Check-in Reminder" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-neutral-600 mb-1">Trigger Field</label>' +
+            '<select id="sr-trigger" onchange="srTriggerFieldChanged()" class="w-full px-4 py-2.5 border rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none">' + fieldOptions + '</select>' +
+          '</div>' +
+          // Date condition: offset hours
+          '<div id="sr-date-condition" class="grid grid-cols-2 gap-4"' + (isDate ? '' : ' style="display:none"') + '>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-neutral-600 mb-1">Offset (hours)</label>' +
+              '<input type="number" id="sr-offset" value="' + (rule ? rule.offsetHours : 0) + '" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">' +
+              '<p class="text-[11px] text-neutral-400 mt-1">Positive = after date, negative = before date</p>' +
+            '</div>' +
+            '<div>' +
+              '<label class="block text-xs font-medium text-neutral-600 mb-1">Cooldown (hours)</label>' +
+              '<input type="number" id="sr-cooldown" value="' + (rule ? (rule.cooldownHours || 24) : 24) + '" min="1" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">' +
+            '</div>' +
+          '</div>' +
+          // Non-date condition: match value
+          '<div id="sr-match-condition"' + (isDate ? ' style="display:none"' : '') + '>' +
+            '<div class="grid grid-cols-2 gap-4">' +
+              '<div>' +
+                '<label class="block text-xs font-medium text-neutral-600 mb-1">Match Value <span style="font-weight:400;color:#999">(equals)</span></label>' +
+                '<div id="sr-match-input-wrap">' +
+                  (initialDef && initialDef.fieldType === 'select'
+                    ? '<select id="sr-match-value" class="w-full px-4 py-2.5 border rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none">' + matchSelectOpts + '</select>'
+                    : '<input type="text" id="sr-match-value" value="' + esc(ruleMatchValue) + '" placeholder="e.g. Airbnb" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">') +
+                '</div>' +
+                '<p class="text-[11px] text-neutral-400 mt-1">Send when field value equals this</p>' +
+              '</div>' +
+              '<div>' +
+                '<label class="block text-xs font-medium text-neutral-600 mb-1">Cooldown (hours)</label>' +
+                '<input type="number" id="sr-cooldown-match" value="' + (rule ? (rule.cooldownHours || 24) : 24) + '" min="1" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-neutral-600 mb-1">Message — English</label>' +
+            '<textarea id="sr-msg-en" rows="2" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none resize-none">' + esc(msgs.en || '') + '</textarea>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-neutral-600 mb-1">Message — Malay</label>' +
+            '<textarea id="sr-msg-ms" rows="2" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none resize-none">' + esc(msgs.ms || '') + '</textarea>' +
+          '</div>' +
+          '<div>' +
+            '<label class="block text-xs font-medium text-neutral-600 mb-1">Message — Chinese</label>' +
+            '<textarea id="sr-msg-zh" rows="2" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none resize-none">' + esc(msgs.zh || '') + '</textarea>' +
+          '</div>' +
+        '</div>' +
+        '<div class="flex gap-3 mt-6">' +
+          '<button onclick="saveScheduledRule(' + (editId || 'null') + ')" class="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-bold text-sm">Save</button>' +
+          '<button onclick="closeScheduledRuleForm()" class="px-6 py-2.5 border rounded-xl hover:bg-neutral-50 transition text-sm font-medium">Cancel</button>' +
+        '</div>' +
+      '</div>';
+
+    modal.classList.remove('hidden');
+  }).catch(function() {
+    toast('Failed to load field definitions', 'error');
+  });
+}
+window.showScheduledRuleForm = showScheduledRuleForm;
+
+export function closeScheduledRuleForm() {
+  var modal = document.getElementById('sr-form-modal');
+  if (modal) { modal.classList.add('hidden'); modal.innerHTML = ''; }
+}
+window.closeScheduledRuleForm = closeScheduledRuleForm;
+
+/**
+ * Called when trigger field dropdown changes — toggles date-condition vs match-condition.
+ */
+export function srTriggerFieldChanged() {
+  var sel = document.getElementById('sr-trigger');
+  if (!sel) return;
+  var opt = sel.options[sel.selectedIndex];
+  var fieldType = opt ? opt.getAttribute('data-type') : 'text';
+  var fieldKey = sel.value;
+  var isDate = fieldType === 'date';
+
+  // Toggle condition sections
+  var dateSec = document.getElementById('sr-date-condition');
+  var matchSec = document.getElementById('sr-match-condition');
+  if (dateSec) dateSec.style.display = isDate ? '' : 'none';
+  if (matchSec) matchSec.style.display = isDate ? 'none' : '';
+
+  // For select-type fields, rebuild match input as <select>
+  if (!isDate) {
+    var wrap = document.getElementById('sr-match-input-wrap');
+    if (!wrap) return;
+    var def = (window._srFieldDefs || []).find(function(d) { return d.fieldKey === fieldKey; });
+    if (def && def.fieldType === 'select' && def.fieldOptions && def.fieldOptions.length) {
+      wrap.innerHTML = '<select id="sr-match-value" class="w-full px-4 py-2.5 border rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none">' +
+        def.fieldOptions.map(function(o) { return '<option value="' + esc(o) + '">' + esc(o) + '</option>'; }).join('') +
+        '</select>';
+    } else {
+      wrap.innerHTML = '<input type="text" id="sr-match-value" value="" placeholder="e.g. Airbnb" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">';
+    }
+  }
+}
+window.srTriggerFieldChanged = srTriggerFieldChanged;
+
+export async function saveScheduledRule(editId) {
+  var name = (document.getElementById('sr-name') || {}).value;
+  var triggerField = (document.getElementById('sr-trigger') || {}).value;
+  var msgEn = (document.getElementById('sr-msg-en') || {}).value;
+  var msgMs = (document.getElementById('sr-msg-ms') || {}).value;
+  var msgZh = (document.getElementById('sr-msg-zh') || {}).value;
+
+  if (!name) { toast('Name is required', 'error'); return; }
+  if (!triggerField) { toast('Trigger field is required', 'error'); return; }
+  if (!msgEn) { toast('English message is required', 'error'); return; }
+
+  // Determine if date-based or match-based from visibility
+  var dateSec = document.getElementById('sr-date-condition');
+  var isDateMode = dateSec && dateSec.style.display !== 'none';
+
+  var offsetHours, cooldownHours, matchValue;
+  if (isDateMode) {
+    offsetHours = parseInt((document.getElementById('sr-offset') || {}).value, 10);
+    cooldownHours = parseInt((document.getElementById('sr-cooldown') || {}).value, 10);
+    matchValue = null;
+  } else {
+    offsetHours = 0;
+    cooldownHours = parseInt((document.getElementById('sr-cooldown-match') || {}).value, 10);
+    matchValue = (document.getElementById('sr-match-value') || {}).value || '';
+    if (!matchValue) { toast('Match value is required for non-date fields', 'error'); return; }
+  }
+
+  var body = {
+    name: name,
+    triggerField: triggerField,
+    offsetHours: isNaN(offsetHours) ? 0 : offsetHours,
+    cooldownHours: isNaN(cooldownHours) ? 24 : cooldownHours,
+    matchValue: matchValue,
+    messages: { en: msgEn, ms: msgMs || '', zh: msgZh || '' }
+  };
+
+  try {
+    if (editId) {
+      await api('/scheduled-rules/' + editId, { method: 'PUT', body: body });
+      toast('Rule updated');
+    } else {
+      await api('/scheduled-rules', { method: 'POST', body: body });
+      toast('Rule created');
+    }
+    closeScheduledRuleForm();
+    await loadScheduledRules();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.saveScheduledRule = saveScheduledRule;
+
+export function editScheduledRule(id) {
+  showScheduledRuleForm(id);
+}
+window.editScheduledRule = editScheduledRule;
+
+export async function toggleScheduledRule(id) {
+  try {
+    var result = await api('/scheduled-rules/' + id + '/toggle', { method: 'PATCH' });
+    toast(result.isActive ? 'Rule activated' : 'Rule paused');
+    await loadScheduledRules();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.toggleScheduledRule = toggleScheduledRule;
+
+export async function deleteScheduledRule(id) {
+  if (!confirm('Delete this scheduled rule? This cannot be undone.')) return;
+  try {
+    await api('/scheduled-rules/' + id, { method: 'DELETE' });
+    toast('Rule deleted');
+    await loadScheduledRules();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.deleteScheduledRule = deleteScheduledRule;
+
+// ─── Custom Fields Tab ──────────────────────────────────────────
+
+let _customFieldDefs = [];
+
+export async function renderCustomFieldsTab(container) {
+  container.innerHTML =
+    '<div class="bg-white border rounded-2xl p-6">' +
+      '<div class="flex items-center justify-between mb-1">' +
+        '<h3 class="font-semibold text-lg flex items-center gap-2">' +
+          '<span>📋</span> Custom Contact Fields' +
+        '</h3>' +
+        '<button onclick="showCustomFieldForm()" class="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-bold text-sm">+ New Field</button>' +
+      '</div>' +
+      '<p class="text-sm text-neutral-500 mb-6 font-medium">Define custom fields that appear on each contact in the Live Chat panel. Use date fields as triggers for scheduled messages.</p>' +
+      '<div id="cf-list" class="space-y-3"><div class="text-sm text-neutral-400 text-center py-8">Loading fields...</div></div>' +
+      '<div id="cf-form-modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"></div>' +
+    '</div>';
+  await loadCustomFieldDefs();
+}
+window.renderCustomFieldsTab = renderCustomFieldsTab;
+
+async function loadCustomFieldDefs() {
+  try {
+    _customFieldDefs = await api('/contact-fields/definitions');
+    renderFieldDefsList();
+  } catch (e) {
+    var el = document.getElementById('cf-list');
+    if (el) el.innerHTML = '<div class="text-sm text-red-500 text-center py-4">Failed to load fields: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderFieldDefsList() {
+  var el = document.getElementById('cf-list');
+  if (!el) return;
+  if (!_customFieldDefs.length) {
+    el.innerHTML = '<div class="text-sm text-neutral-400 text-center py-8">No custom fields yet. Click "+ New Field" to create one.</div>';
+    return;
+  }
+
+  var typeIcons = { text: '📝', date: '📅', number: '🔢', select: '📋' };
+
+  el.innerHTML = _customFieldDefs.map(function(d) {
+    var icon = typeIcons[d.fieldType] || '📄';
+    var builtIn = d.isBuiltIn ? '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold ml-2">Built-in</span>' : '';
+    var opts = (d.fieldOptions && d.fieldOptions.length) ? '<div class="text-[11px] text-neutral-400 mt-1">Options: ' + d.fieldOptions.map(function(o) { return esc(o); }).join(', ') + '</div>' : '';
+    var deleteBtn = d.isBuiltIn ? '' :
+      '<button onclick="deleteCustomField(\'' + esc(d.fieldKey) + '\')" class="px-2 py-1 text-xs rounded-lg border hover:bg-red-50 text-red-500 transition" title="Delete">🗑️</button>';
+    return '<div class="p-4 border rounded-xl hover:shadow-sm transition">' +
+      '<div class="flex items-center justify-between">' +
+        '<div class="flex items-center gap-2">' +
+          '<span>' + icon + '</span>' +
+          '<span class="font-medium text-sm text-neutral-800">' + esc(d.fieldLabel) + '</span>' +
+          '<span class="text-xs text-neutral-400">(' + esc(d.fieldKey) + ')</span>' +
+          builtIn +
+        '</div>' +
+        '<div class="flex gap-1">' +
+          '<span class="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-xs font-bold">' + esc(d.fieldType) + '</span>' +
+          deleteBtn +
+        '</div>' +
+      '</div>' +
+      opts +
+    '</div>';
+  }).join('');
+}
+
+export function showCustomFieldForm() {
+  var modal = document.getElementById('cf-form-modal');
+  if (!modal) return;
+
+  modal.innerHTML =
+    '<div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">' +
+      '<h3 class="font-semibold text-lg mb-4">New Custom Field</h3>' +
+      '<div class="space-y-4">' +
+        '<div>' +
+          '<label class="block text-xs font-medium text-neutral-600 mb-1">Field Label</label>' +
+          '<input type="text" id="cf-label" placeholder="e.g. Arrival Date" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">' +
+        '</div>' +
+        '<div>' +
+          '<label class="block text-xs font-medium text-neutral-600 mb-1">Field Key</label>' +
+          '<input type="text" id="cf-key" placeholder="e.g. arrival_date" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none bg-neutral-50">' +
+          '<p class="text-[11px] text-neutral-400 mt-1">Auto-generated from label. Used in API and filters.</p>' +
+        '</div>' +
+        '<div>' +
+          '<label class="block text-xs font-medium text-neutral-600 mb-1">Field Type</label>' +
+          '<select id="cf-type" class="w-full px-4 py-2.5 border rounded-xl text-sm bg-white focus:ring-2 focus:ring-primary-500 outline-none" onchange="toggleCfOptions()">' +
+            '<option value="text">Text</option>' +
+            '<option value="date">Date</option>' +
+            '<option value="number">Number</option>' +
+            '<option value="select">Select (dropdown)</option>' +
+          '</select>' +
+        '</div>' +
+        '<div id="cf-options-wrap" class="hidden">' +
+          '<label class="block text-xs font-medium text-neutral-600 mb-1">Options (comma-separated)</label>' +
+          '<input type="text" id="cf-options" placeholder="e.g. Airbnb, Booking.com, Direct, Walk-in" class="w-full px-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 outline-none">' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex gap-3 mt-6">' +
+        '<button onclick="saveCustomField()" class="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-bold text-sm">Create</button>' +
+        '<button onclick="closeCustomFieldForm()" class="px-6 py-2.5 border rounded-xl hover:bg-neutral-50 transition text-sm font-medium">Cancel</button>' +
+      '</div>' +
+    '</div>';
+
+  modal.classList.remove('hidden');
+
+  // Auto-generate key from label
+  var labelInput = document.getElementById('cf-label');
+  var keyInput = document.getElementById('cf-key');
+  if (labelInput && keyInput) {
+    labelInput.addEventListener('input', function() {
+      keyInput.value = labelInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    });
+  }
+}
+window.showCustomFieldForm = showCustomFieldForm;
+
+export function toggleCfOptions() {
+  var type = (document.getElementById('cf-type') || {}).value;
+  var wrap = document.getElementById('cf-options-wrap');
+  if (wrap) wrap.classList.toggle('hidden', type !== 'select');
+}
+window.toggleCfOptions = toggleCfOptions;
+
+export function closeCustomFieldForm() {
+  var modal = document.getElementById('cf-form-modal');
+  if (modal) { modal.classList.add('hidden'); modal.innerHTML = ''; }
+}
+window.closeCustomFieldForm = closeCustomFieldForm;
+
+export async function saveCustomField() {
+  var label = (document.getElementById('cf-label') || {}).value;
+  var key = (document.getElementById('cf-key') || {}).value;
+  var type = (document.getElementById('cf-type') || {}).value;
+  var optionsRaw = (document.getElementById('cf-options') || {}).value;
+
+  if (!label || !key) { toast('Label and key are required', 'error'); return; }
+
+  var body = {
+    fieldKey: key,
+    fieldLabel: label,
+    fieldType: type,
+    fieldOptions: type === 'select' ? optionsRaw.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : null
+  };
+
+  try {
+    await api('/contact-fields/definitions', { method: 'POST', body: body });
+    toast('Field created');
+    closeCustomFieldForm();
+    await loadCustomFieldDefs();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.saveCustomField = saveCustomField;
+
+export async function deleteCustomField(key) {
+  if (!confirm('Delete field "' + key + '"? This removes the definition but keeps existing values.')) return;
+  try {
+    await api('/contact-fields/definitions/' + key, { method: 'DELETE' });
+    toast('Field deleted');
+    await loadCustomFieldDefs();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+window.deleteCustomField = deleteCustomField;

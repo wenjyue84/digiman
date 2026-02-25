@@ -34,30 +34,40 @@ export async function notifyAdminDisconnection(
   instanceLabel: string,
   reason: string
 ): Promise<void> {
-  if (!notificationContext) {
-    logger.warn('Not initialized — cannot send disconnect notification');
-    return;
-  }
-
-  const settings = await loadAdminNotificationSettings();
-  if (!settings.enabled || !settings.notifyOnDisconnect) {
-    logger.info('Disconnect notifications disabled in settings');
-    return;
-  }
-
-  const message = `⚠️ *WhatsApp Instance Disconnected*\n\n` +
-    `Instance: *${instanceLabel}*\n` +
-    `ID: ${instanceId}\n` +
-    `Reason: ${reason}\n` +
-    `Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}\n\n` +
-    `Please check the Rainbow Admin dashboard:\n` +
-    `http://localhost:3002/dashboard`;
-
   try {
+    if (!notificationContext) {
+      logger.warn('Not initialized — cannot send disconnect notification');
+      return;
+    }
+
+    // Skip if no connected instance available (prevents crash when all instances are down)
+    if (notificationContext.getConnectedInstance) {
+      const connected = notificationContext.getConnectedInstance();
+      if (!connected || connected.state !== 'open') {
+        logger.info('Skipping disconnect notification — no connected instance to send through');
+        return;
+      }
+    }
+
+    const settings = await loadAdminNotificationSettings();
+    if (!settings.enabled || !settings.notifyOnDisconnect) {
+      logger.info('Disconnect notifications disabled in settings');
+      return;
+    }
+
+    const message = `⚠️ *WhatsApp Instance Disconnected*\n\n` +
+      `Instance: *${instanceLabel}*\n` +
+      `ID: ${instanceId}\n` +
+      `Reason: ${reason}\n` +
+      `Time: ${new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' })}\n\n` +
+      `Please check the Rainbow Admin dashboard:\n` +
+      `http://localhost:3002/dashboard`;
+
     await notificationContext.sendMessage(settings.systemAdminPhone, message);
     logger.info('Sent disconnect notification', { toPhone: settings.systemAdminPhone });
   } catch (err: any) {
-    logger.error('Failed to send disconnect notification', { error: err.message, stack: err.stack });
+    // Silently log — never crash the server for a notification failure
+    logger.error('Failed to send disconnect notification', { error: err.message });
   }
 }
 

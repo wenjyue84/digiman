@@ -28,6 +28,18 @@ export async function deleteChat() {
 export async function sendReply() {
   if (!$.activePhone) return;
 
+  // Note mode: save as internal comment instead of sending WhatsApp message
+  if ($.noteMode) {
+    var noteInput = document.getElementById('lc-input-box');
+    var noteText = noteInput ? noteInput.value.trim() : '';
+    if (!noteText) return;
+    noteInput.value = '';
+    noteInput.style.height = 'auto';
+    var { saveComment } = await import('./live-chat-panels.js');
+    await saveComment(noteText);
+    return;
+  }
+
   if ($.selectedFile) {
     await sendMedia();
     return;

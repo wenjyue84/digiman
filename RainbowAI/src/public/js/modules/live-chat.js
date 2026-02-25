@@ -56,7 +56,15 @@ import {
   toggleUnitFilter, selectUnitFilter, clearUnitFilter,
   unitInput, selectUnit, unitKeydown, unitBlur, loadCapsuleUnits,
   loadPaymentReminder, setPaymentReminder, dismissReminder, snoozeReminder,
-  refreshOverdueBell, showOverdueReminders, addOverdueBadgeToList
+  refreshOverdueBell, showOverdueReminders, addOverdueBadgeToList,
+  loadCustomFields, customFieldChanged,
+  loadCustomFieldsMap, toggleCustomFieldFilter, selectCustomFieldKey,
+  resetCustomFieldKey, selectCustomFieldValue, clearCustomFieldFilter,
+  toggleNoteMode, saveComment, deleteComment, loadComments,
+  toggleQuickFilter, applyQuickFilter,
+  toggleFilterPanel, renderFilterPanel, togglePanelQuick,
+  selectPanelUnit, selectPanelField, clearAllFilters,
+  togglePanelView, selectPanelTag
 } from './live-chat-panels.js';
 
 // ─── Window exports for template onclick handlers ────────────────
@@ -167,6 +175,22 @@ window.lcSetPaymentReminder = setPaymentReminder;
 window.lcDismissReminder = dismissReminder;
 window.lcSnoozeReminder = snoozeReminder;
 window.lcShowOverdueReminders = showOverdueReminders;
+window.lcCustomFieldChanged = customFieldChanged;
+window.lcToggleCustomFieldFilter = toggleCustomFieldFilter;
+window.lcSelectCustomFieldKey = selectCustomFieldKey;
+window.lcResetCustomFieldKey = resetCustomFieldKey;
+window.lcSelectCustomFieldValue = selectCustomFieldValue;
+window.lcClearCustomFieldFilter = clearCustomFieldFilter;
+window.lcToggleNoteMode = toggleNoteMode;
+window.lcDeleteComment = deleteComment;
+window.lcToggleQuickFilter = toggleQuickFilter;
+window.lcToggleFilterPanel = toggleFilterPanel;
+window.lcTogglePanelQuick = togglePanelQuick;
+window.lcSelectPanelUnit = selectPanelUnit;
+window.lcSelectPanelField = selectPanelField;
+window.lcClearAllFilters = clearAllFilters;
+window.lcTogglePanelView = togglePanelView;
+window.lcSelectPanelTag = selectPanelTag;
 window.lcShowReconnectionModal = showReconnectionModal;
 window.lcReconnectInstance = reconnectInstance;
 window.lcAddNewWhatsApp = addNewWhatsApp;

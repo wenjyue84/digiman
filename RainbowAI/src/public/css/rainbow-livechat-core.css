@@ -156,10 +156,8 @@
   display: flex;
   padding: 8px 16px;
   gap: 8px;
-  overflow-x: auto;
+  flex-wrap: wrap;
   border-bottom: 1px solid #f0f2f5;
-  scrollbar-width: none;
-  /* Hide scrollbar */
 }
 
 .lc-chip {
@@ -400,6 +398,9 @@ body.lc-resizing * {
   margin-left: 16px;
   flex: 1;
   cursor: pointer;
+}
+.lc-header-avatar:hover, .lc-header-info:hover {
+  opacity: 0.75;
 }
 
 .lc-header-name {

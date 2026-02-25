@@ -190,6 +190,17 @@ async function checkAndSend(): Promise<void> {
 
   if (changed) saveData(data);
 
+  // ── Rule-based Scheduled Messages (Homestay) ──
+  // Evaluate trigger rules against contact custom field values
+  try {
+    const { evaluateScheduledRules } = await import('./scheduled-rules-engine.js');
+    await evaluateScheduledRules();
+  } catch (err: any) {
+    if (err.code !== 'ERR_MODULE_NOT_FOUND') {
+      console.error('[Scheduler] Scheduled rules check failed:', err.message);
+    }
+  }
+
   // ── Payment Reminders (US-022) ──
   // Check for overdue reminders with auto-send enabled
   try {

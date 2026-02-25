@@ -22,6 +22,8 @@ import capsulesRoutes from './capsules.js';
 import customMessagesRoutes from './custom-messages.js';
 import scheduledMessagesRoutes from './scheduled-messages.js';
 import paymentRemindersRoutes from './payment-reminders.js';
+import contactFieldsRoutes from './contact-fields.js';
+import scheduledRulesRoutes from './scheduled-rules.js';
 import latencyRoutes from '../test/latency.js';
 
 const router = Router();
@@ -99,6 +101,8 @@ router.use(capsulesRoutes);
 router.use(customMessagesRoutes);
 router.use(scheduledMessagesRoutes);
 router.use(paymentRemindersRoutes);
+router.use(contactFieldsRoutes);
+router.use(scheduledRulesRoutes);
 router.use('/test', latencyRoutes);
 
 // Ensure unmatched /api/rainbow/* returns JSON 404 (never HTML)

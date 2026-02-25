@@ -5,7 +5,7 @@
 import { $, avatarImg } from './live-chat-state.js';
 import { handleMessageChevronClick, bindContextMenuActions, clearFile, cancelReply, loadMessageMetadata, updateMessageIndicators, loadCmdTemplates, showReconnectionModal } from './live-chat-actions.js';
 import { hideTranslatePreview, updateTranslateIndicator, updateModeSubmenuUI } from './live-chat-features.js';
-import { loadContactDetails, updateModeUI, checkPendingApprovals, restoreWaStatusBarState, initResizableDivider, mobileShowChat, loadContactTagsMap, loadContactUnitsMap, loadContactDatesMap, loadCapsuleUnits, refreshOverdueBell, addOverdueBadgeToList } from './live-chat-panels.js';
+import { loadContactDetails, updateModeUI, checkPendingApprovals, restoreWaStatusBarState, initResizableDivider, mobileShowChat, loadContactTagsMap, loadContactUnitsMap, loadContactDatesMap, loadCapsuleUnits, refreshOverdueBell, addOverdueBadgeToList, loadCustomFieldsMap, loadComments, applyUnifiedFilters, updateFilterBadge } from './live-chat-panels.js';
 
 var api = window.api;
 
@@ -203,11 +203,13 @@ export async function loadLiveChat() {
     loadContactTagsMap(); // US-009: Fetch phone→tags map for tag filtering
     loadContactUnitsMap(); // US-012: Fetch phone→unit map for left pane prefix
     loadContactDatesMap(); // US-014: Fetch phone→dates map for left pane date suffix
+    loadCustomFieldsMap(); // Homestay: Fetch phone→custom fields map for filtering
     loadCapsuleUnits(); // US-010: Pre-fetch capsule units for dropdown
     loadCmdTemplates(); // US-015: Pre-fetch command palette templates
     renderList($.conversations);
     refreshOverdueBell(); // US-022: Update payment reminder bell
     addOverdueBadgeToList(); // US-022: Add overdue badges to left pane
+    updateFilterBadge(); // Homestay: Restore filter badge count
 
     // WhatsApp Web style: show last active conversation when none selected
     if ($.conversations.length > 0 && $.activePhone === null) {
@@ -442,13 +444,8 @@ export function renderList(conversations) {
     });
   }
 
-  // Apply unit filter (US-013)
-  if ($.unitFilter) {
-    filtered = filtered.filter(function (c) {
-      var contactUnit = $.contactUnitsMap[c.phone];
-      return contactUnit && contactUnit.toLowerCase() === $.unitFilter.toLowerCase();
-    });
-  }
+  // Apply unified filter panel (unit + custom fields + quick filters)
+  filtered = applyUnifiedFilters(filtered);
 
   // Sort: pinned first, then by most recent
   filtered.sort(function (a, b) {
@@ -610,12 +607,15 @@ export async function openConversation(phone) {
       $.conversationCache.delete(oldest);
     }
 
+    // Load internal comments for this conversation
+    await loadComments();
+
     // Only re-render if data actually changed (skip if cached version was identical)
     var msgCount = (log.messages || []).length;
     var cachedMsgCount = cached ? (cached.log.messages || []).length : -1;
     var lastMsgTs = msgCount > 0 ? log.messages[msgCount - 1].timestamp : 0;
     var cachedLastTs = cachedMsgCount > 0 ? cached.log.messages[cachedMsgCount - 1].timestamp : -1;
-    if (!cached || msgCount !== cachedMsgCount || lastMsgTs !== cachedLastTs) {
+    if (!cached || msgCount !== cachedMsgCount || lastMsgTs !== cachedLastTs || $.comments.length > 0) {
       renderChat(log);
     }
 
@@ -680,13 +680,46 @@ export function renderChat(log) {
   var lastDate = '';
   var query = $.searchOpen ? $.searchQuery.toLowerCase() : '';
 
-  for (var i = 0; i < $.lastMessages.length; i++) {
-    var msg = $.lastMessages[i];
-    var msgDate = new Date(msg.timestamp).toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' });
-    if (msgDate !== lastDate) {
-      html += '<div class="lc-date-sep"><span>' + msgDate + '</span></div>';
-      lastDate = msgDate;
+  // Build merged timeline: messages + comments sorted by timestamp
+  var timeline = [];
+  for (var mi = 0; mi < $.lastMessages.length; mi++) {
+    timeline.push({ type: 'msg', idx: mi, ts: new Date($.lastMessages[mi].timestamp).getTime(), data: $.lastMessages[mi] });
+  }
+  if ($.comments && $.comments.length > 0) {
+    for (var ci2 = 0; ci2 < $.comments.length; ci2++) {
+      timeline.push({ type: 'comment', idx: ci2, ts: new Date($.comments[ci2].createdAt).getTime(), data: $.comments[ci2] });
     }
+  }
+  timeline.sort(function(a, b) { return a.ts - b.ts; });
+
+  for (var ti = 0; ti < timeline.length; ti++) {
+    var entry = timeline[ti];
+
+    // Date separator
+    var entryDate = new Date(entry.ts).toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' });
+    if (entryDate !== lastDate) {
+      html += '<div class="lc-date-sep"><span>' + entryDate + '</span></div>';
+      lastDate = entryDate;
+    }
+
+    // Render comment card
+    if (entry.type === 'comment') {
+      var c = entry.data;
+      var cTimeStr = new Date(entry.ts).toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+      html += '<div class="lc-comment-card" data-comment-id="' + c.id + '">' +
+        '<div class="lc-comment-header">' +
+          '<span class="lc-comment-icon">\uD83D\uDD12</span>' +
+          '<span class="lc-comment-author">' + escapeHtml(c.author || 'Staff') + '</span>' +
+          '<span class="lc-comment-time">' + cTimeStr + '</span>' +
+          '<button class="lc-comment-delete" onclick="lcDeleteComment(\'' + c.id + '\')" title="Delete note">\u00D7</button>' +
+        '</div>' +
+        '<div class="lc-comment-body">' + escapeHtml(c.content) + '</div>' +
+      '</div>';
+      continue;
+    }
+
+    var i = entry.idx;
+    var msg = entry.data;
 
     var isGuest = msg.role === 'user';
     var side = isGuest ? 'guest' : 'bot';

@@ -13,7 +13,21 @@ import {
   toggleHandbackGrace,
   saveFailoverSettings,
   failoverPromote,
-  failoverDemote
+  failoverDemote,
+  renderScheduledRulesTab,
+  showScheduledRuleForm,
+  closeScheduledRuleForm,
+  saveScheduledRule,
+  editScheduledRule,
+  toggleScheduledRule,
+  deleteScheduledRule,
+  srTriggerFieldChanged,
+  renderCustomFieldsTab,
+  showCustomFieldForm,
+  toggleCfOptions,
+  closeCustomFieldForm,
+  saveCustomField,
+  deleteCustomField
 } from '/public/js/modules/settings.js';
 
 import {
@@ -66,5 +80,19 @@ window.moveT4Provider = moveT4Provider;
 window.autoSaveT4Providers = autoSaveT4Providers;
 window.testT4Provider = testT4Provider;
 window.saveLLMSettings = saveLLMSettings;
+window.renderScheduledRulesTab = renderScheduledRulesTab;
+window.showScheduledRuleForm = showScheduledRuleForm;
+window.closeScheduledRuleForm = closeScheduledRuleForm;
+window.saveScheduledRule = saveScheduledRule;
+window.editScheduledRule = editScheduledRule;
+window.toggleScheduledRule = toggleScheduledRule;
+window.deleteScheduledRule = deleteScheduledRule;
+window.srTriggerFieldChanged = srTriggerFieldChanged;
+window.renderCustomFieldsTab = renderCustomFieldsTab;
+window.showCustomFieldForm = showCustomFieldForm;
+window.toggleCfOptions = toggleCfOptions;
+window.closeCustomFieldForm = closeCustomFieldForm;
+window.saveCustomField = saveCustomField;
+window.deleteCustomField = deleteCustomField;
 
 console.log('[LazyChunk] Settings modules registered');

@@ -21,6 +21,7 @@ out/
 # Local development
 .local/
 *.local
+.claude/launch.json
 
 # Logs
 logs/
