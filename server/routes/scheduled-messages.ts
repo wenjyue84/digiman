@@ -1,167 +1,142 @@
+/**
+ * scheduled-messages.ts — PMS proxy to Rainbow AI scheduled-rules API
+ *
+ * Proxies all requests to Rainbow API at localhost:3002.
+ * Rainbow owns the DB tables (rainbow_scheduled_rules / _logs) AND the execution engine.
+ * PMS adds Passport.js session auth + transforms field names between PMS and Rainbow formats.
+ *
+ * Field mapping (PMS ↔ Rainbow):
+ *   PMS triggerOffsetHours  ↔  Rainbow offsetHours
+ *   PMS messageEn/Ms/Zh     ↔  Rainbow messages: { en, ms, zh }
+ */
 import { Router } from "express";
-import { eq, desc } from "drizzle-orm";
-import { db } from "../db";
-import {
-  scheduledMessageRules,
-  scheduledMessageLogs,
-} from "@shared/schema";
 import { authenticateToken } from "./middleware/auth";
+import { rainbowFetch } from "./lib/rainbow-proxy";
 
 const router = Router();
 
-// ─── Rules ────────────────────────────────────────────────────────────────────
+// ─── Transform helpers ───────────────────────────────────────────────────────
+
+/** Rainbow → PMS: convert Rainbow rule format to what PMS React expects */
+function toClientFormat(rule: any): any {
+  const messages = rule.messages || {};
+  return {
+    id: rule.id,
+    name: rule.name,
+    isActive: rule.isActive ?? rule.is_active ?? true,
+    triggerField: rule.triggerField ?? rule.trigger_field,
+    triggerOffsetHours: rule.offsetHours ?? rule.offset_hours ?? 0,
+    messageEn: messages.en || "",
+    messageMs: messages.ms || null,
+    messageZh: messages.zh || null,
+    cooldownHours: rule.cooldownHours ?? rule.cooldown_hours ?? 24,
+    createdAt: rule.createdAt ?? rule.created_at,
+  };
+}
+
+/** PMS → Rainbow: convert PMS form data to Rainbow API format */
+function toRainbowFormat(body: any): any {
+  return {
+    name: body.name,
+    triggerField: body.triggerField,
+    offsetHours: body.triggerOffsetHours ?? 0,
+    messages: {
+      en: body.messageEn || "",
+      ms: body.messageMs || null,
+      zh: body.messageZh || null,
+    },
+    cooldownHours: body.cooldownHours ?? 24,
+    matchValue: body.matchValue || null,
+  };
+}
+
+// ─── Rules ───────────────────────────────────────────────────────────────────
 
 // GET /api/scheduled-messages/rules
 router.get("/rules", authenticateToken, async (_req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const rules = await db
-      .select()
-      .from(scheduledMessageRules)
-      .orderBy(scheduledMessageRules.createdAt);
-    res.json(rules);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch scheduled message rules" });
+    const resp = await rainbowFetch("/scheduled-rules");
+    const rules = await resp.json();
+    if (!Array.isArray(rules)) return res.status(resp.status).json(rules);
+    res.json(rules.map(toClientFormat));
+  } catch (error: any) {
+    console.error("[scheduled-messages proxy] GET rules:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
 // POST /api/scheduled-messages/rules
-router.post("/rules", authenticateToken, async (req: any, res) => {
+router.post("/rules", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const {
-      name, description, triggerField, triggerOffsetHours,
-      triggerTimeExact, filterRules, messageEn, messageMs, messageZh, cooldownHours,
-    } = req.body;
-
-    if (!name || !triggerField || triggerOffsetHours === undefined || !messageEn) {
-      return res.status(400).json({ message: "name, triggerField, triggerOffsetHours, messageEn are required" });
-    }
-
-    const [created] = await db
-      .insert(scheduledMessageRules)
-      .values({
-        name,
-        description: description ?? null,
-        isActive: true,
-        triggerField,
-        triggerOffsetHours: Number(triggerOffsetHours),
-        triggerTimeExact: triggerTimeExact ?? null,
-        filterRules: filterRules ?? null,
-        messageEn,
-        messageMs: messageMs ?? null,
-        messageZh: messageZh ?? null,
-        cooldownHours: Number(cooldownHours ?? 0),
-        createdBy: req.user?.id ?? null,
-      })
-      .returning();
-
-    res.status(201).json(created);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to create scheduled message rule" });
+    const resp = await rainbowFetch("/scheduled-rules", {
+      method: "POST",
+      body: JSON.stringify(toRainbowFormat(req.body)),
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(resp.ok ? toClientFormat(data) : data);
+  } catch (error: any) {
+    console.error("[scheduled-messages proxy] POST rules:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
 // PUT /api/scheduled-messages/rules/:id
 router.put("/rules/:id", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid rule id" });
-
-    const {
-      name, description, isActive, triggerField, triggerOffsetHours,
-      triggerTimeExact, filterRules, messageEn, messageMs, messageZh, cooldownHours,
-    } = req.body;
-
-    const [updated] = await db
-      .update(scheduledMessageRules)
-      .set({
-        ...(name !== undefined && { name }),
-        ...(description !== undefined && { description }),
-        ...(isActive !== undefined && { isActive }),
-        ...(triggerField !== undefined && { triggerField }),
-        ...(triggerOffsetHours !== undefined && { triggerOffsetHours: Number(triggerOffsetHours) }),
-        ...(triggerTimeExact !== undefined && { triggerTimeExact }),
-        ...(filterRules !== undefined && { filterRules }),
-        ...(messageEn !== undefined && { messageEn }),
-        ...(messageMs !== undefined && { messageMs }),
-        ...(messageZh !== undefined && { messageZh }),
-        ...(cooldownHours !== undefined && { cooldownHours: Number(cooldownHours) }),
-        updatedAt: new Date(),
-      })
-      .where(eq(scheduledMessageRules.id, id))
-      .returning();
-
-    if (!updated) return res.status(404).json({ message: "Rule not found" });
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to update scheduled message rule" });
+    const resp = await rainbowFetch(`/scheduled-rules/${req.params.id}`, {
+      method: "PUT",
+      body: JSON.stringify(toRainbowFormat(req.body)),
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(resp.ok ? toClientFormat(data) : data);
+  } catch (error: any) {
+    console.error("[scheduled-messages proxy] PUT rules:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
 // PATCH /api/scheduled-messages/rules/:id/toggle
 router.patch("/rules/:id/toggle", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid rule id" });
-
-    const [current] = await db
-      .select({ isActive: scheduledMessageRules.isActive })
-      .from(scheduledMessageRules)
-      .where(eq(scheduledMessageRules.id, id));
-
-    if (!current) return res.status(404).json({ message: "Rule not found" });
-
-    const [updated] = await db
-      .update(scheduledMessageRules)
-      .set({ isActive: !current.isActive, updatedAt: new Date() })
-      .where(eq(scheduledMessageRules.id, id))
-      .returning();
-
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to toggle rule" });
+    const resp = await rainbowFetch(`/scheduled-rules/${req.params.id}/toggle`, {
+      method: "PATCH",
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (error: any) {
+    console.error("[scheduled-messages proxy] TOGGLE:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
 // DELETE /api/scheduled-messages/rules/:id
 router.delete("/rules/:id", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ message: "Invalid rule id" });
-
-    const [deleted] = await db
-      .delete(scheduledMessageRules)
-      .where(eq(scheduledMessageRules.id, id))
-      .returning();
-
-    if (!deleted) return res.status(404).json({ message: "Rule not found" });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete scheduled message rule" });
+    const resp = await rainbowFetch(`/scheduled-rules/${req.params.id}`, {
+      method: "DELETE",
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (error: any) {
+    console.error("[scheduled-messages proxy] DELETE:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
-// ─── Logs ─────────────────────────────────────────────────────────────────────
+// ─── Logs ────────────────────────────────────────────────────────────────────
 
-// GET /api/scheduled-messages/logs?ruleId=&phone=&limit=
+// GET /api/scheduled-messages/logs?ruleId=&limit=
 router.get("/logs", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
-
-    const logs = await db
-      .select()
-      .from(scheduledMessageLogs)
-      .orderBy(desc(scheduledMessageLogs.sentAt))
-      .limit(limit);
-
-    res.json(logs);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch scheduled message logs" });
+    const ruleId = req.query.ruleId as string;
+    const limit = req.query.limit as string || "50";
+    if (!ruleId) return res.json([]);
+    const resp = await rainbowFetch(`/scheduled-rules/${ruleId}/logs?limit=${limit}`);
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (error: any) {
+    console.error("[scheduled-messages proxy] GET logs:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 

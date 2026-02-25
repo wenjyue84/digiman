@@ -364,7 +364,9 @@ export type RainbowConversation = typeof rainbowConversations.$inferSelect;
 export type InsertRainbowConversation = typeof rainbowConversations.$inferInsert;
 export type RainbowMessage = typeof rainbowMessages.$inferSelect;
 
-// ─── Contact Fields (Homestay Feature A) ────────────────────────────
+// ─── Contact Fields (DEPRECATED — PMS now proxies to Rainbow API) ────
+// Rainbow owns: rainbow_custom_field_defs + rainbow_custom_field_values (raw pg)
+// These PMS-side Drizzle tables are kept for backward compat but no longer written to.
 
 export const contactFieldDefinitions = pgTable("contact_field_definitions", {
   id: serial("id").primaryKey(),
@@ -390,7 +392,9 @@ export const contactFieldValues = pgTable("contact_field_values", {
   index("idx_cfv_field_key").on(table.fieldKey),
 ]));
 
-// ─── Scheduled Messages (Homestay Feature D) ────────────────────────
+// ─── Scheduled Messages (DEPRECATED — PMS now proxies to Rainbow API) ────
+// Rainbow owns: rainbow_scheduled_rules + rainbow_scheduled_logs (raw pg)
+// These PMS-side Drizzle tables are kept for backward compat but no longer written to.
 
 export const scheduledMessageRules = pgTable("scheduled_message_rules", {
   id: serial("id").primaryKey(),

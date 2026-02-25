@@ -1,155 +1,85 @@
+/**
+ * contact-fields.ts — PMS proxy to Rainbow AI contact-fields API
+ *
+ * Proxies all requests to Rainbow API at localhost:3002.
+ * Rainbow owns the DB tables (rainbow_custom_field_defs / _values).
+ * PMS adds Passport.js session auth on top.
+ */
 import { Router } from "express";
-import { eq, and } from "drizzle-orm";
-import { db } from "../db";
-import {
-  contactFieldDefinitions,
-  contactFieldValues,
-} from "@shared/schema";
 import { authenticateToken } from "./middleware/auth";
+import { rainbowFetch } from "./lib/rainbow-proxy";
 
 const router = Router();
 
-// ─── Field Definitions ────────────────────────────────────────────────────────
+// ─── Field Definitions ───────────────────────────────────────────────────────
 
 // GET /api/contact-fields/definitions
 router.get("/definitions", authenticateToken, async (_req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const defs = await db
-      .select()
-      .from(contactFieldDefinitions)
-      .orderBy(contactFieldDefinitions.sortOrder);
-    res.json(defs);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch field definitions" });
+    const resp = await rainbowFetch("/contact-fields/definitions");
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (error: any) {
+    console.error("[contact-fields proxy] GET definitions:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
 // POST /api/contact-fields/definitions
 router.post("/definitions", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const { fieldKey, fieldLabel, fieldType, fieldOptions, sortOrder } = req.body;
-
-    if (!fieldKey || !fieldLabel || !fieldType) {
-      return res.status(400).json({ message: "fieldKey, fieldLabel, fieldType are required" });
-    }
-
-    const [created] = await db
-      .insert(contactFieldDefinitions)
-      .values({
-        fieldKey: fieldKey.toLowerCase().replace(/\s+/g, "_"),
-        fieldLabel,
-        fieldType,
-        fieldOptions: fieldOptions ?? null,
-        isBuiltIn: false,
-        sortOrder: sortOrder ?? 0,
-      })
-      .returning();
-
-    res.status(201).json(created);
+    const resp = await rainbowFetch("/contact-fields/definitions", {
+      method: "POST",
+      body: JSON.stringify(req.body),
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
   } catch (error: any) {
-    if (error?.code === "23505") {
-      return res.status(409).json({ message: "Field key already exists" });
-    }
-    res.status(500).json({ message: "Failed to create field definition" });
+    console.error("[contact-fields proxy] POST definitions:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
-// PUT /api/contact-fields/definitions/:key
-router.put("/definitions/:key", authenticateToken, async (req, res) => {
-  try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const { key } = req.params;
-    const { fieldLabel, fieldType, fieldOptions, sortOrder } = req.body;
-
-    const [updated] = await db
-      .update(contactFieldDefinitions)
-      .set({
-        ...(fieldLabel !== undefined && { fieldLabel }),
-        ...(fieldType !== undefined && { fieldType }),
-        ...(fieldOptions !== undefined && { fieldOptions }),
-        ...(sortOrder !== undefined && { sortOrder }),
-      })
-      .where(eq(contactFieldDefinitions.fieldKey, key))
-      .returning();
-
-    if (!updated) return res.status(404).json({ message: "Field definition not found" });
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to update field definition" });
-  }
-});
-
-// DELETE /api/contact-fields/definitions/:key  (only non-built-in)
+// DELETE /api/contact-fields/definitions/:key
 router.delete("/definitions/:key", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const { key } = req.params;
-
-    // Prevent deleting built-in fields
-    const [def] = await db
-      .select()
-      .from(contactFieldDefinitions)
-      .where(eq(contactFieldDefinitions.fieldKey, key));
-
-    if (!def) return res.status(404).json({ message: "Field definition not found" });
-    if (def.isBuiltIn) return res.status(403).json({ message: "Built-in fields cannot be deleted" });
-
-    await db
-      .delete(contactFieldDefinitions)
-      .where(eq(contactFieldDefinitions.fieldKey, key));
-
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete field definition" });
+    const resp = await rainbowFetch(`/contact-fields/definitions/${req.params.key}`, {
+      method: "DELETE",
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (error: any) {
+    console.error("[contact-fields proxy] DELETE definitions:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
-// ─── Field Values (per contact) ───────────────────────────────────────────────
+// ─── Field Values (per contact) ──────────────────────────────────────────────
 
 // GET /api/contact-fields/values/:phone
 router.get("/values/:phone", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const { phone } = req.params;
-    const values = await db
-      .select()
-      .from(contactFieldValues)
-      .where(eq(contactFieldValues.phone, phone));
-
-    // Return as a { fieldKey: value } map for easier frontend consumption
-    const map: Record<string, string | null> = {};
-    for (const v of values) {
-      map[v.fieldKey] = v.value;
-    }
-    res.json(map);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch contact field values" });
+    const resp = await rainbowFetch(`/contact-fields/values/${encodeURIComponent(req.params.phone)}`);
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (error: any) {
+    console.error("[contact-fields proxy] GET values:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 
-// PUT /api/contact-fields/values/:phone  — upsert a map of { fieldKey: value }
-router.put("/values/:phone", authenticateToken, async (req: any, res) => {
+// PUT /api/contact-fields/values/:phone  (Rainbow uses PATCH, we transform)
+router.put("/values/:phone", authenticateToken, async (req, res) => {
   try {
-    if (!db) return res.status(503).json({ message: "Database not available" });
-    const { phone } = req.params;
-    const updates: Record<string, string> = req.body;
-    const updatedBy = `staff:${req.user?.username ?? "unknown"}`;
-
-    for (const [fieldKey, value] of Object.entries(updates)) {
-      await db
-        .insert(contactFieldValues)
-        .values({ phone, fieldKey, value, updatedBy })
-        .onConflictDoUpdate({
-          target: [contactFieldValues.phone, contactFieldValues.fieldKey],
-          set: { value, updatedBy, updatedAt: new Date() },
-        });
-    }
-
-    res.json({ success: true, updated: Object.keys(updates).length });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to update contact field values" });
+    const resp = await rainbowFetch(`/contact-fields/values/${encodeURIComponent(req.params.phone)}`, {
+      method: "PATCH",
+      body: JSON.stringify(req.body),
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (error: any) {
+    console.error("[contact-fields proxy] PUT values:", error.message);
+    res.status(502).json({ message: "Rainbow AI service unavailable" });
   }
 });
 

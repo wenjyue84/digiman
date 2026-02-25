@@ -1,6 +1,8 @@
 /**
- * One-time migration: create the 4 new homestay tables.
- * Safe to re-run — uses IF NOT EXISTS.
+ * DEPRECATED — PMS now proxies to Rainbow AI for contact fields and scheduled rules.
+ * Rainbow owns rainbow_custom_field_defs/values and rainbow_scheduled_rules/logs.
+ * These PMS-side tables (contact_field_*, scheduled_message_*) are no longer used.
+ * Kept for reference only. Safe to re-run — uses IF NOT EXISTS.
  */
 import 'dotenv/config';
 import { Pool } from '@neondatabase/serverless';
