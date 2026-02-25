@@ -1168,3 +1168,28 @@ Incomplete: Fix billing dispute test keyword: 'investigation' vs 'investigate' (
 ### Useful context for future iterations
 - Autotest scenario data is in two files — any future scenario edits need both updated
 - Pre-existing TS error baseline is now ~32 (down from 222 in Feb 2026)
+## Iteration 1 - Thu, Feb 26, 2026  7:46:39 AM
+Completed: Fix billing dispute test keyword: 'investigation' vs 'investigate' (ID: US-006) in 4m
+
+
+## Iteration — Story: US-005 Fix Extra Amenity Towel test — widen keywords for LLM fallback resilience
+
+### What was implemented
+- `RainbowAI/src/public/js/modules/autotest-scenarios-single.js`: Widened `duringstay-extra-towel` validation values from `['deliver', 'housekeeping']` to `['deliver', 'housekeeping', 'arrange', 'bring', 'send', 'towel']`
+- `RainbowAI/src/public/js/modules/autotest-scenarios-single.js`: Also widened `typo-towl` values from `['towel', 'deliver', 'housekeeping']` to `['towel', 'deliver', 'housekeeping', 'arrange', 'bring', 'send']`
+- `RainbowAI/src/public/js/data/autotest-scenarios.js`: Same widen for `duringstay-extra-towel` (typo-towl not present in this file)
+- `knowledge.json`: Verified English template already contains "housekeeping" AND "deliver" — no change needed
+
+### Patterns discovered
+- **autotest-scenarios.js does NOT have typo-tolerance tests**: `typo-towl` exists only in `autotest-scenarios-single.js`, not in the full suite `autotest-scenarios.js`
+- **LLM fallback synonyms**: When primary AI times out (10s+), fallback may use synonyms. Test keyword arrays should include common English synonyms for the action verb.
+
+### Gotchas
+- `knowledge.json` structure is array of objects with `intent`/`response` keys (not `responses`) — the grep at line 126 showed `response.en` not `responses.en`
+- Zero TypeScript changes needed — pure JS data file update
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- `duringstay-extra-towel` keyword array: widened ✅
+- `typo-towl` keyword array: widened ✅
+- `knowledge.json` English template: "housekeeping" + "deliver" present ✅

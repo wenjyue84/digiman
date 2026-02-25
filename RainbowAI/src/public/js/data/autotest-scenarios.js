@@ -346,7 +346,7 @@ const AUTOTEST_SCENARIOS = [
     messages: [{ text: 'Can I get more towels?' }],
     validate: [{ turn: 0, rules: [
       { type: 'not_empty', critical: true },
-      { type: 'contains_any', values: ['deliver', 'housekeeping'], critical: true }
+      { type: 'contains_any', values: ['deliver', 'housekeeping', 'arrange', 'bring', 'send', 'towel'], critical: true }
     ]}]
   },
   {

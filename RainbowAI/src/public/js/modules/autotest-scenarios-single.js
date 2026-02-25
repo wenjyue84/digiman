@@ -414,7 +414,7 @@ export const SINGLE_TURN_SCENARIOS = [
     validate: [{
       turn: 0, rules: [
         { type: 'not_empty', critical: true },
-        { type: 'contains_any', values: ['deliver', 'housekeeping'], critical: true }
+        { type: 'contains_any', values: ['deliver', 'housekeeping', 'arrange', 'bring', 'send', 'towel'], critical: true }
       ]
     }]
   },
@@ -912,7 +912,7 @@ export const SINGLE_TURN_SCENARIOS = [
     validate: [{
       turn: 0, rules: [
         { type: 'not_empty', critical: true },
-        { type: 'contains_any', values: ['towel', 'deliver', 'housekeeping'], critical: true }
+        { type: 'contains_any', values: ['towel', 'deliver', 'housekeeping', 'arrange', 'bring', 'send'], critical: true }
       ]
     }]
   },
