@@ -63,8 +63,8 @@ async function initDatabase() {
     console.log("  - users");
     console.log("  - sessions");
     console.log("  - guests");
-    console.log("  - capsules");
-    console.log("  - capsule_problems");
+    console.log("  - units");
+    console.log("  - unit_problems");
     console.log("  - expenses");
     console.log("  - app_settings");
     console.log("  - guest_tokens");

@@ -83,8 +83,8 @@ export const DEFAULT_TEMPLATES: TemplatesData = {
  * Minimal settings with single AI provider (Ollama local - no API key required)
  */
 export const DEFAULT_SETTINGS: SettingsData = {
-  system_prompt: "You are Rainbow, an AI assistant for Pelangi Capsule Hostel. You're currently in safe mode. Please help guests contact staff if needed.",
-  staff_phones: ["+60127088789"], // Jay's number as fallback
+  system_prompt: `You are ${process.env.BOT_NAME || 'Rainbow'}, an AI assistant for ${process.env.BUSINESS_NAME || 'Pelangi Capsule Hostel'}. You're currently in safe mode. Please help guests contact staff if needed.`,
+  staff_phones: [process.env.STAFF_PRIMARY_PHONE || "+60127088789"], // Fallback number
   ai: {
     nvidia_model: "moonshotai/kimi-k2.5",
     nvidia_base_url: "https://integrate.api.nvidia.com/v1",
@@ -132,7 +132,7 @@ export const DEFAULT_WORKFLOW: WorkflowData = {
   },
   payment: {
     enabled: true,
-    forward_to: "+60127088789" // Jay's number
+    forward_to: process.env.STAFF_PRIMARY_PHONE || "+60127088789"
   },
   booking: {
     enabled: false // Disable booking in safe mode

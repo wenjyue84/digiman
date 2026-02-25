@@ -5,16 +5,16 @@ import { z } from "zod";
 import {
   PHONE_REGEX_LENIENT,
   NAME_REGEX,
-  CAPSULE_NUMBER_REGEX,
+  UNIT_NUMBER_REGEX,
   DATE_REGEX,
 } from "../validation-patterns";
 
 // ─── Token Schemas ───────────────────────────────────────────────────
 
 export const createTokenSchema = z.object({
-  capsuleNumber: z.string()
-    .min(1, "Capsule number is required")
-    .regex(CAPSULE_NUMBER_REGEX, "Capsule number must be in format like C1, C11, C25")
+  unitNumber: z.string()
+    .min(1, "Unit number is required")
+    .regex(UNIT_NUMBER_REGEX, "Unit number must be alphanumeric (e.g., C1, C11, Studio-A)")
     .transform(val => val.toUpperCase())
     .optional(),
   autoAssign: z.boolean().optional(),
@@ -65,31 +65,38 @@ export const createTokenSchema = z.object({
   guideShowOther: z.boolean().optional(),
   guideShowFaq: z.boolean().optional(),
 }).refine((data) => {
-  const hasCapsuleNumber = data.capsuleNumber && data.capsuleNumber.length > 0;
+  const hasUnitNumber = data.unitNumber && data.unitNumber.length > 0;
   const hasAutoAssign = data.autoAssign === true;
-  return (hasCapsuleNumber && !hasAutoAssign) || (!hasCapsuleNumber && hasAutoAssign);
+  return (hasUnitNumber && !hasAutoAssign) || (!hasUnitNumber && hasAutoAssign);
 }, {
-  message: "Either specify a capsule number or choose auto assign (but not both)",
-  path: ["capsuleNumber"],
+  message: "Either specify a unit number or choose auto assign (but not both)",
+  path: ["unitNumber"],
 });
 
-export const updateGuestTokenCapsuleSchema = z.object({
-  capsuleNumber: z.string()
-    .min(1, "Capsule number is required")
-    .regex(CAPSULE_NUMBER_REGEX, "Capsule number must be in format like C1, C11, C25")
+export const updateGuestTokenUnitSchema = z.object({
+  unitNumber: z.string()
+    .min(1, "Unit number is required")
+    .regex(UNIT_NUMBER_REGEX, "Unit number must be alphanumeric (e.g., C1, C11, Studio-A)")
     .transform(val => val.toUpperCase())
     .optional(),
   autoAssign: z.boolean().optional(),
 }).refine((data) => {
-  const hasCapsuleNumber = data.capsuleNumber && data.capsuleNumber.length > 0;
+  const hasUnitNumber = data.unitNumber && data.unitNumber.length > 0;
   const hasAutoAssign = data.autoAssign === true;
-  return (hasCapsuleNumber && !hasAutoAssign) || (!hasCapsuleNumber && hasAutoAssign);
+  return (hasUnitNumber && !hasAutoAssign) || (!hasUnitNumber && hasAutoAssign);
 }, {
-  message: "Either specify a capsule number or choose auto assign (but not both)",
-  path: ["capsuleNumber"],
+  message: "Either specify a unit number or choose auto assign (but not both)",
+  path: ["unitNumber"],
 });
 
-// ─── Schema-derived Types ────────────────────────────────────────────
+// ─── Backward Compatibility (deprecated) ────────────────────────────
+
+/** @deprecated Use updateGuestTokenUnitSchema */
+export const updateGuestTokenCapsuleSchema = updateGuestTokenUnitSchema;
+
+// ─── Schema-derived Types ───────────────────────────────────────────
 
 export type CreateToken = z.infer<typeof createTokenSchema>;
-export type UpdateGuestTokenCapsule = z.infer<typeof updateGuestTokenCapsuleSchema>;
+export type UpdateGuestTokenUnit = z.infer<typeof updateGuestTokenUnitSchema>;
+/** @deprecated Use UpdateGuestTokenUnit */
+export type UpdateGuestTokenCapsule = UpdateGuestTokenUnit;

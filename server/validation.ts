@@ -103,10 +103,10 @@ export const sanitizers = {
   },
 
   /**
-   * Sanitize capsule number
+   * Sanitize unit number
    */
-  sanitizeCapsuleNumber: (capsuleNumber: string): string => {
-    return capsuleNumber.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10);
+  sanitizeunitNumber: (unitNumber: string): string => {
+    return unitNumber.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10);
   }
 };
 
@@ -219,11 +219,11 @@ export const validators = {
   },
 
   /**
-   * Validate capsule number format and check if it exists
+   * Validate unit number format and check if it exists
    */
-  isValidCapsuleFormat: (capsuleNumber: string): boolean => {
+  isValidunitFormat: (unitNumber: string): boolean => {
     // Must be in format like C1, C2, C24 etc.
-    return /^C\d+$/.test(capsuleNumber);
+    return /^C\d+$/.test(unitNumber);
   }
 };
 

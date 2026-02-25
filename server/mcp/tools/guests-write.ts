@@ -4,7 +4,7 @@ import { MCPTool, MCPToolResult } from '../types';
 export const guestWriteTools: MCPTool[] = [
   {
     name: 'pelangi_checkin_guest',
-    description: 'Check in a new guest with automatic or manual capsule assignment',
+    description: 'Check in a new guest with automatic or manual unit assignment',
     inputSchema: {
       type: 'object',
       properties: {
@@ -14,7 +14,7 @@ export const guestWriteTools: MCPTool[] = [
         phoneNumber: { type: 'string', description: 'Contact phone number' },
         email: { type: 'string', description: 'Email address (optional)' },
         expectedCheckoutDate: { type: 'string', description: 'Expected checkout date (YYYY-MM-DD)' },
-        capsuleNumber: { type: 'number', description: 'Specific capsule to assign (optional, auto-assigned if not provided)' },
+        unitNumber: { type: 'number', description: 'Specific unit to assign (optional, auto-assigned if not provided)' },
         paymentAmount: { type: 'number', description: 'Payment amount' },
         paymentMethod: { type: 'string', description: 'Payment method (cash, card, online)' }
       },

@@ -14,7 +14,7 @@ export function useCheckInWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [token, setToken] = useState<string>("");
   const [guestInfo, setGuestInfo] = useState<{
-    capsuleNumber?: string;
+    unitNumber?: string;
     autoAssign?: boolean;
     guestName: string;
     phoneNumber: string;
@@ -28,8 +28,8 @@ export function useCheckInWizard() {
   const [editToken, setEditToken] = useState<string>("");
   const [editExpiresAt, setEditExpiresAt] = useState<Date | null>(null);
   const [canEdit, setCanEdit] = useState(false);
-  const [capsuleIssues, setCapsuleIssues] = useState<any[]>([]);
-  const [assignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
+  const [unitIssues, setunitIssues] = useState<any[]>([]);
+  const [assignedunitNumber, setAssignedunitNumber] = useState<string | null>(null);
   const [tokenExpiresAt, setTokenExpiresAt] = useState<Date | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   
@@ -167,13 +167,13 @@ export function useCheckInWizard() {
         const data = await response.json();
         let position = 'Available capsule will be assigned';
         
-        if (data.capsuleNumber) {
-          const capsuleNum = parseInt(data.capsuleNumber.replace('C', ''));
+        if (data.unitNumber) {
+          const capsuleNum = parseInt(data.unitNumber.replace('C', ''));
           position = capsuleNum % 2 === 0 ? 'Bottom (Preferred)' : 'Top';
         }
         
         setGuestInfo({
-          capsuleNumber: data.capsuleNumber,
+          unitNumber: data.unitNumber,
           autoAssign: data.autoAssign,
           guestName: data.guestName,
           phoneNumber: data.phoneNumber,
@@ -246,11 +246,11 @@ export function useCheckInWizard() {
         setEditToken(result.editToken);
         setEditExpiresAt(new Date(result.editExpiresAt));
         setCanEdit(true);
-        setCapsuleIssues(result.capsuleIssues || []);
-        setAssignedCapsuleNumber(result.capsuleNumber);
+        setunitIssues(result.unitIssues || []);
+        setAssignedunitNumber(result.unitNumber);
         toast({
           title: t.checkInSuccess,
-          description: `${t.checkInSuccessDesc} ${result.capsuleNumber || 'your assigned capsule'}.`,
+          description: `${t.checkInSuccessDesc} ${result.unitNumber || 'your assigned capsule'}.`,
         });
       } else {
         const errorData = await response.json();
@@ -284,8 +284,8 @@ export function useCheckInWizard() {
     editToken,
     editExpiresAt,
     canEdit,
-    capsuleIssues,
-    assignedCapsuleNumber,
+    unitIssues,
+    assignedunitNumber,
     tokenExpiresAt,
     timeRemaining,
     

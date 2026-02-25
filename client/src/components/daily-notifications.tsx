@@ -39,7 +39,7 @@ export default function DailyNotifications() {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/available"] });
       toast({
         title: "Success",
         description: "Guest checked out successfully",
@@ -80,7 +80,7 @@ export default function DailyNotifications() {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/available"] });
       toast({ title: "Success", description: "All overdue guests checked out." });
     },
     onError: () => {
@@ -97,7 +97,7 @@ export default function DailyNotifications() {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/available"] });
       toast({ title: "Success", description: "All guests expected to check out today have been checked out." });
     },
     onError: () => {
@@ -248,7 +248,7 @@ export default function DailyNotifications() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">{guest.name}</div>
-                          <div className="text-xs text-gray-600 truncate">{labels.singular} {guest.capsuleNumber}</div>
+                          <div className="text-xs text-gray-600 truncate">{labels.singular} {guest.unitNumber}</div>
                         </div>
                         <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-200 shrink-0">Due Today</Badge>
                         <ChevronRight className="ml-1 h-4 w-4 text-gray-400 shrink-0" />
@@ -336,7 +336,7 @@ export default function DailyNotifications() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate">{guest.name}</div>
-                          <div className="text-xs text-gray-600 truncate">{labels.singular} {guest.capsuleNumber}</div>
+                          <div className="text-xs text-gray-600 truncate">{labels.singular} {guest.unitNumber}</div>
                         </div>
                         <Badge className="bg-red-600 text-white shrink-0">Overdue</Badge>
                         <ChevronRight className="ml-1 h-4 w-4 text-gray-400 shrink-0" />
@@ -414,7 +414,7 @@ export default function DailyNotifications() {
           }}
           onConfirm={confirmCheckout}
           guestName={checkoutGuest.name}
-          capsuleNumber={checkoutGuest.capsuleNumber}
+          unitNumber={checkoutGuest.unitNumber}
           isLoading={checkoutMutation.isPending}
         />
       )}

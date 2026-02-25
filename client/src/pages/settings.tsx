@@ -20,7 +20,7 @@ import MessagesTab from "../components/settings/MessagesTab";
 import GeneralSettingsTab from "../components/settings/GeneralSettingsTab";
 import TestsTab from "../components/settings/TestsTab";
 import GuestGuideTab from "../components/settings/GuestGuideTab";
-import CapsuleRulesTab from "../components/settings/CapsuleRulesTab";
+import UnitRulesTab from "../components/settings/UnitRulesTab";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TimeSelect } from "@/components/ui/time-select";
@@ -29,7 +29,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { useToast } from "@/hooks/use-toast";
 import { AuthContext } from "@/lib/auth";
-import { updateSettingsSchema, type UpdateSettings, type CapsuleProblem, type User, type InsertUser, insertUserSchema, type PaginatedResponse, type Capsule, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
+import { updateSettingsSchema, type UpdateSettings, type UnitProblem, type User, type InsertUser, insertUserSchema, type PaginatedResponse, type Capsule, insertCapsuleSchema, updateCapsuleSchema } from "@shared/schema";
 import { z } from "zod";
 
 export default function SettingsPage() {
@@ -48,7 +48,7 @@ export default function SettingsPage() {
   });
 
   // Capsule problems queries
-  const { data: problemsResponse, isLoading: problemsLoading } = useQuery<PaginatedResponse<CapsuleProblem>>({
+  const { data: problemsResponse, isLoading: problemsLoading } = useQuery<PaginatedResponse<UnitProblem>>({
     queryKey: ["/api/problems"],
     enabled: isAuthenticated && activeTab === "maintenance",
   });
@@ -57,7 +57,7 @@ export default function SettingsPage() {
 
   // Capsules query for dropdown and capsules management
   const { data: capsules = [] } = useQuery<Capsule[]>({
-    queryKey: ["/api/capsules"],
+    queryKey: ["/api/units"],
     enabled: isAuthenticated && (activeTab === "maintenance" || activeTab === "capsules"),
   });
 
@@ -109,7 +109,7 @@ export default function SettingsPage() {
         guideShowCheckin: (settings as any).guideShowCheckin === true,
         guideShowOther: (settings as any).guideShowOther === true,
         guideShowFaq: (settings as any).guideShowFaq === true,
-        guideShowCapsuleIssues: (settings as any).guideShowCapsuleIssues === true,
+        guideShowunitIssues: (settings as any).guideShowunitIssues === true,
         guideShowSelfCheckinMessage: (settings as any).guideShowSelfCheckinMessage === true,
         guideShowHostelPhotos: (settings as any).guideShowHostelPhotos === true,
         guideShowGoogleMaps: (settings as any).guideShowGoogleMaps === true,
@@ -117,7 +117,7 @@ export default function SettingsPage() {
         guideShowTimeAccess: (settings as any).guideShowTimeAccess === true,
         
         // UI Preferences
-        showAllCapsules: (settings as any).showAllCapsules === true,
+        showAllUnits: (settings as any).showAllUnits === true,
       } as any);
       console.log('✅ Form reset complete with CSV data');
     }
@@ -410,7 +410,7 @@ export default function SettingsPage() {
 
 
         <TabsContent value="rules" className="space-y-6">
-          <CapsuleRulesTab onSwitchTab={setActiveTab} />
+          <UnitRulesTab onSwitchTab={setActiveTab} />
         </TabsContent>
 
         <TabsContent value="tests" className="space-y-6">

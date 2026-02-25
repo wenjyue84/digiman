@@ -9,24 +9,24 @@ export const dashboardTests: SystemTest[] = [
       try {
         // Test occupancy calculation
         const checkedInGuests = await storage.getCheckedInGuests();
-        const allCapsules = await storage.getAllCapsules();
+        const allUnits = await storage.getAllUnits();
 
-        if (allCapsules.length === 0) {
-          throw new Error("No capsules found for occupancy calculation");
+        if (allUnits.length === 0) {
+          throw new Error("No units found for occupancy calculation");
         }
 
-        const occupancyRate = (checkedInGuests.data.length / allCapsules.length) * 100;
+        const occupancyRate = (checkedInGuests.data.length / allUnits.length) * 100;
         if (occupancyRate < 0 || occupancyRate > 100) {
           throw new Error(`Invalid occupancy rate calculated: ${occupancyRate}%`);
         }
 
-        // Test available capsules calculation
-        const availableCapsules = await storage.getAvailableCapsules();
+        // Test available units calculation
+        const availableUnits = await storage.getAvailableUnits();
         const occupiedCount = checkedInGuests.data.length;
-        const availableCount = availableCapsules.length;
+        const availableCount = availableUnits.length;
 
-        if (occupiedCount + availableCount > allCapsules.length) {
-          throw new Error("Occupied + Available exceeds total capsules");
+        if (occupiedCount + availableCount > allUnits.length) {
+          throw new Error("Occupied + Available exceeds total units");
         }
 
         return {
@@ -39,7 +39,7 @@ export const dashboardTests: SystemTest[] = [
     },
     suggestions: [
       "If test fails: Check occupancy calculation logic",
-      "Verify guest and capsule counting methods",
+      "Verify guest and unit counting methods",
       "Check dashboard data aggregation in routes/dashboard.ts"
     ]
   },

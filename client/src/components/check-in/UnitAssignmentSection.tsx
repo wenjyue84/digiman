@@ -7,39 +7,39 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
-import type { InsertGuest, Capsule } from "@shared/schema";
+import type { InsertGuest, Unit } from "@shared/schema";
 
-interface CapsuleAssignmentSectionProps {
+interface UnitAssignmentSectionProps {
   form: UseFormReturn<InsertGuest>;
-  availableCapsules: (Capsule & { canAssign: boolean; warningLevel?: string; canManualAssign?: boolean; activeProblems?: any[] })[];
-  capsulesLoading: boolean;
-  isCapsuleLocked?: boolean;
+  availableUnits: (Unit & { canAssign: boolean; warningLevel?: string; canManualAssign?: boolean; activeProblems?: any[] })[];
+  unitsLoading: boolean;
+  isUnitLocked?: boolean;
 }
 
-export default function CapsuleAssignmentSection({ 
+export default function UnitAssignmentSection({ 
   form, 
-  availableCapsules, 
-  capsulesLoading,
-  isCapsuleLocked = false
-}: CapsuleAssignmentSectionProps) {
+  availableUnits, 
+  unitsLoading,
+  isUnitLocked = false
+}: UnitAssignmentSectionProps) {
   const labels = useAccommodationLabels();
   const [showWarningDialog, setShowWarningDialog] = useState(false);
-  const [pendingCapsule, setPendingCapsule] = useState<string>("");
+  const [pendingUnit, setPendingUnit] = useState<string>("");
   const [warningMessage, setWarningMessage] = useState<string>("");
 
-  // Helper function to get warning message for a capsule
-  const getWarningMessage = (capsule: any): string | null => {
-    if (capsule.toRent === false) {
+  // Helper function to get warning message for a unit
+  const getWarningMessage = (unit: any): string | null => {
+    if (unit.toRent === false) {
       return `⚠️ WARNING: This ${labels.lowerSingular} is marked as "Not Suitable for Rent" due to major maintenance issues. Are you sure you want to assign it?`;
     }
-    if (capsule.cleaningStatus === 'to_be_cleaned') {
+    if (unit.cleaningStatus === 'to_be_cleaned') {
       return `⚠️ WARNING: This ${labels.lowerSingular} needs cleaning before it can be assigned. Are you sure you want to assign it without cleaning?`;
     }
     
     // Check for active maintenance problems
-    if (capsule.activeProblems && capsule.activeProblems.length > 0) {
-      const problemDescriptions = capsule.activeProblems.map((p: any) => p.description).join(', ');
-      const problemCount = capsule.activeProblems.length;
+    if (unit.activeProblems && unit.activeProblems.length > 0) {
+      const problemDescriptions = unit.activeProblems.map((p: any) => p.description).join(', ');
+      const problemCount = unit.activeProblems.length;
       
       return `🔧 MAINTENANCE WARNING: This ${labels.lowerSingular} has ${problemCount} active maintenance ${problemCount === 1 ? 'problem' : 'problems'}: ${problemDescriptions}. Are you sure you want to assign it?`;
     }
@@ -47,42 +47,42 @@ export default function CapsuleAssignmentSection({
     return null;
   };
 
-  // Handle capsule selection with warning check
-  const handleCapsuleSelection = (value: string) => {
-    const selectedCapsule = availableCapsules.find(c => c.number === value);
-    if (!selectedCapsule) return;
+  // Handle unit selection with warning check
+  const handleUnitSelection = (value: string) => {
+    const selectedUnit = availableUnits.find(c => c.number === value);
+    if (!selectedUnit) return;
 
-    const warning = getWarningMessage(selectedCapsule);
+    const warning = getWarningMessage(selectedUnit);
     if (warning) {
-      // Show warning dialog for all problematic capsules (cleaning, maintenance, or major issues)
-      // This includes capsules with maintenance problems even if they can be assigned
-      setPendingCapsule(value);
+      // Show warning dialog for all problematic units (cleaning, maintenance, or major issues)
+      // This includes units with maintenance problems even if they can be assigned
+      setPendingUnit(value);
       setWarningMessage(warning);
       setShowWarningDialog(true);
     } else {
-      // Direct assignment for normal capsules with no issues
-      form.setValue("capsuleNumber", value);
+      // Direct assignment for normal units with no issues
+      form.setValue("unitNumber", value);
     }
   };
 
-  // Confirm problematic capsule assignment
+  // Confirm problematic unit assignment
   const confirmAssignment = () => {
-    form.setValue("capsuleNumber", pendingCapsule);
+    form.setValue("unitNumber", pendingUnit);
     setShowWarningDialog(false);
-    setPendingCapsule("");
+    setPendingUnit("");
     setWarningMessage("");
   };
 
-  // Cancel problematic capsule assignment
+  // Cancel problematic unit assignment
   const cancelAssignment = () => {
     setShowWarningDialog(false);
-    setPendingCapsule("");
+    setPendingUnit("");
     setWarningMessage("");
   };
 
   return (
     <div>
-      <Label htmlFor="capsuleNumber" className="flex items-center text-sm font-medium text-hostel-text mb-2">
+      <Label htmlFor="unitNumber" className="flex items-center text-sm font-medium text-hostel-text mb-2">
         <Bed className="mr-2 h-4 w-4" />
         {labels.singular} Assignment *
       </Label>
@@ -100,85 +100,85 @@ export default function CapsuleAssignmentSection({
           🚫 Red {labels.lowerPlural} are not suitable for rent due to major maintenance issues.
         </p>
       </div>
-      {capsulesLoading ? (
+      {unitsLoading ? (
         <Skeleton className="w-full h-10" />
       ) : (
         <div className="space-y-2">
-          {isCapsuleLocked && (
+          {isUnitLocked && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-700">
-                🔒 Capsule selection is locked because it was pre-selected from Dashboard. 
+                🔒 Unit selection is locked because it was pre-selected from Dashboard. 
                 This bypasses smart gender-based assignment for quick guest entry.
               </p>
             </div>
           )}
           <Select
-            value={form.watch("capsuleNumber") || undefined}
-            onValueChange={handleCapsuleSelection}
-            disabled={isCapsuleLocked}
+            value={form.watch("unitNumber") || undefined}
+            onValueChange={handleUnitSelection}
+            disabled={isUnitLocked}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={`Select ${labels.lowerSingular} (⭐ = bottom bed)`} />
             </SelectTrigger>
             <SelectContent>
-              {availableCapsules.length === 0 ? (
-                <SelectItem value="no-capsules" disabled>No {labels.lowerPlural} available</SelectItem>
+              {availableUnits.length === 0 ? (
+                <SelectItem value="no-units" disabled>No {labels.lowerPlural} available</SelectItem>
               ) : (
                 (() => {
                   try {
-                    // Validate and filter capsules with comprehensive error handling
-                    const validCapsules = availableCapsules.filter(capsule => {
+                    // Validate and filter units with comprehensive error handling
+                    const validUnits = availableUnits.filter(unit => {
                       try {
-                        if (!capsule || typeof capsule !== 'object') {
-                          console.warn('Invalid capsule object (not an object):', capsule);
+                        if (!unit || typeof unit !== 'object') {
+                          console.warn('Invalid unit object (not an object):', unit);
                           return false;
                         }
                         
-                        if (!capsule.number || typeof capsule.number !== 'string') {
-                          console.warn('Invalid capsule number:', capsule);
+                        if (!unit.number || typeof unit.number !== 'string') {
+                          console.warn('Invalid unit number:', unit);
                           return false;
                         }
                         
-                        const match = capsule.number.match(/^C(\d+)$/);
+                        const match = unit.number.match(/^C(\d+)$/);
                         if (!match) {
-                          console.warn('Capsule number does not match pattern:', capsule.number);
+                          console.warn('Unit number does not match pattern:', unit.number);
                           return false;
                         }
                         
                         const num = parseInt(match[1]);
                         if (isNaN(num)) {
-                          console.warn('Capsule number is not a valid integer:', capsule.number);
+                          console.warn('Unit number is not a valid integer:', unit.number);
                           return false;
                         }
                         
                         return true;
                       } catch (error) {
-                        console.warn('Error validating capsule:', error);
+                        console.warn('Error validating unit:', error);
                         return false;
                       }
                     });
                     
-                    if (validCapsules.length === 0) {
-                      return <SelectItem value="no-valid-capsules" disabled>No valid capsules found</SelectItem>;
+                    if (validUnits.length === 0) {
+                      return <SelectItem value="no-valid-units" disabled>No valid units found</SelectItem>;
                     }
                     
-                    // Sort capsules by number for better UX
-                    const sortedCapsules = validCapsules.sort((a, b) => {
+                    // Sort units by number for better UX
+                    const sortedUnits = validUnits.sort((a, b) => {
                       const aNum = parseInt(a.number.replace('C', ''));
                       const bNum = parseInt(b.number.replace('C', ''));
                       return aNum - bNum;
                     });
                     
-                    return sortedCapsules.map(capsule => {
-                      const isRecommended = capsule.canAssign;
-                      const hasWarning = capsule.warningLevel === 'warning' || capsule.warningLevel === 'error';
-                      const hasMaintenanceProblems = capsule.activeProblems && capsule.activeProblems.length > 0;
-                      const isDisabled = !capsule.canManualAssign;
+                    return sortedUnits.map(unit => {
+                      const isRecommended = unit.canAssign;
+                      const hasWarning = unit.warningLevel === 'warning' || unit.warningLevel === 'error';
+                      const hasMaintenanceProblems = unit.activeProblems && unit.activeProblems.length > 0;
+                      const isDisabled = !unit.canManualAssign;
                       
                       return (
                         <SelectItem 
-                          key={capsule.number} 
-                          value={capsule.number}
+                          key={unit.number} 
+                          value={unit.number}
                           disabled={isDisabled}
                           className={`
                             ${hasWarning ? 'text-orange-600' : ''}
@@ -187,10 +187,10 @@ export default function CapsuleAssignmentSection({
                           `}
                         >
                           <div className="flex items-center justify-between w-full">
-                            <span>{capsule.number}</span>
+                            <span>{unit.number}</span>
                             <div className="flex items-center gap-1">
-                              {capsule.position === 'bottom' && <span title="Bottom bed">⭐</span>}
-                              {hasMaintenanceProblems && <span title={`${capsule.activeProblems?.length || 0} maintenance ${(capsule.activeProblems?.length || 0) === 1 ? 'problem' : 'problems'}`}>🔧</span>}
+                              {unit.position === 'bottom' && <span title="Bottom bed">⭐</span>}
+                              {hasMaintenanceProblems && <span title={`${unit.activeProblems?.length || 0} maintenance ${(unit.activeProblems?.length || 0) === 1 ? 'problem' : 'problems'}`}>🔧</span>}
                               {hasWarning && <span title="Warning">⚠️</span>}
                               {!isRecommended && <span title="Not recommended">🚫</span>}
                             </div>
@@ -199,8 +199,8 @@ export default function CapsuleAssignmentSection({
                       );
                     });
                   } catch (error) {
-                    console.error('Error rendering capsule options:', error);
-                    return <SelectItem value="error" disabled>Error loading capsules</SelectItem>;
+                    console.error('Error rendering unit options:', error);
+                    return <SelectItem value="error" disabled>Error loading units</SelectItem>;
                   }
                 })()
               )}
@@ -208,11 +208,11 @@ export default function CapsuleAssignmentSection({
           </Select>
         </div>
       )}
-      {form.formState.errors.capsuleNumber && (
-        <p className="text-hostel-error text-sm mt-1">{form.formState.errors.capsuleNumber.message}</p>
+      {form.formState.errors.unitNumber && (
+        <p className="text-hostel-error text-sm mt-1">{form.formState.errors.unitNumber.message}</p>
       )}
 
-      {/* Warning Dialog for Problematic Capsule Assignment */}
+      {/* Warning Dialog for Problematic Unit Assignment */}
       <Dialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>

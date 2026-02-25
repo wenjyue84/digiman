@@ -3,7 +3,7 @@
  */
 
 // Types
-export type { PushNotificationSettingsProps, NotificationPreferences, TestNotificationError } from './types';
+export type { PushNotificationSettingsProps, TestNotificationError } from './types';
 
 // Hooks
 export { useNotificationPermission } from './useNotificationPermission';

@@ -22,10 +22,10 @@ export const dashboardTools: MCPTool[] = [
 
 export async function getDashboard(args: any): Promise<MCPToolResult> {
   try {
-    const [occupancy, guestResponse, capsules] = await Promise.all([
+    const [occupancy, guestResponse, units] = await Promise.all([
       callAPI('GET', '/api/occupancy'),
       callAPI('GET', '/api/guests/checked-in?page=1&limit=100'),
-      callAPI('GET', '/api/capsules')
+      callAPI('GET', '/api/units')
     ]);
 
     const guests = (guestResponse as any).data || guestResponse;
@@ -33,7 +33,7 @@ export async function getDashboard(args: any): Promise<MCPToolResult> {
     const dashboard = {
       occupancy,
       guests,
-      capsules,
+      units,
       timestamp: new Date().toISOString()
     };
 

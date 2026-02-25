@@ -1,142 +1,36 @@
 {
-  "productName": "Rainbow AI Live Chat Phase 3 — WhatsApp UX, Prisma AI & Bug Fixes",
-  "branchName": "ralph/live-chat-enhancements",
-  "overview": "Phase 3: 22 user stories across 7 areas — fix infrastructure bugs (CORS login, self-check-in URL), fix live-chat bugs (translate toggle, staff-review prediction), improve Rainbow AI content and config (greeting hint, workflow dead ends, Malay naturalness, auto-approve expansion), add WhatsApp UX parity (pill-chip filters, message menu positioning, avatar initials, schedule datetime, date-jump search), build Prisma AI in-chat assistant for new staff, and mirror all features in chat-simulator/live-simulation. All changes within RainbowAI/ and server/ modules only.",
+  "productName": "Multi-Business Deployment \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d Southern Homestay",
+  "branchName": "feature/multi-business",
+  "overview": "Transform PelangiManager from a single-business capsule hostel system into a multi-business platform. Rename capsules schema to generic units (with unitType, maxOccupancy, pricePerNight columns), add env-var-driven business config, parameterize deployment, and set up Southern Homestay on its own Lightsail/Neon/Cloudflare/WhatsApp infrastructure.",
   "goals": [
-    "Fix production infrastructure: CORS login error and broken guest self-check-in link URL",
-    "Fix live-chat bugs: translate toggle, staff-review prediction marking, Ollama UX",
-    "Improve Rainbow AI guest experience: first-contact greeting, workflow cancel escape, natural Malay",
-    "Expand copilot auto-approve from 3 to 11 informational intents to reduce 30-minute wait times",
-    "Match WhatsApp Web UX conventions: filter chips, context menu anchoring, colored avatars, full datetime scheduling, date-jump search",
-    "Build Prisma AI floating assistant for new staff to answer questions using KB, MCP, history, and internet",
-    "Keep #live-chat and #chat-simulator/live-simulation in full feature parity"
+    "One codebase serves multiple accommodation businesses (capsule hostels, homestays, hotels)",
+    "Each business runs on its own Lightsail instance with its own Neon database \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d complete data isolation",
+    "All business differentiation is driven by environment variables (zero code forks)",
+    "Existing Pelangi Capsule Hostel deployment continues working unchanged (backward compatible)",
+    "Southern Homestay is fully operational: management dashboard, Rainbow AI WhatsApp bot, Cloudflare HTTPS"
   ],
   "userStories": [
     {
-      "id": "US-018",
-      "title": "Fix CORS policy violation on production login",
-      "priority": 1,
-      "description": "As a staff member logging in at http://18.142.14.142/login, I want the sign-in to succeed without a CORS error so I can access the dashboard. The browser reports 'CORS policy violation' on login form submission. In production, nginx serves both frontend and API from port 80 — requests should be same-origin. Root cause is likely a hardcoded localhost URL in the login form action or API call that bypasses nginx and hits port 5000 directly.",
-      "acceptanceCriteria": [
-        "Identify the CORS root cause: check server/index.ts cors() middleware config AND scan client-side login code for any hardcoded localhost:5000 or port 5000 references",
-        "If hardcoded URL found: replace with relative path (e.g. /api/login instead of http://localhost:5000/api/login)",
-        "If CORS config is the root cause: add http://18.142.14.142 to allowed origins via CORS_ORIGIN env var",
-        "Login at http://18.142.14.142/login completes without CORS errors in browser console",
-        "Local dev login at http://localhost:3000 is not broken",
-        "CORS_ORIGIN env var documented in root .env.example if used",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: navigate to http://18.142.14.142/login, submit credentials, confirm no CORS error"
-      ],
-      "technicalNotes": [
-        "CORS config: server/index.ts — check cors() middleware origin setting",
-        "Login API call: client/src/ — search for fetch('/api/auth/login') or similar; check if any hardcoded http://localhost:5000 exists",
-        "In production: nginx at port 80 proxies /api/* to port 5000. Frontend at port 80 + API at port 80 = same origin = no CORS needed",
-        "If login JS calls http://localhost:5000/api directly (not relative path), browser blocks it as cross-origin",
-        "Fix priority: relative path fix >> CORS header fix (simpler, no env var needed)",
-        "Check Vite config (vite.config.ts) for proxy settings that may be misapplied in production builds"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-017",
-      "title": "Fix self-check-in link URL to use public Lightsail IP",
-      "priority": 2,
-      "description": "As a guest receiving a self-check-in WhatsApp message, I want the check-in link to work from my phone. The current generated link uses http://localhost:5000/guest-checkin?token=... which guests cannot open. Fix: read PUBLIC_URL env var as the base URL when generating the link.",
-      "acceptanceCriteria": [
-        "Search server/ codebase for all occurrences of 'localhost:5000' in string templates, URL construction, and link generation code",
-        "Add PUBLIC_URL env var support: when set, use it as the base URL for all guest-facing links",
-        "Generated self-check-in URL uses PUBLIC_URL as base: http://18.142.14.142/guest-checkin?token=...",
-        "If PUBLIC_URL is not set, fall back to req.protocol + '://' + req.get('host') (preserves local dev at localhost:5000)",
-        "Same fix applied to any other guest-facing links with hardcoded localhost (payment links, QR links, etc.)",
-        "Root .env.example updated with: PUBLIC_URL=http://18.142.14.142",
-        "On local dev (PUBLIC_URL not set), the link still resolves to localhost (from request host header)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors"
-      ],
-      "technicalNotes": [
-        "Grep server/ for 'localhost:5000' string literals to find all hardcoded URLs",
-        "Self-check-in link is likely generated in server/routes/ when creating a guest token",
-        "Pattern to use: const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;",
-        "Also check RainbowAI/ for any guest-facing URL generation that might use localhost",
-        "The guest-checkin page is served by the server at port 5000 (proxied by nginx in production)"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-016",
-      "title": "Fix 'Failed to mark prediction' error in staff-review",
-      "priority": 3,
-      "description": "As an admin reviewing predictions in #staff-review, I want marking a prediction to succeed without errors. Every row shows 'Error' status (Image #6). Root cause unknown — investigate the mark-prediction API endpoint, request payload, and response.",
-      "acceptanceCriteria": [
-        "Identify the failing API call: check RainbowAI/src/routes/admin/intent-analytics.ts for the mark-prediction endpoint",
-        "Verify the frontend request payload matches what the backend expects (field names, types, content-type header)",
-        "Fix the root cause: missing field, wrong content-type, auth issue, or schema mismatch",
-        "Marking a prediction as correct or incorrect succeeds and the row updates its status visually (no 'Error' label)",
-        "No console errors in browser when marking predictions",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: load #staff-review, click mark on any row, confirm success state"
-      ],
-      "technicalNotes": [
-        "Staff review route: RainbowAI/src/routes/admin/intent-analytics.ts — look for PATCH or POST endpoint for marking predictions",
-        "Frontend call: search RainbowAI/src/public/js/modules/ for 'mark' or 'prediction' to find the fetch() call",
-        "Common causes: body not JSON.stringify'd, missing Content-Type: application/json header, wrong HTTP method, endpoint path mismatch",
-        "The 'Error' shown in Image #6 appears in every row — suggests a systematic issue (wrong URL or auth), not a data issue"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-006",
-      "title": "Fix translate toggle in live-chat",
-      "priority": 4,
-      "description": "As a staff member, I want the Translate toggle in #live-chat to actually enable translation of incoming messages. The toggle currently cannot be turned ON (reverts immediately or has no effect). This feature was previously working — check git log for the regression.",
-      "acceptanceCriteria": [
-        "Check git log for recent changes to translate-related code in live-chat-actions.js, live-chat-core.js, or the translate API route",
-        "Translate toggle can be toggled ON without reverting back to OFF",
-        "When ON, incoming messages are translated using the active AI provider and translation appears below the original text",
-        "When OFF, no translation is shown",
-        "Toggle state persists across conversation switches within the same browser session",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: toggle ON, send a non-English message via chat simulator, confirm translation appears"
-      ],
-      "technicalNotes": [
-        "Translate toggle: RainbowAI/src/public/js/modules/live-chat-actions.js — look for toggleTranslate() or similar",
-        "State management: RainbowAI/src/public/js/modules/live-chat-core.js — check if translate state is being persisted",
-        "Translate API: check RainbowAI/src/routes/admin/conversations.ts for a translate endpoint",
-        "git log -- RainbowAI/src/public/js/modules/live-chat-actions.js to find the regression commit",
-        "Common regression: event listener removed during modular refactor, or state variable renamed"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
       "id": "US-001",
-      "title": "Ollama troubleshooting guide on speed test error",
-      "priority": 5,
-      "description": "As a staff member, I want to see a troubleshooting guide when an Ollama model fails the speed test in #settings/ai-models, so I know it's a local software issue and how to fix it. The guide must explain that Ollama must be running locally, with steps to install, start, and retry.",
+      "title": "Rename capsules table to units in schema definitions",
+      "priority": 1,
+      "description": "As a developer, I want the database schema to use generic 'units' naming instead of 'capsules' so that the same codebase works for any accommodation type.",
       "acceptanceCriteria": [
-        "When 'Test Speed' is clicked on an Ollama model and it returns an error, a collapsible troubleshooting panel appears below that model card (not a toast — must persist)",
-        "The panel contains: (1) explanation 'Ollama runs locally on your computer and must be started before use', (2) steps: install Ollama → run ollama serve → pull the model → retry, (3) a Retry button that re-runs the speed test inline",
-        "The panel does NOT appear for non-Ollama providers (OpenAI, Anthropic, NVIDIA, etc.)",
-        "If the retry succeeds, the panel collapses and the speed result is shown normally",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open #settings/ai-models, test an Ollama model, confirm guide appears on error"
+        "shared/schema-tables.ts: capsules pgTable renamed to units (DB table name: 'units')",
+        "shared/schema-tables.ts: capsuleProblems renamed to unitProblems (DB: 'unit_problems')",
+        "guests.capsuleNumber renamed to guests.unitNumber (DB: 'unit_number')",
+        "guestTokens.capsuleNumber renamed to guestTokens.unitNumber",
+        "adminNotifications.capsuleNumber renamed to adminNotifications.unitNumber",
+        "Exported types renamed: Capsule -> Unit, CapsuleProblem -> UnitProblem, InsertCapsuleProblem -> InsertUnitProblem",
+        "Temporary backward-compat aliases added: export type Capsule = Unit (with @deprecated JSDoc)",
+        "All index definitions updated to reference new table/column names",
+        "TypeScript compiles with zero errors (npm run check)"
       ],
       "technicalNotes": [
-        "Speed test UI: RainbowAI/src/public/js/modules/settings-ai-models.js — find the testSpeed() function",
-        "Template: RainbowAI/src/public/templates/tabs/settings.html — Ollama provider cards",
-        "Detection: check provider.id or provider.type for 'ollama' string before showing the guide",
-        "The guide should be injected into the DOM after the model card, not shown as a modal/toast"
+        "File: shared/schema-tables.ts \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d this is the foundational change, everything else depends on it",
+        "Keep DB column snake_case: unit_number, unit_type, max_occupancy, price_per_night",
+        "Drizzle JS variable names use camelCase: unitNumber, unitType, maxOccupancy, pricePerNight",
+        "After this change, TypeScript will show errors in ~100 files \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d that's expected and guides the remaining stories"
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
@@ -144,217 +38,74 @@
     },
     {
       "id": "US-002",
-      "title": "Cloud environment Ollama unavailability warning",
-      "priority": 6,
-      "description": "As a cloud server admin viewing #settings/ai-models on the Lightsail instance, I want a persistent notice that Ollama is not available in the cloud environment, so I don't waste time enabling it. Detect cloud context via RAINBOW_ROLE=primary env var.",
+      "title": "Add unit type columns for multi-accommodation support",
+      "priority": 2,
+      "description": "As a property manager, I want each unit to optionally store its type, max occupancy, and price so that I can manage different house sizes (studio, 1BR, 2BR).",
       "acceptanceCriteria": [
-        "Detect cloud context server-side: if RAINBOW_ROLE === 'primary', expose isCloud: true in GET /api/rainbow/status response",
-        "In #settings/ai-models, when isCloud is true, Ollama model cards show a yellow warning badge: 'Not available on cloud server — Ollama requires local installation'",
-        "The Activate toggle for Ollama models is disabled (greyed out) in cloud context with tooltip explaining why",
-        "Test Speed button for Ollama is also disabled in cloud context",
-        "In local/standby mode (RAINBOW_ROLE=standby or unset), the warning does NOT appear",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open #settings/ai-models and confirm Ollama UI state matches environment"
+        "units table has new nullable column: unitType: text('unit_type') \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d stores 'studio', '1bedroom', '2bedroom', or null for capsules",
+        "units table has new nullable column: maxOccupancy: integer('max_occupancy') \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d max guests per unit",
+        "units table has new nullable column: pricePerNight: text('price_per_night') \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d base price as decimal string",
+        "Existing Pelangi capsule data works unchanged (all new columns are null)",
+        "TypeScript Unit type includes the three new fields",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Status endpoint: RainbowAI/src/routes/admin/index.ts or whatsapp.ts — GET /api/rainbow/status",
-        "Add isCloud: process.env.RAINBOW_ROLE === 'primary' to the status response",
-        "Frontend reads isCloud from status API on page load and applies warning state to Ollama provider cards",
-        "settings-ai-models.js: add cloud check when rendering provider cards",
-        "CSS: add .lc-disabled and yellow badge styles if not already present"
+        "File: shared/schema-tables.ts \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d add columns to the units table (renamed in US-001)",
+        "All columns nullable so capsule hostels don't need them",
+        "pricePerNight is text not numeric to avoid floating point precision issues (same pattern as paymentAmount in guests)"
       ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-019",
-      "title": "Add capability menu hint to first-contact greeting",
-      "priority": 7,
-      "description": "As a first-time guest messaging Rainbow on WhatsApp, I want to receive a brief menu of what Rainbow can help with so I know how to interact. The current greeting is a plain welcome with no hints. Add a capability list to the greeting for new contacts (conversation history length = 0).",
-      "acceptanceCriteria": [
-        "Locate the greeting intent's static reply in RainbowAI/src/assistant/data/ (settings.json or static-replies config)",
-        "Update the en variant to include the capability menu: 'Hi! I'm Rainbow 🌈 I can help with:\\n• 🏨 Check-in / Check-out\\n• 💰 Pricing & availability\\n• 📍 Location & directions\\n• 🛁 Facilities & WiFi\\n• 🙋 Or just ask me anything!'",
-        "Add ms (Malay) variant: 'Hai! Saya Rainbow 🌈 Boleh bantu dengan:\\n• 🏨 Check-in / Check-out\\n• 💰 Harga & ketersediaan\\n• 📍 Lokasi & arah\\n• 🛁 Kemudahan & WiFi\\n• 🙋 Atau tanya apa sahaja!'",
-        "Add zh (Chinese) variant with equivalent content",
-        "The hint is shown only when conversation history length is 0 (true first contact) — verify the message router checks this condition",
-        "For returning guests (history exists), the greeting remains the original shorter version",
-        "50-scenario accuracy test maintains 100% pass rate after this change",
-        "TypeScript compiles with zero errors",
-        "Verify in Chat Simulator: send 'hi' from a fresh conversation, confirm capability hint appears"
+      "dependencies": [
+        "US-001"
       ],
-      "technicalNotes": [
-        "Greeting reply config: likely in RainbowAI/src/assistant/data/settings.json under staticReplies.greeting",
-        "First-contact detection: RainbowAI/src/assistant/message-router.ts — check if conversationHistory.length === 0 before routing greeting",
-        "If first-contact detection doesn't exist: add check in the greeting action handler to select between full hint vs short reply",
-        "The greeting response may be in routing.json as a static_reply action — trace the full flow from greeting intent → routing → reply"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-021",
-      "title": "Improve booking workflow naturalness and Malay translations",
-      "priority": 9,
-      "description": "As a guest going through the booking process, I want Rainbow to ask questions directly without a preamble filler message, and in natural conversational Malay. Current booking_payment_handler sends a preamble step ('I'll help you with your booking...') before asking the actual question, adding an unnecessary round-trip.",
-      "acceptanceCriteria": [
-        "Locate booking_payment_handler workflow in RainbowAI/src/assistant/data/workflows.json",
-        "Collapse the preamble step: merge Step 1 (preamble) and Step 2 (first question) into a single opening message",
-        "en opening: 'Happy to help with your booking! How many guests will be staying?'",
-        "ms opening: 'Boleh bantu! Berapa orang tetamu nak check in?'",
-        "zh opening: '好的，我来帮您办理！请问几位客人入住？'",
-        "Review all other ms variants in this workflow for literal translations and rewrite unnatural ones (payment method, confirmation messages)",
-        "Only ONE message is sent before the guest can respond (verified in Chat Simulator)",
-        "50-scenario accuracy test maintains 100% pass rate after this change",
-        "TypeScript compiles with zero errors",
-        "Verify in Chat Simulator: trigger booking workflow, confirm only one opening message before guest response"
-      ],
-      "technicalNotes": [
-        "Workflow definitions: RainbowAI/src/assistant/data/workflows.json",
-        "Find booking_payment_handler workflow, look at steps array",
-        "Natural Malaysian Malay markers: 'nak' (want to), 'lah' (particle), 'boleh' (can), 'dah' (already), 'berapa' (how many)",
-        "Avoid literal translation of 'guests will be staying' → 'tetamu nak check in' is more natural",
-        "This is a JSON-only change — no TypeScript files need modification"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-022",
-      "title": "Expand copilot auto-approve intent list from 3 to 11 intents",
-      "priority": 8,
-      "description": "As a hostel manager using copilot mode, I want Rainbow to auto-approve replies for all low-risk informational intents so guests don't wait 30 minutes for staff manual approval. Currently only greeting, thanks, and wifi are auto-approved. All 11 informational intents are safe to auto-approve.",
-      "acceptanceCriteria": [
-        "Locate auto_approve_intents config in RainbowAI/src/assistant/data/settings.json (under copilot key)",
-        "Update the list to: ['greeting', 'thanks', 'wifi', 'directions', 'checkin_info', 'checkout_info', 'facilities_info', 'rules_policy', 'payment_info', 'luggage_storage', 'extra_amenity_request']",
-        "Verify all 11 intent names exist in intent-keywords.json and routing.json (no typos, no missing intents)",
-        "In copilot mode, a message classified as checkin_info is auto-approved and sent without staff action",
-        "50-scenario accuracy test maintains 100% pass rate after this change",
-        "TypeScript compiles with zero errors",
-        "Verify in Chat Simulator: enable copilot mode, ask 'what time is check in?', confirm Rainbow replies without staff approval step"
-      ],
-      "technicalNotes": [
-        "Settings file: RainbowAI/src/assistant/data/settings.json — look for copilot.auto_approve_intents array",
-        "Cross-check intent names: grep intent-keywords.json for each of the 11 intent names to confirm they exist",
-        "Cross-check routing: grep routing.json for each intent name",
-        "This is a JSON-only change — no TypeScript modification needed",
-        "The copilot mode logic that reads this list is in message-router.ts or response-processor.ts"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-020",
-      "title": "Fix workflow dead ends — cancel intent and routing gaps",
-      "priority": 10,
-      "description": "As a guest mid-workflow, I want to say 'cancel' or 'nevermind' and have Rainbow gracefully exit, so I don't get confused responses. Three gaps: (1) no cancel_workflow intent, (2) climate_control_complaint routes to static_reply instead of complaint_handling workflow, (3) billing_dispute routes to static_reply instead of escalate workflow.",
-      "acceptanceCriteria": [
-        "Add cancel_workflow intent to intent-keywords.json with keywords: 'cancel', 'nevermind', 'stop', 'forget it', 'batal', 'tak nak', '算了' (and common variations)",
-        "The workflow executor (workflow-executor.ts or action-dispatch.ts) checks for cancel_workflow intent at each step and exits gracefully",
-        "Graceful exit message (en): 'No problem! Is there anything else I can help you with?' with ms and zh variants",
-        "Update routing.json: climate_control_complaint action changed from static_reply to workflow with workflow_id: complaint_handling",
-        "Update routing.json: billing_dispute action changed from static_reply to workflow with workflow_id: escalate",
-        "Verify complaint_handling and escalate workflows exist in workflows.json (create minimal 2-step versions if missing)",
-        "50-scenario accuracy test maintains 100% pass rate after routing changes",
-        "TypeScript compiles with zero errors",
-        "Verify in Chat Simulator: send 'cancel' mid-booking-workflow, confirm graceful exit message"
-      ],
-      "technicalNotes": [
-        "Intent keywords: RainbowAI/src/assistant/data/intent-keywords.json",
-        "Routing: RainbowAI/src/assistant/data/routing.json — find climate_control_complaint and billing_dispute entries",
-        "Workflow executor: RainbowAI/src/assistant/pipeline/stages/action-dispatch.ts or a workflow-executor.ts file",
-        "Cancel check location: add at the top of the workflow step handler — if classified intent === 'cancel_workflow', call exitWorkflow()",
-        "Workflows file: RainbowAI/src/assistant/data/workflows.json — verify complaint_handling and escalate exist"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "medium",
-      "passes": true
-    },
-    {
-      "id": "US-007",
-      "title": "Colored initials avatar for contacts without profile picture",
-      "priority": 11,
-      "description": "As a staff member, I want contacts without a profile picture to show a colored circle with their initials (e.g. 'AF' for Alston Foo) instead of a blank grey circle, making conversations visually distinguishable at a glance.",
-      "acceptanceCriteria": [
-        "When a contact has no profile picture, avatar is a filled circle with a deterministic background color derived from contact's phone number (same number = same color always)",
-        "Initials: first letter(s) of display name (e.g. 'Alston Foo' → 'AF', 'Jay' → 'J')",
-        "Color palette uses at least 8 distinct, readable colors — not red or green (avoid confusion with status indicators)",
-        "White or near-white text on dark backgrounds for legibility",
-        "Applied in: conversation list avatars, chat header avatar, and message thread avatars",
-        "Contacts with actual profile pictures are unaffected",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open #live-chat, confirm contacts without photos show colored initials"
-      ],
-      "technicalNotes": [
-        "Avatar rendering: RainbowAI/src/public/js/modules/live-chat-panels.js and live-chat-core.js — find where avatar img tags are created",
-        "Color hash: sum = name.split('').reduce((a,c) => a + c.charCodeAt(0), 0); color = palette[sum % palette.length]",
-        "Palette suggestion: ['#1abc9c','#3498db','#9b59b6','#e67e22','#e91e63','#00bcd4','#ff5722','#607d8b']",
-        "If profile picture 404s or src is empty/null, show initials div instead of broken img",
-        "Add CSS class .avatar-initials with display:flex, align-items:center, justify-content:center, border-radius:50%",
-        "CSS target file: RainbowAI/src/public/css/rainbow-livechat-core.css or rainbow-livechat-ui.css"
-      ],
-      "dependencies": [],
       "estimatedComplexity": "small",
       "passes": true
     },
     {
       "id": "US-003",
-      "title": "Redesign chat filter bar to WhatsApp-style pill chips",
-      "priority": 12,
-      "description": "As a staff member, I want the Tags and Unit filter icons in #live-chat to look like WhatsApp's horizontal pill chip row (All | Unread | Favourites | Groups | Tags ▾ | Unit ▾) instead of icon-based buttons, making the interface familiar and visually consistent.",
+      "title": "Update validation schemas for units",
+      "priority": 3,
+      "description": "As a developer, I want validation schemas to match the renamed schema so that API input validation works correctly.",
       "acceptanceCriteria": [
-        "Filter row shows: All | Unread | Favourites | Groups | Tags ▾ | Unit ▾ as horizontal scrollable pill chips",
-        "All chip has a filled/active style (green background matching Image #1) when no filter is active",
-        "Tags and Unit chips show a downward chevron (▾) indicating they open a dropdown",
-        "Active filter chip has a distinct active style (filled background, different from inactive)",
-        "Chips are scrollable horizontally on narrow viewports without wrapping to a second line",
-        "Existing icon-based Tags/Unit buttons are replaced (not kept alongside new chips)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open #live-chat, confirm pill chip row matches WhatsApp style"
+        "shared/validation/capsule-validation.ts renamed to unit-validation.ts",
+        "Exports renamed: insertCapsuleSchema -> insertUnitSchema, updateCapsuleSchema -> updateUnitSchema",
+        "New columns added to schemas: unitType (optional enum), maxOccupancy (optional int >=1), pricePerNight (optional string)",
+        "shared/validation/index.ts re-exports updated",
+        "guest-validation.ts: capsule filter key -> unit",
+        "token-validation.ts: capsuleNumber -> unitNumber",
+        "settings-validation.ts: capsule-related defaults reference updated",
+        "shared/validation-patterns.ts: CAPSULE_FORMAT_REGEX -> UNIT_FORMAT_REGEX",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Current filter HTML: RainbowAI/src/public/templates/tabs/live-chat.html (lines 111-125 — tag/unit filter buttons)",
-        "Replace icon buttons with a <div class='lc-filter-chips'> containing <button class='lc-chip'> elements",
-        "CSS: RainbowAI/src/public/css/rainbow-livechat-core.css or rainbow-livechat-ui.css",
-        "Chip active state: .lc-chip.active { background: #25d366; color: #fff; }",
-        "Horizontal scroll: .lc-filter-chips { display:flex; overflow-x:auto; gap:8px; padding:8px; scrollbar-width:none; }",
-        "This story is visual only — dropdown wiring is in US-004"
+        "Files: shared/validation/capsule-validation.ts (rename), shared/validation/index.ts, guest-validation.ts, token-validation.ts, settings-validation.ts, shared/validation-patterns.ts",
+        "Use git mv for file renames to preserve history",
+        "unitType enum values: 'studio', '1bedroom', '2bedroom', '3bedroom' \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d keep extensible"
       ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
+      "dependencies": [
+        "US-001",
+        "US-002"
+      ],
+      "estimatedComplexity": "medium",
       "passes": true
     },
     {
       "id": "US-004",
-      "title": "Wire Tags and Unit filter chips to backend conversation filtering",
-      "priority": 13,
-      "description": "As a staff member, I want clicking a Tags or Unit chip to actually filter the conversation list, showing only conversations with that tag or unit assignment. Dropdowns fetch data from backend APIs.",
+      "title": "Rename storage interface and DB implementation",
+      "priority": 4,
+      "description": "As a developer, I want the storage layer to use 'unit' naming so that the entire server codebase is consistent.",
       "acceptanceCriteria": [
-        "Clicking Tags ▾ opens a dropdown listing all available tags fetched from GET /api/rainbow/tags",
-        "Selecting a tag filters the conversation list to show only conversations with that tag",
-        "Clicking Unit ▾ opens a dropdown listing all capsule units fetched from GET /api/rainbow/capsules or contacts",
-        "Selecting a unit filters the conversation list to show only conversations with that unit assignment",
-        "Multiple filters can be active simultaneously (Tags AND Unit combined)",
-        "A clear/reset option appears when any filter is active, restoring full conversation list",
-        "Filter state persists during the browser session (not wiped on tab switch)",
-        "Dropdown closes when clicking anywhere outside it",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: select a tag filter, confirm conversation list updates"
+        "server/Storage/IStorage.ts: ICapsuleStorage -> IUnitStorage; all methods renamed (getAllCapsules -> getAllUnits, getCapsule -> getUnit, createCapsule -> createUnit, updateCapsule -> updateUnit, deleteCapsule -> deleteUnit, markCapsuleCleaned -> markUnitCleaned, markCapsuleNeedsCleaning -> markUnitNeedsCleaning, getCapsulesByCleaningStatus -> getUnitsByCleaningStatus, getAvailableCapsules -> getAvailableUnits, getGuestsByCapsule -> getGuestsByUnit)",
+        "server/Storage/db/DbCapsuleQueries.ts renamed to DbUnitQueries.ts with all Drizzle queries updated",
+        "server/Storage/db/DbGuestQueries.ts: capsuleNumber -> unitNumber column references",
+        "server/Storage/db/DbProblemQueries.ts: same column renames",
+        "server/Storage/db/DbTokenQueries.ts: same column renames",
+        "server/Storage/DatabaseStorage.ts: all delegations reference new method names",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Existing filter code: RainbowAI/src/public/js/modules/live-chat-panels.js (lines 773-883: _renderTagFilterDropdown, _renderUnitFilterDropdown)",
-        "Core filtering: RainbowAI/src/public/js/modules/live-chat-core.js (lines 433-449)",
-        "Tags API: GET /api/rainbow/tags (RainbowAI/src/routes/admin/tags.ts)",
-        "Capsules API: GET /api/rainbow/capsules (RainbowAI/src/routes/admin/capsules.ts)",
-        "Root cause from Phase 5: $.contactTagsMap and $.contactUnitsMap not populated — ensure loadContactTagsMap() and loadContactUnitsMap() are called in initialization",
-        "Wire the new chip click events (US-003) to the existing dropdown render functions"
+        "Files: server/Storage/IStorage.ts, server/Storage/db/DbCapsuleQueries.ts (rename), DbGuestQueries.ts, DbProblemQueries.ts, DbTokenQueries.ts, DatabaseStorage.ts",
+        "Use git mv for file renames",
+        "Drizzle queries: replace 'capsules' table import with 'units', replace eq(guests.capsuleNumber, ...) with eq(guests.unitNumber, ...)"
       ],
       "dependencies": [
         "US-003"
@@ -364,341 +115,635 @@
     },
     {
       "id": "US-005",
-      "title": "Reposition message action menu near message bubble (WhatsApp style)",
-      "priority": 14,
-      "description": "As a staff member, I want the message action menu (Like, Love, Haha, Wow, Sad, Thanks, Reply, Copy, Forward) to appear adjacent to the clicked message bubble, not in a fixed or off-position location, matching WhatsApp Web's context menu behaviour.",
+      "title": "Rename memory storage implementation",
+      "priority": 5,
+      "description": "As a developer, I want the in-memory storage (used for dev/testing) updated to match the renamed interface.",
       "acceptanceCriteria": [
-        "When the downward chevron on a message is clicked, the action menu appears immediately adjacent to that message bubble",
-        "Right-aligned for outgoing messages, left-aligned for incoming messages",
-        "Emoji reactions (Like, Love, Haha, Wow, Sad, Thanks) appear in a horizontal icon row at the top of the menu",
-        "Text actions (Reply, Copy, Forward) appear below the emoji row",
-        "If the menu would overflow the bottom of the viewport, it opens upward from the chevron instead",
-        "Clicking anywhere outside the menu closes it",
-        "Works correctly for both incoming and outgoing message bubbles",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: click message chevron, confirm menu appears near that bubble"
+        "server/Storage/mem/MemCapsuleStore.ts renamed to MemUnitStore.ts with methods renamed",
+        "server/Storage/mem/MemGuestStore.ts: capsuleNumber -> unitNumber references",
+        "server/Storage/mem/MemProblemStore.ts: same renames",
+        "server/Storage/mem/MemTokenStore.ts: same renames",
+        "server/Storage/MemStorage.ts: property names and imports updated",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Message action menu: RainbowAI/src/public/js/modules/live-chat-actions.js — find the menu render/position code",
-        "Current issue: menu likely uses position:fixed or a detached absolute div not anchored to the message",
-        "Fix: use getBoundingClientRect() on the chevron element to get absolute position, then set menu top/left accordingly",
-        "Overflow check: if (menuTop + menuHeight > window.innerHeight) { menuTop = chevronRect.top - menuHeight; }",
-        "CSS: menu should be position:absolute inside a relative-positioned container, or position:fixed with calculated coordinates",
-        "WhatsApp Web reference: renders menu as absolute-positioned div with emoji row + text row, flips vertically on overflow"
+        "Files: server/Storage/mem/MemCapsuleStore.ts (rename), MemGuestStore.ts, MemProblemStore.ts, MemTokenStore.ts, server/Storage/MemStorage.ts",
+        "Mirror the interface changes from US-004 \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d same method names, same param types"
       ],
-      "dependencies": [],
+      "dependencies": [
+        "US-004"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Rename server API routes",
+      "priority": 6,
+      "description": "As a developer, I want API routes to use /api/units instead of /api/capsules so that the API reflects the generic model.",
+      "acceptanceCriteria": [
+        "server/routes/capsules.ts renamed to units.ts",
+        "Route registration in server/routes/index.ts: /api/capsules -> /api/units",
+        "All route handlers in units.ts call new storage method names",
+        "server/routes/guests.ts: capsuleNumber -> unitNumber in request bodies, query params, responses",
+        "server/routes/guest-tokens.ts: same renames",
+        "server/routes/dashboard.ts: capsule references -> unit references",
+        "server/routes/admin.ts: any capsule references updated",
+        "TypeScript compiles with zero errors",
+        "Server starts and GET /api/units/available returns correct data"
+      ],
+      "technicalNotes": [
+        "Files: server/routes/capsules.ts (rename to units.ts), server/routes/index.ts, guests.ts, guest-tokens.ts, dashboard.ts, admin.ts",
+        "Also check server/routes/objects.ts and server/routes/settings.ts for any capsule refs"
+      ],
+      "dependencies": [
+        "US-005"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "Update server test files",
+      "priority": 7,
+      "description": "As a developer, I want all test files updated so that the automated test suite passes after the rename.",
+      "acceptanceCriteria": [
+        "server/routes/tests/capsule-tests.ts renamed to unit-tests.ts with all references updated",
+        "server/routes/tests/guest-tests.ts: capsule references -> unit",
+        "server/routes/tests/e2e-workflow-tests.ts: same",
+        "server/routes/tests/system-validation-tests.ts: same",
+        "server/routes/tests/data-integrity-tests.ts: same",
+        "server/routes/tests/dashboard-tests.ts: same",
+        "All tests pass (npm run test)",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "Files: server/routes/tests/*.ts \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d all test files that reference capsule",
+        "Test assertions may reference /api/capsules endpoints \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d update to /api/units",
+        "Test data objects with capsuleNumber fields -> unitNumber"
+      ],
+      "dependencies": [
+        "US-006"
+      ],
       "estimatedComplexity": "medium",
       "passes": true
     },
     {
       "id": "US-008",
-      "title": "Improve schedule message picker with full date-time editing",
-      "priority": 15,
-      "description": "As a staff member, I want to edit the exact hour, minute, and second when scheduling a message, so I can schedule precisely (e.g., exactly at check-in time 14:00:00). The current modal only allows date editing via a datetime-local input.",
+      "title": "Rename client component files",
+      "priority": 8,
+      "description": "As a developer, I want client component files renamed from 'Capsule' to 'Unit' for consistency.",
       "acceptanceCriteria": [
-        "Schedule Message modal shows separate editable fields for: Date, Hour (00-23), Minute (00-59), Second (00-59)",
-        "Users can type directly into each field or use up/down arrows to increment/decrement values",
-        "A human-readable preview shows the composed datetime: 'Will send: 19 Mar 2026 at 02:30:45'",
-        "Validation prevents scheduling in the past — inline error shown if datetime < now",
-        "The existing datetime-local input is replaced or augmented with the separate fields",
-        "Repeat (None / Daily / Weekly) dropdown remains unchanged",
-        "Schedule button submits the full datetime including seconds to the backend",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open Schedule Message modal, edit hour/minute/second fields, confirm they work"
+        "client/src/components/capsule-cleaning-status.tsx -> unit-cleaning-status.tsx",
+        "client/src/components/settings/CapsulesTab.tsx -> settings/UnitsTab.tsx",
+        "client/src/components/check-in/CapsuleAssignmentSection.tsx -> check-in/UnitAssignmentSection.tsx",
+        "client/src/components/guest-table/CapsuleSelector.tsx -> guest-table/UnitSelector.tsx",
+        "All imports of these components updated in consuming files",
+        "useAccommodationLabels() hook remains unchanged (already generic)",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Schedule modal: RainbowAI/src/public/templates/tabs/live-chat.html — search for 'Schedule Message' modal",
-        "Frontend scheduling logic: RainbowAI/src/public/js/modules/live-chat-panels.js — find lcScheduleMessage() or similar",
-        "Replace <input type='datetime-local'> with three <input type='number'> fields for HH, MM, SS plus a <input type='date'>",
-        "Combine into ISO string: new Date(`${date}T${hh}:${mm}:${ss}`).toISOString()",
-        "Scheduled messages route: RainbowAI/src/routes/admin/scheduled-messages.ts — verify it accepts seconds in the datetime"
+        "Use git mv for file renames to preserve history",
+        "Update all import statements in consuming files: grep for old filenames across client/src/",
+        "Component function names inside files should also be renamed (e.g., CapsulesTab -> UnitsTab)"
       ],
-      "dependencies": [],
+      "dependencies": [
+        "US-001"
+      ],
       "estimatedComplexity": "medium",
-      "passes": true
-    },
-    {
-      "id": "US-014",
-      "title": "Add date-jump to in-conversation message search",
-      "priority": 16,
-      "description": "As a staff member searching messages, I want a 'Jump to date' calendar button beside the search bar so I can navigate to messages from a specific date without scrolling, matching WhatsApp Web's date-jump behaviour.",
-      "acceptanceCriteria": [
-        "The in-conversation search bar has a calendar icon button beside it",
-        "Clicking the calendar icon opens a date picker (date only, not datetime)",
-        "Selecting a date scrolls the message thread to the nearest message on or after that date",
-        "A date separator is highlighted to indicate the jump destination",
-        "If no messages exist for the selected date, a toast shows: 'No messages found for [date]'",
-        "The existing ▲ / ▼ navigation arrows for keyword search results are not affected",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open a conversation, use date-jump to navigate to an older date"
-      ],
-      "technicalNotes": [
-        "Search bar: RainbowAI/src/public/templates/tabs/live-chat.html — find the search messages input",
-        "Search logic: RainbowAI/src/public/js/modules/live-chat-core.js — find message search and navigation",
-        "Date jump: find the message element closest to the target date (messages should have data-timestamp attributes or similar)",
-        "Use element.scrollIntoView({ behavior: 'smooth', block: 'start' }) to scroll to the date",
-        "Date separator: messages are grouped by date — find or create the date separator element and highlight it temporarily",
-        "Use <input type='date'> in a small popover triggered by the calendar icon button"
-      ],
-      "dependencies": [],
-      "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-009",
-      "title": "Add 'Ask AI — Prisma' entry to conversation 3-dot menu",
-      "priority": 17,
-      "description": "As a staff member, I want an 'Ask AI' option in the conversation's 3-dot (⋮) menu so I can launch the Prisma AI assistant without leaving the chat. This is the entry point for the Prisma floating window (built in US-010).",
+      "title": "Update client pages, hooks, and utilities",
+      "priority": 9,
+      "description": "As a developer, I want all client code to use unitNumber and Unit type instead of capsuleNumber and Capsule.",
       "acceptanceCriteria": [
-        "The 3-dot (⋮) menu in the conversation header includes a new item: 'Ask AI — Prisma' with a sparkle icon (✦ or similar)",
-        "Clicking it opens/focuses the Prisma floating chat window (to be implemented in US-010 — create empty placeholder div for now)",
-        "If Prisma window is already open, clicking again focuses it (does not open duplicate)",
-        "The menu item is clearly distinguishable from other menu items (icon + label)",
+        "Pages updated: check-in.tsx, check-out.tsx, guest-checkin.tsx, guest-edit.tsx, maintenance-manage.tsx, cleaning.tsx, settings.tsx, history.tsx",
+        "Hooks updated: useCheckInWizard.ts, useTokenValidation.ts, useSuccessPageValidation.ts, useConfig.ts",
+        "Utils updated: queryConfig.ts (/api/capsules -> /api/units), receiptGenerator.ts, validation.ts",
+        "All Capsule type imports -> Unit",
+        "All capsuleNumber state/props -> unitNumber",
+        "All /api/capsules fetch URLs -> /api/units",
         "TypeScript compiles with zero errors",
         "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open a conversation, click 3-dot menu, confirm 'Ask AI — Prisma' item is visible"
+        "Verify in browser using agent-browser: Check-in page loads, unit selector works, check-out page loads"
       ],
       "technicalNotes": [
-        "3-dot menu: RainbowAI/src/public/templates/tabs/live-chat.html — find the vertical ellipsis menu in the chat header",
-        "Menu JS: RainbowAI/src/public/js/modules/live-chat-actions.js or live-chat-panels.js",
-        "Add menu item that calls window.openPrismaWindow() (to be implemented in US-010)",
-        "For now: show an alert or empty div if Prisma window doesn't exist yet"
+        "Largest story in the rename \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d touches ~20+ client files",
+        "Use IDE find-and-replace across client/src/ for: capsuleNumber -> unitNumber, Capsule -> Unit (as type), /api/capsules -> /api/units",
+        "Be careful not to replace 'capsule' in useAccommodationLabels.ts \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d that file stays as-is",
+        "Also update client/src/components/guest-table/ files (SwipeableGuestCard, etc.)"
       ],
-      "dependencies": [],
-      "estimatedComplexity": "small",
-      "passes": true
+      "dependencies": [
+        "US-006",
+        "US-008"
+      ],
+      "estimatedComplexity": "large",
+      "passes": false
     },
     {
       "id": "US-010",
-      "title": "Build Prisma AI floating chat window UI",
-      "priority": 18,
-      "description": "As a staff member, I want a draggable Prisma AI floating chat panel with a source selector and conversation history so I can ask questions without leaving the live chat. The panel is launched from the Ask AI menu entry (US-009).",
+      "title": "Update i18n language files",
+      "priority": 10,
+      "description": "As a developer, I want translation files updated so that capsuleNumber keys become unitNumber.",
       "acceptanceCriteria": [
-        "A floating panel appears with: title 'Prisma AI ✦', close (✕) button, source selector chips, message input, send button, scrollable response history",
-        "Source selector shows 4 chip options: Knowledge Base | MCP Server | All History | Internet (default: Knowledge Base)",
-        "Conversation history within the panel persists for the current browser session (JS in-memory state)",
-        "User messages appear right-aligned; Prisma responses appear left-aligned with avatar",
-        "A loading indicator (typing dots) appears while waiting for a response",
-        "Panel can be minimised to a floating 'Ask Prisma ✦' button at bottom-right corner",
-        "Panel does NOT interfere with the main guest message input area",
-        "Responses use mock/placeholder text until US-011 wires up the backend",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: launch Prisma panel, select source, type a question, confirm UI renders"
+        "client/src/lib/i18n/en.json: all capsule/Capsule string keys and values updated",
+        "client/src/lib/i18n/ms.json: same",
+        "client/src/lib/i18n/zh-cn.json: same",
+        "Any other language files (ja, ko, es) updated if they exist",
+        "Display labels still come from useAccommodationLabels() hook (dynamic, not hardcoded in i18n)",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Create new JS module: RainbowAI/src/public/js/modules/prisma-ai.js (or add to live-chat-actions.js)",
-        "CSS: Add floating panel styles to rainbow-livechat-ui.css — position:fixed, bottom:80px, right:20px, z-index:1000",
-        "Draggable: use mousedown/mousemove/mouseup events on the panel header to implement drag",
-        "Minimise: toggle between full panel and compact button using CSS class toggle",
-        "window.openPrismaWindow() / window.closePrismaWindow() global functions for US-009 integration",
-        "Session history: module-level array var prismaHistory = [] that resets when panel is closed"
+        "Files: client/src/lib/i18n/*.json",
+        "Keys like capsuleNumber -> unitNumber; display text like 'Capsule Number' -> use labels from useAccommodationLabels() instead",
+        "Some i18n values may reference 'capsule' in context \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d update to generic 'unit' where appropriate"
       ],
       "dependencies": [
         "US-009"
       ],
-      "estimatedComplexity": "medium",
-      "passes": true
+      "estimatedComplexity": "small",
+      "passes": false
     },
     {
       "id": "US-011",
-      "title": "Wire Prisma AI to Knowledge Base and AI provider",
-      "priority": 19,
-      "description": "As a staff member using Prisma with 'Knowledge Base' source, I want Prisma to answer from the Rainbow KB files so I get accurate hostel-specific answers. This story adds the backend endpoint and wires it to the UI.",
+      "title": "Rename Rainbow AI capsule references",
+      "priority": 11,
+      "description": "As a developer, I want Rainbow AI code updated from 'capsule' to 'unit' naming for consistency.",
       "acceptanceCriteria": [
-        "New admin API endpoint POST /api/rainbow/prisma/ask added and mounted in RainbowAI/src/routes/admin/index.ts",
-        "Endpoint accepts { question, source, conversationHistory } and returns { answer, sourceUsed }",
-        "When source = 'knowledge_base', endpoint queries existing KB (knowledge-base.ts / .rainbow-kb/) and passes relevant chunks to active AI provider",
-        "Response includes which KB topic files were consulted (for transparency in the UI)",
-        "Errors return graceful fallback: 'I couldn't find an answer in the knowledge base. Try asking differently or choose a different source.'",
-        "Prisma UI (US-010) calls this endpoint and renders the response in the chat panel",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: ask Prisma a hostel question with KB source, confirm a real answer appears"
+        "RainbowAI/src/lib/capsule-cache.ts -> unit-cache.ts with methods renamed",
+        "RainbowAI/src/tools/capsules.ts -> tools/units.ts",
+        "RainbowAI/src/tools/capsules-write.ts -> tools/units-write.ts",
+        "RainbowAI/src/tools/dashboard.ts: capsule references -> unit",
+        "RainbowAI/src/tools/analytics.ts: same",
+        "RainbowAI/src/tools/guests.ts, guests-write.ts: same",
+        "RainbowAI/src/lib/daily-report.ts: same",
+        "RainbowAI/src/routes/admin/ files: capsule references -> unit",
+        "Any workflow/assistant files referencing capsules updated",
+        "Import boundary maintained: RainbowAI has ZERO imports from server/, client/, shared/",
+        "TypeScript compiles with zero errors (cd RainbowAI && npx tsc --noEmit)"
       ],
       "technicalNotes": [
-        "New route file: RainbowAI/src/routes/admin/prisma.ts (or add to conversations.ts)",
-        "KB access: import { loadRelevantKBContent } from '../../../assistant/knowledge-base' or equivalent",
-        "AI call: use existing chatWithFallback() or callAI() from ai-client.ts",
-        "Endpoint must be authenticated: check X-Admin-Key header in production (RAINBOW_ROLE=primary)",
-        "Mount in: RainbowAI/src/routes/admin/index.ts — app.use('/prisma', prismaRouter)"
+        "RainbowAI fetches data via HTTP from /api/units (was /api/capsules) \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d update all fetch URLs",
+        "RainbowAI has its OWN types for capsule/unit data \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d not imported from shared/",
+        "Also update tool descriptions that mention 'capsule' to say 'unit'",
+        "Check RainbowAI/src/assistant/workflow-enhancer.ts and workflow-executor.ts for capsule refs"
       ],
       "dependencies": [
-        "US-010"
+        "US-006"
       ],
       "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-012",
-      "title": "Add MCP Server, All History, and Internet sources to Prisma AI",
-      "priority": 20,
-      "description": "As a staff member, I want to select MCP Server, All History, or Internet as Prisma's source to get context-aware answers beyond the knowledge base. Each source adds different context to the AI prompt.",
+      "title": "Write production database migration SQL",
+      "priority": 12,
+      "description": "As an operator, I want a tested migration script so that Pelangi's production DB can be safely upgraded to the new schema.",
       "acceptanceCriteria": [
-        "When source = 'mcp_server': Prisma calls available MCP tools (booking lookup, capsule availability) and includes tool results in the answer",
-        "When source = 'all_history': Prisma receives the full conversation history of the currently open conversation as context",
-        "When source = 'internet': Prisma uses an internet-capable AI provider or performs a web search if configured — cites sources in answer",
-        "Source label appears in each Prisma response bubble so staff know what was consulted",
-        "If a source is unavailable (no internet provider configured), the chip is greyed out with tooltip explaining why",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser: test each source type, confirm responses reference the correct context"
+        "Migration file created at migrations/rename-capsules-to-units.sql",
+        "Script includes: ALTER TABLE capsules RENAME TO units, ALTER TABLE capsule_problems RENAME TO unit_problems",
+        "Script includes column renames: capsule_number -> unit_number in guests, guest_tokens, admin_notifications, unit_problems",
+        "Script includes: ALTER TABLE units ADD COLUMN unit_type text, ADD COLUMN max_occupancy integer, ADD COLUMN price_per_night text",
+        "Script includes index renames (all idx_capsules_* -> idx_units_*, idx_capsule_problems_* -> idx_unit_problems_*)",
+        "Rollback script included at migrations/rollback-units-to-capsules.sql",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Extend POST /api/rainbow/prisma/ask endpoint (US-011) to handle source: 'mcp_server' | 'all_history' | 'internet'",
-        "MCP tools: check RainbowAI/src/tools/ for available tool definitions to call for mcp_server source",
-        "All history: the frontend sends the currently loaded conversation messages along with the question",
-        "Internet: if the active AI provider supports web search (e.g. Perplexity, or a provider with search), use it; otherwise return unavailable message",
-        "The frontend prisma-ai.js should include currentConversationMessages when source = all_history"
+        "New files: migrations/rename-capsules-to-units.sql, migrations/rollback-units-to-capsules.sql",
+        "ALTER TABLE RENAME is metadata-only in PostgreSQL \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d instant, no data rewrite",
+        "Index rename syntax: ALTER INDEX idx_capsules_is_available RENAME TO idx_units_is_available",
+        "Test locally: create test DB, seed data, run migration, verify drizzle-kit push shows no changes needed"
       ],
       "dependencies": [
-        "US-011"
+        "US-001",
+        "US-002"
       ],
       "estimatedComplexity": "medium",
-      "passes": true
+      "passes": false
     },
     {
       "id": "US-013",
-      "title": "Prisma AI session conversation memory",
-      "priority": 21,
-      "description": "As a staff member having a multi-turn conversation with Prisma, I want Prisma to remember earlier messages in the session so follow-up questions work naturally (e.g. 'what about weekends?' after 'what is the check-in time?').",
+      "title": "Verify zero orphaned capsule references",
+      "priority": 13,
+      "description": "As a developer, I want to confirm no runtime code still references the old 'capsule' naming.",
       "acceptanceCriteria": [
-        "POST /api/rainbow/prisma/ask accepts a conversationHistory array (role/content pairs) and includes it in the AI prompt",
-        "Frontend sends the full session history on each new message (prismaHistory array from US-010)",
-        "After 20 exchanges, history is trimmed to the last 20 messages (client-side) to avoid token overflow",
-        "Closing Prisma window (✕) and re-opening resets the session history to empty",
-        "Follow-up questions in the same session demonstrate context awareness in responses",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser: ask Prisma a question, then ask a follow-up referencing the first answer, confirm it responds correctly"
+        "grep -r 'capsule' --include='*.ts' --include='*.tsx' --include='*.js' server/ client/src/ shared/ RainbowAI/src/ returns ZERO hits (excluding: node_modules, dist, deprecated type aliases, migration SQL files, comments)",
+        "grep -r '/api/capsules' client/src/ returns ZERO hits",
+        "grep -r 'capsule_number' shared/ returns ZERO hits",
+        "npm run check passes",
+        "npm run test passes \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d all tests green",
+        "Local dev server starts and full check-in/check-out flow works end-to-end",
+        "Verify in browser using agent-browser: Dashboard loads, units display, check-in assigns unit, check-out releases unit"
       ],
       "technicalNotes": [
-        "Client-side: prisma-ai.js already has prismaHistory array (US-010) — pass it as conversationHistory in each POST request",
-        "Trim: if (prismaHistory.length > 40) prismaHistory = prismaHistory.slice(-40); // 40 role/content items = 20 exchanges",
-        "Server-side: prepend conversationHistory to the AI messages array before calling the provider",
-        "Reset on close: prismaHistory = [] when the panel close (✕) button is clicked",
-        "No server-side storage needed — purely stateless endpoint that receives history each time"
+        "This is the final verification story for Stage 1",
+        "Run grep across all source directories \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d every hit must be investigated",
+        "Acceptable exclusions: @deprecated aliases in schema-tables.ts, migration SQL files, CLAUDE.md/docs",
+        "If any orphaned references found, fix them before marking this story complete"
       ],
       "dependencies": [
-        "US-011"
-      ],
-      "estimatedComplexity": "small",
-      "passes": true
-    },
-    {
-      "id": "US-015",
-      "title": "Mirror all Phase 3 features in chat-simulator/live-simulation",
-      "priority": 22,
-      "description": "As a staff member testing via Chat Simulator live-simulation mode, I want all new live-chat features to also work in that tab so I can test the full experience without switching tabs. All features from US-003 through US-014 must be mirrored.",
-      "acceptanceCriteria": [
-        "WhatsApp-style filter chips (US-003/US-004) appear and function in the simulator's conversation list panel",
-        "Message action menu (US-005) appears correctly positioned in the simulator's message thread",
-        "Translate toggle (US-006) works in the simulator",
-        "Colored initials avatars (US-007) render in the simulator's contact list",
-        "Schedule message with full datetime editing (US-008) works in the simulator",
-        "'Ask AI — Prisma' menu entry (US-009) and full Prisma window (US-010 to US-013) are accessible from the simulator",
-        "Date-jump search (US-014) works in the simulator",
-        "All features reuse the same JS modules as live-chat (no code duplication)",
-        "TypeScript compiles with zero errors",
-        "Server starts and dashboard loads without errors",
-        "Verify in browser using agent-browser: open #chat-simulator/live-simulation, confirm each feature is present and functional"
-      ],
-      "technicalNotes": [
-        "Chat simulator template: RainbowAI/src/public/templates/tabs/chat-simulator.html",
-        "Live simulation sub-tab: find the live-simulation section within chat-simulator.html",
-        "Shared modules: all features built in US-003 to US-014 use JS modules that should already be loaded in chat-simulator context",
-        "Verify module-chunks: RainbowAI/src/public/js/module-chunks/ — check if live-chat modules are bundled into chat-simulator chunk",
-        "If any feature is chat-simulator-specific HTML missing, add the required DOM elements (filter bar, search bar, action menus)",
-        "CSS: all styles are global in rainbow-livechat-core.css and rainbow-livechat-ui.css — no extra CSS needed"
-      ],
-      "dependencies": [
-        "US-003",
-        "US-004",
-        "US-005",
-        "US-006",
         "US-007",
-        "US-008",
         "US-009",
         "US-010",
         "US-011",
-        "US-012",
-        "US-013",
-        "US-014"
+        "US-012"
       ],
-      "estimatedComplexity": "large",
-      "passes": true
+      "estimatedComplexity": "medium",
+      "passes": false
     },
     {
-      "id": "US-023",
-      "title": "Fix admin auth blocking Rainbow AI dashboard tabs at production IP",
-      "priority": 1,
-      "description": "As a staff member accessing the Rainbow AI dashboard at http://18.142.14.142:3002, I want all tabs (#dashboard, #live-chat, #understanding) to load without 'Failed to load X tab' errors. Root cause: the adminAuth middleware in the production dist requires an X-Admin-Key header for all remote (non-localhost) requests, but the browser JS was not sending it. Secondary cause: tabs.js, template-loader.js, help.js all use raw fetch() calls that bypass the api() utility which sends the header.",
+      "id": "US-014",
+      "title": "Create business config module",
+      "priority": 14,
+      "description": "As a developer, I want a shared business config module so that all business identity (name, address, accommodation type) is centralized and env-var-driven.",
       "acceptanceCriteria": [
-        "Set RAINBOW_ADMIN_KEY=pelangi-admin-2026 in /var/www/pelangi/RainbowAI/.env",
-        "Set CORS_ORIGIN=http://18.142.14.142:3002 in /var/www/pelangi/RainbowAI/.env",
-        "Inject window.__ADMIN_KEY__ + fetch interceptor into served HTML via getDashboardHtml() in index.ts",
-        "Fetch interceptor auto-adds X-Admin-Key header to ALL /api/rainbow/* requests including raw fetch() calls",
-        "Navigate to http://18.142.14.142:3002/#dashboard — tab loads without 'Failed to load' error",
-        "Navigate to http://18.142.14.142:3002/#live-chat — loads cleanly",
-        "Navigate to http://18.142.14.142:3002/#understanding — loads cleanly"
+        "New file shared/business-config.ts exports BusinessConfig interface and DEFAULT_BUSINESS_CONFIG constant (Pelangi defaults)",
+        "BusinessConfig includes: name, shortName, tagline, accommodationType, address, phone, email, website, receiptPrefix",
+        "New file server/lib/business-config.ts exports getBusinessConfig() reading from process.env.BUSINESS_* with Pelangi fallbacks",
+        "When no env vars are set, getBusinessConfig() returns Pelangi defaults exactly",
+        "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Real root cause: adminAuth middleware blocks remote IPs unless X-Admin-Key header matches RAINBOW_ADMIN_KEY env var",
-        "CORS was a secondary symptom (also fixed via CORS_ORIGIN env var)",
-        "tabs.js, template-loader.js, help.js, intent-manager.js all use raw fetch() not api() — so utils.js header injection alone is insufficient",
-        "Fix: inject a window.fetch interceptor in getDashboardHtml() that auto-adds X-Admin-Key to all /api/rainbow/ requests",
-        "Production dist patched: dist/public/rainbow-admin.html has fetch interceptor injected; dist/index.js restored from bak2 + watchdog no-op",
-        "Local source updated: index.ts getDashboardHtml() now injects full fetch interceptor (not just window.__ADMIN_KEY__)"
+        "New files: shared/business-config.ts, server/lib/business-config.ts",
+        "DEFAULT_BUSINESS_CONFIG must match current hardcoded Pelangi values exactly for backward compat",
+        "getBusinessConfig() caches result in module-level variable (config doesn't change at runtime)"
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
-      "passes": true
+      "passes": false
+    },
+    {
+      "id": "US-015",
+      "title": "Add business config API endpoint and client hook",
+      "priority": 15,
+      "description": "As a frontend developer, I want an API endpoint and React hook to access business config so that UI components can display the correct business branding.",
+      "acceptanceCriteria": [
+        "GET /api/business-config endpoint added to server/routes.ts (unauthenticated \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d needed for login page)",
+        "Endpoint returns BusinessConfig JSON from getBusinessConfig()",
+        "New file client/src/hooks/useBusinessConfig.ts exports useBusinessConfig() hook using React Query",
+        "Hook has 30-minute staleTime (business config rarely changes)",
+        "Hook falls back to DEFAULT_BUSINESS_CONFIG while loading",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "New file: client/src/hooks/useBusinessConfig.ts",
+        "Edit: server/routes.ts \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d add before auth middleware routes so it's unauthenticated",
+        "React Query queryKey: ['/api/business-config']"
+      ],
+      "dependencies": [
+        "US-014"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-016",
+      "title": "Add business environment variables to .env.example",
+      "priority": 16,
+      "description": "As an operator, I want documented env vars for business configuration so that each deployment can be customized without code changes.",
+      "acceptanceCriteria": [
+        ".env.example updated with: BUSINESS_NAME, BUSINESS_SHORT_NAME, BUSINESS_TAGLINE, ACCOMMODATION_TYPE, BUSINESS_ADDRESS, BUSINESS_PHONE, BUSINESS_EMAIL, BUSINESS_WEBSITE, RECEIPT_PREFIX",
+        "RainbowAI/.env.example updated with: BUSINESS_NAME, BUSINESS_LOCATION, BOT_NAME, STAFF_PRIMARY_PHONE, ADMIN_SITE_URL, PUBLIC_SITE_URL",
+        "Each env var has a descriptive comment explaining its purpose",
+        "Default values match current Pelangi configuration (backward compatible)",
+        "server/validate-env.ts updated to validate new optional env vars (non-breaking)",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "Files: .env.example, RainbowAI/.env.example, server/validate-env.ts",
+        "All new vars are OPTIONAL \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d system works with zero business env vars set"
+      ],
+      "dependencies": [
+        "US-014"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-017",
+      "title": "Replace hardcoded branding in client",
+      "priority": 17,
+      "description": "As a user, I want the dashboard UI to show the correct business name and branding based on which instance I'm accessing.",
+      "acceptanceCriteria": [
+        "client/src/components/header.tsx:19-20: 'Pelangi Capsule Hostel' -> useBusinessConfig().name; tagline -> .tagline",
+        "client/src/components/login-form.tsx: business name from useBusinessConfig()",
+        "client/src/lib/receiptGenerator.ts:34,41,44: business name, address, phone, email, website read from BusinessConfig parameter",
+        "Receipt number prefix uses receiptPrefix from config",
+        "vite.config.ts:91-94: PWA manifest name, short_name, description read from process.env.BUSINESS_* with Pelangi defaults",
+        "With no env vars set: UI shows 'Pelangi Capsule Hostel' exactly as before",
+        "TypeScript compiles with zero errors",
+        "Verify in browser using agent-browser: Login page shows business name, header shows business name"
+      ],
+      "technicalNotes": [
+        "Files: client/src/components/header.tsx, login-form.tsx, client/src/lib/receiptGenerator.ts, vite.config.ts",
+        "receiptGenerator needs BusinessConfig passed as parameter \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d update callers",
+        "vite.config.ts uses process.env at build time, not runtime \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d values baked into the bundle"
+      ],
+      "dependencies": [
+        "US-015"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-018",
+      "title": "Replace hardcoded branding in server and Rainbow AI",
+      "priority": 18,
+      "description": "As an operator, I want server-side and Rainbow AI branding configurable so that each instance identifies as the correct business.",
+      "acceptanceCriteria": [
+        "server/index.ts:42-43: hardcoded 'https://pelangi-manager.vercel.app' replaced with process.env.VERCEL_URL or removed",
+        "RainbowAI/src/assistant/default-configs.ts:91: system prompt templates process.env.BOT_NAME and process.env.BUSINESS_NAME",
+        "RainbowAI/src/assistant/default-configs.ts:119-142: staff phones template process.env.STAFF_PRIMARY_PHONE",
+        "RainbowAI/src/routes/admin/metrics.ts:34-35: hardcoded pelangicapsulehostel.com URLs replaced with process.env.ADMIN_SITE_URL / PUBLIC_SITE_URL",
+        "TypeScript compiles with zero errors",
+        "With no env vars: all defaults match current Pelangi behavior"
+      ],
+      "technicalNotes": [
+        "Files: server/index.ts, RainbowAI/src/assistant/default-configs.ts, RainbowAI/src/routes/admin/metrics.ts",
+        "Default BOT_NAME='Rainbow', default BUSINESS_NAME='Pelangi Capsule Hostel'",
+        "Default STAFF_PRIMARY_PHONE='+60127088789'"
+      ],
+      "dependencies": [
+        "US-014"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-019",
+      "title": "Make unit seed data configurable",
+      "priority": 19,
+      "description": "As an operator, I want the initial unit inventory configurable via env var so that different businesses start with different units.",
+      "acceptanceCriteria": [
+        "server/index.ts:205-241: hardcoded C1-C26 capsule seed replaced with process.env.SEED_UNITS parser",
+        "Format: number:section[:unitType[:maxOccupancy]] comma-separated",
+        "When SEED_UNITS is not set, defaults to current Pelangi capsule layout (22 capsules)",
+        "Seed data correctly populates unitType, maxOccupancy columns when provided",
+        "Server starts successfully with both default and custom seed configs",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "File: server/index.ts lines 205-241",
+        "Default SEED_UNITS for Pelangi: C1:back,C2:back,C3:back,C4:back,C5:back,C6:back,C25:middle,C26:middle,C11:front,C12:front,C13:front,C14:front,C15:front,C16:front,C17:front,C18:front,C19:front,C20:front,C21:front,C22:front,C23:front,C24:front",
+        "Southern example: Studio-A:ground:studio:2,1BR-1:first_floor:1bedroom:4",
+        "Parser: split by comma, then by colon \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d robust error handling for malformed entries"
+      ],
+      "dependencies": [
+        "US-001",
+        "US-014"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-020",
+      "title": "Parameterize deploy script for multi-target",
+      "priority": 20,
+      "description": "As a developer, I want deploy.sh to support deploying to different Lightsail instances with one command.",
+      "acceptanceCriteria": [
+        "New directory deploy/targets/ created",
+        "deploy/targets/pelangi.env contains: INSTANCE_IP=18.142.14.142, SSH_KEY, SSH_USER=ubuntu, REMOTE_DIR=/var/www/pelangi, PM2 process names",
+        "deploy/targets/southern.env contains: placeholder IP, REMOTE_DIR=/var/www/southern, PM2 process names",
+        "deploy.sh lines 10-14 refactored: first positional arg is target name (default: pelangi), sources deploy/targets/${TARGET}.env",
+        "Usage: ./deploy.sh southern or ./deploy.sh pelangi --skip-build",
+        "Error message if target config file doesn't exist",
+        "Existing ./deploy.sh (no args) works exactly as before (Pelangi default)",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "New files: deploy/targets/pelangi.env, deploy/targets/southern.env",
+        "Edit: deploy.sh \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d change hardcoded vars to sourced vars",
+        "Keep --skip-build and --skip-rainbow flags working"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-021",
+      "title": "Create per-target ecosystem configs",
+      "priority": 21,
+      "description": "As a developer, I want PM2 ecosystem configs per business so that process names, paths, and CORS origins are correct per instance.",
+      "acceptanceCriteria": [
+        "ecosystem.config.cjs parameterized: reads APP_DIR, PM2_API_NAME, PM2_RAINBOW_NAME, CORS_ORIGIN, PUBLIC_URL from env vars with Pelangi defaults",
+        "Pelangi: process names pelangi-api / rainbow-ai, cwd /var/www/pelangi",
+        "Southern: process names southern-api / southern-rainbow, cwd /var/www/southern",
+        "Log file paths use correct instance directory",
+        "TypeScript compiles with zero errors"
+      ],
+      "technicalNotes": [
+        "File: ecosystem.config.cjs",
+        "OR create per-target files: deploy/targets/pelangi.ecosystem.cjs and deploy/targets/southern.ecosystem.cjs",
+        "Deploy script copies the right one during deployment"
+      ],
+      "dependencies": [
+        "US-020"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-022",
+      "title": "Create Neon database for Southern Homestay",
+      "priority": 22,
+      "description": "As an operator, I want a separate Neon Postgres database for Southern Homestay so that business data is completely isolated.",
+      "acceptanceCriteria": [
+        "New Neon project created named southern-homestay in ap-southeast-1 region",
+        "DATABASE_URL connection string obtained and stored securely",
+        "Schema pushed successfully: DATABASE_URL=... npx drizzle-kit push creates all tables with units naming",
+        "Server startup on new DB auto-seeds default app settings",
+        "Unit seed data (from SEED_UNITS env var) populates correctly for Southern Homestay houses"
+      ],
+      "technicalNotes": [
+        "Manual step: create project at console.neon.tech",
+        "Run drizzle-kit push from local machine with the new DATABASE_URL",
+        "Verify with: psql <connection_string> -c '\\dt' shows units table (not capsules)"
+      ],
+      "dependencies": [
+        "US-013",
+        "US-019"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-023",
+      "title": "Provision Lightsail instance for Southern Homestay",
+      "priority": 23,
+      "description": "As an operator, I want a Lightsail instance running the PelangiManager codebase for Southern Homestay.",
+      "acceptanceCriteria": [
+        "Lightsail instance created: Ubuntu 22.04, $10/mo (2GB RAM), ap-southeast-1",
+        "Static/elastic IP assigned",
+        "Server provisioned: Node.js 20+, PM2 global, nginx, 2GB swap",
+        "Directories created: /var/www/southern/ and /var/www/southern/RainbowAI/",
+        ".env files created on server with Southern Homestay config",
+        "Lightsail firewall: ports 80, 443, 5000, 3002 open",
+        "First deployment via ./deploy.sh southern succeeds",
+        "pm2 status shows both processes running",
+        "curl http://localhost:5000/api/health returns healthy",
+        "curl http://localhost:3002/api/health returns healthy"
+      ],
+      "technicalNotes": [
+        "Manual steps: AWS Console > Lightsail > Create Instance",
+        "Server setup script: apt update, install nodejs, npm install -g pm2, nginx, swap setup",
+        "Copy .env template from deploy/targets/southern.env.template (create this)",
+        "Use existing SSH key: ~/.ssh/LightsailDefaultKeyPair.pem"
+      ],
+      "dependencies": [
+        "US-020",
+        "US-021",
+        "US-022"
+      ],
+      "estimatedComplexity": "large",
+      "passes": false
+    },
+    {
+      "id": "US-024",
+      "title": "Set up Cloudflare domain and tunnel for Southern Homestay",
+      "priority": 24,
+      "description": "As an operator, I want HTTPS access to Southern Homestay via a custom domain routed through Cloudflare Tunnel.",
+      "acceptanceCriteria": [
+        "Domain registered/transferred (e.g., southernhomestay.com)",
+        "Domain added to Cloudflare, nameservers updated, status ACTIVE",
+        "cloudflared installed on Southern Lightsail instance",
+        "Tunnel created: cloudflared tunnel create southern-homestay",
+        "Tunnel config: admin.southernhomestay.com -> http://localhost:80, rainbow.southernhomestay.com -> http://localhost:3002",
+        "CNAME DNS records point to <tunnel-id>.cfargotunnel.com",
+        "cloudflared running as systemd service (auto-start on reboot)",
+        "https://admin.southernhomestay.com loads the management dashboard",
+        "https://rainbow.southernhomestay.com loads the Rainbow AI dashboard"
+      ],
+      "technicalNotes": [
+        "Manual steps: domain registration, Cloudflare setup",
+        "Reference: .claude/skills/cloudflare-setup/SKILL.md for tunnel setup procedure",
+        "Existing Pelangi tunnel ID: 0ef67970-4094-492d-a513-8864fa4cfd53 \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d Southern gets a separate tunnel"
+      ],
+      "dependencies": [
+        "US-023"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-025",
+      "title": "Set up WhatsApp for Southern Homestay via Baileys",
+      "priority": 25,
+      "description": "As an operator, I want Southern Homestay to have its own WhatsApp AI assistant with a separate phone number.",
+      "acceptanceCriteria": [
+        "New Malaysian phone number obtained for Southern Homestay",
+        "WHATSAPP_AUTH_DIR=/var/www/southern/RainbowAI/.whatsapp-auth set in Rainbow .env",
+        "Baileys pairing completed: device linked via pairing code",
+        "WhatsApp connection status: open",
+        "Bot responds to test messages with Southern Homestay knowledge",
+        "System prompt uses Southern Homestay business name and bot name",
+        "Escalation routes to Southern Homestay staff phone numbers",
+        "Knowledge base files customized for Southern Homestay (address, pricing, facilities)"
+      ],
+      "technicalNotes": [
+        "Manual steps: obtain phone number, pair device, customize KB",
+        "Each instance MUST have its own WHATSAPP_AUTH_DIR \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d cannot share Baileys credentials",
+        "Reference: .claude/skills/whatsapp-baileys/SKILL.md for pairing procedure"
+      ],
+      "dependencies": [
+        "US-023",
+        "US-018"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-026",
+      "title": "Migrate Pelangi production database",
+      "priority": 26,
+      "description": "As an operator, I want to safely migrate Pelangi's production database to the new schema.",
+      "acceptanceCriteria": [
+        "Production DB backed up before migration",
+        "Migration SQL from US-012 executed on production Neon DB",
+        "All table renames verified: units, unit_problems exist; capsules, capsule_problems do not",
+        "All column renames verified: unit_number in guests, guest_tokens, admin_notifications, unit_problems",
+        "New columns exist: unit_type, max_occupancy, price_per_night (all NULL for existing capsules)",
+        "Updated codebase deployed to Pelangi via ./deploy.sh pelangi",
+        "All Pelangi flows work: login, dashboard, check-in, check-out, maintenance, Rainbow AI",
+        "No data loss \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d all existing guests, units, expenses intact"
+      ],
+      "technicalNotes": [
+        "Manual step: run migration SQL on Neon console or via psql",
+        "Backup first: Neon has point-in-time recovery, but also take explicit snapshot",
+        "Sequence: backup -> migration SQL -> deploy new code -> verify",
+        "If anything breaks: rollback SQL + git revert deploy"
+      ],
+      "dependencies": [
+        "US-012",
+        "US-013"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-027",
+      "title": "End-to-end verification of both instances",
+      "priority": 27,
+      "description": "As an operator, I want to verify both Pelangi and Southern Homestay instances are fully operational and independent.",
+      "acceptanceCriteria": [
+        "Pelangi: https://admin.pelangicapsulehostel.com \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d login, dashboard, check-in/out, receipts all work",
+        "Pelangi: https://rainbow.pelangicapsulehostel.com \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d Rainbow AI dashboard loads, WhatsApp bot responds",
+        "Southern: https://admin.southernhomestay.com \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d login, dashboard with rooms/houses, check-in/out work",
+        "Southern: https://rainbow.southernhomestay.com \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d Rainbow AI dashboard loads, WhatsApp bot responds",
+        "Data isolation: creating a guest on Pelangi does NOT appear on Southern (separate DBs)",
+        "Pelangi UI shows 'Pelangi Capsule Hostel' with 'Capsule' labels",
+        "Southern UI shows 'Southern Homestay' with 'Room'/'House' labels",
+        "Receipts show correct business details per instance",
+        "pm2 status healthy on both instances",
+        "Memory usage under control on both instances"
+      ],
+      "technicalNotes": [
+        "This is the final verification story",
+        "Use agent-browser skill to verify both instances",
+        "Check pm2 status, free -h, and application logs on both servers",
+        "Verify WhatsApp bot responses on both numbers"
+      ],
+      "dependencies": [
+        "US-023",
+        "US-024",
+        "US-025",
+        "US-026"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
     }
   ],
   "technicalContext": {
     "affectedAreas": [
-      "RainbowAI/src/public/js/modules/live-chat-actions.js",
-      "RainbowAI/src/public/js/modules/live-chat-core.js",
-      "RainbowAI/src/public/js/modules/live-chat-panels.js",
-      "RainbowAI/src/public/js/modules/live-chat.js",
-      "RainbowAI/src/public/js/modules/settings-ai-models.js",
-      "RainbowAI/src/public/js/modules/prisma-ai.js",
-      "RainbowAI/src/public/templates/tabs/live-chat.html",
-      "RainbowAI/src/public/templates/tabs/settings.html",
-      "RainbowAI/src/public/templates/tabs/chat-simulator.html",
-      "RainbowAI/src/public/css/rainbow-livechat-core.css",
-      "RainbowAI/src/public/css/rainbow-livechat-ui.css",
-      "RainbowAI/src/routes/admin/index.ts",
-      "RainbowAI/src/routes/admin/intent-analytics.ts",
-      "RainbowAI/src/routes/admin/conversations.ts",
-      "RainbowAI/src/routes/admin/tags.ts",
-      "RainbowAI/src/routes/admin/capsules.ts",
-      "RainbowAI/src/routes/admin/prisma.ts",
-      "RainbowAI/src/assistant/data/settings.json",
-      "RainbowAI/src/assistant/data/routing.json",
-      "RainbowAI/src/assistant/data/workflows.json",
-      "RainbowAI/src/assistant/data/intent-keywords.json",
-      "RainbowAI/src/assistant/message-router.ts",
-      "RainbowAI/src/assistant/knowledge-base.ts",
-      "RainbowAI/src/assistant/pipeline/stages/action-dispatch.ts",
+      "shared/schema-tables.ts",
+      "shared/validation/",
+      "shared/business-config.ts (NEW)",
+      "server/Storage/",
+      "server/routes/",
+      "server/lib/business-config.ts (NEW)",
       "server/index.ts",
-      "server/routes/"
+      "client/src/components/",
+      "client/src/pages/",
+      "client/src/hooks/",
+      "client/src/lib/",
+      "RainbowAI/src/tools/",
+      "RainbowAI/src/lib/",
+      "RainbowAI/src/routes/admin/",
+      "RainbowAI/src/assistant/default-configs.ts",
+      "deploy.sh",
+      "ecosystem.config.cjs",
+      "vite.config.ts",
+      "migrations/ (NEW)"
     ],
-    "newFiles": [
-      "RainbowAI/src/routes/admin/prisma.ts",
-      "RainbowAI/src/public/js/modules/prisma-ai.js"
-    ],
-    "testingStrategy": "Bug fixes verified via agent-browser before marking complete. Intent/workflow changes run 50-scenario accuracy test. UI changes verified in both #live-chat and #chat-simulator/live-simulation. TypeScript compilation check after every story.",
-    "rollbackPlan": "git checkout HEAD -- RainbowAI/src/public/ RainbowAI/src/routes/ RainbowAI/src/assistant/data/ server/index.ts",
+    "testingStrategy": "TypeScript compilation check after every story. npm run test after server stories. agent-browser verification for UI stories. End-to-end verification in US-013 (code) and US-027 (infrastructure).",
+    "rollbackPlan": "Schema: migrations/rollback-units-to-capsules.sql. Code: git revert to pre-rename commit. Infrastructure: each instance is independent \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d rollback one without affecting the other.",
     "crossCuttingConcerns": {
-      "agentBrowserVerification": "All UI stories must be verified using agent-browser before marking complete",
-      "accuracyTest": "All intent and workflow changes must maintain 100% on 50-scenario accuracy test",
-      "importBoundaries": "RainbowAI/ must have ZERO imports from server/, client/, or shared/ — HTTP fetch only for cross-module data",
-      "atomicWrites": "All new JSON data files use config-store.ts atomic write pattern (.tmp then renameSync)",
-      "cssConvention": "All new UI components use existing CSS files — no inline styles, no new stylesheet files"
+      "backwardCompatibility": "All env vars have Pelangi defaults. Existing deployment works unchanged until migration.",
+      "importBoundaries": "RainbowAI/ must have ZERO imports from server/, client/, or shared/ \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d HTTP fetch only",
+      "memoryConstraints": "Southern Homestay needs $10/mo 2GB Lightsail (not $5/mo 512MB) for Rainbow AI",
+      "whatsappIsolation": "Each instance needs unique WHATSAPP_AUTH_DIR \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d cannot share Baileys credentials",
+      "buildLocally": "Never npm install on Lightsail (OOM). Build locally, transfer tarball."
     }
   }
 }

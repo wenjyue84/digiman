@@ -11,8 +11,8 @@ interface GuestFilterPopoverProps {
   filters: GuestFilters;
   setFilters: React.Dispatch<React.SetStateAction<GuestFilters>>;
   hasActiveGuestFilters: boolean;
-  showAllCapsules: boolean;
-  setShowAllCapsules: (val: boolean) => void;
+  showAllUnits: boolean;
+  setshowAllUnits: (val: boolean) => void;
   isAuthenticated: boolean;
   onUpdateSetting: (val: boolean) => void;
   onWhatsAppExport: () => void;
@@ -24,8 +24,8 @@ export function GuestFilterPopover({
   filters,
   setFilters,
   hasActiveGuestFilters,
-  showAllCapsules,
-  setShowAllCapsules,
+  showAllUnits,
+  setshowAllUnits,
   isAuthenticated,
   onUpdateSetting,
   onWhatsAppExport,
@@ -111,14 +111,14 @@ export function GuestFilterPopover({
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs uppercase text-gray-500">Capsule Display</Label>
+            <Label className="text-xs uppercase text-gray-500">Unit Display</Label>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
-                  checked={showAllCapsules}
+                  checked={showAllUnits}
                   onCheckedChange={(val) => {
                     const newValue = Boolean(val);
-                    setShowAllCapsules(newValue);
+                    setshowAllUnits(newValue);
                     if (isAuthenticated) {
                       onUpdateSetting(newValue);
                     }
@@ -126,12 +126,12 @@ export function GuestFilterPopover({
                 />
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
-                  Show all capsules
+                  Show all units
                 </div>
               </label>
-              {showAllCapsules && (
+              {showAllUnits && (
                 <p className="text-xs text-gray-500 ml-6">
-                  Empty capsules will be shown with red background
+                  Empty units will be shown with red background
                 </p>
               )}
             </div>

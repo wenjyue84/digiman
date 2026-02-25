@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import type { Guest } from "@shared/schema";
 import { isGuestPaid } from "@/lib/guest";
-import type { GuestFilters, CombinedDataItem, AllCapsule } from "./types";
+import type { GuestFilters, CombinedDataItem, AllUnit } from "./types";
 
 export function isDateToday(dateStr?: string): boolean {
   if (!dateStr) return false;
@@ -23,21 +23,21 @@ interface UseGuestFilteringArgs {
   activeTokens: Array<{
     id: string;
     token: string;
-    capsuleNumber: string;
+    unitNumber: string;
     guestName: string | null;
     phoneNumber: string | null;
     createdAt: string;
     expiresAt: string;
   }>;
-  showAllCapsules: boolean;
-  allCapsules: AllCapsule[];
+  showAllUnits: boolean;
+  allUnits: AllUnit[];
 }
 
 export function useGuestFiltering({
   guests,
   activeTokens,
-  showAllCapsules,
-  allCapsules,
+  showAllUnits,
+  allUnits,
 }: UseGuestFilteringArgs) {
   const [filters, setFilters] = useState<GuestFilters>({
     gender: 'any',
@@ -48,16 +48,16 @@ export function useGuestFiltering({
 
   const hasActiveGuestFilters = filters.gender !== 'any' || filters.nationality !== 'any' || filters.outstandingOnly || filters.checkoutTodayOnly;
 
-  // Create a combined and filtered list of guests, pending check-ins, and empty capsules
+  // Create a combined and filtered list of guests, pending check-ins, and empty units
   const filteredData = useMemo(() => {
-    // 1. Build combined data (guests + pending + empty capsules)
+    // 1. Build combined data (guests + pending + empty units)
     const guestData = guests.map(guest => ({ type: 'guest' as const, data: guest }));
     const pendingData = activeTokens.map(token => ({
       type: 'pending' as const,
       data: {
         id: token.id,
         name: token.guestName || 'Pending Check-in',
-        capsuleNumber: token.capsuleNumber,
+        unitNumber: token.unitNumber,
         createdAt: token.createdAt,
         expiresAt: token.expiresAt,
         phoneNumber: token.phoneNumber,
@@ -66,21 +66,21 @@ export function useGuestFiltering({
 
     let data: CombinedDataItem[] = [...guestData, ...pendingData];
 
-    // Add empty capsules when showAllCapsules is enabled
-    if (showAllCapsules && allCapsules.length > 0) {
-      const occupiedCapsules = new Set([
-        ...guests.map(g => g.capsuleNumber),
-        ...activeTokens.map(t => t.capsuleNumber)
+    // Add empty units when showAllUnits is enabled
+    if (showAllUnits && allUnits.length > 0) {
+      const occupiedUnits = new Set([
+        ...guests.map(g => g.unitNumber),
+        ...activeTokens.map(t => t.unitNumber)
       ]);
 
-      const emptyCapsules = allCapsules
-        .filter(capsule => !occupiedCapsules.has(capsule.number) && capsule.toRent !== false)
-        .map(capsule => ({
+      const emptyUnits = allUnits
+        .filter(unit => !occupiedUnits.has(unit.number) && unit.toRent !== false)
+        .map(unit => ({
           type: 'empty' as const,
           data: {
-            id: `empty-${capsule.id}`,
+            id: `empty-${unit.id}`,
             name: 'Empty',
-            capsuleNumber: capsule.number,
+            unitNumber: unit.number,
             checkinTime: null as null,
             expectedCheckoutDate: null as null,
             phoneNumber: null as null,
@@ -101,15 +101,15 @@ export function useGuestFiltering({
             status: null as null,
             checkoutTime: null as null,
             isCheckedIn: false,
-            section: capsule.section,
-            isAvailable: capsule.isAvailable,
-            cleaningStatus: capsule.cleaningStatus,
-            toRent: capsule.toRent,
-            remark: capsule.remark,
+            section: unit.section,
+            isAvailable: unit.isAvailable,
+            cleaningStatus: unit.cleaningStatus,
+            toRent: unit.toRent,
+            remark: unit.remark,
           }
         }));
 
-      data = [...data, ...emptyCapsules];
+      data = [...data, ...emptyUnits];
     }
 
     // 2. Apply filters
@@ -130,7 +130,7 @@ export function useGuestFiltering({
       }
       return true;
     });
-  }, [guests, activeTokens, showAllCapsules, allCapsules, filters, hasActiveGuestFilters]);
+  }, [guests, activeTokens, showAllUnits, allUnits, filters, hasActiveGuestFilters]);
 
   const clearFilters = () => {
     setFilters({ gender: 'any', nationality: 'any', outstandingOnly: false, checkoutTodayOnly: false });

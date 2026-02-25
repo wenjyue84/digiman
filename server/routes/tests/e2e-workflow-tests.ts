@@ -8,7 +8,7 @@ export const e2eWorkflowTests: SystemTest[] = [
     async test() {
       const results: string[] = [];
       let testGuest: any = null;
-      let testCapsule: any = null;
+      let testUnit: any = null;
 
       try {
         // STEP 1: Authentication & Authorization
@@ -19,25 +19,25 @@ export const e2eWorkflowTests: SystemTest[] = [
         }
         results.push(`   ✅ Admin user authenticated: ${adminUser.email}`);
 
-        // STEP 2: Capsule Availability Check
-        results.push("🏠 Step 2: Checking Capsule Availability...");
-        const availableCapsules = await storage.getAvailableCapsules();
-        if (availableCapsules.length === 0) {
-          throw new Error("No available capsules - cannot proceed with check-in");
+        // STEP 2: Unit Availability Check
+        results.push("🏠 Step 2: Checking Unit Availability...");
+        const availableUnits = await storage.getAvailableUnits();
+        if (availableUnits.length === 0) {
+          throw new Error("No available units - cannot proceed with check-in");
         }
-        testCapsule = availableCapsules[0];
-        results.push(`   ✅ Available capsules: ${availableCapsules.length}, using ${testCapsule.number}`);
+        testUnit = availableUnits[0];
+        results.push(`   ✅ Available units: ${availableUnits.length}, using ${testUnit.number}`);
 
         // STEP 3: Guest Check-in Process
         results.push("👤 Step 3: Processing Guest Check-in...");
-        const guestData = {
+        const guestData: any = {
           name: "Workflow Test Guest",
           email: "workflow.test@pelangi.com",
           phoneNumber: "012-3456789",
           nationality: "Malaysian",
           gender: "male",
           age: "30",
-          capsuleNumber: testCapsule.number,
+          unitNumber: testUnit.number,
           paymentAmount: "45",
           paymentMethod: "cash",
           paymentCollector: "Admin",
@@ -50,15 +50,15 @@ export const e2eWorkflowTests: SystemTest[] = [
         if (!testGuest || !testGuest.id) {
           throw new Error("Failed to create guest during check-in");
         }
-        results.push(`   ✅ Guest checked in successfully: ${testGuest.name} → ${testGuest.capsuleNumber}`);
+        results.push(`   ✅ Guest checked in successfully: ${testGuest.name} → ${testGuest.unitNumber}`);
 
-        // STEP 4: Verify Capsule Status Update
-        results.push("🔄 Step 4: Verifying Capsule Status...");
-        const updatedCapsule = await storage.getCapsule(testCapsule.number);
-        if (!updatedCapsule || updatedCapsule.isAvailable) {
-          throw new Error("Capsule should be marked as unavailable after check-in");
+        // STEP 4: Verify Unit Status Update
+        results.push("🔄 Step 4: Verifying Unit Status...");
+        const updatedUnit = await storage.getUnit(testUnit.number);
+        if (!updatedUnit || updatedUnit.isAvailable) {
+          throw new Error("Unit should be marked as unavailable after check-in");
         }
-        results.push(`   ✅ Capsule ${testCapsule.number} properly marked as occupied`);
+        results.push(`   ✅ Unit ${testUnit.number} properly marked as occupied`);
 
         // STEP 5: Dashboard Integration Check
         results.push("📊 Step 5: Testing Dashboard Integration...");
@@ -77,31 +77,31 @@ export const e2eWorkflowTests: SystemTest[] = [
         }
         results.push(`   ✅ Guest checked out successfully at ${checkedOutGuest.checkoutTime}`);
 
-        // STEP 7: Capsule Cleaning Mark
-        results.push("🧹 Step 7: Marking Capsule for Cleaning...");
-        await storage.markCapsuleNeedsCleaning(testCapsule.number, "Checkout cleaning required");
-        const capsuleNeedsCleaning = await storage.getCapsule(testCapsule.number);
-        if (capsuleNeedsCleaning.cleaningStatus !== "to_be_cleaned") {
-          throw new Error("Capsule not properly marked for cleaning");
+        // STEP 7: Unit Cleaning Mark
+        results.push("🧹 Step 7: Marking Unit for Cleaning...");
+        await storage.markUnitNeedsCleaning(testUnit.number);
+        const unitNeedsCleaning = await storage.getUnit(testUnit.number);
+        if (!unitNeedsCleaning || unitNeedsCleaning.cleaningStatus !== "to_be_cleaned") {
+          throw new Error("Unit not properly marked for cleaning");
         }
-        results.push(`   ✅ Capsule ${testCapsule.number} marked as needs cleaning`);
+        results.push(`   ✅ Unit ${testUnit.number} marked as needs cleaning`);
 
         // STEP 8: Complete Cleaning Process
         results.push("✨ Step 8: Completing Cleaning Process...");
-        await storage.markCapsuleAsCleaned(testCapsule.number, "Cleaned and ready for next guest");
-        const cleanedCapsule = await storage.getCapsule(testCapsule.number);
-        if (cleanedCapsule.cleaningStatus !== "cleaned" || !cleanedCapsule.isAvailable) {
-          throw new Error("Capsule not properly marked as cleaned and available");
+        await storage.markUnitCleaned(testUnit.number, "Cleaned and ready for next guest");
+        const cleanedUnit = await storage.getUnit(testUnit.number);
+        if (!cleanedUnit || cleanedUnit.cleaningStatus !== "cleaned" || !cleanedUnit.isAvailable) {
+          throw new Error("Unit not properly marked as cleaned and available");
         }
-        results.push(`   ✅ Capsule ${testCapsule.number} cleaned and available for next guest`);
+        results.push(`   ✅ Unit ${testUnit.number} cleaned and available for next guest`);
 
         // STEP 9: Occupancy Statistics Verification
         results.push("📈 Step 9: Verifying Occupancy Statistics...");
-        const occupancyStats = await storage.getOccupancyStats();
+        const occupancyStats = await storage.getUnitOccupancy();
         if (!occupancyStats || typeof occupancyStats.total !== 'number') {
           throw new Error("Occupancy statistics not properly calculated");
         }
-        results.push(`   ✅ Occupancy stats: ${occupancyStats.occupied}/${occupancyStats.total} capsules occupied`);
+        results.push(`   ✅ Occupancy stats: ${occupancyStats.occupied}/${occupancyStats.total} units occupied`);
 
         return {
           passed: true,
@@ -117,10 +117,10 @@ export const e2eWorkflowTests: SystemTest[] = [
     },
     suggestions: [
       "If authentication fails: Check default admin user creation",
-      "If capsule unavailable: Check capsule initialization in storage",
+      "If unit unavailable: Check unit initialization in storage",
       "If check-in fails: Verify guest schema validation",
       "If checkout fails: Check guest checkout logic",
-      "If cleaning fails: Verify capsule status management"
+      "If cleaning fails: Verify unit status management"
     ]
   },
 
@@ -131,20 +131,20 @@ export const e2eWorkflowTests: SystemTest[] = [
       const results: string[] = [];
       let guestToken: any = null;
       let selfCheckedGuest: any = null;
-      let testCapsule: any = null;
+      let testUnit: any = null;
 
       try {
         // STEP 1: Guest Token Creation
         results.push("🎟️ Step 1: Creating Guest Check-in Token...");
-        const availableCapsules = await storage.getAvailableCapsules();
-        if (availableCapsules.length === 0) {
-          throw new Error("No available capsules for self check-in token");
+        const availableUnits = await storage.getAvailableUnits();
+        if (availableUnits.length === 0) {
+          throw new Error("No available units for self check-in token");
         }
 
-        testCapsule = availableCapsules[0];
+        testUnit = availableUnits[0];
         const tokenData = {
           token: `test-token-${Date.now()}`,
-          capsuleNumber: testCapsule.number,
+          unitNumber: testUnit.number,
           autoAssign: false,
           guestName: null,
           phoneNumber: null,
@@ -158,7 +158,7 @@ export const e2eWorkflowTests: SystemTest[] = [
         if (!guestToken || !guestToken.token) {
           throw new Error("Failed to create guest token");
         }
-        results.push(`   ✅ Guest token created: ${guestToken.token} for capsule ${guestToken.capsuleNumber}`);
+        results.push(`   ✅ Guest token created: ${guestToken.token} for unit ${guestToken.unitNumber}`);
 
         // STEP 2: Token Validation
         results.push("🔍 Step 2: Validating Token Access...");
@@ -170,16 +170,17 @@ export const e2eWorkflowTests: SystemTest[] = [
 
         // STEP 3: Self Check-in Form Submission
         results.push("📝 Step 3: Processing Self Check-in Form...");
-        const selfCheckinData = {
+        const selfCheckinData: any = {
           name: "Self Checkin Test Guest",
           email: "selfcheckin.test@guest.com",
           phoneNumber: "019-8765432",
           nationality: "Singaporean",
           gender: "female",
           age: "25",
-          capsuleNumber: guestToken.capsuleNumber,
+          unitNumber: guestToken.unitNumber,
           paymentAmount: "45",
-          paymentMethod: "online",
+          paymentMethod: "cash",
+          paymentCollector: "Self",
           isPaid: true,
           selfCheckinToken: guestToken.token,
           checkinTime: new Date()
@@ -189,7 +190,7 @@ export const e2eWorkflowTests: SystemTest[] = [
         if (!selfCheckedGuest || !selfCheckedGuest.id) {
           throw new Error("Self check-in form processing failed");
         }
-        results.push(`   ✅ Self check-in completed: ${selfCheckedGuest.name} → ${selfCheckedGuest.capsuleNumber}`);
+        results.push(`   ✅ Self check-in completed: ${selfCheckedGuest.name} → ${selfCheckedGuest.unitNumber}`);
 
         // STEP 4: Token Usage Marking
         results.push("✅ Step 4: Marking Token as Used...");
@@ -205,7 +206,7 @@ export const e2eWorkflowTests: SystemTest[] = [
         if (!guestDetails || !guestDetails.isCheckedIn) {
           throw new Error("Guest details not properly saved");
         }
-        results.push(`   ✅ Success page data ready: Guest ${guestDetails.name} in ${guestDetails.capsuleNumber}`);
+        results.push(`   ✅ Success page data ready: Guest ${guestDetails.name} in ${guestDetails.unitNumber}`);
 
         // STEP 6: Book Again Functionality
         results.push("🔄 Step 6: Testing Book Again Feature...");
@@ -257,7 +258,7 @@ export const e2eWorkflowTests: SystemTest[] = [
 
         // INTEGRATION 2: Storage Layer Integration
         results.push("💾 Integration 2: Storage Layer...");
-        const storageInfo = typeof storage.getAllCapsules === 'function' &&
+        const storageInfo = typeof storage.getAllUnits === 'function' &&
                           typeof storage.createGuest === 'function' &&
                           typeof storage.getCheckedInGuests === 'function';
         if (!storageInfo) {
@@ -292,13 +293,13 @@ export const e2eWorkflowTests: SystemTest[] = [
         );
         results.push(`   ✅ Guest token endpoints defined`);
 
-        // INTEGRATION 6: Capsule Management
-        results.push("🏠 Integration 6: Capsule Management...");
+        // INTEGRATION 6: Unit Management
+        results.push("🏠 Integration 6: Unit Management...");
         criticalEndpoints.push(
-          { endpoint: "GET /api/capsules/available", purpose: "Available capsules", status: "Core workflow" },
-          { endpoint: "POST /api/capsules/:number/clean", purpose: "Mark as cleaned", status: "Cleaning workflow" }
+          { endpoint: "GET /api/units/available", purpose: "Available units", status: "Core workflow" },
+          { endpoint: "POST /api/units/:number/clean", purpose: "Mark as cleaned", status: "Cleaning workflow" }
         );
-        results.push(`   ✅ Capsule management endpoints defined`);
+        results.push(`   ✅ Unit management endpoints defined`);
 
         // INTEGRATION 7: Dashboard & Reporting
         results.push("📊 Integration 7: Dashboard Integration...");
@@ -311,14 +312,14 @@ export const e2eWorkflowTests: SystemTest[] = [
         // INTEGRATION 8: Data Consistency
         results.push("🔄 Integration 8: Data Consistency...");
         const testDataConsistency = async () => {
-          const capsules = await storage.getAllCapsules();
+          const units = await storage.getAllUnits();
           const guests = await storage.getCheckedInGuests();
 
-          // Check that occupied capsules have corresponding guests
-          const occupiedCapsules = capsules.filter(c => !c.isAvailable);
-          const guestCapsules = guests.data.map((g: any) => g.capsuleNumber);
+          // Check that occupied units have corresponding guests
+          const occupiedUnits = units.filter(c => !c.isAvailable);
+          const guestUnits = guests.data.map((g: any) => g.unitNumber);
 
-          return occupiedCapsules.length === guestCapsules.length;
+          return occupiedUnits.length === guestUnits.length;
         };
 
         const isConsistent = await testDataConsistency();
@@ -345,7 +346,7 @@ export const e2eWorkflowTests: SystemTest[] = [
       "If server connectivity fails: Check if development server is running (npm run dev)",
       "If storage fails: Verify storage initialization and method implementations",
       "If endpoints fail: Check route definitions in server/routes/",
-      "If data consistency fails: Review guest and capsule state management",
+      "If data consistency fails: Review guest and unit state management",
       "If integration fails: Check for circular dependencies or import issues"
     ]
   },

@@ -3,7 +3,7 @@ import { storage } from "../storage";
 import {
   authTests,
   guestTests,
-  capsuleTests,
+  unitTests,
   financialTests,
   notificationTests,
   dashboardTests,
@@ -21,8 +21,8 @@ const systemTests = [
   ...authTests,
   // === GUEST MANAGEMENT TESTS ===
   ...guestTests,
-  // === CAPSULE MANAGEMENT TESTS ===
-  ...capsuleTests,
+  // === UNIT MANAGEMENT TESTS ===
+  ...unitTests,
   // === FINANCIAL OPERATIONS TESTS ===
   ...financialTests,
   // === NOTIFICATION & PROBLEM TRACKING TESTS ===
@@ -67,7 +67,7 @@ router.post("/run", async (req, res) => {
     const sections = [
       { name: '🔐 AUTHENTICATION & SECURITY', start: 0, emoji: '🛡️' },
       { name: '👥 GUEST MANAGEMENT', start: 2, emoji: '🏨' },
-      { name: '🏠 CAPSULE MANAGEMENT', start: 5, emoji: '🛏️' },
+      { name: '🏠 UNIT MANAGEMENT', start: 5, emoji: '🛏️' },
       { name: '💰 FINANCIAL OPERATIONS', start: 7, emoji: '💳' },
       { name: '📢 NOTIFICATIONS & TRACKING', start: 9, emoji: '🔔' },
       { name: '📊 DASHBOARD & REPORTING', start: 11, emoji: '📈' },
@@ -161,11 +161,11 @@ router.post("/run", async (req, res) => {
 // Health check for tests
 router.get("/health", async (req, res) => {
   try {
-    const capsules = await storage.getAllCapsules();
+    const units = await storage.getAllUnits();
     res.json({
       status: "healthy",
       timestamp: new Date().toISOString(),
-      capsulesCount: capsules.length,
+      unitsCount: units.length,
       storageType: process.env.DATABASE_URL ? "database" : "memory"
     });
   } catch (error: any) {
@@ -214,15 +214,15 @@ router.post("/populate-sample-guests", async (req, res) => {
     const fmtDate = (d: Date) => d.toISOString().split('T')[0];
 
     const sampleGuests = [
-      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
-      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
-      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
-      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
-      { name: "Wei Ming", capsule: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
-      { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
-      { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
-      { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
-      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
+      { name: "Keong", unit: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", unit: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", unit: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", unit: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Wei Ming", unit: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
+      { name: "Raj", unit: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
+      { name: "Hassan", unit: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
+      { name: "Li Wei", unit: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
+      { name: "Siti", unit: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ];
 
     let created = 0;
@@ -234,7 +234,7 @@ router.post("/populate-sample-guests", async (req, res) => {
 
       const guestData = {
         name: guest.name,
-        capsuleNumber: guest.capsule,
+        unitNumber: guest.unit,
         checkinTime: new Date(guest.checkin),
         expectedCheckoutDate: guest.checkout,
         paymentAmount: paidAmount.toString(),
@@ -260,7 +260,7 @@ router.post("/populate-sample-guests", async (req, res) => {
       action: "created",
       storageType: "database",
       guestsCreated: created,
-      guests: sampleGuests.map(g => ({ name: g.name, capsule: g.capsule, status: g.paymentStatus }))
+      guests: sampleGuests.map(g => ({ name: g.name, unit: g.unit, status: g.paymentStatus }))
     });
 
   } catch (error: any) {
@@ -296,9 +296,9 @@ router.post("/refresh-sample-guests", async (req, res) => {
     const postgres = (await import('postgres')).default;
     const sql = postgres(process.env.DATABASE_URL || '');
 
-    // Clear all guests and reset capsule availability
+    // Clear all guests and reset unit availability
     await sql`DELETE FROM guests`;
-    await sql`UPDATE capsules SET is_available = true`;
+    await sql`UPDATE units SET is_available = true`;
 
     await sql.end();
 
@@ -313,15 +313,15 @@ router.post("/refresh-sample-guests", async (req, res) => {
     const fmtDate = (d: Date) => d.toISOString().split('T')[0];
 
     const sampleGuests = [
-      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
-      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
-      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
-      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
-      { name: "Wei Ming", capsule: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
-      { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
-      { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
-      { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
-      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
+      { name: "Keong", unit: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", unit: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", unit: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", unit: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Wei Ming", unit: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
+      { name: "Raj", unit: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
+      { name: "Hassan", unit: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
+      { name: "Li Wei", unit: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
+      { name: "Siti", unit: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000)), nights: 1, nationality: "Malaysian", gender: "female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ];
 
     let created = 0;
@@ -333,7 +333,7 @@ router.post("/refresh-sample-guests", async (req, res) => {
 
       const guestData = {
         name: guest.name,
-        capsuleNumber: guest.capsule,
+        unitNumber: guest.unit,
         checkinTime: new Date(guest.checkin),
         expectedCheckoutDate: guest.checkout,
         paymentAmount: paidAmount.toString(),
@@ -360,7 +360,7 @@ router.post("/refresh-sample-guests", async (req, res) => {
       storageType: "database",
       guestsCleared: existingGuests.data.length,
       guestsCreated: created,
-      guests: sampleGuests.map(g => ({ name: g.name, capsule: g.capsule, status: g.paymentStatus }))
+      guests: sampleGuests.map(g => ({ name: g.name, unit: g.unit, status: g.paymentStatus }))
     });
 
   } catch (error: any) {

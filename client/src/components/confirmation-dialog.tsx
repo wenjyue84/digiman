@@ -103,22 +103,23 @@ export function CheckoutConfirmationDialog({
   onOpenChange,
   onConfirm,
   guestName,
-  capsuleNumber,
+  unitNumber,
   isLoading,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   guestName: string;
-  capsuleNumber: string;
+  unitNumber?: string;
   isLoading?: boolean;
 }) {
+  const accommodationNumber = unitNumber ?? "N/A";
   return (
     <ConfirmationDialog
       open={open}
       onOpenChange={onOpenChange}
       title="Confirm Guest Checkout"
-      description={`Are you sure you want to check out ${guestName} from capsule ${capsuleNumber}? This action cannot be undone.`}
+      description={`Are you sure you want to check out ${guestName} from unit ${accommodationNumber}? This action cannot be undone.`}
       confirmText="Check Out"
       cancelText="Cancel"
       onConfirm={onConfirm}

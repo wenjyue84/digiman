@@ -1,19 +1,19 @@
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Guest } from "@shared/schema";
-import { compareCapsuleNumbers } from "./useGuestSorting";
-import type { AvailableCapsule } from "./types";
+import { compareUnitNumbers } from "./useGuestSorting";
+import type { AvailableUnit } from "./types";
 
-interface CapsuleSelectorProps {
+interface UnitSelectorProps {
   guest: Guest;
   isAuthenticated: boolean;
-  availableCapsules: AvailableCapsule[];
-  onCapsuleChange: (guest: Guest, newCapsuleNumber: string) => void;
+  availableUnits: AvailableUnit[];
+  onUnitChange: (guest: Guest, newUnitNumber: string) => void;
 }
 
-export function CapsuleSelector({ guest, isAuthenticated, availableCapsules, onCapsuleChange }: CapsuleSelectorProps) {
+export function UnitSelector({ guest, isAuthenticated, availableUnits, onUnitChange }: UnitSelectorProps) {
   const { toast } = useToast();
-  const currentCapsule = guest.capsuleNumber;
+  const currentUnit = guest.unitNumber;
 
   if (!isAuthenticated) {
     return (
@@ -21,37 +21,37 @@ export function CapsuleSelector({ guest, isAuthenticated, availableCapsules, onC
         onClick={() => {
           toast({
             title: "Authentication Required",
-            description: "Please login to change capsule assignments",
+            description: "Please login to change unit assignments",
             variant: "destructive",
           });
           const currentPath = window.location.pathname;
           window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
         }}
         className="text-sm font-medium text-blue-600 hover:text-blue-800 underline cursor-pointer"
-        title="Click to login and change capsule"
+        title="Click to login and change unit"
       >
-        {currentCapsule}
+        {currentUnit}
       </button>
     );
   }
 
-  const capsuleOptions = [
-    { number: currentCapsule, isCurrent: true },
-    ...availableCapsules
-      .filter(c => c.number !== currentCapsule && c.toRent)
+  const unitOptions = [
+    { number: currentUnit, isCurrent: true },
+    ...availableUnits
+      .filter(c => c.number !== currentUnit && c.toRent)
       .map(c => ({ number: c.number, isCurrent: false }))
-  ].sort((a, b) => compareCapsuleNumbers(a.number, b.number));
+  ].sort((a, b) => compareUnitNumbers(a.number, b.number));
 
   return (
     <Select
-      value={currentCapsule}
-      onValueChange={(newCapsule) => onCapsuleChange(guest, newCapsule)}
+      value={currentUnit}
+      onValueChange={(newUnit) => onUnitChange(guest, newUnit)}
     >
       <SelectTrigger className="w-16 h-8 text-xs">
-        <SelectValue>{currentCapsule}</SelectValue>
+        <SelectValue>{currentUnit}</SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {capsuleOptions.map((option) => (
+        {unitOptions.map((option) => (
           <SelectItem
             key={option.number}
             value={option.number}

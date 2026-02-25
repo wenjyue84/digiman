@@ -4,7 +4,7 @@
  * Executes action handlers before/after sending workflow step messages.
  * Handles:
  * - WhatsApp message forwarding to staff
- * - MCP API integration for capsule availability
+ * - MCP API integration for unit availability
  * - Dynamic data injection into step messages
  * - External data fetching (GPS coordinates, etc.)
  */
@@ -130,7 +130,7 @@ async function executeAction(
       return handleWhatsAppSend(action.params, context, sendMessage);
 
     case 'book_capsule':
-      return handleBookCapsule(action.params, context, callAPI);
+      return handleBookUnit(action.params, context, callAPI);
 
     default:
       console.warn(`[Workflow Enhancer] Unknown action type: ${action.type}`);
@@ -263,7 +263,7 @@ async function handleForwardPayment(
 }
 
 /**
- * Check capsule availability via Pelangi Manager API
+ * Check unit availability via Pelangi Manager API
  */
 async function handleCheckAvailability(
   context: WorkflowEnhancerContext,
@@ -271,40 +271,40 @@ async function handleCheckAvailability(
 ): Promise<ActionResult> {
 
   try {
-    const response = await callAPI('/api/capsules/available', {});
-    const capsules = Array.isArray(response) ? response : (response.capsules || []);
+    const response = await callAPI('/api/units/available', {});
+    const units = Array.isArray(response) ? response : (response.units || []);
 
-    if (capsules.length === 0) {
-      console.log('[Workflow Enhancer] No available capsules');
+    if (units.length === 0) {
+      console.log('[Workflow Enhancer] No available units');
       return {
         data: {
-          availableCapsules: 'No capsules currently available',
+          availableUnits: 'No units currently available',
           availableCount: 0
         }
       };
     }
 
-    // Format: show capsule numbers grouped by section
-    const capsuleList = capsules
-      .map((c: any) => c.number || c.capsuleNumber)
+    // Format: show unit numbers grouped by section
+    const unitList = units
+      .map((c: any) => c.number || c.unitNumber)
       .filter(Boolean)
       .join(', ');
 
-    console.log(`[Workflow Enhancer] Found ${capsules.length} available capsules: ${capsuleList}`);
+    console.log(`[Workflow Enhancer] Found ${units.length} available units: ${unitList}`);
 
     return {
       data: {
-        availableCapsules: capsuleList,
-        availableCount: capsules.length
+        availableUnits: unitList,
+        availableCount: units.length
       }
     };
   } catch (error) {
     console.error('[Workflow Enhancer] Failed to check availability:', error);
 
-    // Fallback: assume capsules are available (almost never full house)
+    // Fallback: assume units are available (almost never full house)
     return {
       data: {
-        availableCapsules: 'Capsules are available! We will confirm your assignment shortly.',
+        availableUnits: 'Units are available! We will confirm your assignment shortly.',
         availableCount: -1
       }
     };
@@ -339,14 +339,14 @@ async function handleCreateCheckinLink(
       return {
         data: {
           checkinLink: '',
-          assignedCapsule: 'N/A',
+          assignedUnit: 'N/A',
           linkMessage: 'Our staff will assist you with check-in directly.'
         }
       };
     }
 
     const checkinLink = tokenResult.link;
-    const assignedCapsule = tokenResult.capsuleNumber;
+    const assignedUnit = tokenResult.unitNumber;
 
     // Build the link message in guest's language
     const linkMessages: Record<string, string> = {
@@ -360,12 +360,12 @@ async function handleCreateCheckinLink(
     // Send the check-in link to the guest via WhatsApp
     await sendMessage(context.phone, linkMessage, context.instanceId);
 
-    console.log(`[Workflow Enhancer] Sent check-in link to ${context.phone}: ${checkinLink} (capsule ${assignedCapsule})`);
+    console.log(`[Workflow Enhancer] Sent check-in link to ${context.phone}: ${checkinLink} (unit ${assignedUnit})`);
 
     return {
       data: {
         checkinLink,
-        assignedCapsule,
+        assignedUnit,
         linkMessage: 'Link sent!'
       }
     };
@@ -375,7 +375,7 @@ async function handleCreateCheckinLink(
     return {
       data: {
         checkinLink: '',
-        assignedCapsule: 'N/A',
+        assignedUnit: 'N/A',
         linkMessage: 'Unable to generate link. Staff will assist you directly.'
       }
     };
@@ -383,7 +383,7 @@ async function handleCreateCheckinLink(
 }
 
 /**
- * Check lower deck (even-numbered) capsule availability
+ * Check lower deck (even-numbered) unit availability
  */
 async function handleCheckLowerDeck(
   context: WorkflowEnhancerContext,
@@ -395,18 +395,18 @@ async function handleCheckLowerDeck(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await callAPI('http://localhost:5000/api/capsules', {
+    const response = await callAPI('http://localhost:5000/api/units', {
       signal: controller.signal
     });
 
     clearTimeout(timeoutId);
 
-    // Parse and filter for even-numbered available capsules
-    const capsules = response.capsules || response || [];
+    // Parse and filter for even-numbered available units
+    const units = response.units || response || [];
 
-    const lowerDeckAvailable = capsules.filter((c: any) => {
+    const lowerDeckAvailable = units.filter((c: any) => {
       const available = c.status === 'available' || c.status === 'vacant';
-      const isEven = isEvenNumberedCapsule(c.capsuleNumber);
+      const isEven = isEvenNumberedUnit(c.unitNumber);
       return available && isEven;
     });
 
@@ -414,15 +414,15 @@ async function handleCheckLowerDeck(
     let resultMessage = '';
 
     if (lowerDeckAvailable.length > 0) {
-      const capsuleList = lowerDeckAvailable
-        .map((c: any) => c.capsuleNumber)
+      const unitList = lowerDeckAvailable
+        .map((c: any) => c.unitNumber)
         .join(', ');
 
       resultMessage = context.language === 'ms'
-        ? `✅ Tersedia: ${capsuleList}`
+        ? `✅ Tersedia: ${unitList}`
         : context.language === 'zh'
-        ? `✅ 可用: ${capsuleList}`
-        : `✅ Available: ${capsuleList}`;
+        ? `✅ 可用: ${unitList}`
+        : `✅ Available: ${unitList}`;
     } else {
       resultMessage = context.language === 'ms'
         ? '❌ Tiada dek bawah tersedia. Cuba dek atas?'
@@ -431,7 +431,7 @@ async function handleCheckLowerDeck(
         : '❌ No lower deck available. Try upper deck?';
     }
 
-    console.log(`[Workflow Enhancer] Found ${lowerDeckAvailable.length} lower deck capsules`);
+    console.log(`[Workflow Enhancer] Found ${lowerDeckAvailable.length} lower deck units`);
 
     return {
       data: {
@@ -580,52 +580,52 @@ async function handleWhatsAppSend(
 }
 
 /**
- * US-016: Book capsule via Pelangi Manager API
- * Action: POST /api/capsules/assign with capsuleNumber + guestName
+ * US-016: Book unit via Pelangi Manager API
+ * Action: POST /api/units/assign with unitNumber + guestName
  */
-async function handleBookCapsule(
+async function handleBookUnit(
   params: Record<string, any> | undefined,
   context: WorkflowEnhancerContext,
   callAPI: CallAPIFn
 ): Promise<ActionResult> {
 
   try {
-    const capsuleNumber = params?.capsuleNumber || context.collectedData['capsule_number'] || context.collectedData['s1'];
+    const unitNumber = params?.unitNumber || context.collectedData['unit_number'] || context.collectedData['s1'];
     const guestName = params?.guestName || context.collectedData['guest_name'] || context.collectedData['s1'] || context.pushName;
 
-    if (!capsuleNumber) {
-      console.warn('[Workflow Enhancer] book_capsule: No capsule number provided');
+    if (!unitNumber) {
+      console.warn('[Workflow Enhancer] book_capsule: No unit number provided');
       return {
         data: {
           bookingConfirmed: false,
-          bookingError: 'No capsule number specified',
+          bookingError: 'No unit number specified',
         }
       };
     }
 
-    const response = await callAPI('/api/capsules/assign', {
+    const response = await callAPI('/api/units/assign', {
       method: 'POST',
       body: JSON.stringify({
-        capsuleNumber,
+        unitNumber,
         guestName,
       })
     });
 
     const success = response.success !== false;
 
-    console.log(`[Workflow Enhancer] Book capsule ${capsuleNumber} for ${guestName}: ${success ? 'OK' : 'FAILED'}`);
+    console.log(`[Workflow Enhancer] Book unit ${unitNumber} for ${guestName}: ${success ? 'OK' : 'FAILED'}`);
 
     return {
       data: {
         bookingConfirmed: success,
-        capsuleNumber: capsuleNumber,
+        unitNumber: unitNumber,
         bookingMessage: success
-          ? `Capsule ${capsuleNumber} booked for ${guestName}`
+          ? `Unit ${unitNumber} booked for ${guestName}`
           : (response.message || 'Booking failed'),
       }
     };
   } catch (error) {
-    console.error('[Workflow Enhancer] Failed to book capsule:', error);
+    console.error('[Workflow Enhancer] Failed to book unit:', error);
 
     return {
       data: {
@@ -655,11 +655,11 @@ function injectData(message: string, data: Record<string, any>): string {
 }
 
 /**
- * Check if capsule number is even (lower deck)
+ * Check if unit number is even (lower deck)
  * Examples: C2, C4, C6... C24
  */
-function isEvenNumberedCapsule(capsuleNumber: string): boolean {
-  const match = capsuleNumber.match(/C(\d+)/i);
+function isEvenNumberedUnit(unitNumber: string): boolean {
+  const match = unitNumber.match(/C(\d+)/i);
   if (!match) return false;
 
   const number = parseInt(match[1], 10);
@@ -697,9 +697,9 @@ function getFallbackMessage(actionType: string, language: string): string {
       zh: '⚠️ 无法发送WhatsApp消息。请联系 +60127088789。'
     },
     book_capsule: {
-      en: '⚠️ Unable to book capsule automatically. Staff will assist you.',
-      ms: '⚠️ Tidak dapat tempah kapsul secara automatik. Staf akan bantu anda.',
-      zh: '⚠️ 无法自动预订胶囊房。工作人员将为您处理。'
+      en: '⚠️ Unable to book unit automatically. Staff will assist you.',
+      ms: '⚠️ Tidak dapat tempah unit secara automatik. Staf akan bantu anda.',
+      zh: '⚠️ 无法自动预订单位。工作人员将为您处理。'
     }
   };
 

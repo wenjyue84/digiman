@@ -22,7 +22,7 @@ export function useCheckoutFilters(guests: Guest[]) {
     filters.gender !== 'any' ||
     filters.nationality !== 'any' ||
     filters.specificNationality !== 'any' ||
-    filters.capsuleNumber !== 'any' ||
+    filters.unitNumber !== 'any' ||
     filters.lengthOfStayMin !== '' ||
     filters.lengthOfStayMax !== '' ||
     filters.outstandingOnly ||
@@ -32,9 +32,9 @@ export function useCheckoutFilters(guests: Guest[]) {
     filters.expectedCheckoutDateFrom !== '' ||
     filters.expectedCheckoutDateTo !== '';
 
-  // Unique capsule numbers for the capsule filter dropdown
-  const uniqueCapsules = useMemo(() => {
-    return Array.from(new Set(guests.map(g => g.capsuleNumber))).sort((a, b) => {
+  // Unique unit numbers for the unit filter dropdown
+  const uniqueUnits = useMemo(() => {
+    return Array.from(new Set(guests.map(g => g.unitNumber))).sort((a, b) => {
       const aNum = parseInt(a);
       const bNum = parseInt(b);
       if (!isNaN(aNum) && !isNaN(bNum)) {
@@ -107,8 +107,8 @@ export function useCheckoutFilters(guests: Guest[]) {
       // Specific nationality filtering
       if (filters.specificNationality !== 'any' && g.nationality !== filters.specificNationality) return false;
 
-      // Capsule number filtering
-      if (filters.capsuleNumber !== 'any' && g.capsuleNumber !== filters.capsuleNumber) return false;
+      // unit number filtering
+      if (filters.unitNumber !== 'any' && g.unitNumber !== filters.unitNumber) return false;
 
       // Length of stay filtering (in days)
       const lengthOfStay = getLengthOfStayDays(g.checkinTime.toString());
@@ -146,7 +146,7 @@ export function useCheckoutFilters(guests: Guest[]) {
     setFilters,
     hasActiveFilters,
     filteredGuests,
-    uniqueCapsules,
+    uniqueUnits,
     availableNationalities,
     setCheckinDateShortcut,
     setExpectedCheckoutDateShortcut,

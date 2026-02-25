@@ -109,7 +109,7 @@ export function getQueryConfig(queryKey: unknown[]) {
   // Near real-time data
   if (endpoint.includes('/api/admin/notifications/unread') ||
       endpoint.includes('/api/guest-tokens/active') ||
-      endpoint.includes('/api/capsules/available')) {
+      endpoint.includes('/api/units/available')) {
     return queryConfigs.nearRealtime;
   }
 
@@ -123,7 +123,7 @@ export function getQueryConfig(queryKey: unknown[]) {
   // Moderately changing data
   if (endpoint.includes('/api/guests/history') ||
       endpoint.includes('/api/problems') ||
-      endpoint.includes('/api/capsules')) {
+      endpoint.includes('/api/units')) {
     return queryConfigs.moderate;
   }
 

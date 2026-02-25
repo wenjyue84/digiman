@@ -13,8 +13,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { db, dbReady } from '../lib/db.js';
 import { withFallback } from '../lib/with-fallback.js';
-// Import from .ts directly to bypass stale build artifacts
-import { rainbowConversations, rainbowMessages } from '../../../shared/schema-tables.ts';
+import { rainbowConversations, rainbowMessages } from '../../../shared/schema-tables.js';
 
 const CONTACTS_DIR = join(process.cwd(), '.rainbow-kb', 'contacts');
 

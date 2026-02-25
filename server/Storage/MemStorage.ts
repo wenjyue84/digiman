@@ -1,11 +1,11 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Capsule, type InsertCapsule, type Session, type GuestToken, type InsertGuestToken, type CapsuleProblem, type InsertCapsuleProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Unit, type InsertUnit, type Session, type GuestToken, type InsertGuestToken, type UnitProblem, type InsertUnitProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
 import { randomUUID } from "crypto";
 import { IStorage } from "./IStorage";
 import {
   MemUserStore,
   MemSessionStore,
   MemGuestStore,
-  MemCapsuleStore,
+  MemUnitStore,
   MemProblemStore,
   MemTokenStore,
   MemNotificationStore,
@@ -15,7 +15,7 @@ import {
 
 /** Storage seed data constants */
 export const STORAGE_CONSTANTS = {
-  TOTAL_CAPSULES: 22,
+  TOTAL_UNITS: 22,
   STANDARD_RATE: 45,
   OUTSTANDING_PAYMENT_RATIO: 0.8,
   MS_PER_DAY: 24 * 60 * 60 * 1000,
@@ -25,14 +25,14 @@ export const STORAGE_CONSTANTS = {
  * In-memory storage facade.
  *
  * Delegates all domain operations to entity-specific stores under `./mem/`.
- * Cross-entity methods (checkout, occupancy, available capsules) are
+ * Cross-entity methods (checkout, occupancy, available units) are
  * coordinated here in the facade layer.
  */
 export class MemStorage implements IStorage {
   private readonly userStore: MemUserStore;
   private readonly sessionStore: MemSessionStore;
   private readonly guestStore: MemGuestStore;
-  private readonly capsuleStore: MemCapsuleStore;
+  private readonly unitStore: MemUnitStore;
   private readonly problemStore: MemProblemStore;
   private readonly tokenStore: MemTokenStore;
   private readonly notificationStore: MemNotificationStore;
@@ -40,19 +40,19 @@ export class MemStorage implements IStorage {
   private readonly expenseStore: MemExpenseStore;
 
   constructor() {
-    // Create entity stores (problem store first — capsule store needs its map)
+    // Create entity stores (problem store first — unit store needs its map)
     this.userStore = new MemUserStore();
     this.sessionStore = new MemSessionStore();
     this.guestStore = new MemGuestStore();
     this.problemStore = new MemProblemStore();
-    this.capsuleStore = new MemCapsuleStore(this.problemStore.getMap());
+    this.unitStore = new MemUnitStore(this.problemStore.getMap());
     this.tokenStore = new MemTokenStore();
     this.notificationStore = new MemNotificationStore();
     this.settingsStore = new MemSettingsStore();
     this.expenseStore = new MemExpenseStore();
 
     // Initialize seed data
-    this.initializeCapsules();
+    this.initializeUnits();
     this.initializeDefaultUsers();
     this.initializeDefaultSettings();
     this.initializeSampleGuests();
@@ -90,25 +90,25 @@ export class MemStorage implements IStorage {
     const fmtDate = (d: Date) => d.toISOString().split('T')[0];
 
     const sampleGuests = isDev ? [
-      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "Male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
-      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "Male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
-      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "Male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
-      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "Male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
-      { name: "Wei Ming", capsule: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "Male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
-      { name: "Raj", capsule: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "Male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
-      { name: "Hassan", capsule: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "Male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
-      { name: "Li Wei", capsule: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "Male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
-      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * STORAGE_CONSTANTS.MS_PER_DAY).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * STORAGE_CONSTANTS.MS_PER_DAY)), nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
+      { name: "Keong", unit: "C1", phone: "017-6632979", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "Male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", unit: "C4", phone: "019-7418889", checkin: today.toISOString(), checkout: fmtDate(today), nights: 1, nationality: "Malaysian", gender: "Male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", unit: "C5", phone: "010-5218906", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "Male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", unit: "C25", phone: "012-3456789", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "Male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Wei Ming", unit: "C26", phone: "011-9876543", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Malaysian", gender: "Male", email: "weiming.tan@outlook.com", age: 31, paymentStatus: "paid" },
+      { name: "Raj", unit: "C11", phone: "013-2468135", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Indian", gender: "Male", email: "raj.patel@gmail.com", age: 27, paymentStatus: "paid" },
+      { name: "Hassan", unit: "C12", phone: "014-3579246", checkin: today.toISOString(), checkout: fmtDate(tomorrow), nights: 1, nationality: "Malaysian", gender: "Male", email: "hassan.ali@yahoo.com", age: 26, paymentStatus: "paid" },
+      { name: "Li Wei", unit: "C13", phone: "015-4681357", checkin: today.toISOString(), checkout: fmtDate(dayAfter), nights: 2, nationality: "Chinese", gender: "Male", email: "liwei.chen@hotmail.com", age: 30, paymentStatus: "outstanding" },
+      { name: "Siti", unit: "C6", phone: "016-1234567", checkin: new Date(today.getTime() - 2 * STORAGE_CONSTANTS.MS_PER_DAY).toISOString(), checkout: fmtDate(new Date(today.getTime() - 1 * STORAGE_CONSTANTS.MS_PER_DAY)), nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ] : [
-      { name: "Keong", capsule: "C1", phone: "017-6632979", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
-      { name: "Prem", capsule: "C4", phone: "019-7418889", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
-      { name: "Jeevan", capsule: "C5", phone: "010-5218906", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
-      { name: "Ahmad", capsule: "C25", phone: "012-3456789", checkin: "2025-08-06T15:00:00", checkout: "2025-08-08", nights: 2, nationality: "Malaysian", gender: "Male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
-      { name: "Siti", capsule: "C6", phone: "016-1234567", checkin: "2025-08-05T15:00:00", checkout: "2025-08-06", nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
+      { name: "Keong", unit: "C1", phone: "017-6632979", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "keong.lim@gmail.com", age: 28, paymentStatus: "paid" },
+      { name: "Prem", unit: "C4", phone: "019-7418889", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "prem.kumar@yahoo.com", age: 32, paymentStatus: "paid" },
+      { name: "Jeevan", unit: "C5", phone: "010-5218906", checkin: "2025-08-07T15:00:00", checkout: "2025-08-08", nights: 1, nationality: "Malaysian", gender: "Male", email: "jeevan.singh@hotmail.com", age: 25, paymentStatus: "paid" },
+      { name: "Ahmad", unit: "C25", phone: "012-3456789", checkin: "2025-08-06T15:00:00", checkout: "2025-08-08", nights: 2, nationality: "Malaysian", gender: "Male", email: "ahmad.ibrahim@gmail.com", age: 29, paymentStatus: "outstanding" },
+      { name: "Siti", unit: "C6", phone: "016-1234567", checkin: "2025-08-05T15:00:00", checkout: "2025-08-06", nights: 1, nationality: "Malaysian", gender: "Female", email: "siti.rahman@gmail.com", age: 24, paymentStatus: "outstanding" },
     ];
 
     const guestMap = this.guestStore.getMap();
-    const capsuleMap = this.capsuleStore.getMap();
+    const unitMap = this.unitStore.getMap();
 
     sampleGuests.forEach(guest => {
       const standardRate = STORAGE_CONSTANTS.STANDARD_RATE;
@@ -119,7 +119,7 @@ export class MemStorage implements IStorage {
       const guestRecord: Guest = {
         id: randomUUID(),
         name: guest.name,
-        capsuleNumber: guest.capsule,
+        unitNumber: guest.unit,
         checkinTime: new Date(guest.checkin),
         checkoutTime: null,
         expectedCheckoutDate: guest.checkout,
@@ -145,19 +145,19 @@ export class MemStorage implements IStorage {
 
       guestMap.set(guestRecord.id, guestRecord);
 
-      const capsule = capsuleMap.get(guest.capsule);
-      if (capsule) {
-        capsule.isAvailable = false;
-        capsuleMap.set(guest.capsule, capsule);
+      const unit = unitMap.get(guest.unit);
+      if (unit) {
+        unit.isAvailable = false;
+        unitMap.set(guest.unit, unit);
       }
     });
 
     console.log(`Initialized ${sampleGuests.length} sample guests`);
   }
 
-  private initializeCapsules() {
-    const capsuleMap = this.capsuleStore.getMap();
-    const makeCapsule = (num: number, section: string): Capsule => ({
+  private initializeUnits() {
+    const unitMap = this.unitStore.getMap();
+    const makeUnit = (num: number, section: string): Unit => ({
       id: randomUUID(),
       number: `C${num}`,
       section,
@@ -171,25 +171,28 @@ export class MemStorage implements IStorage {
       position: num % 2 === 0 ? 'bottom' : 'top',
       remark: null,
       branch: null,
+      unitType: null,
+      maxOccupancy: null,
+      pricePerNight: null,
     });
 
     // Back section: C1-C6
-    for (let i = 1; i <= 6; i++) capsuleMap.set(`C${i}`, makeCapsule(i, 'back'));
+    for (let i = 1; i <= 6; i++) unitMap.set(`C${i}`, makeUnit(i, 'back'));
     // Middle section: C25, C26
-    for (const n of [25, 26]) capsuleMap.set(`C${n}`, makeCapsule(n, 'middle'));
+    for (const n of [25, 26]) unitMap.set(`C${n}`, makeUnit(n, 'middle'));
     // Front section: C11-C24
-    for (let i = 11; i <= 24; i++) capsuleMap.set(`C${i}`, makeCapsule(i, 'front'));
+    for (let i = 11; i <= 24; i++) unitMap.set(`C${i}`, makeUnit(i, 'front'));
   }
 
   private initializeDefaultSettings(): void {
     this.settingsStore.setSetting('guestTokenExpirationHours', '24', 'Hours before guest check-in tokens expire');
-    this.settingsStore.setSetting('accommodationType', 'capsule', 'Type of accommodation (capsule, room, or house)');
-    this.settingsStore.setSetting('guideIntro', 'Pelangi Capsule Hostel is a modern, innovative accommodation designed to provide guests with comfort, privacy, and convenience at an affordable price. Our contemporary capsule concept offers private sleeping pods with essential amenities in a clean, safe, and friendly environment. Communal spaces encourage social interaction while maintaining personal privacy.', 'Guest guide introduction');
+    this.settingsStore.setSetting('accommodationType', 'unit', 'Type of accommodation (capsule, room, or house)');
+    this.settingsStore.setSetting('guideIntro', 'Pelangi Capsule Hostel is a modern, innovative accommodation designed to provide guests with comfort, privacy, and convenience at an affordable price. Our contemporary unit concept offers private sleeping pods with essential amenities in a clean, safe, and friendly environment. Communal spaces encourage social interaction while maintaining personal privacy.', 'Guest guide introduction');
     this.settingsStore.setSetting('guideAddress', '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\nPhone: +60 12-345 6789\nEmail: info@pelangicapsule.com\nWebsite: www.pelangicapsule.com', 'Hostel address and contacts');
     this.settingsStore.setSetting('guideWifiName', 'Pelangi_Guest', 'WiFi SSID');
     this.settingsStore.setSetting('guideWifiPassword', 'Pelangi2024!', 'WiFi password');
     this.settingsStore.setSetting('guideCheckin', 'Check-In Time: 2:00 PM\nCheck-Out Time: 12:00 PM\n\nHow to check in:\n1) Present a valid ID/passport at the front desk.\n2) If you have a self-check-in token, show it to staff.\n3) Early check-in / late check-out may be available upon request (subject to availability and charges).', 'Check-in and check-out guidance');
-    this.settingsStore.setSetting('guideOther', 'House rules and guidance:\n- Quiet hours: [insert time] to [insert time]\n- Keep shared spaces clean\n- No smoking inside the premises\n- Follow staff instructions for safety\n\nAmenities overview:\n- Private capsules with light, power outlet, and privacy screen\n- Air conditioning throughout\n- Free high-speed Wi-Fi\n- Clean shared bathrooms with toiletries\n- Secure lockers\n- Lounge area\n- Pantry/kitchenette with microwave, kettle, and fridge\n- Self-service laundry (paid)\n- 24-hour security and CCTV\n- Reception assistance and local tips', 'Other guest guidance and rules');
+    this.settingsStore.setSetting('guideOther', 'House rules and guidance:\n- Quiet hours: [insert time] to [insert time]\n- Keep shared spaces clean\n- No smoking inside the premises\n- Follow staff instructions for safety\n\nAmenities overview:\n- Private units with light, power outlet, and privacy screen\n- Air conditioning throughout\n- Free high-speed Wi-Fi\n- Clean shared bathrooms with toiletries\n- Secure lockers\n- Lounge area\n- Pantry/kitchenette with microwave, kettle, and fridge\n- Self-service laundry (paid)\n- 24-hour security and CCTV\n- Reception assistance and local tips', 'Other guest guidance and rules');
     this.settingsStore.setSetting('guideFaq', 'Q: What are the check-in and check-out times?\nA: Standard check-in is at [insert time], and check-out is at [insert time]. Early/late options may be arranged based on availability.\n\nQ: Are towels and toiletries provided?\nA: Yes, fresh towels and basic toiletries are provided.\n\nQ: Is there parking available?\nA: [Insert parking information].\n\nQ: Can I store my luggage after check-out?\nA: Yes, complimentary luggage storage is available at the front desk.\n\nQ: Are there quiet hours?\nA: Yes, quiet hours are observed from [insert time] to [insert time].', 'Frequently asked questions');
     this.settingsStore.setSetting('guideShowIntro', 'true', 'Show intro to guests');
     this.settingsStore.setSetting('guideShowAddress', 'true', 'Show address to guests');
@@ -227,24 +230,24 @@ export class MemStorage implements IStorage {
   getGuest(id: string) { return this.guestStore.getGuest(id); }
   getAllGuests(pagination?: PaginationParams) { return this.guestStore.getAllGuests(pagination); }
   getCheckedInGuests(pagination?: PaginationParams) { return this.guestStore.getCheckedInGuests(pagination); }
-  getGuestHistory(pagination?: PaginationParams, sortBy?: string, sortOrder?: 'asc' | 'desc', filters?: { search?: string; nationality?: string; capsule?: string }) {
+  getGuestHistory(pagination?: PaginationParams, sortBy?: string, sortOrder?: 'asc' | 'desc', filters?: { search?: string; nationality?: string; unit?: string }) {
     return this.guestStore.getGuestHistory(pagination, sortBy, sortOrder, filters);
   }
   updateGuest(id: string, updates: Partial<Guest>) { return this.guestStore.updateGuest(id, updates); }
   getGuestsWithCheckoutToday() { return this.guestStore.getGuestsWithCheckoutToday(); }
   getRecentlyCheckedOutGuest() { return this.guestStore.getRecentlyCheckedOutGuest(); }
-  getGuestByCapsuleAndName(capsuleNumber: string, name: string) { return this.guestStore.getGuestByCapsuleAndName(capsuleNumber, name); }
+  getGuestByUnitAndName(unitNumber: string, name: string) { return this.guestStore.getGuestByUnitAndName(unitNumber, name); }
   getGuestByToken(token: string) { return this.guestStore.getGuestByToken(token); }
   getGuestsByDateRange(start: Date, end: Date) { return this.guestStore.getGuestsByDateRange(start, end); }
 
-  /** Cross-entity: checkout guest then update capsule cleaning status */
+  /** Cross-entity: checkout guest then update unit cleaning status */
   async checkoutGuest(id: string): Promise<Guest | undefined> {
     const updatedGuest = await this.guestStore.checkoutGuest(id);
     if (updatedGuest) {
-      // Set capsule status to 'to be cleaned' after checkout
-      const capsule = await this.capsuleStore.getCapsule(updatedGuest.capsuleNumber);
-      if (capsule) {
-        await this.capsuleStore.updateCapsule(updatedGuest.capsuleNumber, {
+      // Set unit status to 'to be cleaned' after checkout
+      const unit = await this.unitStore.getUnit(updatedGuest.unitNumber);
+      if (unit) {
+        await this.unitStore.updateUnit(updatedGuest.unitNumber, {
           cleaningStatus: 'to_be_cleaned',
           isAvailable: true,
         });
@@ -253,78 +256,78 @@ export class MemStorage implements IStorage {
     return updatedGuest;
   }
 
-  /** Cross-entity: occupancy requires guest + capsule data */
-  async getCapsuleOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
-    const allCapsules = await this.capsuleStore.getAllCapsules();
-    const rentableCapsules = allCapsules.filter(c => c.toRent !== false);
-    const totalCapsules = rentableCapsules.length;
-    const rentableCapsuleNumbers = new Set(rentableCapsules.map(c => c.number));
+  /** Cross-entity: occupancy requires guest + unit data */
+  async getUnitOccupancy(): Promise<{ total: number; occupied: number; available: number; occupancyRate: number }> {
+    const allUnits = await this.unitStore.getAllUnits();
+    const rentableUnits = allUnits.filter(u => u.toRent !== false);
+    const totalUnits = rentableUnits.length;
+    const rentableUnitNumbers = new Set(rentableUnits.map(u => u.number));
 
     const checkedInGuestsResponse = await this.guestStore.getCheckedInGuests();
-    const occupied = checkedInGuestsResponse.data.filter(g => rentableCapsuleNumbers.has(g.capsuleNumber)).length;
+    const occupied = checkedInGuestsResponse.data.filter(g => rentableUnitNumbers.has(g.unitNumber)).length;
 
-    const available = Math.max(0, totalCapsules - occupied);
-    const occupancyRate = totalCapsules > 0 ? Math.min(100, Math.round((occupied / totalCapsules) * 100)) : 0;
+    const available = Math.max(0, totalUnits - occupied);
+    const occupancyRate = totalUnits > 0 ? Math.min(100, Math.round((occupied / totalUnits) * 100)) : 0;
 
-    return { total: totalCapsules, occupied, available, occupancyRate };
+    return { total: totalUnits, occupied, available, occupancyRate };
   }
 
-  /** Cross-entity: available capsules requires guest + capsule data */
-  async getAvailableCapsules(): Promise<Capsule[]> {
+  /** Cross-entity: available units requires guest + unit data */
+  async getAvailableUnits(): Promise<Unit[]> {
     const checkedInGuests = await this.guestStore.getCheckedInGuests();
-    const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
+    const occupiedUnits = new Set(checkedInGuests.data.map(guest => guest.unitNumber));
 
-    const allCapsules = await this.capsuleStore.getAllCapsules();
-    const availableCapsules = allCapsules.filter(
-      capsule => capsule.isAvailable &&
-                  !occupiedCapsules.has(capsule.number) &&
-                  capsule.cleaningStatus === "cleaned" &&
-                  capsule.toRent !== false
+    const allUnits = await this.unitStore.getAllUnits();
+    const availableUnits = allUnits.filter(
+      unit => unit.isAvailable &&
+                  !occupiedUnits.has(unit.number) &&
+                  unit.cleaningStatus === "cleaned" &&
+                  unit.toRent !== false
     );
 
-    return availableCapsules.sort((a, b) => {
+    return availableUnits.sort((a, b) => {
       const aNum = parseInt(a.number.replace('C', ''));
       const bNum = parseInt(b.number.replace('C', ''));
       return aNum - bNum;
     });
   }
 
-  /** Cross-entity: uncleaned available capsules requires guest + capsule data */
-  async getUncleanedAvailableCapsules(): Promise<Capsule[]> {
+  /** Cross-entity: uncleaned available units requires guest + unit data */
+  async getUncleanedAvailableUnits(): Promise<Unit[]> {
     const checkedInGuests = await this.guestStore.getCheckedInGuests();
-    const occupiedCapsules = new Set(checkedInGuests.data.map(guest => guest.capsuleNumber));
+    const occupiedUnits = new Set(checkedInGuests.data.map(guest => guest.unitNumber));
 
-    const allCapsules = await this.capsuleStore.getAllCapsules();
-    return allCapsules.filter(
-      capsule => capsule.isAvailable &&
-                  !occupiedCapsules.has(capsule.number) &&
-                  capsule.cleaningStatus === "to_be_cleaned" &&
-                  capsule.toRent !== false
+    const allUnits = await this.unitStore.getAllUnits();
+    return allUnits.filter(
+      unit => unit.isAvailable &&
+                  !occupiedUnits.has(unit.number) &&
+                  unit.cleaningStatus === "to_be_cleaned" &&
+                  unit.toRent !== false
     );
   }
 
-  // ─── ICapsuleStorage (delegates to MemCapsuleStore) ────────────────────────
+  // ─── IUnitStorage (delegates to MemUnitStore) ──────────────────────────────
 
-  getAllCapsules() { return this.capsuleStore.getAllCapsules(); }
-  getCapsule(number: string) { return this.capsuleStore.getCapsule(number); }
-  getCapsuleById(id: string) { return this.capsuleStore.getCapsuleById(id); }
-  updateCapsule(number: string, updates: Partial<Capsule>) { return this.capsuleStore.updateCapsule(number, updates); }
-  createCapsule(capsule: InsertCapsule) { return this.capsuleStore.createCapsule(capsule); }
-  deleteCapsule(number: string) { return this.capsuleStore.deleteCapsule(number); }
-  markCapsuleCleaned(capsuleNumber: string, cleanedBy: string) { return this.capsuleStore.markCapsuleCleaned(capsuleNumber, cleanedBy); }
-  markCapsuleNeedsCleaning(capsuleNumber: string) { return this.capsuleStore.markCapsuleNeedsCleaning(capsuleNumber); }
-  getCapsulesByCleaningStatus(status: "cleaned" | "to_be_cleaned") { return this.capsuleStore.getCapsulesByCleaningStatus(status); }
+  getAllUnits() { return this.unitStore.getAllUnits(); }
+  getUnit(number: string) { return this.unitStore.getUnit(number); }
+  getUnitById(id: string) { return this.unitStore.getUnitById(id); }
+  updateUnit(number: string, updates: Partial<Unit>) { return this.unitStore.updateUnit(number, updates); }
+  createUnit(unit: InsertUnit) { return this.unitStore.createUnit(unit); }
+  deleteUnit(number: string) { return this.unitStore.deleteUnit(number); }
+  markUnitCleaned(unitNumber: string, cleanedBy: string) { return this.unitStore.markUnitCleaned(unitNumber, cleanedBy); }
+  markUnitNeedsCleaning(unitNumber: string) { return this.unitStore.markUnitNeedsCleaning(unitNumber); }
+  getUnitsByCleaningStatus(status: "cleaned" | "to_be_cleaned") { return this.unitStore.getUnitsByCleaningStatus(status); }
 
-  /** Cross-entity: getGuestsByCapsule queries guests by capsule number */
-  getGuestsByCapsule(capsuleNumber: string) { return this.guestStore.getGuestsByCapsule(capsuleNumber); }
+  /** Cross-entity: getGuestsByUnit queries guests by unit number */
+  getGuestsByUnit(unitNumber: string) { return this.guestStore.getGuestsByUnit(unitNumber); }
 
   // ─── IProblemStorage (delegates to MemProblemStore) ────────────────────────
 
-  createCapsuleProblem(problem: InsertCapsuleProblem) { return this.problemStore.createCapsuleProblem(problem); }
-  getCapsuleProblems(capsuleNumber: string) { return this.problemStore.getCapsuleProblems(capsuleNumber); }
+  createUnitProblem(problem: InsertUnitProblem) { return this.problemStore.createUnitProblem(problem); }
+  getUnitProblems(unitNumber: string) { return this.problemStore.getUnitProblems(unitNumber); }
   getActiveProblems(pagination?: PaginationParams) { return this.problemStore.getActiveProblems(pagination); }
   getAllProblems(pagination?: PaginationParams) { return this.problemStore.getAllProblems(pagination); }
-  updateProblem(problemId: string, updates: Partial<InsertCapsuleProblem>) { return this.problemStore.updateProblem(problemId, updates); }
+  updateProblem(problemId: string, updates: Partial<InsertUnitProblem>) { return this.problemStore.updateProblem(problemId, updates); }
   resolveProblem(problemId: string, resolvedBy: string, notes?: string) { return this.problemStore.resolveProblem(problemId, resolvedBy, notes); }
   deleteProblem(problemId: string) { return this.problemStore.deleteProblem(problemId); }
 
@@ -335,7 +338,7 @@ export class MemStorage implements IStorage {
   getGuestTokenById(id: string) { return this.tokenStore.getGuestTokenById(id); }
   getActiveGuestTokens(pagination?: PaginationParams) { return this.tokenStore.getActiveGuestTokens(pagination); }
   markTokenAsUsed(token: string) { return this.tokenStore.markTokenAsUsed(token); }
-  updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean) { return this.tokenStore.updateGuestTokenCapsule(tokenId, capsuleNumber, autoAssign); }
+  updateGuestTokenUnit(tokenId: string, unitNumber: string | null, autoAssign: boolean) { return this.tokenStore.updateGuestTokenUnit(tokenId, unitNumber, autoAssign); }
   deleteGuestToken(id: string) { return this.tokenStore.deleteGuestToken(id); }
   cleanExpiredTokens() { return this.tokenStore.cleanExpiredTokens(); }
 

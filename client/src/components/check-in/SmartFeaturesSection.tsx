@@ -8,9 +8,9 @@ export default function SmartFeaturesSection() {
       <h4 className="text-sm font-medium text-blue-800 mb-2">✨ Smart Features:</h4>
       <ul className="text-xs text-blue-700 space-y-1">
         <li>• Auto-incrementing guest names (Guest1, Guest2...)</li>
-        <li>• Gender-based {labels.lowerSingular} assignment (Front for males, Back for females)</li>
+        <li>• Gender-based {labels.lowerSingular} assignment</li>
         <li>• Quick payment presets: RM45, RM48, RM650 (Monthly)</li>
-        <li>• Admin form: Only name, capsule & payment required</li>
+        <li>• Admin form: Only name, {labels.lowerSingular} & payment required</li>
       </ul>
     </div>
   );

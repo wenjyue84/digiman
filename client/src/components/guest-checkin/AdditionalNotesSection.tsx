@@ -36,9 +36,9 @@ export function AdditionalNotesSection({ form, errors, t }: AdditionalNotesSecti
             <button 
               type="button" 
               className="px-2 py-1 text-xs border rounded-md hover:bg-white" 
-              onClick={() => addCommonNote(t.commonNoteBottomCapsule)}
+              onClick={() => addCommonNote(t.commonNoteBottomUnit)}
             >
-              {t.commonNoteBottomCapsule}
+              {t.commonNoteBottomUnit}
             </button>
             <button 
               type="button" 

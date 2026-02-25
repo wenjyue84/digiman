@@ -2,7 +2,7 @@ import { MCPTool, MCPToolResult, ToolHandler } from './types';
 
 // Phase 1: Read-only tools
 import { guestTools, listGuests, getGuest, searchGuests } from './tools/guests';
-import { capsuleTools, listCapsules, getOccupancy, checkAvailability } from './tools/capsules';
+import { unitTools, listUnits, getOccupancy, checkAvailability } from './tools/units';
 import { dashboardTools, getDashboard, getOverdueGuests } from './tools/dashboard';
 import { problemTools, listProblems, exportWhatsappIssues } from './tools/problems';
 
@@ -15,10 +15,10 @@ import {
 } from './tools/guests-write';
 
 import {
-  capsuleWriteTools,
+  unitWriteTools,
   markCleaned,
   bulkMarkCleaned
-} from './tools/capsules-write';
+} from './tools/units-write';
 
 import {
   problemWriteTools,
@@ -27,14 +27,14 @@ import {
 
 import {
   analyticsTools,
-  capsuleUtilization,
+  unitUtilization,
   guestStatistics,
   exportGuestsCSV
 } from './tools/analytics';
 
 import {
   settingsTools,
-  getCapsuleRules
+  getUnitRules
 } from './tools/settings-tools';
 
 // Phase 3: WhatsApp integration tools (proxied to Rainbow AI)
@@ -60,9 +60,9 @@ class ToolRegistry {
     this.register(guestTools[1], getGuest);
     this.register(guestTools[2], searchGuests);
 
-    this.register(capsuleTools[0], listCapsules);
-    this.register(capsuleTools[1], getOccupancy);
-    this.register(capsuleTools[2], checkAvailability);
+    this.register(unitTools[0], listUnits);
+    this.register(unitTools[1], getOccupancy);
+    this.register(unitTools[2], checkAvailability);
 
     this.register(dashboardTools[0], getDashboard);
     this.register(dashboardTools[1], getOverdueGuests);
@@ -75,20 +75,20 @@ class ToolRegistry {
     this.register(guestWriteTools[1], checkoutGuest);
     this.register(guestWriteTools[2], bulkCheckout);
 
-    // Phase 2: Capsule write operations (2 tools)
-    this.register(capsuleWriteTools[0], markCleaned);
-    this.register(capsuleWriteTools[1], bulkMarkCleaned);
+    // Phase 2: Unit write operations (2 tools)
+    this.register(unitWriteTools[0], markCleaned);
+    this.register(unitWriteTools[1], bulkMarkCleaned);
 
     // Phase 2: Problem operations (1 tool)
     this.register(problemWriteTools[0], getProblemSummary);
 
     // Phase 2: Analytics & reporting (3 tools)
-    this.register(analyticsTools[0], capsuleUtilization);
+    this.register(analyticsTools[0], unitUtilization);
     this.register(analyticsTools[1], guestStatistics);
     this.register(analyticsTools[2], exportGuestsCSV);
 
     // Phase 2: Settings tools (1 tool)
-    this.register(settingsTools[0], getCapsuleRules);
+    this.register(settingsTools[0], getUnitRules);
 
     // Phase 3: WhatsApp integration (4 tools, proxied to Rainbow AI)
     this.register(whatsappProxyTools[0], whatsappStatus);

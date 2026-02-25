@@ -1,14 +1,13 @@
-import type { Guest, InsertGuest, Capsule, PaginationParams, PaginatedResponse } from "../../../shared/schema";
-import type { IGuestStorage } from "../IStorage";
+import type { Guest, InsertGuest, PaginationParams, PaginatedResponse } from "../../../shared/schema";
 import { randomUUID } from "crypto";
 import { paginate } from "./paginate";
 
 /**
  * Guest entity store implementing IGuestStorage.
  *
- * Some IGuestStorage methods (getAvailableCapsules, getUncleanedAvailableCapsules,
- * getCapsuleOccupancy, checkoutGuest) depend on capsule data. These are handled
- * by the facade (MemStorage) which coordinates between MemGuestStore and MemCapsuleStore.
+ * Some IGuestStorage methods (getAvailableUnits, getUncleanedAvailableUnits,
+ * getUnitOccupancy, checkoutGuest) depend on unit data. These are handled
+ * by the facade (MemStorage) which coordinates between MemGuestStore and MemUnitStore.
  *
  * Methods here operate only on the guests map.
  */
@@ -85,7 +84,7 @@ export class MemGuestStore {
     pagination?: PaginationParams,
     sortBy: string = 'checkoutTime',
     sortOrder: 'asc' | 'desc' = 'desc',
-    filters?: { search?: string; nationality?: string; capsule?: string }
+    filters?: { search?: string; nationality?: string; unit?: string }
   ): Promise<PaginatedResponse<Guest>> {
     let guestHistory = Array.from(this.guests.values()).filter(guest => {
       if (guest.isCheckedIn) return false;
@@ -104,7 +103,7 @@ export class MemGuestStore {
         return false;
       }
 
-      if (filters?.capsule && guest.capsuleNumber !== filters.capsule) {
+      if (filters?.unit && guest.unitNumber !== filters.unit) {
         return false;
       }
 
@@ -116,16 +115,16 @@ export class MemGuestStore {
       if (sortBy === 'name') {
         aVal = a.name;
         bVal = b.name;
-      } else if (sortBy === 'capsuleNumber') {
-        const parseCapNum = (cap: string) => {
-          const match = cap?.match(/^([A-Za-z]+)-?(\d+)$/);
+      } else if (sortBy === 'unitNumber') {
+        const parseUnitNum = (num: string) => {
+          const match = num?.match(/^([A-Za-z]+)-?(\d+)$/);
           if (match) {
             return { prefix: match[1].toUpperCase(), num: parseInt(match[2], 10) };
           }
-          return { prefix: cap || '', num: 0 };
+          return { prefix: num || '', num: 0 };
         };
-        const aParsed = parseCapNum(a.capsuleNumber);
-        const bParsed = parseCapNum(b.capsuleNumber);
+        const aParsed = parseUnitNum(a.unitNumber);
+        const bParsed = parseUnitNum(b.unitNumber);
 
         if (aParsed.prefix !== bParsed.prefix) {
           aVal = aParsed.prefix;
@@ -157,7 +156,7 @@ export class MemGuestStore {
 
   /**
    * Mark guest as checked out. Returns updated guest or undefined.
-   * NOTE: Capsule status update after checkout is handled by the facade.
+   * NOTE: Unit status update after checkout is handled by the facade.
    */
   async checkoutGuest(id: string): Promise<Guest | undefined> {
     const guest = this.guests.get(id);
@@ -208,10 +207,10 @@ export class MemGuestStore {
     return checkedOutGuests[0];
   }
 
-  async getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined> {
+  async getGuestByUnitAndName(unitNumber: string, name: string): Promise<Guest | undefined> {
     return Array.from(this.guests.values())
       .find(guest =>
-        guest.capsuleNumber === capsuleNumber &&
+        guest.unitNumber === unitNumber &&
         guest.name === name &&
         guest.isCheckedIn === true
       );
@@ -222,10 +221,10 @@ export class MemGuestStore {
       .find(guest => guest.selfCheckinToken === token);
   }
 
-  /** Used by MemCapsuleStore.getGuestsByCapsule */
-  async getGuestsByCapsule(capsuleNumber: string): Promise<Guest[]> {
+  /** Used by facade for getGuestsByUnit */
+  async getGuestsByUnit(unitNumber: string): Promise<Guest[]> {
     return Array.from(this.guests.values())
-      .filter(guest => guest.capsuleNumber === capsuleNumber && guest.isCheckedIn);
+      .filter(guest => guest.unitNumber === unitNumber && guest.isCheckedIn);
   }
 
   /**

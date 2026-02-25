@@ -7,7 +7,7 @@ interface SuccessPageData {
   guestInfo: {
     id: string;
     name: string;
-    capsuleNumber: string;
+    unitNumber: string;
     phoneNumber: string;
     email?: string;
     checkinTime: string;
@@ -33,7 +33,7 @@ export function useSuccessPageValidation({ t }: UseSuccessPageValidationProps): 
   const [guestInfo, setGuestInfo] = useState<{
     id: string;
     name: string;
-    capsuleNumber: string;
+    unitNumber: string;
     phoneNumber: string;
     email?: string;
     checkinTime: string;
@@ -78,7 +78,7 @@ export function useSuccessPageValidation({ t }: UseSuccessPageValidationProps): 
           setGuestInfo({
             id: data.guestData.id,
             name: data.guestData.name,
-            capsuleNumber: data.guestData.capsuleNumber,
+            unitNumber: data.guestData.unitNumber,
             phoneNumber: data.guestData.phoneNumber,
             email: data.guestData.email,
             checkinTime: data.guestData.checkinTime,

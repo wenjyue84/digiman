@@ -169,7 +169,7 @@ export async function updateOperators(operators: OperatorContact[]): Promise<voi
     .values({
       key: 'rainbow_operators',
       value: JSON.stringify(operators),
-      description: 'Capsule operators with fallback escalation',
+      description: 'Unit operators with fallback escalation',
       updatedBy: null
     })
     .onConflictDoUpdate({

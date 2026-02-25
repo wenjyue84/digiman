@@ -23,7 +23,7 @@ export function CheckoutTableView({
         <TableHeader>
           <TableRow>
             <TableHead>Guest</TableHead>
-            <TableHead>Capsule</TableHead>
+            <TableHead>Unit</TableHead>
             <TableHead>Check-in Time</TableHead>
             <TableHead>Duration</TableHead>
             {!isCondensedView && (
@@ -62,7 +62,7 @@ export function CheckoutTableView({
                 </TableCell>
                 <TableCell>
                   <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white`}>
-                    {guest.capsuleNumber}
+                    {guest.unitNumber}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">

@@ -20,14 +20,14 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
     case 'guestCheckIn':
       return {
         title: 'Test: Guest Check-in',
-        body: 'John Doe has checked into Capsule A1 (Test Notification)',
+        body: 'John Doe has checked into Unit A1 (Test Notification)',
         icon: '/icon-192.png',
         badge: '/icon-192.png',
         tag: 'test-guest-checkin',
         data: {
           type: 'test-guest-checkin',
           guestName: 'John Doe (Test)',
-          capsuleNumber: 'A1',
+          unitNumber: 'A1',
           url: '/dashboard',
           isTest: true,
         },
@@ -39,14 +39,14 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
     case 'checkoutReminders':
       return {
         title: 'Test: Checkout Reminder',
-        body: 'Jane Smith in Capsule B2 is due for checkout today (Test Notification)',
+        body: 'Jane Smith in Unit B2 is due for checkout today (Test Notification)',
         icon: '/icon-192.png',
         badge: '/icon-192.png',
         tag: 'test-checkout-reminder',
         data: {
           type: 'test-checkout-reminder',
           guestName: 'Jane Smith (Test)',
-          capsuleNumber: 'B2',
+          unitNumber: 'B2',
           url: '/dashboard',
           isTest: true,
         },
@@ -61,14 +61,14 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
     case 'overdueCheckouts':
       return {
         title: 'Test: Overdue Checkout',
-        body: 'Mike Johnson in Capsule C3 is 2 day(s) overdue (Test Notification)',
+        body: 'Mike Johnson in Unit C3 is 2 day(s) overdue (Test Notification)',
         icon: '/icon-192.png',
         badge: '/icon-192.png',
         tag: 'test-overdue-checkout',
         data: {
           type: 'test-overdue-checkout',
           guestName: 'Mike Johnson (Test)',
-          capsuleNumber: 'C3',
+          unitNumber: 'C3',
           daysPast: 2,
           url: '/dashboard',
           isTest: true,
@@ -81,13 +81,13 @@ function buildTestPayload(type: keyof NotificationPreferences): Record<string, a
     case 'maintenanceRequests':
       return {
         title: 'Test: Maintenance Request',
-        body: 'Capsule D4: Air conditioning not working (Test Notification)',
+        body: 'Unit D4: Air conditioning not working (Test Notification)',
         icon: '/icon-192.png',
         badge: '/icon-192.png',
         tag: 'test-maintenance',
         data: {
           type: 'test-maintenance',
-          capsuleNumber: 'D4',
+          unitNumber: 'D4',
           issue: 'Air conditioning not working (Test)',
           url: '/dashboard',
           isTest: true,

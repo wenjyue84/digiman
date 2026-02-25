@@ -15,6 +15,7 @@ import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 import { useToast } from "@/hooks/use-toast";
 import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 import { generateReceipt } from "@/lib/receiptGenerator";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 import type { Guest } from "@shared/schema";
 
 interface GuestDetailsModalProps {
@@ -24,6 +25,7 @@ interface GuestDetailsModalProps {
 }
 
 export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetailsModalProps) {
+  const business = useBusinessConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Guest>>({});
   const [isImageOpen, setIsImageOpen] = useState(false);
@@ -160,7 +162,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
               <User className="h-5 w-5 text-orange-600" />
               <DialogTitle className="text-lg font-semibold">Guest Details</DialogTitle>
               <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
-                {guest.capsuleNumber}
+                {guest.unitNumber}
               </Badge>
             </div>
             {!isEditing ? (
@@ -482,7 +484,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
                 <div className="mt-1">
                   <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
                     <MapPin className="h-3 w-3 mr-1" />
-                    {guest.capsuleNumber}
+                    {guest.unitNumber}
                   </Badge>
                 </div>
               </div>
@@ -568,10 +570,11 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
             </div>
             {/* Print Receipt Button */}
             <div className="mt-4">
-              <Button
-                onClick={() => generateReceipt({ guest })}
-                size="sm"
-                variant="outline"
+                            <Button
+                              onClick={() => generateReceipt({ guest, business })
+              }
+                              size="sm"
+                              variant="outline"
                 className="w-full sm:w-auto"
                 data-testid="button-print-receipt"
               >

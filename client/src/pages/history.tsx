@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 interface Guest {
   id: string;
   name: string;
-  capsuleNumber: string;
+  unitNumber: string;
   checkinTime: string;
   checkoutTime?: string;
   nationality?: string;
@@ -27,7 +27,7 @@ interface Guest {
   idNumber?: string;
 }
 
-interface Capsule {
+interface Unit {
   id: string;
   number: string;
   lastCleanedAt?: string;
@@ -142,7 +142,7 @@ export default function History() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [nationalityFilter, setNationalityFilter] = useState("all");
-  const [capsuleFilter, setCapsuleFilter] = useState("all");
+  const [unitFilter, setUnitFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(50);
   const [sortBy, setSortBy] = useState<string>('checkoutTime');
@@ -175,7 +175,7 @@ export default function History() {
     
     if (searchQuery) params.append('search', searchQuery);
     if (nationalityFilter !== 'all') params.append('nationality', nationalityFilter);
-    if (capsuleFilter !== 'all') params.append('capsule', capsuleFilter);
+    if (unitFilter !== 'all') params.append('unit', unitFilter);
     
     return params.toString();
   };
@@ -189,7 +189,7 @@ export default function History() {
       sortOrder, 
       searchQuery, 
       nationalityFilter, 
-      capsuleFilter 
+      unitFilter 
     }],
     queryFn: async () => {
       const res = await fetch(`/api/guests/history?${buildQueryString()}`);
@@ -233,8 +233,8 @@ export default function History() {
   ).sort();
   
   // Sort capsules with numeric awareness (C1, C2, ..., C10, C11 not C1, C10, C11, C2)
-  const uniqueCapsules = Array.from(
-    new Set(guestHistory.map(g => g.capsuleNumber).filter(Boolean))
+  const uniqueUnits = Array.from(
+    new Set(guestHistory.map(g => g.unitNumber).filter(Boolean))
   ).sort((a, b) => {
     const matchA = a.match(/([A-Za-z]+)(\d+)/);
     const matchB = b.match(/([A-Za-z]+)(\d+)/);
@@ -253,16 +253,16 @@ export default function History() {
   });
   
   // Reset to page 1 when filters change
-  const handleFilterChange = (filterType: 'search' | 'nationality' | 'capsule', value: string) => {
+  const handleFilterChange = (filterType: 'search' | 'nationality' | 'unit', value: string) => {
     setPage(1);
     if (filterType === 'search') setSearchQuery(value);
     else if (filterType === 'nationality') setNationalityFilter(value);
-    else if (filterType === 'capsule') setCapsuleFilter(value);
+    else if (filterType === 'unit') setUnitFilter(value);
   };
 
   // Cleaning history
-  const { data: cleanedCapsules = [], isLoading: cleaningLoading } = useQuery<Capsule[]>({
-    queryKey: ["/api/capsules/cleaning-status/cleaned"],
+  const { data: cleanedUnits = [], isLoading: cleaningLoading } = useQuery<Unit[]>({
+    queryKey: ["/api/units/cleaning-status/cleaned"],
   });
 
   const recheckinMutation = useMutation({
@@ -274,7 +274,7 @@ export default function History() {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       toast({ title: "Updated", description: "Guest moved back to checked-in." });
     },
     onError: (error: any) => {
@@ -444,14 +444,14 @@ export default function History() {
             </SelectContent>
           </Select>
           
-          <Select value={capsuleFilter} onValueChange={(value) => handleFilterChange('capsule', value)}>
-            <SelectTrigger className="w-[140px]" data-testid="select-capsule-filter">
-              <SelectValue placeholder="All Capsules" />
+          <Select value={unitFilter} onValueChange={(value) => handleFilterChange('unit', value)}>
+            <SelectTrigger className="w-[140px]" data-testid="select-unit-filter">
+              <SelectValue placeholder="All Units" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Capsules</SelectItem>
-              {uniqueCapsules.map(capsule => (
-                <SelectItem key={capsule} value={capsule}>{capsule}</SelectItem>
+              <SelectItem value="all">All Units</SelectItem>
+              {uniqueUnits.map(unit => (
+                <SelectItem key={unit} value={unit}>{unit}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -501,12 +501,12 @@ export default function History() {
                             </TableHead>
                             <TableHead 
                               className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 select-none"
-                              onClick={() => handleSort('capsuleNumber')}
+                              onClick={() => handleSort('unitNumber')}
                               data-testid="header-sort-capsule"
                             >
                               <div className="flex items-center">
-                                Capsule
-                                {getSortIcon('capsuleNumber')}
+                                Unit
+                                {getSortIcon('unitNumber')}
                               </div>
                             </TableHead>
                             <TableHead 
@@ -548,7 +548,7 @@ export default function History() {
                               <TableCell className="font-medium">{guest.name}</TableCell>
                               <TableCell>
                                 <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                                  {guest.capsuleNumber}
+                                  {guest.unitNumber}
                                 </Badge>
                               </TableCell>
                               <TableCell>
@@ -594,7 +594,7 @@ export default function History() {
                         <div key={record.id} className="flex items-center justify-between rounded-md border px-3 py-2">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold">{record.name}</span>
-                            <Badge className="bg-blue-600 text-white">{record.capsuleNumber}</Badge>
+                            <Badge className="bg-blue-600 text-white">{record.unitNumber}</Badge>
                           </div>
                           <div className="text-sm text-gray-600">
                             {new Date(record.checkinTime).toLocaleDateString()} - {record.checkoutTime ? new Date(record.checkoutTime).toLocaleDateString() : 'Present'}
@@ -612,7 +612,7 @@ export default function History() {
                             <CardTitle>{record.name}</CardTitle>
                           </CardHeader>
                           <CardContent>
-                            <p>Capsule: {record.capsuleNumber}</p>
+                            <p>Unit: {record.unitNumber}</p>
                             <p>Check-in: {new Date(record.checkinTime).toLocaleString()}</p>
                             <p>Check-out: {record.checkoutTime ? new Date(record.checkoutTime).toLocaleString() : 'Not checked out'}</p>
                           </CardContent>
@@ -709,7 +709,7 @@ export default function History() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
             <CardTitle className="text-lg font-semibold text-hostel-text">Cleaning History</CardTitle>
-            <p className="text-sm text-gray-600">Record of capsule cleaning and maintenance activities</p>
+            <p className="text-sm text-gray-600">Record of unit cleaning and maintenance activities</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant={cleaningViewMode === 'table' ? 'default' : 'outline'} size="sm" onClick={() => setCleaningViewMode('table')}>
@@ -742,7 +742,7 @@ export default function History() {
               </div>
             ))}
           </div>
-        ) : cleanedCapsules.length === 0 ? (
+        ) : cleanedUnits.length === 0 ? (
           <div className="text-center py-6 text-gray-500">No cleaning records</div>
         ) : (
           <>
@@ -754,7 +754,7 @@ export default function History() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Capsule Number</TableHead>
+                            <TableHead>unit number</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Last Cleaned</TableHead>
                             <TableHead>Cleaned By</TableHead>
@@ -762,26 +762,26 @@ export default function History() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {cleanedCapsules.map((capsule) => (
-                            <TableRow key={capsule.id}>
-                              <TableCell className="font-medium">{capsule.number}</TableCell>
+                          {cleanedUnits.map((unit) => (
+                            <TableRow key={unit.id}>
+                              <TableCell className="font-medium">{unit.number}</TableCell>
                               <TableCell>
                                 <Badge className="bg-green-100 text-green-800 border-green-200">
                                   Clean
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                {capsule.lastCleanedAt 
-                                  ? new Date(capsule.lastCleanedAt).toLocaleString()
+                                {unit.lastCleanedAt
+                                  ? new Date(unit.lastCleanedAt).toLocaleString()
                                   : 'N/A'
                                 }
                               </TableCell>
-                              <TableCell>{capsule.lastCleanedBy || 'N/A'}</TableCell>
+                              <TableCell>{unit.lastCleanedBy || 'N/A'}</TableCell>
                               <TableCell>
-                                {capsule.lastCleanedAt 
+                                {unit.lastCleanedAt
                                   ? (() => {
                                       const now = new Date();
-                                      const cleaned = new Date(capsule.lastCleanedAt);
+                                      const cleaned = new Date(unit.lastCleanedAt);
                                       const diffHours = Math.floor((now.getTime() - cleaned.getTime()) / (1000 * 60 * 60));
                                       const diffDays = Math.floor(diffHours / 24);
                                       
@@ -803,7 +803,7 @@ export default function History() {
                 case 'list':
                   return (
                     <div className="space-y-2">
-                      {cleanedCapsules.map((c) => (
+                      {cleanedUnits.map((c) => (
                         <div key={c.id} className="flex items-center justify-between rounded-md border px-3 py-2">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold">{c.number}</span>
@@ -819,7 +819,7 @@ export default function History() {
                 case 'card':
                   return (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {cleanedCapsules.map((c) => (
+                      {cleanedUnits.map((c) => (
                         <Card key={c.id}>
                           <CardHeader>
                             <CardTitle>{c.number}</CardTitle>

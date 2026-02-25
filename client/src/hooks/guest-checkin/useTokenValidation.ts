@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 interface TokenValidationResult {
   token: string;
   guestInfo: {
-    capsuleNumber?: string;
+    unitNumber?: string;
     autoAssign?: boolean;
     guestName: string;
     phoneNumber: string;
@@ -17,7 +17,7 @@ interface TokenValidationResult {
   editToken: string;
   editExpiresAt: Date | null;
   canEdit: boolean;
-  assignedCapsuleNumber: string | null;
+  assignedunitNumber: string | null;
   tokenExpiresAt: Date | null;
   timeRemaining: string;
 }
@@ -33,7 +33,7 @@ export function useTokenValidation({ t, form }: UseTokenValidationProps): TokenV
   
   const [token, setToken] = useState<string>("");
   const [guestInfo, setGuestInfo] = useState<{
-    capsuleNumber?: string;
+    unitNumber?: string;
     autoAssign?: boolean;
     guestName: string;
     phoneNumber: string;
@@ -45,7 +45,7 @@ export function useTokenValidation({ t, form }: UseTokenValidationProps): TokenV
   const [editToken, setEditToken] = useState<string>("");
   const [editExpiresAt, setEditExpiresAt] = useState<Date | null>(null);
   const [canEdit, setCanEdit] = useState(false);
-  const [assignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
+  const [assignedunitNumber, setAssignedunitNumber] = useState<string | null>(null);
   const [tokenExpiresAt, setTokenExpiresAt] = useState<Date | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
@@ -123,15 +123,15 @@ export function useTokenValidation({ t, form }: UseTokenValidationProps): TokenV
       const response = await fetch(`/api/guest-tokens/${tokenValue}`);
       if (response.ok) {
         const data = await response.json();
-        let position = 'Available capsule will be assigned';
-        
-        if (data.capsuleNumber) {
-          const capsuleNum = parseInt(data.capsuleNumber.replace('C', ''));
-          position = capsuleNum % 2 === 0 ? 'Bottom (Preferred)' : 'Top';
+        let position = 'Available unit will be assigned';
+
+        if (data.unitNumber) {
+          const unitNum = parseInt(data.unitNumber.replace('C', ''));
+          position = unitNum % 2 === 0 ? 'Bottom (Preferred)' : 'Top';
         }
         
         setGuestInfo({
-          capsuleNumber: data.capsuleNumber,
+          unitNumber: data.unitNumber,
           autoAssign: data.autoAssign,
           guestName: data.guestName,
           phoneNumber: data.phoneNumber,
@@ -156,8 +156,8 @@ export function useTokenValidation({ t, form }: UseTokenValidationProps): TokenV
         // Token validation complete - basic info pre-filled from token
         
         // If the guest has an assigned capsule already, track it
-        if (data.capsuleNumber) {
-          setAssignedCapsuleNumber(data.capsuleNumber);
+        if (data.unitNumber) {
+          setAssignedunitNumber(data.unitNumber);
         }
         
         // If there's an edit token and it's still valid, enable editing
@@ -197,7 +197,7 @@ export function useTokenValidation({ t, form }: UseTokenValidationProps): TokenV
     editToken,
     editExpiresAt,
     canEdit,
-    assignedCapsuleNumber,
+    assignedunitNumber,
     tokenExpiresAt,
     timeRemaining,
   };

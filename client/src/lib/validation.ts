@@ -175,16 +175,16 @@ export const clientValidation = {
   },
 
   /**
-   * Validate capsule number
+   * Validate unit number
    */
-  validateCapsuleNumber: (capsuleNumber: string): { isValid: boolean; message?: string } => {
-    if (!capsuleNumber) {
-      return { isValid: false, message: "Capsule number is required" };
+  validateunitNumber: (unitNumber: string): { isValid: boolean; message?: string } => {
+    if (!unitNumber) {
+      return { isValid: false, message: "unit number is required" };
     }
     
     const capsuleRegex = /^[A-Z]\d{2}$/;
-    if (!capsuleRegex.test(capsuleNumber.toUpperCase())) {
-      return { isValid: false, message: "Capsule number must be in format A01, B02, etc." };
+    if (!capsuleRegex.test(unitNumber.toUpperCase())) {
+      return { isValid: false, message: "unit number must be in format A01, B02, etc." };
     }
     
     return { isValid: true };
@@ -280,9 +280,9 @@ export const inputFormatters = {
   },
 
   /**
-   * Format capsule number
+   * Format unit number
    */
-  formatCapsuleNumber: (input: string): string => {
+  formatunitNumber: (input: string): string => {
     return input.toUpperCase().replace(/[^A-Z0-9]/g, '');
   },
 
@@ -352,9 +352,9 @@ export const quickValidation = {
     return NAME_REGEX.test(name) && name.length >= 2 && name.length <= 100;
   },
   
-  isCapsuleNumber: (capsule: string): boolean => {
-    const capsuleRegex = /^[A-Z]\d{2}$/;
-    return capsuleRegex.test(capsule.toUpperCase());
+  isUnitNumber: (unit: string): boolean => {
+    const unitRegex = /^[A-Z]\d{2}$/;
+    return unitRegex.test(unit.toUpperCase());
   },
   
   isIC: (ic: string): boolean => {
@@ -452,14 +452,14 @@ export const createFormValidationRules = {
   }),
 
   /**
-   * Capsule number validation rules
+   * unit number validation rules
    */
-  capsuleNumber: (required: boolean = true) => ({
-    ...(required && createFormValidationRules.required("Capsule number")),
+  unitNumber: (required: boolean = true) => ({
+    ...(required && createFormValidationRules.required("unit number")),
     validate: (value: string) => {
       if (!required && !value) return true;
-      const result = clientValidation.validateCapsuleNumber(value);
-      return result.isValid || result.message || "Invalid capsule number";
+      const result = clientValidation.validateunitNumber(value);
+      return result.isValid || result.message || "Invalid unit number";
     },
   }),
 
@@ -566,8 +566,8 @@ export const formDataSanitizer = {
       sanitized.idNumber = sanitized.idNumber.toUpperCase().trim();
     }
     
-    if (sanitized.capsuleNumber) {
-      sanitized.capsuleNumber = inputFormatters.formatCapsuleNumber(sanitized.capsuleNumber);
+    if (sanitized.unitNumber) {
+      sanitized.unitNumber = inputFormatters.formatunitNumber(sanitized.unitNumber);
     }
     
     if (sanitized.paymentAmount) {
@@ -613,7 +613,7 @@ export const formDataSanitizer = {
     });
     
     // Sanitize numeric fields
-    const numericFields = ['maxGuestStayDays', 'totalCapsules', 'maxPaymentAmount'];
+    const numericFields = ['maxGuestStayDays', 'totalUnits', 'maxPaymentAmount'];
     numericFields.forEach(field => {
       if (sanitized[field] !== undefined && sanitized[field] !== "") {
         const num = parseFloat(sanitized[field]);
@@ -779,13 +779,13 @@ export const bulkValidation = {
       }
     }
     
-    // Capsule number validation
-    if (!data.capsuleNumber || data.capsuleNumber.trim() === "") {
-      errors.capsuleNumber = "Capsule number is required";
+    // unit number validation
+    if (!data.unitNumber || data.unitNumber.trim() === "") {
+      errors.unitNumber = "unit number is required";
     } else {
-      const capsuleResult = clientValidation.validateCapsuleNumber(data.capsuleNumber);
+      const capsuleResult = clientValidation.validateunitNumber(data.unitNumber);
       if (!capsuleResult.isValid && capsuleResult.message) {
-        errors.capsuleNumber = capsuleResult.message;
+        errors.unitNumber = capsuleResult.message;
       }
     }
     

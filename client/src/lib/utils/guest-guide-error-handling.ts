@@ -4,6 +4,7 @@
  */
 
 import { toast } from '@/hooks/use-toast';
+import React from 'react';
 
 // Error types for the Guest Guide system
 export enum GuestGuideErrorType {
@@ -60,7 +61,7 @@ class GuestGuideErrorLogger {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.group(`[GuestGuide] ${error.type} - ${error.severity.toUpperCase()}`);
+      console.group(`[GuestGuide] ${error.type} - ${enrichedError.severity.toUpperCase()}`);
       console.error(error.message);
       if (error.details) {
         console.error('Details:', error.details);

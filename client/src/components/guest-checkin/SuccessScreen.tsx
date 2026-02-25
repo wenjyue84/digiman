@@ -5,12 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Printer, Send, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useI18n } from "@/lib/i18n";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 import GuestSuccessPageTemplate from "@/components/guest-success/GuestSuccessPageTemplate";
 import GuestExtendDialog from "@/components/guest-success/GuestExtendDialog";
 
 interface SuccessScreenProps {
   guestInfo: {
-    capsuleNumber?: string;
+    unitNumber?: string;
     autoAssign?: boolean;
     guestName: string;
     phoneNumber: string;
@@ -19,8 +20,8 @@ interface SuccessScreenProps {
     position: string;
   } | null;
   settings: any;
-  assignedCapsuleNumber: string | null;
-  capsuleIssues: any[];
+  assignedUnitNumber: string | null;
+  unitIssues: any[];
   canEdit: boolean;
   editExpiresAt: Date | null;
   editToken: string;
@@ -34,7 +35,7 @@ interface SuccessScreenProps {
   guestData?: {
     id: string;
     name: string;
-    capsuleNumber: string;
+    unitNumber: string;
     expectedCheckoutDate: string;
     paymentAmount?: string;
     notes?: string;
@@ -46,8 +47,8 @@ interface SuccessScreenProps {
 export default function SuccessScreen({
   guestInfo,
   settings,
-  assignedCapsuleNumber,
-  capsuleIssues,
+  assignedUnitNumber,
+  unitIssues,
   canEdit,
   editExpiresAt,
   editToken,
@@ -58,15 +59,16 @@ export default function SuccessScreen({
   handlePrint,
   handleSaveAsPdf,
   handleSendEmail,
-  guestData,
+  guestData = null,
   onRefresh,
 }: SuccessScreenProps) {
   const { t } = useI18n();
+  const business = useBusinessConfig();
   const [showExtendDialog, setShowExtendDialog] = useState(false);
   
-  // Derive a reliable capsule number
-  const storedCapsuleNumber = (typeof window !== 'undefined') ? localStorage.getItem('lastAssignedCapsule') : null;
-  const displayCapsuleNumber = assignedCapsuleNumber || guestInfo?.capsuleNumber || storedCapsuleNumber || "";
+  // Derive a reliable unit number
+  const storedUnitNumber = (typeof window !== 'undefined') ? localStorage.getItem('lastAssignedUnit') : null;
+  const displayUnitNumber = assignedUnitNumber || guestInfo?.unitNumber || storedUnitNumber || "";
   
   // Get current token for extend functionality
   const getCurrentToken = () => {
@@ -74,38 +76,38 @@ export default function SuccessScreen({
     return urlParams.get('token') || '';
   };
   if (process.env.NODE_ENV !== 'production') {
-    // Lightweight debug to help diagnose missing capsule numbers during development
-    console.log('[SuccessScreen] capsule numbers', {
-      assignedCapsuleNumber,
-      guestInfoCapsule: guestInfo?.capsuleNumber,
-      storedCapsuleNumber,
-      displayCapsuleNumber,
+    // Lightweight debug to help diagnose missing unit numbers during development
+    console.log('[SuccessScreen] unit numbers', {
+      assignedUnitNumber,
+      guestInfoUnit: guestInfo?.unitNumber,
+      storedUnitNumber,
+      displayUnitNumber,
     });
   }
 
   // Handle share action
   const handleShare = () => {
     const guestName = guestInfo?.guestName || 'Guest';
-    const capsule = displayCapsuleNumber || '';
+    const unit = displayUnitNumber || '';
     const checkinTime = settings?.guideCheckinTime || "3:00 PM";
     const checkoutTime = settings?.guideCheckoutTime || "12:00 PM";
     const doorPassword = settings?.guideDoorPassword || "1270#";
 
-    const shareText = `🏨 Pelangi Capsule Hostel - My Stay Information
+    const shareText = `🏨 ${business.name} - My Stay Information
 
 Name: ${guestName}
-Capsule: ${capsule}
+Unit: ${unit}
 Arrival: ${checkinTime}
 Departure: ${checkoutTime}
 Door Password: ${doorPassword}
 
 Address: ${settings?.guideAddress || '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia'}
 
-Welcome to Pelangi Capsule Hostel! 🌈`;
+Welcome to ${business.name}! 🌈`;
 
     if (navigator.share) {
       navigator.share({
-        title: 'Pelangi Capsule Hostel - My Stay Information',
+        title: `${business.name} - My Stay Information`,
         text: shareText,
       }).catch(() => {
         navigator.clipboard.writeText(shareText).then(() => {
@@ -143,8 +145,8 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
         viewMode="desktop"
         isPreview={false}
         guestInfo={guestInfo}
-        assignedCapsuleNumber={assignedCapsuleNumber}
-        capsuleIssues={capsuleIssues}
+        assignedUnitNumber={assignedUnitNumber}
+        unitIssues={unitIssues}
         settings={settings}
         actions={{
           onPrint: handlePrint,

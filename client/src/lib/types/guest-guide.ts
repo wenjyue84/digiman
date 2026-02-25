@@ -45,7 +45,7 @@ export interface GuestGuideVisibility {
   showCheckin: boolean;
   showOther: boolean;
   showFaq: boolean;
-  showCapsuleIssues: boolean;
+  showunitIssues: boolean;
   showTimeAccess: boolean;
   showHostelPhotos: boolean;
   showGoogleMaps: boolean;
@@ -90,7 +90,7 @@ export const DEFAULT_GUEST_GUIDE_CONTENT: GuestGuideContent = {
   checkin: 'Welcome! Here are your check-in instructions:\n\n1. Arrive at the main entrance\n2. Use the intercom to contact reception\n3. Present your booking confirmation\n4. Collect your access card\n5. Proceed to your assigned capsule',
   other: 'Additional services available:\n\n• 24/7 reception support\n• Luggage storage facilities\n• Common area with kitchenette\n• Laundry facilities\n• Tour booking assistance',
   faq: 'Frequently Asked Questions:\n\nQ: What time is check-in?\nA: Check-in is available from 3:00 PM onwards.\n\nQ: Is there a curfew?\nA: No curfew, 24/7 access with your key card.\n\nQ: Are towels provided?\nA: Yes, towels and basic amenities are included.',
-  importantReminders: '⚠️ IMPORTANT REMINDERS:\n\n• Keep your access card safe - replacement fee applies\n• Respect quiet hours (10 PM - 8 AM)\n• No smoking inside the premises\n• No outside food in capsule areas\n• Check-out by 12:00 PM to avoid late fees',
+  importantReminders: '⚠️ IMPORTANT REMINDERS:\n\n• Keep your access card safe - replacement fee applies\n• Respect quiet hours (10 PM - 8 AM)\n• No smoking inside the premises\n• No outside food in Unit areas\n• Check-out by 12:00 PM to avoid late fees',
   hostelPhotosUrl: 'https://example.com/photos',
   googleMapsUrl: 'https://maps.google.com',
   checkinVideoUrl: 'https://example.com/checkin-video',
@@ -106,7 +106,7 @@ export const DEFAULT_GUEST_GUIDE_VISIBILITY: GuestGuideVisibility = {
   showCheckin: true,
   showOther: true,
   showFaq: true,
-  showCapsuleIssues: false,
+  showunitIssues: false,
   showTimeAccess: true,
   showHostelPhotos: true,
   showGoogleMaps: true,

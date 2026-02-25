@@ -201,10 +201,10 @@ export default function AdminNotifications() {
                             <Calendar className="h-3 w-3" />
                             {formatDate(notification.createdAt)}
                           </div>
-                          {notification.capsuleNumber && (
+                          {notification.unitNumber && (
                             <div className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
-                              {notification.capsuleNumber}
+                              {notification.unitNumber}
                             </div>
                           )}
                         </div>

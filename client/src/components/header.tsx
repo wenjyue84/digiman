@@ -5,19 +5,22 @@ import { User, LogOut } from "lucide-react";
 import { AuthContext } from "../lib/auth";
 import { NetworkStatusBadge, PWAInstallButton } from "@/components/ui/offline-indicator";
 
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
+
 export default function Header() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user || null;
   const logout = authContext?.logout || (() => {});
   const isAuthenticated = authContext?.isAuthenticated || false;
+  const business = useBusinessConfig();
 
   return (
     // US-007: Improved mobile header layout with reduced padding and collapsible user info
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-shrink">
-          <h1 className="text-lg sm:text-2xl font-bold text-orange-700 truncate">Pelangi Capsule Hostel</h1>
-          <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Management System - Johor Bahru</p>
+          <h1 className="text-lg sm:text-2xl font-bold text-orange-700 truncate">{business.name}</h1>
+          <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">{business.tagline}</p>
         </div>
 
         {isAuthenticated && user && (

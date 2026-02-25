@@ -7,10 +7,10 @@ export const guestTests: SystemTest[] = [
     description: "Test complete guest check-in workflow",
     async test() {
       try {
-        // Test available capsules for check-in
-        const availableCapsules = await storage.getAvailableCapsules();
-        if (availableCapsules.length === 0) {
-          throw new Error("No available capsules for guest check-in");
+        // Test available units for check-in
+        const availableUnits = await storage.getAvailableUnits();
+        if (availableUnits.length === 0) {
+          throw new Error("No available units for guest check-in");
         }
 
         // Test guest creation schema requirements
@@ -19,7 +19,7 @@ export const guestTests: SystemTest[] = [
           email: "test@example.com",
           phoneNumber: "+60123456789",
           identificationNumber: "950101-01-1234",
-          capsuleNumber: availableCapsules[0].number,
+          unitNumber: availableUnits[0].number,
           checkinTime: new Date(),
           expectedCheckoutDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           paymentAmount: "50.00",
@@ -30,7 +30,7 @@ export const guestTests: SystemTest[] = [
         };
 
         // Validate required fields are present
-        const requiredFields = ['name', 'email', 'phoneNumber', 'capsuleNumber'];
+        const requiredFields = ['name', 'email', 'phoneNumber', 'unitNumber'];
         const missingFields = requiredFields.filter(field => !testGuest[field as keyof typeof testGuest]);
         if (missingFields.length > 0) {
           throw new Error(`Guest check-in missing required fields: ${missingFields.join(', ')}`);
@@ -38,7 +38,7 @@ export const guestTests: SystemTest[] = [
 
         return {
           passed: true,
-          details: `✅ Guest check-in workflow ready. ${availableCapsules.length} capsules available`
+          details: `✅ Guest check-in workflow ready. ${availableUnits.length} units available`
         };
       } catch (error: any) {
         throw new Error(`Guest check-in test failed: ${error.message}`);
@@ -46,14 +46,14 @@ export const guestTests: SystemTest[] = [
     },
     suggestions: [
       "If test fails: Check guest schema in shared/schema.ts",
-      "Verify capsule availability logic",
+      "Verify unit availability logic",
       "Check guest creation validation rules"
     ]
   },
 
   {
     name: "Guest Check-out Process",
-    description: "Test guest check-out and capsule cleanup",
+    description: "Test guest check-out and unit cleanup",
     async test() {
       try {
         // Test checked-in guests retrieval
@@ -71,8 +71,8 @@ export const guestTests: SystemTest[] = [
           throw new Error("checkoutGuest method not available");
         }
 
-        if (typeof storage.markCapsuleNeedsCleaning !== 'function') {
-          throw new Error("markCapsuleNeedsCleaning method not available");
+        if (typeof storage.markUnitNeedsCleaning !== 'function') {
+          throw new Error("markUnitNeedsCleaning method not available");
         }
 
         return {
@@ -85,7 +85,7 @@ export const guestTests: SystemTest[] = [
     },
     suggestions: [
       "If test fails: Check guest checkout methods in storage",
-      "Verify capsule cleaning workflow integration",
+      "Verify unit cleaning workflow integration",
       "Check checkout schema validation"
     ]
   },

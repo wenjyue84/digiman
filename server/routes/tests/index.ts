@@ -1,7 +1,7 @@
 export type { SystemTest } from "./types";
 export { authTests } from "./auth-tests";
 export { guestTests } from "./guest-tests";
-export { capsuleTests } from "./capsule-tests";
+export { unitTests } from "./unit-tests";
 export { financialTests } from "./financial-tests";
 export { notificationTests } from "./notification-tests";
 export { dashboardTests } from "./dashboard-tests";

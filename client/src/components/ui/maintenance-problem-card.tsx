@@ -15,10 +15,10 @@ import {
   Wrench,
   MessageSquare
 } from 'lucide-react';
-import type { CapsuleProblem } from '@shared/schema';
+import type { UnitProblem } from '@shared/schema';
 
 interface MaintenanceProblemCardProps {
-  problem: CapsuleProblem;
+  problem: UnitProblem;
   onResolve: (problemId: string, notes?: string) => void;
   isResolving?: boolean;
   className?: string;
@@ -78,7 +78,7 @@ export function MaintenanceProblemCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-lg">{problem.capsuleNumber}</h3>
+            <h3 className="font-semibold text-lg">{problem.unitNumber}</h3>
             <Badge 
               variant={statusInfo.variant}
               className={statusInfo.badgeClass}

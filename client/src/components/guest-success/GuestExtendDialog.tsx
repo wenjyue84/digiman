@@ -12,7 +12,7 @@ interface GuestExtendDialogProps {
   guest: {
     id: string;
     name: string;
-    capsuleNumber: string;
+    unitNumber: string;
     expectedCheckoutDate: string;
     paymentAmount?: string;
     notes?: string;
@@ -127,7 +127,7 @@ export default function GuestExtendDialog({
             Extend Stay
           </DialogTitle>
           <DialogDescription>
-            {guest ? `Extend your stay in ${guest.capsuleNumber}` : ''}
+            {guest ? `Extend your stay in ${guest.unitNumber}` : ''}
           </DialogDescription>
         </DialogHeader>
 

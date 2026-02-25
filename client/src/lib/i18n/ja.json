@@ -1,9 +1,8 @@
 {
   "welcomeTitle": "ペランギカプセルホステルへようこそ",
   "completeCheckIn": "チェックイン情報を完了してください",
-  "assignedCapsule": "割り当てられたカプセル",
+  "assignedUnit": "割り当てられたカプセル",
   "prefilledInfo": "事前入力情報:",
-
   "personalInfo": "個人情報",
   "fullNameLabel": "身分証明書/パスポート記載の氏名 *",
   "fullNamePlaceholder": "IDに記載されている氏名を入力してください",
@@ -15,7 +14,6 @@
   "female": "女性",
   "nationalityLabel": "国籍 *",
   "nationalityPlaceholder": "例: マレーシア、シンガポール",
-
   "identityDocs": "身分証明書 *",
   "identityDocsDesc": "IDまたはパスポート情報と書類の写真を提供してください:",
   "icNumberLabel": "ID番号 (マレーシア人用)",
@@ -27,18 +25,15 @@
   "passportPhotoLabel": "パスポート書類写真",
   "passportPhotoDesc": "パスポートの写真をアップロード",
   "chooseFile": "ファイルを選択",
-
   "paymentMethod": "支払い方法 *",
   "paymentMethodPlaceholder": "希望する支払い方法を選択",
   "cash": "現金",
   "card": "クレジット/デビットカード",
   "onlineTransfer": "オンライン振込",
   "paymentNote": "到着時にフロントデスクで支払いを徴収します",
-
   "completeCheckInBtn": "チェックイン完了",
   "completingCheckIn": "チェックインを完了中...",
   "editInfo": "情報を編集",
-
   "goodDay": "こんにちは、私たちの大切なお客様！",
   "welcomeHostel": "ペランギカプセルホステルへようこそ",
   "address": "住所:",
@@ -48,12 +43,12 @@
   "checkInTime": "チェックイン: 午後3:00から",
   "checkOutTime": "チェックアウト: 午後12:00まで",
   "doorPassword": "ドアパスワード:",
-  "capsuleNumber": "あなたのカプセル番号:",
+  "unitNumber": "あなたのカプセル番号:",
   "accessCard": "カプセルアクセスカード: 枕の上に置いてあります",
   "importantReminders": "重要な注意事項:",
   "noCardWarning": "🚫 カードをカプセル内に置いたままドアを閉めないでください",
   "noSmoking": "🚭 ホステルエリア内禁煙",
-  "cctvWarning": "🎥 CCTV監視中 \u2013 違反行為(喫煙など)はRM300の罰金が科される場合があります",
+  "cctvWarning": "🎥 CCTV監視中 – 違反行為(喫煙など)はRM300の罰金が科される場合があります",
   "infoEditable": "情報編集可能",
   "editUntil": "チェックイン情報は次の時間まで編集できます",
   "editMyInfo": "情報を編集",
@@ -61,7 +56,6 @@
   "linkExpiresIn": "リンクの有効期限",
   "assistance": "ご不明な点がございましたら、フロントまでお問い合わせください。",
   "enjoyStay": "ペランギカプセルホステルでのご滞在をお楽しみください！💼🌟",
-
   "validatingLink": "チェックインリンクを検証中...",
   "invalidLink": "無効なリンク",
   "invalidLinkDesc": "このチェックインリンクは無効またはトークンが不足しています。",
@@ -72,10 +66,8 @@
   "checkInFailed": "チェックイン失敗",
   "checkInSuccess": "チェックイン成功！",
   "checkInSuccessDesc": "ペランギカプセルホステルへようこそ！",
-
   "selectLanguage": "言語を選択",
   "currentLanguage": "日本語",
-
   "printCheckInSlip": "印刷",
   "saveAsPdf": "保存",
   "sendToEmail": "メールで送信",
@@ -88,18 +80,15 @@
   "pleaseEnterValidEmail": "有効なメールアドレスを入力してください",
   "emailSent": "メール送信完了",
   "checkInSlipSentTo": "チェックインスリップを送信しました",
-
   "tipsTitle": "素早く入力するためのヒント",
   "tipHaveDocument": "IC（身分証）またはパスポートのどちらかをご用意ください。どちらか一方で十分です。",
   "tipPhoneFormat": "電話番号は国番号を含めて入力してください（例：マレーシア +60）。",
   "tipGenderPrivacy": "プライバシー重視の方は「その他」または「無回答」を選べます。",
   "tipLanguageSwitch": "上部の地球アイコンから言語をいつでも切替可能です。",
-
   "photoTipsTitle": "写真のコツ",
   "photoTipLighting": "明るい場所で、書類全体がはっきり写るようにしてください。",
   "photoTipGlare": "反射やブレを避け、スマホを安定させてください。",
   "photoTipSize": "最大 15MB まで対応。鮮明な写真1枚で十分です。",
-
   "nameHint": "IC/パスポートと同じ表記で入力してください。",
   "phoneHint": "国番号を含めて入力（例：+60、+65）。",
   "genderHint": "最も安心できる選択をしてください。適切なカプセルエリアの提案に使います。",
@@ -112,7 +101,6 @@
   "notesHint": "例：「23:30 到着」「ピーナッツアレルギー」「可能なら下段を希望」など。",
   "paymentMethodHint": "予定している支払い方法を選択。到着後に確定でもOKです。",
   "cashDescriptionHint": "すでに現金で支払い済みの場合は、受け取ったスタッフ名を記載。未払いなら空欄で構いません。",
-
   "faqNeedHelp": "入力の手助けが必要ですか？",
   "faqIntro": "よくある質問と回答：",
   "faqIcVsPassportQ": "IC とパスポートは両方必要？",
@@ -127,11 +115,10 @@
   "faqPrivacyA": "はい。滞在と法令順守のためだけに使用し、書類を公開することはありません。",
   "faqEditAfterQ": "送信後に編集できる？",
   "faqEditAfterA": "可能です。成功後 1 時間以内なら、成功ページのリンクから編集できます。",
-
   "commonNotesTitle": "よくある要望を素早く追加：",
   "commonNoteLateArrival": "到着が遅くなります（23:00以降）",
   "commonNoteArriveEarly": "早めに到着します（15:00 前）",
-  "commonNoteBottomCapsule": "可能なら下段を希望",
   "commonNoteQuietArea": "可能なら静かなエリアを希望",
-  "commonNoteExtraBedding": "毛布の追加を希望"
+  "commonNoteExtraBedding": "毛布の追加を希望",
+  "commonNoteBottomUnit": "可能なら下段を希望"
 }

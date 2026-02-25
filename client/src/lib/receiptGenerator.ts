@@ -1,19 +1,21 @@
 import jsPDF from 'jspdf';
 import type { Guest } from '@shared/schema';
 import { isGuestPaid } from '@/lib/guest';
+import { BusinessConfig } from '@shared/business-config';
 
 interface ReceiptData {
   guest: Guest;
   receiptNumber?: string;
   issuedOn?: Date;
+  business: BusinessConfig;
 }
 
 export function generateReceipt(data: ReceiptData): void {
-  const { guest } = data;
+  const { guest, business } = data;
   const doc = new jsPDF();
   
   // Generate receipt number if not provided
-  const receiptNumber = data.receiptNumber || generateReceiptNumber();
+  const receiptNumber = data.receiptNumber || generateReceiptNumber(business.receiptPrefix);
   const issuedOn = data.issuedOn || new Date();
   
   // Page dimensions
@@ -22,26 +24,26 @@ export function generateReceipt(data: ReceiptData): void {
   const contentWidth = pageWidth - (margin * 2);
   
   // Colors
-  const primaryColor = '#2c3e50';
+  const primaryColor = business.primaryColor || '#2c3e50';
   const secondaryColor = '#7f8c8d';
   
   let yPosition = 20;
   
-  // Header - Hostel Name (centered, large)
+  // Header - Business Name (centered, large)
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(primaryColor);
-  doc.text('Pelangi Capsule Hostel', pageWidth / 2, yPosition, { align: 'center' });
+  doc.text(business.name, pageWidth / 2, yPosition, { align: 'center' });
   
   // Address and contact info (centered, small)
   yPosition += 8;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(secondaryColor);
-  doc.text('26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia', pageWidth / 2, yPosition, { align: 'center' });
+  doc.text(business.address, pageWidth / 2, yPosition, { align: 'center' });
   
   yPosition += 5;
-  doc.text('Phone: +60 12-708 8789 • Email: wenjyue@gmail.com • Website: pelangicapsulehostel.com', pageWidth / 2, yPosition, { align: 'center' });
+  doc.text(`Phone: ${business.phone} • Email: ${business.email} • Website: ${business.website}`, pageWidth / 2, yPosition, { align: 'center' });
   
   yPosition += 15;
   
@@ -169,13 +171,14 @@ export function generateReceipt(data: ReceiptData): void {
   yPosition += 8;
   doc.setFontSize(9);
   
-  // Capsule and Duration
+  // Unit and Duration
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(secondaryColor);
-  doc.text('Capsule', margin, yPosition);
+  const accommodationLabel = business.accommodationType.charAt(0).toUpperCase() + business.accommodationType.slice(1);
+  doc.text(accommodationLabel, margin, yPosition);
   doc.setTextColor(primaryColor);
   doc.setFont('helvetica', 'bold');
-  doc.text(guest.capsuleNumber, margin + 35, yPosition);
+  doc.text(guest.unitNumber, margin + 35, yPosition);
   
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(secondaryColor);
@@ -255,10 +258,10 @@ export function generateReceipt(data: ReceiptData): void {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(secondaryColor);
-  const notesText = 'Notes: This receipt confirms payment received for accommodation at Pelangi Capsule Hostel. Please retain for your';
+  const notesText = `Notes: This receipt confirms payment received for accommodation at ${business.name}. Please retain for your`;
   doc.text(notesText, margin, yPosition);
   yPosition += 4;
-  doc.text('records and claims. For assistance, contact us at +60 12-708 8789.', margin, yPosition);
+  doc.text(`records and claims. For assistance, contact us at ${business.phone}.`, margin, yPosition);
   
   yPosition += 10;
   
@@ -273,11 +276,11 @@ export function generateReceipt(data: ReceiptData): void {
   doc.save(filename);
 }
 
-function generateReceiptNumber(): string {
+function generateReceiptNumber(prefix: string): string {
   const date = new Date();
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
   const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `PCH-${dateStr}-${randomStr}`;
+  return `${prefix}-${dateStr}-${randomStr}`;
 }
 
 function formatDateTime(date: Date): string {

@@ -1,11 +1,11 @@
-import { callAPI } from '../lib/http-client.js';
-import { MCPTool, MCPToolResult } from '../types/mcp.js';
-import { handleToolCall } from './tool-factory.js';
+import { callAPI } from '../http-client';
+import { MCPTool, MCPToolResult } from '../types';
+import { handleToolCall } from '../tool-factory';
 
-export const capsuleTools: MCPTool[] = [
+export const unitTools: MCPTool[] = [
   {
-    name: 'pelangi_list_capsules',
-    description: 'List all capsules with status',
+    name: 'pelangi_list_units',
+    description: 'List all units with status',
     inputSchema: {
       type: 'object',
       properties: {}
@@ -21,7 +21,7 @@ export const capsuleTools: MCPTool[] = [
   },
   {
     name: 'pelangi_check_availability',
-    description: 'Get available capsules for assignment',
+    description: 'Get available units for assignment',
     inputSchema: {
       type: 'object',
       properties: {}
@@ -29,8 +29,8 @@ export const capsuleTools: MCPTool[] = [
   }
 ];
 
-export async function listCapsules(args: any): Promise<MCPToolResult> {
-  return handleToolCall(() => callAPI('GET', '/api/capsules'), 'Error listing capsules');
+export async function listUnits(args: any): Promise<MCPToolResult> {
+  return handleToolCall(() => callAPI('GET', '/api/units'), 'Error listing units');
 }
 
 export async function getOccupancy(args: any): Promise<MCPToolResult> {
@@ -38,5 +38,5 @@ export async function getOccupancy(args: any): Promise<MCPToolResult> {
 }
 
 export async function checkAvailability(args: any): Promise<MCPToolResult> {
-  return handleToolCall(() => callAPI('GET', '/api/capsules/available'), 'Error checking availability');
+  return handleToolCall(() => callAPI('GET', '/api/units/available'), 'Error checking availability');
 }

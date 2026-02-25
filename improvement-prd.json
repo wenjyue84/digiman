@@ -1,0 +1,67 @@
+{
+  "productName": "Security & Reliability Hardening",
+  "branchName": "local/hardening-pass-1",
+  "overview": "Hardening pass for authz, internal endpoint protection, sensitive logging, and routing reliability.",
+  "verification": {
+    "tsc": "passed - npm run check succeeds on Node v20.20.0 (2026-02-20)",
+    "smokeChecks": "passed - static hardening smoke checks (14/14) on 2026-02-20",
+    "runtimeSmokeChecks": "blocked in this environment: tsx/esbuild platform mismatch and missing runtime deps in dist bundle"
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Gate and redact sensitive logs in auth and validation",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Make CORS origin checks strict",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Fix /sw.js route for ESM runtime",
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Make service worker registration production-safe",
+      "passes": true
+    },
+    {
+      "id": "US-005",
+      "title": "Avoid logging API response bodies in production",
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Remove unused /setup-admin placeholder route",
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "Harden internal guest-token helper endpoints",
+      "passes": true
+    },
+    {
+      "id": "US-008",
+      "title": "Close remaining unauthenticated operational endpoints",
+      "passes": true
+    },
+    {
+      "id": "US-009",
+      "title": "Reduce PII-heavy logs in guest/token/upload flows",
+      "passes": true
+    },
+    {
+      "id": "US-010",
+      "title": "Fix in-memory admin seed correctness and security defaults",
+      "passes": true
+    },
+    {
+      "id": "US-011",
+      "title": "Remove ambiguous duplicate capsule routes",
+      "passes": true
+    }
+  ]
+}

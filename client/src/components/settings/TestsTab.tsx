@@ -70,8 +70,8 @@ export default function TestsTab() {
     },
     {
       id: 5,
-      title: "Show All Capsules Feature",
-      description: "Added option to display all capsules including empty ones with a 'Show all capsules' checkbox in the guest table filter panel. Empty capsules are visually distinguished to help users see both occupied and available capsules.",
+      title: "Show all units Feature",
+      description: "Added option to display all units including empty ones with a 'Show all units' checkbox in the guest table filter panel. Empty units are visually distinguished to help users see both occupied and available units.",
       date: "August 20, 2025",
       bgColor: "bg-indigo-50",
       borderColor: "border-indigo-200",
@@ -166,8 +166,8 @@ export default function TestsTab() {
     },
     {
       id: 13,
-      title: "Capsule Assignment UX Improvements",
-      description: "Enhanced capsule assignment UI with clearer warnings, manual override dialogs for unavailable capsules, and improved color coding for capsule statuses. Updated object upload API for both local and Replit environments.",
+      title: "Unit Assignment UX Improvements",
+      description: "Enhanced unit assignment UI with clearer warnings, manual override dialogs for unavailable units, and improved color coding for unit statuses. Updated object upload API for both local and Replit environments.",
       date: "August 19, 2025",
       bgColor: "bg-lime-50",
       borderColor: "border-lime-200",
@@ -226,7 +226,7 @@ export default function TestsTab() {
       // Application-specific validation tests
       { name: 'Email Validation', fn: () => expect(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test('test@example.com')).toBe(true) },
       { name: 'Phone Number Format', fn: () => expect(/^\+60[0-9]{8,12}$/.test('+60123456789')).toBe(true) },
-      { name: 'Capsule Number Format (C1-C99)', fn: () => expect(/^C\d+$/.test('C1')).toBe(true) && expect(/^C\d+$/.test('C24')).toBe(true) },
+      { name: 'unit number Format (C1-C99)', fn: () => expect(/^C\d+$/.test('C1')).toBe(true) && expect(/^C\d+$/.test('C24')).toBe(true) },
       { name: 'Payment Amount Format', fn: () => expect(/^\d+\.\d{2}$/.test('50.00')).toBe(true) },
       { name: 'Malaysian IC Format', fn: () => expect(/^\d{6}-\d{2}-\d{4}$/.test('950101-01-1234')).toBe(true) },
       

@@ -14,7 +14,7 @@ export class MemTokenStore implements ITokenStorage {
     const token: GuestToken = {
       id: randomUUID(),
       token: insertToken.token,
-      capsuleNumber: insertToken.capsuleNumber || null,
+      unitNumber: insertToken.unitNumber || null,
       autoAssign: insertToken.autoAssign || false,
       guestName: insertToken.guestName || null,
       phoneNumber: insertToken.phoneNumber || null,
@@ -61,7 +61,7 @@ export class MemTokenStore implements ITokenStorage {
     return undefined;
   }
 
-  async updateGuestTokenCapsule(tokenId: string, capsuleNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined> {
+  async updateGuestTokenUnit(tokenId: string, unitNumber: string | null, autoAssign: boolean): Promise<GuestToken | undefined> {
     let tokenKey: string | null = null;
     let foundToken: GuestToken | undefined = undefined;
 
@@ -75,7 +75,7 @@ export class MemTokenStore implements ITokenStorage {
     if (foundToken && tokenKey) {
       const updatedToken: GuestToken = {
         ...(foundToken as GuestToken),
-        capsuleNumber: capsuleNumber,
+        unitNumber: unitNumber,
         autoAssign: autoAssign
       };
       this.guestTokens.set(tokenKey, updatedToken);

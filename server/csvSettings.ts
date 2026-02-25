@@ -55,15 +55,15 @@ export class CsvSettingsManager {
   private createDefaultSettings(): void {
     console.log('📝 Creating default settings CSV file...');
     const defaultSettings: CsvSetting[] = [
-      { key: 'accommodationType', value: 'capsule', description: 'Type of accommodation (capsule/room/house)', updated_by: 'system', updated_at: new Date().toISOString() },
+      { key: 'accommodationType', value: 'unit', description: 'Type of accommodation (capsule/room/house)', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideIntro', value: 'Welcome to Pelangi Capsule Hostel! Enjoy private sleeping pods with fresh linens, personal light, and power socket. Shared bathrooms are cleaned multiple times daily. Quiet hours are from 10:00 PM to 7:00 AM. Reception is available from 8:00 AM–10:00 PM; night staff is on call.', description: 'Guest guide introduction', updated_by: 'system', updated_at: new Date().toISOString() },
-      { key: 'guideAddress', value: '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\\nPhone: +60 12-345 6789\\nEmail: info@pelangicapsule.com', description: 'Hostel address and contact info', updated_by: 'system', updated_at: new Date().toISOString() },
+      { key: 'guideAddress', value: 'Business Address\nPhone: +60 12-345 6789\nEmail: info@example.com', description: 'Hostel address and contact info', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideWifiName', value: 'Pelangi_Guest', description: 'WiFi network name', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideWifiPassword', value: 'Pelangi2024!', description: 'WiFi password', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideCheckin', value: 'Check-In Time: 2:00 PM\\nCheck-Out Time: 12:00 PM\\n\\nHow to check in:\\n1) Present a valid ID/passport at the front desk.\\n2) If you have a self-check-in token, show it to staff.\\n3) Early check-in / late check-out may be available upon request.', description: 'Check-in instructions', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideOther', value: 'House Rules:\\n- No smoking inside the building.\\n- Keep noise to a minimum, especially during quiet hours.\\n- Food is allowed in the pantry only.\\n\\nAmenities:\\n- Free high-speed Wi‑Fi throughout the hostel.\\n- Pantry with kettle, microwave, and fridge (label your items).\\n- Laundry service (self-service machines on Level 2).', description: 'House rules and amenities', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideFaq', value: 'Q: What time are check-in/check-out?\\nA: Check-in 2:00 PM, Check-out 12:00 PM.\\n\\nQ: Where can I store luggage?\\nA: Free luggage storage at reception before check-in or after check-out.\\n\\nQ: Are towels provided?\\nA: Yes, one towel per guest per stay.\\n\\nQ: Do you have parking?\\nA: Limited street parking nearby; public car park is 3 minutes walk.', description: 'Frequently asked questions', updated_by: 'system', updated_at: new Date().toISOString() },
-      { key: 'guideImportantReminders', value: '• 🚫 Do not leave your card inside the capsule and close the door\\n• 🚭 No Smoking in hostel area\\n• 🎥 CCTV monitored - Violation (e.g., smoking) may result in RM300 penalty', description: 'Important reminders for guests', updated_by: 'system', updated_at: new Date().toISOString() },
+      { key: 'guideImportantReminders', value: '• 🚫 Do not leave your card inside the unit and close the door\\n• 🚭 No Smoking in hostel area\\n• 🎥 CCTV monitored - Violation (e.g., smoking) may result in RM300 penalty', description: 'Important reminders for guests', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideHostelPhotosUrl', value: '', description: 'Hostel photos URL', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideGoogleMapsUrl', value: '', description: 'Google Maps URL', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideCheckinVideoUrl', value: '', description: 'Check-in video URL', updated_by: 'system', updated_at: new Date().toISOString() },
@@ -76,7 +76,7 @@ export class CsvSettingsManager {
       { key: 'guideShowCheckin', value: 'true', description: 'Show check-in guidance', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowOther', value: 'true', description: 'Show other guidance', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowFaq', value: 'true', description: 'Show FAQ', updated_by: 'system', updated_at: new Date().toISOString() },
-      { key: 'guideShowCapsuleIssues', value: 'false', description: 'Show capsule issues', updated_by: 'system', updated_at: new Date().toISOString() },
+      { key: 'guideShowUnitIssues', value: 'false', description: 'Show unit issues', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowSelfCheckinMessage', value: 'true', description: 'Show self check-in message', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowHostelPhotos', value: 'true', description: 'Show hostel photos link', updated_by: 'system', updated_at: new Date().toISOString() },
       { key: 'guideShowGoogleMaps', value: 'true', description: 'Show Google Maps link', updated_by: 'system', updated_at: new Date().toISOString() },

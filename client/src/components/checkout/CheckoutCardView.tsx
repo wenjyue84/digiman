@@ -42,7 +42,7 @@ export function CheckoutCardView({
                   </div>
                 </div>
                 <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white`}>
-                  {guest.capsuleNumber}
+                  {guest.unitNumber}
                 </Badge>
               </div>
 

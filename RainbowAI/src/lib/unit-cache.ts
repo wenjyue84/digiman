@@ -1,7 +1,7 @@
 /**
- * Capsule Cache (US-010)
+ * Unit Cache (US-010, US-011)
  *
- * Fetches capsule list from the main dashboard API (port 5000),
+ * Fetches unit list from the main dashboard API (port 5000),
  * caches with a 5-minute TTL, and merges with custom user entries.
  * Gracefully handles port 5000 being unavailable.
  */
@@ -14,14 +14,14 @@ const CUSTOM_UNITS_FILE = join(process.cwd(), 'data', 'custom-units.json');
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const DASHBOARD_API = process.env.DASHBOARD_API_URL || 'http://localhost:5000';
 
-interface CapsuleEntry {
+interface UnitEntry {
   number: string;
   section?: string;
   isAvailable?: boolean;
 }
 
 interface CacheState {
-  capsules: CapsuleEntry[];
+  units: UnitEntry[];
   fetchedAt: number;
 }
 
@@ -29,9 +29,9 @@ interface CustomUnitsData {
   units: string[];
 }
 
-let _cache: CacheState = { capsules: [], fetchedAt: 0 };
+let _cache: CacheState = { units: [], fetchedAt: 0 };
 
-// ─── Custom Units (disk-backed) ─────────────────────────────────────
+// --- Custom Units (disk-backed) ---
 
 function loadCustomUnits(): CustomUnitsData {
   try {
@@ -67,29 +67,29 @@ export function addCustomUnit(unit: string): string[] {
   return data.units;
 }
 
-// ─── API Cache ──────────────────────────────────────────────────────
+// --- API Cache ---
 
-async function fetchCapsules(): Promise<CapsuleEntry[]> {
+async function fetchUnits(): Promise<UnitEntry[]> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
 
-    const resp = await fetch(`${DASHBOARD_API}/api/capsules`, {
+    const resp = await fetch(`${DASHBOARD_API}/api/units`, {
       signal: controller.signal,
     });
     clearTimeout(timeout);
 
     if (!resp.ok) {
-      console.warn(`[CapsuleCache] Dashboard API returned ${resp.status}`);
+      console.warn(`[UnitCache] Dashboard API returned ${resp.status}`);
       return [];
     }
 
-    const data = await resp.json() as CapsuleEntry[];
+    const data = await resp.json() as UnitEntry[];
     return Array.isArray(data) ? data : [];
   } catch (err: any) {
-    // ECONNREFUSED, timeout, etc — graceful degradation
+    // ECONNREFUSED, timeout, etc -- graceful degradation
     if (err?.name !== 'AbortError') {
-      console.warn('[CapsuleCache] Dashboard API unavailable:', err?.code || err?.message);
+      console.warn('[UnitCache] Dashboard API unavailable:', err?.code || err?.message);
     }
     return [];
   }
@@ -97,23 +97,23 @@ async function fetchCapsules(): Promise<CapsuleEntry[]> {
 
 async function refreshIfStale(): Promise<void> {
   const age = Date.now() - _cache.fetchedAt;
-  if (age < CACHE_TTL_MS && _cache.capsules.length > 0) return;
+  if (age < CACHE_TTL_MS && _cache.units.length > 0) return;
 
-  const fresh = await fetchCapsules();
+  const fresh = await fetchUnits();
   if (fresh.length > 0) {
-    _cache = { capsules: fresh, fetchedAt: Date.now() };
+    _cache = { units: fresh, fetchedAt: Date.now() };
   }
   // If fetch failed but we have stale cache, keep using it
 }
 
-// ─── Public API ─────────────────────────────────────────────────────
+// --- Public API ---
 
-/** Get merged list of capsule numbers + custom units. */
-export async function getCapsuleUnits(): Promise<string[]> {
+/** Get merged list of unit numbers + custom units. */
+export async function getUnitList(): Promise<string[]> {
   await refreshIfStale();
 
-  // Extract capsule numbers from API data
-  const apiUnits = _cache.capsules.map(c => c.number);
+  // Extract unit numbers from API data
+  const apiUnits = _cache.units.map(c => c.number);
 
   // Merge with custom units
   const custom = loadCustomUnits().units;
@@ -130,18 +130,24 @@ export async function getCapsuleUnits(): Promise<string[]> {
   );
 }
 
+// Backward-compat alias
+export const getCapsuleUnits = getUnitList;
+
 /** Force refresh the cache (called from manual trigger). */
 export async function forceRefresh(): Promise<string[]> {
-  const fresh = await fetchCapsules();
+  const fresh = await fetchUnits();
   if (fresh.length > 0) {
-    _cache = { capsules: fresh, fetchedAt: Date.now() };
+    _cache = { units: fresh, fetchedAt: Date.now() };
   }
-  return getCapsuleUnits();
+  return getUnitList();
 }
 
 /** Warm up cache on server start. */
-export function initCapsuleCache(): void {
-  // Fire and forget — no blocking
+export function initUnitCache(): void {
+  // Fire and forget -- no blocking
   refreshIfStale().catch(() => {});
-  console.log('[CapsuleCache] Initialized (5-min TTL)');
+  console.log('[UnitCache] Initialized (5-min TTL)');
 }
+
+// Backward-compat alias
+export const initCapsuleCache = initUnitCache;

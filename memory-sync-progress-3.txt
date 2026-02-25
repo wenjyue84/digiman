@@ -1,0 +1,79 @@
+# Memory Sync Round 3 Progress Log - Thu, Feb 20, 2026
+Extracting facts from Notion workspace into Mem0 Cloud — Round 3 (Business Operations, Travel & Financial)
+Starting Mem0 count: 975
+
+## Patterns
+- Use ToolSearch to load notion-search and notion-fetch before each iteration
+- Push facts via python3 urllib.request with 0.3s sleep between calls
+- Search Mem0 first to check for existing facts before pushing
+- Mem0 deduplicates automatically — overlapping facts get merged
+- Always add encoding='utf-8' to file operations on Windows
+- Use ssl.create_default_context() for HTTPS calls
+- PRD path: C:/Users/Jyue/Documents/1-projects/Projects/PelangiManager-Zeabur/memory-sync-prd-3.json
+
+---
+
+## Wave 1 — Travel, Palm Oil, Loans, Education (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS3-001 | Travel History — Chronological Trace | 15 | 6+ trip pages (Batam, Manila, KK, Tokyo, Jakarta, Thailand) |
+| MS3-002 | Palm Oil Business — Inherited Operations | 12 | Palm Oil Hub, Operations Index, seasonal data |
+| MS3-003 | Loan Portfolio — All Property & Vehicle Loans | 12 | Loan account DB, individual property loans |
+| MS3-004 | Jay's Education and Career Timeline | 10 | NCC diploma, I-Skill legacy, EPSON career, milestones |
+**Subtotal: 49 facts**
+
+## Wave 2 — SSM Companies, Financial Plan, Int'l Friends, Side Projects (4 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS3-005 | Registered Companies — SSM Active List | 12 | 10 pages (5 active companies, db companies, SSM index) |
+| MS3-006 | Financial Plan and Debt Strategy | 9 | Financial Plan, Finance Ops Index, Income Hub, tax return |
+| MS3-007 | International Friends and Encounters | 8 | Int'l Friends Summary, Do Thi Linh profile, Langkawi trip |
+| MS3-008 | Side Projects — Niaga.club & PetiKembara | 8 | Niaga.club proposal, PetiKembara plan, TikTok links |
+**Subtotal: 37 facts**
+
+## Wave 3 — Grant Projects, AWS Certification (2 agents)
+| Story | Title | Facts Pushed | Notion Pages |
+|-------|-------|-------------|--------------|
+| MS3-009 | GPM/GDPM Grant Projects | 8 | GDPM program, Hair Spring Beauty, Elly Trinh, Prisma GDPM |
+| MS3-010 | AWS Certification and Tech Development | 7 | CLF-C02 prep, APN registration, Sales Accreditation, Kimi research |
+**Subtotal: 15 facts**
+
+---
+
+## Round 3 Final Summary
+
+| Metric | Value |
+|--------|-------|
+| Stories completed | 10/10 |
+| Total raw facts pushed | 101 |
+| Starting Mem0 count | 975 |
+| Final Mem0 count | 1,127 |
+| Net new memories | +152 (Mem0 splits some multi-part facts) |
+| Waves executed | 3 (4+4+2 agents) |
+| PRD race conditions fixed | 1 (MS3-005) |
+
+### Domain Coverage Added in Round 3
+1. **Travel** — 6 countries, 10+ trips (2015–2025)
+2. **Palm Oil** — inherited from father/uncle, Guan Soon Lee buyer, seasonal cycle
+3. **Loans** — 5 properties + 1 vehicle, ~RM5,965/month total commitments
+4. **Education** — SRJK(C) Senai → Campbell Univ → NCC/Sunderland → EPSON → Delmarco → I-Skill → Prisma
+5. **SSM Companies** — 5 active (Kafe Kenangan Makan, Apam Balik Jalil, Prisma, Pelangi Capsule, Southern Homestay)
+6. **Financial Plan** — RM31,900/month income, 9.7% DSR, 7 strategic pillars, 7 properties
+7. **International Friends** — 7 friends (Michelle, Malin, Merel, Mirei, Hibiki, Yui, Liz) + Do Thi Linh
+8. **Side Projects** — Niaga.club (B2B, archived) + PetiKembara (luggage TikTok, archived)
+9. **Grant Programs** — GDPM/GPM, Hair Spring Beauty (RM30K), Elly Trinh (RM38K), Niko as referral partner
+10. **AWS Certification** — APN Consulting Partner, CLF-C02 prep, Select Tier target, team roster
+
+### Cumulative Totals Across All 3 Rounds
+| Round | Stories | Raw Facts | Mem0 Start | Mem0 End | Net New |
+|-------|---------|-----------|------------|----------|---------|
+| Round 1 | 18 | ~180 | ~605 | ~819 | ~214 |
+| Round 2 | 12 | ~120 | 819 | 975 | 156 |
+| Round 3 | 10 | 101 | 975 | 1,127 | 152 |
+| **Total** | **40** | **~401** | **605** | **1,127** | **522** |
+
+### Technical Notes
+- Mem0 Cloud now processes all POST /v1/memories/ asynchronously (returns PENDING)
+- Using `"infer": false` forces synchronous direct memory addition for immediate confirmation
+- PRD race condition: When multiple agents write to same PRD file, later writes can revert earlier ones — always reconcile post-wave
+

@@ -22,7 +22,7 @@ export function useBulkCheckout() {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/available"] });
 
       // Show push notification for bulk check-out
       pushNotificationManager.showLocalNotification(

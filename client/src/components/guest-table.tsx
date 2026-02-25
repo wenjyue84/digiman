@@ -41,10 +41,10 @@ export default function GuestTable() {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
       queryClient.invalidateQueries({ queryKey: ["/api/occupancy"] });
       queryClient.invalidateQueries({ queryKey: ["/api/guests/history"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/available"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/available"] });
       // Invalidate cleaning status queries to update the cleaning list
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/cleaning-status/to_be_cleaned"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/capsules/cleaning-status/cleaned"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/cleaning-status/to_be_cleaned"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units/cleaning-status/cleaned"] });
       toast({
         title: "Success",
         description: "Guest checked out successfully",
@@ -131,7 +131,7 @@ export default function GuestTable() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capsule</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-in Time</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -160,7 +160,7 @@ export default function GuestTable() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">
-                        {guest.capsuleNumber}
+                        {guest.unitNumber}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -205,7 +205,7 @@ export default function GuestTable() {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Check out {guest.name} and free their capsule</p>
+                            <p>Check out {guest.name} and free their unit</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

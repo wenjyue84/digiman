@@ -11,7 +11,7 @@ import {
   IC_RAW_REGEX,
   PASSPORT_REGEX_LENIENT,
   ID_NUMBER_REGEX,
-  CAPSULE_NUMBER_REGEX,
+  UNIT_NUMBER_REGEX,
   PAYMENT_AMOUNT_REGEX,
   DATE_REGEX,
   NATIONALITY_REGEX,
@@ -43,9 +43,9 @@ export const insertGuestSchema = createInsertSchema(guests).omit({
     .max(100, "Guest name too long. Please use 100 characters or fewer")
     .regex(GUEST_NAME_REGEX, "Guest name can only contain letters, numbers, spaces, periods (.), apostrophes ('), and hyphens (-). Special symbols are not allowed")
     .transform(val => val.trim()),
-  capsuleNumber: z.string()
-    .min(1, "Please select a capsule for the guest")
-    .regex(CAPSULE_NUMBER_REGEX, "Invalid capsule format. Please use format like C1, C2, or C24 (C followed by numbers)"),
+  unitNumber: z.string()
+    .min(1, "Please select a unit for the guest")
+    .regex(UNIT_NUMBER_REGEX, "Invalid unit format. Please use alphanumeric format (e.g., C1, Studio-A, 1BR-1)"),
   paymentAmount: z.string()
     .regex(PAYMENT_AMOUNT_REGEX, "Invalid amount format. Please enter numbers only (e.g., 50.00 or 150)")
     .transform(val => val || "0")
@@ -127,9 +127,9 @@ export const updateGuestSchema = z.object({
     .regex(GUEST_NAME_REGEX, "Guest name can only contain letters, numbers, spaces, periods (.), apostrophes ('), and hyphens (-). Special symbols are not allowed")
     .transform(val => val.trim())
     .optional(),
-  capsuleNumber: z.string()
-    .min(1, "Please select a capsule for the guest")
-    .regex(CAPSULE_NUMBER_REGEX, "Invalid capsule format. Please use format like C1, C2, or C24 (C followed by numbers)")
+  unitNumber: z.string()
+    .min(1, "Please select a unit for the guest")
+    .regex(UNIT_NUMBER_REGEX, "Invalid unit format. Please use alphanumeric format (e.g., C1, Studio-A, 1BR-1)")
     .optional(),
   paymentAmount: z.string()
     .regex(PAYMENT_AMOUNT_REGEX, "Invalid amount format. Please enter numbers only (e.g., 50.00 or 150)")

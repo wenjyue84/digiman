@@ -63,7 +63,7 @@ export const DesktopRow = memo(function DesktopRow({ index, style, data }: ListC
             >
               <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
                 <Badge variant="outline" className="bg-blue-600 text-white border-blue-600">
-                  {guest.capsuleNumber}
+                  {guest.unitNumber}
                 </Badge>
               </td>
               <td className="px-2 py-3 whitespace-nowrap">
@@ -177,7 +177,7 @@ export const DesktopRow = memo(function DesktopRow({ index, style, data }: ListC
               <td className="px-2 py-3 whitespace-nowrap sticky left-0 bg-white z-10">
                 <div className="flex items-center gap-1">
                   <Badge variant="outline" className="bg-orange-100 text-orange-600 border-orange-300">
-                    {pendingData.capsuleNumber}
+                    {pendingData.unitNumber}
                   </Badge>
                   <Button
                     variant="ghost"

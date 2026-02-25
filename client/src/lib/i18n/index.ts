@@ -25,7 +25,7 @@ export interface Translations {
   // Header and welcome
   welcomeTitle: string;
   completeCheckIn: string;
-  assignedCapsule: string;
+  assignedUnit: string;
   prefilledInfo: string;
 
   // Personal Information Section
@@ -77,7 +77,7 @@ export interface Translations {
   checkInTime: string;
   checkOutTime: string;
   doorPassword: string;
-  capsuleNumber: string;
+  unitNumber: string;
   accessCard: string;
   importantReminders: string;
   noCardWarning: string;
@@ -166,7 +166,7 @@ export interface Translations {
   // Common additional notes quick-select
   commonNotesTitle: string;
   commonNoteLateArrival: string;
-  commonNoteBottomCapsule: string;
+  commonNoteBottomUnit: string;
   commonNoteArriveEarly: string;
   commonNoteQuietArea: string;
   commonNoteExtraBedding: string;

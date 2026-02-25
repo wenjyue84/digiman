@@ -7,6 +7,7 @@ import { CheckCircle } from "lucide-react";
 import { GuestGuideProvider, useGuestGuide } from "@/lib/contexts/guest-guide-context";
 import { getContentWithFallback } from "@/lib/utils/guest-guide-utils";
 import GuestSuccessPageTemplate from "@/components/guest-success/GuestSuccessPageTemplate";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 
 // Lazy load the success screen component
 const LazySuccessScreen = React.lazy(() => import("@/components/guest-checkin/SuccessScreen"));
@@ -20,6 +21,7 @@ const EnhancedGuestSuccessPage: React.FC<{
   settings: any;
 }> = ({ guestInfo, settings }) => {
   const { settings: contextSettings, isLoading: contextLoading, error } = useGuestGuide();
+  const business = useBusinessConfig();
   
   // Use context settings if available (same as preview), fallback to API settings
   const useContextSettings = !contextLoading && !error && contextSettings?.content;
@@ -39,28 +41,28 @@ const EnhancedGuestSuccessPage: React.FC<{
 
   const handleShare = () => {
     const guestName = guestInfo?.name || 'Guest';
-    const capsule = guestInfo?.capsuleNumber || '';
+    const unit = guestInfo?.unitNumber || '';
     const contentToUse = useContextSettings ? contextSettings.content : settings;
     const checkinTime = getContentWithFallback(contentToUse, 'checkinTime', '3:00 PM');
     const checkoutTime = getContentWithFallback(contentToUse, 'checkoutTime', '12:00 PM');
     const doorPassword = getContentWithFallback(contentToUse, 'doorPassword', '1270#');
     const address = getContentWithFallback(contentToUse, 'address', '26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia');
 
-    const shareText = `🏨 Pelangi Capsule Hostel - My Stay Information
+    const shareText = `🏨 ${business.name} - My Stay Information
 
 Name: ${guestName}
-Capsule: ${capsule}
+Unit: ${unit}
 Arrival: ${checkinTime}
 Departure: ${checkoutTime}
 Door Password: ${doorPassword}
 
 Address: ${address?.split('\n')[0] || address}
 
-Welcome to Pelangi Capsule Hostel! 🌈`;
+Welcome to ${business.name}! 🌈`;
 
     if (navigator.share) {
       navigator.share({
-        title: 'Pelangi Capsule Hostel - My Stay Information',
+        title: `${business.name} - My Stay Information`,
         text: shareText,
       }).catch(() => {
         navigator.clipboard.writeText(shareText);
@@ -90,14 +92,14 @@ Welcome to Pelangi Capsule Hostel! 🌈`;
         viewMode="desktop"
         isPreview={false}
         guestInfo={{
-          capsuleNumber: guestInfo.capsuleNumber,
+          unitNumber: guestInfo.unitNumber,
           guestName: guestInfo.name,
           phoneNumber: guestInfo.phoneNumber,
           email: guestInfo.email,
           expectedCheckoutDate: guestInfo.expectedCheckoutDate,
         }}
-        assignedCapsuleNumber={guestInfo.capsuleNumber}
-        capsuleIssues={[]}
+        assignedunitNumber={guestInfo.unitNumber}
+        unitIssues={[]}
         // Use the SAME approach as preview: pass settings=null when using context
         settings={useContextSettings ? null : settings}
         // Pass content and visibility directly from context (same as preview)
@@ -140,7 +142,7 @@ export default function GuestSuccessPage() {
     guideAddress?: string;
     guideWifiName?: string;
     guideWifiPassword?: string;
-    guideShowCapsuleIssues?: boolean;
+    guideShowunitIssues?: boolean;
   }>({
     queryKey: ["/api/settings"],
     enabled: isValidAccess,

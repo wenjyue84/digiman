@@ -37,7 +37,7 @@ export function CheckoutListView({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <Badge className={`${isOverdue ? 'bg-red-600' : isToday ? 'bg-orange-600' : 'bg-blue-600'} text-white text-xs`}>
-                    {guest.capsuleNumber}
+                    {guest.unitNumber}
                   </Badge>
                   <span className="font-medium text-sm truncate">{guest.name}</span>
                 </div>

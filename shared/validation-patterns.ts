@@ -37,11 +37,16 @@ export const PASSPORT_REGEX_LENIENT = /^[A-Za-z0-9]+$/;
 /** ID/Passport general: letters, digits, hyphens (case-insensitive) */
 export const ID_NUMBER_REGEX = /^[A-Z0-9\-]+$/i;
 
-// ─── Capsule ────────────────────────────────────────────────────────
-/** Capsule number: C followed by one or more digits (e.g., C1, C24) */
-export const CAPSULE_NUMBER_REGEX = /^C\d+$/;
-/** Capsule number format for settings: letter + 2 digits (e.g., A01, B02) */
-export const CAPSULE_FORMAT_REGEX = /^[A-Z]\d+$/;
+// ─── Unit / Accommodation ───────────────────────────────────────────
+/** Unit number: alphanumeric with optional hyphens (e.g., C1, C24, Studio-A, 1BR-1) */
+export const UNIT_NUMBER_REGEX = /^[A-Za-z0-9][A-Za-z0-9\-]*$/;
+/** Unit number format for settings: letter + digits (e.g., A01, B02) */
+export const UNIT_FORMAT_REGEX = /^[A-Z][A-Za-z0-9\-]*$/;
+
+/** @deprecated Use UNIT_NUMBER_REGEX */
+export const CAPSULE_NUMBER_REGEX = UNIT_NUMBER_REGEX;
+/** @deprecated Use UNIT_FORMAT_REGEX */
+export const CAPSULE_FORMAT_REGEX = UNIT_FORMAT_REGEX;
 
 // ─── Payment ────────────────────────────────────────────────────────
 /** Payment amount: digits with optional decimal up to 2 places */

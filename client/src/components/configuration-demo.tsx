@@ -2,6 +2,7 @@ import { useConfig, useQueryRefreshInterval, useCacheTime, useAppInfo } from "@/
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Database, RefreshCw, Building2 } from "lucide-react";
+import { useAccommodationLabels } from "@/hooks/useAccommodationLabels";
 
 /**
  * Demonstration component showing the configuration system in action
@@ -12,6 +13,7 @@ export function ConfigurationDemo() {
   const refreshInterval = useQueryRefreshInterval();
   const cacheTime = useCacheTime();
   const { hostelName } = useAppInfo();
+  const labels = useAccommodationLabels();
 
   if (isLoading) {
     return (
@@ -71,7 +73,7 @@ export function ConfigurationDemo() {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">
-                {config.totalCapsules} Capsules
+                {config.totalUnits} {labels.plural}
               </Badge>
             </div>
           </div>

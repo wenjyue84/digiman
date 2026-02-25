@@ -6,8 +6,8 @@ import { paginate } from "./paginate";
 /**
  * Database guest queries — single-entity operations only.
  *
- * Cross-entity methods (checkoutGuest, getCapsuleOccupancy, getAvailableCapsules,
- * getUncleanedAvailableCapsules) are coordinated by the DatabaseStorage facade.
+ * Cross-entity methods (checkoutGuest, getUnitOccupancy, getAvailableUnits,
+ * getUncleanedAvailableUnits) are coordinated by the DatabaseStorage facade.
  */
 export class DbGuestQueries {
   constructor(private readonly db: any) {}
@@ -45,23 +45,23 @@ export class DbGuestQueries {
     pagination?: PaginationParams,
     sortBy: string = 'checkoutTime',
     sortOrder: 'asc' | 'desc' = 'desc',
-    filters?: { search?: string; nationality?: string; capsule?: string }
+    filters?: { search?: string; nationality?: string; unit?: string }
   ): Promise<PaginatedResponse<Guest>> {
-    // Helper for natural capsule number sorting (C1, C2, ..., C10, C11 instead of C1, C10, C11, C2)
+    // Helper for natural unit number sorting (C1, C2, ..., C10, C11 instead of C1, C10, C11, C2)
     // Handles both formats: "C1", "C11" and "C-01", "A-02"
-    const parseCapNum = (cap: string) => {
+    const parseUnitNum = (num: string) => {
       // Match formats like "C1", "C11", "C-01", "A-02", "R3"
-      const match = cap?.match(/^([A-Za-z]+)-?(\d+)$/);
+      const match = num?.match(/^([A-Za-z]+)-?(\d+)$/);
       if (match) {
         return { prefix: match[1].toUpperCase(), num: parseInt(match[2], 10) };
       }
-      return { prefix: cap || '', num: 0 };
+      return { prefix: num || '', num: 0 };
     };
 
-    const sortCapsuleNumbers = (data: Guest[]) => {
+    const sortUnitNumbers = (data: Guest[]) => {
       return data.sort((a, b) => {
-        const aParsed = parseCapNum(a.capsuleNumber);
-        const bParsed = parseCapNum(b.capsuleNumber);
+        const aParsed = parseUnitNum(a.unitNumber);
+        const bParsed = parseUnitNum(b.unitNumber);
 
         let comparison = 0;
         if (aParsed.prefix !== bParsed.prefix) {
@@ -74,7 +74,7 @@ export class DbGuestQueries {
     };
 
     const orderColumn = sortBy === 'name' ? guests.name :
-                       sortBy === 'capsuleNumber' ? guests.capsuleNumber :
+                       sortBy === 'unitNumber' ? guests.unitNumber :
                        sortBy === 'checkinTime' ? guests.checkinTime :
                        sortBy === 'checkoutTime' ? guests.checkoutTime :
                        guests.checkoutTime;
@@ -102,17 +102,17 @@ export class DbGuestQueries {
       conditions.push(eq(guests.nationality, filters.nationality));
     }
 
-    // Add capsule filter (exact match)
-    if (filters?.capsule) {
-      conditions.push(eq(guests.capsuleNumber, filters.capsule));
+    // Add unit filter (exact match)
+    if (filters?.unit) {
+      conditions.push(eq(guests.unitNumber, filters.unit));
     }
 
-    // For capsuleNumber sorting, we need to fetch all and sort in memory for natural order
-    if (sortBy === 'capsuleNumber') {
+    // For unitNumber sorting, we need to fetch all and sort in memory for natural order
+    if (sortBy === 'unitNumber') {
       const allGuests = await this.db.select().from(guests)
         .where(and(...conditions));
 
-      const sortedGuests = sortCapsuleNumbers(allGuests);
+      const sortedGuests = sortUnitNumbers(allGuests);
 
       if (!pagination) {
         return paginate(sortedGuests, pagination);
@@ -204,10 +204,10 @@ export class DbGuestQueries {
     return result[0];
   }
 
-  async getGuestByCapsuleAndName(capsuleNumber: string, name: string): Promise<Guest | undefined> {
+  async getGuestByUnitAndName(unitNumber: string, name: string): Promise<Guest | undefined> {
     const result = await this.db.select().from(guests).where(
       and(
-        eq(guests.capsuleNumber, capsuleNumber),
+        eq(guests.unitNumber, unitNumber),
         eq(guests.name, name),
         eq(guests.isCheckedIn, true)
       )
@@ -220,10 +220,10 @@ export class DbGuestQueries {
     return result[0];
   }
 
-  async getGuestsByCapsule(capsuleNumber: string): Promise<Guest[]> {
+  async getGuestsByUnit(unitNumber: string): Promise<Guest[]> {
     return await this.db.select().from(guests).where(
       and(
-        eq(guests.capsuleNumber, capsuleNumber),
+        eq(guests.unitNumber, unitNumber),
         eq(guests.isCheckedIn, true)
       )
     );

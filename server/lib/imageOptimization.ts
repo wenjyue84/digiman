@@ -116,7 +116,13 @@ export async function optimizeImage(
 
   let optimizedBuffer: Buffer;
   let imageInfo: any; // Sharp metadata type
-  let compressionInfo = {
+  let compressionInfo: {
+    originalFormat: string;
+    optimizedFormat: string;
+    resized: boolean;
+    optimized?: boolean;
+    originalDimensions?: string;
+  } = {
     originalFormat: originalMimetype,
     optimizedFormat: `image/${optimizationConfig.outputFormat}`,
     resized: false

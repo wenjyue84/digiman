@@ -18,23 +18,23 @@ const mainNavigationItems = [
     icon: UserPlus, 
     requireAuth: true, 
     color: "text-green-600 bg-green-50",
-    tooltip: "Register new guests and assign capsules"
+    tooltip: "Register new guests and assign units"
   },
-  { 
-    path: "/check-out", 
-    label: "Check Out", 
-    icon: UserX, 
-    requireAuth: true, 
+  {
+    path: "/check-out",
+    label: "Check Out",
+    icon: UserX,
+    requireAuth: true,
     color: "text-red-600 bg-red-50",
-    tooltip: "Process guest departures and free capsules"
+    tooltip: "Process guest departures and free units"
   },
-  { 
-    path: "/cleaning", 
-    label: "Clean", 
-    icon: ListChecks, 
-    requireAuth: true, 
+  {
+    path: "/cleaning",
+    label: "Clean",
+    icon: ListChecks,
+    requireAuth: true,
     color: "text-emerald-600 bg-emerald-50",
-    tooltip: "Manage capsule cleaning and maintenance"
+    tooltip: "Manage unit cleaning and maintenance"
   },
 ];
 

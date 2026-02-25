@@ -43,4 +43,4 @@ export { MemStorage, DatabaseStorage, createStorage } from "./Storage/index";
 export { storage } from "./Storage/index";
 
 // Re-export the IStorage interface and domain sub-interfaces for TypeScript type checking
-export type { IStorage, IUserStorage, ISessionStorage, IGuestStorage, ICapsuleStorage, IProblemStorage, ITokenStorage, INotificationStorage, ISettingsStorage, IExpenseStorage } from "./Storage/IStorage";
+export type { IStorage, IUserStorage, ISessionStorage, IGuestStorage, IUnitStorage, IProblemStorage, ITokenStorage, INotificationStorage, ISettingsStorage, IExpenseStorage } from "./Storage/IStorage";

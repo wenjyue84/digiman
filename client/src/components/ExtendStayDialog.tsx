@@ -230,7 +230,7 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
     console.log('Extending stay with data:', {
       guestId: guest.id,
       guestName: guest.name,
-      capsuleNumber: guest.capsuleNumber,
+      unitNumber: guest.unitNumber,
       currentCheckout: guest.expectedCheckoutDate,
       newCheckout: computedNewCheckout,
       days,
@@ -273,7 +273,7 @@ export default function ExtendStayDialog({ guest, open, onOpenChange }: ExtendSt
             Extend Stay
           </DialogTitle>
           <DialogDescription>
-            {guest ? `Extend ${guest.name}'s stay in ${guest.capsuleNumber}` : ''}
+            {guest ? `Extend ${guest.name}'s stay in ${guest.unitNumber}` : ''}
           </DialogDescription>
         </DialogHeader>
 

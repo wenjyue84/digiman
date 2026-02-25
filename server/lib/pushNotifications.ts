@@ -208,16 +208,16 @@ export const createNotificationPayload = {
   /**
    * Guest check-in notification
    */
-  guestCheckIn: (guestName: string, capsuleNumber: string): NotificationPayload => ({
+  guestCheckIn: (guestName: string, unitNumber: string): NotificationPayload => ({
     title: '✅ New Guest Check-in',
-    body: `${guestName} has checked into ${capsuleNumber}`,
+    body: `${guestName} has checked into ${unitNumber}`,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: 'guest-checkin',
     data: {
       type: 'guest-checkin',
       guestName,
-      capsuleNumber,
+      unitNumber,
       url: '/dashboard',
     },
     actions: [
@@ -233,16 +233,16 @@ export const createNotificationPayload = {
   /**
    * Checkout reminder notification
    */
-  checkoutReminder: (guestName: string, capsuleNumber: string): NotificationPayload => ({
+  checkoutReminder: (guestName: string, unitNumber: string): NotificationPayload => ({
     title: '⏰ Checkout Reminder',
-    body: `${guestName} in ${capsuleNumber} is due for checkout today`,
+    body: `${guestName} in ${unitNumber} is due for checkout today`,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: 'checkout-reminder',
     data: {
       type: 'checkout-reminder',
       guestName,
-      capsuleNumber,
+      unitNumber,
       url: '/dashboard',
     },
     actions: [
@@ -262,16 +262,16 @@ export const createNotificationPayload = {
   /**
    * Overdue checkout notification
    */
-  overdueCheckout: (guestName: string, capsuleNumber: string, daysPast: number): NotificationPayload => ({
+  overdueCheckout: (guestName: string, unitNumber: string, daysPast: number): NotificationPayload => ({
     title: '🚨 Overdue Checkout',
-    body: `${guestName} in ${capsuleNumber} is ${daysPast} day(s) overdue`,
+    body: `${guestName} in ${unitNumber} is ${daysPast} day(s) overdue`,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: 'overdue-checkout',
     data: {
       type: 'overdue-checkout',
       guestName,
-      capsuleNumber,
+      unitNumber,
       daysPast,
       url: '/dashboard',
     },
@@ -288,15 +288,15 @@ export const createNotificationPayload = {
   /**
    * Maintenance request notification
    */
-  maintenanceRequest: (capsuleNumber: string, issue: string): NotificationPayload => ({
+  maintenanceRequest: (unitNumber: string, issue: string): NotificationPayload => ({
     title: '🔧 Maintenance Request',
-    body: `${capsuleNumber}: ${issue}`,
+    body: `${unitNumber}: ${issue}`,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: 'maintenance',
     data: {
       type: 'maintenance',
-      capsuleNumber,
+      unitNumber,
       issue,
       url: '/dashboard',
     },

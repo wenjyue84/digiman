@@ -1,0 +1,228 @@
+{
+  "productName": "Memory Sync Round 3 — Business Operations, Travel & Financial Domains",
+  "branchName": "main",
+  "overview": "Extract facts from Jay's Notion workspace covering palm oil business, travel history, loan portfolio, education/career, registered companies, financial planning, international contacts, side projects, and grant programs. Push atomic memories to Mem0 Cloud (api.mem0.ai). No code changes — purely API operations.",
+  "goals": [
+    "Capture palm oil inheritance business operations and seasonal patterns",
+    "Document Jay's travel history across 10+ international trips",
+    "Map complete loan portfolio across all properties and vehicles",
+    "Record education timeline from NCC diploma through I-Skill to AWS certification",
+    "Document all SSM-registered companies under Jay and Niko",
+    "Each fact is atomic: one subject, one predicate, retrievable via semantic search"
+  ],
+  "userStories": [
+    {
+      "id": "MS3-001",
+      "title": "Travel History — Chronological Trace",
+      "priority": 1,
+      "description": "Fetch the 'Wenjyue Lew Travel History: A Chronological Trace' summary page and key trip pages (Batam-Singapore Dec 2023, Manila-Palawan Jan 2024, Kota Kinabalu Mar 2024, Angeles City/Tokyo Jun 2024, Jakarta-Bandung Aug 2024, Thailand 2022, CNY trips). Extract: destinations, dates, companions, accommodation, purpose.",
+      "acceptanceCriteria": [
+        "Fetch travel history summary page and 4-5 trip itinerary pages",
+        "Extract: destinations, dates, travel companions, accommodation, trip purpose",
+        "Push 10-15 atomic facts about travel history",
+        "Verify via Mem0 search for 'travel' and 'trip'"
+      ],
+      "notionSearchQueries": [
+        "Wenjyue Lew Travel History Chronological Trace",
+        "itinerary Batam Singapore Trip December 2023",
+        "Manila Palawan January 2024",
+        "Kota Kinabalu visit Minthe March 2024",
+        "Angeles City Tokyo trip June 2024",
+        "Jakarta Bandung Trip August 2024"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS3-002",
+      "title": "Palm Oil Business — Inherited Operations",
+      "priority": 2,
+      "description": "Fetch the Palm Oil Operations Hub, Palm Oil Operations Index, and palm oil summary pages. Extract: inheritance details (from father and uncle), buyer (Guan Soon Lee), seasonal patterns, production areas, income data, Uncle Wong role, fertilizer details.",
+      "acceptanceCriteria": [
+        "Fetch Palm Oil Operations Hub and summary pages",
+        "Extract: inheritance, buyer, seasonal cycle, production areas, key contacts",
+        "Push 8-12 atomic facts about palm oil business",
+        "Verify via Mem0 search for 'palm oil'"
+      ],
+      "notionSearchQueries": [
+        "Palm Oil Operations Hub",
+        "Palm Oil Operations Index",
+        "palm oil summary seasonal",
+        "Palm Oil Uncle Wong Bank Account",
+        "Guan Soon Lee FFB palm"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS3-003",
+      "title": "Loan Portfolio — All Property and Vehicle Loans",
+      "priority": 3,
+      "description": "Fetch the 'loan account' database page, 'Consolidate all debts' page, and individual loan pages (112 Senai Baru, KSL B2215, KSL B3303, House 172 UOB, Aruz hire purchase). Extract: bank, account numbers, monthly payments, total loan amounts, property addresses. NO login credentials.",
+      "acceptanceCriteria": [
+        "Fetch loan account database and 4-5 individual loan pages",
+        "Extract: bank, loan amount, monthly installment, property/asset, account number",
+        "Push 10-15 atomic facts about loans",
+        "Verify via Mem0 search for 'loan' and 'mortgage'"
+      ],
+      "notionSearchQueries": [
+        "loan account",
+        "Consolidate all debts",
+        "Senai Baru 112 Public Bank loan",
+        "KSL B2215 loan application",
+        "KSL B3303 HLB loan",
+        "172 refinance loan UOB",
+        "Aruz VEE6177 car loan"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "MS3-004",
+      "title": "Jay's Education and Career Timeline",
+      "priority": 4,
+      "description": "Fetch education pages: Postgraduate Diploma in Strategic Business IT (NCC/Sunderland), certificates page (文凭 certificate), I-Skill legacy page, EPSON career, and Important Milestones page (education sections). Extract: degrees, institutions, years, career positions, certifications.",
+      "acceptanceCriteria": [
+        "Fetch education and career pages",
+        "Extract: degrees, institutions, years, career milestones",
+        "Push 8-10 atomic facts about education and career",
+        "Verify via Mem0 search"
+      ],
+      "notionSearchQueries": [
+        "Postgraduate diploma strategic business IT",
+        "文凭 certificate",
+        "I-Skill Computer Training Center decade legacy",
+        "Important Milestones education career",
+        "EPSON manufacturing IT management"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS3-005",
+      "title": "Registered Companies — SSM Active List",
+      "priority": 5,
+      "description": "Fetch the 'Senarai Syarikat Aktif' page listing all companies under Jay (Lew Wen Jyue) and Niko (Lew Huey Wen). Extract: company names, SSM numbers, business types, addresses, ownership.",
+      "acceptanceCriteria": [
+        "Fetch active companies list page",
+        "Extract: company names, SSM registration numbers, types, addresses",
+        "Push 8-12 atomic facts about registered companies",
+        "Verify via Mem0 search for 'SSM' and 'company'"
+      ],
+      "notionSearchQueries": [
+        "Senarai Syarikat Aktif Wenjyue Lew Niko",
+        "SSM registration business",
+        "Cafe Operations Index SSM certificate"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS3-006",
+      "title": "Financial Plan and Debt Strategy",
+      "priority": 6,
+      "description": "Fetch the 'Financial Plan for Lew Wen Jyue' page and 'Finance Operations Index'. Extract: income sources summary, debt service ratio, financial goals, monthly fixed costs, business income breakdown.",
+      "acceptanceCriteria": [
+        "Fetch financial plan and finance operations index pages",
+        "Extract: income sources, DSR, financial goals, expense categories",
+        "Push 6-10 atomic facts about financial planning",
+        "Verify via Mem0 search"
+      ],
+      "notionSearchQueries": [
+        "Financial Plan for Lew Wen Jyue",
+        "Finance Operations Index Income Loans Payments",
+        "Fixed Income Expenditures Hub"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS3-007",
+      "title": "International Friends and Encounters",
+      "priority": 7,
+      "description": "Fetch 'International Friends Encounter Summary' page and 'Do Thi Linh' detailed profile. Extract: friend nationalities, meeting contexts, key characteristics, relationship details.",
+      "acceptanceCriteria": [
+        "Fetch international friends summary and individual profile pages",
+        "Extract: names, nationalities, meeting context, relationship nature",
+        "Push 6-10 atomic facts",
+        "Verify via Mem0 search"
+      ],
+      "notionSearchQueries": [
+        "International Friends Encounter Summary Caucasians Asians",
+        "Detailed Profile Do Thi Linh",
+        "Langkawi trip toastmaster competition"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS3-008",
+      "title": "Side Projects — Niaga.club and PetiKembara",
+      "priority": 8,
+      "description": "Fetch Niaga.club B2B platform proposal and PetiKembara luggage business plan. Extract: project concepts, status, target market, pricing model, implementation details.",
+      "acceptanceCriteria": [
+        "Fetch Niaga.club and PetiKembara pages",
+        "Extract: project concepts, status, business model, target market",
+        "Push 6-8 atomic facts about side projects",
+        "Verify via Mem0 search"
+      ],
+      "notionSearchQueries": [
+        "Niaga.club Building B2B Platform SMEs Johor Bahru",
+        "PetiKembara 行李箱直播生意计划书",
+        "luggage business tiktok live"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS3-009",
+      "title": "GPM/GDPM Grant Projects",
+      "priority": 9,
+      "description": "Fetch GDPM grant program page, Hair Spring Beauty GPM project, and GPM Grant Projects summary. Extract: grant types, client projects, revenue model, commission structure, Prisma's role as digitalization partner.",
+      "acceptanceCriteria": [
+        "Fetch GDPM and GPM grant project pages",
+        "Extract: grant types, clients, revenue, Prisma role, certification dates",
+        "Push 6-8 atomic facts about grant programs",
+        "Verify via Mem0 search"
+      ],
+      "notionSearchQueries": [
+        "GDPM PKMS Grant Program",
+        "Hair Spring Beauty GPM Grant Project",
+        "GPM Grant Projects Hair Spring Elly Trinh",
+        "Prisma GDPM Digitalisation Partner"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "MS3-010",
+      "title": "AWS Certification and Tech Development",
+      "priority": 10,
+      "description": "Fetch AWS CLF-C02 exam preparation page, APN registration, and technical research pages. Extract: certification goals, study progress, Prisma's AWS partnership, technical capabilities.",
+      "acceptanceCriteria": [
+        "Fetch AWS certification and tech development pages",
+        "Extract: certification name, study status, partnership details",
+        "Push 5-8 atomic facts",
+        "Verify via Mem0 search"
+      ],
+      "notionSearchQueries": [
+        "Prepare for AWS exam CLF-C02",
+        "APN registration confirm org setup",
+        "Complete AWS Partner Sales Accreditation",
+        "Technical Research Kimi API CTO"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    }
+  ]
+}

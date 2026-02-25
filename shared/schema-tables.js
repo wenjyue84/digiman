@@ -39,7 +39,7 @@ export const sessions = pgTable("sessions", {
 export const guests = pgTable("guests", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
     name: text("name").notNull(),
-    capsuleNumber: text("capsule_number").notNull(),
+    unitNumber: text("unit_number").notNull(),
     checkinTime: timestamp("checkin_time").notNull().defaultNow(),
     checkoutTime: timestamp("checkout_time"),
     expectedCheckoutDate: date("expected_checkout_date"),
@@ -62,7 +62,7 @@ export const guests = pgTable("guests", {
     status: text("status"),
     alertSettings: text("alert_settings"), // JSON string for checkout alert configuration
 }, (table) => ([
-    index("idx_guests_capsule_number").on(table.capsuleNumber),
+    index("idx_guests_unit_number").on(table.unitNumber),
     index("idx_guests_is_checked_in").on(table.isCheckedIn),
     index("idx_guests_checkin_time").on(table.checkinTime),
     index("idx_guests_checkout_time").on(table.checkoutTime),
@@ -93,7 +93,7 @@ export const capsules = pgTable("capsules", {
 ]));
 export const capsuleProblems = pgTable("capsule_problems", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
-    capsuleNumber: text("capsule_number").notNull(),
+    unitNumber: text("unit_number").notNull(),
     description: text("description").notNull(),
     reportedBy: text("reported_by").notNull(), // Username of staff who reported
     reportedAt: timestamp("reported_at").notNull().defaultNow(),
@@ -102,7 +102,7 @@ export const capsuleProblems = pgTable("capsule_problems", {
     resolvedAt: timestamp("resolved_at"),
     notes: text("notes"), // Resolution notes
 }, (table) => ([
-    index("idx_capsule_problems_capsule_number").on(table.capsuleNumber),
+    index("idx_capsule_problems_unit_number").on(table.unitNumber),
     index("idx_capsule_problems_is_resolved").on(table.isResolved),
     index("idx_capsule_problems_reported_at").on(table.reportedAt),
 ]));
@@ -110,7 +110,7 @@ export const capsuleProblems = pgTable("capsule_problems", {
 export const guestTokens = pgTable("guest_tokens", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
     token: text("token").notNull().unique(),
-    capsuleNumber: text("capsule_number"), // Optional - null when auto-assign is used
+    unitNumber: text("unit_number"), // Optional - null when auto-assign is used
     autoAssign: boolean("auto_assign").default(false), // True when capsule should be auto-assigned
     guestName: text("guest_name"), // Optional - guest fills it themselves
     phoneNumber: text("phone_number"), // Optional - guest fills it themselves
@@ -125,7 +125,7 @@ export const guestTokens = pgTable("guest_tokens", {
     index("idx_guest_tokens_token").on(table.token),
     index("idx_guest_tokens_is_used").on(table.isUsed),
     index("idx_guest_tokens_expires_at").on(table.expiresAt),
-    index("idx_guest_tokens_capsule_number").on(table.capsuleNumber),
+    index("idx_guest_tokens_unit_number").on(table.unitNumber),
 ]));
 // ─── Notifications ───────────────────────────────────────────────────
 export const adminNotifications = pgTable("admin_notifications", {
@@ -134,7 +134,7 @@ export const adminNotifications = pgTable("admin_notifications", {
     title: text("title").notNull(),
     message: text("message").notNull(),
     guestId: varchar("guest_id"), // Optional reference to guest
-    capsuleNumber: text("capsule_number"), // Optional capsule reference
+    unitNumber: text("unit_number"), // Optional capsule reference
     isRead: boolean("is_read").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ([

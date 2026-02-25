@@ -38,7 +38,7 @@ export const expenseCategories = {
   equipment: {
     label: "Equipment & Furniture",
     color: "bg-purple-100 text-purple-800",
-    subcategories: ["Capsule Beds", "Mattresses", "Lockers", "Curtains", "Lighting", "Fans", "Security Cameras", "WiFi Equipment"]
+    subcategories: ["Unit Beds", "Mattresses", "Lockers", "Curtains", "Lighting", "Fans", "Security Cameras", "WiFi Equipment"]
   },
   marketing: {
     label: "Marketing & Promotion",

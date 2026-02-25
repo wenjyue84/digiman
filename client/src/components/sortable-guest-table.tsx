@@ -11,7 +11,7 @@ import { CheckoutConfirmationDialog } from "./confirmation-dialog";
 import CheckoutAlertDialog from "./CheckoutAlertDialog";
 import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import type { Guest, PaginatedResponse } from "@shared/schema";
-import type { AllCapsule, AvailableCapsule } from "./guest-table/types";
+import type { AllUnit, AvailableUnit } from "./guest-table/types";
 import { GuestTableHeader } from "./guest-table/GuestTableHeader";
 import { GuestDesktopTable } from "./guest-table/GuestTableRow";
 import { GuestCardView } from "./guest-table/GuestCardView";
@@ -23,7 +23,7 @@ export default function SortableGuestTable() {
   const isMobile = useIsMobile();
   const { isAuthenticated, logout } = useAuth();
   const [isCondensedView, setIsCondensedView] = useState(() => isMobile);
-  const [showAllCapsules, setShowAllCapsules] = useState(false);
+  const [showAllUnits, setshowAllUnits] = useState(false);
 
   // Auto-switch view mode based on device type
   useEffect(() => {
@@ -32,14 +32,14 @@ export default function SortableGuestTable() {
 
   // ---------- Data queries ----------
 
-  const { data: settings } = useVisibilityQuery<{ showAllCapsules?: boolean }>({
+  const { data: settings } = useVisibilityQuery<{ showAllUnits?: boolean }>({
     queryKey: ["/api/settings"],
     enabled: isAuthenticated,
   });
 
   useEffect(() => {
-    if (settings && typeof settings.showAllCapsules === 'boolean') {
-      setShowAllCapsules(settings.showAllCapsules);
+    if (settings && typeof settings.showAllUnits === 'boolean') {
+      setshowAllUnits(settings.showAllUnits);
     }
   }, [settings]);
 
@@ -55,7 +55,7 @@ export default function SortableGuestTable() {
   const { data: activeTokensResponse } = useVisibilityQuery<PaginatedResponse<{
     id: string;
     token: string;
-    capsuleNumber: string;
+    unitNumber: string;
     guestName: string | null;
     phoneNumber: string | null;
     createdAt: string;
@@ -65,14 +65,14 @@ export default function SortableGuestTable() {
   });
   const activeTokens = activeTokensResponse?.data || [];
 
-  const { data: allCapsulesResponse } = useVisibilityQuery<AllCapsule[]>({
-    queryKey: ["/api/capsules"],
+  const { data: allUnitsResponse } = useVisibilityQuery<AllUnit[]>({
+    queryKey: ["/api/units"],
   });
-  const allCapsules = allCapsulesResponse || [];
-  const exportCapsules = allCapsulesResponse || [];
+  const allUnits = allUnitsResponse || [];
+  const exportUnits = allUnitsResponse || [];
 
-  const { data: availableCapsules = [] } = useVisibilityQuery<AvailableCapsule[]>({
-    queryKey: ["/api/capsules/available"],
+  const { data: availableUnits = [] } = useVisibilityQuery<AvailableUnit[]>({
+    queryKey: ["/api/units/available"],
   });
 
   // ---------- Hooks ----------
@@ -80,13 +80,13 @@ export default function SortableGuestTable() {
   const { filters, setFilters, hasActiveGuestFilters, filteredData, clearFilters } = useGuestFiltering({
     guests,
     activeTokens,
-    showAllCapsules,
-    allCapsules,
+    showAllUnits,
+    allUnits,
   });
 
   const { sortConfig, sortedData, handleSort } = useGuestSorting(filteredData);
 
-  const mutations = useGuestMutations({ guests, exportCapsules, activeTokens });
+  const mutations = useGuestMutations({ guests, exportUnits, activeTokens });
 
   // ---------- Loading state ----------
 
@@ -122,9 +122,9 @@ export default function SortableGuestTable() {
   return (
     <Card>
       <GuestTableHeader
-        showAllCapsules={showAllCapsules}
+        showAllUnits={showAllUnits}
         occupancy={occupancy}
-        allCapsulesCount={allCapsules.length}
+        allUnitsCount={allUnits.length}
         isMobile={isMobile}
         isAuthenticated={isAuthenticated}
         isCondensedView={isCondensedView}
@@ -134,7 +134,7 @@ export default function SortableGuestTable() {
         filters={filters}
         setFilters={setFilters}
         hasActiveGuestFilters={hasActiveGuestFilters}
-        setShowAllCapsules={setShowAllCapsules}
+        setshowAllUnits={setshowAllUnits}
         onUpdateSetting={(val) => mutations.updateSettingsMutation.mutate(val)}
         onWhatsAppExport={mutations.handleWhatsAppExport}
         clearFilters={clearFilters}
@@ -145,8 +145,8 @@ export default function SortableGuestTable() {
         {sortedData.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p>
-              {showAllCapsules
-                ? "No guests currently checked in, pending check-ins, or empty capsules found"
+              {showAllUnits
+                ? "No guests currently checked in, pending check-ins, or empty units found"
                 : "No guests currently checked in or pending check-ins"
               }
             </p>
@@ -159,21 +159,21 @@ export default function SortableGuestTable() {
             isCondensedView={isCondensedView}
             isMobile={isMobile}
             isAuthenticated={isAuthenticated}
-            availableCapsules={availableCapsules}
+            availableUnits={availableUnits}
             activeTokens={activeTokens}
             checkoutMutation={mutations.checkoutMutation}
             cancelTokenMutation={mutations.cancelTokenMutation}
-            updateTokenCapsuleMutation={mutations.updateTokenCapsuleMutation}
+            updateTokenUnitMutation={mutations.updateTokenUnitMutation}
             onCheckout={mutations.handleCheckout}
             onGuestClick={mutations.handleGuestClick}
             onExtend={mutations.handleExtend}
             openAlertDialog={mutations.openAlertDialog}
-            onCapsuleChange={mutations.handleCapsuleChange}
+            onUnitChange={mutations.handleUnitChange}
             onCancelToken={mutations.handleCancelToken}
-            onTokenCapsuleChange={mutations.handleTokenCapsuleChange}
+            onTokenUnitChange={mutations.handleTokenUnitChange}
             copyToClipboard={mutations.copyToClipboard}
             getCheckinLink={mutations.getCheckinLink}
-            onEmptyCapsuleClick={mutations.handleEmptyCapsuleClick}
+            onEmptyUnitClick={mutations.handleEmptyUnitClick}
           />
         )}
 
@@ -183,19 +183,19 @@ export default function SortableGuestTable() {
             sortedData={sortedData}
             isCondensedView={isCondensedView}
             isAuthenticated={isAuthenticated}
-            availableCapsules={availableCapsules}
+            availableUnits={availableUnits}
             activeTokens={activeTokens}
             checkoutGuest={mutations.checkoutGuest}
             cancelTokenMutation={mutations.cancelTokenMutation}
-            updateTokenCapsuleMutation={mutations.updateTokenCapsuleMutation}
+            updateTokenUnitMutation={mutations.updateTokenUnitMutation}
             onCheckout={mutations.handleCheckout}
             onGuestClick={mutations.handleGuestClick}
             onExtend={mutations.handleExtend}
             openAlertDialog={mutations.openAlertDialog}
-            onCapsuleChange={mutations.handleCapsuleChange}
-            onTokenCapsuleChange={mutations.handleTokenCapsuleChange}
+            onUnitChange={mutations.handleUnitChange}
+            onTokenUnitChange={mutations.handleTokenUnitChange}
             onPendingCheckinClick={mutations.handlePendingCheckinClick}
-            onEmptyCapsuleClick={mutations.handleEmptyCapsuleClick}
+            onEmptyUnitClick={mutations.handleEmptyUnitClick}
           />
         )}
       </CardContent>
@@ -222,7 +222,7 @@ export default function SortableGuestTable() {
           onOpenChange={mutations.setShowCheckoutConfirmation}
           onConfirm={mutations.confirmCheckout}
           guestName={mutations.checkoutGuest.name}
-          capsuleNumber={mutations.checkoutGuest.capsuleNumber}
+          unitNumber={mutations.checkoutGuest.unitNumber}
           isLoading={mutations.checkoutMutation.isPending}
         />
       )}
@@ -233,7 +233,7 @@ export default function SortableGuestTable() {
           onOpenChange={mutations.setShowUndoConfirmation}
           onConfirm={mutations.confirmUndo}
           title="Undo Checkout"
-          description={`Are you sure you want to undo check-out for capsule ${mutations.undoGuest.capsuleNumber} ${mutations.undoGuest.name}?`}
+          description={`Are you sure you want to undo check-out for unit ${mutations.undoGuest.unitNumber} ${mutations.undoGuest.name}?`}
           confirmText="Undo"
           cancelText="Cancel"
           variant="info"

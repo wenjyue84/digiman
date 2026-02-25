@@ -35,6 +35,7 @@ import { useTokenValidation } from "@/hooks/guest-checkin/useTokenValidation";
 import { useAutoSave } from "@/hooks/guest-checkin/useAutoSave";
 import CountdownTimer from "@/components/guest-checkin/CountdownTimer";
 import { AlertTriangle, Clock, CheckCircle, HelpCircle, Camera, Upload, Calendar, MapPin } from "lucide-react";
+import { useBusinessConfig } from "@/hooks/useBusinessConfig";
 
 // Lazy load heavy components for better performance
 const LazySuccessScreen = React.lazy(() => import("@/components/guest-checkin/SuccessScreen"));
@@ -50,6 +51,7 @@ const formatDateInput = (date: Date): string => {
 export default function GuestCheckin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const business = useBusinessConfig();
   
   // Add error handling for useI18n
   let t: any;
@@ -87,7 +89,7 @@ export default function GuestCheckin() {
   }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [capsuleIssues, setCapsuleIssues] = useState<any[]>([]);
+  const [unitIssues, setunitIssues] = useState<any[]>([]);
   const [icDocumentUrl, setIcDocumentUrl] = useState<string>("");
   const [passportDocumentUrl, setPassportDocumentUrl] = useState<string>("");
   const [showEmailDialog, setShowEmailDialog] = useState(false);
@@ -97,7 +99,7 @@ export default function GuestCheckin() {
   const [localEditToken, setEditToken] = useState<string>("");
   const [localEditExpiresAt, setEditExpiresAt] = useState<Date | null>(null);
   const [localCanEdit, setCanEdit] = useState(false);
-  const [localAssignedCapsuleNumber, setAssignedCapsuleNumber] = useState<string | null>(null);
+  const [localAssignedunitNumber, setAssignedunitNumber] = useState<string | null>(null);
 
   // Lazy loading states for performance optimization
   const [nationalitiesLoaded, setNationalitiesLoaded] = useState(false);
@@ -117,7 +119,7 @@ export default function GuestCheckin() {
     guideAddress?: string;
     guideWifiName?: string;
     guideWifiPassword?: string;
-    guideShowCapsuleIssues?: boolean;
+    guideShowunitIssues?: boolean;
   }>({
     queryKey: ["/api/settings"],
     enabled: true,
@@ -227,7 +229,7 @@ export default function GuestCheckin() {
     editToken,
     editExpiresAt,
     canEdit,
-    assignedCapsuleNumber
+    assignedunitNumber
   } = useTokenValidation({ t, form });
   
   useAutoSave({ form, token });
@@ -238,7 +240,7 @@ export default function GuestCheckin() {
   useEffect(() => {
     if (!nationalitiesLoaded) {
       lazyLoadNationalities().then((data) => {
-        setNationalities(data.map(item => typeof item === 'string' ? item : item.value || item.name || 'Other'));
+        setNationalities(data.map(item => typeof item === 'string' ? item : item.value || item.label || 'Other'));
         setNationalitiesLoaded(true);
       }).catch(() => {
         // Fallback to basic options
@@ -381,12 +383,12 @@ export default function GuestCheckin() {
         setEditToken(result.editToken);
         setEditExpiresAt(new Date(result.editExpiresAt));
         setCanEdit(true);
-        setCapsuleIssues(result.capsuleIssues || []);
-        setAssignedCapsuleNumber(result.capsuleNumber);
-        try { localStorage.setItem('lastAssignedCapsule', result.capsuleNumber || ''); } catch {}
+        setunitIssues(result.unitIssues || []);
+        setAssignedunitNumber(result.unitNumber);
+        try { localStorage.setItem('lastAssignedUnit', result.unitNumber || ''); } catch {}
         toast({
           title: t.checkInSuccess,
-          description: `${t.checkInSuccessDesc} ${result.capsuleNumber || 'your assigned capsule'}.`,
+          description: `${t.checkInSuccessDesc} ${result.unitNumber || 'your assigned capsule'}.`,
         });
       } else {
         const errorData = await response.json();
@@ -498,7 +500,7 @@ export default function GuestCheckin() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Check-in Slip - Pelangi Capsule Hostel</title>
+        <title>Check-in Slip - ${business.name}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 20px; }
           .header { text-align: center; margin-bottom: 30px; }
@@ -515,7 +517,7 @@ export default function GuestCheckin() {
       </head>
       <body>
         <div class="header">
-          <div class="logo">🌈 PELANGI CAPSULE HOSTEL</div>
+          <div class="logo">🌈 ${business.name.toUpperCase()}</div>
           <h1>Check-in Slip</h1>
           <p>Generated on ${new Date().toLocaleDateString()}</p>
         </div>
@@ -528,8 +530,8 @@ export default function GuestCheckin() {
               <div class="value">${form.getValues("nameAsInDocument") || guestInfo?.guestName || 'Guest'}</div>
             </div>
               <div class="info-item">
-              <div class="label">Capsule:</div>
-              <div class="value">${localAssignedCapsuleNumber || assignedCapsuleNumber || guestInfo?.capsuleNumber || (typeof window !== 'undefined' ? (localStorage.getItem('lastAssignedCapsule') || '') : '')}</div>
+              <div class="label">Unit:</div>
+              <div class="value">${localAssignedunitNumber || assignedunitNumber || guestInfo?.unitNumber || (typeof window !== 'undefined' ? (localStorage.getItem('lastAssignedUnit') || '') : '')}</div>
             </div>
           </div>
         </div>
@@ -568,7 +570,7 @@ export default function GuestCheckin() {
 
         <div class="footer">
           <p>For assistance, please contact reception</p>
-          <p>Enjoy your stay at Pelangi Capsule Hostel! 💼🌟</p>
+          <p>Enjoy your stay at ${business.name}! 💼🌟</p>
         </div>
       </body>
       </html>
@@ -613,16 +615,16 @@ export default function GuestCheckin() {
     const { checkinTime, checkoutTime, doorPassword, importantReminders } = getCheckinTimes();
     
     // Create email content
-    const subject = encodeURIComponent('Your Check-in Slip - Pelangi Capsule Hostel');
+    const subject = encodeURIComponent(`Your Check-in Slip - ${business.name}`);
     const body = encodeURIComponent(`
 Dear ${form.getValues("nameAsInDocument") || guestInfo?.guestName || 'Guest'},
 
-Welcome to Pelangi Capsule Hostel! Here is your check-in slip:
+Welcome to ${business.name}! Here is your check-in slip:
 
-🏨 PELANGI CAPSULE HOSTEL - CHECK-IN SLIP
+🏨 ${business.name.toUpperCase()} - CHECK-IN SLIP
 
 Guest Name: ${form.getValues("nameAsInDocument") || guestInfo?.guestName || 'Guest'}
-Capsule Number: ${localAssignedCapsuleNumber || assignedCapsuleNumber || guestInfo?.capsuleNumber || ''}
+unit number: ${localAssignedunitNumber || assignedunitNumber || guestInfo?.unitNumber || ''}
 Check-in: ${checkinTime}
 Check-out: ${checkoutTime}
 Door Password: ${doorPassword}
@@ -634,10 +636,10 @@ ${importantReminders}
 📍 Address: 26A, Jalan Perang, Taman Pelangi, 80400 Johor Bahru
 
 For any assistance, please contact reception.
-Enjoy your stay at Pelangi Capsule Hostel! 💼🌟
+Enjoy your stay at ${business.name}! 💼🌟
 
 ---
-This email was generated by Pelangi Capsule Hostel Management System
+This email was generated by ${business.name} Management System
     `);
 
     // Create mailto link
@@ -674,8 +676,8 @@ This email was generated by Pelangi Capsule Hostel Management System
         <LazySuccessScreen
           guestInfo={guestInfo}
           settings={settings}
-          assignedCapsuleNumber={localAssignedCapsuleNumber || assignedCapsuleNumber}
-          capsuleIssues={capsuleIssues}
+          assignedUnitNumber={localAssignedunitNumber || assignedunitNumber}
+          unitIssues={unitIssues}
           canEdit={canEdit}
           editExpiresAt={editExpiresAt}
           editToken={editToken}
@@ -729,7 +731,7 @@ This email was generated by Pelangi Capsule Hostel Management System
                     <div className="rounded-lg p-3 bg-orange-50">
                       <div className="flex items-center justify-center text-sm font-medium text-orange-800">
                         <MapPin className="h-4 w-4 mr-2" />
-                        <span>{t.assignedCapsule}: {guestInfo.capsuleNumber} - {guestInfo.position}</span>
+                        <span>{t.assignedCapsule}: {guestInfo.unitNumber} - {guestInfo.position}</span>
                       </div>
                     </div>
                   )}

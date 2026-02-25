@@ -18,9 +18,9 @@ export interface AppConfig {
   maxPaymentAmount: number;
   
   // Capsule Settings
-  totalCapsules: number;
-  capsuleSections: string[];
-  capsuleNumberFormat: string;
+  totalUnits: number;
+  unitSections: string[];
+  unitNumberFormat: string;
   
   // Notification Settings
   notificationRetentionDays: number;
@@ -58,9 +58,9 @@ export const DEFAULT_CONFIG: AppConfig = {
   maxGuestStayDays: 30,
   defaultPaymentMethod: 'cash',
   maxPaymentAmount: 9999.99,
-  totalCapsules: 24,
-  capsuleSections: ['front', 'middle', 'back'],
-  capsuleNumberFormat: 'A01',
+  totalUnits: 24,
+  unitSections: ['front', 'middle', 'back'],
+  unitNumberFormat: 'A01',
   notificationRetentionDays: 30,
   cacheTimeMinutes: 5,
   queryRefreshIntervalSeconds: 30,
@@ -174,20 +174,20 @@ export function usePaymentConfig() {
 }
 
 /**
- * Provides capsule management configuration and validation helpers
+ * Provides unit management configuration and validation helpers
  * Defines hostel layout and numbering system
  */
-export function useCapsuleConfig() {
-  const totalCapsules = useConfigValue('totalCapsules');
-  const sections = useConfigValue('capsuleSections');
-  const numberFormat = useConfigValue('capsuleNumberFormat');
+export function useUnitConfig() {
+  const totalUnits = useConfigValue('totalUnits');
+  const sections = useConfigValue('unitSections');
+  const numberFormat = useConfigValue('unitNumberFormat');
   
   return {
-    totalCapsules,
+    totalUnits,
     sections,
     numberFormat,
-    // Validates capsule numbers against configured format pattern
-    isValidCapsuleNumber: (number: string) => {
+    // Validates unit numbers against configured format pattern
+    isValidunitNumber: (number: string) => {
       const pattern = numberFormat.replace(/[A-Z]/g, '[A-Z]').replace(/\d/g, '\\d');
       return new RegExp(`^${pattern}$`).test(number);
     },

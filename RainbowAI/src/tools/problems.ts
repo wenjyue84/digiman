@@ -45,7 +45,7 @@ export async function exportWhatsappIssues(args: any): Promise<MCPToolResult> {
     message += `⚠️ ${problems.length} Active Issue(s)\n\n`;
 
     problems.forEach((problem: any, index: number) => {
-      message += `${index + 1}. *Capsule ${problem.capsuleNumber}*\n`;
+      message += `${index + 1}. *Unit ${problem.unitNumber}*\n`;
       message += `   Problem: ${problem.description}\n`;
       if (problem.reportedAt) {
         message += `   Reported: ${new Date(problem.reportedAt).toLocaleDateString()}\n`;
@@ -54,7 +54,7 @@ export async function exportWhatsappIssues(args: any): Promise<MCPToolResult> {
     });
 
     message += '---\n';
-    message += 'Reply with capsule number when resolved';
+    message += 'Reply with unit number when resolved';
 
     return {
       content: [{

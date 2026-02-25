@@ -52,7 +52,7 @@ export const whatsappProxyTools: MCPTool[] = [
   },
   {
     name: 'pelangi_whatsapp_send_guest_status',
-    description: 'Fetch current guest/capsule status from PelangiManager and send as WhatsApp message',
+    description: 'Fetch current guest/unit status from PelangiManager and send as WhatsApp message',
     inputSchema: {
       type: 'object',
       properties: {

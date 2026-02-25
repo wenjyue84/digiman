@@ -1,21 +1,21 @@
 import { callAPI } from '../lib/http-client.js';
 import { MCPTool, MCPToolResult } from '../types/mcp.js';
 
-export const capsuleWriteTools: MCPTool[] = [
+export const unitWriteTools: MCPTool[] = [
   {
     name: 'pelangi_mark_cleaned',
-    description: 'Mark a capsule as cleaned',
+    description: 'Mark a unit as cleaned',
     inputSchema: {
       type: 'object',
       properties: {
-        capsuleNumber: { type: 'number', description: 'Capsule number' }
+        unitNumber: { type: 'number', description: 'Unit number' }
       },
-      required: ['capsuleNumber']
+      required: ['unitNumber']
     }
   },
   {
     name: 'pelangi_bulk_mark_cleaned',
-    description: 'Mark all capsules as cleaned',
+    description: 'Mark all units as cleaned',
     inputSchema: {
       type: 'object',
       properties: {}
@@ -25,15 +25,15 @@ export const capsuleWriteTools: MCPTool[] = [
 
 export async function markCleaned(args: any): Promise<MCPToolResult> {
   try {
-    const result = await callAPI('POST', `/api/capsules/${args.capsuleNumber}/mark-cleaned`, {});
+    const result = await callAPI('POST', `/api/units/${args.unitNumber}/mark-cleaned`, {});
 
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
           success: true,
-          capsuleNumber: args.capsuleNumber,
-          message: `Capsule ${args.capsuleNumber} marked as cleaned`
+          unitNumber: args.unitNumber,
+          message: `Unit ${args.unitNumber} marked as cleaned`
         }, null, 2)
       }]
     };
@@ -41,7 +41,7 @@ export async function markCleaned(args: any): Promise<MCPToolResult> {
     return {
       content: [{
         type: 'text',
-        text: `Error marking capsule as cleaned: ${error.message}`
+        text: `Error marking unit as cleaned: ${error.message}`
       }],
       isError: true
     };
@@ -50,7 +50,7 @@ export async function markCleaned(args: any): Promise<MCPToolResult> {
 
 export async function bulkMarkCleaned(args: any): Promise<MCPToolResult> {
   try {
-    const result = await callAPI('POST', '/api/capsules/mark-cleaned-all', {});
+    const result = await callAPI('POST', '/api/units/mark-cleaned-all', {});
 
     return {
       content: [{
@@ -58,7 +58,7 @@ export async function bulkMarkCleaned(args: any): Promise<MCPToolResult> {
         text: JSON.stringify({
           success: true,
           result,
-          message: 'All capsules marked as cleaned'
+          message: 'All units marked as cleaned'
         }, null, 2)
       }]
     };
@@ -66,7 +66,7 @@ export async function bulkMarkCleaned(args: any): Promise<MCPToolResult> {
     return {
       content: [{
         type: 'text',
-        text: `Error bulk marking capsules: ${error.message}`
+        text: `Error bulk marking units: ${error.message}`
       }],
       isError: true
     };

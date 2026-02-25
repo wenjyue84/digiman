@@ -17,7 +17,7 @@ interface CheckoutFilterBarProps {
   filters: CheckoutFilters;
   setFilters: React.Dispatch<React.SetStateAction<CheckoutFilters>>;
   hasActiveFilters: boolean;
-  uniqueCapsules: string[];
+  uniqueUnits: string[];
   availableNationalities: string[];
   setCheckinDateShortcut: (type: 'today' | 'yesterday' | 'tomorrow') => void;
   setExpectedCheckoutDateShortcut: (type: 'today' | 'yesterday' | 'tomorrow') => void;
@@ -28,7 +28,7 @@ export function CheckoutFilterBar({
   filters,
   setFilters,
   hasActiveFilters,
-  uniqueCapsules,
+  uniqueUnits,
   availableNationalities,
   setCheckinDateShortcut,
   setExpectedCheckoutDateShortcut,
@@ -109,18 +109,18 @@ export function CheckoutFilterBar({
             </Select>
           </div>
 
-          {/* Capsule Assignment */}
+          {/* Unit Assignment */}
           <div className="space-y-2">
-            <Label className="text-xs uppercase text-gray-500">Capsule Assignment</Label>
-            <Select value={filters.capsuleNumber} onValueChange={(val) => setFilters(prev => ({ ...prev, capsuleNumber: val }))}>
+            <Label className="text-xs uppercase text-gray-500">Unit Assignment</Label>
+            <Select value={filters.unitNumber} onValueChange={(val) => setFilters(prev => ({ ...prev, unitNumber: val }))}>
               <SelectTrigger className="h-11 sm:h-9 text-sm sm:text-xs">
-                <SelectValue placeholder="Select capsule" />
+                <SelectValue placeholder="Select unit" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">Any capsule</SelectItem>
-                {uniqueCapsules.map((capsule) => (
-                  <SelectItem key={capsule} value={capsule}>
-                    Capsule {capsule}
+                <SelectItem value="any">Any unit</SelectItem>
+                {uniqueUnits.map((unit) => (
+                  <SelectItem key={unit} value={unit}>
+                    Unit {unit}
                   </SelectItem>
                 ))}
               </SelectContent>

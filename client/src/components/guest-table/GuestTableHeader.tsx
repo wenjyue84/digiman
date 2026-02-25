@@ -7,9 +7,9 @@ import { GuestFilterPopover } from "./GuestFilterPopover";
 import type { GuestFilters } from "./types";
 
 interface GuestTableHeaderProps {
-  showAllCapsules: boolean;
+  showAllUnits: boolean;
   occupancy: { total: number; occupied: number; available: number } | undefined;
-  allCapsulesCount: number;
+  allUnitsCount: number;
   isMobile: boolean;
   isAuthenticated: boolean;
   isCondensedView: boolean;
@@ -21,7 +21,7 @@ interface GuestTableHeaderProps {
   filters: GuestFilters;
   setFilters: React.Dispatch<React.SetStateAction<GuestFilters>>;
   hasActiveGuestFilters: boolean;
-  setShowAllCapsules: (val: boolean) => void;
+  setshowAllUnits: (val: boolean) => void;
   onUpdateSetting: (val: boolean) => void;
   onWhatsAppExport: () => void;
   clearFilters: () => void;
@@ -30,9 +30,9 @@ interface GuestTableHeaderProps {
 }
 
 export function GuestTableHeader({
-  showAllCapsules,
+  showAllUnits,
   occupancy,
-  allCapsulesCount,
+  allUnitsCount,
   isMobile,
   isAuthenticated,
   isCondensedView,
@@ -42,7 +42,7 @@ export function GuestTableHeader({
   filters,
   setFilters,
   hasActiveGuestFilters,
-  setShowAllCapsules,
+  setshowAllUnits,
   onUpdateSetting,
   onWhatsAppExport,
   clearFilters,
@@ -52,11 +52,11 @@ export function GuestTableHeader({
     <CardHeader className="pb-4">
       <div className="flex justify-between items-center">
         <CardTitle className="text-lg font-bold text-hostel-text flex items-center">
-          {showAllCapsules ? "All Capsules" : "Current Guest"}
+          {showAllUnits ? "All Units" : "Current Guest"}
           {occupancy && (
             <span className="ml-2 text-sm font-normal text-gray-600">
-              {showAllCapsules
-                ? `(${occupancy.occupied}/${allCapsulesCount || occupancy.total})`
+              {showAllUnits
+                ? `(${occupancy.occupied}/${allUnitsCount || occupancy.total})`
                 : `(${occupancy.occupied}/${occupancy.total})`
               }
             </span>
@@ -79,8 +79,8 @@ export function GuestTableHeader({
             filters={filters}
             setFilters={setFilters}
             hasActiveGuestFilters={hasActiveGuestFilters}
-            showAllCapsules={showAllCapsules}
-            setShowAllCapsules={setShowAllCapsules}
+            showAllUnits={showAllUnits}
+            setshowAllUnits={setshowAllUnits}
             isAuthenticated={isAuthenticated}
             onUpdateSetting={onUpdateSetting}
             onWhatsAppExport={onWhatsAppExport}

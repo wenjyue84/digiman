@@ -3,7 +3,7 @@
  * Handles push notification subscriptions and sending
  */
 
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { pushNotificationService, createNotificationPayload } from '../lib/pushNotifications.js';
 
@@ -234,7 +234,7 @@ router.post('/test', async (req: any, res: any) => {
 router.post('/send', [
   body('title').notEmpty().withMessage('Title is required'),
   body('body').notEmpty().withMessage('Body is required'),
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -333,7 +333,7 @@ router.post('/send', [
 router.post('/send-all', [
   body('title').notEmpty().withMessage('Title is required'),
   body('body').notEmpty().withMessage('Body is required'),
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -374,7 +374,7 @@ router.post('/send-all', [
 router.post('/send-admin', [
   body('title').notEmpty().withMessage('Title is required'),
   body('body').notEmpty().withMessage('Body is required'),
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 export interface MaintenanceFilters {
   dateFrom: string;
   dateTo: string;
-  capsuleNumber: string;
+  unitNumber: string;
   reportedBy: string;
   showResolved: boolean;
 }
@@ -18,27 +18,27 @@ export interface MaintenanceFilters {
 interface MaintenanceFiltersProps {
   filters: MaintenanceFilters;
   onFiltersChange: (filters: MaintenanceFilters) => void;
-  capsules: Array<{ number: string; section: string }>;
+  units: Array<{ number: string; section: string }>;
   reporters: string[];
   className?: string;
 }
 
-export function MaintenanceFilters({ 
-  filters, 
-  onFiltersChange, 
-  capsules, 
-  reporters, 
-  className = '' 
+export function MaintenanceFilters({
+  filters,
+  onFiltersChange,
+  units,
+  reporters,
+  className = ''
 }: MaintenanceFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasActiveFilters = filters.dateFrom || filters.dateTo || filters.capsuleNumber || filters.reportedBy || filters.showResolved;
+  const hasActiveFilters = filters.dateFrom || filters.dateTo || filters.unitNumber || filters.reportedBy || filters.showResolved;
 
   const clearFilters = () => {
     onFiltersChange({
       dateFrom: '',
       dateTo: '',
-      capsuleNumber: '',
+      unitNumber: '',
       reportedBy: '',
       showResolved: false,
     });
@@ -55,7 +55,7 @@ export function MaintenanceFilters({
     let count = 0;
     if (filters.dateFrom) count++;
     if (filters.dateTo) count++;
-    if (filters.capsuleNumber) count++;
+    if (filters.unitNumber) count++;
     if (filters.reportedBy) count++;
     if (filters.showResolved) count++;
     return count;
@@ -116,21 +116,21 @@ export function MaintenanceFilters({
             </div>
           </div>
 
-          {/* Capsule Filter */}
+          {/* Unit Filter */}
           <div className="space-y-2">
-            <Label htmlFor="capsule-filter" className="text-xs font-medium flex items-center gap-1">
+            <Label htmlFor="unit-filter" className="text-xs font-medium flex items-center gap-1">
               <Building2 className="h-3 w-3" />
-              Capsule
+              Unit
             </Label>
-            <Select value={filters.capsuleNumber} onValueChange={(value) => updateFilter('capsuleNumber', value)}>
+            <Select value={filters.unitNumber} onValueChange={(value) => updateFilter('unitNumber', value)}>
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="All capsules" />
+                <SelectValue placeholder="All units" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All capsules</SelectItem>
-                {capsules.map((capsule) => (
-                  <SelectItem key={capsule.number} value={capsule.number}>
-                    {capsule.number} - {capsule.section}
+                <SelectItem value="">All units</SelectItem>
+                {units.map((unit) => (
+                  <SelectItem key={unit.number} value={unit.number}>
+                    {unit.number} - {unit.section}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -187,9 +187,9 @@ export function MaintenanceFilters({
                     To: {new Date(filters.dateTo).toLocaleDateString()}
                   </Badge>
                 )}
-                {filters.capsuleNumber && (
+                {filters.unitNumber && (
                   <Badge variant="outline" className="text-xs">
-                    Capsule: {filters.capsuleNumber}
+                    Unit: {filters.unitNumber}
                   </Badge>
                 )}
                 {filters.reportedBy && (

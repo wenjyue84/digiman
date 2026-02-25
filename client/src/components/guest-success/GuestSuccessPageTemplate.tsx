@@ -9,13 +9,17 @@ interface GuestSuccessPageTemplateProps {
   
   // Guest-specific data (for actual success page)
   guestInfo?: {
-    capsuleNumber?: string;
+    unitNumber?: string;
     guestName: string;
     phoneNumber: string;
     email?: string;
     expectedCheckoutDate?: string;
   } | null;
-  assignedCapsuleNumber?: string | null;
+  assignedUnitNumber?: string | null;
+  /** @deprecated Use assignedUnitNumber */
+  assignedunitNumber?: string | null;
+  unitIssues?: any[];
+  /** @deprecated Use unitIssues */
   capsuleIssues?: any[];
   
   // Settings data
@@ -29,7 +33,7 @@ interface GuestSuccessPageTemplateProps {
     showCheckin?: boolean;
     showOther?: boolean;
     showFaq?: boolean;
-    showCapsuleIssues?: boolean;
+    showUnitIssues?: boolean;
     showTimeAccess?: boolean;
     showHostelPhotos?: boolean;
     showGoogleMaps?: boolean;
@@ -71,20 +75,23 @@ export default function GuestSuccessPageTemplate({
   viewMode = 'mobile',
   isPreview = false,
   guestInfo,
-  assignedCapsuleNumber,
+  assignedUnitNumber,
+  assignedunitNumber,
+  unitIssues = [],
   capsuleIssues = [],
   settings,
   visibility = {},
   content = {},
   actions = {}
 }: GuestSuccessPageTemplateProps) {
+  const mergedUnitIssues = unitIssues.length ? unitIssues : capsuleIssues;
   
   // Use content from props for preview, or settings for actual page
   const effectiveContent = {
     intro: content.intro || settings?.guideIntro || '',
     address: content.address || settings?.guideAddress || '26a jalan perang taman pelangi 80400 johor bahru',
-    wifiName: content.wifiName || settings?.guideWifiName || 'pelangi capsule',
-    wifiPassword: content.wifiPassword || settings?.guideWifiPassword || 'ilovestaycapsule',
+    wifiName: content.wifiName || settings?.guideWifiName || 'your wifi name',
+    wifiPassword: content.wifiPassword || settings?.guideWifiPassword || 'your wifi password',
     checkin: content.checkin || settings?.guideCheckin || '',
     other: content.other || settings?.guideOther || '',
     faq: content.faq || settings?.guideFaq || '',
@@ -105,7 +112,7 @@ export default function GuestSuccessPageTemplate({
     showCheckin: visibility.showCheckin ?? settings?.guideShowCheckin ?? true,
     showOther: visibility.showOther ?? settings?.guideShowOther ?? true,
     showFaq: visibility.showFaq ?? settings?.guideShowFaq ?? true,
-    showCapsuleIssues: visibility.showCapsuleIssues ?? settings?.guideShowCapsuleIssues ?? false,
+    showUnitIssues: visibility.showUnitIssues ?? settings?.guideshowUnitIssues ?? false,
     showTimeAccess: visibility.showTimeAccess ?? settings?.guideShowTimeAccess ?? true,
     showHostelPhotos: visibility.showHostelPhotos ?? settings?.guideShowHostelPhotos ?? true,
     showGoogleMaps: visibility.showGoogleMaps ?? settings?.guideShowGoogleMaps ?? true,
@@ -123,9 +130,9 @@ export default function GuestSuccessPageTemplate({
 
   const { address: streetAddress, phone, email } = parseAddress(effectiveContent.address);
 
-  const capsuleNumber = isPreview 
+  const unitNumber = isPreview 
     ? 'Assigned based on availability'
-    : (assignedCapsuleNumber || guestInfo?.capsuleNumber || 'C01');
+    : (assignedUnitNumber || assignedunitNumber || guestInfo?.unitNumber || 'C01');
 
   return (
     <div className={`${viewMode === 'mobile' ? 'max-w-sm' : 'max-w-2xl'} mx-auto ${isPreview ? '' : 'px-4'}`}>
@@ -142,7 +149,7 @@ export default function GuestSuccessPageTemplate({
           {effectiveVisibility.showIntro && effectiveContent.intro && (
             <div className={`bg-gradient-to-r from-orange-100 to-pink-100 rounded-xl ${viewMode === 'mobile' ? 'p-4' : 'p-6'} mb-6`}>
               <h2 className={`${viewMode === 'mobile' ? 'text-lg' : 'text-xl'} font-bold text-gray-800 mb-4 flex items-center justify-center gap-2`}>
-                Welcome to Pelangi Capsule Hostel <span className={`${viewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>🌈</span>
+                Welcome to your wifi name Hostel <span className={`${viewMode === 'mobile' ? 'text-xl' : 'text-2xl'}`}>🌈</span>
               </h2>
               
               {/* Essential Information Grid */}
@@ -308,9 +315,9 @@ export default function GuestSuccessPageTemplate({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-green-600">🛌</span>
-                    <span className="font-medium">Capsule:</span>
+                    <span className="font-medium">Unit:</span>
                     <span className="font-bold text-lg text-orange-600 bg-white px-2 py-1 rounded border">
-                      {capsuleNumber}
+                      {unitNumber}
                     </span>
                   </div>
                 </div>
@@ -320,15 +327,15 @@ export default function GuestSuccessPageTemplate({
                   <span className="text-sm text-gray-600">Collect from reception upon arrival</span>
                 </div>
 
-                {/* Capsule Issues */}
-                {effectiveVisibility.showCapsuleIssues && capsuleIssues.length > 0 && (
+                {/* Unit Issues */}
+                {effectiveVisibility.showUnitIssues && mergedUnitIssues.length > 0 && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-yellow-600">⚠️</span>
-                      <span className="font-medium text-yellow-800">Capsule Issues</span>
+                      <span className="font-medium text-yellow-800">Unit Issues</span>
                     </div>
                     <div className="space-y-2">
-                      {capsuleIssues.map((issue, index) => (
+                      {mergedUnitIssues.map((issue, index) => (
                         <div key={index} className="text-sm text-yellow-700 bg-white/60 p-2 rounded border">
                           <div className="font-medium">{issue.description}</div>
                           <div className="text-xs text-yellow-600 mt-1">
@@ -339,7 +346,7 @@ export default function GuestSuccessPageTemplate({
                     </div>
                     <div className="mt-3 text-xs text-yellow-700">
                       <strong>Note:</strong> These issues have been reported and are being addressed. 
-                      You may choose to accept this capsule or contact reception for alternatives.
+                      You may choose to accept this unit or contact reception for alternatives.
                     </div>
                   </div>
                 )}
@@ -398,8 +405,8 @@ export default function GuestSuccessPageTemplate({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">💊</span>
-                    <span className="font-medium text-gray-800">Capsule No:</span>
-                    <span className="font-bold text-lg text-orange-600">{capsuleNumber}</span>
+                    <span className="font-medium text-gray-800">Unit No:</span>
+                    <span className="font-bold text-lg text-orange-600">{unitNumber}</span>
                   </div>
                 </div>
               </div>
@@ -408,7 +415,7 @@ export default function GuestSuccessPageTemplate({
                 <div className="flex items-start gap-2">
                   <span className="text-lg">🛏</span>
                   <div className="text-sm text-blue-800">
-                    <span className="font-semibold">Capsule Card On The Pillow</span>
+                    <span className="font-semibold">Unit Card On The Pillow</span>
                   </div>
                 </div>
               </div>
@@ -417,7 +424,7 @@ export default function GuestSuccessPageTemplate({
                 <div className="flex items-start gap-2">
                   <span className="text-lg">🚨</span>
                   <div className="text-sm text-yellow-800">
-                    <span className="font-semibold">Don't leave your card inside capsule and closed the door</span>
+                    <span className="font-semibold">Don't leave your card inside unit and closed the door</span>
                   </div>
                 </div>
               </div>
@@ -547,7 +554,7 @@ export default function GuestSuccessPageTemplate({
           {!isPreview && (
             <div className="text-center text-gray-600 text-sm mt-6">
               For any assistance, please contact reception.<br />
-              Enjoy your stay at Pelangi Capsule Hostel! 💼🌟
+              Enjoy your stay at your wifi name Hostel! 💼🌟
             </div>
           )}
         </div>

@@ -1,11 +1,9 @@
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-
-type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
-type SortOrder = 'asc' | 'desc';
+import type { SortConfig, SortField } from "./types";
 
 interface SortButtonProps {
   field: SortField;
-  currentSort: { field: SortField; order: SortOrder };
+  currentSort: SortConfig;
   onSort: (field: SortField) => void;
 }
 

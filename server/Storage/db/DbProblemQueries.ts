@@ -1,50 +1,50 @@
-import type { CapsuleProblem, InsertCapsuleProblem, PaginationParams, PaginatedResponse } from "../../../shared/schema";
-import { capsuleProblems } from "../../../shared/schema";
+import type { UnitProblem, InsertUnitProblem, PaginationParams, PaginatedResponse } from "../../../shared/schema";
+import { unitProblems } from "../../../shared/schema";
 import { eq } from "drizzle-orm";
 import type { IProblemStorage } from "../IStorage";
 import { paginate } from "./paginate";
 
-/** Database capsule problem queries implementing IProblemStorage via Drizzle ORM */
+/** Database unit problem queries implementing IProblemStorage via Drizzle ORM */
 export class DbProblemQueries implements IProblemStorage {
   constructor(private readonly db: any) {}
 
-  async createCapsuleProblem(problem: InsertCapsuleProblem): Promise<CapsuleProblem> {
-    const result = await this.db.insert(capsuleProblems).values(problem).returning();
+  async createUnitProblem(problem: InsertUnitProblem): Promise<UnitProblem> {
+    const result = await this.db.insert(unitProblems).values(problem).returning();
     return result[0];
   }
 
-  async getCapsuleProblems(capsuleNumber: string): Promise<CapsuleProblem[]> {
-    return await this.db.select().from(capsuleProblems).where(eq(capsuleProblems.capsuleNumber, capsuleNumber)).orderBy(capsuleProblems.reportedAt);
+  async getUnitProblems(unitNumber: string): Promise<UnitProblem[]> {
+    return await this.db.select().from(unitProblems).where(eq(unitProblems.unitNumber, unitNumber)).orderBy(unitProblems.reportedAt);
   }
 
-  async getActiveProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>> {
-    const activeProblems = await this.db.select().from(capsuleProblems).where(eq(capsuleProblems.isResolved, false)).orderBy(capsuleProblems.reportedAt);
+  async getActiveProblems(pagination?: PaginationParams): Promise<PaginatedResponse<UnitProblem>> {
+    const activeProblems = await this.db.select().from(unitProblems).where(eq(unitProblems.isResolved, false)).orderBy(unitProblems.reportedAt);
     return paginate(activeProblems, pagination);
   }
 
-  async getAllProblems(pagination?: PaginationParams): Promise<PaginatedResponse<CapsuleProblem>> {
-    const allProblems = await this.db.select().from(capsuleProblems).orderBy(capsuleProblems.reportedAt);
+  async getAllProblems(pagination?: PaginationParams): Promise<PaginatedResponse<UnitProblem>> {
+    const allProblems = await this.db.select().from(unitProblems).orderBy(unitProblems.reportedAt);
     return paginate(allProblems, pagination);
   }
 
-  async updateProblem(problemId: string, updates: Partial<InsertCapsuleProblem>): Promise<CapsuleProblem | undefined> {
-    const result = await this.db.update(capsuleProblems).set(updates).where(eq(capsuleProblems.id, problemId)).returning();
+  async updateProblem(problemId: string, updates: Partial<InsertUnitProblem>): Promise<UnitProblem | undefined> {
+    const result = await this.db.update(unitProblems).set(updates).where(eq(unitProblems.id, problemId)).returning();
     return result[0];
   }
 
-  async resolveProblem(problemId: string, resolvedBy: string, notes?: string): Promise<CapsuleProblem | undefined> {
-    const result = await this.db.update(capsuleProblems).set({
+  async resolveProblem(problemId: string, resolvedBy: string, notes?: string): Promise<UnitProblem | undefined> {
+    const result = await this.db.update(unitProblems).set({
       isResolved: true,
       resolvedBy,
       resolvedAt: new Date(),
       notes: notes || null,
-    }).where(eq(capsuleProblems.id, problemId)).returning();
+    }).where(eq(unitProblems.id, problemId)).returning();
     return result[0];
   }
 
   async deleteProblem(problemId: string): Promise<boolean> {
     try {
-      const result = await this.db.delete(capsuleProblems).where(eq(capsuleProblems.id, problemId)).returning();
+      const result = await this.db.delete(unitProblems).where(eq(unitProblems.id, problemId)).returning();
       return result.length > 0;
     } catch (error) {
       console.error("Error deleting problem:", error);

@@ -16,7 +16,7 @@ interface GuestSuccessPagePreviewProps {
   showControls?: boolean;
   showTitle?: boolean;
   guestInfo?: {
-    capsuleNumber?: string;
+    unitNumber?: string;
     guestName: string;
     phoneNumber: string;
     email?: string;
@@ -46,7 +46,7 @@ const GuestSuccessPagePreview: React.FC<GuestSuccessPagePreviewProps> = ({
     phoneNumber: '+60 12-345 6789',
     email: 'john.doe@example.com',
     expectedCheckoutDate: '2024-01-15',
-    capsuleNumber: 'C12'
+    unitNumber: 'C12'
   };
 
   if (isLoading) {
@@ -209,7 +209,7 @@ export const StandaloneGuestSuccessPagePreview: React.FC<GuestSuccessPagePreview
     phoneNumber: '+60 12-345 6789',
     email: 'john.doe@example.com',
     expectedCheckoutDate: '2024-01-15',
-    capsuleNumber: 'C12'
+    unitNumber: 'C12'
   };
 
   const previewConfig = PREVIEW_CONFIGURATIONS[previewMode];

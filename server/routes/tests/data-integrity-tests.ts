@@ -8,41 +8,41 @@ export const dataIntegrityTests: SystemTest[] = [
     async test() {
       try {
         const checkedInGuests = await storage.getCheckedInGuests();
-        const allCapsules = await storage.getAllCapsules();
+        const allUnits = await storage.getAllUnits();
 
         // Check for orphaned guest assignments
-        const assignedCapsules = checkedInGuests.data.map(g => g.capsuleNumber);
-        const invalidAssignments = assignedCapsules.filter(capsuleNum =>
-          !allCapsules.some(c => c.number === capsuleNum)
+        const assignedUnits = checkedInGuests.data.map(g => g.unitNumber);
+        const invalidAssignments = assignedUnits.filter(unitNum =>
+          !allUnits.some(c => c.number === unitNum)
         );
 
         if (invalidAssignments.length > 0) {
-          throw new Error(`Guests assigned to non-existent capsules: ${invalidAssignments.join(', ')}`);
+          throw new Error(`Guests assigned to non-existent units: ${invalidAssignments.join(', ')}`);
         }
 
         // Check for double assignments
-        const duplicateAssignments = assignedCapsules.filter((capsule, index) =>
-          assignedCapsules.indexOf(capsule) !== index
+        const duplicateAssignments = assignedUnits.filter((unit, index) =>
+          assignedUnits.indexOf(unit) !== index
         );
 
         if (duplicateAssignments.length > 0) {
-          throw new Error(`Multiple guests assigned to same capsule: ${duplicateAssignments.join(', ')}`);
+          throw new Error(`Multiple guests assigned to same unit: ${duplicateAssignments.join(', ')}`);
         }
 
-        // Check capsule availability consistency
-        const occupiedCapsules = new Set(assignedCapsules);
-        const availableCapsules = await storage.getAvailableCapsules();
-        const inconsistentCapsules = availableCapsules.filter(c =>
-          occupiedCapsules.has(c.number)
+        // Check unit availability consistency
+        const occupiedUnits = new Set(assignedUnits);
+        const availableUnits = await storage.getAvailableUnits();
+        const inconsistentUnits = availableUnits.filter(c =>
+          occupiedUnits.has(c.number)
         );
 
-        if (inconsistentCapsules.length > 0) {
-          throw new Error(`Capsules marked available but occupied: ${inconsistentCapsules.map(c => c.number).join(', ')}`);
+        if (inconsistentUnits.length > 0) {
+          throw new Error(`Units marked available but occupied: ${inconsistentUnits.map(c => c.number).join(', ')}`);
         }
 
         return {
           passed: true,
-          details: `✅ Data consistency verified. ${checkedInGuests.data.length} guests, ${allCapsules.length} capsules, no conflicts`
+          details: `✅ Data consistency verified. ${checkedInGuests.data.length} guests, ${allUnits.length} units, no conflicts`
         };
       } catch (error: any) {
         throw new Error(`Data consistency test failed: ${error.message}`);
@@ -50,7 +50,7 @@ export const dataIntegrityTests: SystemTest[] = [
     },
     suggestions: [
       "If test fails: Check guest assignment logic",
-      "Verify capsule availability updates during check-in/out",
+      "Verify unit availability updates during check-in/out",
       "Check for race conditions in concurrent operations"
     ]
   },

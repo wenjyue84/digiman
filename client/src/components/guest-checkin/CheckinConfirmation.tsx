@@ -22,7 +22,7 @@ const CheckinConfirmation: React.FC<CheckinConfirmationProps> = ({ guest }) => {
 *Guest Check-in Confirmation* 👋
 
 *Name:* ${guest.name}
-*Capsule:* 🛌 ${guest.capsuleNumber}
+*Unit:* 🛌 ${guest.unitNumber}
 *Payment:* 💳 RM ${guest.paymentAmount} via ${guest.paymentMethod}
 *Check-in Date:* 📅 ${guest.checkInDate}
 *Expected Checkout:* 📅 ${guest.expectedCheckoutDate}
@@ -56,7 +56,7 @@ ${guest.notes ? `*Notes:* 📝 ${guest.notes}` : ''}
       <div ref={pdfRef} className="p-4 border rounded-md">
         <h3 className="font-bold text-lg mb-2">{guest.name}</h3>
         <ul>
-          <li><strong>Capsule:</strong> {guest.capsuleNumber}</li>
+          <li><strong>Unit:</strong> {guest.unitNumber}</li>
           <li><strong>Payment:</strong> RM {guest.paymentAmount} via {guest.paymentMethod}</li>
           <li><strong>Check-in Date:</strong> {guest.checkInDate}</li>
           <li><strong>Expected Checkout:</strong> {guest.expectedCheckoutDate}</li>

@@ -495,7 +495,7 @@ const getVisibilityDescription = (key: string): string => {
     showCheckin: 'Show check-in instructions and guidance',
     showOther: 'Display additional information and services',
     showFaq: 'Show frequently asked questions section',
-    showCapsuleIssues: 'Display any reported capsule issues (if applicable)',
+    showunitIssues: 'Display any reported unit issues (if applicable)',
     showTimeAccess: 'Show operating hours and access information',
     showHostelPhotos: 'Display link to hostel photos',
     showGoogleMaps: 'Show Google Maps link',

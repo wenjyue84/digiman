@@ -17,12 +17,12 @@ export const settingsTests: SystemTest[] = [
 
         // Test accommodation type setting
         const testSettings = {
-          accommodationType: "capsule",
+          accommodationType: "unit",
           guideIntro: "Welcome to our hostel",
           guideWifiName: "HostelWiFi"
         };
 
-        const validAccommodationTypes = ['capsule', 'pod', 'bunk', 'room'];
+        const validAccommodationTypes = ['unit', 'capsule', 'pod', 'bunk', 'room'];
         if (!validAccommodationTypes.includes(testSettings.accommodationType)) {
           throw new Error(`Invalid accommodation type: ${testSettings.accommodationType}`);
         }

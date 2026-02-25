@@ -217,7 +217,7 @@ class LocalStorageGuestGuideService implements GuestGuideServiceInterface {
       if (settings.visibility) {
         const requiredVisibilityKeys = [
           'showIntro', 'showAddress', 'showWifi', 'showCheckin',
-          'showOther', 'showFaq', 'showCapsuleIssues', 'showTimeAccess',
+          'showOther', 'showFaq', 'showunitIssues', 'showTimeAccess',
           'showHostelPhotos', 'showGoogleMaps', 'showCheckinVideo'
         ];
 

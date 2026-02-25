@@ -4,12 +4,12 @@ import { SystemTest } from "./types";
 export const notificationTests: SystemTest[] = [
   {
     name: "Problem Tracking System",
-    description: "Test capsule problem reporting and resolution",
+    description: "Test unit problem reporting and resolution",
     async test() {
       try {
         // Test problem storage methods
-        if (typeof storage.createCapsuleProblem !== 'function') {
-          throw new Error("createCapsuleProblem method missing");
+        if (typeof storage.createUnitProblem !== 'function') {
+          throw new Error("createUnitProblem method missing");
         }
         if (typeof storage.resolveProblem !== 'function') {
           throw new Error("resolveProblem method missing");
@@ -17,13 +17,13 @@ export const notificationTests: SystemTest[] = [
 
         // Test problem data structure
         const testProblem = {
-          capsuleNumber: "C1",
+          unitNumber: "C1",
           description: "Test problem",
           severity: "medium",
           reportedBy: "admin"
         };
 
-        const requiredFields = ['capsuleNumber', 'description', 'severity'];
+        const requiredFields = ['unitNumber', 'description', 'severity'];
         const missingFields = requiredFields.filter(field => !(field in testProblem));
         if (missingFields.length > 0) {
           throw new Error(`Problem missing required fields: ${missingFields.join(', ')}`);

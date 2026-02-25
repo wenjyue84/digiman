@@ -27,12 +27,12 @@ export const guestTools: MCPTool[] = [
   },
   {
     name: 'pelangi_search_guests',
-    description: 'Search guests by name, capsule, or nationality',
+    description: 'Search guests by name, unit, or nationality',
     inputSchema: {
       type: 'object',
       properties: {
         query: { type: 'string', description: 'Search query' },
-        field: { type: 'string', description: 'Field to search (name, capsule, nationality)' }
+        field: { type: 'string', description: 'Field to search (name, unit, nationality)' }
       },
       required: ['query']
     }
@@ -72,13 +72,13 @@ export async function searchGuests(args: any): Promise<MCPToolResult> {
       const searchValue = args.query.toLowerCase();
       if (args.field === 'name') {
         return g.name?.toLowerCase().includes(searchValue);
-      } else if (args.field === 'capsule') {
-        return g.capsuleNumber?.toString().includes(searchValue);
+      } else if (args.field === 'unit') {
+        return g.unitNumber?.toString().includes(searchValue);
       } else if (args.field === 'nationality') {
         return g.nationality?.toLowerCase().includes(searchValue);
       } else {
         return g.name?.toLowerCase().includes(searchValue) ||
-               g.capsuleNumber?.toString().includes(searchValue) ||
+               g.unitNumber?.toString().includes(searchValue) ||
                g.nationality?.toLowerCase().includes(searchValue);
       }
     });

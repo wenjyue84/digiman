@@ -1,7 +1,11 @@
 import type { Guest } from "@shared/schema";
 
-export type SortField = 'name' | 'capsuleNumber' | 'checkinTime' | 'expectedCheckoutDate';
-export type SortOrder = 'asc' | 'desc';
+export type SortField =
+  | "name"
+  | "unitNumber"
+  | "checkinTime"
+  | "expectedCheckoutDate";
+export type SortOrder = "asc" | "desc";
 
 export interface SortConfig {
   field: SortField;
@@ -9,8 +13,8 @@ export interface SortConfig {
 }
 
 export interface GuestFilters {
-  gender: 'any' | 'male' | 'female';
-  nationality: 'any' | 'malaysian' | 'non-malaysian';
+  gender: "any" | "male" | "female";
+  nationality: "any" | "malaysian" | "non-malaysian";
   outstandingOnly: boolean;
   checkoutTodayOnly: boolean;
 }
@@ -18,7 +22,9 @@ export interface GuestFilters {
 export interface PendingData {
   id: string;
   name: string;
-  capsuleNumber: string;
+  unitNumber: string;
+  /** @deprecated Use unitNumber */
+  capsuleNumber?: string;
   createdAt: string;
   expiresAt: string;
   phoneNumber: string | null;
@@ -27,7 +33,9 @@ export interface PendingData {
 export interface EmptyData {
   id: string;
   name: string;
-  capsuleNumber: string;
+  unitNumber: string;
+  /** @deprecated Use unitNumber */
+  capsuleNumber?: string;
   checkinTime: null;
   expectedCheckoutDate: null;
   phoneNumber: null;
@@ -56,11 +64,11 @@ export interface EmptyData {
 }
 
 export type CombinedDataItem =
-  | { type: 'guest'; data: Guest }
-  | { type: 'pending'; data: PendingData }
-  | { type: 'empty'; data: EmptyData };
+  | { type: "guest"; data: Guest }
+  | { type: "pending"; data: PendingData }
+  | { type: "empty"; data: EmptyData };
 
-export interface AvailableCapsule {
+export interface AvailableUnit {
   id: string;
   number: string;
   section: string;
@@ -70,7 +78,7 @@ export interface AvailableCapsule {
   position: string | null;
 }
 
-export interface AllCapsule {
+export interface AllUnit {
   id: string;
   number: string;
   section: string;
@@ -84,3 +92,8 @@ export interface AllCapsule {
   position: string | null;
   remark: string | null;
 }
+
+/** @deprecated Use AvailableUnit */
+export type AvailableCapsule = AvailableUnit;
+/** @deprecated Use AllUnit */
+export type AllCapsule = AllUnit;

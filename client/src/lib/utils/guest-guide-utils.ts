@@ -82,7 +82,7 @@ export const mapApiToGuestGuideSettings = (apiSettings: any): GuestGuideSettings
       showCheckin: apiSettings.guideShowCheckin ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showCheckin,
       showOther: apiSettings.guideShowOther ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showOther,
       showFaq: apiSettings.guideShowFaq ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showFaq,
-      showCapsuleIssues: apiSettings.guideShowCapsuleIssues ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showCapsuleIssues,
+      showunitIssues: apiSettings.guideShowunitIssues ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showunitIssues,
       showTimeAccess: apiSettings.guideShowTimeAccess ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showTimeAccess,
       showHostelPhotos: apiSettings.guideShowHostelPhotos ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showHostelPhotos,
       showGoogleMaps: apiSettings.guideShowGoogleMaps ?? DEFAULT_GUEST_GUIDE_SETTINGS.visibility.showGoogleMaps,

@@ -207,7 +207,7 @@ export default function GuestEdit() {
                   <div className="bg-orange-50 rounded-lg p-3">
                     <div className="flex items-center justify-center text-sm font-medium text-orange-800">
                       <MapPin className="h-4 w-4 mr-2" />
-                      Capsule: {guestInfo.capsuleNumber}
+                      Unit: {guestInfo.unitNumber}
                     </div>
                   </div>
                   
@@ -381,15 +381,15 @@ export default function GuestEdit() {
                 <div>
                   <Select
                     value={form.watch("paymentMethod") || ""}
-                    onValueChange={(value) => form.setValue("paymentMethod", value as "cash" | "card" | "online_transfer")}
+                    onValueChange={(value) => form.setValue("paymentMethod", value as "cash" | "bank" | "online_platform")}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select preferred payment method" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Credit/Debit Card</SelectItem>
-                      <SelectItem value="online_transfer">Online Transfer</SelectItem>
+                      <SelectItem value="bank">Bank Transfer</SelectItem>
+                      <SelectItem value="online_platform">Online Platform</SelectItem>
                     </SelectContent>
                   </Select>
                   {form.formState.errors.paymentMethod && (

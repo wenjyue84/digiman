@@ -104,8 +104,27 @@ router.post('/test', async (req, res) => {
   try {
     const { text } = req.body;
 
-    // Dynamic import to avoid circular dependencies
-    const { classifyMessage } = await import('../../mcp-server/src/assistant/intents.js');
+    // Dynamic import with runtime fallback to keep compatibility across layouts.
+    const candidates = [
+      '../../RainbowAI/src/assistant/intents.ts',
+      '../../RainbowAI/src/assistant/intents.js',
+      '../../mcp-server/src/assistant/intents.js',
+    ];
+    let classifyMessage: any;
+    for (const candidate of candidates) {
+      try {
+        const mod = await import(candidate);
+        if (typeof (mod as any).classifyMessage === 'function') {
+          classifyMessage = (mod as any).classifyMessage;
+          break;
+        }
+      } catch {
+        // Try next candidate path.
+      }
+    }
+    if (!classifyMessage) {
+      return res.status(500).json({ error: 'Intent engine module not found' });
+    }
 
     const result = await classifyMessage(text);
 
@@ -364,7 +383,27 @@ router.post('/llm-test', async (req, res) => {
       return res.status(400).json({ error: 'providerId required' });
     }
 
-    const { testProvider } = await import('../../mcp-server/src/assistant/ai-client.js');
+    const candidates = [
+      '../../RainbowAI/src/assistant/ai-client.ts',
+      '../../RainbowAI/src/assistant/ai-client.js',
+      '../../mcp-server/src/assistant/ai-client.js',
+    ];
+    let testProvider: any;
+    for (const candidate of candidates) {
+      try {
+        const mod = await import(candidate);
+        if (typeof (mod as any).testProvider === 'function') {
+          testProvider = (mod as any).testProvider;
+          break;
+        }
+      } catch {
+        // Try next candidate path.
+      }
+    }
+    if (!testProvider) {
+      return res.status(500).json({ error: 'LLM provider module not found' });
+    }
+
     const result = await testProvider(providerId);
     res.json(result);
   } catch (error: any) {

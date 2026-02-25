@@ -37,6 +37,7 @@ interface PaymentGuest {
   totalAmount: number;
   paidAmount: number;
   balance: number;
+  notes?: string | null;
 }
 
 interface GuestPaymentModalProps {

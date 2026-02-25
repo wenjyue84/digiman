@@ -18,7 +18,7 @@ router.post('/notify-checkin', async (req: Request, res: Response) => {
     const {
       guestName,
       phoneNumber,
-      capsuleNumber,
+      unitNumber,
       checkInDate,
       checkOutDate,
       idNumber,
@@ -28,8 +28,8 @@ router.post('/notify-checkin', async (req: Request, res: Response) => {
       age,
     } = req.body;
 
-    if (!guestName || !capsuleNumber) {
-      badRequest(res, 'guestName and capsuleNumber are required');
+    if (!guestName || !unitNumber) {
+      badRequest(res, 'guestName and unitNumber are required');
       return;
     }
 
@@ -39,7 +39,7 @@ router.post('/notify-checkin', async (req: Request, res: Response) => {
       '',
       `👤 *Name:* ${guestName}`,
       `📱 *Phone:* ${phoneNumber || 'Not provided'}`,
-      `🛏️ *Capsule:* ${capsuleNumber}`,
+      `🛏️ *Unit:* ${unitNumber}`,
     ];
 
     if (checkInDate) lines.push(`📅 *Check-in:* ${checkInDate}`);
@@ -59,7 +59,7 @@ router.post('/notify-checkin', async (req: Request, res: Response) => {
     // Send WhatsApp message to admin
     await sendWhatsAppMessage(ADMIN_PHONE, message);
 
-    console.log(`[CheckinNotify] Sent admin notification for ${guestName} → ${capsuleNumber}`);
+    console.log(`[CheckinNotify] Sent admin notification for ${guestName} → ${unitNumber}`);
 
     ok(res, { sent: true, admin: ADMIN_PHONE });
   } catch (error: any) {

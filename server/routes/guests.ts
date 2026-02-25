@@ -20,13 +20,13 @@ import sgMail from "@sendgrid/mail";
 import { handleRouteError, asyncRouteHandler, sendSuccessResponse } from "../lib/errorHandler";
 import { getTodayBoundary, isOverdue } from "../lib/dateUtils";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
-import { notifyOperatorMaintenanceCapsule } from "../lib/maintenanceNotify";
+import { notifyOperatorMaintenanceUnit } from "../lib/maintenanceNotify";
 
 // Validation schema for guest history query parameters
 const guestHistoryQuerySchema = z.object({
   page: z.string().optional(),
   limit: z.string().optional(),
-  sortBy: z.enum(['name', 'capsuleNumber', 'checkinTime', 'checkoutTime']).optional(),
+  sortBy: z.enum(['name', 'unitNumber', 'checkinTime', 'checkoutTime']).optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
   search: z.string()
     .max(100, "Search query must not exceed 100 characters")
@@ -38,8 +38,8 @@ const guestHistoryQuerySchema = z.object({
     .regex(/^[a-zA-Z\s'-]+$/, "Nationality can only contain letters, spaces, hyphens, and apostrophes")
     .transform(val => val.trim() || undefined)
     .optional(),
-  capsule: z.string()
-    .max(10, "Capsule number must not exceed 10 characters")
+  unit: z.string()
+    .max(10, "Unit number must not exceed 10 characters")
     .transform(val => val.trim() || undefined)
     .optional(),
 });
@@ -159,13 +159,13 @@ router.get("/history",
     const filters = {
       search: req.query.search,
       nationality: req.query.nationality,
-      capsule: req.query.capsule,
+      unit: req.query.unit,
     };
-    
+
     // Remove undefined values for cleaner passing
     const cleanFilters = Object.fromEntries(
       Object.entries(filters).filter(([_, v]) => v !== undefined)
-    ) as { search?: string; nationality?: string; capsule?: string } | undefined;
+    ) as { search?: string; nationality?: string; unit?: string } | undefined;
     
     const history = await storage.getGuestHistory(
       { page, limit }, 
@@ -237,12 +237,12 @@ router.post("/checkin",
     try {
       const validatedData = req.body;
       
-      // Check if capsule is available
-      const availableCapsules = await storage.getAvailableCapsules();
-      const availableCapsuleNumbers = availableCapsules.map(c => c.number);
-      
-      if (!availableCapsuleNumbers.includes(validatedData.capsuleNumber)) {
-        return res.status(400).json({ message: `Capsule ${validatedData.capsuleNumber} is not available` });
+      // Check if unit is available
+      const availableUnits = await storage.getAvailableUnits();
+      const availableUnitNumbers = availableUnits.map(c => c.number);
+
+      if (!availableUnitNumbers.includes(validatedData.unitNumber)) {
+        return res.status(400).json({ message: `Unit ${validatedData.unitNumber} is not available` });
       }
 
       // Check if guest already exists and is currently checked in
@@ -256,7 +256,7 @@ router.post("/checkin",
         //     existingGuest: {
         //       id: existingGuest.id,
         //       name: existingGuest.name,
-        //       capsuleNumber: existingGuest.capsuleNumber,
+        //       unitNumber: existingGuest.unitNumber,
         //       checkinTime: existingGuest.checkinTime
         //     }
         //   });
@@ -280,7 +280,7 @@ router.post("/checkin",
       try {
         const notificationPayload = createNotificationPayload.guestCheckIn(
           guest.name,
-          `Capsule ${guest.capsuleNumber}`
+          `Unit ${guest.unitNumber}`
         );
 
         await pushNotificationService.sendToAdmins(notificationPayload);
@@ -290,23 +290,23 @@ router.post("/checkin",
         // Don't fail the request if notification fails
       }
 
-      // US-144: Notify operator if capsule has maintenance issues and no clean alternative
+      // US-144: Notify operator if unit has maintenance issues and no clean alternative
       try {
         const activeProblems = await storage.getActiveProblems({ page: 1, limit: 1000 });
-        const capsuleProblems = activeProblems.data.filter(
-          (p: any) => p.capsuleNumber === guest.capsuleNumber && !p.isResolved
+        const unitProblems = activeProblems.data.filter(
+          (p: any) => p.unitNumber === guest.unitNumber && !p.isResolved
         );
-        if (capsuleProblems.length > 0) {
-          const maintenanceCapsuleNumbers = new Set(activeProblems.data.map((p: any) => p.capsuleNumber));
-          const hasCleanAlternative = availableCapsules.some(
-            (c: any) => c.number !== guest.capsuleNumber && !maintenanceCapsuleNumbers.has(c.number)
+        if (unitProblems.length > 0) {
+          const maintenanceUnitNumbers = new Set(activeProblems.data.map((p: any) => p.unitNumber));
+          const hasCleanAlternative = availableUnits.some(
+            (c: any) => c.number !== guest.unitNumber && !maintenanceUnitNumbers.has(c.number)
           );
           if (!hasCleanAlternative) {
-            notifyOperatorMaintenanceCapsule({
-              capsuleNumber: guest.capsuleNumber,
+            notifyOperatorMaintenanceUnit({
+              unitNumber: guest.unitNumber,
               guestName: guest.name,
               guestPhone: guest.phoneNumber || undefined,
-              problems: capsuleProblems.map((p: any) => p.description),
+              problems: unitProblems.map((p: any) => p.description),
             });
           }
         }
@@ -359,8 +359,8 @@ router.post("/recheckin", authenticateToken, asyncRouteHandler(async (req: any, 
       return res.status(400).json({ message: "Failed to re-check in guest" });
     }
 
-    // Mark capsule as occupied and cleaned (since it's currently in-use)
-    await storage.updateCapsule(updated.capsuleNumber, { isAvailable: false, cleaningStatus: 'cleaned' } as any);
+    // Mark unit as occupied and cleaned (since it's currently in-use)
+    await storage.updateUnit(updated.unitNumber, { isAvailable: false, cleaningStatus: 'cleaned' } as any);
 
     // REFACTORED: Use centralized success response helper
     sendSuccessResponse(res, { guest: updated }, "Guest re-checked in");
@@ -474,24 +474,24 @@ router.post("/undo-recent-checkout", authenticateToken, asyncRouteHandler(async 
     return res.status(400).json({ message: "Failed to undo checkout" });
   }
   
-  // Mark capsule as occupied and cleaned (since it's currently in-use)
-  await storage.updateCapsule(updated.capsuleNumber, { isAvailable: false, cleaningStatus: 'cleaned' } as any);
+  // Mark unit as occupied and cleaned (since it's currently in-use)
+  await storage.updateUnit(updated.unitNumber, { isAvailable: false, cleaningStatus: 'cleaned' } as any);
   
   // REFACTORED: Use centralized success response helper
   sendSuccessResponse(res, { guest: updated }, "Checkout undone successfully");
 }));
 
-// Simple capsule change for guests
-router.patch("/:id/capsule",
+// Simple unit change for guests
+router.patch("/:id/unit",
   securityValidationMiddleware,
   authenticateToken,
   async (req: any, res) => {
   try {
     const { id } = req.params;
-    const { capsuleNumber, reason } = req.body;
+    const { unitNumber, reason } = req.body;
 
-    if (!capsuleNumber) {
-      return res.status(400).json({ message: "Capsule number is required" });
+    if (!unitNumber) {
+      return res.status(400).json({ message: "Unit number is required" });
     }
 
     // Get the guest
@@ -500,33 +500,33 @@ router.patch("/:id/capsule",
       return res.status(404).json({ message: "Guest not found" });
     }
 
-    // Check if new capsule is available
-    const availableCapsules = await storage.getAvailableCapsules();
-    const isAvailable = availableCapsules.some(c => c.number === capsuleNumber);
+    // Check if new unit is available
+    const availableUnits = await storage.getAvailableUnits();
+    const isAvailable = availableUnits.some(c => c.number === unitNumber);
 
-    if (!isAvailable && guest.capsuleNumber !== capsuleNumber) {
-      return res.status(400).json({ message: `Capsule ${capsuleNumber} is not available` });
+    if (!isAvailable && guest.unitNumber !== unitNumber) {
+      return res.status(400).json({ message: `Unit ${unitNumber} is not available` });
     }
 
-    // Update guest's capsule
+    // Update guest's unit
     const updatedGuest = await storage.updateGuest(id, {
-      capsuleNumber: capsuleNumber
+      unitNumber: unitNumber
     });
 
     if (!updatedGuest) {
-      return res.status(400).json({ message: "Failed to update guest capsule" });
+      return res.status(400).json({ message: "Failed to update guest unit" });
     }
 
     res.json({
       success: true,
-      message: `Guest moved to capsule ${capsuleNumber}`,
+      message: `Guest moved to unit ${unitNumber}`,
       guest: updatedGuest
     });
 
   } catch (error: any) {
-    console.error("Error changing guest capsule:", error);
+    console.error("Error changing guest unit:", error);
     res.status(500).json({
-      message: error.message || "Failed to change capsule"
+      message: error.message || "Failed to change unit"
     });
   }
 });

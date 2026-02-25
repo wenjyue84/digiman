@@ -11,6 +11,8 @@ You are running as part of Ralph, an autonomous agent loop. Your job is to imple
 5. **Document learnings**: Append discoveries to `progress.txt` for future iterations
 6. **Update CLAUDE.md**: Add patterns, gotchas, and useful context discovered
 7. **Commit frequently**: Commit working changes to build git history for future iterations
+8. **3-RETRY SKIP RULE**: The outer loop tracks retries. If you cannot complete a story, leave `passes: false` and EXIT cleanly. After 3 failed attempts the story is automatically skipped. Do NOT spend excessive time on a single problem — attempt a reasonable solution and move on.
+9. **AGENT-BROWSER FOR ALL STORIES**: After completing ANY story, you MUST use the agent-browser skill (via the Skill tool) to verify changes in a real browser. For schema/storage/backend stories, verify the server can start and the dashboard loads. For UI stories, verify the specific UI changes. Do NOT skip browser verification — it is a required quality gate.
 
 ## Your Workflow
 

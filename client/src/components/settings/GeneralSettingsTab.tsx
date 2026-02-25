@@ -39,7 +39,7 @@ export default function GeneralSettingsTab({ settings, isLoading, form, onSubmit
                             <SelectValue placeholder="Select term" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="capsule">Capsule</SelectItem>
+                            <SelectItem value="unit">Unit</SelectItem>
                             <SelectItem value="room">Room</SelectItem>
                             <SelectItem value="house">House</SelectItem>
                           </SelectContent>

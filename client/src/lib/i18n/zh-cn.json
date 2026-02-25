@@ -1,9 +1,8 @@
 {
   "welcomeTitle": "欢迎来到彩虹胶囊旅舍",
   "completeCheckIn": "完成您的入住信息",
-  "assignedCapsule": "您被分配的胶囊",
+  "assignedUnit": "您被分配的胶囊",
   "prefilledInfo": "预填信息:",
-
   "personalInfo": "个人信息",
   "fullNameLabel": "身份证/护照上的全名 *",
   "fullNamePlaceholder": "输入身份证件上显示的姓名",
@@ -15,7 +14,6 @@
   "female": "女性",
   "nationalityLabel": "国籍 *",
   "nationalityPlaceholder": "例如: 马来西亚, 新加坡",
-
   "identityDocs": "身份证件 *",
   "identityDocsDesc": "请提供身份证或护照信息以及证件照片:",
   "icNumberLabel": "身份证号码 (马来西亚人)",
@@ -27,18 +25,15 @@
   "passportPhotoLabel": "护照照片",
   "passportPhotoDesc": "上传您的护照照片",
   "chooseFile": "选择文件",
-
   "paymentMethod": "付款方式 *",
   "paymentMethodPlaceholder": "选择首选付款方式",
   "cash": "现金",
   "card": "信用卡/借记卡",
   "onlineTransfer": "网上转账",
   "paymentNote": "到达时将在前台收取付款",
-
   "completeCheckInBtn": "完成入住",
   "completingCheckIn": "正在完成入住...",
   "editInfo": "编辑我的信息",
-
   "goodDay": "您好，我们尊贵的客人！",
   "welcomeHostel": "欢迎来到彩虹胶囊旅舍",
   "address": "地址:",
@@ -48,7 +43,7 @@
   "checkInTime": "入住: 下午3:00开始",
   "checkOutTime": "退房: 上午12:00之前",
   "doorPassword": "门密码:",
-  "capsuleNumber": "您的胶囊号码:",
+  "unitNumber": "您的胶囊号码:",
   "accessCard": "胶囊门卡: 放在您的枕头上",
   "importantReminders": "重要提醒:",
   "noCardWarning": "🚫 请勿将门卡留在胶囊内并关闭门",
@@ -61,7 +56,6 @@
   "linkExpiresIn": "链接将在以下时间后过期",
   "assistance": "如需任何帮助，请联系前台。",
   "enjoyStay": "祝您在彩虹胶囊旅舍住宿愉快！💼🌟",
-
   "validatingLink": "验证入住链接中...",
   "invalidLink": "无效链接",
   "invalidLinkDesc": "此入住链接无效或缺少令牌。",
@@ -72,10 +66,8 @@
   "checkInFailed": "入住失败",
   "checkInSuccess": "入住成功！",
   "checkInSuccessDesc": "欢迎来到彩虹胶囊旅舍！您已被分配到",
-
   "selectLanguage": "选择语言",
   "currentLanguage": "简体中文",
-
   "printCheckInSlip": "打印",
   "saveAsPdf": "保存",
   "sendToEmail": "发送到邮箱",
@@ -88,18 +80,15 @@
   "pleaseEnterValidEmail": "请输入有效的邮箱地址",
   "emailSent": "邮件已发送",
   "checkInSlipSentTo": "入住单已发送到",
-
   "tipsTitle": "快速完成表单的小贴士",
   "tipHaveDocument": "准备好身份证或护照，两者其一即可。",
   "tipPhoneFormat": "手机号应包含国家区号，例如马来西亚 +60。",
-  "tipGenderPrivacy": "若注重隐私，可选择\u201c其他\u201d或\u201c不便透露\u201d作为性别。",
+  "tipGenderPrivacy": "若注重隐私，可选择“其他”或“不便透露”作为性别。",
   "tipLanguageSwitch": "可随时点击上方地球图标切换语言。",
-
   "photoTipsTitle": "拍照提示",
   "photoTipLighting": "使用良好光线，确保整张证件清晰可见。",
   "photoTipGlare": "避免反光与模糊，保持手机稳定。",
   "photoTipSize": "文件大小上限 15MB，一张清晰照片即可。",
-
   "nameHint": "姓名请与身份证/护照一致。",
   "phoneHint": "请包含国家区号（如 +60 马来西亚，+65 新加坡）。",
   "genderHint": "请选择您最舒适的选项，仅用于推荐合适的舱位区域。",
@@ -109,10 +98,9 @@
   "photoHint": "确保姓名和号码清晰可读。若预览模糊，请重新拍摄。",
   "emergencyContactHint": "可选但有帮助。本地联系人便于我们在紧急情况下联系到人。",
   "emergencyPhoneHint": "请包含国家区号（如 +60）。若无他人可填，可先填写您本人号码。",
-  "notesHint": "示例：\u201c我将于 23:30 到达\u201d、\u201c花生过敏\u201d、\u201c如可，请安排下铺\u201d。",
+  "notesHint": "示例：“我将于 23:30 到达”、“花生过敏”、“如可，请安排下铺”。",
   "paymentMethodHint": "请选择您计划的付款方式。到店后可再确认。",
   "cashDescriptionHint": "若已向员工现金付款，请说明收款人；否则可留空。",
-
   "faqNeedHelp": "需要填写帮助吗？",
   "faqIntro": "常见问题与快速解答：",
   "faqIcVsPassportQ": "是否必须同时提供身份证和护照？",
@@ -122,16 +110,15 @@
   "faqPhoneFormatQ": "手机号该如何填写？",
   "faqPhoneFormatA": "请包含国家区号，如 +60（马来西亚）或 +65（新加坡）。可包含横杠或空格。",
   "faqGenderWhyQ": "为什么需要性别？",
-  "faqGenderWhyA": "仅用于推荐合适舱位区域（如前/后、上/下铺）。您也可选择\u201c其他\u201d或\u201c不便透露\u201d。",
+  "faqGenderWhyA": "仅用于推荐合适舱位区域（如前/后、上/下铺）。您也可选择“其他”或“不便透露”。",
   "faqPrivacyQ": "我的信息是否保密？",
   "faqPrivacyA": "是。仅用于住宿与合规，不会公开分享您的证件。",
   "faqEditAfterQ": "提交后还能修改吗？",
   "faqEditAfterA": "可以。成功入住后 1 小时内可通过成功页提供的链接进行修改。",
-
   "commonNotesTitle": "快速添加常见备注：",
   "commonNoteLateArrival": "我会晚到（晚上 11 点后）",
   "commonNoteArriveEarly": "我会提早到达（下午 3 点前）",
-  "commonNoteBottomCapsule": "如可，优先安排下铺",
   "commonNoteQuietArea": "如可，优先安排安静区域",
-  "commonNoteExtraBedding": "需要额外毛毯"
+  "commonNoteExtraBedding": "需要额外毛毯",
+  "commonNoteBottomUnit": "如可，优先安排下铺"
 }
