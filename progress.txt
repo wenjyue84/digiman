@@ -1098,3 +1098,49 @@ Incomplete: Rename client component files (ID: US-008) — attempt 1/3
 Incomplete: Rename client component files (ID: US-008) — attempt 2/3
 
 
+
+## Iteration - US-009 — Update client pages, hooks, and utilities (COMPLETED)
+
+### What was implemented
+- `guest-checkin.tsx` line 734: fixed `t.assignedCapsule` → `t.assignedUnit` (runtime bug — the i18n key was already renamed but the page still used old name; silently rendered `undefined:` in UI since `t` is typed as `any`)
+- `history.tsx` line 505: updated `data-testid="header-sort-capsule"` → `data-testid="header-sort-unit"`
+- `types.ts`: removed deprecated `capsuleNumber?` fields from `PendingData` and `EmptyData` (already had `unitNumber` as primary; nothing referenced `.capsuleNumber`)
+- `prd.json`: US-009 marked `passes: true`
+
+### Pre-existing state
+- Most US-009 work was already done by US-008 (previous iteration)
+- All pages, hooks, and utils mentioned in acceptance criteria already had zero capsuleNumber/Capsule references
+- Only 3 residual issues remained (listed above)
+
+### Quality gates
+- TS compilation: 0 errors ✅
+- All capsuleNumber references in client (excluding @deprecated aliases): 0 ✅
+
+### Patterns discovered
+- **`t` as `any` hides type errors in guest-checkin**: The try/catch block wrapping `useI18n()` assigns `t` as `any`, so renamed i18n keys silently break at runtime. This pattern means any i18n key rename requires manual scan of all `t.xxx` calls.
+## Iteration 1 - Thu, Feb 26, 2026  7:24:56 AM
+Incomplete: Fix billing dispute test keyword: 'investigation' vs 'investigate' (ID: US-006) — attempt 1/3
+
+## Iteration 2 - Thu, Feb 26, 2026  7:35:37 AM
+Incomplete: Fix billing dispute test keyword: 'investigation' vs 'investigate' (ID: US-006) — attempt 2/3
+
+
+## Iteration N - US-010: Update i18n language files
+
+### What was implemented
+- Verified all 6 i18n files (en, ms, zh-cn, ja, ko, es) already had correct key names (`unitNumber` not `capsuleNumber`) and unit terminology from prior work
+- Discovered and fixed: previous iteration introduced **malformed JSON** in 5 files (en, ms, zh-cn, ko, es) by accidentally replacing ASCII structural JSON delimiters `"` (U+0022) with smart/curly quotes (U+201C/U+201D) when editing `notesHint` and `faqGenderWhyA` values
+- Fixed all 5 files using a Node.js repair script that distinguishes structural vs content curly quotes
+- `ja.json` was already valid (no issue)
+- Confirmed 0 TypeScript errors after fix
+
+### Patterns discovered
+- **Smart quote corruption in JSON edits**: Editors with autocorrect (Word, some IDEs) may replace ASCII `"` structural JSON delimiters with curly/smart quotes U+201C/U+201D when editing strings that contain curly quotes. This produces invalid JSON that TS fails to parse. Use `JSON.parse()` to validate after any manual i18n edits.
+- **TS 'Invalid character' errors in .json files**: If you see TS1127 "Invalid character" in a .json file, suspect Unicode smart quotes at structural positions (key/value delimiters). Check codepoints with `node -e "Array.from(line).map(c=>c.codePointAt(0).toString(16))"`.
+
+### Quality gates
+- All 6 JSON files: valid JSON ✅
+- `unitNumber` key present in all files ✅
+- No `capsuleNumber` keys in any file ✅
+- TS compilation: 0 errors ✅
+
