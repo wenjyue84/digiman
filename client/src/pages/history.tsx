@@ -502,7 +502,7 @@ export default function History() {
                             <TableHead 
                               className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 select-none"
                               onClick={() => handleSort('unitNumber')}
-                              data-testid="header-sort-capsule"
+                              data-testid="header-sort-unit"
                             >
                               <div className="flex items-center">
                                 Unit

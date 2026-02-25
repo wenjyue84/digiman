@@ -1,10 +1,10 @@
 {
-  "productName": "Multi-Business Deployment Ã¢â‚¬â€\udc9d Southern Homestay",
+  "productName": "Multi-Business Deployment \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d Southern Homestay",
   "branchName": "feature/multi-business",
   "overview": "Transform PelangiManager from a single-business capsule hostel system into a multi-business platform. Rename capsules schema to generic units (with unitType, maxOccupancy, pricePerNight columns), add env-var-driven business config, parameterize deployment, and set up Southern Homestay on its own Lightsail/Neon/Cloudflare/WhatsApp infrastructure.",
   "goals": [
     "One codebase serves multiple accommodation businesses (capsule hostels, homestays, hotels)",
-    "Each business runs on its own Lightsail instance with its own Neon database Ã¢â‚¬â€\udc9d complete data isolation",
+    "Each business runs on its own Lightsail instance with its own Neon database \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d complete data isolation",
     "All business differentiation is driven by environment variables (zero code forks)",
     "Existing Pelangi Capsule Hostel deployment continues working unchanged (backward compatible)",
     "Southern Homestay is fully operational: management dashboard, Rainbow AI WhatsApp bot, Cloudflare HTTPS"
@@ -27,10 +27,10 @@
         "TypeScript compiles with zero errors (npm run check)"
       ],
       "technicalNotes": [
-        "File: shared/schema-tables.ts Ã¢â‚¬â€\udc9d this is the foundational change, everything else depends on it",
+        "File: shared/schema-tables.ts \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d this is the foundational change, everything else depends on it",
         "Keep DB column snake_case: unit_number, unit_type, max_occupancy, price_per_night",
         "Drizzle JS variable names use camelCase: unitNumber, unitType, maxOccupancy, pricePerNight",
-        "After this change, TypeScript will show errors in ~100 files Ã¢â‚¬â€\udc9d that's expected and guides the remaining stories"
+        "After this change, TypeScript will show errors in ~100 files \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d that's expected and guides the remaining stories"
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
@@ -42,15 +42,15 @@
       "priority": 2,
       "description": "As a property manager, I want each unit to optionally store its type, max occupancy, and price so that I can manage different house sizes (studio, 1BR, 2BR).",
       "acceptanceCriteria": [
-        "units table has new nullable column: unitType: text('unit_type') Ã¢â‚¬â€\udc9d stores 'studio', '1bedroom', '2bedroom', or null for capsules",
-        "units table has new nullable column: maxOccupancy: integer('max_occupancy') Ã¢â‚¬â€\udc9d max guests per unit",
-        "units table has new nullable column: pricePerNight: text('price_per_night') Ã¢â‚¬â€\udc9d base price as decimal string",
+        "units table has new nullable column: unitType: text('unit_type') \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d stores 'studio', '1bedroom', '2bedroom', or null for capsules",
+        "units table has new nullable column: maxOccupancy: integer('max_occupancy') \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d max guests per unit",
+        "units table has new nullable column: pricePerNight: text('price_per_night') \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d base price as decimal string",
         "Existing Pelangi capsule data works unchanged (all new columns are null)",
         "TypeScript Unit type includes the three new fields",
         "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "File: shared/schema-tables.ts Ã¢â‚¬â€\udc9d add columns to the units table (renamed in US-001)",
+        "File: shared/schema-tables.ts \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d add columns to the units table (renamed in US-001)",
         "All columns nullable so capsule hostels don't need them",
         "pricePerNight is text not numeric to avoid floating point precision issues (same pattern as paymentAmount in guests)"
       ],
@@ -79,7 +79,7 @@
       "technicalNotes": [
         "Files: shared/validation/capsule-validation.ts (rename), shared/validation/index.ts, guest-validation.ts, token-validation.ts, settings-validation.ts, shared/validation-patterns.ts",
         "Use git mv for file renames to preserve history",
-        "unitType enum values: 'studio', '1bedroom', '2bedroom', '3bedroom' Ã¢â‚¬â€\udc9d keep extensible"
+        "unitType enum values: 'studio', '1bedroom', '2bedroom', '3bedroom' \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d keep extensible"
       ],
       "dependencies": [
         "US-001",
@@ -128,7 +128,7 @@
       ],
       "technicalNotes": [
         "Files: server/Storage/mem/MemCapsuleStore.ts (rename), MemGuestStore.ts, MemProblemStore.ts, MemTokenStore.ts, server/Storage/MemStorage.ts",
-        "Mirror the interface changes from US-004 Ã¢â‚¬â€\udc9d same method names, same param types"
+        "Mirror the interface changes from US-004 \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d same method names, same param types"
       ],
       "dependencies": [
         "US-004"
@@ -178,8 +178,8 @@
         "TypeScript compiles with zero errors"
       ],
       "technicalNotes": [
-        "Files: server/routes/tests/*.ts Ã¢â‚¬â€\udc9d all test files that reference capsule",
-        "Test assertions may reference /api/capsules endpoints Ã¢â‚¬â€\udc9d update to /api/units",
+        "Files: server/routes/tests/*.ts \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d all test files that reference capsule",
+        "Test assertions may reference /api/capsules endpoints \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d update to /api/units",
         "Test data objects with capsuleNumber fields -> unitNumber"
       ],
       "dependencies": [
@@ -230,9 +230,9 @@
         "Verify in browser using agent-browser: Check-in page loads, unit selector works, check-out page loads"
       ],
       "technicalNotes": [
-        "Largest story in the rename Ã¢â‚¬â€\udc9d touches ~20+ client files",
+        "Largest story in the rename \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d touches ~20+ client files",
         "Use IDE find-and-replace across client/src/ for: capsuleNumber -> unitNumber, Capsule -> Unit (as type), /api/capsules -> /api/units",
-        "Be careful not to replace 'capsule' in useAccommodationLabels.ts Ã¢â‚¬â€\udc9d that file stays as-is",
+        "Be careful not to replace 'capsule' in useAccommodationLabels.ts \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d that file stays as-is",
         "Also update client/src/components/guest-table/ files (SwipeableGuestCard, etc.)"
       ],
       "dependencies": [
@@ -240,7 +240,7 @@
         "US-008"
       ],
       "estimatedComplexity": "large",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-010",
@@ -258,7 +258,7 @@
       "technicalNotes": [
         "Files: client/src/lib/i18n/*.json",
         "Keys like capsuleNumber -> unitNumber; display text like 'Capsule Number' -> use labels from useAccommodationLabels() instead",
-        "Some i18n values may reference 'capsule' in context Ã¢â‚¬â€\udc9d update to generic 'unit' where appropriate"
+        "Some i18n values may reference 'capsule' in context \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d update to generic 'unit' where appropriate"
       ],
       "dependencies": [
         "US-009"
@@ -285,8 +285,8 @@
         "TypeScript compiles with zero errors (cd RainbowAI && npx tsc --noEmit)"
       ],
       "technicalNotes": [
-        "RainbowAI fetches data via HTTP from /api/units (was /api/capsules) Ã¢â‚¬â€\udc9d update all fetch URLs",
-        "RainbowAI has its OWN types for capsule/unit data Ã¢â‚¬â€\udc9d not imported from shared/",
+        "RainbowAI fetches data via HTTP from /api/units (was /api/capsules) \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d update all fetch URLs",
+        "RainbowAI has its OWN types for capsule/unit data \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d not imported from shared/",
         "Also update tool descriptions that mention 'capsule' to say 'unit'",
         "Check RainbowAI/src/assistant/workflow-enhancer.ts and workflow-executor.ts for capsule refs"
       ],
@@ -312,7 +312,7 @@
       ],
       "technicalNotes": [
         "New files: migrations/rename-capsules-to-units.sql, migrations/rollback-units-to-capsules.sql",
-        "ALTER TABLE RENAME is metadata-only in PostgreSQL Ã¢â‚¬â€\udc9d instant, no data rewrite",
+        "ALTER TABLE RENAME is metadata-only in PostgreSQL \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d instant, no data rewrite",
         "Index rename syntax: ALTER INDEX idx_capsules_is_available RENAME TO idx_units_is_available",
         "Test locally: create test DB, seed data, run migration, verify drizzle-kit push shows no changes needed"
       ],
@@ -333,13 +333,13 @@
         "grep -r '/api/capsules' client/src/ returns ZERO hits",
         "grep -r 'capsule_number' shared/ returns ZERO hits",
         "npm run check passes",
-        "npm run test passes Ã¢â‚¬â€\udc9d all tests green",
+        "npm run test passes \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d all tests green",
         "Local dev server starts and full check-in/check-out flow works end-to-end",
         "Verify in browser using agent-browser: Dashboard loads, units display, check-in assigns unit, check-out releases unit"
       ],
       "technicalNotes": [
         "This is the final verification story for Stage 1",
-        "Run grep across all source directories Ã¢â‚¬â€\udc9d every hit must be investigated",
+        "Run grep across all source directories \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d every hit must be investigated",
         "Acceptable exclusions: @deprecated aliases in schema-tables.ts, migration SQL files, CLAUDE.md/docs",
         "If any orphaned references found, fix them before marking this story complete"
       ],
@@ -380,7 +380,7 @@
       "priority": 15,
       "description": "As a frontend developer, I want an API endpoint and React hook to access business config so that UI components can display the correct business branding.",
       "acceptanceCriteria": [
-        "GET /api/business-config endpoint added to server/routes.ts (unauthenticated Ã¢â‚¬â€\udc9d needed for login page)",
+        "GET /api/business-config endpoint added to server/routes.ts (unauthenticated \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d needed for login page)",
         "Endpoint returns BusinessConfig JSON from getBusinessConfig()",
         "New file client/src/hooks/useBusinessConfig.ts exports useBusinessConfig() hook using React Query",
         "Hook has 30-minute staleTime (business config rarely changes)",
@@ -389,7 +389,7 @@
       ],
       "technicalNotes": [
         "New file: client/src/hooks/useBusinessConfig.ts",
-        "Edit: server/routes.ts Ã¢â‚¬â€\udc9d add before auth middleware routes so it's unauthenticated",
+        "Edit: server/routes.ts \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d add before auth middleware routes so it's unauthenticated",
         "React Query queryKey: ['/api/business-config']"
       ],
       "dependencies": [
@@ -413,7 +413,7 @@
       ],
       "technicalNotes": [
         "Files: .env.example, RainbowAI/.env.example, server/validate-env.ts",
-        "All new vars are OPTIONAL Ã¢â‚¬â€\udc9d system works with zero business env vars set"
+        "All new vars are OPTIONAL \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d system works with zero business env vars set"
       ],
       "dependencies": [
         "US-014"
@@ -438,8 +438,8 @@
       ],
       "technicalNotes": [
         "Files: client/src/components/header.tsx, login-form.tsx, client/src/lib/receiptGenerator.ts, vite.config.ts",
-        "receiptGenerator needs BusinessConfig passed as parameter Ã¢â‚¬â€\udc9d update callers",
-        "vite.config.ts uses process.env at build time, not runtime Ã¢â‚¬â€\udc9d values baked into the bundle"
+        "receiptGenerator needs BusinessConfig passed as parameter \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d update callers",
+        "vite.config.ts uses process.env at build time, not runtime \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d values baked into the bundle"
       ],
       "dependencies": [
         "US-015"
@@ -488,7 +488,7 @@
         "File: server/index.ts lines 205-241",
         "Default SEED_UNITS for Pelangi: C1:back,C2:back,C3:back,C4:back,C5:back,C6:back,C25:middle,C26:middle,C11:front,C12:front,C13:front,C14:front,C15:front,C16:front,C17:front,C18:front,C19:front,C20:front,C21:front,C22:front,C23:front,C24:front",
         "Southern example: Studio-A:ground:studio:2,1BR-1:first_floor:1bedroom:4",
-        "Parser: split by comma, then by colon Ã¢â‚¬â€\udc9d robust error handling for malformed entries"
+        "Parser: split by comma, then by colon \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d robust error handling for malformed entries"
       ],
       "dependencies": [
         "US-001",
@@ -514,7 +514,7 @@
       ],
       "technicalNotes": [
         "New files: deploy/targets/pelangi.env, deploy/targets/southern.env",
-        "Edit: deploy.sh Ã¢â‚¬â€\udc9d change hardcoded vars to sourced vars",
+        "Edit: deploy.sh \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d change hardcoded vars to sourced vars",
         "Keep --skip-build and --skip-rainbow flags working"
       ],
       "dependencies": [],
@@ -618,7 +618,7 @@
       "technicalNotes": [
         "Manual steps: domain registration, Cloudflare setup",
         "Reference: .claude/skills/cloudflare-setup/SKILL.md for tunnel setup procedure",
-        "Existing Pelangi tunnel ID: 0ef67970-4094-492d-a513-8864fa4cfd53 Ã¢â‚¬â€\udc9d Southern gets a separate tunnel"
+        "Existing Pelangi tunnel ID: 0ef67970-4094-492d-a513-8864fa4cfd53 \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d Southern gets a separate tunnel"
       ],
       "dependencies": [
         "US-023"
@@ -643,7 +643,7 @@
       ],
       "technicalNotes": [
         "Manual steps: obtain phone number, pair device, customize KB",
-        "Each instance MUST have its own WHATSAPP_AUTH_DIR Ã¢â‚¬â€\udc9d cannot share Baileys credentials",
+        "Each instance MUST have its own WHATSAPP_AUTH_DIR \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d cannot share Baileys credentials",
         "Reference: .claude/skills/whatsapp-baileys/SKILL.md for pairing procedure"
       ],
       "dependencies": [
@@ -666,7 +666,7 @@
         "New columns exist: unit_type, max_occupancy, price_per_night (all NULL for existing capsules)",
         "Updated codebase deployed to Pelangi via ./deploy.sh pelangi",
         "All Pelangi flows work: login, dashboard, check-in, check-out, maintenance, Rainbow AI",
-        "No data loss Ã¢â‚¬â€\udc9d all existing guests, units, expenses intact"
+        "No data loss \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d all existing guests, units, expenses intact"
       ],
       "technicalNotes": [
         "Manual step: run migration SQL on Neon console or via psql",
@@ -687,10 +687,10 @@
       "priority": 27,
       "description": "As an operator, I want to verify both Pelangi and Southern Homestay instances are fully operational and independent.",
       "acceptanceCriteria": [
-        "Pelangi: https://admin.pelangicapsulehostel.com Ã¢â‚¬â€\udc9d login, dashboard, check-in/out, receipts all work",
-        "Pelangi: https://rainbow.pelangicapsulehostel.com Ã¢â‚¬â€\udc9d Rainbow AI dashboard loads, WhatsApp bot responds",
-        "Southern: https://admin.southernhomestay.com Ã¢â‚¬â€\udc9d login, dashboard with rooms/houses, check-in/out work",
-        "Southern: https://rainbow.southernhomestay.com Ã¢â‚¬â€\udc9d Rainbow AI dashboard loads, WhatsApp bot responds",
+        "Pelangi: https://admin.pelangicapsulehostel.com \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d login, dashboard, check-in/out, receipts all work",
+        "Pelangi: https://rainbow.pelangicapsulehostel.com \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d Rainbow AI dashboard loads, WhatsApp bot responds",
+        "Southern: https://admin.southernhomestay.com \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d login, dashboard with rooms/houses, check-in/out work",
+        "Southern: https://rainbow.southernhomestay.com \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d Rainbow AI dashboard loads, WhatsApp bot responds",
         "Data isolation: creating a guest on Pelangi does NOT appear on Southern (separate DBs)",
         "Pelangi UI shows 'Pelangi Capsule Hostel' with 'Capsule' labels",
         "Southern UI shows 'Southern Homestay' with 'Room'/'House' labels",
@@ -804,12 +804,12 @@
       "migrations/ (NEW)"
     ],
     "testingStrategy": "TypeScript compilation check after every story. npm run test after server stories. agent-browser verification for UI stories. End-to-end verification in US-013 (code) and US-027 (infrastructure).",
-    "rollbackPlan": "Schema: migrations/rollback-units-to-capsules.sql. Code: git revert to pre-rename commit. Infrastructure: each instance is independent Ã¢â‚¬â€\udc9d rollback one without affecting the other.",
+    "rollbackPlan": "Schema: migrations/rollback-units-to-capsules.sql. Code: git revert to pre-rename commit. Infrastructure: each instance is independent \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d rollback one without affecting the other.",
     "crossCuttingConcerns": {
       "backwardCompatibility": "All env vars have Pelangi defaults. Existing deployment works unchanged until migration.",
-      "importBoundaries": "RainbowAI/ must have ZERO imports from server/, client/, or shared/ Ã¢â‚¬â€\udc9d HTTP fetch only",
+      "importBoundaries": "RainbowAI/ must have ZERO imports from server/, client/, or shared/ \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d HTTP fetch only",
       "memoryConstraints": "Southern Homestay needs $10/mo 2GB Lightsail (not $5/mo 512MB) for Rainbow AI",
-      "whatsappIsolation": "Each instance needs unique WHATSAPP_AUTH_DIR Ã¢â‚¬â€\udc9d cannot share Baileys credentials",
+      "whatsappIsolation": "Each instance needs unique WHATSAPP_AUTH_DIR \u00c3\u0192\u00c2\u00a2\u00c3\u00a2\u00e2\u20ac\u0161\u00c2\u00ac\u00c3\u00a2\u00e2\u201a\u00ac\udc9d cannot share Baileys credentials",
       "buildLocally": "Never npm install on Lightsail (OOM). Build locally, transfer tarball."
     }
   }

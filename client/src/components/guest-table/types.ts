@@ -23,8 +23,6 @@ export interface PendingData {
   id: string;
   name: string;
   unitNumber: string;
-  /** @deprecated Use unitNumber */
-  capsuleNumber?: string;
   createdAt: string;
   expiresAt: string;
   phoneNumber: string | null;
@@ -34,8 +32,6 @@ export interface EmptyData {
   id: string;
   name: string;
   unitNumber: string;
-  /** @deprecated Use unitNumber */
-  capsuleNumber?: string;
   checkinTime: null;
   expectedCheckoutDate: null;
   phoneNumber: null;
