@@ -197,7 +197,7 @@ class PushNotificationManager {
       // Subscribe to push manager
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey) as Uint8Array<ArrayBuffer>,
       });
 
       // Send subscription to server
