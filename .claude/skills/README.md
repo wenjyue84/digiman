@@ -4,6 +4,19 @@ This directory contains project-specific skills for Claude Code to use when work
 
 ## Available Skills
 
+### run-all-tests
+Programmatically run all 58+ Rainbow AI Chat Simulator integration tests (same as clicking "Run All" at `http://localhost:3002/#chat-simulator`).
+
+**Use when:**
+- "Run all tests" / "run the chat simulator tests"
+- Verifying AI pipeline after intent/routing/KB changes
+- Pre-deployment regression check
+- "How do I run autotests?"
+
+**Key insight:** Concurrency MUST be 2. Higher values cause AI provider rate-limiting (pass rate drops from ~70% to 0%).
+
+---
+
 ### database-troubleshooting
 Diagnose and fix database connection issues, schema mismatches, and Drizzle ORM sync problems.
 

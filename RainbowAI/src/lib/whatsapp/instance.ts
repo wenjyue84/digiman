@@ -1,4 +1,4 @@
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, isLidUser, jidNormalizedUser } from '@whiskeysockets/baileys';
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, isLidUser, jidNormalizedUser, fetchLatestWaWebVersion } from '@whiskeysockets/baileys';
 import fs from 'fs';
 import type { IncomingMessage, MessageType } from '../../assistant/types.js';
 import { trackWhatsAppConnected, trackWhatsAppDisconnected, trackWhatsAppUnlinked } from '../activity-tracker.js';
@@ -71,7 +71,11 @@ export class WhatsAppInstance {
 
     const { state, saveCreds } = await useMultiFileAuthState(this.authDir);
 
+    const { version } = await fetchLatestWaWebVersion();
+    console.log(`[Baileys:${this.id}] Using WA Web version: ${version.join('.')}`);
+
     this.sock = makeWASocket({
+      version,
       auth: state,
       printQRInTerminal: false,
       keepAliveIntervalMs: 10_000, // 10s keepalives — prevents socket from appearing silent during idle periods
