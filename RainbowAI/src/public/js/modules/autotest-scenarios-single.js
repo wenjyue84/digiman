@@ -582,7 +582,7 @@ export const SINGLE_TURN_SCENARIOS = [
     validate: [{
       turn: 0, rules: [
         { type: 'not_empty', critical: true },
-        { type: 'contains_any', values: ['investigation', 'refund', 'review'], critical: true }
+        { type: 'contains_any', values: ['investigate', 'investigation', 'refund', 'review', 'billing', 'overcharge'], critical: true }
       ]
     }]
   },
