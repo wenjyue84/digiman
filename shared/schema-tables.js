@@ -69,8 +69,8 @@ export const guests = pgTable("guests", {
     index("idx_guests_self_checkin_token").on(table.selfCheckinToken),
     index("idx_guests_expected_checkout_date").on(table.expectedCheckoutDate),
 ]));
-// ─── Capsules ────────────────────────────────────────────────────────
-export const capsules = pgTable("capsules", {
+// ─── Units (accommodation units: capsules, rooms, houses) ───────────
+export const units = pgTable("units", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
     number: text("number").notNull().unique(),
     section: text("section").notNull(), // 'back', 'middle', 'front'
@@ -79,19 +79,22 @@ export const capsules = pgTable("capsules", {
     toRent: boolean("to_rent").notNull().default(true), // true = suitable for rent, false = not suitable for rent due to major issues
     lastCleanedAt: timestamp("last_cleaned_at"),
     lastCleanedBy: text("last_cleaned_by"),
-    color: text("color"), // Color of the capsule
-    purchaseDate: date("purchase_date"), // When the capsule was purchased
+    color: text("color"), // Color of the unit
+    purchaseDate: date("purchase_date"), // When the unit was purchased/added
     position: text("position"), // 'top' or 'bottom' for stacked capsules
-    remark: text("remark"), // Additional notes about the capsule
+    remark: text("remark"), // Additional notes about the unit
     branch: text("branch"), // Branch location identifier
+    unitType: text("unit_type"), // 'studio', '1bedroom', '2bedroom', '3bedroom', or null for capsules
+    maxOccupancy: integer("max_occupancy"), // Max guests per unit
+    pricePerNight: text("price_per_night"), // Base price as decimal string (text for precision)
 }, (table) => ([
-    index("idx_capsules_is_available").on(table.isAvailable),
-    index("idx_capsules_section").on(table.section),
-    index("idx_capsules_cleaning_status").on(table.cleaningStatus),
-    index("idx_capsules_position").on(table.position),
-    index("idx_capsules_to_rent").on(table.toRent),
+    index("idx_units_is_available").on(table.isAvailable),
+    index("idx_units_section").on(table.section),
+    index("idx_units_cleaning_status").on(table.cleaningStatus),
+    index("idx_units_position").on(table.position),
+    index("idx_units_to_rent").on(table.toRent),
 ]));
-export const capsuleProblems = pgTable("capsule_problems", {
+export const unitProblems = pgTable("unit_problems", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
     unitNumber: text("unit_number").notNull(),
     description: text("description").notNull(),
@@ -102,16 +105,16 @@ export const capsuleProblems = pgTable("capsule_problems", {
     resolvedAt: timestamp("resolved_at"),
     notes: text("notes"), // Resolution notes
 }, (table) => ([
-    index("idx_capsule_problems_unit_number").on(table.unitNumber),
-    index("idx_capsule_problems_is_resolved").on(table.isResolved),
-    index("idx_capsule_problems_reported_at").on(table.reportedAt),
+    index("idx_unit_problems_unit_number").on(table.unitNumber),
+    index("idx_unit_problems_is_resolved").on(table.isResolved),
+    index("idx_unit_problems_reported_at").on(table.reportedAt),
 ]));
 // ─── Guest Tokens ────────────────────────────────────────────────────
 export const guestTokens = pgTable("guest_tokens", {
     id: varchar("id").primaryKey().default(sql `gen_random_uuid()`),
     token: text("token").notNull().unique(),
     unitNumber: text("unit_number"), // Optional - null when auto-assign is used
-    autoAssign: boolean("auto_assign").default(false), // True when capsule should be auto-assigned
+    autoAssign: boolean("auto_assign").default(false), // True when unit should be auto-assigned
     guestName: text("guest_name"), // Optional - guest fills it themselves
     phoneNumber: text("phone_number"), // Optional - guest fills it themselves
     email: text("email"),
@@ -134,7 +137,7 @@ export const adminNotifications = pgTable("admin_notifications", {
     title: text("title").notNull(),
     message: text("message").notNull(),
     guestId: varchar("guest_id"), // Optional reference to guest
-    unitNumber: text("unit_number"), // Optional capsule reference
+    unitNumber: text("unit_number"), // Optional unit reference
     isRead: boolean("is_read").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ([
@@ -301,7 +304,7 @@ export const rainbowMessages = pgTable("rainbow_messages", {
     routedAction: text("routed_action"), // static_reply | llm_reply | workflow | etc
     workflowId: text("workflow_id"),
     stepId: text("step_id"),
-    usageJson: text("usage_json"), // JSON: {prompt_tokens, completion_tokens, total_tokens}
+    usageJson: text("usage_json"), // JSON: token usage + staffName for manual messages
 }, (table) => ([
     index("idx_rainbow_messages_phone").on(table.phone),
     index("idx_rainbow_messages_phone_timestamp").on(table.phone, table.timestamp),
@@ -310,3 +313,8 @@ export const rainbowMessages = pgTable("rainbow_messages", {
     // Composite: hot query for fetching conversation messages filtered by role
     index("idx_rainbow_messages_phone_role_ts").on(table.phone, table.role, table.timestamp),
 ]));
+// ─── Backward Compatibility Aliases ──────────────────────────────────
+/** @deprecated Use units instead */
+export const capsules = units;
+/** @deprecated Use unitProblems instead */
+export const capsuleProblems = unitProblems;
