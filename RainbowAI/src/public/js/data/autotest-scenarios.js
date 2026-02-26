@@ -1876,15 +1876,15 @@ const AUTOTEST_SCENARIOS = [
     category: 'CONVERSATION_SUMMARIZATION',
     messages: [
       { text: 'My name is John' },
-      { text: 'I want to book for 3 nights' },
-      { text: 'Starting June 15th' },
-      { text: 'For 2 people' },
+      { text: 'How much is it for 3 nights?' },
+      { text: 'Is there air conditioning?' },
+      { text: 'Do you provide towels?' },
       { text: 'What facilities do you have?' },
       { text: 'Do you have parking?' },
       { text: 'How about breakfast?' },
       { text: 'Is WiFi free?' },
-      { text: 'Can I check in early?' },
-      { text: 'What about late checkout?' },
+      { text: 'What time is check-in?' },
+      { text: 'Is there a convenience store nearby?' },
       { text: 'Do you remember my name?' }
     ],
     validate: [

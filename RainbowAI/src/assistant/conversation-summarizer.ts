@@ -86,19 +86,28 @@ export async function applyConversationSummarization(
 
     const summaryPrompt = `You are summarizing a conversation between a guest and a hostel AI assistant.
 
-Summarize the following conversation into 2-3 concise sentences. Focus on:
+Summarize the following conversation into 2-3 concise sentences.
+
+CRITICAL: You MUST preserve these named entities exactly as they appear:
+- Guest's name (e.g., "The guest's name is John")
+- Booking dates and duration
+- Capsule/room number
+- Complaint details and status
+- Phone numbers or reference IDs
+
+Also include:
 - Guest's key questions or requests
 - Main topics discussed
-- Any important details (dates, numbers, specific requests)
+- Any other important details (dates, numbers, specific requests)
 
 Conversation to summarize (messages ${summarize_from_message}-${summarize_to_message}):
 ${conversationText}
 
-Summary:`;
+Summary (include all named entities):`;
 
     // Call AI to generate summary
     const summaryContent = await chat(
-      'You are a helpful assistant that summarizes conversations concisely.',
+      'You are a helpful assistant that summarizes conversations concisely. You MUST preserve all named entities (guest name, dates, capsule numbers, complaint details) in the summary.',
       [],
       summaryPrompt
     );

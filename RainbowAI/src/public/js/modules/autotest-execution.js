@@ -301,8 +301,10 @@ export async function runScenario(scenario) {
   const scenarioStart = Date.now();
 
   // Multi-turn workflow scenarios use /preview/chat with session ID to maintain state (US-015)
+  // CONVERSATION_SUMMARIZATION tests need multi-turn to maintain context across 11+ messages (US-013)
   const isMultiTurn = scenario.messages.length > 1 && (
-    scenario.category === 'WORKFLOW_COMPLETE' || scenario.category === 'ARRIVAL_CHECKIN' || scenario.suite === 'checkin_process'
+    scenario.category === 'WORKFLOW_COMPLETE' || scenario.category === 'ARRIVAL_CHECKIN' ||
+    scenario.suite === 'checkin_process' || scenario.category === 'CONVERSATION_SUMMARIZATION'
   );
   const sessionId = isMultiTurn ? ('autotest-' + scenario.id + '-' + Date.now()) : null;
   const chatHistory = [];
