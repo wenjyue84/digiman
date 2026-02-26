@@ -51,7 +51,7 @@
     {
       "comment": "Capsule layout, deck, bunk assignment",
       "regex": "lower.?deck|upper.?deck|bottom.?bunk|top.?bunk|deck|bunk|even.?number|odd.?number|which.?capsule|capsule.?layout|assign",
-      "files": ["capsule-layout.md"]
+      "files": ["unit-layout.md"]
     },
     {
       "comment": "Bathrooms & showers",
