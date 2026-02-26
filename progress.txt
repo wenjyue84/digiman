@@ -1409,3 +1409,6 @@ The original bug was: `kb-patterns.json` referenced `capsule-layout.md` (non-exi
   - "after checking out, i want to complain about poor service" → post_checkout_complaint ✅
   - "I want to check in" → no correction (no post-checkout regex match) ✅
   - "After checking out I forgot my passport" → no correction (no complaint regex match) ✅
+## Iteration 7 - Thu, Feb 26, 2026  9:15:52 AM
+Completed: Fix Capsule Layout responses â€” lower deck queries missing even/odd info (ID: US-004) in 24m
+
