@@ -1677,3 +1677,41 @@ Completed: Fix multi-turn complaint escalation â€” follow-up message not ac
 ### Patterns discovered
 - **Verify before assuming a story needs implementation**: PRD stories may already be passing from previous iterations. Always run the specific test scenario against the live server FIRST before writing any code.
 - **Workflow-based responses are stable test targets**: When routing.json points an intent to workflow, the response comes from static template text — not LLM. These tests are AI-provider-independent and much more stable than LLM-based tests.
+
+## Iteration 14 — Story: US-012 Fix multi-turn check-in info flow — topic switching loses lower deck and WiFi answers
+
+### What was implemented
+- **`RainbowAI/src/routes/admin/testing-preview.ts`**: Added "topic-escape" logic to abandon active workflows when the user's new message clearly switches topic.
+
+### Root cause
+- Turn 1 ("I have arrived at the hostel now") triggers `checkin_full` workflow (6-step interactive workflow with `waitForReply: true`). 
+- The workflow state is saved in `previewWorkflowStates` keyed by history signature.
+- Turns 2 and 3 get intercepted as workflow continuation inputs instead of being independently answered.
+
+### The fix
+Added `shouldEscapeWorkflow` check between intent classification and the workflow branch:
+```typescript
+const shouldEscapeWorkflow = !!activeWorkflow &&
+  currentRoute?.action === 'static_reply' &&
+  intentResult.confidence >= 0.8;
+```
+When true: delete the workflow state and process the message as a fresh static_reply.
+Used `effectiveWorkflow` (null when escaping) instead of `activeWorkflow` in all downstream logic.
+
+### Key discovery
+Both `lower_deck_preference` and `wifi` intents classify via T4 LLM (source='llm') with confidence=1.0.
+The initial version excluded LLM-sourced intents from escaping (`source !== 'llm'`), which prevented the fix from working. Removed this condition — confidence >= 0.8 is sufficient signal for a topic switch.
+
+### Test results (verified against live server):
+- Turn 0: "What time is check-in?" → checkin_info static_reply → contains PM, check-in ✅
+- Turn 1: "I have arrived at the hostel now" → check_in_arrival workflow → contains welcome, name ✅
+- Turn 2: "Can I get a lower deck capsule?" → ESCAPED workflow → lower_deck_preference static_reply → contains lower, deck, even, C2, C4 ✅
+- Turn 3: "What is the WiFi password?" → ESCAPED (clean state) → wifi static_reply → contains WiFi, password ✅
+
+### Quality gates
+- TS compilation: 30 errors (all pre-existing, zero new) ✅
+- mt-checkin-flow: all 4 turns PASS via live API ✅
+
+### Patterns discovered
+- **Topic-escape pattern**: When in a preview/chat workflow, if user asks a high-confidence static_reply intent, delete the workflow state (use effectiveWorkflow not activeWorkflow). Threshold: confidence >= 0.8 regardless of source.
+- **Both lower_deck and wifi use T4 LLM** (source='llm') — do NOT filter escapes by source='keyword'.

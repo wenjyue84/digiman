@@ -179,7 +179,20 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
 
     const routingConfig = configStore.getRouting() || {};
     const route = routingConfig[intentResult.category];
-    const routedAction: string = activeWorkflow ? 'workflow' : (route?.action || 'llm_reply');
+
+    // Topic-escape: if user switches to a high-confidence static_reply intent while in a
+    // workflow (e.g., asks WiFi password mid check-in), abandon the workflow and answer directly.
+    const currentRoute = routingConfig[intentResult.category];
+    const shouldEscapeWorkflow = !!activeWorkflow &&
+      currentRoute?.action === 'static_reply' &&
+      intentResult.confidence >= 0.8;
+    if (shouldEscapeWorkflow) {
+      previewWorkflowStates.delete(lookupKey);
+      console.log(`[Preview] Topic-escape: abandoning workflow ${activeWorkflow?.workflowId} for intent ${intentResult.category} (confidence=${intentResult.confidence})`);
+    }
+    const effectiveWorkflow = shouldEscapeWorkflow ? null : activeWorkflow;
+
+    const routedAction: string = effectiveWorkflow ? 'workflow' : (route?.action || 'llm_reply');
 
     const { detectMessageType } = await import('../../assistant/problem-detector.js');
     const messageType = detectMessageType(sanitizedMessage);
@@ -192,7 +205,7 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     let llmModel = 'none';
     let topicFiles: string[] = [];
     let problemOverride = false;
-    let activeWorkflowId = activeWorkflow?.workflowId || null;
+    let activeWorkflowId = effectiveWorkflow?.workflowId || null;
     let llmUsage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | undefined;
     let editMeta: {
       type: 'knowledge' | 'workflow' | 'template';
@@ -207,18 +220,18 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     } | null = null;
 
     // Handle active workflow continuation
-    if (activeWorkflow) {
+    if (effectiveWorkflow) {
       const workflowsData = configStore.getWorkflows() || { workflows: [] };
-      const workflow = (workflowsData.workflows || []).find(w => w.id === activeWorkflow.workflowId);
-      if (workflow && activeWorkflow.currentStepIndex < workflow.steps.length) {
-        const step = workflow.steps[activeWorkflow.currentStepIndex];
+      const workflow = (workflowsData.workflows || []).find(w => w.id === effectiveWorkflow.workflowId);
+      if (workflow && effectiveWorkflow.currentStepIndex < workflow.steps.length) {
+        const step = workflow.steps[effectiveWorkflow.currentStepIndex];
         finalMessage = step.message?.en || '';
         editMeta = {
           type: 'workflow',
-          workflowId: activeWorkflow.workflowId,
+          workflowId: effectiveWorkflow.workflowId,
           workflowName: workflow.name,
           stepId: step.id,
-          stepIndex: activeWorkflow.currentStepIndex,
+          stepIndex: effectiveWorkflow.currentStepIndex,
           languages: {
             en: step.message?.en || '',
             ms: step.message?.ms || '',
@@ -227,13 +240,13 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
         };
 
         // Advance or complete workflow
-        if (activeWorkflow.currentStepIndex + 1 < workflow.steps.length) {
+        if (effectiveWorkflow.currentStepIndex + 1 < workflow.steps.length) {
           // Save state for next turn (always advance state for simulation)
           const saveKey = sessionId || getPreviewSessionKey([...conversationHistory, { role: 'user', content: sanitizedMessage }, { role: 'assistant', content: finalMessage }]);
-          console.log(`[Preview] Saving workflow continuation: key=${saveKey}, nextStep=${activeWorkflow.currentStepIndex + 1}`);
+          console.log(`[Preview] Saving workflow continuation: key=${saveKey}, nextStep=${effectiveWorkflow.currentStepIndex + 1}`);
           previewWorkflowStates.set(saveKey, {
-            workflowId: activeWorkflow.workflowId,
-            currentStepIndex: activeWorkflow.currentStepIndex + 1
+            workflowId: effectiveWorkflow.workflowId,
+            currentStepIndex: effectiveWorkflow.currentStepIndex + 1
           });
         } else {
           // Workflow completed
