@@ -508,6 +508,23 @@ async function tryMultiIntentSplit(
   return null;
 }
 
+/**
+ * Corrects Fuse.js false positives where phonetically similar keywords cause wrong intent.
+ * Primary case: "checking out" fuzzy-matches "checking in" → check_in_arrival,
+ * but message is actually a post-checkout complaint.
+ * Returns the corrected intent string, or null if no correction needed.
+ */
+function correctCheckInFalsePositive(intent: string, text: string): string | null {
+  if (
+    (intent === 'check_in_arrival' || intent === 'checkin_info') &&
+    /\b(after\s+(checking\s+out|check\s*out|checkout|checked\s+out)|post[- ]?checkout|lepas\s+(check\s*out|checkout|keluar)|退房后)\b/i.test(text) &&
+    /\b(complain|complaint|poor\s+service|bad\s+service|aduan|servis\s+teruk|pengalaman\s+teruk)\b/i.test(text)
+  ) {
+    return 'post_checkout_complaint';
+  }
+  return null;
+}
+
 export async function classifyMessageWithContext(
   text: string,
   history: ChatMessage[] = [],
@@ -585,15 +602,21 @@ export async function classifyMessageWithContext(
       config.tiers.tier2_fuzzy.threshold,
       't2'
     )) {
-      console.log(
-        `[Intent] ⚡ FUZZY match: ${fuzzyResult.intent} ` +
-        `(${(fuzzyResult.score * 100).toFixed(0)}% - keyword: "${fuzzyResult.matchedKeyword}")` +
-        (fuzzyResult.contextBoost ? ' [CONTEXT BOOST]' : '')
-      );
+      const correctedIntent = correctCheckInFalsePositive(fuzzyResult.intent, processedText);
+      const finalIntent = correctedIntent ?? fuzzyResult.intent;
+      if (correctedIntent) {
+        console.log(`[Intent] ⚠️ T2 false-positive corrected: ${fuzzyResult.intent} → ${correctedIntent} (post-checkout context)`);
+      } else {
+        console.log(
+          `[Intent] ⚡ FUZZY match: ${fuzzyResult.intent} ` +
+          `(${(fuzzyResult.score * 100).toFixed(0)}% - keyword: "${fuzzyResult.matchedKeyword}")` +
+          (fuzzyResult.contextBoost ? ' [CONTEXT BOOST]' : '')
+        );
+      }
 
       return {
-        category: fuzzyResult.intent as any,
-        confidence: fuzzyResult.score,
+        category: finalIntent as any,
+        confidence: correctedIntent ? 0.88 : fuzzyResult.score,
         entities: {},
         source: 'fuzzy',
         matchedKeyword: fuzzyResult.matchedKeyword,
@@ -605,13 +628,19 @@ export async function classifyMessageWithContext(
     // Even if the fuzzy result didn't pass per-intent tier thresholds, a raw score >= 0.85
     // is strong enough to skip the expensive semantic embedding step.
     if (fuzzyResult && fuzzyResult.score >= 0.85) {
-      console.log(
-        `[Intent] ⚡ FUZZY high-confidence shortcut: ${fuzzyResult.intent} ` +
-        `(${(fuzzyResult.score * 100).toFixed(0)}% >= 85%) — skipping semantic tier`
-      );
+      const correctedHigh = correctCheckInFalsePositive(fuzzyResult.intent, processedText);
+      const finalHighIntent = correctedHigh ?? fuzzyResult.intent;
+      if (correctedHigh) {
+        console.log(`[Intent] ⚠️ T2 high-confidence false-positive corrected: ${fuzzyResult.intent} → ${correctedHigh}`);
+      } else {
+        console.log(
+          `[Intent] ⚡ FUZZY high-confidence shortcut: ${fuzzyResult.intent} ` +
+          `(${(fuzzyResult.score * 100).toFixed(0)}% >= 85%) — skipping semantic tier`
+        );
+      }
       fuzzyHighConfidenceResult = {
-        category: fuzzyResult.intent as any,
-        confidence: fuzzyResult.score,
+        category: finalHighIntent as any,
+        confidence: correctedHigh ? 0.88 : fuzzyResult.score,
         entities: {},
         source: 'fuzzy',
         matchedKeyword: fuzzyResult.matchedKeyword,

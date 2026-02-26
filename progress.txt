@@ -1388,3 +1388,24 @@ The original bug was: `kb-patterns.json` referenced `capsule-layout.md` (non-exi
 ### Patterns discovered
 - **Always verify against latest test report before implementing**: If a PRD story shows passes:false but the tests are actually passing in recent reports, the fix was likely applied in a prior session without marking the PRD entry.
 - **capsule-bottom-bunk also failing**: "Can I have a bottom bunk please?" → intent=unknown. This is NOT part of US-004 but is related. Fix: add `bottom bunk` or `bottom deck` to intent keywords or ensure routing handles `unknown` intent with capsule/deck KB context. Leave for future iteration.
+
+## Iteration — Story: US-007 Fix Post-Checkout Complaint Service response — missing apology keywords
+
+### What was implemented
+- `RainbowAI/src/assistant/intents.ts`: Added `correctCheckInFalsePositive()` helper function and applied it in both T2 return paths (threshold check return + high-confidence shortcut return).
+- The helper detects when `check_in_arrival` or `checkin_info` is returned by Fuse.js but the message contains post-checkout context ("after checking out") + complaint language ("complain", "poor service"), and reclassifies to `post_checkout_complaint`.
+
+### Root cause
+"After checking out, I want to complain about poor service" — Fuse.js fuzzy-matched "checking out" to "checking in" (only 3-char diff) with ~90% confidence → `check_in_arrival` returned with high confidence. The existing T2 substringMatch was never tried because confidence exceeded the 0.70 threshold. Result: check-in workflow ran instead of complaint workflow → "What is your full name?" with no apology keywords.
+
+### Patterns discovered
+- **Fuse.js phonetic false positives**: "checking out" ≈ "checking in" (~90% similarity). Any intent with "checking in" as a keyword can incorrectly match messages about checking OUT. Add post-T2 reclassification guards for semantically-opposite phrases.
+- **Two T2 return paths**: The T2 correction must be applied in BOTH the threshold-pass block (lines ~582-601) AND the high-confidence shortcut block (~607-633). The shortcut (>= 0.85) bypasses even the threshold check.
+- **correctCheckInFalsePositive pattern**: Place correction helpers between `tryMultiIntentSplit` and `classifyMessageWithContext` alongside `mapLLMIntentToSpecific`. Both are "post-classification corrections" for different tiers.
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- `correctCheckInFalsePositive` regex logic verified:
+  - "after checking out, i want to complain about poor service" → post_checkout_complaint ✅
+  - "I want to check in" → no correction (no post-checkout regex match) ✅
+  - "After checking out I forgot my passport" → no correction (no complaint regex match) ✅
