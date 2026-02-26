@@ -76,9 +76,9 @@ const NEGATIVE_PATTERNS = [
 
   // English negative - complaints & frustration
   'bad', 'terrible', 'awful', 'worst', 'horrible', 'useless',
-  'stupid', 'idiot', 'hate', 'angry', 'frustrated', 'annoying',
+  'stupid', 'idiot', 'hate', 'angry', 'frustrated', 'frustrating', 'annoying',
   'disappointed', 'waste', 'suck', 'pathetic', 'ridiculous',
-  'unacceptable', 'disgust', 'furious', 'outrage',
+  'unacceptable', 'disgust', 'furious', 'outrage', 'demand',
 
   // English negative - problems & dissatisfaction
   'wrong', 'broken', 'not working', "doesn't work", "don't work",

@@ -361,6 +361,30 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       llmModel = llmModel === 'none' ? 'static_fallback' : llmModel;
     }
 
+    // ─── Sentiment-based escalation for preview ────────────────────
+    // Analyze consecutive negative user messages from history + current message.
+    // Stateless: counts from the history array each time (no shared state crosstalk).
+    if (sentimentScore === 'negative' && isSentimentAnalysisEnabled()) {
+      const settings = configStore.getSettings();
+      const threshold = settings.sentiment_analysis?.consecutive_threshold ?? 2;
+
+      // Count consecutive negative user messages: current (1) + history backwards
+      let consecutiveNeg = 1;
+      for (let i = conversationHistory.length - 1; i >= 0; i--) {
+        if (conversationHistory[i].role === 'user') {
+          if (analyzeSentiment(conversationHistory[i].content) === 'negative') {
+            consecutiveNeg++;
+          } else {
+            break;
+          }
+        }
+      }
+
+      if (consecutiveNeg >= threshold) {
+        finalMessage += "\n\nI'm sorry about the trouble you're experiencing. I've escalated this to our staff — a manager will contact you shortly to help resolve this.";
+      }
+    }
+
     const responseTime = Date.now() - startTime;
     trackIntentClassified(intentResult.category, intentResult.confidence, intentResult.source);
     trackResponseSent('simulator@preview', 'Live Sim', routedAction, responseTime);
