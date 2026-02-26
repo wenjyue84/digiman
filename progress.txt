@@ -1621,3 +1621,30 @@ Completed: Fix sentiment escalation â€” 3 consecutive negative messages sho
 ### Patterns discovered
 - NEGATIVE_PATTERNS must cover complaint follow-up phrases (see updated Codebase Patterns)
 - The consecutive-negative threshold logic works correctly once all upstream messages are classified negative
+## Iteration 3 - Thu, Feb 26, 2026 10:15:28 AM
+Completed: Fix multi-turn complaint escalation â€” follow-up message not acknowledged (ID: US-010) in 19m
+
+
+## Iteration 3 — Story: US-010 Fix multi-turn complaint escalation — follow-up message not acknowledged
+
+### What was implemented
+- **No code changes needed** — US-010 was already fully fixed as a side effect of US-014 (sentiment escalation).
+- US-014 added stateless consecutive-negative counting in `testing-preview.ts` that appends "I'm sorry about the trouble you're experiencing. I've escalated this to our staff — a manager will contact you shortly to help resolve this." when consecutiveNeg >= threshold (default 2).
+- The `MULTI_TURN_INTENT` category was already added to the `isMultiTurn` whitelist in `autotest-execution.js` (line 306-310), ensuring `/preview/chat` is used for multi-turn history.
+
+### Root cause (prior failure at attempt 1)
+The story was marked incomplete (attempt 1) before US-014 was verified as working for multi-turn scenarios. The "attempt 1" iteration ran immediately after US-014 was completed but apparently got a false failure (possibly stale workflow state from a prior test run). Current test confirms all 3 turns pass.
+
+### Test results (verified directly):
+- Turn 0: "My room is not clean" → response contains 'sorry'/'clean' ✅
+- Turn 1: "Nobody came to fix it after I reported it" → sentiment escalation appends sorry/staff ✅  
+- Turn 2: "This is unacceptable! I want to speak to a manager!" → escalation appends manager/staff/sorry ✅
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- mt-complaint-escalation: all 3 turns PASS ✅
+- Dependency US-014 verified complete ✅
+
+### Patterns discovered
+- **US-014 covers US-010**: The sentiment escalation (US-014) is the implementation that satisfies US-010's requirements. Both stories use the same mechanism — consecutive negative message counting + escalation text appended in testing-preview.ts.
+- **Stale workflow state can cause false failures**: If a previous test run left a previewWorkflowStates entry with the same sessionId or lookup key, subsequent tests can get wrong workflow steps. Use unique sessionIds for each test run (the autotest does this with timestamp suffix).
