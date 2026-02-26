@@ -7,6 +7,8 @@
 - **Intent keyword changes need server restart**: `intent-keywords.json` is statically imported at module load (`import ... with { type: 'json' }`). Keyword changes don't take effect until `POST /api/rainbow/restart` + process restarts. Verify intent changes via `/api/rainbow/intents/test` after restart.
 - **Two-layer intent fix**: Fixing `intent-keywords.json` (T2 fuzzy path) is not enough — T4 LLM path also has `mapLLMIntentToSpecific()` and post-classification correction blocks in `intents.ts` that can override results. Check both layers when reclassifying an intent.
 - **test-all-133.js pass rate is AI-provider-sensitive**: With concurrency=2 on a freshly-started server, AI provider rate limits cause many "fetch failed". Use concurrency=1 for reliable results. The specific target test not appearing in `failures[]` is the true pass signal.
+- **Fuse.js returns empty for long user messages**: When user message is much longer than keywords (e.g., "I was overcharged by RM50" vs keyword "overcharged"), Fuse.js search returns NO results. The substringMatch fallback catches it IF keywords are 4+ words AND 18+ chars. For billing_dispute-like intents, add long-form trigger phrases like "i was overcharged by rm" (5w, 22c) to bypass this limitation.
+- **T2 substringMatch threshold**: `substringMatch()` in fuzzy-matcher.ts only runs for keywords with `>= 4 words AND >= 18 chars`. Short keywords are skipped. Add phrase variants (4+ words, 18+ chars) to intent-keywords.json to enable substring fallback matching. Score returned is hardcoded 0.95 (high confidence).
 
 
 - **3-server architecture**: Port 3000 (Vite), 5000 (Express API), 3002 (Rainbow MCP). All 3 must run for dashboard.
@@ -1233,3 +1235,25 @@ Three-layer bug: (1) keywords in wrong intent bucket (T2 path), (2) `mapLLMInten
 - Response contains 'relocate' (test keyword): ✅
 - No 'billing dispute' in response: ✅
 - duringstay-noise-baby: PASS (not in failures list) ✅
+## Iteration 3 - Thu, Feb 26, 2026  8:12:25 AM
+Completed: Fix Noise Complaint intent â€” 'baby crying' misclassified as contact_staff (ID: US-001) in 21m
+
+
+## Iteration N - Story: Fix billing dispute test keyword: 'investigation' vs 'investigate' (US-006)
+
+### What was implemented
+- Previous iteration had already applied keyword fix in both test files (added both 'investigate' AND 'investigation' to postcheckout-billing-dispute values array)
+- Discovered DEEPER root cause: Fuse.js returns EMPTY results for "I was overcharged by RM50" because message (26 chars) >> keywords (10-17 chars) → substringMatch fallback skips all billing_dispute keywords (none were 4+ words AND 18+ chars)
+- Added 7 long-form billing_dispute EN keywords to `intent-keywords.json` (all 4+ words, 18+ chars): "i was overcharged by rm", "i have been overcharged", "extra charge on my bill", "wrong charge on my bill", "there is an extra charge", "i want to dispute my bill", "charge error on my bill"
+- Restarted Rainbow AI server so new keywords take effect
+- Verified: billing_dispute now caught by T2 substringMatch in 28ms vs 254ms LLM (source changed from 'llm' to 'fuzzy')
+- 3 consecutive direct tests all PASS: source=fuzzy, intent=billing_dispute, keywords found
+
+### Patterns discovered
+- Fuse.js empty results for long queries vs short keywords → must add 4+ word / 18+ char phrases for substringMatch to work
+- T2 substringMatch returns 0.95 confidence (hardcoded) → always passes T2 threshold of 0.8
+
+### Gotchas  
+- Server restart required after intent-keywords.json changes (static ESM import)
+- killing PID requires `taskkill //F //PID` (double slashes in Git Bash on Windows)
+- The batch test may show billing_dispute failing due to LLM rate limits - direct 3x test is the reliable gate
