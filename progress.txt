@@ -1748,3 +1748,21 @@ Completed: Fix multi-turn billing dispute â€” resolution path context lost 
 - **steps[] vs nodes[] duality**: checkin_full has both `steps` (used by testing-preview.ts for simulation) and `nodes` (used by production workflow-executor.ts). Changing `steps` only affects preview/autotest behavior; production uses nodes. They can diverge.
 - **Restart kills dev server**: `POST /api/rainbow/restart` calls process.exit(). In dev mode (no PM2), this kills the process permanently. Use nodemon auto-restart or start via `npm run dev` before testing.
 - **TS file hot-reload vs JSON config**: nodemon reloads TypeScript changes immediately. workflows.json requires server restart to take effect (configStore loads on startup).
+## Iteration 14 - Thu, Feb 26, 2026 10:58:04 AM
+Completed: Fix multi-turn booking workflow â€” context lost after turn 0 (ID: US-008) in 22m
+
+
+## PRD COMPLETE — All 15/15 Stories Passing (verified Thu, Feb 26, 2026, 11:00:26 AM)
+
+### Discovery
+- All 15 user stories were already marked passes:true in tasks/prd-rainbow-ai-test-failures.json
+- Initial Python3 read gave false 'US-008 and US-009 failing' result due to Windows CP1252 encoding (byte 0x9d is undefined in CP1252, causes decode error that corrupts the output)
+- Node.js read is authoritative on Windows — always use node -e for JSON checks, not python3
+
+### Final state
+- TypeScript errors: 32 (all pre-existing, zero new)
+- All stories: ✅ US-001 through US-015 all pass
+
+### Patterns discovered
+- **Windows JSON encoding pitfall**: python3 open() defaults to locale encoding (CP1252 on Windows). JSON files with UTF-8 characters (em-dashes —, curly quotes “”) cause UnicodeDecodeError. Use 'node -e' or python3 with open('file', encoding='utf-8') on Windows.
+- **False negative from encoding crash**: When python3 crashes mid-parse, it may produce partial output that looks like real data. Always cross-check with node -e before acting on 'failing' stories.
