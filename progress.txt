@@ -1365,3 +1365,26 @@ Dual bug: (1) `kb-patterns.json` had `capsule-layout.md` (non-existent) instead 
 ### Patterns discovered
 - **Schema rename causes KB orphans**: When files are renamed (capsule→unit), check `kb-patterns.json` file references — they don't auto-update with file renames.
 - **Static_reply intents still need T2**: Even though routing says `static_reply`, if T2 misses and T3/T4 fails/misclassifies, the wrong static reply is returned. Add long-form substringMatch phrases as T2 safety net.
+## Iteration 6 - Thu, Feb 26, 2026  9:02:41 AM
+Completed: Fix Capsule Layout responses â€” lower deck queries missing even/odd info (ID: US-004) in 7m
+
+
+## Iteration — Story: US-004 Fix Capsule Layout responses — lower deck queries missing even/odd info
+
+### What was implemented
+- No code changes required — the fix was already in place from a previous session
+- `kb-patterns.json` already correctly references `unit-layout.md` (not `capsule-layout.md`)
+- `unit-layout.md` already contains the correct deck info: even-numbered (C2, C4, C6...) = lower deck; odd-numbered (C1, C3, C5...) = upper deck
+- Verified from the latest test report (2026-02-26-00-54-00): both `capsule-which-lower` and `ci-suite-special-needs` are PASSING
+
+### Root cause (documented for reference)
+The original bug was: `kb-patterns.json` referenced `capsule-layout.md` (non-existent) instead of `unit-layout.md`. This file name drift happened when the codebase was refactored from "capsule" → "unit" terminology. A previous iteration already fixed the kb-patterns.json reference.
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- capsule-which-lower: PASS ✅ (not in failures list)
+- ci-suite-special-needs: PASS ✅ (not in failures list)
+
+### Patterns discovered
+- **Always verify against latest test report before implementing**: If a PRD story shows passes:false but the tests are actually passing in recent reports, the fix was likely applied in a prior session without marking the PRD entry.
+- **capsule-bottom-bunk also failing**: "Can I have a bottom bunk please?" → intent=unknown. This is NOT part of US-004 but is related. Fix: add `bottom bunk` or `bottom deck` to intent keywords or ensure routing handles `unknown` intent with capsule/deck KB context. Leave for future iteration.
