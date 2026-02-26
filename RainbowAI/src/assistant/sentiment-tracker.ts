@@ -85,6 +85,13 @@ const NEGATIVE_PATTERNS = [
   'failed', 'error', 'problem', 'issue', 'never', 'always',
   'still not', 'still same', 'same problem', 'again',
 
+  // English negative - cleanliness & maintenance complaints
+  'not clean', 'dirty', 'unclean', 'filthy', 'messy',
+  'nobody came', "didn't come", 'did not come', 'no one came',
+  'not fixed', 'not repaired', 'not resolved', 'still broken',
+  'i reported', 'already reported', 'reported it',
+  'nobody helped', 'no response', 'ignored',
+
   // Stronger indicators
   'complaint', 'complain', 'refund', 'cancel', 'lawyer',
   'report you', 'manager', 'speak to manager',
