@@ -1305,3 +1305,30 @@ Same Fuse.js directional matching limitation as US-006: query "nk tny harga caps
 
 ### Patterns discovered (same as US-006)
 - Short (< 4 words OR < 18 chars) keywords can't be substringMatch-caught — must add long-form phrase variants for slang messages that extend beyond the keyword
+## Iteration 5 - Thu, Feb 26, 2026  8:32:55 AM
+Completed: Fix Malay slang pricing â€” 'nk tny harga' not recognized (ID: US-003) in 12m
+
+
+## Iteration 6 - Thu, Feb 26, 2026
+
+### What was implemented
+- **US-002**: Fix Tourist Guide response — verified already working, no code changes needed
+
+### Root cause analysis
+The story was `passes: false` because all previous test runs used `concurrency=2`, which caused rate-limit/server-overload "fetch failed" errors on workflow/multi-turn tests. The tourist KB file, workflow, and routing were all correctly configured. When tested with `concurrency=1`, both tourist tests pass.
+
+### Evidence
+- `duringstay-tourist-guide` (single-turn): passed in all recent runs — never in failures list
+- `workflow-tourist-guide-full` (2-turn): previously "fetch failed" due to concurrency; passes with concurrency=1
+- Latest run (full-133-2026-02-26-00-43-16.json): 124/133 passed, 0 tourist failures
+
+### Infrastructure already in place
+- `RainbowAI/.rainbow-kb/tourist-attractions.md` — contains LEGOLAND, Desaru, Sultan Abu Bakar
+- `kb-patterns.json` — tourist regex: `tourist|attract|sightseeing|spot|legoland|desaru|...` → `tourist-attractions.md`
+- `routing.json` — `tourist_guide` → `workflow` → `tourist_guide` workflow  
+- `workflows.json` — `tourist_guide` workflow with full multilingual node messages
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- duringstay-tourist-guide: PASS ✅
+- workflow-tourist-guide-full: PASS ✅ (with concurrency=1)
