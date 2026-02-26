@@ -1648,3 +1648,32 @@ The story was marked incomplete (attempt 1) before US-014 was verified as workin
 ### Patterns discovered
 - **US-014 covers US-010**: The sentiment escalation (US-014) is the implementation that satisfies US-010's requirements. Both stories use the same mechanism — consecutive negative message counting + escalation text appended in testing-preview.ts.
 - **Stale workflow state can cause false failures**: If a previous test run left a previewWorkflowStates entry with the same sessionId or lookup key, subsequent tests can get wrong workflow steps. Use unique sessionIds for each test run (the autotest does this with timestamp suffix).
+## Iteration 12 - Thu, Feb 26, 2026 10:18:11 AM
+Completed: Fix multi-turn complaint escalation â€” follow-up message not acknowledged (ID: US-010) in 17m
+
+
+## Iteration 13 — Story: US-011 Fix multi-turn billing dispute — resolution path context lost at turn 2
+
+### What was implemented
+- **No code changes needed** — US-011 was already fully passing before this iteration.
+- Verified by running the exact test scenario (3 turns) against live server on port 3002.
+
+### Test results (verified directly):
+- Turn 0: "I want to check my bill" → intent=billing_inquiry, action=static_reply → response contains 'bill', 'charge', 'review' ✅
+- Turn 1: "There is an extra charge of RM50 I did not authorize" → intent=billing_dispute, action=workflow → response contains 'review', 'refund' ✅
+- Turn 2: "I was overcharged and I want a refund" → intent=billing_dispute, action=workflow → response contains 'refund', 'investigation', 'review' ✅
+
+### Why it passes:
+- The escalate workflow (triggered by billing_dispute) returns deterministic static messages:
+  "We will conduct a thorough review and investigation... we will process a refund..."
+  This is AI-provider-independent, so the test is stable.
+- billing_dispute keywords ('overcharged', 'i want a refund') correctly classify turns 1 and 2.
+- Turn 0 is billing_inquiry (static_reply) which returns a response with 'bill', 'charge', 'review'.
+
+### Quality gates
+- TS compilation: 30 errors (all pre-existing, zero new) ✅
+- mt-billing-dispute: all 3 turns PASS via live API ✅
+
+### Patterns discovered
+- **Verify before assuming a story needs implementation**: PRD stories may already be passing from previous iterations. Always run the specific test scenario against the live server FIRST before writing any code.
+- **Workflow-based responses are stable test targets**: When routing.json points an intent to workflow, the response comes from static template text — not LLM. These tests are AI-provider-independent and much more stable than LLM-based tests.
