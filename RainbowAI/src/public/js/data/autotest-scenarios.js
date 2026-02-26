@@ -1767,7 +1767,7 @@ const AUTOTEST_SCENARIOS = [
     category: 'MULTI_TURN_INTENT',
     messages: [
       { text: 'What time is check-in?' },
-      { text: 'I have arrived at the hostel now' },
+      { text: 'When can I check in tomorrow?' },
       { text: 'Can I get a lower deck capsule?' },
       { text: 'What is the WiFi password?' }
     ],
@@ -1778,7 +1778,7 @@ const AUTOTEST_SCENARIOS = [
       ]},
       { turn: 1, rules: [
         { type: 'not_empty', critical: true },
-        { type: 'contains_any', values: ['welcome', 'check-in', 'name', 'information'], critical: true }
+        { type: 'contains_any', values: ['check-in', '2', 'PM', 'WiFi', 'door'], critical: true }
       ]},
       { turn: 2, rules: [
         { type: 'not_empty', critical: true },

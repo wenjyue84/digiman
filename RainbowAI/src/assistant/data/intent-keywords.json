@@ -82,6 +82,9 @@
           "how to connect internet",
           "connect to the internet",
           "connect to internet",
+          "what is the wifi password",
+          "what is the wifi code",
+          "tell me the wifi password",
           "internet access",
           "whats the wifi",
           "wifi pw",
@@ -962,7 +965,10 @@
           "need a lower deck capsule",
           "i have a bad back lower deck",
           "capsule numbers are the lower deck",
-          "which capsules are lower deck"
+          "which capsules are lower deck",
+          "can i get a lower deck",
+          "a lower deck capsule please",
+          "get a lower deck capsule"
         ],
         "ms": [
           "lower deck",

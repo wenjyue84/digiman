@@ -1715,3 +1715,6 @@ The initial version excluded LLM-sourced intents from escaping (`source !== 'llm
 ### Patterns discovered
 - **Topic-escape pattern**: When in a preview/chat workflow, if user asks a high-confidence static_reply intent, delete the workflow state (use effectiveWorkflow not activeWorkflow). Threshold: confidence >= 0.8 regardless of source.
 - **Both lower_deck and wifi use T4 LLM** (source='llm') — do NOT filter escapes by source='keyword'.
+## Iteration 13 - Thu, Feb 26, 2026 10:35:28 AM
+Completed: Fix multi-turn billing dispute â€” resolution path context lost at turn 2 (ID: US-011) in 17m
+
