@@ -206,10 +206,7 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
     if (/\b(cold|hot|warm|temperature|ac|air\s?cond|heater|sejuk|panas)\b/i.test(messageText)) {
       return 'climate_control_complaint';
     }
-    if (/\b(baby|bayi|infant|婴儿)\b/i.test(messageText)) {
-      return 'contact_staff';  // Babies not allowed in hostel — escalate to staff
-    }
-    if (/\b(nois[ye]|loud|bising|can'?t\s?sleep|quiet)\b/i.test(messageText)) {
+    if (/\b(nois[ye]|loud|bising|can'?t\s?sleep|quiet|baby|bayi|infant|婴儿|cry|crying)\b/i.test(messageText)) {
       return 'noise_complaint';
     }
     if (/\b(dirty|unclean|smell|stain|not\s?clean|kotor|bau|comot|脏|不干净)\b/i.test(messageText)) {
@@ -321,13 +318,6 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
 
   // ─── Post-classification corrections (specific → specific) ───
   // LLM sometimes returns a close-but-wrong specific category
-
-  // noise_complaint + baby/infant → escalate (babies not allowed, unauthorized guest)
-  if (llmIntent === 'noise_complaint') {
-    if (/\b(baby|infant|toddler|bayi|budak\s?kecil|婴儿|宝宝|小孩哭)\b/i.test(messageText)) {
-      return 'contact_staff';  // Escalate: babies not allowed in hostel
-    }
-  }
 
   // checkout_procedure/checkout_info → late_checkout_request when mentioning specific time
   if (llmIntent === 'checkout_procedure' || llmIntent === 'checkout_info') {

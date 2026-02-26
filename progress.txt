@@ -4,6 +4,9 @@
 - **esbuild bundle path resolution**: In bundled production builds, `__dirname` via `fileURLToPath(import.meta.url)` resolves to `dist/`, NOT the source layout. Use `process.cwd()` for paths to files in `src/public/` (templates, assets). Process CWD is set at launch time = `RainbowAI/`. Example: `join(process.cwd(), 'src/public/templates/tabs', name)`.
 - **dist/public must be synced after src/public changes**: The esbuild bundle only rebuilds TS → `dist/index.js`. Static files (`src/public/js/**`) must be manually copied: `node -e "require('fs').cpSync('src/public','dist/public',{recursive:true,force:true})"`. Otherwise old compiled JS runs in production.
 - **Route naming convention for new endpoints**: Backend `GET /autotest/reports` (not `/tests/scan-reports`) matches the frontend fetch call in `autotest-history.js`. Always verify URL alignment between frontend fetch and backend router registration before implementing.
+- **Intent keyword changes need server restart**: `intent-keywords.json` is statically imported at module load (`import ... with { type: 'json' }`). Keyword changes don't take effect until `POST /api/rainbow/restart` + process restarts. Verify intent changes via `/api/rainbow/intents/test` after restart.
+- **Two-layer intent fix**: Fixing `intent-keywords.json` (T2 fuzzy path) is not enough — T4 LLM path also has `mapLLMIntentToSpecific()` and post-classification correction blocks in `intents.ts` that can override results. Check both layers when reclassifying an intent.
+- **test-all-133.js pass rate is AI-provider-sensitive**: With concurrency=2 on a freshly-started server, AI provider rate limits cause many "fetch failed". Use concurrency=1 for reliable results. The specific target test not appearing in `failures[]` is the true pass signal.
 
 
 - **3-server architecture**: Port 3000 (Vite), 5000 (Express API), 3002 (Rainbow MCP). All 3 must run for dashboard.
@@ -1193,3 +1196,40 @@ Completed: Fix billing dispute test keyword: 'investigation' vs 'investigate' (I
 - `duringstay-extra-towel` keyword array: widened ✅
 - `typo-towl` keyword array: widened ✅
 - `knowledge.json` English template: "housekeeping" + "deliver" present ✅
+## Iteration 2 - Thu, Feb 26, 2026  7:50:41 AM
+Completed: Fix Extra Amenity Towel test â€” widen keywords for LLM fallback resilience (ID: US-005) in 3m
+
+
+## Iteration — Story: US-001 Fix Noise Complaint intent — 'baby crying' misclassified as contact_staff
+
+### What was implemented
+1. **`RainbowAI/src/assistant/data/intent-keywords.json`**: Moved baby-crying keywords from `contact_staff` to `noise_complaint`:
+   - EN removed from contact_staff: 'baby crying', 'baby noise', 'baby won't stop', 'baby all night', 'crying all night'
+   - MS removed: 'baby menangis', 'bayi menangis', 'tangisan bayi'
+   - ZH removed: '婴儿哭'
+   - Added to noise_complaint EN: 'baby crying', 'baby noise', 'baby won't stop', 'baby all night', 'crying all night', 'been crying', 'keeps crying'
+   - Added to noise_complaint MS: 'baby menangis', 'bayi menangis', 'tangisan bayi'
+   - Added to noise_complaint ZH: '婴儿哭', '婴儿哭闹', '宝宝哭'
+
+2. **`RainbowAI/src/assistant/intents.ts`** — removed two hardcoded overrides:
+   - Line ~209: In `mapLLMIntentToSpecific()`, removed the `if (/\b(baby|bayi|infant|婴儿)\b/) return 'contact_staff'` branch. Baby mentions now fall through to noise_complaint check.
+   - Lines ~325-329: Removed the post-classification correction `if (llmIntent === 'noise_complaint' && /baby|infant/) return 'contact_staff'`
+
+### Root cause
+Three-layer bug: (1) keywords in wrong intent bucket (T2 path), (2) `mapLLMIntentToSpecific()` hardcode (T4 LLM fallback path), (3) post-classification correction (T4 LLM correction path). All pointed baby mentions to contact_staff→escalate workflow instead of noise_complaint→complaint_handling workflow.
+
+### Patterns discovered
+- **Intent keywords.json is statically imported**: `import intentKeywordsData from './data/intent-keywords.json' with { type: 'json' }` in `intents.ts`. Server MUST restart for keyword changes to take effect. `/api/rainbow/restart` will restart the process.
+- **Two tiers need independent fixes**: T2 fuzzy matching reads `intent-keywords.json`. T4 LLM path goes through `mapLLMIntentToSpecific()` AND post-classification corrections. Fixing only the keywords file leaves T4 still broken.
+- **test-all-133.js pass rate is environment-sensitive**: With concurrency=2 on a fresh-started server, 101/133 tests fail with "fetch failed" due to AI provider rate limiting. With concurrency=1 they stabilize. The `duringstay-noise-baby` test is confirmed passing (not in failures list).
+
+### Gotchas
+- The `mapLLMIntentToSpecific()` function is ONLY used for T4 LLM intent mapping — T2 fuzzy results skip it (returned early at line 604)
+- Server restart via `/api/rainbow/restart` kills the process (exit 0); only restarts if a process manager is watching. Background-start with `cd RainbowAI && npm run dev` if needed.
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- Intent test via /api/rainbow/intents/test: noise_complaint ✅
+- Response contains 'relocate' (test keyword): ✅
+- No 'billing dispute' in response: ✅
+- duringstay-noise-baby: PASS (not in failures list) ✅

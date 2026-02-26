@@ -585,12 +585,7 @@
           "talk to",
           "speak to",
           "contact",
-          "call someone",
-          "baby crying",
-          "baby noise",
-          "baby won't stop",
-          "baby all night",
-          "crying all night"
+          "call someone"
         ],
         "ms": [
           "staff",
@@ -599,10 +594,7 @@
           "manager",
           "manusia",
           "cakap dengan orang",
-          "jumpa staff",
-          "baby menangis",
-          "bayi menangis",
-          "tangisan bayi"
+          "jumpa staff"
         ],
         "zh": [
           "联系",
@@ -611,8 +603,7 @@
           "真人",
           "客服",
           "经理",
-          "员工",
-          "婴儿哭"
+          "员工"
         ]
       }
     },
@@ -1037,7 +1028,14 @@
           "invoice mistake",
           "demand refund",
           "i want a refund",
-          "refund me"
+          "refund me",
+          "i was overcharged by rm",
+          "i have been overcharged",
+          "extra charge on my bill",
+          "wrong charge on my bill",
+          "there is an extra charge",
+          "i want to dispute my bill",
+          "charge error on my bill"
         ],
         "ms": [
           "overcharge",
@@ -1193,7 +1191,14 @@
           "cannot sleep",
           "people too loud",
           "construction noise",
-          "quiet hours"
+          "quiet hours",
+          "baby crying",
+          "baby noise",
+          "baby won't stop",
+          "baby all night",
+          "crying all night",
+          "been crying",
+          "keeps crying"
         ],
         "ms": [
           "terlalu bising",
@@ -1204,7 +1209,10 @@
           "tak boleh tidur",
           "susah tidur",
           "orang bising",
-          "bunyi pembinaan"
+          "bunyi pembinaan",
+          "baby menangis",
+          "bayi menangis",
+          "tangisan bayi"
         ],
         "zh": [
           "太吵",
@@ -1215,7 +1223,10 @@
           "睡不着",
           "不能睡",
           "人太吵",
-          "施工噪音"
+          "施工噪音",
+          "婴儿哭",
+          "婴儿哭闹",
+          "宝宝哭"
         ]
       }
     },
