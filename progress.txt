@@ -1440,3 +1440,27 @@ Completed: Fix Post-Checkout Complaint Service response â€” missing apology
 - 19 category blocks present ✅
 - No ES module syntax in data file ✅
 
+## Iteration 8 - Thu, Feb 26, 2026  9:23:39 AM
+Completed: Restore full 133-scenario suite as default autotest file (ID: US-015) in 7m
+
+
+
+## Iteration — Story: US-015 Restore full 133-scenario suite as default autotest file
+
+### What was implemented
+- **No code changes needed** — the src file (`RainbowAI/src/public/js/data/autotest-scenarios.js`) was already correctly consolidated with all 133 scenarios from a previous session
+- **Only fix**: Copied updated src → dist (`RainbowAI/dist/public/js/data/autotest-scenarios.js`) which was stale at 56 scenarios
+
+### Verification
+- src file: 133 scenarios, 2037 lines, 20 category comment blocks ✅
+- dist file: updated to match src (133 scenarios) ✅
+- Browser-compatible format: no ES module syntax, UMD guard for Node.js ✅
+- test-autotest-optimized.js regex parser: extracts all 133 scenarios ✅
+- Browser verification: `window.AUTOTEST_SCENARIOS.length === 133` ✅
+- Run All button present in Chat Simulator → Autotest panel ✅
+- TypeScript: 32 errors (all pre-existing, zero new) ✅
+
+### Patterns discovered
+- **dist/public is a separate sync concern**: The esbuild build only compiles TS → dist/index.js. Browser-facing static files in src/public/js/data/ must be manually copied to dist/public/js/data/ after any changes. This was already documented in Codebase Patterns but this story is a concrete example.
+- **UMD-style export for browser+Node dual use**: `if (typeof module !== 'undefined' && module.exports) { module.exports = X; }` allows the same file to work in browsers (const becomes global) and in Node.js (require() works). The test runner bypasses both by using regex+eval extraction.
+- **Category comment blocks vs category values**: The file has 20 ═══-bordered comment blocks but only 19 unique `category` property values (CHECK-IN PROCESS SUITE tests use `ARRIVAL_CHECKIN` category). Comment blocks serve as human-readable section dividers, not necessarily 1:1 with category values.
