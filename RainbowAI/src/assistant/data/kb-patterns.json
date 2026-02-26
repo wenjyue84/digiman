@@ -104,6 +104,11 @@
       "files": ["amenities-extra.md"]
     },
     {
+      "comment": "Tourist attractions & sightseeing",
+      "regex": "tourist|attract|sightseeing|sight.?see|visit.*place|place.*visit|spot|legoland|desaru|theme.?park|tempat menarik|jalan.jalan|景点|旅游",
+      "files": ["tourist-attractions.md"]
+    },
+    {
       "comment": "Location & directions",
       "regex": "where|direction|map|location|address|nearby|food|restaurant|transport|grab|alamat|dimana|地址|怎么走|airport|get.*(from|to)|how.*(get|reach|find)|way.*(here|there)",
       "files": ["location.md"]
