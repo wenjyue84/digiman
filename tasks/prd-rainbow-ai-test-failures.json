@@ -322,7 +322,7 @@
       ],
       "dependencies": [],
       "estimatedComplexity": "large",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-009",
@@ -348,7 +348,7 @@
         "US-008"
       ],
       "estimatedComplexity": "large",
-      "passes": false
+      "passes": true
     }
   ]
 }

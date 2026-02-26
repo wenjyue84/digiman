@@ -182,10 +182,14 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
 
     // Topic-escape: if user switches to a high-confidence static_reply intent while in a
     // workflow (e.g., asks WiFi password mid check-in), abandon the workflow and answer directly.
+    // Only escape when the user is clearly asking a NEW question (message contains '?').
+    // Data responses like "Check-in 15 Feb, check-out 17 Feb" or "My name is John Smith"
+    // should continue the active workflow, not escape it.
     const currentRoute = routingConfig[intentResult.category];
     const shouldEscapeWorkflow = !!activeWorkflow &&
       currentRoute?.action === 'static_reply' &&
-      intentResult.confidence >= 0.8;
+      intentResult.confidence >= 0.8 &&
+      sanitizedMessage.includes('?');
     if (shouldEscapeWorkflow) {
       previewWorkflowStates.delete(lookupKey);
       console.log(`[Preview] Topic-escape: abandoning workflow ${activeWorkflow?.workflowId} for intent ${intentResult.category} (confidence=${intentResult.confidence})`);
