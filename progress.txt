@@ -1257,3 +1257,27 @@ Completed: Fix Noise Complaint intent â€” 'baby crying' misclassified as co
 - Server restart required after intent-keywords.json changes (static ESM import)
 - killing PID requires `taskkill //F //PID` (double slashes in Git Bash on Windows)
 - The batch test may show billing_dispute failing due to LLM rate limits - direct 3x test is the reliable gate
+## Iteration 4 - Thu, Feb 26, 2026  8:20:18 AM
+Completed: Fix billing dispute test keyword: 'investigation' vs 'investigate' (ID: US-006) in 35m
+
+
+## Iteration — Story: US-003 Fix Malay slang pricing — 'nk tny harga' not recognized
+
+### What was implemented
+- Added Malay slang keywords to `pricing` intent in `RainbowAI/src/assistant/data/intent-keywords.json`:
+  - `nk tny harga`, `nk tanya harga`, `tny harga`, `harga capsule`, `harga bilik`, `harga unit`, `brp harga`, `nak tanya harga`
+
+### Root cause
+The T2 fuzzy matcher compares the entire user text against each keyword using Fuse.js. `nk tny harga capsule` scored poorly against `berapa harga` because `nk tny` is lexically distant from `berapa`. The LLM (T4) caught it correctly but is unreliable when providers time out. Adding the slang form directly as a T2 keyword gives immediate reliable classification.
+
+### Patterns discovered
+- **Fuse.js scores full-text vs keyword**: Fuse.js uses the entire user message as the query and compares against keyword phrases. Abbreviations that don't phonetically resemble the full form (nk≠nak, tny≠tanya) score poorly even at threshold=0.3. Solution: add abbreviated forms directly.
+- **T4 LLM can mask T2 failures**: LLM fallback correctly classifies slang even without T2 keywords. But test reliability requires T2 coverage so tests pass even when LLM is rate-limited/timed out.
+- **Restart needed after keywords change**: `intent-keywords.json` is statically imported — changes don't take effect until server restarts. When `/api/rainbow/restart` is called without a process manager, server must be manually restarted with `cd RainbowAI && npm run dev`.
+
+### Quality gates
+- JSON valid: 44 intents ✅
+- TS compilation: 32 errors (all pre-existing, 0 new) ✅
+- `nk tny harga capsule` → intent: pricing, response contains RM/night/rate ✅
+- `slang-brp-harga` still passes ✅
+- `slang-bole-checkin` still passes ✅
