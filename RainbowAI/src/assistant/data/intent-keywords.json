@@ -1053,7 +1053,11 @@
           "wrong charge on my bill",
           "there is an extra charge",
           "i want to dispute my bill",
-          "charge error on my bill"
+          "charge error on my bill",
+          "i was overcharged and",
+          "was overcharged and i want",
+          "overcharged and want refund",
+          "i want a full refund now"
         ],
         "ms": [
           "overcharge",
