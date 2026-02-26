@@ -1,5 +1,6 @@
 ## Codebase Patterns
-- **isMultiTurn categories for autotest**: `autotest-execution.js` checks `scenario.category` against a whitelist to decide multi-turn vs single-turn mode. Multi-turn uses `/preview/chat` with accumulated history; single-turn uses `/intents/test` (stateless). Add new multi-turn categories (e.g., `CONVERSATION_SUMMARIZATION`, `SENTIMENT_ANALYSIS`) to the `isMultiTurn` condition when tests need conversation state.
+- **isMultiTurn categories for autotest**: `autotest-execution.js` checks `scenario.category` against a whitelist to decide multi-turn vs single-turn mode. Multi-turn uses `/preview/chat` with accumulated history; single-turn uses `/intents/test` (stateless). Add new multi-turn categories (e.g., `CONVERSATION_SUMMARIZATION`, `SENTIMENT_ANALYSIS`, `MULTI_TURN_INTENT`) to the `isMultiTurn` condition when tests need conversation state.
+- **NEGATIVE_PATTERNS must cover complaint follow-up phrases**: Complaint follow-ups like "My room is not clean" and "Nobody came to fix it after I reported it" don't match vague keywords ('bad', 'terrible') — add specific phrases: 'not clean', 'nobody came', 'not fixed', 'i reported', 'reported it'. These enable the consecutive-negative counter to reach threshold at turn 1, triggering escalation with sorry/staff/manager.
 - **preview/chat endpoint is stateless for sentiment**: Unlike the production pipeline (input-validator→response-processor) which uses a persistent StateManager, the preview/chat endpoint must analyze sentiment from the history array passed in each request. Use a stateless approach: count consecutive negative user messages from history backward + current message. This avoids crosstalk between concurrent test scenarios.
 - **Multi-turn test messages must avoid workflow triggers**: Messages like "I want to book for 3 nights" or "Can I check in early?" trigger booking/check-in workflows that consume ALL subsequent messages as workflow step inputs. Use non-workflow equivalents: "How much is it for 3 nights?" (pricing, static_reply), "What time is check-in?" (checkin_info, static_reply).
 - **previewWorkflowStates persist across requests**: The in-memory `previewWorkflowStates` Map in `testing-preview.ts` persists workflow state across preview/chat requests using a key derived from first message + history length. Stale states from previous test runs can interfere — restart server to clear.
@@ -1591,3 +1592,32 @@ Incomplete: Fix multi-turn complaint escalation â€” follow-up message not a
 - **Escalation message vocabulary must match test validation lists**: The `contains_any` validation in test scenarios checks for SPECIFIC keywords. When writing escalation messages, ensure they include words from the validation list. Current tests check for: 'staff', 'contact', 'manager', 'sorry', 'apologize', 'escalat', 'team', 'help'.
 - **Stateless sentiment counting in preview/chat**: The /preview/chat endpoint has NO shared state — it re-counts consecutive negatives by walking backward through the history array on every request. The in-memory `SentimentState` (sentimentManager) is only used for real WhatsApp conversations routed through the production pipeline. This is intentional — preview/chat must be isolated so concurrent autotest runs don't interfere.
 - **Two sentiment tracking systems**: (1) Production: `sentiment-tracker.ts` with StateManager (phone-keyed in-memory state, used by `response-processor.ts` pipeline stage); (2) Preview: stateless counting in `testing-preview.ts` from history array. Both use the same `analyzeSentiment()` keyword detector and `isSentimentAnalysisEnabled()` settings check.
+## Iteration 11 - Thu, Feb 26, 2026 10:00:47 AM
+Completed: Fix sentiment escalation â€” 3 consecutive negative messages should escalate to staff (ID: US-014) in 17m
+
+
+## Iteration 3 - Thu, Feb 26, 2026
+
+### What was implemented
+- **US-010**: Fix multi-turn complaint escalation — follow-up message not acknowledged -- COMPLETE
+
+### Changes made
+1. `RainbowAI/src/assistant/sentiment-tracker.ts` -- Added complaint-specific negative patterns to NEGATIVE_PATTERNS:
+   - 'not clean', 'dirty', 'unclean', 'filthy', 'messy' (cleanliness complaints)
+   - 'nobody came', "didn't come", 'did not come', 'no one came' (unresolved service)
+   - 'not fixed', 'not repaired', 'not resolved', 'still broken'
+   - 'i reported', 'already reported', 'reported it'
+   - 'nobody helped', 'no response', 'ignored'
+   
+2. `RainbowAI/src/public/js/modules/autotest-execution.js` -- Added `MULTI_TURN_INTENT` to isMultiTurn whitelist. Dashboard autotest now sends `mt-complaint-escalation` as multi-turn with history (via /preview/chat), not single-turn (via /intents/test).
+
+### Root cause
+"My room is not clean" and "Nobody came to fix it after I reported it" had no negative sentiment keywords, so both scored neutral. The escalation block in testing-preview.ts requires sentimentScore === 'negative' AND consecutiveNeg >= 2 — with both earlier messages neutral, the threshold was never met. Adding 'not clean', 'nobody came', 'i reported' makes turns 0 and 1 both negative, so turn 1 triggers escalation (consecutiveNeg=2).
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- mt-complaint-escalation: turns 0/1/2 all PASS via live API ✅
+
+### Patterns discovered
+- NEGATIVE_PATTERNS must cover complaint follow-up phrases (see updated Codebase Patterns)
+- The consecutive-negative threshold logic works correctly once all upstream messages are classified negative
