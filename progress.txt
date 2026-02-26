@@ -1281,3 +1281,27 @@ The T2 fuzzy matcher compares the entire user text against each keyword using Fu
 - `nk tny harga capsule` → intent: pricing, response contains RM/night/rate ✅
 - `slang-brp-harga` still passes ✅
 - `slang-bole-checkin` still passes ✅
+## Iteration 4 - Thu, Feb 26, 2026  8:26:32 AM
+Completed: Fix Malay slang pricing â€” 'nk tny harga' not recognized (ID: US-003) in 13m
+
+
+## Iteration — Story: US-003 Fix Malay slang pricing — 'nk tny harga' not recognized
+
+### What was implemented
+- `RainbowAI/src/assistant/data/intent-keywords.json`: Added 4 long-form Malay slang keywords to `pricing` intent, `ms` array:
+  - `"nk tny harga capsule"` (4 words, 20 chars) — exact test phrase
+  - `"nk tny harga satu malam"` (5 words, 23 chars) — "ask nightly price" variant
+  - `"nk tanya harga capsule"` (4 words, 22 chars) — expanded slang
+  - `"berapa harga satu malam"` (4 words, 23 chars) — standard long form
+
+### Root cause
+Same Fuse.js directional matching limitation as US-006: query "nk tny harga capsule" (20 chars) is LONGER than keyword "nk tny harga" (12 chars). Fuse.js searches for the query WITHIN keyword strings — when query > keyword length, fails. substringMatch only triggers for keywords with 4+ words AND 18+ chars (none of the existing MS pricing keywords qualified).
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- Intent test /api/rainbow/intents/test "nk tny harga capsule": intent=pricing, source=fuzzy ✅
+- slang-brp-harga "brp harga satu mlm": intent=pricing (via LLM), RM in response ✅
+- slang-bole-checkin "bole check in skrg?": intent=checkin_info ✅
+
+### Patterns discovered (same as US-006)
+- Short (< 4 words OR < 18 chars) keywords can't be substringMatch-caught — must add long-form phrase variants for slang messages that extend beyond the keyword
