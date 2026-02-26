@@ -1412,3 +1412,31 @@ The original bug was: `kb-patterns.json` referenced `capsule-layout.md` (non-exi
 ## Iteration 7 - Thu, Feb 26, 2026  9:15:52 AM
 Completed: Fix Capsule Layout responses â€” lower deck queries missing even/odd info (ID: US-004) in 24m
 
+## Iteration 7 - Thu, Feb 26, 2026  9:18:43 AM
+Completed: Fix Post-Checkout Complaint Service response â€” missing apology keywords (ID: US-007) in 15m
+
+## Iteration 8 - Wed, Feb 26, 2026
+
+### What was implemented
+- **US-015**: Restore full 133-scenario suite as default autotest file — COMPLETE
+
+### Changes made
+1. Created `RainbowAI/scripts/merge-autotest-scenarios.cjs` — utility script to merge single-turn + workflow module files into a single browser-compatible data file
+2. Regenerated `RainbowAI/src/public/js/data/autotest-scenarios.js` — now contains all 133 scenarios (was 56)
+   - 112 single-turn scenarios from `autotest-scenarios-single.js` (15 categories)
+   - 21 workflow scenarios from `autotest-scenarios-workflow.js` (4 categories)
+   - 19 category comment blocks total
+   - Browser-compatible format (no ES module syntax, conditional CJS module.exports)
+3. Copied to `RainbowAI/dist/public/js/data/autotest-scenarios.js`
+
+### Patterns discovered
+- **Two autotest scenario paths**: `data/autotest-scenarios.js` (browser-compatible, used by CLI scripts) and `modules/autotest-scenarios.js` (ES module, used by dashboard chunk loader). Both must contain the same scenarios. The module version imports from `autotest-scenarios-single.js` + `autotest-scenarios-workflow.js`.
+- **CLI test script regex**: `test-autotest-optimized.js` uses `scenariosContent.match(/const AUTOTEST_SCENARIOS = (\[[\s\S]*?\]);/)` then `eval()` to parse the data file. The non-greedy `*?` works because `];` only appears once (at array end).
+- **Package.json type:module**: RainbowAI has `”type”: “module”`, so utility scripts must use `.cjs` extension for CommonJS require().
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- CLI parse verification: 133 scenarios parsed correctly ✅
+- 19 category blocks present ✅
+- No ES module syntax in data file ✅
+
