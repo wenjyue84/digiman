@@ -250,6 +250,11 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
           finalMessage = ack + finalMessage;
         }
 
+        // Emergency context override: replace generic workflow step with emergency-specific guidance
+        if (emergencyContextInHistory && isEmergencyFollowupMsg) {
+          finalMessage = EMERGENCY_REASSURANCE;
+        }
+
         editMeta = {
           type: 'workflow',
           workflowId: effectiveWorkflow.workflowId,

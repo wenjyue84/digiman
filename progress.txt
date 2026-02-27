@@ -1868,3 +1868,26 @@ Completed: Handle extend stay separately from new booking (ID: US-003) in 22m
 ### Patterns
 - substringMatch activates for long-form keywords (4+ words, 18+ chars) when Fuse.js confidence < 0.70 or returns empty
 - The keyword "where is the nearest atm" (5w, 24c) is the specific trigger for local_services T2 match
+## Iteration 4 - Fri, Feb 27, 2026  3:09:37 PM
+Completed: Add local services intent for ATM/money changer queries (ID: US-004) in 10m
+
+
+## Iteration 5 - Story: US-005 - Handle accessibility queries specifically
+
+### What was implemented
+- No code changes needed — accessibility intent was already fully implemented in a previous sprint
+- Verified all 3 data files are complete: `intent-keywords.json` (keywords), `routing.json` (→ static_reply), `knowledge.json` (full en/ms/zh response)
+- `intents.ts` `mapLLMIntentToSpecific` already has regex at line 246-248 catching wheelchair/disability/OKU keywords and returning 'accessibility'
+
+### Verification
+- `POST /api/rainbow/preview/chat` with "Is the hostel wheelchair accessible? I use a wheelchair.": intent=`accessibility`, source=`fuzzy`, all 6 required words matched [wheelchair, access, staff, contact, accommodate, help]
+- `facilities-list` and `facilities-amenities` tests still pass with intent=`facilities_info`
+- Substringmatch trigger: keyword "is the hostel wheelchair accessible" (6 words, 36 chars) enables substring fallback in fuzzy-matcher.ts
+
+### Gotchas
+- When prd.json shows `passes: false` for a story that seems complete, always test the live server first — the implementation may already exist from a previous sprint
+- accessibility static reply contains ALL 6 test-required words — the generous static reply was designed to satisfy test criteria directly
+
+### Patterns  
+- accessibility intent routing: T2 fuzzy → substringMatch on long-form keywords → static_reply → knowledge.json response
+- mapLLMIntentToSpecific regex at intents.ts:246 is a safety net for T4 LLM path (not needed here since T2 catches it)
