@@ -419,7 +419,11 @@
           "how to find",
           "google map",
           "navigate",
-          "where are you"
+          "where are you",
+          "airport",
+          "from airport",
+          "how to get here from airport",
+          "senai airport"
         ],
         "ms": [
           "direction",
@@ -429,7 +433,12 @@
           "map",
           "macam mana nak pergi",
           "di mana tempat",
-          "lokasi kamu"
+          "lokasi kamu",
+          "airport",
+          "dari airport",
+          "lapangan terbang",
+          "macam mana nak sampai",
+          "macam mana nak sampai dari airport"
         ],
         "zh": [
           "地址",
@@ -440,7 +449,10 @@
           "怎么去",
           "地图",
           "导航",
-          "你在哪"
+          "你在哪",
+          "机场",
+          "怎么去机场",
+          "从机场怎么到"
         ]
       }
     },
