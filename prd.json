@@ -50,7 +50,7 @@
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-003",
@@ -206,7 +206,16 @@
         "The test runner exits with code 1 when there are failures — this is expected.",
         "Always use --concurrency=1 for reliable results (concurrency=2+ causes rate limit failures)."
       ],
-      "dependencies": ["US-001", "US-002", "US-003", "US-004", "US-005", "US-006", "US-007", "US-008"],
+      "dependencies": [
+        "US-001",
+        "US-002",
+        "US-003",
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008"
+      ],
       "estimatedComplexity": "medium",
       "passes": false
     }
