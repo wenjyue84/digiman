@@ -1796,3 +1796,22 @@ Completed: Fix multi-turn booking workflow â€” context lost after turn 0 (I
 - **knowledge.json is hot-reloaded**: Changes to knowledge.json take effect immediately (no server restart needed). intent-keywords.json is statically imported and requires restart.
 - **Test validates contains_any not language**: The autotest validates keyword presence, not language. An EN response to a Malay query still passes if it contains the required keywords.
 - **Empty static replies fall back to EN**: When ms/zh responses are empty strings, the system falls back to the EN response. Always fill all 3 language variants.
+## Iteration 1 - Fri, Feb 27, 2026  2:28:44 PM
+Completed: Fix directions response to include transport info (ID: US-001) in 8m
+
+
+## Iteration — Story: US-002 Fix check-in info to mention passport/IC requirements
+
+### What was implemented
+- **`RainbowAI/src/assistant/data/knowledge.json`**: The `checkin_info` static reply was already updated in a previous run — all 3 language variants (en/ms/zh) already contained passport/IC/identification keywords. No further changes needed to this file.
+- **`RainbowAI/.rainbow-kb/checkin-procedure.md`**: Added "Prepare your identification document" as step 1 (renumbered remaining steps). Specifies passport for international guests, IC for Malaysian guests.
+
+### Root cause
+- `checkin_info` static reply (knowledge.json) had no mention of any identity documents — only times, WiFi, address.
+- Test `ci-suite-passport-request` requires contains_any: ['passport','IC','identity','document','identification'].
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+
+### Patterns discovered
+- **knowledge.json pre-updated**: When a prd.json references a fix that should be applied, always check if a previous session already applied it before re-editing.

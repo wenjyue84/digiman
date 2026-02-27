@@ -1843,6 +1843,123 @@
           "不要"
         ]
       }
+    },
+    {
+      "intent": "extend_stay",
+      "keywords": {
+        "en": [
+          "extend",
+          "extend my stay",
+          "extend stay",
+          "extra night",
+          "extra nights",
+          "stay longer",
+          "more nights",
+          "prolong my stay",
+          "I want to extend my stay",
+          "can I extend",
+          "additional nights please",
+          "stay for more nights"
+        ],
+        "ms": [
+          "tambah malam",
+          "lanjutkan penginapan",
+          "nak tambah malam",
+          "nak stay lagi",
+          "boleh extend",
+          "malam tambahan",
+          "nak lanjutkan",
+          "saya nak extend stay saya",
+          "boleh lanjutkan penginapan saya"
+        ],
+        "zh": [
+          "延长住宿",
+          "多住几晚",
+          "续住",
+          "加几天",
+          "延长",
+          "我想延长住宿",
+          "可以多住几天吗"
+        ]
+      }
+    },
+    {
+      "intent": "local_services",
+      "keywords": {
+        "en": [
+          "ATM",
+          "ATM nearby",
+          "money changer",
+          "nearest ATM",
+          "where is the nearest ATM",
+          "bank nearby",
+          "convenience store",
+          "pharmacy nearby",
+          "laundry nearby",
+          "nearby services",
+          "where can I find an ATM",
+          "where is the nearest money changer"
+        ],
+        "ms": [
+          "ATM",
+          "ATM berdekatan",
+          "tukar wang",
+          "money changer",
+          "kedai runcit",
+          "farmasi berdekatan",
+          "dobi berdekatan",
+          "di mana ATM terdekat",
+          "ada ATM dekat sini tak",
+          "nak tukar duit dekat mana"
+        ],
+        "zh": [
+          "ATM",
+          "取款机",
+          "附近的ATM",
+          "兑换",
+          "换钱",
+          "便利店",
+          "药房",
+          "附近哪里有ATM",
+          "最近的取款机在哪"
+        ]
+      }
+    },
+    {
+      "intent": "accessibility",
+      "keywords": {
+        "en": [
+          "wheelchair",
+          "wheelchair accessible",
+          "accessibility",
+          "disabled access",
+          "disability",
+          "mobility",
+          "is the hostel wheelchair accessible",
+          "accessible for disabled guests",
+          "special needs access",
+          "can wheelchair users stay here"
+        ],
+        "ms": [
+          "kerusi roda",
+          "akses OKU",
+          "OKU",
+          "kecacatan",
+          "mobiliti",
+          "adakah hostel ini mesra OKU",
+          "boleh kerusi roda masuk",
+          "akses untuk orang kurang upaya"
+        ],
+        "zh": [
+          "轮椅",
+          "无障碍",
+          "残疾",
+          "行动不便",
+          "轮椅可以进吗",
+          "有无障碍设施吗",
+          "适合残疾人吗"
+        ]
+      }
     }
   ]
 }
