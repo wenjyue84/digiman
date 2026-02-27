@@ -242,8 +242,12 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
         // Detect mid-flow corrections (e.g., "actually 3 guests not 2")
         const correctionPattern = /\b(actually|sorry.*mistake|i\s+meant|not\s+\d+\s+but\s+\d+)\b/i;
         if (correctionPattern.test(sanitizedMessage)) {
+          // Extract the CORRECTED number (new value, not old value)
+          // "not 2 but 3" → 3 (after "but"); "actually 3, not 2" → 3 (after "actually")
+          const butMatch = sanitizedMessage.match(/but\s+(\d+)/i);
+          const actuallyMatch = sanitizedMessage.match(/(?:actually|i\s+meant)\s+(\d+)/i);
           const numbers = sanitizedMessage.match(/\d+/g);
-          const correctionNum = numbers ? numbers[numbers.length - 1] : null;
+          const correctionNum = butMatch?.[1] || actuallyMatch?.[1] || (numbers ? numbers[0] : null);
           const ack = correctionNum
             ? `Got it! I've noted your correction — updated to ${correctionNum} guests. `
             : `Got it! I've noted your correction and updated accordingly. `;

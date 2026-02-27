@@ -1914,3 +1914,29 @@ Completed: Handle accessibility queries specifically (ID: US-005) in 17m
 ### Patterns discovered
 - **Workflow complaint_handling drives escalation**: The noise complaint triggers `complaint_handling` workflow which progressively collects details (turn 0: describe issue, turn 1: photo evidence) then escalates at turn 2 with management phone number
 - **LLM escalation response is rich**: Turn 2 response from LLM includes management phone, PRIORITY status, and 'escalating' verb — well-aligned with the widened validation keywords
+## Iteration 6 - Fri, Feb 27, 2026  3:33:04 PM
+Completed: Fix noise complaint follow-up validation and response (ID: US-006) in 5m
+
+
+
+## Iteration 7 — Story: US-007 Fix booking workflow to handle mid-flow corrections
+
+### What was implemented
+- **`RainbowAI/src/routes/admin/testing-preview.ts`**: Fixed number extraction in mid-flow correction handler (lines 242-255). Previous code used `numbers[numbers.length - 1]` (last number in message), which extracted the OLD value ("2" from "Actually 3 guests, not 2"). New code uses smart extraction:
+  - Checks "but X" pattern first (for "not 2 but 3" → 3)
+  - Then "actually/I meant X" pattern (for "actually 3, not 2" → 3)
+  - Falls back to first number in message
+
+### Root cause
+- The correction detection regex was already implemented from a prior session
+- The bug was in number extraction: `numbers[numbers.length - 1]` grabbed the LAST number in the message, but in "Actually 3 guests, not 2" the last number (2) is the OLD value, not the correction
+- Fixed to extract the first number after the correction keyword ("actually 3" → 3)
+
+### Test results (verified against live server)
+- mt-correction-mid-flow: Turn 0 PASS (guest/booking), Turn 2 PASS (3/guest/update/note/correct — all 5 keywords match) ✅
+- Existing booking workflow: Turn 0 PASS (guest/booking), Turn 2 PASS (payment), Turn 3 PASS (not_empty) ✅
+- TypeScript: 32 errors (all pre-existing, zero new) ✅
+
+### Patterns discovered
+- **Correction number extraction heuristic**: In correction messages, the NEW value appears after "actually/I meant" and the OLD value appears after "not". For "not X but Y", the new value is after "but". Use named pattern matching (butMatch, actuallyMatch) rather than positional array indexing.
+- **nodemon hot-reload**: TypeScript changes in dev mode are auto-reloaded by nodemon — no server restart needed for testing-preview.ts changes.
