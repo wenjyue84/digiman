@@ -1840,3 +1840,31 @@ Completed: Fix check-in info to mention passport/IC requirements (ID: US-002) in
 ### Patterns discovered
 - **Cross-session work duplication risk**: When a story references a fix, always test against live server FIRST before implementing — the fix may already be in place from a previous session. Saves wasted effort.
 - **knowledge.json uses `d.static` array**: Top-level structure is `{ static: [...], dynamic: [...] }`. Access via `d.static.find(e => e.intent === 'name')`, NOT `d[intent]`. Avoid the encoding bug trap — use `node -e` for JSON inspection on Windows.
+## Iteration 3 - Fri, Feb 27, 2026  2:58:27 PM
+Completed: Handle extend stay separately from new booking (ID: US-003) in 22m
+
+
+## Iteration N - Story: US-004 - Add local services intent for ATM/money changer queries
+
+### What was implemented
+- Verified that `local_services` intent was already fully implemented from a prior iteration:
+  - `intent-keywords.json`: local_services entry with ATM, money changer, nearest ATM, "where is the nearest ATM" (5-word substringMatch), etc.
+  - `routing.json`: `local_services: { action: "static_reply" }`
+  - `knowledge.json`: rich static reply with ATM (CIMB/Maybank), Money Changer (KSL City/JB Sentral), pharmacy, laundry
+  - `intents.ts` `mapLLMIntentToSpecific`: maps `directions` → `local_services` when ATM/money changer keywords present in message
+- Story was marked `passes: false` because verification was missing; direct API testing confirmed it works
+
+### Verification
+- `GET /api/rainbow/intents/test` with "Where is the nearest ATM or money changer?": intent=`local_services`, source=`fuzzy`, score=0.95
+- `POST /api/rainbow/preview/chat`: Returns Nearby Services response with ATM, Money Changer, nearby — all test-required words
+- Match mechanism: substringMatch on "where is the nearest atm" (5 words, 24 chars — passes 4-word/18-char threshold)
+- TypeScript: 32 errors (well below 222 baseline)
+
+### Gotchas
+- `intents.json` does NOT need `local_services` — it only controls T1 regex patterns and threshold overrides; routing/knowledge/keywords are what matter
+- `local_services` not in `intents.json`'s category list is fine: the integration test only requires 50%+ overlap (routing→intents direction)
+- When verifying "already-implemented" stories, always test live with the running server before assuming it doesn't work
+
+### Patterns
+- substringMatch activates for long-form keywords (4+ words, 18+ chars) when Fuse.js confidence < 0.70 or returns empty
+- The keyword "where is the nearest atm" (5w, 24c) is the specific trigger for local_services T2 match
