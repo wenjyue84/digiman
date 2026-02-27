@@ -225,7 +225,7 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
 
     // Emergency context detection: maintain emergency context across completed workflows
     const emergencyContextInHistory = conversationHistory.some(msg =>
-      msg.role === 'assistant' && /\b(emergency|ambulance|URGENT|staff.*notif|immediately|collapsed|not\s+responding)\b/i.test(msg.content)
+      /\b(emergency|ambulance|URGENT|collapsed|not\s+responding|unconscious|bleeding|injured|seizure|heart\s+attack|choking)\b/i.test(msg.content)
     );
     const isEmergencyFollowupMsg = emergencyContextInHistory &&
       /\b(breathing|unconscious|not\s+responding|bleeding|hurt|conscious|condition|worse|better|awake|pulse|still|pain|help)\b/i.test(sanitizedMessage);
