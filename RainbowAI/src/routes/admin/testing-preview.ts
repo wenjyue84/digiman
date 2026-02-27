@@ -314,7 +314,10 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     } else if (routedAction === 'static_reply') {
       const knowledge = configStore.getKnowledge() || { static: [], dynamic: {} };
       const staticEntry = (knowledge.static || []).find(e => e.intent === intentResult.category);
-      const staticText = staticEntry?.response?.en || '(no static reply configured)';
+      const langKey = (intentResult.detectedLanguage === 'ms' || intentResult.detectedLanguage === 'zh')
+        ? intentResult.detectedLanguage as 'en' | 'ms' | 'zh'
+        : 'en';
+      const staticText = staticEntry?.response?.[langKey] || staticEntry?.response?.en || '(no static reply configured)';
 
       if (messageType === 'info') {
         finalMessage = staticText;

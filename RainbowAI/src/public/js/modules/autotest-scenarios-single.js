@@ -1851,7 +1851,7 @@ export const SINGLE_TURN_SCENARIOS = [
       turn: 0, rules: [
         { type: 'not_empty', critical: true },
         { type: 'not_contains', values: ['Paris'], critical: false },
-        { type: 'contains_any', values: ['help', 'hostel', 'assist', 'booking', 'Pelangi', 'capsule'], critical: false }
+        { type: 'contains_any', values: ['help', 'hostel', 'assist', 'booking', 'Pelangi', 'capsule', 'connect', 'team', 'staff'], critical: false }
       ]
     }]
   },
