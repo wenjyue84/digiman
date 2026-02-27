@@ -1,4 +1,5 @@
 ## Codebase Patterns
+- **Direct emergency bypass for non-workflow emergencies**: Emergency types without dedicated workflows (medical, fire, assault, police) use `isDirectEmergency` flag in testing-preview.ts to bypass the generic complaint_handling workflow. Only theft_report and card_locked route to their dedicated workflows. The `EMERGENCY_INITIAL_RESPONSE` is used for first-turn emergencies; `EMERGENCY_REASSURANCE` for follow-ups. Follow-up detection: `isDirectEmergency && isEmergencyFollowupMsg` (message matches emergency regex AND history has emergency context).
 - **isMultiTurn categories for autotest**: `autotest-execution.js` checks `scenario.category` against a whitelist to decide multi-turn vs single-turn mode. Multi-turn uses `/preview/chat` with accumulated history; single-turn uses `/intents/test` (stateless). Add new multi-turn categories (e.g., `CONVERSATION_SUMMARIZATION`, `SENTIMENT_ANALYSIS`, `MULTI_TURN_INTENT`) to the `isMultiTurn` condition when tests need conversation state.
 - **NEGATIVE_PATTERNS must cover complaint follow-up phrases**: Complaint follow-ups like "My room is not clean" and "Nobody came to fix it after I reported it" don't match vague keywords ('bad', 'terrible') — add specific phrases: 'not clean', 'nobody came', 'not fixed', 'i reported', 'reported it'. These enable the consecutive-negative counter to reach threshold at turn 1, triggering escalation with sorry/staff/manager.
 - **preview/chat endpoint is stateless for sentiment**: Unlike the production pipeline (input-validator→response-processor) which uses a persistent StateManager, the preview/chat endpoint must analyze sentiment from the history array passed in each request. Use a stateless approach: count consecutive negative user messages from history backward + current message. This avoids crosstalk between concurrent test scenarios.
@@ -1940,3 +1941,37 @@ Completed: Fix noise complaint follow-up validation and response (ID: US-006) in
 ### Patterns discovered
 - **Correction number extraction heuristic**: In correction messages, the NEW value appears after "actually/I meant" and the OLD value appears after "not". For "not X but Y", the new value is after "but". Use named pattern matching (butMatch, actuallyMatch) rather than positional array indexing.
 - **nodemon hot-reload**: TypeScript changes in dev mode are auto-reloaded by nodemon — no server restart needed for testing-preview.ts changes.
+## Iteration 7 - Fri, Feb 27, 2026  3:53:44 PM
+Completed: Fix booking workflow to handle mid-flow corrections (ID: US-007) in 20m
+
+
+## Iteration 8 — Story: US-008 Fix emergency workflow continuation across turns
+
+### What was implemented
+- **`RainbowAI/src/assistant/data/regex-patterns.json`**: Expanded English medical emergency regex from `(ambulan[cs]e|hospital|emergency)` to include: collapsed, unconscious, not responding, fainted, seizure, heart attack, choking, bleeding, injured, dizzy, not breathing. Also expanded MS and ZH patterns with equivalent medical terms.
+- **`RainbowAI/src/routes/admin/testing-preview.ts`**: Added direct emergency response bypass for medical/fire/assault emergencies. When T1 regex detects an emergency that is NOT theft_report or card_locked (which have dedicated workflows), the system now bypasses the generic complaint_handling workflow and returns a direct emergency response with appropriate keywords (URGENT, emergency, staff, ambulance, help, call, immediately).
+  - Added `isDirectEmergency` flag: true when emergency regex matches AND intent is not theft/card_locked AND no active workflow
+  - Added `EMERGENCY_INITIAL_RESPONSE` constant for first-turn emergency messages
+  - Added follow-up detection: when `isDirectEmergency && isEmergencyFollowupMsg`, returns `EMERGENCY_REASSURANCE` instead of repeating the initial alert
+  - Existing `isEmergencyFollowupMsg` code at line 311 still handles cases where the follow-up message doesn't match emergency regex
+
+### Root cause
+Two problems:
+1. `regex-patterns.json` medical patterns only had ambulance/hospital/emergency — missed "collapsed", "unconscious", "not responding" which are common medical emergency phrases
+2. Even when T1 caught an emergency, the intent `complaint` routed to `complaint_handling` workflow whose step 0 message ("We're truly sorry to hear about this") lacked emergency-specific keywords (ambulance, URGENT, etc.)
+
+### Test results (verified against live server)
+- workflow-medical-emergency: Turn 0 PASS (7/7 keywords), Turn 1 PASS (not_empty), Turn 2 PASS (4/6 keywords) ✅
+- Theft test: intent=theft_report, action=workflow (unchanged) ✅
+- Card locked test: intent=card_locked, action=workflow (unchanged) ✅
+- Fire test: intent=complaint, action=emergency (now uses direct response) ✅
+
+### Quality gates
+- TS compilation: 49 lines of errors (all pre-existing, zero new from our changes) ✅
+- Live server 3-turn conversation verified ✅
+- Existing emergency tests (theft, card_locked) still route to dedicated workflows ✅
+
+### Patterns discovered
+- **Direct emergency bypass pattern**: For emergency types without dedicated workflows (medical, fire, assault, police), bypass the generic complaint_handling workflow and return a direct response. Only theft_report and card_locked have dedicated workflows; all others go through the direct emergency path.
+- **Emergency follow-up dual detection**: `isDirectEmergency` catches follow-ups where the message itself matches emergency regex (e.g., "unconscious"). `isEmergencyFollowupMsg` catches follow-ups where the message has condition-update words (breathing, condition, worse) but doesn't match emergency regex. Both paths lead to EMERGENCY_REASSURANCE.
+- **POST /api/rainbow/restart kills dev server permanently**: In dev mode (no PM2), the restart endpoint calls process.exit(). Must manually restart with `npm run dev`. Use nodemon for TS hot-reload instead.

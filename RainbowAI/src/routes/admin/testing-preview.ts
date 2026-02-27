@@ -196,7 +196,14 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     }
     const effectiveWorkflow = shouldEscapeWorkflow ? null : activeWorkflow;
 
-    const routedAction: string = effectiveWorkflow ? 'workflow' : (route?.action || 'llm_reply');
+    // Direct emergency override: for medical/fire/assault emergencies (not theft_report/card_locked
+    // which have dedicated workflows), bypass the generic complaint_handling workflow and provide
+    // an immediate emergency response on the FIRST turn.
+    const isDirectEmergency = !!emergencyIntent &&
+      emergencyIntent !== 'theft_report' &&
+      emergencyIntent !== 'card_locked' &&
+      !effectiveWorkflow;
+    const routedAction: string = isDirectEmergency ? 'emergency' : (effectiveWorkflow ? 'workflow' : (route?.action || 'llm_reply'));
 
     const { detectMessageType } = await import('../../assistant/problem-detector.js');
     const messageType = detectMessageType(sanitizedMessage);
@@ -230,9 +237,17 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     const isEmergencyFollowupMsg = emergencyContextInHistory &&
       /\b(breathing|unconscious|not\s+responding|bleeding|hurt|conscious|condition|worse|better|awake|pulse|still|pain|help)\b/i.test(sanitizedMessage);
     const EMERGENCY_REASSURANCE = "Our staff has been notified and help is on the way. Please stay calm and keep your friend comfortable. If their condition worsens, please call 999 for an ambulance immediately. A staff member will arrive shortly to assist you.";
+    const EMERGENCY_INITIAL_RESPONSE = "URGENT — This is an emergency! Our staff has been immediately notified and help is on the way. Please stay calm. Call 999 for an ambulance right away if medical assistance is needed. DO NOT move the person if they have collapsed or are unconscious. A staff member will arrive shortly to assist you. Please tell us your exact location in the hostel.";
 
-    // Handle active workflow continuation
-    if (effectiveWorkflow) {
+    // Direct emergency response — bypass complaint_handling workflow for medical/fire emergencies
+    if (isDirectEmergency && isEmergencyFollowupMsg) {
+      // Follow-up to an ongoing emergency — provide reassurance, not the initial alert again
+      finalMessage = EMERGENCY_REASSURANCE;
+      console.log(`[Preview] 🚨 Emergency follow-up response (intent=${emergencyIntent})`);
+    } else if (isDirectEmergency) {
+      finalMessage = EMERGENCY_INITIAL_RESPONSE;
+      console.log(`[Preview] 🚨 Direct emergency response (intent=${emergencyIntent}), bypassing workflow routing`);
+    } else if (effectiveWorkflow) {
       const workflowsData = configStore.getWorkflows() || { workflows: [] };
       const workflow = (workflowsData.workflows || []).find(w => w.id === effectiveWorkflow.workflowId);
       if (workflow && effectiveWorkflow.currentStepIndex < workflow.steps.length) {
