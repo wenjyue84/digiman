@@ -1815,3 +1815,28 @@ Completed: Fix directions response to include transport info (ID: US-001) in 8m
 
 ### Patterns discovered
 - **knowledge.json pre-updated**: When a prd.json references a fix that should be applied, always check if a previous session already applied it before re-editing.
+## Iteration 2 - Fri, Feb 27, 2026  2:35:18 PM
+Completed: Fix check-in info to mention passport/IC requirements (ID: US-002) in 6m
+
+
+## Iteration 3 — Story: US-003 Handle extend stay separately from new booking
+
+### What was implemented
+- **No code changes required** — all implementation was already present from a previous session:
+  - `intent-keywords.json`: `extend_stay` intent with EN/MS/ZH keywords (extend, extend stay, extra nights, stay longer, prolong, tambah malam, lanjutkan, etc.)
+  - `routing.json`: `extend_stay` → `static_reply` (confirmed, not workflow)
+  - `knowledge.json`: Full 3-language static reply for `extend_stay` with availability, staff contact, and nightly rates
+- **Verified via live server**: "I want to extend my stay for 2 more nights" → `intent: extend_stay`, `action: static_reply`, response contains 'extend', 'availability', 'staff', 'night' ✅
+- **Existing booking still routes to workflow**: "I want to book a capsule for next weekend" → `intent: booking`, `action: workflow` ✅
+- **prd.json**: Marked `US-003` as `passes: true`
+
+### Root cause
+- `prd.json` was not updated after a previous session implemented the fix. Story was effectively done but not marked complete.
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- Live server verification: intent match + correct action + keyword validation ✅
+
+### Patterns discovered
+- **Cross-session work duplication risk**: When a story references a fix, always test against live server FIRST before implementing — the fix may already be in place from a previous session. Saves wasted effort.
+- **knowledge.json uses `d.static` array**: Top-level structure is `{ static: [...], dynamic: [...] }`. Access via `d.static.find(e => e.intent === 'name')`, NOT `d[intent]`. Avoid the encoding bug trap — use `node -e` for JSON inspection on Windows.
