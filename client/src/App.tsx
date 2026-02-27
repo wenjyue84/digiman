@@ -28,6 +28,7 @@ import GuestGuide from "./pages/guest-guide";
 // REMOVED: AdminRainbow - NO redirects from port 3000 to port 3002!
 // Rainbow admin is ONLY accessible directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard)
 import IntentManager from "./pages/intent-manager";
+import TestSuite from "./pages/test-suite";
 import Header from "./components/header";
 import Navigation from "./components/navigation";
 import MobileBottomNav from "./components/mobile-bottom-nav";
@@ -118,6 +119,8 @@ function Router() {
           </Route>
           {/* REMOVED: /admin/rainbow route - NO redirects from port 3000 to port 3002! */}
           {/* Access Rainbow admin directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard) */}
+          {/* Developer test suite — accessible without protected route for inline login form */}
+          <Route path="/test" component={TestSuite} />
           <Route path="/login" component={LoginForm} />
           <Route component={NotFound} />
         </Switch>
