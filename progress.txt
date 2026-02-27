@@ -1891,3 +1891,26 @@ Completed: Add local services intent for ATM/money changer queries (ID: US-004) 
 ### Patterns  
 - accessibility intent routing: T2 fuzzy → substringMatch on long-form keywords → static_reply → knowledge.json response
 - mapLLMIntentToSpecific regex at intents.ts:246 is a safety net for T4 LLM path (not needed here since T2 catches it)
+## Iteration 5 - Fri, Feb 27, 2026  3:27:48 PM
+Completed: Handle accessibility queries specifically (ID: US-005) in 17m
+
+
+## Iteration 6 - Story: US-006 - Fix noise complaint follow-up validation and response
+
+### What was implemented
+- **No code changes needed** — all implementation was already present from a previous session:
+  - `autotest-scenarios-workflow.js:265`: Turn 2 validation already widened to 9 keywords: `['staff', 'send', 'address', 'quiet', 'sorry', 'management', 'escalat', 'team', 'priority']`
+  - `templates.json:38`: Escalation template already includes 'staff' ("Let me connect you with our staff")
+- **Verified via live server (3-turn conversation)**:
+  - Turn 0: "The people next door are being really loud" → `noise_complaint`, workflow action, response contains 'sorry' ✅
+  - Turn 1: "It has been going on for over an hour now" → not_empty ✅
+  - Turn 2: "Can someone come and tell them to quiet down?" → escalation response with 'escalating', 'management', 'team', 'PRIORITY' — matches 4 of 9 validation keywords ✅
+- **Existing noise tests**: Standalone noise complaint still routes to `noise_complaint` + workflow ✅
+
+### Quality gates
+- TS compilation: 32 errors (all pre-existing, zero new) ✅
+- Live server verification: 3-turn multi-turn conversation ✅
+
+### Patterns discovered
+- **Workflow complaint_handling drives escalation**: The noise complaint triggers `complaint_handling` workflow which progressively collects details (turn 0: describe issue, turn 1: photo evidence) then escalates at turn 2 with management phone number
+- **LLM escalation response is rich**: Turn 2 response from LLM includes management phone, PRIORITY status, and 'escalating' verb — well-aligned with the widened validation keywords
