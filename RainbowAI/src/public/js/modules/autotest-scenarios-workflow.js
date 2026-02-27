@@ -586,5 +586,153 @@ export const WORKFLOW_SCENARIOS = [
         ]
       }
     ]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // MULTI_TURN_LOGISTICS (4 tests) - Multi-turn booking & logistics flows
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'mt-cancel-then-rebook',
+    name: 'Multi-Turn - Cancel then rebook',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'I need to cancel my booking for this Saturday' },
+      { text: 'Actually, can I change it to next Saturday instead?' },
+      { text: 'How much would that be for 2 nights?' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['cancel', 'booking', 'staff', 'contact', 'help'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['change', 'date', 'booking', 'staff', 'modify'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['RM', 'price', 'night', 'rate', 'cost'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-price-then-book-then-payment',
+    name: 'Multi-Turn - Price inquiry → booking → payment',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'How much per night?' },
+      { text: 'OK I want to book for 3 nights starting tomorrow' },
+      { text: 'What payment methods do you accept?' },
+      { text: 'I will pay by bank transfer' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['RM', 'price', 'night', 'rate'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['book', 'reservation', 'guest', 'WhatsApp', 'date'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['cash', 'card', 'transfer', 'bank', 'payment'], critical: true }
+      ]},
+      { turn: 3, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'undefined'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-mixed-language-conversation',
+    name: 'Multi-Turn - Language switching mid-conversation',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'Hi, how much is one night?' },
+      { text: 'Boleh book tak untuk esok?' },
+      { text: '谢谢，我明天到' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['RM', 'price', 'night', 'rate'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'undefined'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'undefined'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'mt-correction-mid-flow',
+    name: 'Multi-Turn - Guest corrects earlier info',
+    category: 'MULTI_TURN_INTENT',
+    messages: [
+      { text: 'I want to book for 2 guests' },
+      { text: 'Check in on March 1st' },
+      { text: 'Sorry, I made a mistake. Actually 3 guests, not 2' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['guest', 'booking', 'date', 'check-in'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['3', 'guest', 'update', 'note', 'correct'], critical: true }
+      ]}
+    ]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // WORKFLOW_EMERGENCY (2 tests) - Multi-turn emergency workflows
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'workflow-medical-emergency',
+    name: 'Workflow - Medical Emergency (3 turns)',
+    category: 'WORKFLOW_COMPLETE',
+    messages: [
+      { text: 'Help! My friend collapsed and is not responding!' },
+      { text: 'We are on the 2nd floor near the bathroom' },
+      { text: 'He is breathing but unconscious' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['emergency', 'staff', 'ambulance', 'help', 'call', 'immediately', 'URGENT'], critical: true }
+      ]},
+      { turn: 1, rules: [
+        { type: 'not_empty', critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['ambulance', 'staff', 'help', 'medical', 'coming', 'way'], critical: true }
+      ]}
+    ]
+  },
+  {
+    id: 'workflow-lost-found-multi',
+    name: 'Workflow - Lost item multi-turn (3 turns)',
+    category: 'WORKFLOW_COMPLETE',
+    messages: [
+      { text: 'I think I left my laptop charger in my capsule after checkout' },
+      { text: 'I checked out this morning from capsule C5' },
+      { text: 'Can someone check if it is still there?' }
+    ],
+    validate: [
+      { turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['lost', 'item', 'check', 'staff', 'charger', 'found'], critical: true }
+      ]},
+      { turn: 2, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'check', 'contact', 'help'], critical: true }
+      ]}
+    ]
   }
 ];

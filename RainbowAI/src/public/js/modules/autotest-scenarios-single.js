@@ -1444,5 +1444,427 @@ export const SINGLE_TURN_SCENARIOS = [
         { type: 'contains_any', values: ['staff', 'booking', 'check', 'date', 'confirm', 'contact'], critical: true }
       ]
     }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // BOOKING_LOGISTICS (5 tests) - Booking edge cases
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'booking-group-large',
+    name: 'Booking - Large group (8 guests)',
+    category: 'BOOKING_LOGISTICS',
+    messages: [{ text: 'We are a group of 8 people, can we all stay together?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['group', 'capsule', 'book', 'staff', 'contact', 'accommodate', 'available'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'booking-cancellation',
+    name: 'Booking - Cancellation request',
+    category: 'BOOKING_LOGISTICS',
+    messages: [{ text: 'I need to cancel my booking for next week' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['cancel', 'booking', 'staff', 'refund', 'contact'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'booking-modification',
+    name: 'Booking - Date change request',
+    category: 'BOOKING_LOGISTICS',
+    messages: [{ text: 'Can I change my booking from Friday to Saturday?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['change', 'modify', 'booking', 'staff', 'contact', 'date'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'booking-extend-stay',
+    name: 'Booking - Extend current stay',
+    category: 'BOOKING_LOGISTICS',
+    messages: [{ text: 'I want to extend my stay for 2 more nights' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['extend', 'availability', 'staff', 'night', 'check', 'extra'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'booking-refund-policy',
+    name: 'Booking - Refund policy inquiry',
+    category: 'BOOKING_LOGISTICS',
+    messages: [{ text: 'What is your refund policy if I cancel?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['refund', 'cancel', 'policy', 'staff', 'contact'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // PAYMENT_METHODS (4 tests) - Payment-specific queries
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'payment-card-accepted',
+    name: 'Payment - Card acceptance',
+    category: 'PAYMENT_METHODS',
+    messages: [{ text: 'Do you accept credit card or debit card?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['cash', 'card', 'payment', 'transfer', 'bank', 'accept'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'payment-online-transfer',
+    name: 'Payment - Online banking transfer',
+    category: 'PAYMENT_METHODS',
+    messages: [{ text: 'Can I pay via online bank transfer?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['transfer', 'bank', 'payment', 'cash', 'account'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'payment-foreign-currency',
+    name: 'Payment - Foreign currency inquiry',
+    category: 'PAYMENT_METHODS',
+    messages: [{ text: 'I only have Singapore dollars, do you accept SGD?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['RM', 'ringgit', 'Malaysian', 'exchange', 'currency', 'cash', 'money changer'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'payment-deposit-required',
+    name: 'Payment - Deposit inquiry',
+    category: 'PAYMENT_METHODS',
+    messages: [{ text: 'Do I need to pay a deposit when I check in?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['deposit', 'payment', 'check-in', 'pay', 'staff'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // EMERGENCY_SAFETY (4 tests) - Safety and emergency scenarios
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'emergency-medical',
+    name: 'Emergency - Medical help needed',
+    category: 'EMERGENCY_SAFETY',
+    messages: [{ text: 'I feel very sick and dizzy, I think I need to see a doctor!' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'hospital', 'clinic', 'emergency', 'doctor', 'help', 'medical', 'contact'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'emergency-fire-alarm',
+    name: 'Emergency - Fire alarm or smoke',
+    category: 'EMERGENCY_SAFETY',
+    messages: [{ text: 'I can smell smoke! Is there a fire?!' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'exit', 'emergency', 'fire', 'safety', 'evacuate', 'calm', 'contact'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'emergency-suspicious-person',
+    name: 'Emergency - Suspicious person report',
+    category: 'EMERGENCY_SAFETY',
+    messages: [{ text: 'There is a stranger who doesnt seem like a guest hanging around the corridors' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'security', 'contact', 'report', 'concern', 'safe'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'emergency-lost-valuables',
+    name: 'Emergency - Lost passport',
+    category: 'EMERGENCY_SAFETY',
+    messages: [{ text: 'I lost my passport somewhere in the hostel! What do I do?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['staff', 'lost', 'found', 'check', 'passport', 'help', 'contact'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // TRANSPORT_LOGISTICS (4 tests) - Getting to/from hostel
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'transport-from-airport',
+    name: 'Transport - From Senai airport',
+    category: 'TRANSPORT_LOGISTICS',
+    messages: [{ text: 'How do I get to the hostel from Senai airport?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['Grab', 'taxi', 'airport', 'drive', 'minute', 'km', 'direction'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'transport-grab-available',
+    name: 'Transport - Grab/taxi availability',
+    category: 'TRANSPORT_LOGISTICS',
+    messages: [{ text: 'Can you help me book a Grab to the airport?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['Grab', 'taxi', 'app', 'transport', 'staff', 'help'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'transport-bus-station',
+    name: 'Transport - Nearest bus station',
+    category: 'TRANSPORT_LOGISTICS',
+    messages: [{ text: 'Where is the nearest bus stop or bus station?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['bus', 'station', 'Larkin', 'terminal', 'walk', 'nearby'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'transport-parking',
+    name: 'Transport - Car parking',
+    category: 'TRANSPORT_LOGISTICS',
+    messages: [{ text: 'I am driving, is there parking available at the hostel?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['parking', 'park', 'car', 'space', 'free', 'available'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // LOCAL_INFORMATION (4 tests) - Nearby food, services, attractions
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'local-food-nearby',
+    name: 'Local Info - Food nearby',
+    category: 'LOCAL_INFORMATION',
+    messages: [{ text: 'Where can I get food near the hostel? Im hungry' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['restaurant', 'food', 'eat', 'nearby', 'shop', 'mamak', 'cafe'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'local-convenience-store',
+    name: 'Local Info - Convenience store',
+    category: 'LOCAL_INFORMATION',
+    messages: [{ text: 'Is there a 7-Eleven or convenience store nearby?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['store', 'shop', 'convenience', '7-Eleven', 'nearby', 'walk'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'local-laundry',
+    name: 'Local Info - Laundry service',
+    category: 'LOCAL_INFORMATION',
+    messages: [{ text: 'Is there a laundry or laundromat nearby? I need to wash my clothes' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['laundry', 'wash', 'clothes', 'service', 'nearby'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'local-atm-money',
+    name: 'Local Info - ATM / money changer',
+    category: 'LOCAL_INFORMATION',
+    messages: [{ text: 'Where is the nearest ATM or money changer?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['ATM', 'bank', 'money', 'nearby', 'changer', 'cash'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // POLICY_RULES (4 tests) - Hostel rules and policy questions
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'policy-pet-allowed',
+    name: 'Policy - Pet policy',
+    category: 'POLICY_RULES',
+    messages: [{ text: 'Can I bring my pet dog to the hostel?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'undefined'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'policy-smoking',
+    name: 'Policy - Smoking area',
+    category: 'POLICY_RULES',
+    messages: [{ text: 'Is smoking allowed? Where is the smoking area?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['smoking', 'smoke', 'area', 'outside', 'not allowed', 'prohibited', 'designated'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'policy-age-limit',
+    name: 'Policy - Minimum age',
+    category: 'POLICY_RULES',
+    messages: [{ text: 'Is there a minimum age requirement? Can a 16 year old stay?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['age', 'minimum', 'year', 'adult', 'staff', 'policy', 'contact'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'policy-visitor-allowed',
+    name: 'Policy - Visitors/guests allowed inside',
+    category: 'POLICY_RULES',
+    messages: [{ text: 'Can my friend visit me at the hostel? They are not a guest' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['visitor', 'guest', 'lobby', 'common', 'allow', 'policy', 'staff'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // ACCESSIBILITY (2 tests) - Accessibility & special needs
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'access-wheelchair',
+    name: 'Accessibility - Wheelchair access',
+    category: 'ACCESSIBILITY',
+    messages: [{ text: 'Is the hostel wheelchair accessible? I use a wheelchair.' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['wheelchair', 'access', 'staff', 'contact', 'accommodate', 'help'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'access-elderly-guest',
+    name: 'Accessibility - Elderly guest concerns',
+    category: 'ACCESSIBILITY',
+    messages: [{ text: 'My mother is 70 years old, is a capsule hostel suitable for elderly?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['lower', 'capsule', 'staff', 'comfortable', 'suitable', 'help', 'assist'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // RETURNING_GUEST (2 tests) - Returning/repeat guests
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'returning-stayed-before',
+    name: 'Returning Guest - Previous stay',
+    category: 'RETURNING_GUEST',
+    messages: [{ text: 'Hi, I stayed at your hostel last month and want to come back next week' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['welcome', 'back', 'book', 'stay', 'glad', 'happy'], critical: true }
+      ]
+    }]
+  },
+  {
+    id: 'returning-feedback',
+    name: 'Returning Guest - Positive feedback',
+    category: 'RETURNING_GUEST',
+    messages: [{ text: 'I really enjoyed my stay last time, the staff were amazing!' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'contains_any', values: ['thank', 'glad', 'happy', 'appreciate', 'welcome'], critical: true }
+      ]
+    }]
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // SPAM_ROBUSTNESS (3 tests) - Spam, promo, off-topic messages
+  // ══════════════════════════════════════════════════════════════
+  {
+    id: 'spam-promotional-msg',
+    name: 'Spam - Promotional message',
+    category: 'SPAM_ROBUSTNESS',
+    messages: [{ text: 'BUY NOW! Amazing deals on electronics! Visit www.spam-deals.com for 50% off!' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['buy', 'deal', 'visit'], critical: true },
+        { type: 'contains_any', values: ['help', 'hostel', 'assist', 'Pelangi', 'booking'], critical: false }
+      ]
+    }]
+  },
+  {
+    id: 'spam-off-topic',
+    name: 'Spam - Completely off-topic question',
+    category: 'SPAM_ROBUSTNESS',
+    messages: [{ text: 'What is the capital of France?' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['Paris'], critical: false },
+        { type: 'contains_any', values: ['help', 'hostel', 'assist', 'booking', 'Pelangi', 'capsule'], critical: false }
+      ]
+    }]
+  },
+  {
+    id: 'spam-voice-note',
+    name: 'Spam - Voice note message',
+    category: 'SPAM_ROBUSTNESS',
+    messages: [{ text: '[Voice note - 0:15]' }],
+    validate: [{
+      turn: 0, rules: [
+        { type: 'not_empty', critical: true },
+        { type: 'not_contains', values: ['error', 'undefined'], critical: true }
+      ]
+    }]
   }
 ];

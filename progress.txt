@@ -1766,3 +1766,33 @@ Completed: Fix multi-turn booking workflow â€” context lost after turn 0 (I
 ### Patterns discovered
 - **Windows JSON encoding pitfall**: python3 open() defaults to locale encoding (CP1252 on Windows). JSON files with UTF-8 characters (em-dashes —, curly quotes “”) cause UnicodeDecodeError. Use 'node -e' or python3 with open('file', encoding='utf-8') on Windows.
 - **False negative from encoding crash**: When python3 crashes mid-parse, it may produce partial output that looks like real data. Always cross-check with node -e before acting on 'failing' stories.
+
+## Iteration N — Story: US-001 Fix directions response to include transport info
+
+### What was implemented
+- **`RainbowAI/src/assistant/data/knowledge.json`**: Updated `directions` static reply in all 3 languages.
+  - EN: Added transport section with Grab (RM50-70), Taxi (RM60-80), and airport shuttle (Causeway Link AA1) options from Senai Airport.
+  - MS: Filled previously-empty Malay response with full directions + transport info in Malay.
+  - ZH: Filled previously-empty Chinese response with full directions + transport info in Chinese.
+- **`RainbowAI/src/assistant/data/intent-keywords.json`**: Added airport-related keywords to `directions` intent.
+  - EN: airport, from airport, how to get here from airport, senai airport
+  - MS: airport, dari airport, lapangan terbang, macam mana nak sampai, macam mana nak sampai dari airport
+  - ZH: 机场, 怎么去机场, 从机场怎么到
+
+### Root cause
+- `knowledge.json` directions MS and ZH responses were empty strings `""` — any non-English query fell back to English with no transport info.
+- EN response only had address + Google Maps link — no Grab/taxi/airport keywords required by the tests.
+- Test validation required any of: Grab, taxi, airport, drive, minute (transport-from-airport) or Grab, taxi, airport, alamat, address (ml-malay-directions).
+
+### Test results (verified against live server)
+- transport-from-airport: Response contains Grab, taxi, airport ✅
+- ml-malay-directions: Response contains Grab, taxi, airport ✅ (EN fallback still satisfies contains_any validation)
+
+### Quality gates
+- TS compilation: 30 errors (all pre-existing, zero new) ✅
+- Live server verified ✅
+
+### Patterns discovered
+- **knowledge.json is hot-reloaded**: Changes to knowledge.json take effect immediately (no server restart needed). intent-keywords.json is statically imported and requires restart.
+- **Test validates contains_any not language**: The autotest validates keyword presence, not language. An EN response to a Malay query still passes if it contains the required keywords.
+- **Empty static replies fall back to EN**: When ms/zh responses are empty strings, the system falls back to the EN response. Always fill all 3 language variants.

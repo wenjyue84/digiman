@@ -56,7 +56,7 @@ fi
 npm run build
 ```
 
-**IMPORTANT**: For this session, the PRD file is `tasks/prd-rainbow-ai-test-failures.json` (NOT `prd.json`). When reading stories, always use: `cat tasks/prd-rainbow-ai-test-failures.json | jq '.userStories[] | select(.passes == false) | {id, priority, title}'`
+**IMPORTANT**: PRD file is `prd.json` at project root. Read stories with: `cat prd.json | jq '.userStories[] | select(.passes == false) | {id, priority, title}'`
 
 ### 5. Verify in Browser (for UI stories)
 If the story involves UI changes:
