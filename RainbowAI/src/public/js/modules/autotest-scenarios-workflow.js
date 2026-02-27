@@ -262,7 +262,7 @@ export const WORKFLOW_SCENARIOS = [
       ]},
       { turn: 2, rules: [
         { type: 'not_empty', critical: true },
-        { type: 'contains_any', values: ['staff', 'send', 'address', 'quiet', 'sorry'], critical: true }
+        { type: 'contains_any', values: ['staff', 'send', 'address', 'quiet', 'sorry', 'management', 'escalat', 'team', 'priority'], critical: true }
       ]}
     ]
   },

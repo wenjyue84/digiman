@@ -227,8 +227,26 @@ function mapLLMIntentToSpecific(llmIntent: string, messageText: string): string 
     return 'general_complaint_in_stay';
   }
 
+  // Map "booking" to "extend_stay" when extending existing stay (not new booking)
+  if (llmIntent === 'booking' || llmIntent === 'book' || llmIntent === 'reservation') {
+    if (/\b(extend|prolong|extra\s+night|stay\s+longer|add\s+(more\s+)?night|tambah\s+malam|lanjut\s+penginapan|延长|续住|加住)\b/i.test(messageText)) {
+      return 'extend_stay';
+    }
+  }
+
+  // Map "directions" to "local_services" when asking about nearby services/ATM
+  if (llmIntent === 'directions') {
+    if (/\b(atm|money\s+changer|bank|pharmacy|farmasi|laundry|dobi|convenience|kedai|grocery|tukar\s+wang|取款|换钱|银行|药房|便利店)\b/i.test(messageText)) {
+      return 'local_services';
+    }
+  }
+
   // Map "facilities" to "facilities_info"
   if (llmIntent === 'facilities' || llmIntent === 'amenities' || llmIntent === 'facilities_info') {
+    // Check for accessibility queries
+    if (/\b(wheelchair|disabled|disability|accessibility|accessible|mobility|handicap|OKU|kerusi\s+roda|kurang\s+upaya|轮椅|无障碍|残疾)\b/i.test(messageText)) {
+      return 'accessibility';
+    }
     // Check if asking about facility location (orientation)
     if (/\b(where\s?is|di\s?mana|在哪|location|lokasi)\b/i.test(messageText)) {
       return 'facility_orientation';

@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus MCP
 
-This project is indexed by GitNexus as **digiman** (9927 symbols, 21259 relationships, 300 execution flows).
+This project is indexed by GitNexus as **digiman** (9922 symbols, 21261 relationships, 300 execution flows).
 
 GitNexus provides a knowledge graph over this codebase — call chains, blast radius, execution flows, and semantic search.
 

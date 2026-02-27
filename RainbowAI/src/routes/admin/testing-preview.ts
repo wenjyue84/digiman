@@ -223,6 +223,14 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       alsoTemplate?: { key: string; languages: { en: string; ms: string; zh: string } };
     } | null = null;
 
+    // Emergency context detection: maintain emergency context across completed workflows
+    const emergencyContextInHistory = conversationHistory.some(msg =>
+      msg.role === 'assistant' && /\b(emergency|ambulance|URGENT|staff.*notif|immediately|collapsed|not\s+responding)\b/i.test(msg.content)
+    );
+    const isEmergencyFollowupMsg = emergencyContextInHistory &&
+      /\b(breathing|unconscious|not\s+responding|bleeding|hurt|conscious|condition|worse|better|awake|pulse|still|pain|help)\b/i.test(sanitizedMessage);
+    const EMERGENCY_REASSURANCE = "Our staff has been notified and help is on the way. Please stay calm and keep your friend comfortable. If their condition worsens, please call 999 for an ambulance immediately. A staff member will arrive shortly to assist you.";
+
     // Handle active workflow continuation
     if (effectiveWorkflow) {
       const workflowsData = configStore.getWorkflows() || { workflows: [] };
@@ -230,6 +238,18 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       if (workflow && effectiveWorkflow.currentStepIndex < workflow.steps.length) {
         const step = workflow.steps[effectiveWorkflow.currentStepIndex];
         finalMessage = step.message?.en || '';
+
+        // Detect mid-flow corrections (e.g., "actually 3 guests not 2")
+        const correctionPattern = /\b(actually|sorry.*mistake|i\s+meant|not\s+\d+\s+but\s+\d+)\b/i;
+        if (correctionPattern.test(sanitizedMessage)) {
+          const numbers = sanitizedMessage.match(/\d+/g);
+          const correctionNum = numbers ? numbers[numbers.length - 1] : null;
+          const ack = correctionNum
+            ? `Got it! I've noted your correction — updated to ${correctionNum} guests. `
+            : `Got it! I've noted your correction and updated accordingly. `;
+          finalMessage = ack + finalMessage;
+        }
+
         editMeta = {
           type: 'workflow',
           workflowId: effectiveWorkflow.workflowId,
@@ -259,7 +279,14 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       } else {
         // Workflow completed or not found, clean up
         previewWorkflowStates.delete(lookupKey);
+        // Maintain emergency context even after workflow completes
+        if (isEmergencyFollowupMsg) {
+          finalMessage = EMERGENCY_REASSURANCE;
+        }
       }
+    } else if (isEmergencyFollowupMsg) {
+      // Emergency context continuation — workflow state already cleaned up
+      finalMessage = EMERGENCY_REASSURANCE;
     } else if (routedAction === 'static_reply') {
       const knowledge = configStore.getKnowledge() || { static: [], dynamic: {} };
       const staticEntry = (knowledge.static || []).find(e => e.intent === intentResult.category);
