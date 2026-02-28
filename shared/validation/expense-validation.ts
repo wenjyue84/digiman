@@ -25,8 +25,8 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({
     .regex(EXPENSE_AMOUNT_REGEX, "Amount must be a valid number with up to 2 decimal places")
     .refine(val => {
       const num = parseFloat(val);
-      return num >= 0 && num <= 99999.99;
-    }, "Amount must be between 0 and 99,999.99"),
+      return num > 0 && num <= 99999.99;
+    }, "Amount must be a positive number between 0.01 and 99,999.99"),
   category: z.enum(["salary", "utilities", "consumables", "maintenance", "equipment", "marketing", "operations", "other"], {
     required_error: "Category is required"
   }),
