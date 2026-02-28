@@ -23,6 +23,7 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:init": "tsx server/init-db.ts",
+    "seed:admin": "cross-env NODE_ENV=development tsx scripts/seed-admin.ts",
     "db:migrate": "node scripts/migrate-all.mjs",
     "db:migrate:status": "node scripts/migrate-all.mjs --status",
     "db:migrate:dry": "node scripts/migrate-all.mjs --dry-run",

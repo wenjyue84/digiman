@@ -110,7 +110,7 @@ function makeCtx(baseUrl, token) {
 }
 
 // ── Test Helpers ──────────────────────────────────────────────────────────────
-const ts = () => `_TEST_${Date.now()}`;
+const ts = () => `Test${Date.now()}`;
 const tomorrow = () => new Date(Date.now() + 86400000).toISOString().split("T")[0];
 const arr = (data) => (Array.isArray(data) ? data : data?.data ?? []);
 
@@ -452,7 +452,7 @@ const TESTS = [
     async run(ctx) {
       const unit = await getAvailableUnit(ctx);
       if (!unit) return { passed: false, details: "No available units", error: "No available units" };
-      const checkinR = await ctx.post("/guests", guestPayload(unit.number, "_Integration"), true);
+      const checkinR = await ctx.post("/guests", guestPayload(unit.number, "-Integration"), true);
       if (checkinR.status !== 201 && checkinR.status !== 200) throw new Error(`Check-in: ${checkinR.status}: ${JSON.stringify(checkinR.data)}`);
       const guestId = checkinR.data?.id;
       const verifyR = await ctx.get(`/guests/${guestId}`, true);
@@ -474,7 +474,7 @@ const TESTS = [
       const listR = await ctx.get("/expenses", true);
       const found = arr(listR.data).some(e => e.id === id);
       if (!found) throw new Error("Created expense not found in list");
-      const updateR = await ctx.put(`/expenses/${id}`, { description: label + "_updated", amount: "200.00", category: "utilities", date: new Date().toISOString().split("T")[0] }, true);
+      const updateR = await ctx.put(`/expenses/${id}`, { id, description: label + "-updated", amount: "200.00", category: "utilities", date: new Date().toISOString().split("T")[0] }, true);
       if (updateR.status !== 200) throw new Error(`Update: ${updateR.status}: ${JSON.stringify(updateR.data)}`);
       const delR = await ctx.del(`/expenses/${id}`, true);
       if (delR.status !== 200 && delR.status !== 204) throw new Error(`Delete: ${delR.status}`);
@@ -500,7 +500,7 @@ const TESTS = [
     async run(ctx) {
       const unit = await getAvailableUnit(ctx);
       if (!unit) return { passed: false, details: "No available units", error: "No available units" };
-      const checkinR = await ctx.post("/guests", guestPayload(unit.number, "_CleanTest"), true);
+      const checkinR = await ctx.post("/guests", guestPayload(unit.number, "-CleanTest"), true);
       if (checkinR.status !== 201 && checkinR.status !== 200) throw new Error(`Check-in: ${checkinR.status}`);
       const guestId = checkinR.data?.id;
       await ctx.post(`/guests/${guestId}/checkout`, { checkoutTime: new Date().toISOString(), actualAmount: "50.00", paymentMethod: "cash" }, true);
