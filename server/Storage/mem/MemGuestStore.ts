@@ -70,6 +70,10 @@ export class MemGuestStore {
     return this.guests.get(id);
   }
 
+  async deleteGuest(id: string): Promise<boolean> {
+    return this.guests.delete(id);
+  }
+
   async getAllGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
     const allGuests = Array.from(this.guests.values());
     return paginate(allGuests, pagination);

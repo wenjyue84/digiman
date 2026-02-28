@@ -234,6 +234,7 @@ export class MemStorage implements IStorage {
   getGuestHistory(pagination?: PaginationParams, sortBy?: string, sortOrder?: 'asc' | 'desc', filters?: { search?: string; nationality?: string; unit?: string }) {
     return this.guestStore.getGuestHistory(pagination, sortBy, sortOrder, filters);
   }
+  deleteGuest(id: string) { return this.guestStore.deleteGuest(id); }
   updateGuest(id: string, updates: Partial<Guest>) { return this.guestStore.updateGuest(id, updates); }
   getGuestsWithCheckoutToday() { return this.guestStore.getGuestsWithCheckoutToday(); }
   getRecentlyCheckedOutGuest() { return this.guestStore.getRecentlyCheckedOutGuest(); }

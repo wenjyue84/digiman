@@ -11,17 +11,17 @@
     {
       "intent": "directions",
       "response": {
-        "en": "📍 *How to find us*\n26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\n\nGoogle Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb\n\nWe're in a quiet commercial area in Taman Pelangi, walking distance to cafes and shops.",
-        "ms": "",
-        "zh": ""
+        "en": "📍 *How to find us*\n26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\n\nGoogle Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb\n\n🚗 *From Senai Airport (JHB) — ~30-40 min:*\n• *Grab:* RM50-70 (book in Arrival Hall, available 24/7)\n• *Taxi:* RM60-80 (official taxi counter in Arrival Hall)\n• *Airport shuttle:* Causeway Link AA1 bus to JB Sentral (RM8), then Grab (~RM10)\n\nWe're in a quiet area in Taman Pelangi, walking distance to cafes and shops! — Rainbow 🌈",
+        "ms": "📍 *Cara nak sampai ke sini*\n26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\n\nGoogle Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb\n\n🚗 *Dari Lapangan Terbang Senai (JHB) — ~30-40 minit:*\n• *Grab:* RM50-70 (tempah di Arrival Hall, ada 24/7)\n• *Teksi:* RM60-80 (kaunter teksi rasmi di Arrival Hall)\n• *Bas airport:* Causeway Link AA1 ke JB Sentral (RM8), kemudian Grab (~RM10)\n\nKami berada di kawasan yang tenang di Taman Pelangi! — Rainbow 🌈",
+        "zh": "📍 *如何找到我们*\n26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru, Johor, Malaysia\n\nGoogle Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb\n\n🚗 *从士乃机场(JHB)前往 — 约30-40分钟:*\n• *Grab:* RM50-70（在到达大厅预订，24/7可用）\n• *出租车(Taxi):* RM60-80（到达大厅官方出租车柜台）\n• *机场巴士:* Causeway Link AA1到JB Sentral (RM8)，再乘Grab (~RM10)\n\n我们位于彩虹新村的安静区域，步行可达咖啡厅和商店！— Rainbow 🌈"
       }
     },
     {
       "intent": "checkin_info",
       "response": {
-        "en": "⏰ *Check-in Info*\n\n🕑 Check-in: *2:00 PM* (early check-in available, free!)\n🕛 Check-out: *12:00 PM*\n🔑 Door password: *1270#*\n📶 WiFi: *pelangi capsule* / pw: *ilovestaycapsule*\n📍 Address: 26A Jalan Perang, Taman Pelangi, JB\n\n📹 First time? Watch our capsule guide: youtube.com/watch?v=6Ux11oBZaQQ\n\nReady to check in? Just say *\"I want to check in\"*! 😊\n\n— Rainbow 🌈",
-        "ms": "⏰ *Info Daftar Masuk*\n\n🕑 Daftar masuk: *2:00 PM* (awal boleh, percuma!)\n🕛 Daftar keluar: *12:00 PM*\n🔑 Password pintu: *1270#*\n📶 WiFi: *pelangi capsule* / pw: *ilovestaycapsule*\n📍 Alamat: 26A Jalan Perang, Taman Pelangi, JB\n\n📹 Pertama kali? Tonton video capsule: youtube.com/watch?v=6Ux11oBZaQQ\n\nReady check in? Cakap *\"nak check in\"*! 😊\n\n— Rainbow 🌈",
-        "zh": "⏰ *入住信息*\n\n🕑 入住时间: *下午2:00*（可提前入住，免费！）\n🕛 退房时间: *中午12:00*\n🔑 门密码: *1270#*\n📶 WiFi: *pelangi capsule* / 密码: *ilovestaycapsule*\n📍 地址: 26A Jalan Perang, Taman Pelangi, JB\n\n📹 第一次来？看看我们的胶囊房指南: youtube.com/watch?v=6Ux11oBZaQQ\n\n准备入住？直接说 *\"我要入住\"*！😊\n\n— Rainbow 🌈"
+        "en": "⏰ *Check-in Info*\n\n🕑 Check-in: *2:00 PM* (early check-in available, free!)\n🕛 Check-out: *12:00 PM*\n🔑 Door password: *1270#*\n📶 WiFi: *pelangi capsule* / pw: *ilovestaycapsule*\n📍 Address: 26A Jalan Perang, Taman Pelangi, JB\n\n🪪 *Document required:* Please prepare your *passport* (international guests) or *IC/identification card* (Malaysian guests) for identity verification at check-in.\n\n📹 First time? Watch our capsule guide: youtube.com/watch?v=6Ux11oBZaQQ\n\nReady to check in? Just say *\"I want to check in\"*! 😊\n\n— Rainbow 🌈",
+        "ms": "⏰ *Info Daftar Masuk*\n\n🕑 Daftar masuk: *2:00 PM* (awal boleh, percuma!)\n🕛 Daftar keluar: *12:00 PM*\n🔑 Password pintu: *1270#*\n📶 WiFi: *pelangi capsule* / pw: *ilovestaycapsule*\n📍 Alamat: 26A Jalan Perang, Taman Pelangi, JB\n\n🪪 *Dokumen diperlukan:* Sila sediakan *passport* (tetamu antarabangsa) atau *IC/kad pengenalan* (tetamu Malaysia) untuk pengesahan identiti semasa daftar masuk.\n\n📹 Pertama kali? Tonton video capsule: youtube.com/watch?v=6Ux11oBZaQQ\n\nReady check in? Cakap *\"nak check in\"*! 😊\n\n— Rainbow 🌈",
+        "zh": "⏰ *入住信息*\n\n🕑 入住时间: *下午2:00*（可提前入住，免费！）\n🕛 退房时间: *中午12:00*\n🔑 门密码: *1270#*\n📶 WiFi: *pelangi capsule* / 密码: *ilovestaycapsule*\n📍 地址: 26A Jalan Perang, Taman Pelangi, JB\n\n🪪 *所需证件:* 请准备好您的*护照*（国际旅客）或*身份证/IC*（马来西亚旅客）以便入住时进行身份验证。\n\n📹 第一次来？看看我们的胶囊房指南: youtube.com/watch?v=6Ux11oBZaQQ\n\n准备入住？直接说 *\"我要入住\"*！😊\n\n— Rainbow 🌈"
       }
     },
     {
@@ -198,6 +198,30 @@
         "en": "We're sorry about the temperature issue! Each capsule has an individual fan you can adjust. If the AC is too cold or too hot, please let our staff know and we can cool or warm up the area. Contact Maya at +60127088789 for immediate help. — Rainbow 🌈",
         "ms": "Maaf tentang masalah suhu! Setiap kapsul ada kipas individu yang boleh dilaraskan. Jika AC terlalu sejuk atau panas, maklumkan staf kami dan kami boleh laraskan. Hubungi Maya di +60127088789 untuk bantuan segera. — Rainbow 🌈",
         "zh": "对不起温度问题！每个胶囊房都有可调节的独立风扇。如果空调太冷或太热，请告知工作人员，我们可以调整。联系Maya +60127088789获得即时帮助。— Rainbow 🌈"
+      }
+    },
+    {
+      "intent": "extend_stay",
+      "response": {
+        "en": "🏨 *Extend Your Stay*\n\nWe'd be happy to help you extend your stay! Please note that extensions are subject to availability.\n\nTo check availability and arrange extra nights, please contact our staff Maya at +60127088789. She can confirm if your current capsule is available or arrange an alternative.\n\nRates: RM45/night (daily), RM38/night (weekly). — Rainbow 🌈",
+        "ms": "🏨 *Lanjutkan Penginapan*\n\nKami gembira dapat membantu anda melanjutkan penginapan! Sila ambil perhatian bahawa lanjutan tertakluk kepada ketersediaan.\n\nUntuk semak ketersediaan dan atur malam tambahan, sila hubungi staf kami Maya di +60127088789.\n\nHarga: RM45/malam (harian), RM38/malam (mingguan). — Rainbow 🌈",
+        "zh": "🏨 *延长住宿*\n\n我们很乐意帮您延长住宿！请注意，延长住宿视空房情况而定。\n\n如需查看空房和安排额外住宿，请联系工作人员 Maya (+60127088789)。\n\n房价：RM45/晚（日租），RM38/晚（周租）。— Rainbow 🌈"
+      }
+    },
+    {
+      "intent": "local_services",
+      "response": {
+        "en": "🏧 *Nearby Services*\n\nHere are some useful places near Pelangi Capsule Hostel:\n\n• *ATM:* CIMB ATM at Taman Pelangi (~3 min walk), Maybank ATM at Jalan Serampang (~5 min walk)\n• *Money Changer:* Available at KSL City Mall (~10 min by Grab) or JB Sentral (~15 min)\n• *Convenience Store:* 7-Eleven on Jalan Serampang (~5 min walk)\n• *Pharmacy:* Guardian at Taman Pelangi (~5 min walk)\n• *Laundry:* Self-service laundromat on Jalan Serampang (~5 min walk)\n\nNeed directions to any of these? Just ask! — Rainbow 🌈",
+        "ms": "🏧 *Perkhidmatan Berdekatan*\n\n• *ATM:* CIMB ATM di Taman Pelangi (~3 min jalan kaki), Maybank ATM di Jalan Serampang (~5 min)\n• *Money Changer:* Di KSL City Mall (~10 min Grab) atau JB Sentral (~15 min)\n• *Kedai Serbaneka:* 7-Eleven di Jalan Serampang (~5 min jalan kaki)\n• *Farmasi:* Guardian di Taman Pelangi (~5 min jalan kaki)\n• *Dobi:* Dobi layan diri di Jalan Serampang (~5 min jalan kaki)\n\nNak arah ke mana-mana tempat ni? Tanya je! — Rainbow 🌈",
+        "zh": "🏧 *附近服务*\n\n• *ATM:* Taman Pelangi的CIMB ATM（步行约3分钟），Jalan Serampang的Maybank ATM（步行约5分钟）\n• *换汇:* KSL City Mall（Grab约10分钟）或JB Sentral（约15分钟）\n• *便利店:* Jalan Serampang的7-Eleven（步行约5分钟）\n• *药房:* Taman Pelangi的Guardian（步行约5分钟）\n• *洗衣:* Jalan Serampang的自助洗衣店（步行约5分钟）\n\n需要去哪里的路线？问我就好！— Rainbow 🌈"
+      }
+    },
+    {
+      "intent": "accessibility",
+      "response": {
+        "en": "♿ *Accessibility Info*\n\nThank you for asking! We want to be transparent about our accessibility:\n\n• Our hostel is a *2-storey shophouse* with stairs to the upper floor\n• Capsule beds require *climbing in/out* (upper deck has a ladder)\n• Bathrooms have *standard fixtures* (no grab bars)\n• Corridors are *narrow* between capsule rows\n\nWe understand this may not be ideal for wheelchair users. However, our staff are always happy to help accommodate special needs as best we can. Please contact Maya at +60127088789 to discuss your specific requirements — we'll do our best to help! — Rainbow 🌈",
+        "ms": "♿ *Info Aksesibiliti*\n\nTerima kasih kerana bertanya! Kami ingin jujur tentang aksesibiliti kami:\n\n• Hostel kami adalah *rumah kedai 2 tingkat* dengan tangga ke tingkat atas\n• Katil kapsul memerlukan *memanjat masuk/keluar*\n• Bilik air mempunyai *kemudahan standard* (tiada palang pegangan)\n• Koridor *sempit* antara barisan kapsul\n\nKami faham ini mungkin kurang sesuai untuk pengguna kerusi roda. Namun, staf kami sentiasa gembira membantu keperluan khas. Hubungi Maya di +60127088789 untuk bincang keperluan anda — kami akan cuba sedaya upaya! — Rainbow 🌈",
+        "zh": "♿ *无障碍信息*\n\n感谢您的询问！我们希望如实告知无障碍情况：\n\n• 我们的旅馆是*两层店屋*，上层需要走楼梯\n• 胶囊床需要*攀爬进出*（上层有梯子）\n• 浴室是*标准设施*（无扶手）\n• 胶囊排之间走廊*较窄*\n\n我们理解这对轮椅使用者可能不太方便。但我们的工作人员随时乐意尽力帮助特殊需求的客人。请联系Maya (+60127088789) 讨论您的具体需求——我们会尽最大努力帮助！— Rainbow 🌈"
       }
     },
     {

@@ -145,5 +145,14 @@
   },
   "cancel_workflow": {
     "action": "static_reply"
+  },
+  "extend_stay": {
+    "action": "static_reply"
+  },
+  "local_services": {
+    "action": "static_reply"
+  },
+  "accessibility": {
+    "action": "static_reply"
   }
 }

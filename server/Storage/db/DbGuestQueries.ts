@@ -31,6 +31,11 @@ export class DbGuestQueries {
     return result[0];
   }
 
+  async deleteGuest(id: string): Promise<boolean> {
+    const result = await this.db.delete(guests).where(eq(guests.id, id)).returning();
+    return result.length > 0;
+  }
+
   async getAllGuests(pagination?: PaginationParams): Promise<PaginatedResponse<Guest>> {
     const allGuests = await this.db.select().from(guests);
     return paginate(allGuests, pagination);

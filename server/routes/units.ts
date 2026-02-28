@@ -258,9 +258,11 @@ router.post("/:number/mark-cleaned", securityValidationMiddleware, async (req, r
 
     const cleanedBySchema = z.object({
       cleanedBy: z.string()
-        .min(1, "Cleaner name is required")
+        .min(1)
         .max(50, "Cleaner name must not exceed 50 characters")
-        .transform(val => val.trim()),
+        .transform(val => val.trim())
+        .optional()
+        .default("Staff"),
     });
 
     const { cleanedBy } = cleanedBySchema.parse(req.body);

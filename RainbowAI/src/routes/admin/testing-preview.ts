@@ -196,7 +196,14 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
     }
     const effectiveWorkflow = shouldEscapeWorkflow ? null : activeWorkflow;
 
-    const routedAction: string = effectiveWorkflow ? 'workflow' : (route?.action || 'llm_reply');
+    // Direct emergency override: for medical/fire/assault emergencies (not theft_report/card_locked
+    // which have dedicated workflows), bypass the generic complaint_handling workflow and provide
+    // an immediate emergency response on the FIRST turn.
+    const isDirectEmergency = !!emergencyIntent &&
+      emergencyIntent !== 'theft_report' &&
+      emergencyIntent !== 'card_locked' &&
+      !effectiveWorkflow;
+    const routedAction: string = isDirectEmergency ? 'emergency' : (effectiveWorkflow ? 'workflow' : (route?.action || 'llm_reply'));
 
     const { detectMessageType } = await import('../../assistant/problem-detector.js');
     const messageType = detectMessageType(sanitizedMessage);
@@ -223,13 +230,50 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       alsoTemplate?: { key: string; languages: { en: string; ms: string; zh: string } };
     } | null = null;
 
-    // Handle active workflow continuation
-    if (effectiveWorkflow) {
+    // Emergency context detection: maintain emergency context across completed workflows
+    const emergencyContextInHistory = conversationHistory.some(msg =>
+      /\b(emergency|ambulance|URGENT|collapsed|not\s+responding|unconscious|bleeding|injured|seizure|heart\s+attack|choking)\b/i.test(msg.content)
+    );
+    const isEmergencyFollowupMsg = emergencyContextInHistory &&
+      /\b(breathing|unconscious|not\s+responding|bleeding|hurt|conscious|condition|worse|better|awake|pulse|still|pain|help)\b/i.test(sanitizedMessage);
+    const EMERGENCY_REASSURANCE = "Our staff has been notified and help is on the way. Please stay calm and keep your friend comfortable. If their condition worsens, please call 999 for an ambulance immediately. A staff member will arrive shortly to assist you.";
+    const EMERGENCY_INITIAL_RESPONSE = "URGENT — This is an emergency! Our staff has been immediately notified and help is on the way. Please stay calm. Call 999 for an ambulance right away if medical assistance is needed. DO NOT move the person if they have collapsed or are unconscious. A staff member will arrive shortly to assist you. Please tell us your exact location in the hostel.";
+
+    // Direct emergency response — bypass complaint_handling workflow for medical/fire emergencies
+    if (isDirectEmergency && isEmergencyFollowupMsg) {
+      // Follow-up to an ongoing emergency — provide reassurance, not the initial alert again
+      finalMessage = EMERGENCY_REASSURANCE;
+      console.log(`[Preview] 🚨 Emergency follow-up response (intent=${emergencyIntent})`);
+    } else if (isDirectEmergency) {
+      finalMessage = EMERGENCY_INITIAL_RESPONSE;
+      console.log(`[Preview] 🚨 Direct emergency response (intent=${emergencyIntent}), bypassing workflow routing`);
+    } else if (effectiveWorkflow) {
       const workflowsData = configStore.getWorkflows() || { workflows: [] };
       const workflow = (workflowsData.workflows || []).find(w => w.id === effectiveWorkflow.workflowId);
       if (workflow && effectiveWorkflow.currentStepIndex < workflow.steps.length) {
         const step = workflow.steps[effectiveWorkflow.currentStepIndex];
         finalMessage = step.message?.en || '';
+
+        // Detect mid-flow corrections (e.g., "actually 3 guests not 2")
+        const correctionPattern = /\b(actually|sorry.*mistake|i\s+meant|not\s+\d+\s+but\s+\d+)\b/i;
+        if (correctionPattern.test(sanitizedMessage)) {
+          // Extract the CORRECTED number (new value, not old value)
+          // "not 2 but 3" → 3 (after "but"); "actually 3, not 2" → 3 (after "actually")
+          const butMatch = sanitizedMessage.match(/but\s+(\d+)/i);
+          const actuallyMatch = sanitizedMessage.match(/(?:actually|i\s+meant)\s+(\d+)/i);
+          const numbers = sanitizedMessage.match(/\d+/g);
+          const correctionNum = butMatch?.[1] || actuallyMatch?.[1] || (numbers ? numbers[0] : null);
+          const ack = correctionNum
+            ? `Got it! I've noted your correction — updated to ${correctionNum} guests. `
+            : `Got it! I've noted your correction and updated accordingly. `;
+          finalMessage = ack + finalMessage;
+        }
+
+        // Emergency context override: replace generic workflow step with emergency-specific guidance
+        if (emergencyContextInHistory && isEmergencyFollowupMsg) {
+          finalMessage = EMERGENCY_REASSURANCE;
+        }
+
         editMeta = {
           type: 'workflow',
           workflowId: effectiveWorkflow.workflowId,
@@ -259,11 +303,21 @@ router.post('/preview/chat', async (req: Request, res: Response) => {
       } else {
         // Workflow completed or not found, clean up
         previewWorkflowStates.delete(lookupKey);
+        // Maintain emergency context even after workflow completes
+        if (isEmergencyFollowupMsg) {
+          finalMessage = EMERGENCY_REASSURANCE;
+        }
       }
+    } else if (isEmergencyFollowupMsg) {
+      // Emergency context continuation — workflow state already cleaned up
+      finalMessage = EMERGENCY_REASSURANCE;
     } else if (routedAction === 'static_reply') {
       const knowledge = configStore.getKnowledge() || { static: [], dynamic: {} };
       const staticEntry = (knowledge.static || []).find(e => e.intent === intentResult.category);
-      const staticText = staticEntry?.response?.en || '(no static reply configured)';
+      const langKey = (intentResult.detectedLanguage === 'ms' || intentResult.detectedLanguage === 'zh')
+        ? intentResult.detectedLanguage as 'en' | 'ms' | 'zh'
+        : 'en';
+      const staticText = staticEntry?.response?.[langKey] || staticEntry?.response?.en || '(no static reply configured)';
 
       if (messageType === 'info') {
         finalMessage = staticText;
