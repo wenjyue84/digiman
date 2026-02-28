@@ -114,6 +114,7 @@ export class DatabaseStorage implements IStorage {
   getGuestHistory(pagination?: PaginationParams, sortBy?: string, sortOrder?: 'asc' | 'desc', filters?: { search?: string; nationality?: string; unit?: string }) {
     return this.guestQueries.getGuestHistory(pagination, sortBy, sortOrder, filters);
   }
+  deleteGuest(id: string) { return this.guestQueries.deleteGuest(id); }
   updateGuest(id: string, updates: Partial<Guest>) { return this.guestQueries.updateGuest(id, updates); }
   getGuestsWithCheckoutToday() { return this.guestQueries.getGuestsWithCheckoutToday(); }
   getRecentlyCheckedOutGuest() { return this.guestQueries.getRecentlyCheckedOutGuest(); }

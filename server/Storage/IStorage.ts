@@ -35,6 +35,7 @@ export interface IGuestStorage {
     filters?: { search?: string; nationality?: string; unit?: string }
   ): Promise<PaginatedResponse<Guest>>;
   checkoutGuest(id: string): Promise<Guest | undefined>;
+  deleteGuest(id: string): Promise<boolean>;
   updateGuest(id: string, updates: Partial<Guest>): Promise<Guest | undefined>;
   getGuestsWithCheckoutToday(): Promise<Guest[]>;
   getRecentlyCheckedOutGuest(): Promise<Guest | undefined>;
