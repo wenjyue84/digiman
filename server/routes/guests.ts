@@ -183,8 +183,75 @@ router.get("/checkout-today", asyncRouteHandler(async (_req: any, res: any) => {
   res.json(guests);
 }));
 
+// ── RESTful base CRUD ─────────────────────────────────────────────────────────
+// NOTE: These must be declared BEFORE the wildcard router.patch('/:id') and
+// router.patch('/:id/unit') routes to avoid Express path shadowing.
+
+// List all guests (with optional pagination + search)
+router.get("/", authenticateToken, asyncRouteHandler(async (req: any, res: any) => {
+  const { search, page, limit } = req.query;
+  const pagination = {
+    page: parseInt(page as string) || 1,
+    limit: parseInt(limit as string) || 50,
+  };
+  const guests = await storage.getAllGuests(pagination);
+
+  // Client-side search filter when ?search= is provided
+  if (search && typeof search === 'string' && search.trim()) {
+    const q = search.trim().toLowerCase();
+    guests.data = guests.data.filter((g: any) =>
+      (g.name || '').toLowerCase().includes(q) ||
+      (g.idNumber || '').toLowerCase().includes(q) ||
+      (g.unitNumber || '').toLowerCase().includes(q)
+    );
+  }
+  res.json(guests);
+}));
+
+// Create a new guest (same schema as /checkin but at the root endpoint)
+router.post("/",
+  securityValidationMiddleware,
+  authenticateToken,
+  validateData(insertGuestSchema, 'body'),
+  asyncRouteHandler(async (req: any, res: any) => {
+    const validatedData = req.body;
+    const guest = await storage.createGuest(validatedData);
+    res.status(201).json(guest);
+  })
+);
+
+// Delete a guest record permanently
+router.delete("/:id", authenticateToken, asyncRouteHandler(async (req: any, res: any) => {
+  const { id } = req.params;
+  const deleted = await storage.deleteGuest(id);
+  if (!deleted) {
+    return res.status(404).json({ message: "Guest not found" });
+  }
+  res.status(200).json({ message: "Guest deleted successfully" });
+}));
+
+// Get a single guest by ID
+router.get("/:id", authenticateToken, asyncRouteHandler(async (req: any, res: any) => {
+  const { id } = req.params;
+  const guest = await storage.getGuest(id);
+  if (!guest) {
+    return res.status(404).json({ message: "Guest not found" });
+  }
+  res.json(guest);
+}));
+
+// Checkout a guest by ID (RESTful: POST /guests/:id/checkout)
+router.post("/:id/checkout", authenticateToken, asyncRouteHandler(async (req: any, res: any) => {
+  const { id } = req.params;
+  const guest = await storage.checkoutGuest(id);
+  if (!guest) {
+    return res.status(404).json({ message: "Guest not found or already checked out" });
+  }
+  res.json(guest);
+}));
+
 // Update guest information
-router.patch("/:id", 
+router.patch("/:id",
   (req, res, next) => {
     console.log('Guest update route - request received:', { method: req.method, url: req.url, body: req.body });
     next();
