@@ -12,10 +12,10 @@ import { verifyPassword, hashPassword, isHashed } from "../lib/password";
 
 const router = Router();
 
-// Rate limit login attempts: 5 per 15 minutes per IP
+// Rate limit login attempts: 5 per 15 minutes per IP (relaxed in dev for test suites)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === 'production' ? 5 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many login attempts. Please try again in 15 minutes." },

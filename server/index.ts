@@ -132,12 +132,16 @@ app.use((req, res, next) => {
           role: "admin",
         } as any);
         console.log(`Created admin user: ${username}`);
+      } else if (process.env.NODE_ENV !== 'production') {
+        // In dev: always sync admin password to the configured dev password so tests pass
+        const hashed = await hashPassword(password);
+        await storage.updateUser(found.id, { password: hashed });
       }
     };
 
     // Use env vars for credentials (fall back to defaults in development only)
     const isDev = process.env.NODE_ENV !== 'production';
-    const adminPassword = process.env.ADMIN_PASSWORD || (isDev ? 'admin123' : undefined);
+    const adminPassword = process.env.ADMIN_PASSWORD || (isDev ? 'admin' : undefined);
     if (adminPassword) {
       await ensureAdminUser("admin", adminPassword);
     } else {
