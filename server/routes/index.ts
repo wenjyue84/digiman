@@ -18,6 +18,7 @@ import environmentRoutes from "./environment";
 import rainbowKBRoutes from "./rainbow-kb";
 import intentManagerRoutes from "./intent-manager";
 import setupRoutes from "./setup";
+import publicBookingRoutes from "./public-booking";
 
 import { getBusinessConfig } from "../lib/business-config";
 import { storage } from "../storage";
@@ -86,6 +87,9 @@ export function registerModularRoutes(app: Express) {
 
   // Register test routes
   app.use("/api/tests", testRoutes);
+
+  // Register public booking routes (no auth — guest-facing)
+  app.use("/api/public", publicBookingRoutes);
 
   // Top-level API health (for MCP server and load balancers)
   app.get("/api/health", async (_req, res) => {

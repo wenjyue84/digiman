@@ -27,8 +27,8 @@ import GuestSuccess from "./pages/guest-success";
 import GuestGuide from "./pages/guest-guide";
 // REMOVED: AdminRainbow - NO redirects from port 3000 to port 3002!
 // Rainbow admin is ONLY accessible directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard)
-import IntentManager from "./pages/intent-manager";
 import Reservations from "./pages/reservations";
+import PublicBooking from "./pages/public-booking";
 
 // Lazy-loaded pages (rarely visited — reduces initial bundle size)
 const Help = lazy(() => import("./pages/help"));
@@ -64,10 +64,11 @@ function AppTitleSync() {
 function Router() {
   const [location] = useLocation();
 
-  // Hide navigation for guest-facing pages and admin pages
+  // Hide navigation for guest-facing pages, admin pages, and public booking
   const isGuestPage = location?.startsWith('/guest-') || false;
   const isAdminPage = location?.startsWith('/admin/') || false;
-  const shouldHideNavigation = isGuestPage || isAdminPage;
+  const isPublicPage = location === '/book';
+  const shouldHideNavigation = isGuestPage || isAdminPage || isPublicPage;
 
   return (
     <div className="min-h-screen bg-hostel-background flex flex-col">
@@ -125,11 +126,6 @@ function Router() {
                   <GuestGuide />
                 </ProtectedRoute>
               </Route>
-              <Route path="/admin/intent-manager">
-                <ProtectedRoute requireAuth={true}>
-                  <IntentManager />
-                </ProtectedRoute>
-              </Route>
               {/* REMOVED: /admin/rainbow route - NO redirects from port 3000 to port 3002! */}
               {/* Access Rainbow admin directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard) */}
               {/* Developer test suite — accessible without protected route for inline login form */}
@@ -138,6 +134,8 @@ function Router() {
                   <TestSuite />
                 </Suspense>
               </Route>
+              {/* Public booking page — no auth required */}
+              <Route path="/book" component={PublicBooking} />
               <Route path="/login" component={LoginForm} />
               <Route component={NotFound} />
             </Switch>
