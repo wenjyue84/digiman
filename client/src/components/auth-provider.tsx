@@ -70,17 +70,18 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
-        setToken(data.token);
-        setStoredToken(data.token);
+        const payload = data.data || data;
+        setUser(payload.user);
+        setToken(payload.token);
+        setStoredToken(payload.token);
         return { success: true };
       } else {
         // Try to get error message from server
         try {
           const errorData = await response.json();
-          return { 
-            success: false, 
-            error: errorData.message || `Server error (${response.status})` 
+          return {
+            success: false,
+            error: errorData.message || `Server error (${response.status})`
           };
         } catch {
           return { 
@@ -111,17 +112,18 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
-        setToken(data.token);
-        setStoredToken(data.token);
+        const payload = data.data || data;
+        setUser(payload.user);
+        setToken(payload.token);
+        setStoredToken(payload.token);
         return { success: true };
       } else {
         // Try to get error message from server
         try {
           const errorData = await response.json();
-          return { 
-            success: false, 
-            error: errorData.message || `Google login failed (${response.status})` 
+          return {
+            success: false,
+            error: errorData.message || `Google login failed (${response.status})`
           };
         } catch {
           return { 
@@ -165,7 +167,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     login,
     loginWithGoogle,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    isLoading
   };
 
   // Show loading screen while checking authentication status

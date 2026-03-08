@@ -311,6 +311,56 @@ export const createNotificationPayload = {
   }),
 
   /**
+   * Guest checkout notification
+   */
+  guestCheckout: (guestName: string, unitNumber: string): NotificationPayload => ({
+    title: '👋 Guest Checked Out',
+    body: `${guestName} has checked out from ${unitNumber}`,
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: 'guest-checkout',
+    data: {
+      type: 'guest-checkout',
+      guestName,
+      unitNumber,
+      url: '/check-out',
+    },
+    actions: [
+      {
+        action: 'view',
+        title: 'View Check-outs',
+      },
+    ],
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+  }),
+
+  /**
+   * Check-in link created notification
+   */
+  checkInLinkCreated: (guestName: string, unitNumber: string): NotificationPayload => ({
+    title: '🔗 Check-in Link Created',
+    body: `Check-in link created for ${guestName} — ${unitNumber}`,
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: 'checkin-link-created',
+    data: {
+      type: 'checkin-link-created',
+      guestName,
+      unitNumber,
+      url: '/check-in',
+    },
+    actions: [
+      {
+        action: 'view',
+        title: 'View Details',
+      },
+    ],
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+  }),
+
+  /**
    * Daily reminder notification (12 PM)
    */
   dailyReminder: (checkoutCount: number, overdueCount: number): NotificationPayload => ({

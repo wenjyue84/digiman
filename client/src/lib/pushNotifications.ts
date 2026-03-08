@@ -461,16 +461,20 @@ export function usePushNotifications() {
     
     // Check subscription status on mount
     pushNotificationManager.checkSubscriptionStatus().then(isSubscribed => {
-      // Auto-request permission and subscribe if supported but not subscribed
+      // Auto-request permission and subscribe for ALL logged-in users (not just PWA-installed).
+      // Browser-tab users need push notifications too — the standalone check was too restrictive
+      // and prevented colleagues from ever receiving cross-device notifications.
       if (pushNotificationManager.getState().supported && !isSubscribed && Notification.permission === 'default') {
-        // Only auto-request on PWA (when installed as app)
-        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-          pushNotificationManager.requestPermission().then(permission => {
-            if (permission === 'granted') {
-              pushNotificationManager.subscribeToPush().catch(console.error);
-            }
-          }).catch(console.error);
-        }
+        pushNotificationManager.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            pushNotificationManager.subscribeToPush().catch(console.error);
+          }
+        }).catch(console.error);
+      }
+      // If permission was already granted but subscription is missing (e.g. after SW re-registration),
+      // re-subscribe silently to restore the push endpoint.
+      if (pushNotificationManager.getState().supported && !isSubscribed && Notification.permission === 'granted') {
+        pushNotificationManager.subscribeToPush().catch(console.error);
       }
     });
 

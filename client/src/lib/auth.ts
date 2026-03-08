@@ -32,6 +32,7 @@ export interface AuthContextType {
   loginWithGoogle: (googleToken: string) => Promise<LoginResult>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 // React context for authentication state and methods

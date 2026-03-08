@@ -8,15 +8,17 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAuth = false }: ProtectedRouteProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
+    if (isLoading) return;
     if (requireAuth && !isAuthenticated) {
       const redirectTarget = encodeURIComponent(location || "/");
       setLocation(`/login?redirect=${redirectTarget}`);
     }
-  }, [requireAuth, isAuthenticated, location, setLocation]);
+  }, [requireAuth, isAuthenticated, isLoading, location, setLocation]);
 
+  if (isLoading) return null;
   return requireAuth && !isAuthenticated ? null : <>{children}</>;
 }

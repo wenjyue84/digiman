@@ -60,24 +60,24 @@ export function LoginForm() {
     retry: false // Don't retry if it fails
   });
 
+  // Effect 1: Redirect if already authenticated — reactive to auth state changes
   useEffect(() => {
-    // If already authenticated, bounce to redirect target immediately
-    if (isAuthenticated) {
-      const search = typeof window !== 'undefined' ? window.location.search : '';
-      const params = new URLSearchParams(search);
-      const rawRedirect = params.get("redirect") || "/dashboard";
-      let redirect = "/dashboard";
-      try {
-        const decoded = decodeURIComponent(rawRedirect);
-        redirect = decoded.startsWith('/') ? decoded : '/dashboard';
-      } catch {
-        redirect = '/dashboard';
-      }
-      setLocation(redirect);
-      return;
+    if (!isAuthenticated) return;
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const params = new URLSearchParams(search);
+    const rawRedirect = params.get("redirect") || "/dashboard";
+    let redirect = "/dashboard";
+    try {
+      const decoded = decodeURIComponent(rawRedirect);
+      redirect = decoded.startsWith('/') ? decoded : '/dashboard';
+    } catch {
+      redirect = '/dashboard';
     }
+    setLocation(redirect);
+  }, [isAuthenticated, setLocation]);
 
-    // Load Google Sign-In script
+  // Effect 2: Load Google Sign-In script — mount-only, independent of auth state
+  useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
