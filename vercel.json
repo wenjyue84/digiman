@@ -7,11 +7,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://admin.pelangicapsulehostel.com/api/:path*"
+      "destination": "http://18.142.14.142/api/:path*"
     },
     {
       "source": "/objects/:path*",
-      "destination": "https://admin.pelangicapsulehostel.com/objects/:path*"
+      "destination": "http://18.142.14.142/objects/:path*"
     },
     {
       "source": "/(.*)",
