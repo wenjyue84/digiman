@@ -23,8 +23,7 @@ Each module has its own README with boundary docs:
 | Frontend | [client/README.md](../client/README.md) |
 | Backend | [server/README.md](../server/README.md) |
 | Shared Types | [shared/README.md](../shared/README.md) |
-| MCP Server | [mcp-server/README.md](../mcp-server/README.md) |
-| MCP Deployment | [mcp-server/DEPLOYMENT.md](../mcp-server/DEPLOYMENT.md) |
+| Rainbow AI | [RainbowAI/README.md](../RainbowAI/README.md) |
 
 ## Local services
 

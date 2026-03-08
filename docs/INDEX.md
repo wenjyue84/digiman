@@ -36,7 +36,7 @@ Choose one branch; load only the files listed under that branch.
 
 | Order | Doc | Use when |
 |-------|-----|----------|
-| 1 | [API-CONTRACT.md](API-CONTRACT.md) | Inter-module HTTP APIs (client ↔ server ↔ MCP/Rainbow). |
+| 1 | [API-CONTRACT.md](API-CONTRACT.md) | Inter-module HTTP APIs, response envelope format, reservation endpoints. |
 
 ### 3. Fleet Manager (localhost:9999)
 

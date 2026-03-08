@@ -21,6 +21,21 @@ This document defines the HTTP APIs used for communication between PelangiManage
 └─────────────┘
 ```
 
+## Response Envelope
+
+All server API responses use a standardized envelope format (via `sendSuccess()`/`sendError()` in `server/lib/apiResponse.ts`):
+
+```json
+// Success
+{ "success": true, "data": { ... } }
+{ "success": true, "message": "Created", "data": { ... } }
+
+// Error
+{ "success": false, "error": "Validation failed", "message": "Email is required" }
+```
+
+**Client-side handling**: When consuming responses, unwrap with `data.data || data` to support both wrapped and legacy flat responses (see `auth-provider.tsx`).
+
 ## 1. Web App API (server/ on port 5000)
 
 Called by: `client/` (via Vite proxy), `mcp-server/` (via HTTP with Bearer token)
@@ -43,16 +58,32 @@ Called by: `client/` (via Vite proxy), `mcp-server/` (via HTTP with Bearer token
 | GET | `/api/capsules` | List all capsules |
 | GET | `/api/occupancy` | Get occupancy stats |
 | GET | `/api/capsules/available` | Available capsules |
-| GET | `/api/dashboard` | Dashboard summary data |
+| GET | `/api/dashboard` | Dashboard summary (includes todayArrivals, upcomingReservationCount) |
 | GET | `/api/problems` | List problems |
 | POST | `/api/problems` | Create problem |
 | GET | `/api/settings` | Get settings |
 | PUT | `/api/settings` | Update settings |
 | POST | `/api/auth/login` | Login |
 | POST | `/api/auth/logout` | Logout |
+| GET | `/api/auth/me` | Get current user (raw JSON, not envelope) |
 | GET | `/api/expenses` | List expenses |
 | GET | `/api/rainbow-kb/*` | Knowledge base CRUD |
 | GET | `/objects/uploads/*` | Uploaded files |
+
+### Reservation Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/reservations` | List reservations (filter by status, date range) |
+| GET | `/api/reservations/:id` | Get reservation by ID |
+| POST | `/api/reservations` | Create reservation |
+| PATCH | `/api/reservations/:id` | Update reservation |
+| DELETE | `/api/reservations/:id` | Cancel reservation |
+| POST | `/api/reservations/:id/check-in` | Convert reservation to check-in |
+| POST | `/api/reservations/:id/no-show` | Mark as no-show |
+| GET | `/api/reservations/availability` | Check unit availability for date range |
+
+**Auto-expiration**: Server runs hourly task to expire no-show reservations past their check-in date.
 
 ## 2. Rainbow MCP Admin API (mcp-server/ on port 3002)
 

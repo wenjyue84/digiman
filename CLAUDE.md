@@ -151,12 +151,16 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | -------------------------------- | ------------------------------------------------ |
 | `client/src/pages/`              | Route components                                 |
 | `client/src/components/`         | Reusable UI components                           |
+| `client/src/components/reservations/` | Reservation UI (calendar, table, form, filters) |
 | `server/routes/`                 | Express API route handlers                       |
+| `server/lib/`                    | Shared helpers (apiResponse, errorHandler, push) |
 | `server/Storage/`                | Storage implementations (PostgreSQL + in-memory) |
 | `shared/schema.ts`               | Drizzle table defs + Zod schemas + types         |
+| `shared/schema-tables.ts`        | Additional table defs (reservations)             |
+| `shared/validation/`             | Zod validation schemas (reservations, etc.)      |
 | `RainbowAI/src/assistant/`      | Rainbow AI engine                                |
 | `RainbowAI/src/tools/`          | MCP tool implementations                         |
-| `RainbowAI/src/routes/admin.ts` | Rainbow admin API (~50 endpoints)                |
+| `RainbowAI/src/routes/admin/`   | Rainbow admin API sub-routers (~50 endpoints)    |
 | `RainbowAI/.rainbow-kb/`         | Knowledge base markdown files (RAG source)       |
 | `RainbowAI/scripts/`             | Rainbow-specific scripts (health check, startup) |
 | `RainbowAI/reports/autotest/`    | Rainbow autotest HTML reports                    |
@@ -166,7 +170,7 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | `fleet-manager/`                 | Fleet Manager app (server.js + public dashboard)  |
 | `scripts/`                       | Project-wide utility scripts                     |
 | `archive/`                       | Archived files (gitignored)                      |
-| `deploy.sh`                      | Lightsail full deployment script                 |
+| `deploy.sh`                      | Lightsail deployment (with --rollback support)   |
 | `ecosystem.config.cjs`           | PM2 process definitions (production)             |
 | `lightsail-nginx.sh`             | nginx reverse proxy setup script                 |
 | `lightsail-backup.sh`            | Automated snapshot backup script                 |
@@ -177,14 +181,23 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | --------------------- | -------------------------------------------- |
 | Check-in flow         | `client/src/pages/check-in.tsx`              |
 | Check-out flow        | `client/src/pages/check-out.tsx`             |
+| Reservations UI       | `client/src/pages/reservations.tsx`          |
 | Settings UI           | `client/src/pages/settings.tsx`              |
+| Auth provider         | `client/src/components/auth-provider.tsx`    |
 | Storage factory       | `server/Storage/StorageFactory.ts`           |
+| API response helpers  | `server/lib/apiResponse.ts`                  |
 | API routes            | `server/routes/*.ts`                         |
+| Reservation routes    | `server/routes/reservations.ts`              |
+| Unit sort comparator  | `server/lib/unitAssignment.ts`               |
 | Shared schemas        | `shared/schema.ts`                           |
+| Reservation schema    | `shared/schema-tables.ts`                    |
 | System config         | `server/configManager.ts`                    |
 | **Rainbow entry**     | `RainbowAI/src/assistant/message-router.ts` |
 | **Intent matching**   | `RainbowAI/src/assistant/fuzzy-matcher.ts`  |
 | **Semantic matching** | `RainbowAI/src/assistant/semantic-matcher.ts`|
+| **Emergency patterns**| `RainbowAI/src/assistant/emergency-patterns.ts` |
+| **Multi-intent**      | `RainbowAI/src/assistant/multi-intent.ts`   |
+| **LLM intent mapper** | `RainbowAI/src/assistant/llm-intent-mapper.ts` |
 | **AI client**         | `RainbowAI/src/assistant/ai-client.ts`      |
 | **Knowledge base**    | `RainbowAI/src/assistant/knowledge-base.ts` |
 | **Config store**      | `RainbowAI/src/assistant/config-store.ts`   |
@@ -192,11 +205,13 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | **LLM settings**      | `RainbowAI/src/assistant/llm-settings-loader.ts` |
 | **Failover**          | `RainbowAI/src/lib/failover-coordinator.ts` |
 | **Conversation**      | `RainbowAI/src/assistant/conversation.ts`   |
+| **Conversation DB**   | `RainbowAI/src/assistant/conversation-db.ts` |
+| **Conversation contacts** | `RainbowAI/src/assistant/conversation-contacts.ts` |
 | **Workflow engine**   | `RainbowAI/src/assistant/workflow-executor.ts` |
 | MCP tools             | `RainbowAI/src/tools/registry.ts`           |
 | WhatsApp client       | `RainbowAI/src/lib/baileys-client.ts`       |
 | Rainbow dashboard     | `RainbowAI/src/public/rainbow-admin.html`   |
-| Rainbow admin API     | `RainbowAI/src/routes/admin.ts`             |
+| Rainbow admin routes  | `RainbowAI/src/routes/admin/index.ts`       |
 
 ## AWS Lightsail Production
 
@@ -286,7 +301,7 @@ ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 logs --lines
 - **Primary**: PostgreSQL (Neon) via Drizzle ORM
 - **Fallback**: In-memory storage (auto-failover)
 - **Factory**: `server/Storage/StorageFactory.ts` selects based on DB availability
-- **Models**: Guests, Capsules, Users, Problems, Settings, GuestTokens
+- **Models**: Guests, Capsules, Users, Problems, Settings, GuestTokens, Reservations
 
 **Rainbow AI Config (raw pg):**
 - **Primary**: PostgreSQL (Neon) — `rainbow_configs` (JSONB), `rainbow_kb_files`, `rainbow_config_audit`
@@ -300,6 +315,7 @@ ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 logs --lines
 
 | Problem | Solution |
 | --- | --- |
+| **Login succeeds but stuck on login page** | **API response envelope mismatch — check `auth-provider.tsx` uses `data.data \|\| data` to unwrap `sendSuccess()` envelope** |
 | Port conflicts | `npm run dev:clean` |
 | Component cache stale | `rm -rf node_modules/.vite && npm run dev` |
 | DB schema mismatch | `npm run db:push` |
