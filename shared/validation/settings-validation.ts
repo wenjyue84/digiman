@@ -129,7 +129,7 @@ export const updateSettingsSchema = z.object({
     .int("Maximum age must be a whole number")
     .default(120),
   showAllUnits: z.boolean()
-    .default(false)
+    .default(true)
     .describe("Show all units (including empty ones) in the dashboard by default"),
   defaultAdminEmail: z.string()
     .email("Default admin email must be a valid email address")

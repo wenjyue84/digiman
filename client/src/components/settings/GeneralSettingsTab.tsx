@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building, Globe, Save } from "lucide-react";
+import { Building, Globe, Save, LayoutGrid } from "lucide-react";
 import PushNotificationSettings from "@/components/ui/push-notification-settings";
 
 export default function GeneralSettingsTab({ settings, isLoading, form, onSubmit, resetToDefault, updateSettingsMutation }: any) {
@@ -125,9 +126,53 @@ export default function GeneralSettingsTab({ settings, isLoading, form, onSubmit
                   </div>
                 </CardContent>
               </Card>
+              {/* Dashboard Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LayoutGrid className="h-5 w-5 text-indigo-600" />
+                    Dashboard Preferences
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name={"showAllUnits" as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <FormLabel>Show All Units by Default</FormLabel>
+                            <div className="text-sm text-gray-600 mt-1">
+                              Display all units (including empty ones) in the dashboard. Empty units are highlighted in red.
+                            </div>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={!!field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      type="submit"
+                      disabled={updateSettingsMutation.isPending}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      {updateSettingsMutation.isPending ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </form>
           </Form>
-          
+
           {/* Push Notifications Card - Outside Form */}
           <PushNotificationSettings />
         </div>

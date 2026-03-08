@@ -126,7 +126,7 @@ export default function SettingsPage() {
         guideShowTimeAccess: (settings as any).guideShowTimeAccess === true,
         
         // UI Preferences
-        showAllUnits: (settings as any).showAllUnits === true,
+        showAllUnits: (settings as any).showAllUnits !== false,
 
         // App identity
         appTitle: (settings as any).appTitle || "",
