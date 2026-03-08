@@ -9,7 +9,7 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-function getAuthHeaders(): Record<string, string> {
+export function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('auth_token');
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
@@ -84,20 +84,28 @@ focusManager.setEventListener((handleFocus) => {
   };
 });
 
+// Only dispatch auth:unauthorized when user had a token (session expired),
+// not for anonymous visitors browsing public pages.
+function dispatchUnauthorizedIfAuthenticated() {
+  if (localStorage.getItem('auth_token')) {
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+  }
+}
+
 // Global error handler for queries
 const handleQueryError = (error: unknown) => {
-  // Silently handle expected 401 errors for auth-related endpoints
+  // Silently handle 401 errors — if user had a token, treat as session expiry
   if (error instanceof Error && error.message.includes('401:')) {
-    // Don't log or show toasts for expected 401 errors on auth endpoints
+    dispatchUnauthorizedIfAuthenticated();
     return;
   }
-  
+
   console.error('Query error:', error);
-  
+
   if (error instanceof Error && error.message) {
     // Handle specific error types
     if (error.message.includes('401:')) {
-      // Don't show toast for 401 errors - let auth provider handle
+      dispatchUnauthorizedIfAuthenticated();
       return;
     }
     
@@ -167,11 +175,7 @@ const handleMutationError = (error: unknown) => {
     
     // Handle authorization errors
     if (error.message.includes('401:') || error.message.includes('403:')) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to perform this action.",
-        variant: "destructive",
-      });
+      dispatchUnauthorizedIfAuthenticated();
       return;
     }
     

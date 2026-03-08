@@ -1,4 +1,5 @@
 import React, { useState, useEffect, ReactNode } from "react";
+import { useLocation } from "wouter";
 import { AuthContext, type User, type AuthContextType, type LoginResult, getStoredToken, setStoredToken, removeStoredToken } from "../lib/auth";
 
 interface AuthProviderProps {
@@ -25,6 +26,21 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [, setLocation] = useLocation();
+
+  // Handle session expiry: redirect to /login when any API call returns 401
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      setToken(null);
+      removeStoredToken();
+      const currentPath = window.location.pathname;
+      const safeRedirect = currentPath && currentPath !== '/login' ? currentPath : '/dashboard';
+      setLocation(`/login?redirect=${encodeURIComponent(safeRedirect)}`);
+    };
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+  }, [setLocation]);
 
   // Restore authentication state from stored token on component mount
   useEffect(() => {

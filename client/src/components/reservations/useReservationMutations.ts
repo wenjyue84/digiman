@@ -1,11 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 const API_BASE = "/api/reservations";
 
 async function apiCall(url: string, options?: RequestInit) {
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
     credentials: "include",
     ...options,
   });
