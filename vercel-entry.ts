@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import helmet from 'helmet';
 import { registerRoutes } from "./server/routes";
+import { registerObjectRoutes } from "./server/routes/index";
 import { initializeConfig, AppConfig, getConfig, getConfigUtils } from "./server/configManager";
 import { storage } from "./server/storage";
 
@@ -108,6 +109,10 @@ async function initializeApp() {
 
     // Register routes
     await registerRoutes(app);
+
+    // Register object/upload routes (photo upload, document upload, file serving)
+    // On Vercel these use Blob storage; on Lightsail they use disk
+    registerObjectRoutes(app);
 
     // API 404 catch-all (before error handler, after all routes)
     app.use('/api/*', (req: Request, res: Response) => {

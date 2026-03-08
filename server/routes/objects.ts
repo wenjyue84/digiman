@@ -90,10 +90,10 @@ router.post("/api/upload-photo", uploadLimiter, upload.single('photo'), async (r
     );
     
     // Return the URL where the file can be accessed with compression info
-    const protocol = req.protocol;
-    const host = req.get('host');
-    const fullUrl = `${protocol}://${host}${result.fileUrl}`;
-    
+    // Blob URLs are already absolute; disk URLs need protocol://host prefix
+    const isAbsoluteUrl = result.fileUrl.startsWith('http');
+    const fullUrl = isAbsoluteUrl ? result.fileUrl : `${req.protocol}://${req.get('host')}${result.fileUrl}`;
+
     res.json({
       success: true,
       url: fullUrl,
@@ -140,9 +140,9 @@ router.post("/api/upload-document", uploadLimiter, upload.single('document'), as
     );
     
     // Return the URL in the format expected by ObjectUploader
-    const protocol = req.protocol;
-    const host = req.get('host');
-    const fullUrl = `${protocol}://${host}${result.fileUrl}`;
+    // Blob URLs are already absolute; disk URLs need protocol://host prefix
+    const isAbsoluteUrl = result.fileUrl.startsWith('http');
+    const fullUrl = isAbsoluteUrl ? result.fileUrl : `${req.protocol}://${req.get('host')}${result.fileUrl}`;
     
     console.log('=== Document Upload Response ===');
     console.log('File URL:', result.fileUrl);
@@ -179,42 +179,29 @@ router.post("/api/objects/upload", uploadLimiter, async (req, res) => {
     console.log('Upload request body:', req.body);
     console.log('Environment check - PRIVATE_OBJECT_DIR:', process.env.PRIVATE_OBJECT_DIR);
     
-    // Check if we're in Replit environment
+    // Check environment and route to appropriate storage
     const isReplitEnvironment = process.env.PRIVATE_OBJECT_DIR;
-    
+
     if (isReplitEnvironment) {
       // Use Google Cloud Storage signed URL for Replit
       try {
         const objectStorage = new ObjectStorageService();
         const uploadURL = await objectStorage.getObjectEntityUploadURL();
-        
-        console.log('Replit - Generated signed upload URL:', uploadURL);
-        
-        // Extract object ID from the signed URL for consistency
         const urlParts = uploadURL.split('/');
-        const objectId = urlParts[urlParts.length - 1].split('?')[0]; // Remove query params
-        
-        res.json({
-          uploadURL: uploadURL,
-          objectId: objectId
-        });
+        const objectId = urlParts[urlParts.length - 1].split('?')[0];
+        res.json({ uploadURL, objectId });
       } catch (replitError: any) {
         console.error("Replit upload URL error:", replitError);
         sendError(res, 500, "Failed to get Replit upload URL: " + replitError.message);
       }
     } else {
-      // Use local development upload endpoint
+      // Local dev / Lightsail / Vercel — use dev-upload endpoint
+      // (On Vercel, dev-upload will store to Blob; on disk it writes locally)
       const objectId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const protocol = req.protocol;
       const host = req.get('host');
       const uploadURL = `${protocol}://${host}/api/objects/dev-upload/${objectId}`;
-      
-      console.log('Localhost - Generated dev upload URL:', uploadURL);
-      
-      res.json({
-        uploadURL: uploadURL,
-        objectId: objectId
-      });
+      res.json({ uploadURL, objectId });
     }
   } catch (error: any) {
     console.error("Upload parameter error:", error);
@@ -306,38 +293,42 @@ router.put("/api/objects/dev-upload/:id", async (req, res) => {
 
     console.log(`Processing upload for ID: ${id} (${Buffer.isBuffer(req.body) ? req.body.length : typeof req.body} bytes)`);
 
-    // Environment check - use appropriate storage method
-    const isReplitEnvironment = process.env.PRIVATE_OBJECT_DIR;
-    
-    if (isReplitEnvironment) {
-      // For Replit, this endpoint shouldn't be hit as uploads go directly to Google Cloud Storage
-      // But if it is hit, we should provide a helpful error
-      console.error("Dev upload endpoint hit in Replit environment - this suggests upload URL generation issue");
-      return sendError(res, 400, "Invalid upload endpoint for Replit environment", {
-        suggestion: "This indicates a configuration issue - uploads should go directly to Google Cloud Storage"
-      });
+    // Handle different types of request body data from Uppy
+    let fileData: Buffer;
+    if (Buffer.isBuffer(req.body)) {
+      fileData = req.body;
+    } else if (typeof req.body === 'string') {
+      fileData = Buffer.from(req.body, 'binary');
     } else {
-      // Local development file storage
+      fileData = Buffer.from(JSON.stringify(req.body));
+    }
+
+    // Vercel Blob storage (serverless — no persistent disk)
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const { put } = await import('@vercel/blob');
+      const blob = await put(`uploads/${id}`, fileData, {
+        access: 'public',
+        contentType: req.headers['content-type'] || 'application/octet-stream',
+      });
+      console.log(`File uploaded to Blob: ${blob.url} (${fileData.length} bytes)`);
+      res.json({
+        message: "Upload successful",
+        id,
+        uploadURL: blob.url,
+        url: blob.url,
+        size: fileData.length
+      });
+    } else if (process.env.PRIVATE_OBJECT_DIR) {
+      // Replit — should not hit this endpoint
+      return sendError(res, 400, "Invalid upload endpoint for Replit environment");
+    } else {
+      // Local disk storage (Lightsail / dev)
       const uploadsDir = path.join(process.cwd(), 'uploads');
       await fs.mkdir(uploadsDir, { recursive: true });
-      
+
       const filePath = path.join(uploadsDir, id);
-      
-      // Handle different types of request body data from Uppy
-      let fileData: Buffer;
-      if (Buffer.isBuffer(req.body)) {
-        fileData = req.body;
-      } else if (typeof req.body === 'string') {
-        fileData = Buffer.from(req.body, 'binary');
-      } else {
-        // Fallback for other data types
-        fileData = Buffer.from(JSON.stringify(req.body));
-      }
-      
-      // Write the actual file to disk
       await fs.writeFile(filePath, fileData);
-      
-      // Store metadata alongside the file for proper content-type serving
+
       const metaPath = path.join(uploadsDir, `${id}.meta.json`);
       const metadata = {
         contentType: req.headers['content-type'] || 'application/octet-stream',
@@ -346,12 +337,11 @@ router.put("/api/objects/dev-upload/:id", async (req, res) => {
         size: fileData.length
       };
       await fs.writeFile(metaPath, JSON.stringify(metadata, null, 2));
-      
-      console.log(`File uploaded successfully: ${filePath} (${fileData.length} bytes)`);
 
-      res.json({ 
-        message: "Upload successful", 
-        id: id,
+      console.log(`File uploaded successfully: ${filePath} (${fileData.length} bytes)`);
+      res.json({
+        message: "Upload successful",
+        id,
         uploadURL: `/api/objects/dev-upload/${id}`,
         size: fileData.length
       });

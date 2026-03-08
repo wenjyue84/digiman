@@ -10,10 +10,7 @@
     }
   },
   "rewrites": [
-    { "source": "/objects/:path*", "destination": "http://18.142.14.142/objects/:path*" },
-    { "source": "/api/upload-photo", "destination": "http://18.142.14.142/api/upload-photo" },
-    { "source": "/api/upload-document", "destination": "http://18.142.14.142/api/upload-document" },
-    { "source": "/api/objects/:path*", "destination": "http://18.142.14.142/api/objects/:path*" },
+    { "source": "/objects/:path*", "destination": "/api/[...all].js" },
     { "source": "/api/:path*", "destination": "/api/[...all].js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

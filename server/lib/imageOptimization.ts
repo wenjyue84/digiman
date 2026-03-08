@@ -233,7 +233,9 @@ export async function optimizeImage(
 }
 
 /**
- * Save optimized image to local storage with metadata
+ * Save optimized image to storage (Vercel Blob or local disk).
+ * Uses BLOB_READ_WRITE_TOKEN env var to decide: if set, uploads to Vercel Blob CDN;
+ * otherwise writes to local disk (Lightsail / dev).
  */
 export async function saveOptimizedImage(
   optimizedBuffer: Buffer,
@@ -241,22 +243,31 @@ export async function saveOptimizedImage(
   uploadDirectory: string = 'uploads'
 ): Promise<{ filename: string; filePath: string; fileUrl: string }> {
   // Generate secure filename
-  const fileExtension = metadata.optimization.optimizedFormat === 'image/jpeg' ? '.jpg' : 
+  const fileExtension = metadata.optimization.optimizedFormat === 'image/jpeg' ? '.jpg' :
                        metadata.optimization.optimizedFormat === 'image/webp' ? '.webp' : '.png';
   const filename = `${Date.now()}-${randomUUID()}${fileExtension}`;
-  
-  // Create upload directory if it doesn't exist
+
+  // Vercel Blob storage (serverless — no persistent disk)
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = await import('@vercel/blob');
+    const blob = await put(`${uploadDirectory}/${filename}`, optimizedBuffer, {
+      access: 'public',
+      contentType: metadata.mimetype,
+    });
+    return { filename, filePath: blob.url, fileUrl: blob.url };
+  }
+
+  // Local disk storage (Lightsail / dev)
   const uploadsDir = path.join(process.cwd(), uploadDirectory);
   await fs.mkdir(uploadsDir, { recursive: true });
-  
-  // Save optimized file
+
   const filePath = path.join(uploadsDir, filename);
   await fs.writeFile(filePath, optimizedBuffer);
-  
+
   // Save metadata file
   const metaPath = path.join(uploadsDir, `${filename}.meta.json`);
   await fs.writeFile(metaPath, JSON.stringify(metadata, null, 2));
-  
+
   return {
     filename,
     filePath,
