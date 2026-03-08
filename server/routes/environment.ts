@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getEnvironmentConfig } from "../../shared/utils.js";
 import { authenticateToken } from "./middleware/auth";
+import { sendError } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -47,10 +48,7 @@ router.get("/api/environment/config", authenticateToken, (req, res) => {
     });
   } catch (error) {
     console.error("Failed to get environment config:", error);
-    res.status(500).json({
-      error: "Failed to get environment configuration",
-      message: error instanceof Error ? error.message : "Unknown error"
-    });
+    sendError(res, 500, "Failed to get environment configuration");
   }
 });
 

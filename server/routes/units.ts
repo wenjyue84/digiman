@@ -7,6 +7,7 @@ import {
 } from "@shared/schema";
 import { validateData, securityValidationMiddleware } from "../validation";
 import { authenticateToken } from "./middleware/auth";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -36,7 +37,7 @@ router.get("/available", async (_req, res) => {
     const units = await storage.getAvailableUnits();
     res.json(units);
   } catch (error) {
-    res.status(500).json({ message: "Failed to get available units" });
+    sendError(res, 500, "Failed to get available units");
   }
 });
 
@@ -87,7 +88,7 @@ router.get("/available-with-status", authenticateToken, async (_req, res) => {
     res.json(sortedUnits);
   } catch (error) {
     console.error("Error in available-with-status endpoint:", error);
-    res.status(500).json({ message: "Failed to get available units with status" });
+    sendError(res, 500, "Failed to get available units with status");
   }
 });
 
@@ -113,7 +114,7 @@ router.get("/needs-attention", async (_req, res) => {
     res.json(sortedUnits);
   } catch (error) {
     console.error("Error getting units needing cleaning:", error);
-    res.status(500).json({ message: "Failed to get units needing cleaning" });
+    sendError(res, 500, "Failed to get units needing cleaning");
   }
 });
 
@@ -123,7 +124,7 @@ router.get("/", async (_req, res) => {
     const units = await storage.getAllUnits();
     res.json(units);
   } catch (error) {
-    res.status(500).json({ message: "Failed to get units" });
+    sendError(res, 500, "Failed to get units");
   }
 });
 
@@ -139,7 +140,7 @@ router.post("/",
     res.json(unit);
   } catch (error: any) {
     console.error("Error creating unit:", error);
-    res.status(400).json({ message: error.message || "Failed to create unit" });
+    sendError(res, 400, error.message || "Failed to create unit");
   }
 });
 
@@ -156,19 +157,19 @@ router.patch("/:id",
     // Get unit by ID first to check its number
     const unit = await storage.getUnitById(id);
     if (!unit) {
-      return res.status(404).json({ message: "Unit not found" });
+      return sendError(res, 404, "Unit not found");
     }
 
     const updatedUnit = await storage.updateUnit(unit.number, updates);
 
     if (!updatedUnit) {
-      return res.status(404).json({ message: "Unit not found" });
+      return sendError(res, 404, "Unit not found");
     }
 
     res.json(updatedUnit);
   } catch (error: any) {
     console.error("Error updating unit:", error);
-    res.status(400).json({ message: error.message || "Failed to update unit" });
+    sendError(res, 400, error.message || "Failed to update unit");
   }
 });
 
@@ -184,13 +185,13 @@ router.patch("/:number",
     const unit = await storage.updateUnit(number, updates);
 
     if (!unit) {
-      return res.status(404).json({ message: "Unit not found" });
+      return sendError(res, 404, "Unit not found");
     }
 
     res.json(unit);
   } catch (error: any) {
     console.error("Error updating unit:", error);
-    res.status(400).json({ message: error.message || "Failed to update unit" });
+    sendError(res, 400, error.message || "Failed to update unit");
   }
 });
 
@@ -202,19 +203,19 @@ router.delete("/:id", authenticateToken, async (req: any, res) => {
     // Get unit by ID first to check its number
     const unit = await storage.getUnitById(id);
     if (!unit) {
-      return res.status(404).json({ message: "Unit not found" });
+      return sendError(res, 404, "Unit not found");
     }
 
     const deleted = await storage.deleteUnit(unit.number);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Unit not found" });
+      return sendError(res, 404, "Unit not found");
     }
 
-    res.json({ message: "Unit deleted successfully" });
+    sendSuccess(res, undefined, "Unit deleted successfully");
   } catch (error: any) {
     console.error("Error deleting unit:", error);
-    res.status(400).json({ message: error.message || "Failed to delete unit" });
+    sendError(res, 400, error.message || "Failed to delete unit");
   }
 });
 
@@ -226,13 +227,13 @@ router.delete("/:number", authenticateToken, async (req: any, res) => {
     const deleted = await storage.deleteUnit(number);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Unit not found" });
+      return sendError(res, 404, "Unit not found");
     }
 
-    res.json({ message: "Unit deleted successfully" });
+    sendSuccess(res, undefined, "Unit deleted successfully");
   } catch (error: any) {
     console.error("Error deleting unit:", error);
-    res.status(400).json({ message: error.message || "Failed to delete unit" });
+    sendError(res, 400, error.message || "Failed to delete unit");
   }
 });
 
@@ -241,13 +242,13 @@ router.get("/cleaning-status/:status", async (req, res) => {
   try {
     const { status } = req.params;
     if (!['cleaned', 'to_be_cleaned'].includes(status)) {
-      return res.status(400).json({ message: "Invalid cleaning status" });
+      return sendError(res, 400, "Invalid cleaning status");
     }
 
     const units = await storage.getUnitsByCleaningStatus(status as 'cleaned' | 'to_be_cleaned');
     res.json(units);
   } catch (error) {
-    res.status(500).json({ message: "Failed to get units by cleaning status" });
+    sendError(res, 500, "Failed to get units by cleaning status");
   }
 });
 
@@ -270,16 +271,16 @@ router.post("/:number/mark-cleaned", securityValidationMiddleware, async (req, r
     const updatedUnit = await storage.markUnitCleaned(number, cleanedBy);
 
     if (!updatedUnit) {
-      return res.status(404).json({ message: "Unit not found" });
+      return sendError(res, 404, "Unit not found");
     }
 
     res.json(updatedUnit);
   } catch (error: any) {
     console.error("Error marking unit as cleaned:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
-    res.status(400).json({ message: error.message || "Failed to mark unit as cleaned" });
+    sendError(res, 400, error.message || "Failed to mark unit as cleaned");
   }
 });
 
@@ -297,7 +298,7 @@ router.post("/mark-cleaned-all", authenticateToken, async (req: any, res) => {
     res.json({ count });
   } catch (error) {
     console.error("Bulk mark cleaned failed:", error);
-    res.status(500).json({ message: "Failed to mark all as cleaned" });
+    sendError(res, 500, "Failed to mark all as cleaned");
   }
 });
 
@@ -318,25 +319,23 @@ router.post("/switch",
 
     // Prevent switching to the same unit
     if (oldUnitNumber === newUnitNumber) {
-      return res.status(400).json({ message: "Cannot switch to the same unit" });
+      return sendError(res, 400, "Cannot switch to the same unit");
     }
 
     // Check if guest exists and is currently in the old unit
     const guest = await storage.getGuest(guestId);
     if (!guest) {
-      return res.status(404).json({ message: "Guest not found" });
+      return sendError(res, 404, "Guest not found");
     }
 
     if (guest.unitNumber !== oldUnitNumber) {
-      return res.status(400).json({
-        message: `Guest is not currently in unit ${oldUnitNumber}. Current unit: ${guest.unitNumber}`
-      });
+      return sendError(res, 400, `Guest is not currently in unit ${oldUnitNumber}. Current unit: ${guest.unitNumber}`);
     }
 
     // Check if new unit exists and is available
     const newUnit = await storage.getUnit(newUnitNumber);
     if (!newUnit) {
-      return res.status(404).json({ message: `Unit ${newUnitNumber} not found` });
+      return sendError(res, 404, `Unit ${newUnitNumber} not found`);
     }
 
     // Check if new unit is available (not occupied by another guest)
@@ -344,9 +343,7 @@ router.post("/switch",
     const occupiedUnits = new Set(allGuests.data.map(g => g.unitNumber));
 
     if (occupiedUnits.has(newUnitNumber) && newUnitNumber !== oldUnitNumber) {
-      return res.status(400).json({
-        message: `Unit ${newUnitNumber} is already occupied by another guest`
-      });
+      return sendError(res, 400, `Unit ${newUnitNumber} is already occupied by another guest`);
     }
 
     // Perform the switch with proper error handling and data sanitization
@@ -361,9 +358,7 @@ router.post("/switch",
       const recentlyOccupiedUnits = new Set(recentGuests.data.map(g => g.unitNumber));
 
       if (recentlyOccupiedUnits.has(newUnitNumber) && newUnitNumber !== oldUnitNumber) {
-        return res.status(409).json({
-          message: `Unit ${newUnitNumber} was just assigned to another guest`
-        });
+        return sendError(res, 409, `Unit ${newUnitNumber} was just assigned to another guest`);
       }
 
       const operations = [
@@ -410,16 +405,12 @@ router.post("/switch",
         }
       }
 
-      const switchResult = {
-        success: true,
+      sendSuccess(res, {
         guestId,
         oldUnitNumber,
         newUnitNumber,
         maintenanceRemark: sanitizedRemark || null,
-        message: `Guest successfully moved from ${oldUnitNumber} to ${newUnitNumber}`
-      };
-
-      res.json(switchResult);
+      }, `Guest successfully moved from ${oldUnitNumber} to ${newUnitNumber}`);
 
     } catch (switchError) {
       console.error("Error during unit switch:", switchError);
@@ -437,15 +428,10 @@ router.post("/switch",
     console.error("Unit switch error:", error);
 
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        message: "Invalid data",
-        errors: error.errors
-      });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
 
-    res.status(500).json({
-      message: error.message || "Failed to switch units"
-    });
+    sendError(res, 500, error.message || "Failed to switch units");
   }
 });
 
@@ -489,13 +475,10 @@ router.post("/fix-unit-data", async (_req, res) => {
       }
     }
 
-    res.json({
-      message: `Unit data fixed successfully. Updated ${fixedCount} units.`,
-      fixedCount
-    });
+    sendSuccess(res, { fixedCount }, `Unit data fixed successfully. Updated ${fixedCount} units.`);
   } catch (error) {
     console.error("Error fixing unit data:", error);
-    res.status(500).json({ message: "Failed to fix unit data" });
+    sendError(res, 500, "Failed to fix unit data");
   }
 });
 
@@ -523,7 +506,7 @@ router.get("/debug-units", async (_req, res) => {
     });
   } catch (error) {
     console.error("Error getting unit debug data:", error);
-    res.status(500).json({ message: "Failed to get unit debug data" });
+    sendError(res, 500, "Failed to get unit debug data");
   }
 });
 

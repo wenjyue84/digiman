@@ -4,6 +4,7 @@ import { storage } from "../storage";
 import { createUnitProblemSchema, resolveProblemSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware } from "../validation";
 import { authenticateToken } from "./middleware/auth";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.get("/", authenticateToken, async (req, res) => {
     const problems = await storage.getAllProblems({ page, limit });
     res.json(problems);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch problems" });
+    sendError(res, 500, "Failed to fetch problems");
   }
 });
 
@@ -27,7 +28,7 @@ router.get("/active", authenticateToken, async (req, res) => {
     const problems = await storage.getActiveProblems({ page, limit });
     res.json(problems);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch active problems" });
+    sendError(res, 500, "Failed to fetch active problems");
   }
 });
 
@@ -45,9 +46,7 @@ router.post("/",
     const hasActiveProblem = existingProblems.some(p => !p.isResolved);
 
     if (hasActiveProblem) {
-      return res.status(400).json({
-        message: "This unit already has an active problem. Please resolve it first."
-      });
+      return sendError(res, 400, "This unit already has an active problem. Please resolve it first.");
     }
 
     const problem = await storage.createUnitProblem({
@@ -58,7 +57,7 @@ router.post("/",
     res.json(problem);
   } catch (error: any) {
     console.error("Error creating problem:", error);
-    res.status(400).json({ message: error.message || "Failed to create problem" });
+    sendError(res, 400, error.message || "Failed to create problem");
   }
 });
 
@@ -72,13 +71,13 @@ router.patch("/:id/resolve", authenticateToken, async (req: any, res) => {
     const problem = await storage.resolveProblem(id, resolvedBy, notes);
 
     if (!problem) {
-      return res.status(404).json({ message: "Problem not found" });
+      return sendError(res, 404, "Problem not found");
     }
 
     res.json(problem);
   } catch (error: any) {
     console.error("Error resolving problem:", error);
-    res.status(400).json({ message: error.message || "Failed to resolve problem" });
+    sendError(res, 400, error.message || "Failed to resolve problem");
   }
 });
 
@@ -97,7 +96,7 @@ router.put("/:id",
     const existingProblem = existingProblems.data.find(p => p.id === id);
 
     if (!existingProblem) {
-      return res.status(404).json({ message: "Problem not found" });
+      return sendError(res, 404, "Problem not found");
     }
 
     // If unit number is being changed, check for active problems on the new unit
@@ -106,22 +105,20 @@ router.put("/:id",
       const hasActiveProblem = newUnitProblems.some(p => !p.isResolved && p.id !== id);
 
       if (hasActiveProblem) {
-        return res.status(400).json({
-          message: "The target unit already has an active problem. Please resolve it first."
-        });
+        return sendError(res, 400, "The target unit already has an active problem. Please resolve it first.");
       }
     }
 
     const updatedProblem = await storage.updateProblem(id, validatedData);
 
     if (!updatedProblem) {
-      return res.status(404).json({ message: "Problem not found" });
+      return sendError(res, 404, "Problem not found");
     }
 
     res.json(updatedProblem);
   } catch (error: any) {
     console.error("Error updating problem:", error);
-    res.status(400).json({ message: error.message || "Failed to update problem" });
+    sendError(res, 400, error.message || "Failed to update problem");
   }
 });
 
@@ -133,13 +130,13 @@ router.delete("/:id", authenticateToken, async (req: any, res) => {
     const deleted = await storage.deleteProblem(id);
 
     if (!deleted) {
-      return res.status(404).json({ message: "Problem not found" });
+      return sendError(res, 404, "Problem not found");
     }
 
-    res.json({ message: "Problem deleted successfully" });
+    sendSuccess(res, undefined, "Problem deleted successfully");
   } catch (error: any) {
     console.error("Error deleting problem:", error);
-    res.status(400).json({ message: error.message || "Failed to delete problem" });
+    sendError(res, 400, error.message || "Failed to delete problem");
   }
 });
 

@@ -6,6 +6,7 @@ import { updateSettingsSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware } from "../validation";
 import { csvSettings } from "../csvSettings";
 import { authenticateToken } from "./middleware/auth";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 import multer from "multer";
 
 const router = Router();
@@ -56,7 +57,7 @@ router.get("/", authenticateToken, async (req, res) => {
     
     res.json(settings);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch settings" });
+    sendError(res, 500, "Failed to fetch settings");
   }
 });
 
@@ -79,24 +80,22 @@ router.patch("/",
       }
     }
     
-    res.json({ 
-      success: true, 
+    sendSuccess(res, {
       updatedSettings: results.length,
-      settings: results 
+      settings: results
     });
   } catch (error: any) {
     console.error("Error updating setting:", error);
-    
+
     // Handle database constraint violations specifically
     if (error.message && error.message.includes('constraint')) {
-      return res.status(400).json({ 
-        message: "Database constraint violation. Please check the data being saved.",
-        error: "CONSTRAINT_VIOLATION",
-        details: error.message
+      return sendError(res, 400, "Database constraint violation. Please check the data being saved.", {
+        errorCode: "CONSTRAINT_VIOLATION",
+        errorDetails: error.message
       });
     }
-    
-    res.status(400).json({ message: error.message || "Failed to update setting" });
+
+    sendError(res, 400, error.message || "Failed to update setting");
   }
 });
 
@@ -112,7 +111,7 @@ router.get("/export", async (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename="settings.csv"');
     res.send(csvContent);
   } catch (error) {
-    res.status(500).json({ message: "Failed to export settings" });
+    sendError(res, 500, "Failed to export settings");
   }
 });
 
@@ -122,7 +121,7 @@ router.get("/csv-path", authenticateToken, async (req, res) => {
     const csvPath = path.join(process.cwd(), 'settings.csv');
     res.json({ path: csvPath });
   } catch (error) {
-    res.status(500).json({ message: "Failed to get CSV path" });
+    sendError(res, 500, "Failed to get CSV path");
   }
 });
 
@@ -137,7 +136,7 @@ router.post("/import",
   async (req: any, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return sendError(res, 400, "No file uploaded");
     }
 
     const updatedBy = req.user.username || req.user.email || "Unknown";
@@ -146,14 +145,13 @@ router.post("/import",
     // Changing this logic can break the entire settings import functionality.
     const results = await csvSettings.importFromFile(req.file.path, updatedBy);
     
-    res.json({
-      message: results.success ? "Settings imported successfully" : "Import completed with errors",
+    sendSuccess(res, {
       imported: results.imported,
       errors: results.errors
-    });
+    }, results.success ? "Settings imported successfully" : "Import completed with errors");
   } catch (error: any) {
     console.error("Error importing settings:", error);
-    res.status(500).json({ message: error.message || "Failed to import settings" });
+    sendError(res, 500, error.message || "Failed to import settings");
   }
 });
 
@@ -165,7 +163,7 @@ router.get("/setup-status", authenticateToken, async (_req, res) => {
     const setting = await storage.getSetting("firstRunCompleted");
     res.json({ completed: setting?.value === "true" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch setup status" });
+    sendError(res, 500, "Failed to fetch setup status");
   }
 });
 
@@ -174,9 +172,9 @@ router.post("/setup-complete", authenticateToken, async (req: any, res) => {
   try {
     const updatedBy = req.user?.username || req.user?.email || "system";
     await storage.setSetting("firstRunCompleted", "true", "First-run wizard completed", updatedBy);
-    res.json({ success: true });
+    sendSuccess(res);
   } catch (error) {
-    res.status(500).json({ message: "Failed to save setup status" });
+    sendError(res, 500, "Failed to save setup status");
   }
 });
 
@@ -231,7 +229,7 @@ router.get("/unit-rules", async (_req, res) => {
     });
   } catch (error) {
     console.error("Error fetching unit rules:", error);
-    res.status(500).json({ message: "Failed to fetch unit rules" });
+    sendError(res, 500, "Failed to fetch unit rules");
   }
 });
 
@@ -244,22 +242,22 @@ router.put("/unit-rules",
 
     // Basic validation
     if (typeof rules !== 'object' || rules === null) {
-      return res.status(400).json({ message: 'Rules must be a JSON object' });
+      return sendError(res, 400, 'Rules must be a JSON object');
     }
     if (rules.excludedUnits && !Array.isArray(rules.excludedUnits)) {
-      return res.status(400).json({ message: 'excludedUnits must be an array' });
+      return sendError(res, 400, 'excludedUnits must be an array');
     }
     if (rules.deprioritizedUnits && !Array.isArray(rules.deprioritizedUnits)) {
-      return res.status(400).json({ message: 'deprioritizedUnits must be an array' });
+      return sendError(res, 400, 'deprioritizedUnits must be an array');
     }
 
     const updatedBy = req.user?.username || req.user?.email || 'Unknown';
     await storage.setSetting(UNIT_RULES_KEY, JSON.stringify(rules), 'Unit assignment rules', updatedBy);
 
-    res.json({ success: true, rules });
+    sendSuccess(res, { rules });
   } catch (error: any) {
     console.error("Error saving unit rules:", error);
-    res.status(500).json({ message: error.message || "Failed to save unit rules" });
+    sendError(res, 500, error.message || "Failed to save unit rules");
   }
 });
 

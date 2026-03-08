@@ -6,6 +6,7 @@
 import { Router, type Request, type Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { pushNotificationService, createNotificationPayload } from '../lib/pushNotifications.js';
+import { sendError, sendSuccess } from '../lib/apiResponse';
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get('/vapid-key', (req, res) => {
     res.json({ publicKey });
   } catch (error) {
     console.error('Error getting VAPID public key:', error);
-    res.status(500).json({ error: 'Failed to get VAPID public key' });
+    sendError(res, 500, 'Failed to get VAPID public key');
   }
 });
 
@@ -32,10 +33,7 @@ router.post('/subscribe', [
 ], async (req: any, res: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: 'Invalid subscription data',
-      details: errors.array()
-    });
+    return sendError(res, 400, 'Invalid subscription data', errors.array());
   }
 
   try {
@@ -55,14 +53,10 @@ router.post('/subscribe', [
 
     console.log(`Push subscription registered: ${subscriptionId} for user: ${userId || 'anonymous'}`);
     
-    res.json({ 
-      success: true, 
-      subscriptionId,
-      message: 'Successfully subscribed to push notifications'
-    });
+    sendSuccess(res, { subscriptionId }, 'Successfully subscribed to push notifications');
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);
-    res.status(500).json({ error: 'Failed to subscribe to push notifications' });
+    sendError(res, 500, 'Failed to subscribe to push notifications');
   }
 });
 
@@ -74,10 +68,7 @@ router.post('/unsubscribe', [
 ], async (req: any, res: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: 'Invalid unsubscribe data',
-      details: errors.array()
-    });
+    return sendError(res, 400, 'Invalid unsubscribe data', errors.array());
   }
 
   try {
@@ -92,19 +83,16 @@ router.post('/unsubscribe', [
       
       if (success) {
         console.log(`Push subscription unsubscribed: ${subscription.id}`);
-        res.json({ 
-          success: true,
-          message: 'Successfully unsubscribed from push notifications'
-        });
+        sendSuccess(res, undefined, 'Successfully unsubscribed from push notifications');
       } else {
-        res.status(404).json({ error: 'Subscription not found' });
+        sendError(res, 404, 'Subscription not found');
       }
     } else {
-      res.status(404).json({ error: 'Subscription not found' });
+      sendError(res, 404, 'Subscription not found');
     }
   } catch (error) {
     console.error('Error unsubscribing from push notifications:', error);
-    res.status(500).json({ error: 'Failed to unsubscribe from push notifications' });
+    sendError(res, 500, 'Failed to unsubscribe from push notifications');
   }
 });
 
@@ -132,9 +120,7 @@ router.post('/test', async (req: any, res: any) => {
     const subscriptions = await pushNotificationService.getAllSubscriptions();
     
     if (subscriptions.length === 0) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'No active subscriptions found',
+      return sendError(res, 400, 'No active subscriptions found', {
         details: 'Subscribe to push notifications first before testing',
         code: 'NO_SUBSCRIPTIONS'
       });
@@ -144,54 +130,44 @@ router.post('/test', async (req: any, res: any) => {
     try {
       const publicKey = pushNotificationService.getVapidPublicKey();
       if (!publicKey) {
-        return res.status(500).json({
-          success: false,
-          error: 'VAPID keys not configured',
+        return sendError(res, 500, 'VAPID keys not configured', {
           details: 'Push notification service is not properly configured',
           code: 'VAPID_NOT_CONFIGURED'
         });
       }
     } catch (vapidError) {
-      return res.status(500).json({
-        success: false,
-        error: 'VAPID configuration error',
+      return sendError(res, 500, 'VAPID configuration error', {
         details: 'Failed to retrieve VAPID public key',
         code: 'VAPID_ERROR'
       });
     }
 
     const testPayload = createNotificationPayload.dailyReminder(2, 1);
-    
+
     // Validate payload before sending
     if (!testPayload.title || !testPayload.body) {
-      return res.status(500).json({
-        success: false,
-        error: 'Invalid test payload',
+      return sendError(res, 500, 'Invalid test payload', {
         details: 'Test notification payload is malformed',
         code: 'INVALID_PAYLOAD'
       });
     }
 
     const sentCount = await pushNotificationService.sendToAll(testPayload);
-    
+
     if (sentCount === 0) {
-      return res.status(500).json({
-        success: false,
-        error: 'No notifications delivered',
+      return sendError(res, 500, 'No notifications delivered', {
         details: 'Test notification was sent but not delivered to any devices',
         code: 'DELIVERY_FAILED'
       });
     }
-    
-    res.json({ 
-      success: true,
-      message: `Test notification sent to ${sentCount} device(s)`,
+
+    sendSuccess(res, {
       sentCount,
       payload: {
         title: testPayload.title,
         body: testPayload.body
       }
-    });
+    }, `Test notification sent to ${sentCount} device(s)`);
   } catch (error) {
     console.error('Error sending test push notification:', error);
     
@@ -218,12 +194,7 @@ router.post('/test', async (req: any, res: any) => {
       }
     }
     
-    res.status(500).json({ 
-      success: false,
-      error: errorMessage,
-      details: errorDetails,
-      code: errorCode
-    });
+    sendError(res, 500, errorMessage, { details: errorDetails, code: errorCode });
   }
 });
 
@@ -237,28 +208,22 @@ router.post('/send', [
 ], async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      success: false,
-      error: 'Invalid notification data',
-      details: errors.array()
-    });
+    return sendError(res, 400, 'Invalid notification data', errors.array());
   }
 
   try {
     // Check if there are any subscriptions first
     const subscriptions = await pushNotificationService.getAllSubscriptions();
-    
+
     if (subscriptions.length === 0) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'No active subscriptions found',
+      return sendError(res, 400, 'No active subscriptions found', {
         details: 'Subscribe to push notifications first before testing',
         code: 'NO_SUBSCRIPTIONS'
       });
     }
 
     const { title, body, icon, badge, tag, data, actions, requireInteraction, vibrate } = req.body;
-    
+
     const payload = {
       title,
       body,
@@ -270,28 +235,24 @@ router.post('/send', [
       requireInteraction: requireInteraction || false,
       vibrate,
     };
-    
+
     // Send to all subscribers (for individual test notifications)
     const sentCount = await pushNotificationService.sendToAll(payload);
-    
+
     if (sentCount === 0) {
-      return res.status(500).json({
-        success: false,
-        error: 'No notifications delivered',
+      return sendError(res, 500, 'No notifications delivered', {
         details: 'Notification was sent but not delivered to any devices',
         code: 'DELIVERY_FAILED'
       });
     }
-    
-    res.json({ 
-      success: true,
-      message: `Test notification sent to ${sentCount} device(s)`,
+
+    sendSuccess(res, {
       sentCount,
       payload: {
         title: payload.title,
         body: payload.body
       }
-    });
+    }, `Test notification sent to ${sentCount} device(s)`);
   } catch (error) {
     console.error('Error sending individual test push notification:', error);
     
@@ -318,12 +279,7 @@ router.post('/send', [
       }
     }
     
-    res.status(500).json({ 
-      success: false,
-      error: errorMessage,
-      details: errorDetails,
-      code: errorCode
-    });
+    sendError(res, 500, errorMessage, { details: errorDetails, code: errorCode });
   }
 });
 
@@ -336,15 +292,12 @@ router.post('/send-all', [
 ], async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: 'Invalid notification data',
-      details: errors.array()
-    });
+    return sendError(res, 400, 'Invalid notification data', errors.array());
   }
 
   try {
     const { title, body, icon, tag, data, actions, requireInteraction } = req.body;
-    
+
     const payload = {
       title,
       body,
@@ -355,16 +308,13 @@ router.post('/send-all', [
       actions,
       requireInteraction: requireInteraction || false,
     };
-    
+
     const sentCount = await pushNotificationService.sendToAll(payload);
-    
-    res.json({ 
-      success: true,
-      message: `Notification sent to ${sentCount} device(s)`
-    });
+
+    sendSuccess(res, { sentCount }, `Notification sent to ${sentCount} device(s)`);
   } catch (error) {
     console.error('Error sending push notification:', error);
-    res.status(500).json({ error: 'Failed to send notification' });
+    sendError(res, 500, 'Failed to send notification');
   }
 });
 
@@ -377,15 +327,12 @@ router.post('/send-admin', [
 ], async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
-      error: 'Invalid notification data',
-      details: errors.array()
-    });
+    return sendError(res, 400, 'Invalid notification data', errors.array());
   }
 
   try {
     const { title, body, icon, tag, data, actions, requireInteraction } = req.body;
-    
+
     const payload = {
       title,
       body,
@@ -396,16 +343,13 @@ router.post('/send-admin', [
       actions,
       requireInteraction: requireInteraction || false,
     };
-    
+
     const sentCount = await pushNotificationService.sendToAdmins(payload);
-    
-    res.json({ 
-      success: true,
-      message: `Admin notification sent to ${sentCount} device(s)`
-    });
+
+    sendSuccess(res, { sentCount }, `Admin notification sent to ${sentCount} device(s)`);
   } catch (error) {
     console.error('Error sending admin push notification:', error);
-    res.status(500).json({ error: 'Failed to send admin notification' });
+    sendError(res, 500, 'Failed to send admin notification');
   }
 });
 
@@ -433,7 +377,7 @@ router.get('/stats', async (req: any, res: any) => {
     res.json(stats);
   } catch (error) {
     console.error('Error getting push notification stats:', error);
-    res.status(500).json({ error: 'Failed to get statistics' });
+    sendError(res, 500, 'Failed to get statistics');
   }
 });
 
@@ -444,13 +388,10 @@ router.post('/cleanup', async (req: any, res: any) => {
   try {
     const cleanedCount = await pushNotificationService.cleanupInvalidSubscriptions();
     
-    res.json({ 
-      success: true,
-      message: `Cleaned up ${cleanedCount} invalid subscription(s)`
-    });
+    sendSuccess(res, { cleanedCount }, `Cleaned up ${cleanedCount} invalid subscription(s)`);
   } catch (error) {
     console.error('Error cleaning up push subscriptions:', error);
-    res.status(500).json({ error: 'Failed to cleanup subscriptions' });
+    sendError(res, 500, 'Failed to cleanup subscriptions');
   }
 });
 

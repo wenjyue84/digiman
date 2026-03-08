@@ -3,6 +3,7 @@ import { getStorage } from "../Storage/StorageFactory.js";
 // REFACTORING: Import new utility functions to eliminate duplication
 import { asyncRouteHandler } from "../lib/errorHandler";
 import { authenticateToken } from "./middleware/auth";
+import { sendError } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -39,7 +40,9 @@ router.get("/dashboard", authenticateToken, asyncRouteHandler(async (req: any, r
     occupancyData,
     guestsResponse,
     activeTokensResponse,
-    unreadNotificationsResponse
+    unreadNotificationsResponse,
+    todayArrivals,
+    upcomingReservations
   ] = await Promise.all([
     storage.getUnitOccupancy(),
     storage.getCheckedInGuests(),
@@ -52,7 +55,9 @@ router.get("/dashboard", authenticateToken, asyncRouteHandler(async (req: any, r
         return { data: [], pagination: { total: 0, page: 1, limit: 10, pages: 0 } };
       }
       throw error;
-    })
+    }),
+    storage.getTodayArrivals().catch(() => []),
+    storage.getUpcomingReservations(7).catch(() => []),
   ]);
 
   res.json({
@@ -60,6 +65,8 @@ router.get("/dashboard", authenticateToken, asyncRouteHandler(async (req: any, r
     guests: guestsResponse,
     activeTokens: activeTokensResponse,
     unreadNotifications: unreadNotificationsResponse,
+    todayArrivals,
+    upcomingReservationCount: upcomingReservations.length,
     timestamp: new Date().toISOString()
   });
 }));
@@ -71,7 +78,7 @@ router.get("/calendar/occupancy/:year/:month", authenticateToken, asyncRouteHand
   const monthNum = parseInt(month);
 
   if (isNaN(yearNum) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
-    return res.status(400).json({ message: "Invalid year or month" });
+    return sendError(res, 400, "Invalid year or month");
   }
 
   // Compute the date range for this month

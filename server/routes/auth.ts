@@ -9,6 +9,7 @@ import { validateData, securityValidationMiddleware } from "../validation";
 import { AppConfig } from "../configManager";
 import { authenticateToken } from "./middleware/auth";
 import { verifyPassword, hashPassword, isHashed } from "../lib/password";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.post("/login",
     console.log("User found:", user ? "Yes" : "No");
 
     if (!user || !user.password || !(await verifyPassword(password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return sendError(res, 401, "Invalid credentials");
     }
 
     // Auto-migrate legacy plaintext passwords to bcrypt on successful login
@@ -65,19 +66,19 @@ router.post("/login",
     const expiresAt = new Date(Date.now() + sessionTtlMs);
     const session = await storage.createSession(user.id, token, expiresAt);
 
-    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
+    sendSuccess(res, { token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role } });
   } catch (error) {
     console.error("Login error:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
     // Database/storage errors (e.g. connection failed, relation does not exist)
     const msg = error instanceof Error ? error.message : String(error);
     const isDbError = /relation ".*" does not exist|connection|ECONNREFUSED|ETIMEDOUT|connect ECONNREFUSED|database|timeout|Connection terminated/i.test(msg);
     if (isDbError) {
-      return res.status(503).json({ message: "Database unavailable. Run 'npm run db:push' if the schema was never applied, then restart the server." });
+      return sendError(res, 503, "Database unavailable. Run 'npm run db:push' if the schema was never applied, then restart the server.");
     }
-    res.status(500).json({ message: "Login failed" });
+    sendError(res, 500, "Login failed");
   }
 });
 
@@ -88,9 +89,9 @@ router.post("/logout", authenticateToken, async (req: any, res) => {
     if (token) {
       await storage.deleteSession(token);
     }
-    res.json({ message: "Logged out successfully" });
+    sendSuccess(res, undefined, "Logged out successfully");
   } catch (error) {
-    res.status(500).json({ message: "Logout failed" });
+    sendError(res, 500, "Logout failed");
   }
 });
 
@@ -107,13 +108,13 @@ router.post("/google", loginLimiter, async (req, res) => {
     
     const payload = ticket.getPayload();
     if (!payload) {
-      return res.status(401).json({ message: "Invalid Google token" });
+      return sendError(res, 401, "Invalid Google token");
     }
 
     const { sub: googleId, email, given_name: firstName, family_name: lastName, picture: profileImage } = payload;
-    
+
     if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+      return sendError(res, 400, "Email is required");
     }
 
     // Check if user exists
@@ -124,7 +125,7 @@ router.post("/google", loginLimiter, async (req, res) => {
       if (user) {
         // Link Google account to existing user
         // This would require updating the user with Google ID
-        return res.status(400).json({ message: "User with this email already exists. Please login with email/password first." });
+        return sendError(res, 400, "User with this email already exists. Please login with email/password first.");
       } else {
         // Create new user
         user = await storage.createUser({
@@ -144,23 +145,23 @@ router.post("/google", loginLimiter, async (req, res) => {
     const expiresAt = new Date(Date.now() + sessionTtlMs);
     await storage.createSession(user.id, sessionToken, expiresAt);
 
-    res.json({ 
-      token: sessionToken, 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        firstName: user.firstName, 
-        lastName: user.lastName, 
+    sendSuccess(res, {
+      token: sessionToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
         profileImage: user.profileImage,
-        role: user.role 
-      } 
+        role: user.role
+      }
     });
   } catch (error) {
     console.error("Google auth error:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
-    res.status(500).json({ message: "Google authentication failed" });
+    sendError(res, 500, "Google authentication failed");
   }
 });
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { storage } from "../storage";
 import { authenticateToken } from "./middleware/auth";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -126,7 +127,7 @@ router.get("/checklist", authenticateToken, async (_req, res) => {
     res.json({ items, completedCount, totalCount: items.length });
   } catch (error) {
     console.error("Setup checklist error:", error);
-    res.status(500).json({ message: "Failed to fetch setup checklist" });
+    sendError(res, 500, "Failed to fetch setup checklist");
   }
 });
 
@@ -139,7 +140,7 @@ router.get("/dismiss-status", authenticateToken, async (_req, res) => {
     const setting = await storage.getSetting("setupChecklistDismissed");
     res.json({ dismissed: setting?.value === "true" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch dismiss status" });
+    sendError(res, 500, "Failed to fetch dismiss status");
   }
 });
 
@@ -151,9 +152,9 @@ router.post("/dismiss", authenticateToken, async (req: any, res) => {
   try {
     const updatedBy = req.user?.username || req.user?.email || "system";
     await storage.setSetting("setupChecklistDismissed", "true", "Setup checklist dismissed", updatedBy);
-    res.json({ success: true });
+    sendSuccess(res);
   } catch (error) {
-    res.status(500).json({ message: "Failed to save dismiss status" });
+    sendError(res, 500, "Failed to save dismiss status");
   }
 });
 

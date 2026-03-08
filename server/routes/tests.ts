@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { storage } from "../storage";
+import { sendError } from "../lib/apiResponse";
 import {
   authTests,
   guestTests,
@@ -39,7 +40,7 @@ const systemTests = [
 ];
 
 router.get("/hello", (req, res) => {
-  res.json({ message: "Hello from Gemini!" });
+  res.json({ success: true, message: "Hello from Gemini!" });
 });
 
 // Main test runner endpoint
@@ -169,9 +170,8 @@ router.get("/health", async (req, res) => {
       storageType: process.env.DATABASE_URL ? "database" : "memory"
     });
   } catch (error: any) {
-    res.status(500).json({
+    sendError(res, 500, "Health check failed", {
       status: "unhealthy",
-      error: error.message,
       timestamp: new Date().toISOString()
     });
   }
@@ -265,9 +265,7 @@ router.post("/populate-sample-guests", async (req, res) => {
 
   } catch (error: any) {
     console.error("❌ Error populating sample guests:", error);
-    res.status(500).json({
-      message: "Failed to populate sample guests",
-      error: error.message,
+    sendError(res, 500, "Failed to populate sample guests", {
       action: "failed"
     });
   }
@@ -365,9 +363,7 @@ router.post("/refresh-sample-guests", async (req, res) => {
 
   } catch (error: any) {
     console.error("❌ Error refreshing sample guests:", error);
-    res.status(500).json({
-      message: "Failed to refresh sample guests",
-      error: error.message,
+    sendError(res, 500, "Failed to refresh sample guests", {
       action: "failed"
     });
   }

@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import { authenticateToken } from './middleware/auth';
+import { sendError, sendSuccess } from '../lib/apiResponse';
 
 const router = Router();
 
@@ -8,7 +11,7 @@ const router = Router();
 router.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:3002');
   res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Key');
 
   // PERMANENT FIX: Prevent caching of KB files
   res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -19,6 +22,31 @@ router.use((req, res, next) => {
   if (req.method === 'OPTIONS') { res.sendStatus(204); return; }
   next();
 });
+
+// ─── Auth Middleware: localhost OR Bearer token OR X-Admin-Key ────────
+function kbAuth(req: any, res: any, next: any): void {
+  // 1. Allow localhost (MCP server on same machine)
+  const ip = req.ip || req.socket.remoteAddress || '';
+  const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  if (isLocal) { next(); return; }
+
+  // 2. Check X-Admin-Key header (for remote Rainbow admin access)
+  const adminKey = process.env.RAINBOW_ADMIN_KEY;
+  const provided = req.headers['x-admin-key'];
+  if (adminKey && typeof provided === 'string' && provided.length > 0) {
+    const providedBuf = Buffer.from(provided);
+    const expectedBuf = Buffer.from(adminKey);
+    if (providedBuf.length === expectedBuf.length && crypto.timingSafeEqual(providedBuf, expectedBuf)) {
+      next();
+      return;
+    }
+  }
+
+  // 3. Fall through to Bearer token auth (web dashboard sessions)
+  authenticateToken(req, res, next);
+}
+
+router.use(kbAuth);
 
 // Base path for KB files (canonical location inside RainbowAI)
 const KB_BASE_PATH = path.join(process.cwd(), 'RainbowAI', '.rainbow-kb');
@@ -55,7 +83,7 @@ router.get('/files', async (req, res) => {
 
     res.json({ files: fileList });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
@@ -66,7 +94,7 @@ router.get('/files/:filename', async (req, res) => {
 
     // Security: prevent directory traversal
     if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return res.status(400).json({ error: 'Invalid filename' });
+      return sendError(res, 400, 'Invalid filename');
     }
 
     const filePath = path.join(KB_BASE_PATH, filename);
@@ -79,9 +107,9 @@ router.get('/files/:filename', async (req, res) => {
     });
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      res.status(404).json({ error: 'File not found' });
+      sendError(res, 404, 'File not found');
     } else {
-      res.status(500).json({ error: error.message });
+      sendError(res, 500, error.message);
     }
   }
 });
@@ -93,12 +121,12 @@ router.put('/files/:filename', async (req, res) => {
     const { content } = req.body;
 
     if (!content && content !== '') {
-      return res.status(400).json({ error: 'Content is required' });
+      return sendError(res, 400, 'Content is required');
     }
 
     // Security: prevent directory traversal
     if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return res.status(400).json({ error: 'Invalid filename' });
+      return sendError(res, 400, 'Invalid filename');
     }
 
     const filePath = path.join(KB_BASE_PATH, filename);
@@ -114,17 +142,15 @@ router.put('/files/:filename', async (req, res) => {
     // Write new content
     await fs.writeFile(filePath, content, 'utf-8');
 
-    res.json({
-      success: true,
+    sendSuccess(res, {
       filename,
-      message: 'File updated successfully',
       backup: `.${filename}.backup`
-    });
+    }, 'File updated successfully');
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      res.status(404).json({ error: 'File not found' });
+      sendError(res, 404, 'File not found');
     } else {
-      res.status(500).json({ error: error.message });
+      sendError(res, 500, error.message);
     }
   }
 });
@@ -140,14 +166,14 @@ router.get('/memory/durable', async (req, res) => {
     res.json({ content, size: stats.size });
   } catch (error: any) {
     if (error.code === 'ENOENT') res.json({ content: '', size: 0 });
-    else res.status(500).json({ error: error.message });
+    else sendError(res, 500, error.message);
   }
 });
 
 // PUT /memory/durable — Update durable memory
 router.put('/memory/durable', async (req, res) => {
   const { content } = req.body;
-  if (content === undefined) return res.status(400).json({ error: 'content required' });
+  if (content === undefined) return sendError(res, 400, 'content required');
   try {
     const filePath = path.join(KB_BASE_PATH, 'memory.md');
     try {
@@ -157,7 +183,7 @@ router.put('/memory/durable', async (req, res) => {
     await fs.writeFile(filePath, content, 'utf-8');
     res.json({ ok: true, size: content.length });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
@@ -187,22 +213,22 @@ router.get('/memory', async (req, res) => {
 
     res.json({ days, totalDays: days.length, today, todayEntries, durableMemorySize: durableSize });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
 // GET /memory/:date — Read specific day's log
 router.get('/memory/:date', async (req, res) => {
   const { date } = req.params;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Invalid date format' });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return sendError(res, 400, 'Invalid date format');
   try {
     const filePath = path.join(MEMORY_PATH, `${date}.md`);
     const content = await fs.readFile(filePath, 'utf-8');
     const stats = await fs.stat(filePath);
     res.json({ date, content, size: stats.size, modified: stats.mtime });
   } catch (error: any) {
-    if (error.code === 'ENOENT') res.status(404).json({ error: `No log for ${date}` });
-    else res.status(500).json({ error: error.message });
+    if (error.code === 'ENOENT') sendError(res, 404, `No log for ${date}`);
+    else sendError(res, 500, error.message);
   }
 });
 
@@ -210,8 +236,8 @@ router.get('/memory/:date', async (req, res) => {
 router.put('/memory/:date', async (req, res) => {
   const { date } = req.params;
   const { content } = req.body;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Invalid date format' });
-  if (content === undefined) return res.status(400).json({ error: 'content required' });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return sendError(res, 400, 'Invalid date format');
+  if (content === undefined) return sendError(res, 400, 'content required');
   try {
     await fs.mkdir(MEMORY_PATH, { recursive: true });
     const filePath = path.join(MEMORY_PATH, `${date}.md`);
@@ -222,7 +248,7 @@ router.put('/memory/:date', async (req, res) => {
     await fs.writeFile(filePath, content, 'utf-8');
     res.json({ ok: true, date, size: content.length });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 
@@ -230,8 +256,8 @@ router.put('/memory/:date', async (req, res) => {
 router.post('/memory/:date/append', async (req, res) => {
   const { date } = req.params;
   const { section, entry } = req.body;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Invalid date format' });
-  if (!section || !entry) return res.status(400).json({ error: 'section and entry required' });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return sendError(res, 400, 'Invalid date format');
+  if (!section || !entry) return sendError(res, 400, 'section and entry required');
 
   // Canonical source: RainbowAI/src/assistant/default-configs.ts — keep in sync
   const TEMPLATE = `# ${date} -- Daily Memory\n\n## Staff Notes\n\n## Issues Reported\n\n## Operational Changes\n\n## Patterns Observed\n\n## AI Notes\n`;
@@ -257,7 +283,7 @@ router.post('/memory/:date/append', async (req, res) => {
     await fs.writeFile(filePath, content, 'utf-8');
     res.json({ ok: true, date, section, timestamp, entry });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    sendError(res, 500, error.message);
   }
 });
 

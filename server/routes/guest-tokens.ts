@@ -16,7 +16,9 @@ import { authenticateToken } from "./middleware/auth";
 import sgMail from "@sendgrid/mail";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
 import { handleDatabaseError, handleFeatureNotImplementedError } from "../lib/errorHandler";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 import { notifyOperatorMaintenanceUnit } from "../lib/maintenanceNotify";
+import { unitSortComparator } from "../lib/unitAssignment";
 
 const router = Router();
 
@@ -29,7 +31,7 @@ router.use((req, res, next) => {
 // Test endpoint to verify router is working
 router.get("/test", (req, res) => {
   console.log("🧪 GET /api/guest-tokens/test - Router is working");
-  res.json({ message: "Guest tokens router is working", timestamp: new Date().toISOString() });
+  sendSuccess(res, { timestamp: new Date().toISOString() }, "Guest tokens router is working");
 });
 
 // Database health check endpoint
@@ -41,13 +43,12 @@ router.get("/health", async (req, res) => {
     const testResult = await storage.getActiveGuestTokens();
     console.log("✅ Database connection successful, guest tokens accessible");
     
-    res.json({ 
+    sendSuccess(res, {
       status: "healthy",
-      message: "Database connection is working",
       timestamp: new Date().toISOString(),
       databaseType: storage.constructor.name,
       guestTokensCount: Array.isArray(testResult) ? testResult.length : 'unknown'
-    });
+    }, "Database connection is working");
   } catch (error: any) {
     console.error("❌ Database health check failed:", error);
     
@@ -71,11 +72,10 @@ router.get("/health", async (req, res) => {
       errorDetails = "Database does not exist";
     }
     
-    res.status(500).json({
+    sendError(res, 500, "Database connection failed", {
       status: "unhealthy",
-      message: "Database connection failed",
-      error: errorType,
-      details: errorDetails,
+      errorType,
+      errorDetails,
       timestamp: new Date().toISOString(),
       databaseType: storage.constructor.name
     });
@@ -89,7 +89,7 @@ router.post("/internal",
     const ip = req.ip || req.socket.remoteAddress || '';
     const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
     if (!isLocal) {
-      return res.status(403).json({ message: 'Internal endpoint — localhost only' });
+      return sendError(res, 403, 'Internal endpoint — localhost only');
     }
 
     try {
@@ -99,11 +99,7 @@ router.post("/internal",
       const availableUnits = await storage.getAvailableUnits();
 
       if (availableUnits.length === 0) {
-        return res.status(200).json({
-          success: false,
-          message: 'No units available',
-          availableCount: 0
-        });
+        return sendError(res, 200, 'No units available', { availableCount: 0 });
       }
 
       // Fetch unit assignment rules from settings
@@ -123,24 +119,11 @@ router.post("/internal",
       if (candidates.length === 0) candidates = availableUnits; // fallback if all excluded
 
       // Sort by priority: back (1-6) > middle (25-26) > front (11-24), prefer even (bottom bunk)
-      const sorted = candidates.sort((a, b) => {
-        const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
-        const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
-        // Deprioritize maintenance units
-        if (maintenanceDeprioritize) {
-          const aDepri = deprioritizedList.includes(a.number) ? 1 : 0;
-          const bDepri = deprioritizedList.includes(b.number) ? 1 : 0;
-          if (aDepri !== bDepri) return aDepri - bDepri;
-        }
-        const section = (n: number) => n >= 1 && n <= 6 ? 1 : n >= 25 && n <= 26 ? 2 : 3;
-        if (section(aNum) !== section(bNum)) return section(aNum) - section(bNum);
-        // Deck priority: even (lower/bottom) first
-        if (deckPriority) {
-          if (aNum % 2 === 0 && bNum % 2 !== 0) return -1;
-          if (aNum % 2 !== 0 && bNum % 2 === 0) return 1;
-        }
-        return aNum - bNum;
-      });
+      const sorted = candidates.sort(unitSortComparator({
+        deckPriority,
+        maintenanceDeprioritize,
+        deprioritizedUnits: deprioritizedList,
+      }));
 
       const assignedUnit = sorted[0].number;
       const token = randomUUID();
@@ -151,7 +134,7 @@ router.post("/internal",
       const users = await storage.getAllUsers();
       const adminUser = users[0];
       if (!adminUser) {
-        return res.status(500).json({ success: false, message: 'No admin user found in system' });
+        return sendError(res, 500, 'No admin user found in system');
       }
 
       const createdToken = await storage.createGuestToken({
@@ -197,8 +180,18 @@ router.post("/internal",
         console.error('[Internal Token] Maintenance notification error (non-blocking):', notifyErr.message);
       }
 
-      res.json({
-        success: true,
+      // Send push notification for internal check-in link creation
+      try {
+        const payload = createNotificationPayload.checkInLinkCreated(
+          guestName || 'Guest',
+          `Unit ${assignedUnit}`
+        );
+        await pushNotificationService.sendToAll(payload);
+      } catch (notifyErr) {
+        console.error('[Internal Token] Push notification error (non-blocking):', notifyErr);
+      }
+
+      sendSuccess(res, {
         token: createdToken.token,
         link,
         unitNumber: assignedUnit,
@@ -208,7 +201,7 @@ router.post("/internal",
       });
     } catch (error: any) {
       console.error('[Internal Token] Error:', error.message);
-      res.status(500).json({ success: false, message: error.message || 'Failed to create token' });
+      sendError(res, 500, error.message || 'Failed to create token');
     }
   }
 );
@@ -250,7 +243,7 @@ router.post("/",
       const availableUnits = await storage.getAvailableUnits();
 
       if (availableUnits.length === 0) {
-        return res.status(400).json({ message: "No units available for assignment" });
+        return sendError(res, 400, "No units available for assignment");
       }
 
       // Apply unit assignment rules from settings
@@ -269,36 +262,25 @@ router.post("/",
       if (candidates.length === 0) candidates = availableUnits;
       autoAssignCandidates = candidates;
 
-      const sortedUnits = candidates.sort((a, b) => {
-        const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
-        const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
-        if (maintenanceDeprioritize) {
-          const aDepri = deprioritizedList.includes(a.number) ? 1 : 0;
-          const bDepri = deprioritizedList.includes(b.number) ? 1 : 0;
-          if (aDepri !== bDepri) return aDepri - bDepri;
-        }
-        const section = (n: number) => n >= 1 && n <= 6 ? 1 : n >= 25 && n <= 26 ? 2 : 3;
-        if (section(aNum) !== section(bNum)) return section(aNum) - section(bNum);
-        if (deckPriority) {
-          if (aNum % 2 === 0 && bNum % 2 !== 0) return -1;
-          if (aNum % 2 !== 0 && bNum % 2 === 0) return 1;
-        }
-        return aNum - bNum;
-      });
+      const sortedUnits = candidates.sort(unitSortComparator({
+        deckPriority,
+        maintenanceDeprioritize,
+        deprioritizedUnits: deprioritizedList,
+      }));
 
       assignedUnit = sortedUnits[0].number;
     } else if (validatedData.unitNumber) {
       // Verify specific unit is available
       const unit = await storage.getUnit(validatedData.unitNumber);
       if (!unit) {
-        return res.status(400).json({ message: "Specified unit not found" });
+        return sendError(res, 400, "Specified unit not found");
       }
       if (!unit.isAvailable) {
-        return res.status(400).json({ message: "Specified unit is not available" });
+        return sendError(res, 400, "Specified unit is not available");
       }
       assignedUnit = validatedData.unitNumber;
     }
-    
+
     // Create guest token
     const token = randomUUID();
     const expiresAt = new Date();
@@ -385,7 +367,19 @@ router.post("/",
       }
     }
 
-    res.json({
+    // Send push notification for check-in link creation
+    try {
+      const payload = createNotificationPayload.checkInLinkCreated(
+        validatedData.guestName || 'Guest',
+        assignedUnit ? `Unit ${assignedUnit}` : 'Auto-assign'
+      );
+      await pushNotificationService.sendToAll(payload);
+      console.log(`Push notification sent for check-in link creation: ${validatedData.guestName || 'Guest'}`);
+    } catch (error) {
+      console.error('Failed to send check-in link push notification:', error);
+    }
+
+    sendSuccess(res, {
       token: createdToken.token,
       link,
       unitNumber: assignedUnit,
@@ -409,9 +403,8 @@ router.post("/",
     });
     console.error("❌ [Guest Token Creation] Full error object:", error);
     
-    res.status(400).json({ 
-      message: error.message || "Failed to create guest token",
-      details: "Check server logs for more information",
+    sendError(res, 400, error.message || "Failed to create guest token", {
+      hint: "Check server logs for more information",
       timestamp: new Date().toISOString()
     });
   }
@@ -447,9 +440,9 @@ router.get("/:token", async (req, res) => {
     const guestToken = await storage.getGuestToken(token);
     
     if (!guestToken) {
-      return res.status(404).json({ message: "Token not found" });
+      return sendError(res, 404, "Token not found");
     }
-    
+
     // Handle used tokens
     if (guestToken.isUsed) {
       // For used tokens, check if there's a completed check-in (guest record)
@@ -485,7 +478,7 @@ router.get("/:token", async (req, res) => {
           return res.json(guestToken);
         } else {
           // Token used but no guest record found
-          return res.status(400).json({ message: "Token has already been used" });
+          return sendError(res, 400, "Token has already been used");
         }
       } catch (guestFetchError) {
         console.error("Error checking guest records:", guestFetchError);
@@ -493,19 +486,19 @@ router.get("/:token", async (req, res) => {
         if (successPage) {
           return res.json(guestToken);
         } else {
-          return res.status(400).json({ message: "Token has already been used" });
+          return sendError(res, 400, "Token has already been used");
         }
       }
     }
     
     if (guestToken.expiresAt && new Date() > guestToken.expiresAt) {
-      return res.status(400).json({ message: "Token has expired" });
+      return sendError(res, 400, "Token has expired");
     }
-    
+
     res.json(guestToken);
   } catch (error) {
     console.error("Error fetching guest token:", error);
-    res.status(500).json({ message: "Failed to fetch guest token" });
+    sendError(res, 500, "Failed to fetch guest token");
   }
 });
 
@@ -518,13 +511,13 @@ router.patch("/:token/use",
     const updatedToken = await storage.markTokenAsUsed(token);
     
     if (!updatedToken) {
-      return res.status(404).json({ message: "Token not found" });
+      return sendError(res, 404, "Token not found");
     }
-    
-    res.json({ message: "Token marked as used", token: updatedToken });
+
+    sendSuccess(res, { token: updatedToken }, "Token marked as used");
   } catch (error) {
     console.error("Error marking token as used:", error);
-    res.status(500).json({ message: "Failed to mark token as used" });
+    sendError(res, 500, "Failed to mark token as used");
   }
 });
 
@@ -541,15 +534,15 @@ router.post("/checkin/:token",
     const guestToken = await storage.getGuestToken(token);
     
     if (!guestToken) {
-      return res.status(404).json({ message: "Token not found" });
+      return sendError(res, 404, "Token not found");
     }
-    
+
     if (guestToken.isUsed) {
-      return res.status(400).json({ message: "Token has already been used" });
+      return sendError(res, 400, "Token has already been used");
     }
-    
+
     if (guestToken.expiresAt && new Date() > guestToken.expiresAt) {
-      return res.status(400).json({ message: "Token has expired" });
+      return sendError(res, 400, "Token has expired");
     }
 
     // Check if assigned unit is still available
@@ -558,9 +551,7 @@ router.post("/checkin/:token",
       const availableUnitNumbers = availableUnits.map(c => c.number);
 
       if (!availableUnitNumbers.includes(guestToken.unitNumber)) {
-        return res.status(400).json({
-          message: `Assigned unit ${guestToken.unitNumber} is no longer available`
-        });
+        return sendError(res, 400, `Assigned unit ${guestToken.unitNumber} is no longer available`);
       }
     }
 
@@ -635,15 +626,14 @@ router.post("/checkin/:token",
       // Don't fail the request if notification fails
     }
     
-    res.status(201).json({
-      success: true,
+    res.status(201);
+    sendSuccess(res, {
       guest,
       unitNumber: guest.unitNumber,
-      message: "Check-in completed successfully"
-    });
+    }, "Check-in completed successfully");
   } catch (error) {
     console.error("Error completing self-checkin:", error);
-    res.status(500).json({ message: "Failed to complete check-in" });
+    sendError(res, 500, "Failed to complete check-in");
   }
 });
 
@@ -651,10 +641,10 @@ router.post("/checkin/:token",
 router.delete("/cleanup", authenticateToken, async (req: any, res) => {
   try {
     await storage.cleanExpiredTokens();
-    res.json({ message: "Expired tokens cleaned up successfully" });
+    sendSuccess(res, undefined, "Expired tokens cleaned up successfully");
   } catch (error) {
     console.error("Error cleaning up expired tokens:", error);
-    res.status(500).json({ message: "Failed to cleanup expired tokens" });
+    sendError(res, 500, "Failed to cleanup expired tokens");
   }
 });
 
@@ -668,13 +658,13 @@ router.delete("/:id", authenticateToken, async (req: any, res) => {
     const deleted = await storage.deleteGuestToken(id);
     
     if (!deleted) {
-      return res.status(404).json({ message: "Guest token not found" });
+      return sendError(res, 404, "Guest token not found");
     }
-    
-    res.json({ message: "Guest token deleted successfully" });
+
+    sendSuccess(res, undefined, "Guest token deleted successfully");
   } catch (error: any) {
     console.error("Error deleting guest token:", error);
-    res.status(500).json({ message: error.message || "Failed to delete guest token" });
+    sendError(res, 500, error.message || "Failed to delete guest token");
   }
 });
 
@@ -687,24 +677,24 @@ router.patch("/:id/cancel", authenticateToken, async (req: any, res) => {
     // Get the guest token to check if it exists and is not used
     const guestToken = await storage.getGuestTokenById(id);
     if (!guestToken) {
-      return res.status(404).json({ message: "Guest check-in not found" });
+      return sendError(res, 404, "Guest check-in not found");
     }
-    
+
     if (guestToken.isUsed) {
-      return res.status(400).json({ message: "Cannot cancel already used check-in" });
+      return sendError(res, 400, "Cannot cancel already used check-in");
     }
-    
+
     // Mark token as cancelled (we'll use isUsed field for this)
     const updated = await storage.markTokenAsUsed(guestToken.token);
-    
+
     if (!updated) {
-      return res.status(400).json({ message: "Failed to cancel check-in" });
+      return sendError(res, 400, "Failed to cancel check-in");
     }
-    
-    res.json({ message: "Check-in cancelled successfully" });
+
+    sendSuccess(res, undefined, "Check-in cancelled successfully");
   } catch (error: any) {
     console.error("Error cancelling guest check-in:", error);
-    res.status(400).json({ message: error.message || "Failed to cancel check-in" });
+    sendError(res, 400, error.message || "Failed to cancel check-in");
   }
 });
 
@@ -730,19 +720,17 @@ router.patch("/:tokenId/unit",
     // Get the existing guest token to check if it can be updated
     const existingToken = await storage.getGuestTokenById(tokenId);
     if (!existingToken) {
-      return res.status(404).json({ message: "Guest token not found" });
+      return sendError(res, 404, "Guest token not found");
     }
 
     // Prevent updating already used tokens
     if (existingToken.isUsed) {
-      return res.status(400).json({
-        message: "Cannot update unit assignment for already used guest token"
-      });
+      return sendError(res, 400, "Cannot update unit assignment for already used guest token");
     }
 
     // Check if token is expired
     if (existingToken.expiresAt && new Date() > existingToken.expiresAt) {
-      return res.status(400).json({ message: "Cannot update expired guest token" });
+      return sendError(res, 400, "Cannot update expired guest token");
     }
 
     // Store the previous unit for response
@@ -756,48 +744,21 @@ router.patch("/:tokenId/unit",
       const availableUnits = await storage.getAvailableUnits();
 
       if (availableUnits.length === 0) {
-        return res.status(400).json({ message: "No units available for auto-assignment" });
+        return sendError(res, 400, "No units available for auto-assignment");
       }
 
-      // Use the same priority logic as token creation
-      const sortedUnits = availableUnits.sort((a, b) => {
-        const aNum = parseInt(a.number.replace(/[A-Z]/g, ''));
-        const bNum = parseInt(b.number.replace(/[A-Z]/g, ''));
-
-        // Section priority: back (1-6) > middle (25-26) > front (11-24)
-        const getSectionPriority = (num: number) => {
-          if (num >= 1 && num <= 6) return 1; // back
-          if (num >= 25 && num <= 26) return 2; // middle
-          return 3; // front
-        };
-
-        const aSectionPriority = getSectionPriority(aNum);
-        const bSectionPriority = getSectionPriority(bNum);
-
-        if (aSectionPriority !== bSectionPriority) {
-          return aSectionPriority - bSectionPriority;
-        }
-
-        // Within same section, prefer even numbers (bottom bunks)
-        const aIsEven = aNum % 2 === 0;
-        const bIsEven = bNum % 2 === 0;
-
-        if (aIsEven && !bIsEven) return -1;
-        if (!aIsEven && bIsEven) return 1;
-
-        // Same parity, sort by number
-        return aNum - bNum;
-      });
+      // Use the same priority logic as token creation (defaults: deckPriority=true, no maintenance deprioritization)
+      const sortedUnits = availableUnits.sort(unitSortComparator());
 
       newUnitNumber = sortedUnits[0].number;
     } else if (validatedData.unitNumber) {
       // Verify specific unit is available
       const unit = await storage.getUnit(validatedData.unitNumber);
       if (!unit) {
-        return res.status(400).json({ message: "Specified unit not found" });
+        return sendError(res, 400, "Specified unit not found");
       }
       if (!unit.isAvailable) {
-        return res.status(400).json({ message: "Specified unit is not available" });
+        return sendError(res, 400, "Specified unit is not available");
       }
       newUnitNumber = validatedData.unitNumber;
     }
@@ -810,7 +771,7 @@ router.patch("/:tokenId/unit",
     );
 
     if (!updatedToken) {
-      return res.status(500).json({ message: "Failed to update guest token unit assignment" });
+      return sendError(res, 500, "Failed to update guest token unit assignment");
     }
 
     console.log('[Guest Token Unit Update] Update successful');
@@ -822,8 +783,7 @@ router.patch("/:tokenId/unit",
       timestamp: new Date().toISOString()
     });
 
-    res.json({
-      success: true,
+    sendSuccess(res, {
       updatedToken: {
         id: updatedToken.id,
         token: updatedToken.token,
@@ -834,8 +794,7 @@ router.patch("/:tokenId/unit",
         isUsed: updatedToken.isUsed
       },
       previousUnit: previousUnit,
-      message: `Unit assignment updated ${previousUnit ? `from ${previousUnit}` : ''} to ${newUnitNumber || 'auto-assign'}`
-    });
+    }, `Unit assignment updated ${previousUnit ? `from ${previousUnit}` : ''} to ${newUnitNumber || 'auto-assign'}`);
 
   } catch (error: any) {
     console.error("[Guest Token Unit Update] Error occurred during update");
@@ -851,9 +810,8 @@ router.patch("/:tokenId/unit",
       }
     });
 
-    res.status(500).json({
-      message: error.message || "Failed to update guest token unit assignment",
-      details: "Check server logs for more information",
+    sendError(res, 500, error.message || "Failed to update guest token unit assignment", {
+      hint: "Check server logs for more information",
       timestamp: new Date().toISOString()
     });
   }

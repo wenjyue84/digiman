@@ -2,6 +2,8 @@ import express from 'express';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 
+import { sendError, sendSuccess } from "../lib/apiResponse";
+
 const router = express.Router();
 
 // Paths to data files (RainbowAI in this repo; fallback to mcp-server for compatibility)
@@ -21,7 +23,7 @@ router.get('/keywords', async (req, res) => {
     res.json(keywords);
   } catch (error) {
     console.error('Error reading keywords:', error);
-    res.status(500).json({ error: 'Failed to read keywords' });
+    sendError(res, 500, 'Failed to read keywords');
   }
 });
 
@@ -34,7 +36,7 @@ router.get('/examples', async (req, res) => {
     res.json(examples);
   } catch (error) {
     console.error('Error reading examples:', error);
-    res.status(500).json({ error: 'Failed to read examples' });
+    sendError(res, 500, 'Failed to read examples');
   }
 });
 
@@ -53,7 +55,7 @@ router.put('/keywords/:intent', async (req, res) => {
     const intentIndex = keywordsData.intents.findIndex((i: any) => i.intent === intent);
 
     if (intentIndex === -1) {
-      return res.status(404).json({ error: 'Intent not found' });
+      return sendError(res, 404, 'Intent not found');
     }
 
     keywordsData.intents[intentIndex].keywords = keywords;
@@ -61,10 +63,10 @@ router.put('/keywords/:intent', async (req, res) => {
     // Save back to file
     await writeFile(KEYWORDS_PATH, JSON.stringify(keywordsData, null, 2));
 
-    res.json({ success: true, intent, keywords });
+    sendSuccess(res, { intent, keywords });
   } catch (error) {
     console.error('Error updating keywords:', error);
-    res.status(500).json({ error: 'Failed to update keywords' });
+    sendError(res, 500, 'Failed to update keywords');
   }
 });
 
@@ -83,7 +85,7 @@ router.put('/examples/:intent', async (req, res) => {
     const intentIndex = examplesData.intents.findIndex((i: any) => i.intent === intent);
 
     if (intentIndex === -1) {
-      return res.status(404).json({ error: 'Intent not found' });
+      return sendError(res, 404, 'Intent not found');
     }
 
     examplesData.intents[intentIndex].examples = examples;
@@ -91,10 +93,10 @@ router.put('/examples/:intent', async (req, res) => {
     // Save back to file
     await writeFile(EXAMPLES_PATH, JSON.stringify(examplesData, null, 2));
 
-    res.json({ success: true, intent, examples });
+    sendSuccess(res, { intent, examples });
   } catch (error) {
     console.error('Error updating examples:', error);
-    res.status(500).json({ error: 'Failed to update examples' });
+    sendError(res, 500, 'Failed to update examples');
   }
 });
 
@@ -123,7 +125,7 @@ router.post('/test', async (req, res) => {
       }
     }
     if (!classifyMessage) {
-      return res.status(500).json({ error: 'Intent engine module not found' });
+      return sendError(res, 500, 'Intent engine module not found');
     }
 
     const result = await classifyMessage(text);
@@ -138,7 +140,7 @@ router.post('/test', async (req, res) => {
     });
   } catch (error) {
     console.error('Error testing intent:', error);
-    res.status(500).json({ error: 'Failed to test intent' });
+    sendError(res, 500, 'Failed to test intent');
   }
 });
 
@@ -172,7 +174,7 @@ router.get('/stats', async (req, res) => {
     res.json(stats);
   } catch (error) {
     console.error('Error getting stats:', error);
-    res.status(500).json({ error: 'Failed to get stats' });
+    sendError(res, 500, 'Failed to get stats');
   }
 });
 
@@ -220,7 +222,7 @@ router.get('/export', async (req, res) => {
     }
   } catch (error) {
     console.error('Error exporting:', error);
-    res.status(500).json({ error: 'Failed to export' });
+    sendError(res, 500, 'Failed to export');
   }
 });
 
@@ -237,7 +239,7 @@ router.get('/regex', async (req, res) => {
       res.json([]);
     } else {
       console.error('Error reading regex patterns:', error);
-      res.status(500).json({ error: 'Failed to read regex patterns' });
+      sendError(res, 500, 'Failed to read regex patterns');
     }
   }
 });
@@ -247,7 +249,7 @@ router.put('/regex', async (req, res) => {
     const { patterns } = req.body;
 
     if (!Array.isArray(patterns)) {
-      return res.status(400).json({ error: 'patterns array required' });
+      return sendError(res, 400, 'patterns array required');
     }
 
     const allowedLangs = ['en', 'ms', 'zh'];
@@ -256,13 +258,13 @@ router.put('/regex', async (req, res) => {
     // Validate regex patterns
     for (const item of patterns) {
       if (!item.pattern || typeof item.pattern !== 'string') {
-        return res.status(400).json({ error: 'Each pattern must have a pattern string' });
+        return sendError(res, 400, 'Each pattern must have a pattern string');
       }
       if (item.language != null && !allowedLangs.includes(item.language)) {
-        return res.status(400).json({ error: `language must be one of: ${allowedLangs.join(', ')}` });
+        return sendError(res, 400, `language must be one of: ${allowedLangs.join(', ')}`);
       }
       if (item.emergencyType != null && !allowedTypes.includes(item.emergencyType)) {
-        return res.status(400).json({ error: `emergencyType must be one of: ${allowedTypes.join(', ')}` });
+        return sendError(res, 400, `emergencyType must be one of: ${allowedTypes.join(', ')}`);
       }
 
       // Validate regex syntax
@@ -275,17 +277,17 @@ router.put('/regex', async (req, res) => {
           new RegExp(item.pattern);
         }
       } catch (err: any) {
-        return res.status(400).json({ error: `Invalid regex "${item.pattern}": ${err.message}` });
+        return sendError(res, 400, `Invalid regex "${item.pattern}": ${err.message}`);
       }
     }
 
     // Save to file
     await writeFile(REGEX_PATH, JSON.stringify(patterns, null, 2));
 
-    res.json({ success: true, patterns });
+    sendSuccess(res, { patterns });
   } catch (error) {
     console.error('Error saving regex patterns:', error);
-    res.status(500).json({ error: 'Failed to save regex patterns' });
+    sendError(res, 500, 'Failed to save regex patterns');
   }
 });
 
@@ -313,7 +315,7 @@ router.get('/llm-settings', async (req, res) => {
       res.json(defaultSettings);
     } else {
       console.error('Error reading LLM settings:', error);
-      res.status(500).json({ error: 'Failed to read LLM settings' });
+      sendError(res, 500, 'Failed to read LLM settings');
     }
   }
 });
@@ -329,7 +331,7 @@ router.get('/llm-settings/available-providers', async (req, res) => {
     res.json(providers);
   } catch (error) {
     console.error('Error reading providers:', error);
-    res.status(500).json({ error: 'Failed to read providers' });
+    sendError(res, 500, 'Failed to read providers');
   }
 });
 
@@ -338,7 +340,7 @@ router.put('/llm-settings', async (req, res) => {
     const settings = req.body;
 
     if (!settings.thresholds || typeof settings.thresholds !== 'object') {
-      return res.status(400).json({ error: 'thresholds object required' });
+      return sendError(res, 400, 'thresholds object required');
     }
 
     // Validate thresholds are between 0 and 1
@@ -346,21 +348,21 @@ router.put('/llm-settings', async (req, res) => {
     for (const key of thresholds) {
       const value = settings.thresholds[key];
       if (typeof value !== 'number' || value < 0 || value > 1) {
-        return res.status(400).json({ error: `thresholds.${key} must be a number between 0 and 1` });
+        return sendError(res, 400, `thresholds.${key} must be a number between 0 and 1`);
       }
     }
 
     // Validate selectedProviders if present
     if (settings.selectedProviders !== undefined) {
       if (!Array.isArray(settings.selectedProviders)) {
-        return res.status(400).json({ error: 'selectedProviders must be an array' });
+        return sendError(res, 400, 'selectedProviders must be an array');
       }
       for (const sp of settings.selectedProviders) {
         if (!sp.id || typeof sp.id !== 'string') {
-          return res.status(400).json({ error: 'Each selectedProvider must have an id string' });
+          return sendError(res, 400, 'Each selectedProvider must have an id string');
         }
         if (typeof sp.priority !== 'number') {
-          return res.status(400).json({ error: 'Each selectedProvider must have a priority number' });
+          return sendError(res, 400, 'Each selectedProvider must have a priority number');
         }
       }
     }
@@ -368,10 +370,10 @@ router.put('/llm-settings', async (req, res) => {
     // Save to file
     await writeFile(LLM_SETTINGS_PATH, JSON.stringify(settings, null, 2));
 
-    res.json({ success: true, settings });
+    sendSuccess(res, { settings });
   } catch (error) {
     console.error('Error saving LLM settings:', error);
-    res.status(500).json({ error: 'Failed to save LLM settings' });
+    sendError(res, 500, 'Failed to save LLM settings');
   }
 });
 
@@ -380,7 +382,7 @@ router.post('/llm-test', async (req, res) => {
     const { providerId } = req.body;
 
     if (!providerId) {
-      return res.status(400).json({ error: 'providerId required' });
+      return sendError(res, 400, 'providerId required');
     }
 
     const candidates = [
@@ -401,14 +403,14 @@ router.post('/llm-test', async (req, res) => {
       }
     }
     if (!testProvider) {
-      return res.status(500).json({ error: 'LLM provider module not found' });
+      return sendError(res, 500, 'LLM provider module not found');
     }
 
     const result = await testProvider(providerId);
     res.json(result);
   } catch (error: any) {
     console.error('Error testing LLM:', error);
-    res.status(500).json({ error: 'Failed to test LLM connection' });
+    sendError(res, 500, 'Failed to test LLM connection');
   }
 });
 

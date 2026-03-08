@@ -5,6 +5,7 @@ import { insertUserSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware, validators } from "../validation";
 import { authenticateToken } from "./middleware/auth";
 import { hashPassword } from "../lib/password";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get("/", authenticateToken, async (req: any, res) => {
     
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: "Failed to get users" });
+    sendError(res, 500, "Failed to get users");
   }
 });
 
@@ -35,7 +36,7 @@ router.post(
     try {
       // Check if current user is admin
       if (req.user?.role !== "admin") {
-        return res.status(403).json({ message: "Only admin can create new users" });
+        return sendError(res, 403, "Only admin can create new users");
       }
 
       const userData = req.body;
@@ -44,24 +45,21 @@ router.post(
       if (userData.password) {
         const passwordCheck = validators.isStrongPassword(userData.password);
         if (!passwordCheck.isValid) {
-          return res.status(400).json({
-            message: "Password does not meet strength requirements",
-            issues: passwordCheck.issues,
-          });
+          return sendError(res, 400, "Password does not meet strength requirements", passwordCheck.issues);
         }
       }
 
       // Check if user with email already exists
       const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(409).json({ message: "User with this email already exists" });
+        return sendError(res, 409, "User with this email already exists");
       }
 
       // Check if user with username already exists
       if (userData.username) {
         const existingUsername = await storage.getUserByUsername(userData.username);
         if (existingUsername) {
-          return res.status(409).json({ message: "User with this username already exists" });
+          return sendError(res, 409, "User with this username already exists");
         }
       }
 
@@ -75,9 +73,9 @@ router.post(
     } catch (error) {
       console.error("Create user error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+        return sendError(res, 400, "Invalid data", error.errors);
       }
-      res.status(500).json({ message: "Failed to create user" });
+      sendError(res, 500, "Failed to create user");
     }
   }
 );
@@ -94,13 +92,13 @@ router.patch("/:id", authenticateToken, async (req: any, res) => {
     const isOwnAccount = currentUser?.id === id;
 
     if (!isAdmin && !isOwnAccount) {
-      return res.status(403).json({ message: "You can only edit your own account" });
+      return sendError(res, 403, "You can only edit your own account");
     }
 
     // Staff users can only update their own account - allow certain fields
     if (!isAdmin) {
       if (!isOwnAccount) {
-        return res.status(403).json({ message: "Staff users cannot edit other users" });
+        return sendError(res, 403, "Staff users cannot edit other users");
       }
       // Staff can update: email, username, firstName, lastName, password
       // Strip: role, googleId, profileImage, createdAt, updatedAt, id
@@ -126,17 +124,14 @@ router.patch("/:id", authenticateToken, async (req: any, res) => {
 
     // Check if there's anything to update
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: "No valid fields to update" });
+      return sendError(res, 400, "No valid fields to update");
     }
 
     // Validate password strength if being updated
     if (updates.password) {
       const passwordCheck = validators.isStrongPassword(updates.password);
       if (!passwordCheck.isValid) {
-        return res.status(400).json({
-          message: "Password does not meet strength requirements",
-          issues: passwordCheck.issues,
-        });
+        return sendError(res, 400, "Password does not meet strength requirements", passwordCheck.issues);
       }
       // Hash the new password before storage
       updates.password = await hashPassword(updates.password);
@@ -146,7 +141,7 @@ router.patch("/:id", authenticateToken, async (req: any, res) => {
     if (updates.email) {
       const existingUser = await storage.getUserByEmail(updates.email);
       if (existingUser && existingUser.id !== id) {
-        return res.status(409).json({ message: "Email is already in use" });
+        return sendError(res, 409, "Email is already in use");
       }
     }
 
@@ -154,18 +149,18 @@ router.patch("/:id", authenticateToken, async (req: any, res) => {
     if (updates.username) {
       const existingUser = await storage.getUserByUsername(updates.username);
       if (existingUser && existingUser.id !== id) {
-        return res.status(409).json({ message: "Username is already in use" });
+        return sendError(res, 409, "Username is already in use");
       }
     }
 
     const user = await storage.updateUser(id, updates);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return sendError(res, 404, "User not found");
     }
 
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: "Failed to update user" });
+    sendError(res, 500, "Failed to update user");
   }
 });
 
@@ -174,25 +169,25 @@ router.delete("/:id", authenticateToken, async (req: any, res) => {
   try {
     // Check if current user is admin
     if (req.user?.role !== "admin") {
-      return res.status(403).json({ message: "Only admin can delete users" });
+      return sendError(res, 403, "Only admin can delete users");
     }
 
     const { id } = req.params;
-    
+
     // Prevent admin from deleting themselves
     if (req.user?.id === id) {
-      return res.status(400).json({ message: "You cannot delete your own account" });
+      return sendError(res, 400, "You cannot delete your own account");
     }
 
     const success = await storage.deleteUser(id);
 
     if (!success) {
-      return res.status(404).json({ message: "User not found" });
+      return sendError(res, 404, "User not found");
     }
 
-    res.json({ message: "User deleted successfully" });
+    sendSuccess(res, undefined, "User deleted successfully");
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete user" });
+    sendError(res, 500, "Failed to delete user");
   }
 });
 

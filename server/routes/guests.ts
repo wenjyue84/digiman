@@ -18,6 +18,7 @@ import { authenticateToken } from "./middleware/auth";
 import sgMail from "@sendgrid/mail";
 // REFACTORING: Import new utility functions to eliminate duplication
 import { handleRouteError, asyncRouteHandler, sendSuccessResponse } from "../lib/errorHandler";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 import { getTodayBoundary, isOverdue } from "../lib/dateUtils";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
 import { notifyOperatorMaintenanceUnit } from "../lib/maintenanceNotify";
@@ -72,6 +73,18 @@ router.post("/checkout-overdue", authenticateToken, asyncRouteHandler(async (_re
     if (updated) checkedOutIds.push(updated.id);
   }
 
+  // Send summary push notification for bulk checkout
+  if (checkedOutIds.length > 0) {
+    try {
+      const payload = createNotificationPayload.guestCheckout(
+        `${checkedOutIds.length} guest(s)`, 'multiple units (overdue)'
+      );
+      await pushNotificationService.sendToAll(payload);
+    } catch (error) {
+      console.error('Failed to send bulk checkout push notification:', error);
+    }
+  }
+
   // REFACTORED: Use centralized success response helper
   sendSuccessResponse(res, { count: checkedOutIds.length, checkedOutIds }, "Overdue guests checked out successfully");
 }));
@@ -107,6 +120,18 @@ router.post("/checkout-today", authenticateToken, asyncRouteHandler(async (_req:
     if (updated) checkedOutIds.push(updated.id);
   }
 
+  // Send summary push notification for bulk checkout
+  if (checkedOutIds.length > 0) {
+    try {
+      const payload = createNotificationPayload.guestCheckout(
+        `${checkedOutIds.length} guest(s)`, 'multiple units (today)'
+      );
+      await pushNotificationService.sendToAll(payload);
+    } catch (error) {
+      console.error('Failed to send bulk checkout push notification:', error);
+    }
+  }
+
   // REFACTORED: Use centralized success response helper
   sendSuccessResponse(res, { count: checkedOutIds.length, checkedOutIds }, `Successfully checked out ${checkedOutIds.length} guests expected to check out today`);
 }));
@@ -126,6 +151,18 @@ router.post("/checkout-all", authenticateToken, asyncRouteHandler(async (_req: a
   for (const guest of checkedIn) {
     const updated = await storage.checkoutGuest(guest.id);
     if (updated) checkedOutIds.push(updated.id);
+  }
+
+  // Send summary push notification for bulk checkout
+  if (checkedOutIds.length > 0) {
+    try {
+      const payload = createNotificationPayload.guestCheckout(
+        `${checkedOutIds.length} guest(s)`, 'all units'
+      );
+      await pushNotificationService.sendToAll(payload);
+    } catch (error) {
+      console.error('Failed to send bulk checkout push notification:', error);
+    }
   }
 
   // REFACTORED: Use centralized success response helper
@@ -225,9 +262,10 @@ router.delete("/:id", authenticateToken, asyncRouteHandler(async (req: any, res:
   const { id } = req.params;
   const deleted = await storage.deleteGuest(id);
   if (!deleted) {
-    return res.status(404).json({ message: "Guest not found" });
+    return sendError(res, 404, "Guest not found");
   }
-  res.status(200).json({ message: "Guest deleted successfully" });
+  res.status(200);
+  sendSuccess(res, undefined, "Guest deleted successfully");
 }));
 
 // Get a single guest by ID
@@ -235,7 +273,7 @@ router.get("/:id", authenticateToken, asyncRouteHandler(async (req: any, res: an
   const { id } = req.params;
   const guest = await storage.getGuest(id);
   if (!guest) {
-    return res.status(404).json({ message: "Guest not found" });
+    return sendError(res, 404, "Guest not found");
   }
   res.json(guest);
 }));
@@ -245,8 +283,17 @@ router.post("/:id/checkout", authenticateToken, asyncRouteHandler(async (req: an
   const { id } = req.params;
   const guest = await storage.checkoutGuest(id);
   if (!guest) {
-    return res.status(404).json({ message: "Guest not found or already checked out" });
+    return sendError(res, 404, "Guest not found or already checked out");
   }
+
+  // Send push notification for guest checkout
+  try {
+    const payload = createNotificationPayload.guestCheckout(guest.name, `Unit ${guest.unitNumber}`);
+    await pushNotificationService.sendToAll(payload);
+  } catch (error) {
+    console.error('Failed to send checkout push notification:', error);
+  }
+
   res.json(guest);
 }));
 
@@ -271,7 +318,7 @@ router.patch("/:id",
       const isValidDomain = await validators.isValidEmailDomain(updates.email);
       console.log('Email domain validation result:', isValidDomain);
       if (!isValidDomain) {
-        return res.status(400).json({ message: "Invalid email domain" });
+        return sendError(res, 400, "Invalid email domain");
       }
     }
     
@@ -280,7 +327,7 @@ router.patch("/:id",
       const isValidPhone = validators.isValidInternationalPhone(updates.phoneNumber);
       console.log('Phone validation result:', isValidPhone);
       if (!isValidPhone) {
-        return res.status(400).json({ message: "Invalid phone number format" });
+        return sendError(res, 400, "Invalid phone number format");
       }
     }
     
@@ -288,7 +335,7 @@ router.patch("/:id",
     const guest = await storage.updateGuest(id, updates);
     if (!guest) {
       console.log('Guest not found for ID:', id);
-      return res.status(404).json({ message: "Guest not found" });
+      return sendError(res, 404, "Guest not found");
     }
 
     console.log('Guest updated successfully:', guest.id);
@@ -296,20 +343,20 @@ router.patch("/:id",
   }));
 
 // Guest check-in
-router.post("/checkin", 
+router.post("/checkin",
   securityValidationMiddleware,
   authenticateToken,
   validateData(insertGuestSchema, 'body'),
   asyncRouteHandler(async (req: any, res: any) => {
     try {
       const validatedData = req.body;
-      
+
       // Check if unit is available
       const availableUnits = await storage.getAvailableUnits();
       const availableUnitNumbers = availableUnits.map(c => c.number);
 
       if (!availableUnitNumbers.includes(validatedData.unitNumber)) {
-        return res.status(400).json({ message: `Unit ${validatedData.unitNumber} is not available` });
+        return sendError(res, 400, `Unit ${validatedData.unitNumber} is not available`);
       }
 
       // Check if guest already exists and is currently checked in
@@ -384,7 +431,7 @@ router.post("/checkin",
       res.status(201).json(guest);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+        return sendError(res, 400, "Invalid data", error.errors);
       }
       // Re-throw to let asyncRouteHandler handle it
       throw error;
@@ -397,15 +444,24 @@ router.post("/checkout", authenticateToken, asyncRouteHandler(async (req: any, r
   try {
     const validatedData = checkoutGuestSchema.parse(req.body);
     const guest = await storage.checkoutGuest(validatedData.id);
-    
+
     if (!guest) {
-      return res.status(404).json({ message: "Guest not found or already checked out" });
+      return sendError(res, 404, "Guest not found or already checked out");
+    }
+
+    // Send push notification for guest checkout
+    try {
+      const payload = createNotificationPayload.guestCheckout(guest.name, `Unit ${guest.unitNumber}`);
+      await pushNotificationService.sendToAll(payload);
+      console.log(`Push notification sent for guest checkout: ${guest.name}`);
+    } catch (error) {
+      console.error('Failed to send checkout push notification:', error);
     }
 
     res.json(guest);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
     // Re-throw to let asyncRouteHandler handle it
     throw error;
@@ -418,12 +474,12 @@ router.post("/recheckin", authenticateToken, asyncRouteHandler(async (req: any, 
     const { id } = checkoutGuestSchema.parse(req.body);
     const existing = await storage.getGuest(id);
     if (!existing) {
-      return res.status(404).json({ message: "Guest not found" });
+      return sendError(res, 404, "Guest not found");
     }
 
     const updated = await storage.updateGuest(id, { isCheckedIn: true, checkoutTime: null });
     if (!updated) {
-      return res.status(400).json({ message: "Failed to re-check in guest" });
+      return sendError(res, 400, "Failed to re-check in guest");
     }
 
     // Mark unit as occupied and cleaned (since it's currently in-use)
@@ -433,7 +489,7 @@ router.post("/recheckin", authenticateToken, asyncRouteHandler(async (req: any, 
     sendSuccessResponse(res, { guest: updated }, "Guest re-checked in");
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
     // Re-throw to let asyncRouteHandler handle it
     throw error;
@@ -484,7 +540,7 @@ router.get('/profiles/:idNumber', authenticateToken, asyncRouteHandler(async (re
   const idNumber = (req.params.idNumber || '').trim();
   const all = await storage.getAllGuests();
   const records = all.data.filter(g => (g.idNumber || '').trim() === idNumber);
-  if (records.length === 0) return res.status(404).json({ message: 'Profile not found' });
+  if (records.length === 0) return sendError(res, 404, 'Profile not found');
   const latest = records.sort((a, b) => new Date((b.checkoutTime || b.checkinTime) as any).getTime() - new Date((a.checkoutTime || a.checkinTime) as any).getTime())[0];
   const bl = await storage.getSetting(`blacklist:${idNumber}`);
   const note = await storage.getSetting(`blacklistNote:${idNumber}`);
@@ -520,9 +576,9 @@ router.get("/undo-recent-checkout", authenticateToken, asyncRouteHandler(async (
   const recentGuest = await storage.getRecentlyCheckedOutGuest();
   
   if (!recentGuest) {
-    return res.status(404).json({ message: "No recently checked-out guest found" });
+    return sendError(res, 404, "No recently checked-out guest found");
   }
-  
+
   // REFACTORED: Use centralized success response helper
   sendSuccessResponse(res, { guest: recentGuest }, "Recent checkout found");
 }));
@@ -530,15 +586,15 @@ router.get("/undo-recent-checkout", authenticateToken, asyncRouteHandler(async (
 // Undo the most recent checkout
 router.post("/undo-recent-checkout", authenticateToken, asyncRouteHandler(async (_req: any, res: any) => {
   const recentGuest = await storage.getRecentlyCheckedOutGuest();
-  
+
   if (!recentGuest) {
-    return res.status(404).json({ message: "No recently checked-out guest found" });
+    return sendError(res, 404, "No recently checked-out guest found");
   }
-  
+
   // Re-check in the most recent guest
   const updated = await storage.updateGuest(recentGuest.id, { isCheckedIn: true, checkoutTime: null });
   if (!updated) {
-    return res.status(400).json({ message: "Failed to undo checkout" });
+    return sendError(res, 400, "Failed to undo checkout");
   }
   
   // Mark unit as occupied and cleaned (since it's currently in-use)
@@ -558,13 +614,13 @@ router.patch("/:id/unit",
     const { unitNumber, reason } = req.body;
 
     if (!unitNumber) {
-      return res.status(400).json({ message: "Unit number is required" });
+      return sendError(res, 400, "Unit number is required");
     }
 
     // Get the guest
     const guest = await storage.getGuest(id);
     if (!guest) {
-      return res.status(404).json({ message: "Guest not found" });
+      return sendError(res, 404, "Guest not found");
     }
 
     // Check if new unit is available
@@ -572,7 +628,7 @@ router.patch("/:id/unit",
     const isAvailable = availableUnits.some(c => c.number === unitNumber);
 
     if (!isAvailable && guest.unitNumber !== unitNumber) {
-      return res.status(400).json({ message: `Unit ${unitNumber} is not available` });
+      return sendError(res, 400, `Unit ${unitNumber} is not available`);
     }
 
     // Update guest's unit
@@ -581,20 +637,14 @@ router.patch("/:id/unit",
     });
 
     if (!updatedGuest) {
-      return res.status(400).json({ message: "Failed to update guest unit" });
+      return sendError(res, 400, "Failed to update guest unit");
     }
 
-    res.json({
-      success: true,
-      message: `Guest moved to unit ${unitNumber}`,
-      guest: updatedGuest
-    });
+    sendSuccess(res, { guest: updatedGuest }, `Guest moved to unit ${unitNumber}`);
 
   } catch (error: any) {
     console.error("Error changing guest unit:", error);
-    res.status(500).json({
-      message: error.message || "Failed to change unit"
-    });
+    sendError(res, 500, error.message || "Failed to change unit");
   }
 });
 

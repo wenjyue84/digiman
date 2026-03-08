@@ -4,6 +4,7 @@ import { storage } from "../storage";
 import { insertExpenseSchema, updateExpenseSchema } from "@shared/schema";
 import { validateData, securityValidationMiddleware } from "../validation";
 import { authenticateToken } from "./middleware/auth";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.get("/", authenticateToken, async (req: any, res) => {
       res.json(expenses);
     }
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch expenses" });
+    sendError(res, 500, "Failed to fetch expenses");
   }
 });
 
@@ -33,19 +34,19 @@ router.post("/", authenticateToken, async (req: any, res) => {
   try {
     const validatedData = insertExpenseSchema.parse(req.body);
     const createdBy = req.user.id;
-    
+
     const expense = await storage.addExpense({
       ...validatedData,
       createdBy
     });
-    
+
     res.status(201).json(expense);
   } catch (error: any) {
     console.error("Error creating expense:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
-    res.status(400).json({ message: error.message || "Failed to create expense" });
+    sendError(res, 400, error.message || "Failed to create expense");
   }
 });
 
@@ -54,23 +55,23 @@ router.put("/:id", authenticateToken, async (req: any, res) => {
   try {
     const { id } = req.params;
     const validatedData = updateExpenseSchema.parse(req.body);
-    
+
     const expense = await storage.updateExpense({
       ...validatedData,
       id
     });
-    
+
     if (!expense) {
-      return res.status(404).json({ message: "Expense not found" });
+      return sendError(res, 404, "Expense not found");
     }
 
     res.json(expense);
   } catch (error: any) {
     console.error("Error updating expense:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      return sendError(res, 400, "Invalid data", error.errors);
     }
-    res.status(400).json({ message: error.message || "Failed to update expense" });
+    sendError(res, 400, error.message || "Failed to update expense");
   }
 });
 
@@ -78,17 +79,17 @@ router.put("/:id", authenticateToken, async (req: any, res) => {
 router.delete("/:id", authenticateToken, async (req: any, res) => {
   try {
     const { id } = req.params;
-    
+
     const deleted = await storage.deleteExpense(id);
-    
+
     if (!deleted) {
-      return res.status(404).json({ message: "Expense not found" });
+      return sendError(res, 404, "Expense not found");
     }
 
-    res.json({ message: "Expense deleted successfully" });
+    sendSuccess(res, undefined, "Expense deleted successfully");
   } catch (error: any) {
     console.error("Error deleting expense:", error);
-    res.status(400).json({ message: error.message || "Failed to delete expense" });
+    sendError(res, 400, error.message || "Failed to delete expense");
   }
 });
 

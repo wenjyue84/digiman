@@ -42,14 +42,14 @@ export const handleRouteError = (
 ): void => {
   console.error(`${message}:`, error);
   
-  const errorResponse: ErrorResponse = {
-    message,
-    statusCode
+  const errorResponse: any = {
+    success: false,
+    error: message,
   };
 
   // Include error details in development
   if (process.env.NODE_ENV === 'development') {
-    errorResponse.error = error instanceof Error ? error.message : String(error);
+    errorResponse.details = error instanceof Error ? error.message : String(error);
   }
 
   res.status(statusCode).json(errorResponse);
@@ -82,9 +82,9 @@ export const handleValidationErrors = (
   res: Response
 ): void => {
   res.status(400).json({
-    message: "Validation failed",
-    errors: validationErrors,
-    statusCode: 400
+    success: false,
+    error: "Validation failed",
+    details: validationErrors,
   });
 };
 
@@ -106,7 +106,8 @@ export const handleSpecificError = (error: any, res: Response): void => {
 };
 
 /**
- * Success response helper for consistent API responses
+ * Success response helper for consistent API responses.
+ * Delegates to the canonical sendSuccess() in apiResponse.ts.
  */
 export const sendSuccessResponse = (
   res: Response,
@@ -115,9 +116,9 @@ export const sendSuccessResponse = (
   statusCode: number = 200
 ): void => {
   res.status(statusCode).json({
+    success: true,
     message,
     data,
-    statusCode
   });
 };
 
@@ -133,6 +134,7 @@ export const sendPaginatedResponse = (
   message: string = "Data retrieved successfully"
 ): void => {
   res.status(200).json({
+    success: true,
     message,
     data,
     pagination: {
@@ -141,7 +143,6 @@ export const sendPaginatedResponse = (
       limit,
       pages: Math.ceil(total / limit)
     },
-    statusCode: 200
   });
 };
 

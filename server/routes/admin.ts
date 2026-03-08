@@ -6,6 +6,7 @@ import { validateData, securityValidationMiddleware } from "../validation";
 import { getConfig, getConfigForAPI, validateConfigUpdate } from "../configManager";
 import { authenticateToken } from "./middleware/auth";
 import { handleDatabaseError, handleFeatureNotImplementedError } from "../lib/errorHandler";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 import fs from "fs/promises";
 import path from "path";
 import { db } from "../db";
@@ -19,7 +20,7 @@ router.get("/config", authenticateToken, securityValidationMiddleware, async (re
     const config = await getConfigForAPI();
     res.json(config);
   } catch (error) {
-    res.status(500).json({ message: "Failed to get configuration" });
+    sendError(res, 500, "Failed to get configuration");
   }
 });
 
@@ -30,19 +31,16 @@ router.put("/config", authenticateToken, securityValidationMiddleware, async (re
     const validation = await validateConfigUpdate(updates);
     
     if (!validation.valid) {
-      return res.status(400).json({ 
-        message: "Invalid configuration", 
-        errors: validation.errors 
-      });
+      return sendError(res, 400, "Invalid configuration", validation.errors);
     }
 
     const config = getConfig();
     await config.updateMultiple(updates, (req as any).user?.email || 'admin');
-    
-    res.json({ message: "Configuration updated successfully" });
+
+    sendSuccess(res, undefined, "Configuration updated successfully");
   } catch (error) {
     console.error("Config update error:", error);
-    res.status(500).json({ message: "Failed to update configuration" });
+    sendError(res, 500, "Failed to update configuration");
   }
 });
 
@@ -52,10 +50,10 @@ router.post("/config/reset", authenticateToken, securityValidationMiddleware, as
     const config = getConfig();
     await config.resetAll((req as any).user?.email || 'admin');
     
-    res.json({ message: "Configuration reset to defaults successfully" });
+    sendSuccess(res, undefined, "Configuration reset to defaults successfully");
   } catch (error) {
     console.error("Config reset error:", error);
-    res.status(500).json({ message: "Failed to reset configuration" });
+    sendError(res, 500, "Failed to reset configuration");
   }
 });
 
@@ -110,12 +108,12 @@ router.patch("/notifications/:id/read", authenticateToken, async (req, res) => {
     const updated = await storage.markNotificationAsRead(id);
     
     if (!updated) {
-      return res.status(404).json({ message: "Notification not found" });
+      return sendError(res, 404, "Notification not found");
     }
 
-    res.json({ message: "Notification marked as read" });
+    sendSuccess(res, undefined, "Notification marked as read");
   } catch (error) {
-    res.status(500).json({ message: "Failed to mark notification as read" });
+    sendError(res, 500, "Failed to mark notification as read");
   }
 });
 
@@ -123,9 +121,9 @@ router.patch("/notifications/:id/read", authenticateToken, async (req, res) => {
 router.patch("/notifications/read-all", authenticateToken, async (req, res) => {
   try {
     const count = await storage.markAllNotificationsAsRead();
-    res.json({ message: `${count} notifications marked as read` });
+    sendSuccess(res, { count }, `${count} notifications marked as read`);
   } catch (error) {
-    res.status(500).json({ message: "Failed to mark all notifications as read" });
+    sendError(res, 500, "Failed to mark all notifications as read");
   }
 });
 
@@ -140,7 +138,7 @@ router.get("/rainbow/intents", authenticateToken, securityValidationMiddleware, 
     res.json(intents);
   } catch (error) {
     console.error("Failed to read intents configuration:", error);
-    res.status(500).json({ message: "Failed to read intents configuration" });
+    sendError(res, 500, "Failed to read intents configuration");
   }
 });
 
@@ -150,7 +148,7 @@ router.post("/rainbow/intents/toggle", authenticateToken, securityValidationMidd
     const { category, enabled } = req.body;
 
     if (!category || typeof enabled !== "boolean") {
-      return res.status(400).json({ message: "Invalid request body" });
+      return sendError(res, 400, "Invalid request body");
     }
 
     const intentsPath = path.join(process.cwd(), "mcp-server", "src", "assistant", "data", "intents.json");
@@ -163,7 +161,7 @@ router.post("/rainbow/intents/toggle", authenticateToken, securityValidationMidd
     );
 
     if (categoryIndex === -1) {
-      return res.status(404).json({ message: "Intent category not found" });
+      return sendError(res, 404, "Intent category not found");
     }
 
     intents.categories[categoryIndex].enabled = enabled;
@@ -171,14 +169,10 @@ router.post("/rainbow/intents/toggle", authenticateToken, securityValidationMidd
     // Write back to file
     await fs.writeFile(intentsPath, JSON.stringify(intents, null, 2), "utf-8");
 
-    res.json({
-      message: "Intent status updated successfully",
-      category,
-      enabled
-    });
+    sendSuccess(res, { category, enabled }, "Intent status updated successfully");
   } catch (error) {
     console.error("Failed to toggle intent:", error);
-    res.status(500).json({ message: "Failed to toggle intent status" });
+    sendError(res, 500, "Failed to toggle intent status");
   }
 });
 
@@ -188,7 +182,7 @@ router.post("/rainbow/intents/test", authenticateToken, securityValidationMiddle
     const { category } = req.body;
 
     if (!category) {
-      return res.status(400).json({ message: "Category is required" });
+      return sendError(res, 400, "Category is required");
     }
 
     const intentsPath = path.join(process.cwd(), "mcp-server", "src", "assistant", "data", "intents.json");
@@ -201,7 +195,7 @@ router.post("/rainbow/intents/test", authenticateToken, securityValidationMiddle
     );
 
     if (!intentCategory) {
-      return res.status(404).json({ message: "Intent category not found" });
+      return sendError(res, 404, "Intent category not found");
     }
 
     // Generate sample replies based on category
@@ -231,7 +225,7 @@ router.post("/rainbow/intents/test", authenticateToken, securityValidationMiddle
     });
   } catch (error) {
     console.error("Failed to test intent:", error);
-    res.status(500).json({ message: "Failed to test intent" });
+    sendError(res, 500, "Failed to test intent");
   }
 });
 
@@ -292,7 +286,7 @@ router.get("/intent-detection-config", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to get intent detection config:", error);
-    res.status(500).json({ message: "Failed to get intent detection configuration" });
+    sendError(res, 500, "Failed to get intent detection configuration");
   }
 });
 
@@ -303,7 +297,7 @@ router.post("/intent-detection-config", authenticateToken, async (req, res) => {
 
     // Validate input
     if (!tiers || !conversationState) {
-      return res.status(400).json({ message: "Invalid configuration format" });
+      return sendError(res, 400, "Invalid configuration format");
     }
 
     // Transform API format to DB format
@@ -337,10 +331,10 @@ router.post("/intent-detection-config", authenticateToken, async (req, res) => {
       await db.insert(intentDetectionSettings).values(dbConfig);
     }
 
-    res.json({ success: true, message: "Intent detection configuration updated" });
+    sendSuccess(res, undefined, "Intent detection configuration updated");
   } catch (error) {
     console.error("Failed to update intent detection config:", error);
-    res.status(500).json({ message: "Failed to update intent detection configuration" });
+    sendError(res, 500, "Failed to update intent detection configuration");
   }
 });
 

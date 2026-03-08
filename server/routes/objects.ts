@@ -5,9 +5,20 @@ import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import multer from "multer";
+import rateLimit from "express-rate-limit";
 import { optimizeAndSaveImage } from "../lib/imageOptimization";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 const router = Router();
+
+// Rate limit uploads: 20 per 15 minutes per IP
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 20 : 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many upload requests. Please try again later." },
+});
 
 // ⚠️  CRITICAL UPLOAD FUNCTIONALITY - DO NOT MODIFY WITHOUT STRONG REASON ⚠️
 //
@@ -55,10 +66,10 @@ const upload = multer({
 
 // Photo upload endpoint for expenses with image optimization
 // ⚠️  DO NOT MODIFY - This endpoint is working perfectly for expense photos
-router.post("/api/upload-photo", upload.single('photo'), async (req, res) => {
+router.post("/api/upload-photo", uploadLimiter, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No photo provided" });
+      return sendError(res, 400, "No photo provided");
     }
 
     const file = req.file;
@@ -95,10 +106,7 @@ router.post("/api/upload-photo", upload.single('photo'), async (req, res) => {
     
   } catch (error: any) {
     console.error("Photo upload error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || "Failed to upload photo" 
-    });
+    sendError(res, 500, error.message || "Failed to upload photo");
   }
 });
 
@@ -107,10 +115,10 @@ router.post("/api/upload-photo", upload.single('photo'), async (req, res) => {
 // This endpoint handles guest document uploads and is currently working perfectly.
 // It generates thumbnails that display correctly in Guest Details.
 // Any changes here can break the entire guest photo system.
-router.post("/api/upload-document", upload.single('document'), async (req, res) => {
+router.post("/api/upload-document", uploadLimiter, upload.single('document'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No document photo provided" });
+      return sendError(res, 400, "No document photo provided");
     }
 
     const file = req.file;
@@ -159,17 +167,14 @@ router.post("/api/upload-document", upload.single('document'), async (req, res) 
     
   } catch (error: any) {
     console.error("Document upload error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || "Failed to upload document photo" 
-    });
+    sendError(res, 500, error.message || "Failed to upload document photo");
   }
 });
 
 // Get upload URL for file uploads
 // Environment-aware upload URL generation for both localhost and Replit
 // ⚠️  DO NOT MODIFY - This handles environment detection and URL generation
-router.post("/api/objects/upload", async (req, res) => {
+router.post("/api/objects/upload", uploadLimiter, async (req, res) => {
   try {
     console.log('Upload request body:', req.body);
     console.log('Environment check - PRIVATE_OBJECT_DIR:', process.env.PRIVATE_OBJECT_DIR);
@@ -195,7 +200,7 @@ router.post("/api/objects/upload", async (req, res) => {
         });
       } catch (replitError: any) {
         console.error("Replit upload URL error:", replitError);
-        res.status(500).json({ message: "Failed to get Replit upload URL: " + replitError.message });
+        sendError(res, 500, "Failed to get Replit upload URL: " + replitError.message);
       }
     } else {
       // Use local development upload endpoint
@@ -213,7 +218,7 @@ router.post("/api/objects/upload", async (req, res) => {
     }
   } catch (error: any) {
     console.error("Upload parameter error:", error);
-    res.status(500).json({ message: error.message || "Failed to get upload URL" });
+    sendError(res, 500, error.message || "Failed to get upload URL");
   }
 });
 
@@ -265,10 +270,10 @@ router.get("/objects/:objectPath(*)", async (req, res) => {
     
   } catch (error) {
     if (error instanceof ObjectNotFoundError) {
-      return res.status(404).json({ message: "Object not found" });
+      return sendError(res, 404, "Object not found");
     }
     console.error("Get object error:", error);
-    res.status(500).json({ message: "Failed to retrieve object" });
+    sendError(res, 500, "Failed to retrieve object");
   }
 });
 
@@ -296,7 +301,7 @@ router.put("/api/objects/dev-upload/:id", async (req, res) => {
     const { id } = req.params;
     
     if (!req.body) {
-      return res.status(400).json({ message: "No data provided" });
+      return sendError(res, 400, "No data provided");
     }
 
     console.log(`Processing upload for ID: ${id} (${Buffer.isBuffer(req.body) ? req.body.length : typeof req.body} bytes)`);
@@ -308,8 +313,7 @@ router.put("/api/objects/dev-upload/:id", async (req, res) => {
       // For Replit, this endpoint shouldn't be hit as uploads go directly to Google Cloud Storage
       // But if it is hit, we should provide a helpful error
       console.error("Dev upload endpoint hit in Replit environment - this suggests upload URL generation issue");
-      return res.status(400).json({ 
-        message: "Invalid upload endpoint for Replit environment",
+      return sendError(res, 400, "Invalid upload endpoint for Replit environment", {
         suggestion: "This indicates a configuration issue - uploads should go directly to Google Cloud Storage"
       });
     } else {
@@ -354,7 +358,7 @@ router.put("/api/objects/dev-upload/:id", async (req, res) => {
     }
   } catch (error: any) {
     console.error("Dev upload error:", error);
-    res.status(500).json({ message: error.message || "Upload failed" });
+    sendError(res, 500, error.message || "Upload failed");
   }
 });
 
@@ -391,11 +395,11 @@ router.get("/objects/uploads/:id", async (req, res) => {
       res.setHeader('Content-Type', contentType);
       res.send(fileData);
     } catch (fileError) {
-      return res.status(404).json({ message: "Upload not found" });
+      return sendError(res, 404, "Upload not found");
     }
   } catch (error: any) {
     console.error("Get upload error:", error);
-    res.status(500).json({ message: "Failed to retrieve upload" });
+    sendError(res, 500, "Failed to retrieve upload");
   }
 });
 

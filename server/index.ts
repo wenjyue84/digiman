@@ -43,9 +43,14 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, curl, Postman, same-origin)
     if (!origin) return callback(null, true);
 
-    // Allow localhost (local dev + Rainbow AI)
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return callback(null, true);
+    // Allow localhost with exact port matching (local dev + Rainbow AI)
+    try {
+      const url = new URL(origin);
+      if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        return callback(null, true);
+      }
+    } catch {
+      // Invalid origin URL — fall through to deny
     }
 
     const allowedOrigins = [
@@ -340,6 +345,16 @@ app.use((req, res, next) => {
     host: process.env.NODE_ENV === 'production' ? "0.0.0.0" : "127.0.0.1",
   }, () => {
     log(`serving on port ${port}`);
+
+    // Auto-expire no-show reservations every hour
+    setInterval(async () => {
+      try {
+        const count = await storage.expireNoShowReservations();
+        if (count > 0) log(`Auto-expired ${count} no-show reservation(s)`);
+      } catch (e) {
+        // Silently ignore — table may not exist yet
+      }
+    }, 60 * 60 * 1000);
   });
 
   // Graceful shutdown handling to prevent port conflicts
