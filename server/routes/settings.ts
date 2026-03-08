@@ -18,7 +18,7 @@ const router = Router();
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, process.cwd());
+      cb(null, process.env.VERCEL ? '/tmp' : process.cwd());
     },
     filename: (req, file, cb) => {
       cb(null, 'settings.csv');
