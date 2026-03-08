@@ -310,6 +310,21 @@ router.delete("/:id", authenticateToken, async (req: any, res) => {
   }
 });
 
+// GET /cron/expire-no-shows — Vercel Cron endpoint (secured by CRON_SECRET)
+router.get("/cron/expire-no-shows", async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || req.headers.authorization !== `Bearer ${secret}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  try {
+    const count = await storage.expireNoShowReservations();
+    res.json({ ok: true, expired: count });
+  } catch (error: any) {
+    console.error("Error in cron expire-no-shows:", error);
+    res.status(500).json({ error: "Failed to expire no-show reservations" });
+  }
+});
+
 // POST /expire-no-shows — Bulk expire past-due confirmed reservations
 router.post("/expire-no-shows", authenticateToken, async (_req: any, res) => {
   try {
