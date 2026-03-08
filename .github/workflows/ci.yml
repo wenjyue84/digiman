@@ -9,7 +9,7 @@ on:
 jobs:
   typecheck-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +29,12 @@ jobs:
       - name: Unit tests (root)
         run: npm test
 
+      - name: Build client + server
+        run: npm run build
+
+      - name: Security audit
+        run: npm audit --audit-level=critical || true
+
       # RainbowAI
       - name: Install RainbowAI dependencies
         run: npm ci
@@ -43,3 +49,7 @@ jobs:
         working-directory: RainbowAI
         env:
           NODE_ENV: test
+
+      - name: Security audit (RainbowAI)
+        run: npm audit --audit-level=critical || true
+        working-directory: RainbowAI

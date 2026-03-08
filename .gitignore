@@ -101,7 +101,9 @@ mcp-server/whatsapp-auth/
 mcp-server/whatsapp-data/
 whatsapp-auth/
 whatsapp-data/
+whatsapp-data-*/
 .env.zeabur
+.env.vercel
 .zeabur-token
 mcp-server/evolution-api.env
 local.env

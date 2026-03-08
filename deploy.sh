@@ -35,13 +35,37 @@ SCP_CMD="scp -i $SSH_KEY"
 
 SKIP_BUILD=false
 SKIP_RAINBOW=false
+ROLLBACK=false
 
 for arg in "$@"; do
   case $arg in
     --skip-build) SKIP_BUILD=true ;;
     --skip-rainbow) SKIP_RAINBOW=true ;;
+    --rollback) ROLLBACK=true ;;
   esac
 done
+
+# --- Rollback Mode ---
+if [ "$ROLLBACK" = true ]; then
+  echo "=== ROLLBACK: Restoring previous deployment [$TARGET] ==="
+  $SSH_CMD << ROLLBACK_EOF
+set -e
+cd $REMOTE_DIR
+if [ ! -f /tmp/dist-rollback.tar.gz ]; then
+  echo "ERROR: No rollback backup found at /tmp/dist-rollback.tar.gz"
+  exit 1
+fi
+echo "Restoring previous dist/..."
+tar xzf /tmp/dist-rollback.tar.gz
+echo "Restarting PM2..."
+pm2 reload ecosystem.config.cjs --update-env
+pm2 save
+echo ""
+echo "=== Rollback Complete ==="
+pm2 status
+ROLLBACK_EOF
+  exit 0
+fi
 
 echo "=== digiman Deployment [$TARGET] ==="
 echo "Target: $SSH_USER@$INSTANCE_IP:$REMOTE_DIR"
@@ -92,14 +116,18 @@ tar czf pelangi-deploy.tar.gz --exclude="*.map" $TAR_ARGS
 TARBALL_SIZE=$(du -h pelangi-deploy.tar.gz | cut -f1)
 echo "  Tarball created: pelangi-deploy.tar.gz ($TARBALL_SIZE)"
 
-# --- Phase 4: Upload + extract ---
-echo "[4/5] Uploading to Lightsail..."
+# --- Phase 4: Upload + extract (with rollback backup) ---
+echo "[4/6] Uploading to Lightsail..."
 $SCP_CMD pelangi-deploy.tar.gz $SSH_USER@$INSTANCE_IP:/tmp/
+
+# Backup current dist/ on server before overwriting
+$SSH_CMD "cd $REMOTE_DIR && if [ -d dist ]; then echo '  Backing up current dist/ for rollback...'; tar czf /tmp/dist-rollback.tar.gz dist/ RainbowAI/dist/ 2>/dev/null || tar czf /tmp/dist-rollback.tar.gz dist/; fi"
+
 $SSH_CMD "mkdir -p $REMOTE_DIR && cd $REMOTE_DIR && tar xzf /tmp/pelangi-deploy.tar.gz && rm /tmp/pelangi-deploy.tar.gz"
 echo "  Upload and extraction complete."
 
 # --- Phase 5: Install deps + restart ---
-echo "[5/5] Installing dependencies and restarting..."
+echo "[5/6] Installing dependencies and restarting..."
 $SSH_CMD << REMOTE_EOF
 set -e
 cd $REMOTE_DIR
@@ -126,6 +154,18 @@ pm2 status
 echo ""
 free -h | head -3
 REMOTE_EOF
+
+# --- Phase 6: Post-deploy health check ---
+echo "[6/6] Verifying deployment..."
+sleep 3
+HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$INSTANCE_IP/api/health" 2>/dev/null || echo "000")
+if [ "$HEALTH_STATUS" = "200" ]; then
+  echo "  Health check passed (HTTP $HEALTH_STATUS)"
+else
+  echo "  WARNING: Health check returned HTTP $HEALTH_STATUS"
+  echo "  Rollback available: ssh into server and run:"
+  echo "    cd $REMOTE_DIR && tar xzf /tmp/dist-rollback.tar.gz && pm2 reload ecosystem.config.cjs --update-env"
+fi
 
 # Cleanup local tarball
 rm -f pelangi-deploy.tar.gz
