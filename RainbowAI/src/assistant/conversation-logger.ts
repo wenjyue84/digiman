@@ -6,163 +6,56 @@
  *
  * Maintains the same public API as the old JSON-file version
  * so all callers (pipeline, routes, etc.) work unchanged.
+ *
+ * Refactored: helpers extracted to conversation-db.ts, conversation-contacts.ts,
+ * conversation-context.ts, and conversation-logger-types.ts.
  */
 
-import { eq, desc, gt, sql, and } from 'drizzle-orm';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { db, dbReady } from '../lib/db.js';
+import { eq, gt, sql, and } from 'drizzle-orm';
+import { db } from '../lib/db.js';
 import { withFallback } from '../lib/with-fallback.js';
 import { rainbowConversations, rainbowMessages } from '../../../shared/schema-tables.js';
+import {
+  ensureDb,
+  canonicalPhoneKey,
+  rowToMessage,
+  upsertConversation,
+  invalidateListCache,
+  getListCache,
+  setListCache,
+} from './conversation-db.js';
+import { scheduleContextUpdate } from './conversation-context.js';
 
-const CONTACTS_DIR = join(process.cwd(), '.rainbow-kb', 'contacts');
+// ─── Re-export types (callers still import these from here) ─────────
 
-// ─── Types (unchanged — callers still import these) ─────────────────
+export type {
+  LoggedMessage,
+  ContactDetails,
+  ConversationLog,
+  ConversationSummary,
+} from './conversation-logger-types.js';
 
-export interface LoggedMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;       // Unix ms
-  intent?: string;
-  confidence?: number;
-  action?: string;
-  manual?: boolean;
-  source?: string;
-  model?: string;
-  responseTime?: number;
-  kbFiles?: string[];
-  messageType?: string;
-  routedAction?: string;
-  workflowId?: string;
-  stepId?: string;
-  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-  staffName?: string;        // US-011: Staff display name for manual message attribution
-}
+import type {
+  ContactDetails,
+  ConversationLog,
+  ConversationSummary,
+} from './conversation-logger-types.js';
 
-export interface ContactDetails {
-  name?: string;
-  email?: string;
-  country?: string;
-  language?: string;
-  languageLocked?: boolean;
-  checkIn?: string;
-  checkOut?: string;
-  unit?: string;
-  notes?: string;
-  contactStatus?: string;
-  paymentStatus?: string;
-  tags?: string[];
-}
+// ─── Re-export contact management (callers import from here) ────────
 
-export interface ConversationLog {
-  phone: string;
-  pushName: string;
-  instanceId?: string;
-  messages: LoggedMessage[];
-  contactDetails?: ContactDetails;
-  pinned?: boolean;
-  favourite?: boolean;
-  lastReadAt?: number;
-  responseMode?: string;
-  createdAt: number;
-  updatedAt: number;
-}
+export {
+  getContactDetails,
+  updateContactDetails,
+  getAllContactTags,
+  getAllContactUnits,
+  getAllContactDates,
+} from './conversation-contacts.js';
 
-export interface ConversationSummary {
-  phone: string;
-  pushName: string;
-  instanceId?: string;
-  lastMessage: string;
-  lastMessageRole: 'user' | 'assistant';
-  lastMessageAt: number;
-  messageCount: number;
-  unreadCount: number;
-  pinned?: boolean;
-  favourite?: boolean;
-  createdAt: number;
-}
+// ─── Re-export context update (used by logMessage internally + tests) ─
 
-// ─── DB availability guard ──────────────────────────────────────────
+export { scheduleContextUpdate } from './conversation-context.js';
 
-let dbAvailable = false;
-
-async function ensureDb(): Promise<boolean> {
-  if (dbAvailable) return true;
-  try {
-    const ready = await dbReady;
-    dbAvailable = !!ready;
-  } catch {
-    dbAvailable = false;
-  }
-  return dbAvailable;
-}
-
-// ─── Canonical phone key (same as before) ───────────────────────────
-
-function canonicalPhoneKey(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  return digits || phone.replace(/[^a-zA-Z0-9@._-]/g, '_');
-}
-
-// ─── DB row → LoggedMessage ─────────────────────────────────────────
-
-function rowToMessage(row: typeof rainbowMessages.$inferSelect): LoggedMessage {
-  const msg: LoggedMessage = {
-    role: row.role as 'user' | 'assistant',
-    content: row.content,
-    timestamp: row.timestamp.getTime(),
-  };
-  if (row.intent) msg.intent = row.intent;
-  if (row.confidence != null) msg.confidence = row.confidence;
-  if (row.action) msg.action = row.action;
-  if (row.manual) msg.manual = row.manual;
-  if (row.source) msg.source = row.source;
-  if (row.model) msg.model = row.model;
-  if (row.responseTime != null) msg.responseTime = row.responseTime;
-  if (row.kbFilesJson) {
-    try { msg.kbFiles = JSON.parse(row.kbFilesJson); } catch { /* ignore */ }
-  }
-  if (row.messageType) msg.messageType = row.messageType;
-  if (row.routedAction) msg.routedAction = row.routedAction;
-  if (row.workflowId) msg.workflowId = row.workflowId;
-  if (row.stepId) msg.stepId = row.stepId;
-  if (row.usageJson) {
-    try { msg.usage = JSON.parse(row.usageJson); } catch { /* ignore */ }
-  }
-  return msg;
-}
-
-// ─── Upsert conversation row ───────────────────────────────────────
-
-async function upsertConversation(
-  phone: string,
-  pushName: string,
-  instanceId?: string,
-  txOrDb: typeof db = db
-): Promise<void> {
-  const key = canonicalPhoneKey(phone);
-  const now = new Date();
-
-  await txOrDb
-    .insert(rainbowConversations)
-    .values({
-      phone: key,
-      pushName,
-      instanceId: instanceId ?? null,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: rainbowConversations.phone,
-      set: {
-        pushName,
-        ...(instanceId ? { instanceId } : {}),
-        updatedAt: now,
-      },
-    });
-}
-
-// ─── Public API (same signatures as before) ─────────────────────────
+// ─── Public API ─────────────────────────────────────────────────────
 
 /** Log a single message to a conversation */
 export async function logMessage(
@@ -318,20 +211,10 @@ export async function logNonTextExchange(
   }
 }
 
-// ─── List cache (same TTL approach) ─────────────────────────────────
-
-let _listCache: { data: ConversationSummary[]; ts: number } | null = null;
-const LIST_CACHE_TTL = 10_000;
-
-function invalidateListCache(): void {
-  _listCache = null;
-}
-
 /** List all conversations with summaries. */
 export async function listConversations(): Promise<ConversationSummary[]> {
-  if (_listCache && Date.now() - _listCache.ts < LIST_CACHE_TTL) {
-    return _listCache.data;
-  }
+  const cached = getListCache();
+  if (cached) return cached.data;
 
   if (!(await ensureDb())) return [];
 
@@ -398,7 +281,7 @@ export async function listConversations(): Promise<ConversationSummary[]> {
           ? r.created_at.getTime()
           : new Date(r.created_at).getTime(),
       }));
-      _listCache = { data: summaries, ts: Date.now() };
+      setListCache(summaries);
       return summaries;
     },
     async () => [],
@@ -569,160 +452,6 @@ export async function toggleFavourite(phone: string): Promise<boolean> {
   );
 }
 
-/** Get contact details for a phone number */
-export async function getContactDetails(phone: string): Promise<ContactDetails> {
-  if (!(await ensureDb())) return {};
-
-  return withFallback(
-    async () => {
-      const key = canonicalPhoneKey(phone);
-      const rows = await db
-        .select({ json: rainbowConversations.contactDetailsJson })
-        .from(rainbowConversations)
-        .where(eq(rainbowConversations.phone, key))
-        .limit(1);
-
-      if (rows.length === 0 || !rows[0].json) return {};
-      return JSON.parse(rows[0].json);
-    },
-    async () => ({}),
-    `[ConvoLogger] getContactDetails(${phone})`
-  );
-}
-
-/** Merge partial contact details update for a phone number */
-export async function updateContactDetails(phone: string, partial: Partial<ContactDetails>): Promise<ContactDetails> {
-  if (!(await ensureDb())) return {};
-
-  return withFallback(
-    async () => {
-      const key = canonicalPhoneKey(phone);
-
-      // Ensure conversation exists
-      await db
-        .insert(rainbowConversations)
-        .values({ phone: key, pushName: '', createdAt: new Date(), updatedAt: new Date() })
-        .onConflictDoNothing();
-
-      // Get existing details
-      const rows = await db
-        .select({ json: rainbowConversations.contactDetailsJson })
-        .from(rainbowConversations)
-        .where(eq(rainbowConversations.phone, key))
-        .limit(1);
-
-      let existing: ContactDetails = {};
-      if (rows.length > 0 && rows[0].json) {
-        try { existing = JSON.parse(rows[0].json); } catch { /* ignore */ }
-      }
-
-      const merged = { ...existing, ...partial };
-
-      await db
-        .update(rainbowConversations)
-        .set({ contactDetailsJson: JSON.stringify(merged), updatedAt: new Date() })
-        .where(eq(rainbowConversations.phone, key));
-
-      return merged;
-    },
-    async () => ({}),
-    `[ConvoLogger] updateContactDetails(${phone})`
-  );
-}
-
-/** Get phone→tags[] map for all contacts that have tags (US-009). */
-export async function getAllContactTags(): Promise<Record<string, string[]>> {
-  if (!(await ensureDb())) return {};
-
-  return withFallback(
-    async () => {
-      const rows = await db
-        .select({
-          phone: rainbowConversations.phone,
-          json: rainbowConversations.contactDetailsJson,
-        })
-        .from(rainbowConversations)
-        .where(sql`${rainbowConversations.contactDetailsJson} IS NOT NULL`);
-
-      const result: Record<string, string[]> = {};
-      for (const r of rows) {
-        if (!r.json) continue;
-        try {
-          const details = JSON.parse(r.json);
-          if (Array.isArray(details.tags) && details.tags.length > 0) {
-            result[r.phone] = details.tags;
-          }
-        } catch { /* ignore malformed JSON */ }
-      }
-      return result;
-    },
-    async () => ({}),
-    '[ConvoLogger] getAllContactTags'
-  );
-}
-
-/** Get phone→unit map for all contacts that have a unit assigned (US-012). */
-export async function getAllContactUnits(): Promise<Record<string, string>> {
-  if (!(await ensureDb())) return {};
-
-  return withFallback(
-    async () => {
-      const rows = await db
-        .select({
-          phone: rainbowConversations.phone,
-          json: rainbowConversations.contactDetailsJson,
-        })
-        .from(rainbowConversations)
-        .where(sql`${rainbowConversations.contactDetailsJson} IS NOT NULL`);
-
-      const result: Record<string, string> = {};
-      for (const r of rows) {
-        if (!r.json) continue;
-        try {
-          const details = JSON.parse(r.json);
-          if (details.unit && typeof details.unit === 'string' && details.unit.trim()) {
-            result[r.phone] = details.unit.trim();
-          }
-        } catch { /* ignore malformed JSON */ }
-      }
-      return result;
-    },
-    async () => ({}),
-    '[ConvoLogger] getAllContactUnits'
-  );
-}
-
-/** Get phone→{checkIn, checkOut} map for all contacts that have dates set (US-014). */
-export async function getAllContactDates(): Promise<Record<string, { checkIn: string; checkOut: string }>> {
-  if (!(await ensureDb())) return {};
-
-  return withFallback(
-    async () => {
-      const rows = await db
-        .select({
-          phone: rainbowConversations.phone,
-          json: rainbowConversations.contactDetailsJson,
-        })
-        .from(rainbowConversations)
-        .where(sql`${rainbowConversations.contactDetailsJson} IS NOT NULL`);
-
-      const result: Record<string, { checkIn: string; checkOut: string }> = {};
-      for (const r of rows) {
-        if (!r.json) continue;
-        try {
-          const details = JSON.parse(r.json);
-          if (details.checkIn && details.checkOut) {
-            result[r.phone] = { checkIn: details.checkIn, checkOut: details.checkOut };
-          }
-        } catch { /* ignore malformed JSON */ }
-      }
-      return result;
-    },
-    async () => ({}),
-    '[ConvoLogger] getAllContactDates'
-  );
-}
-
 /** Update the response mode for a conversation (persists to DB). */
 export async function updateConversationMode(phone: string, mode: string): Promise<void> {
   if (!(await ensureDb())) return;
@@ -771,114 +500,6 @@ export async function getResponseTimeStats(): Promise<{ count: number; sumMs: nu
     async () => ({ count: 0, sumMs: 0, avgMs: null }),
     '[ConvoLogger] getResponseTimeStats'
   );
-}
-
-// ─── Auto-update Contact Context Files (US-104) ─────────────────────
-
-const _contextUpdateTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const CONTEXT_UPDATE_DEBOUNCE_MS = 30_000; // 30 seconds debounce
-
-/** Schedule a debounced context file update after assistant reply */
-export function scheduleContextUpdate(phone: string, pushName: string): void {
-  const key = phone.replace(/\D/g, '');
-  if (!key) return;
-
-  // Clear existing timer
-  const existing = _contextUpdateTimers.get(key);
-  if (existing) clearTimeout(existing);
-
-  // Schedule new update
-  _contextUpdateTimers.set(key, setTimeout(async () => {
-    _contextUpdateTimers.delete(key);
-    try {
-      await updateContactContextFile(key, pushName);
-    } catch (err: any) {
-      console.error(`[ContactContext] Auto-update failed for ${key}:`, err.message);
-    }
-  }, CONTEXT_UPDATE_DEBOUNCE_MS));
-}
-
-/** Write/update a contact context file from the latest conversation data */
-async function updateContactContextFile(phone: string, pushName: string): Promise<void> {
-  if (!(await ensureDb())) return;
-
-  try {
-    if (!existsSync(CONTACTS_DIR)) {
-      mkdirSync(CONTACTS_DIR, { recursive: true });
-    }
-
-    const convo = await getConversation(phone);
-    if (!convo || convo.messages.length === 0) return;
-
-    const messages = convo.messages;
-    const userMsgs = messages.filter(m => m.role === 'user');
-    const lastMsg = messages[messages.length - 1];
-
-    // Detect primary language
-    const langCounts: Record<string, number> = {};
-    for (const msg of userMsgs.slice(-20)) {
-      const lang = detectLangSimple(msg.content);
-      langCounts[lang] = (langCounts[lang] || 0) + 1;
-    }
-    const primaryLang = Object.entries(langCounts)
-      .sort((a, b) => b[1] - a[1])[0]?.[0] || 'en';
-
-    // Extract intents
-    const intentSet = new Set<string>();
-    for (const msg of messages) {
-      if (msg.intent && msg.intent !== 'unknown') {
-        intentSet.add(msg.intent);
-      }
-    }
-
-    const recentUserMsgs = userMsgs.slice(-10).map(m => m.content).join('; ');
-    const topicSummary = recentUserMsgs.length > 300
-      ? recentUserMsgs.slice(0, 300) + '...'
-      : recentUserMsgs;
-
-    const details = convo.contactDetails || {};
-
-    const lines = [
-      `# Contact: ${pushName || convo.pushName || phone}`,
-      '',
-      `- **Phone:** ${phone}`,
-      `- **Name:** ${pushName || convo.pushName || 'Unknown'}`,
-      details.language ? `- **Language:** ${details.language}` : `- **Language:** ${primaryLang}`,
-      details.country ? `- **Country:** ${details.country}` : '',
-      `- **Total Messages:** ${messages.length}`,
-      `- **Last Interaction:** ${new Date(lastMsg.timestamp).toISOString().split('T')[0]}`,
-      `- **First Contact:** ${new Date(convo.createdAt).toISOString().split('T')[0]}`,
-      '',
-      '## Key Topics',
-      '',
-      intentSet.size > 0
-        ? Array.from(intentSet).map(i => `- ${i}`).join('\n')
-        : '- No classified intents yet',
-      '',
-      '## Recent Conversation Summary',
-      '',
-      topicSummary || 'No messages yet.',
-    ];
-
-    if (details.notes) {
-      lines.push('', '## Notes', '', details.notes);
-    }
-    if (details.tags && details.tags.length > 0) {
-      lines.push('', '## Tags', '', details.tags.join(', '));
-    }
-
-    const contextContent = lines.filter(l => l !== undefined).join('\n') + '\n';
-    const filename = `${phone}-context.md`;
-    writeFileSync(join(CONTACTS_DIR, filename), contextContent, 'utf-8');
-  } catch (err: any) {
-    console.error(`[ContactContext] updateContactContextFile failed for ${phone}:`, err.message);
-  }
-}
-
-function detectLangSimple(text: string): string {
-  if (/[\u4e00-\u9fff]/.test(text)) return 'zh';
-  if (/\b(saya|boleh|nak|mahu|ada|ini|itu|di|dan|untuk|tidak|dengan)\b/i.test(text)) return 'ms';
-  return 'en';
 }
 
 // ─── One-time Dedup Cleanup (Baileys double-fire) ────────────────────
