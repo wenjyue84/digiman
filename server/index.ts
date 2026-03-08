@@ -141,7 +141,7 @@ app.use((req, res, next) => {
 
     // Use env vars for credentials (fall back to defaults in development only)
     const isDev = process.env.NODE_ENV !== 'production';
-    const adminPassword = process.env.ADMIN_PASSWORD || (isDev ? 'admin' : undefined);
+    const adminPassword = process.env.ADMIN_PASSWORD || (isDev ? 'admin123' : undefined);
     if (adminPassword) {
       await ensureAdminUser("admin", adminPassword);
     } else {

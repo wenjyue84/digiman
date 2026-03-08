@@ -5,6 +5,7 @@ import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { GlobalErrorBoundary } from "./components/global-error-boundary";
 import { DatabaseErrorBoundary } from "./components/DatabaseErrorBoundary";
 import AuthProvider from "./components/auth-provider";
@@ -66,65 +67,69 @@ function Router() {
   const shouldHideNavigation = isGuestPage || isAdminPage;
 
   return (
-    <div className="min-h-screen bg-hostel-background">
+    <div className="min-h-screen bg-hostel-background flex flex-col">
       <GlobalTopProgress />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-24 md:pb-4 animate-fade-in">
+      <SidebarProvider className="flex-1" defaultOpen={false}>
         {!shouldHideNavigation && <Navigation />}
-        <Switch>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/check-in">
-            <ProtectedRoute requireAuth={true}>
-              <CheckIn />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/check-out">
-            <ProtectedRoute requireAuth={true}>
-              <CheckOut />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/cleaning">
-            <ProtectedRoute requireAuth={true}>
-              <Cleaning />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/history" component={History} />
-          <Route path="/guest-checkin" component={GuestCheckin} />
-          <Route path="/guest-edit" component={GuestEdit} />
-          <Route path="/guest-success" component={GuestSuccess} />
-          <Route path="/settings">
-            <ProtectedRoute requireAuth={true}>
-              <Settings />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/help">
-            <ProtectedRoute requireAuth={true}>
-              <Help />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/finance">
-            <ProtectedRoute requireAuth={true}>
-              <Finance />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/guest-guide">
-            <ProtectedRoute requireAuth={true}>
-              <GuestGuide />
-            </ProtectedRoute>
-          </Route>
-          <Route path="/admin/intent-manager">
-            <ProtectedRoute requireAuth={true}>
-              <IntentManager />
-            </ProtectedRoute>
-          </Route>
-          {/* REMOVED: /admin/rainbow route - NO redirects from port 3000 to port 3002! */}
-          {/* Access Rainbow admin directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard) */}
-          {/* Developer test suite — accessible without protected route for inline login form */}
-          <Route path="/test" component={TestSuite} />
-          <Route path="/login" component={LoginForm} />
-          <Route component={NotFound} />
-        </Switch>
-      </div>
+        <SidebarInset className="overflow-auto">
+          <div className="px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6 animate-fade-in">
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/dashboard" component={Dashboard} />
+              <Route path="/check-in">
+                <ProtectedRoute requireAuth={true}>
+                  <CheckIn />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/check-out">
+                <ProtectedRoute requireAuth={true}>
+                  <CheckOut />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/cleaning">
+                <ProtectedRoute requireAuth={true}>
+                  <Cleaning />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/history" component={History} />
+              <Route path="/guest-checkin" component={GuestCheckin} />
+              <Route path="/guest-edit" component={GuestEdit} />
+              <Route path="/guest-success" component={GuestSuccess} />
+              <Route path="/settings">
+                <ProtectedRoute requireAuth={true}>
+                  <Settings />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/help">
+                <ProtectedRoute requireAuth={true}>
+                  <Help />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/finance">
+                <ProtectedRoute requireAuth={true}>
+                  <Finance />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/guest-guide">
+                <ProtectedRoute requireAuth={true}>
+                  <GuestGuide />
+                </ProtectedRoute>
+              </Route>
+              <Route path="/admin/intent-manager">
+                <ProtectedRoute requireAuth={true}>
+                  <IntentManager />
+                </ProtectedRoute>
+              </Route>
+              {/* REMOVED: /admin/rainbow route - NO redirects from port 3000 to port 3002! */}
+              {/* Access Rainbow admin directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard) */}
+              {/* Developer test suite — accessible without protected route for inline login form */}
+              <Route path="/test" component={TestSuite} />
+              <Route path="/login" component={LoginForm} />
+              <Route component={NotFound} />
+            </Switch>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
       {!shouldHideNavigation && <MobileBottomNav />}
     </div>
   );
