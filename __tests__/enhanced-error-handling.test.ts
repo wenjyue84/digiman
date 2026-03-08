@@ -207,16 +207,16 @@ describe('Enhanced Error Handling System', () => {
       const mockResponse = new Response('', { status: 400 });
       const detailedError = await parseApiError(mockResponse, '/api/guest-tokens');
 
-      expect(detailedError.details).toBe('The guest token creation failed due to invalid data or capsule unavailability.');
-      expect(detailedError.solution).toBe('Check if the selected capsule is available and all required fields are filled correctly.');
+      expect(detailedError.details).toBe('The guest token creation failed due to invalid data or unit unavailability.');
+      expect(detailedError.solution).toBe('Check if the selected unit is available and all required fields are filled correctly.');
     });
 
     it('should enhance guest check-in endpoint errors', async () => {
       const mockResponse = new Response('', { status: 400 });
       const detailedError = await parseApiError(mockResponse, '/api/guests/checkin');
 
-      expect(detailedError.details).toBe('Guest check-in failed due to validation errors or capsule conflicts.');
-      expect(detailedError.solution).toBe('Verify all guest information is correct and the selected capsule is available.');
+      expect(detailedError.details).toBe('Guest check-in failed due to validation errors or unit conflicts.');
+      expect(detailedError.solution).toBe('Verify all guest information is correct and the selected unit is available.');
     });
   });
 

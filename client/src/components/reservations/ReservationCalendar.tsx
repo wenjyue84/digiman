@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { getAuthHeaders } from "@/lib/queryClient";
 import type { Reservation, PaginatedResponse } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,10 @@ export function ReservationCalendar({ onCreateForDate }: Props) {
   const { data: reservationsResponse } = useQuery<PaginatedResponse<Reservation>>({
     queryKey: ["/api/reservations", { dateFrom: getMonthStart(), dateTo: getMonthEnd() }],
     queryFn: async () => {
-      const res = await fetch(`/api/reservations?dateFrom=${getMonthStart()}&dateTo=${getMonthEnd()}`, { credentials: "include" });
+      const res = await fetch(`/api/reservations?dateFrom=${getMonthStart()}&dateTo=${getMonthEnd()}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
       return res.json();
     },
   });

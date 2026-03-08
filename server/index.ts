@@ -55,6 +55,7 @@ const corsOptions = {
 
     const allowedOrigins = [
       process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+      process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '',
       process.env.PRODUCTION_URL || '',
       ...extraOrigins,
     ].filter(Boolean);
