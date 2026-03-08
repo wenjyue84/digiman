@@ -208,6 +208,47 @@ export const expenses = pgTable("expenses", {
   index("idx_expenses_created_at").on(table.createdAt),
 ]));
 
+// ─── Reservations ───────────────────────────────────────────────
+
+export const reservations = pgTable("reservations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  confirmationNumber: text("confirmation_number").notNull().unique(),
+  guestName: text("guest_name").notNull(),
+  guestPhone: text("guest_phone"),
+  guestEmail: text("guest_email"),
+  guestNationality: text("guest_nationality"),
+  numberOfGuests: integer("number_of_guests").notNull().default(1),
+  unitNumber: text("unit_number"),
+  checkInDate: date("check_in_date").notNull(),
+  checkOutDate: date("check_out_date").notNull(),
+  numberOfNights: integer("number_of_nights").notNull(),
+  totalAmount: text("total_amount"),
+  depositAmount: text("deposit_amount"),
+  depositMethod: text("deposit_method"),
+  depositPaid: boolean("deposit_paid").notNull().default(false),
+  refundStatus: text("refund_status"),
+  status: text("status").notNull().default("confirmed"),
+  source: text("source").notNull().default("walk_in"),
+  specialRequests: text("special_requests"),
+  internalNotes: text("internal_notes"),
+  guestId: varchar("guest_id"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  cancelledAt: timestamp("cancelled_at"),
+  cancelledBy: varchar("cancelled_by"),
+  cancelReason: text("cancel_reason"),
+}, (table) => ([
+  index("idx_reservations_confirmation_number").on(table.confirmationNumber),
+  index("idx_reservations_status").on(table.status),
+  index("idx_reservations_check_in_date").on(table.checkInDate),
+  index("idx_reservations_check_out_date").on(table.checkOutDate),
+  index("idx_reservations_unit_number").on(table.unitNumber),
+  index("idx_reservations_guest_name").on(table.guestName),
+  index("idx_reservations_source").on(table.source),
+  index("idx_reservations_status_check_in").on(table.status, table.checkInDate),
+]));
+
 // ─── Rainbow AI ──────────────────────────────────────────────────────
 
 export const intentDetectionSettings = pgTable("intent_detection_settings", {
@@ -381,3 +422,5 @@ export type RainbowConversation = typeof rainbowConversations.$inferSelect;
 export type InsertRainbowConversation = typeof rainbowConversations.$inferInsert;
 export type RainbowMessage = typeof rainbowMessages.$inferSelect;
 export type InsertRainbowMessage = typeof rainbowMessages.$inferInsert;
+export type Reservation = typeof reservations.$inferSelect;
+export type InsertReservation = typeof reservations.$inferInsert;

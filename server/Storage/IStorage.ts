@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Unit, type InsertUnit, type Session, type GuestToken, type InsertGuestToken, type UnitProblem, type InsertUnitProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Unit, type InsertUnit, type Session, type GuestToken, type InsertGuestToken, type UnitProblem, type InsertUnitProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, type Reservation, type InsertReservation } from "../../shared/schema";
 
 // ─── Domain Sub-Interfaces (Interface Segregation Principle) ─────────────────
 
@@ -122,6 +122,23 @@ export interface IExpenseStorage {
   deleteExpense(id: string): Promise<boolean>;
 }
 
+/** Reservation/booking lifecycle management */
+export interface IReservationStorage {
+  createReservation(data: InsertReservation & { createdBy: string; confirmationNumber: string }): Promise<Reservation>;
+  getReservation(id: string): Promise<Reservation | undefined>;
+  getReservationByConfirmation(num: string): Promise<Reservation | undefined>;
+  getReservations(pagination?: PaginationParams, filters?: {
+    status?: string; dateFrom?: string; dateTo?: string;
+    unitNumber?: string; search?: string; source?: string;
+  }): Promise<PaginatedResponse<Reservation>>;
+  getReservationsByUnit(unitNumber: string, start: Date, end: Date): Promise<Reservation[]>;
+  getUpcomingReservations(days?: number): Promise<Reservation[]>;
+  getTodayArrivals(): Promise<Reservation[]>;
+  updateReservation(id: string, updates: Partial<Reservation>): Promise<Reservation | undefined>;
+  deleteReservation(id: string): Promise<boolean>;
+  expireNoShowReservations(): Promise<number>;
+}
+
 export interface IDatabaseMetrics {
   status: "ok" | "error";
   uptime: string;
@@ -143,6 +160,7 @@ export interface IStorage extends
   ITokenStorage,
   INotificationStorage,
   ISettingsStorage,
-  IExpenseStorage {
+  IExpenseStorage,
+  IReservationStorage {
   getDatabaseMetrics(): Promise<IDatabaseMetrics | null>;
 }

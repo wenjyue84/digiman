@@ -11,4 +11,5 @@ export * from './unit-validation';
 export * from './token-validation';
 export * from './settings-validation';
 export * from './expense-validation';
+export * from './reservation-validation';
 export * from './rainbow-validation';

@@ -7,4 +7,5 @@ export { DbTokenQueries } from "./DbTokenQueries";
 export { DbNotificationQueries } from "./DbNotificationQueries";
 export { DbSettingsQueries } from "./DbSettingsQueries";
 export { DbExpenseQueries } from "./DbExpenseQueries";
+export { DbReservationQueries } from "./DbReservationQueries";
 export { paginate } from "./paginate";

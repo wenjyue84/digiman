@@ -1,4 +1,4 @@
-import type { User, InsertUser, Guest, InsertGuest, Unit, InsertUnit, Session, GuestToken, InsertGuestToken, UnitProblem, InsertUnitProblem, AdminNotification, InsertAdminNotification, PushSubscription, InsertPushSubscription, AppSetting, InsertAppSetting, PaginationParams, PaginatedResponse, Expense, InsertExpense, UpdateExpense } from "../../shared/schema";
+import type { User, InsertUser, Guest, InsertGuest, Unit, InsertUnit, Session, GuestToken, InsertGuestToken, UnitProblem, InsertUnitProblem, AdminNotification, InsertAdminNotification, PushSubscription, InsertPushSubscription, AppSetting, InsertAppSetting, PaginationParams, PaginatedResponse, Expense, InsertExpense, UpdateExpense, Reservation, InsertReservation } from "../../shared/schema";
 import { units } from "../../shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
@@ -20,6 +20,7 @@ import {
   DbNotificationQueries,
   DbSettingsQueries,
   DbExpenseQueries,
+  DbReservationQueries,
 } from "./db";
 
 /**
@@ -40,6 +41,7 @@ export class DatabaseStorage implements IStorage {
   private readonly notificationQueries: DbNotificationQueries;
   private readonly settingsQueries: DbSettingsQueries;
   private readonly expenseQueries: DbExpenseQueries;
+  private readonly reservationQueries: DbReservationQueries;
 
   constructor() {
     if (!process.env.DATABASE_URL) {
@@ -74,6 +76,7 @@ export class DatabaseStorage implements IStorage {
     this.notificationQueries = new DbNotificationQueries(this.db);
     this.settingsQueries = new DbSettingsQueries(this.db);
     this.expenseQueries = new DbExpenseQueries(this.db);
+    this.reservationQueries = new DbReservationQueries(this.db);
   }
 
   // ─── Health Check ────────────────────────────────────────────────────────
@@ -265,6 +268,19 @@ export class DatabaseStorage implements IStorage {
   addExpense(expense: InsertExpense & { createdBy: string }) { return this.expenseQueries.addExpense(expense); }
   updateExpense(expense: UpdateExpense) { return this.expenseQueries.updateExpense(expense); }
   deleteExpense(id: string) { return this.expenseQueries.deleteExpense(id); }
+
+  // ─── IReservationStorage (delegates to DbReservationQueries) ──────────────
+
+  createReservation(data: InsertReservation & { createdBy: string; confirmationNumber: string }) { return this.reservationQueries.createReservation(data); }
+  getReservation(id: string) { return this.reservationQueries.getReservation(id); }
+  getReservationByConfirmation(num: string) { return this.reservationQueries.getReservationByConfirmation(num); }
+  getReservations(pagination?: PaginationParams, filters?: { status?: string; dateFrom?: string; dateTo?: string; unitNumber?: string; search?: string; source?: string }) { return this.reservationQueries.getReservations(pagination, filters); }
+  getReservationsByUnit(unitNumber: string, start: Date, end: Date) { return this.reservationQueries.getReservationsByUnit(unitNumber, start, end); }
+  getUpcomingReservations(days?: number) { return this.reservationQueries.getUpcomingReservations(days); }
+  getTodayArrivals() { return this.reservationQueries.getTodayArrivals(); }
+  updateReservation(id: string, updates: Partial<Reservation>) { return this.reservationQueries.updateReservation(id, updates); }
+  deleteReservation(id: string) { return this.reservationQueries.deleteReservation(id); }
+  expireNoShowReservations() { return this.reservationQueries.expireNoShowReservations(); }
 
   async getDatabaseMetrics(): Promise<IDatabaseMetrics | null> {
     try {

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Guest, type InsertGuest, type Unit, type InsertUnit, type Session, type GuestToken, type InsertGuestToken, type UnitProblem, type InsertUnitProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense } from "../../shared/schema";
+import { type User, type InsertUser, type Guest, type InsertGuest, type Unit, type InsertUnit, type Session, type GuestToken, type InsertGuestToken, type UnitProblem, type InsertUnitProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, type Reservation, type InsertReservation } from "../../shared/schema";
 import { randomUUID } from "crypto";
 import { IStorage } from "./IStorage";
 import {
@@ -11,6 +11,7 @@ import {
   MemNotificationStore,
   MemSettingsStore,
   MemExpenseStore,
+  MemReservationStore,
 } from "./mem";
 import { DEFAULT_BUSINESS_CONFIG } from "../../shared/business-config";
 
@@ -39,6 +40,7 @@ export class MemStorage implements IStorage {
   private readonly notificationStore: MemNotificationStore;
   private readonly settingsStore: MemSettingsStore;
   private readonly expenseStore: MemExpenseStore;
+  private readonly reservationStore: MemReservationStore;
 
   constructor() {
     // Create entity stores (problem store first — unit store needs its map)
@@ -51,6 +53,7 @@ export class MemStorage implements IStorage {
     this.notificationStore = new MemNotificationStore();
     this.settingsStore = new MemSettingsStore();
     this.expenseStore = new MemExpenseStore();
+    this.reservationStore = new MemReservationStore();
 
     // Initialize seed data
     this.initializeUnits();
@@ -377,6 +380,19 @@ export class MemStorage implements IStorage {
   addExpense(expense: InsertExpense & { createdBy: string }) { return this.expenseStore.addExpense(expense); }
   updateExpense(expense: UpdateExpense) { return this.expenseStore.updateExpense(expense); }
   deleteExpense(id: string) { return this.expenseStore.deleteExpense(id); }
+
+  // ─── IReservationStorage (delegates to MemReservationStore) ───────────────
+
+  createReservation(data: InsertReservation & { createdBy: string; confirmationNumber: string }) { return this.reservationStore.createReservation(data); }
+  getReservation(id: string) { return this.reservationStore.getReservation(id); }
+  getReservationByConfirmation(num: string) { return this.reservationStore.getReservationByConfirmation(num); }
+  getReservations(pagination?: PaginationParams, filters?: { status?: string; dateFrom?: string; dateTo?: string; unitNumber?: string; search?: string; source?: string }) { return this.reservationStore.getReservations(pagination, filters); }
+  getReservationsByUnit(unitNumber: string, start: Date, end: Date) { return this.reservationStore.getReservationsByUnit(unitNumber, start, end); }
+  getUpcomingReservations(days?: number) { return this.reservationStore.getUpcomingReservations(days); }
+  getTodayArrivals() { return this.reservationStore.getTodayArrivals(); }
+  updateReservation(id: string, updates: Partial<Reservation>) { return this.reservationStore.updateReservation(id, updates); }
+  deleteReservation(id: string) { return this.reservationStore.deleteReservation(id); }
+  expireNoShowReservations() { return this.reservationStore.expireNoShowReservations(); }
 
   async getDatabaseMetrics() {
     return {

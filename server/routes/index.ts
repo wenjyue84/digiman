@@ -8,6 +8,7 @@ import adminRoutes from "./admin";
 import problemRoutes from "./problems";
 import settingsRoutes from "./settings";
 import expenseRoutes from "./expenses";
+import reservationRoutes from "./reservations";
 import objectRoutes from "./objects";
 import dashboardRoutes from "./dashboard";
 import testRoutes from "./tests";
@@ -20,6 +21,7 @@ import setupRoutes from "./setup";
 
 import { getBusinessConfig } from "../lib/business-config";
 import { storage } from "../storage";
+import { sendError, sendSuccess } from "../lib/apiResponse";
 
 export function registerModularRoutes(app: Express) {
   // Unauthenticated business config (needed for login page)
@@ -57,6 +59,9 @@ export function registerModularRoutes(app: Express) {
 
   // Register expense routes
   app.use("/api/expenses", expenseRoutes);
+
+  // Register reservation/booking routes
+  app.use("/api/reservations", reservationRoutes);
 
   // Register dashboard routes (includes /api/dashboard, /api/occupancy, /api/calendar)
   app.use("/api", dashboardRoutes);
@@ -119,13 +124,10 @@ export function registerModularRoutes(app: Express) {
       }
 
       // For now, just acknowledge receipt
-      res.json({
-        success: true,
-        message: 'Error report received'
-      });
+      sendSuccess(res, undefined, 'Error report received');
     } catch (error) {
       console.error('Failed to process error report:', error);
-      res.status(500).json({ success: false, message: 'Failed to process error report' });
+      sendError(res, 500, 'Failed to process error report');
     }
   });
 

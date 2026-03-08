@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Clock, LayoutGrid, LogOut, UserPlus, UserX, Settings, ListChecks, Database, DollarSign, HelpCircle, Rainbow } from "lucide-react";
+import { Clock, LayoutGrid, LogOut, UserPlus, UserX, Settings, ListChecks, Database, DollarSign, HelpCircle, Rainbow, CalendarDays } from "lucide-react";
 import { AuthContext } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { DatabaseStatus } from "./DatabaseSelector";
@@ -27,12 +27,12 @@ const navigationItems = [
     id: "nav-dashboard"
   },
   {
-    path: "/history",
-    label: "History",
-    icon: Clock,
-    color: "text-purple-600 bg-purple-50",
+    path: "/reservations",
+    label: "Bookings",
+    icon: CalendarDays,
+    color: "text-cyan-600 bg-cyan-50",
     requireAuth: true,
-    tooltip: "View past guests and check-out history"
+    tooltip: "Manage future bookings and reservations"
   },
   {
     path: "/check-in",
@@ -57,6 +57,14 @@ const navigationItems = [
     color: "text-emerald-600 bg-emerald-50",
     requireAuth: true,
     tooltip: "Manage unit cleaning status and maintenance tasks"
+  },
+  {
+    path: "/history",
+    label: "History",
+    icon: Clock,
+    color: "text-purple-600 bg-purple-50",
+    requireAuth: true,
+    tooltip: "View past guests and check-out history"
   },
   {
     path: "/finance",

@@ -7,4 +7,5 @@ export { MemTokenStore } from "./MemTokenStore";
 export { MemNotificationStore } from "./MemNotificationStore";
 export { MemSettingsStore } from "./MemSettingsStore";
 export { MemExpenseStore } from "./MemExpenseStore";
+export { MemReservationStore } from "./MemReservationStore";
 export { paginate } from "./paginate";
