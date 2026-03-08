@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 
 import knowledgeBaseRoutes from './knowledge-base.js';
 import memoryRoutes from './memory.js';
@@ -41,14 +43,29 @@ function adminAuth(req: Request, res: Response, next: NextFunction): void {
     return;
   }
   const provided = req.headers['x-admin-key'];
-  if (provided === adminKey) {
-    next();
-    return;
+  if (typeof provided === 'string' && provided.length > 0) {
+    const providedBuf = Buffer.from(provided);
+    const expectedBuf = Buffer.from(adminKey);
+    if (providedBuf.length === expectedBuf.length && crypto.timingSafeEqual(providedBuf, expectedBuf)) {
+      next();
+      return;
+    }
   }
   res.status(401).json({ error: 'Unauthorized' });
 }
 
 router.use(adminAuth);
+
+// ─── Rate Limiting (mutation endpoints) ─────────────────────────────
+const adminMutationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 60 : 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many admin API requests. Please try again later.' },
+  skip: (req: Request) => req.method === 'GET', // Only limit mutations
+});
+router.use(adminMutationLimiter);
 
 // ─── Selective Cache Headers ─────────────────────────────────────────
 // Stable endpoints (config/definitions that rarely change) — 60s cache

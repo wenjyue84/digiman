@@ -300,16 +300,50 @@ class ConfigStore extends EventEmitter {
   }
 
   /**
-   * Dual-write: sync to local file + fire-and-forget async to DB.
-   * Setters call this to stay synchronous while keeping DB in sync.
+   * Dual-write: sync to local file + async to DB with retry.
+   * Local file write is synchronous (fast path / fallback).
+   * DB write is awaited with 1 retry after 1s delay. Failures are logged
+   * as errors but do NOT prevent the function from completing (local file
+   * is the authoritative fallback).
    */
   private saveJSONAndDB(filename: string, data: unknown): void {
     // Sync: write to local file (immediate consistency)
     this.saveJSONToFile(filename, data);
-    // Async: replicate to DB (fire-and-forget)
-    saveConfigToDB(filename, data, process.env.RAINBOW_ROLE || 'unknown').catch(err => {
-      console.error(`[ConfigStore] ⚠️ DB write for ${filename} failed:`, err.message);
+    // Async: replicate to DB with retry (tracked promise, not fire-and-forget)
+    this.saveToDBWithRetry(filename, data).catch(() => {
+      // Final error already logged inside saveToDBWithRetry — nothing more to do.
+      // Local file write succeeded, so the system can recover on next DB sync.
     });
+  }
+
+  /**
+   * Attempt to save config to DB with 1 retry after a 1-second delay.
+   * Logs clear error messages on each failure including the config key.
+   */
+  private async saveToDBWithRetry(filename: string, data: unknown): Promise<void> {
+    const role = process.env.RAINBOW_ROLE || 'unknown';
+
+    // First attempt
+    try {
+      await saveConfigToDB(filename, data, role);
+      return; // Success
+    } catch (err: any) {
+      console.error(`[ConfigStore] DB write failed for "${filename}": ${err.message} — retrying in 1s...`);
+    }
+
+    // Wait 1 second before retry
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Retry attempt
+    try {
+      await saveConfigToDB(filename, data, role);
+      console.log(`[ConfigStore] DB write retry succeeded for "${filename}"`);
+    } catch (retryErr: any) {
+      console.error(`[ConfigStore] DB write retry ALSO FAILED for "${filename}": ${retryErr.message}`);
+      console.error(`[ConfigStore] Config "${filename}" is saved locally but NOT synced to DB. ` +
+        `DB and local file may diverge until next successful write or forceReload.`);
+      throw retryErr; // Propagate so the caller's .catch() is triggered
+    }
   }
 
   /**

@@ -3,12 +3,11 @@ import type { Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
-import { listConversations, getConversation, deleteConversation, getResponseTimeStats, getContactDetails, updateContactDetails, getAllContactTags, getAllContactUnits, getAllContactDates, togglePin, toggleFavourite, markConversationAsRead, updateConversationMode } from '../../assistant/conversation-logger.js';
+import { listConversations, getConversation, deleteConversation, getResponseTimeStats, togglePin, toggleFavourite, markConversationAsRead, updateConversationMode } from '../../assistant/conversation-logger.js';
 import { whatsappManager } from '../../lib/baileys-client.js';
-import { translateText } from '../../assistant/ai-client.js';
 import { ok, badRequest, notFound, serverError } from './http-utils.js';
-import { activityTracker } from '../../lib/activity-tracker.js';
-import type { ActivityEvent } from '../../lib/activity-tracker.js';
+import contactsRouter from './conversations-contacts.js';
+import sseRouter from './conversations-sse.js';
 
 // ─── Message Metadata Store (pin/star per message) ────────────────────
 interface MessageMetadata {
@@ -44,6 +43,10 @@ let metadata: MessageMetadata = loadMetadata();
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 
+// ─── Mount sub-routers (contacts, SSE/translate) ─────────────────────
+router.use(contactsRouter);
+router.use(sseRouter);
+
 // ─── Response time aggregate (must be before /:phone to avoid matching "stats") ───
 router.get('/conversations/stats/response-time', async (_req: Request, res: Response) => {
   try {
@@ -54,101 +57,12 @@ router.get('/conversations/stats/response-time', async (_req: Request, res: Resp
   }
 });
 
-// ─── SSE: Real-time conversation update stream (US-159) ──────────────
-router.get('/conversations/events', (req: Request, res: Response) => {
-  // Set SSE headers (same pattern as activity stream)
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
-    'X-Accel-Buffering': 'no', // Disable nginx buffering
-  });
-
-  // Send initial connected event
-  res.write(`event: connected\ndata: ${JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() })}\n\n`);
-
-  // Keep-alive heartbeat every 30s
-  const heartbeat = setInterval(() => {
-    res.write(`:heartbeat\n\n`);
-  }, 30000);
-
-  // Listen for activity events that indicate conversation changes
-  const onActivity = (event: ActivityEvent) => {
-    const phone = event.metadata?.phone;
-    if (!phone) return;
-
-    // Only forward conversation-relevant events
-    if (event.type === 'message_received' || event.type === 'response_sent'
-        || event.type === 'workflow_started' || event.type === 'booking_started'
-        || event.type === 'escalation') {
-      res.write(`event: conversation_update\ndata: ${JSON.stringify({
-        phone,
-        type: event.type,
-        timestamp: event.timestamp,
-      })}\n\n`);
-    }
-  };
-
-  activityTracker.on('activity', onActivity);
-
-  // Forward message status (read receipts, US-017) via SSE
-  const onMessageStatus = (event: any) => {
-    res.write(`event: message_status\ndata: ${JSON.stringify({
-      phone: event.phone,
-      messageId: event.messageId,
-      status: event.status,
-    })}\n\n`);
-  };
-  whatsappManager.on('message_status', onMessageStatus);
-
-  // Cleanup on disconnect
-  req.on('close', () => {
-    clearInterval(heartbeat);
-    activityTracker.removeListener('activity', onActivity);
-    whatsappManager.removeListener('message_status', onMessageStatus);
-  });
-});
-
 // ─── Conversation History (Real Chat) ─────────────────────────────────
 
 router.get('/conversations', async (_req: Request, res: Response) => {
   try {
     const conversations = await listConversations();
     res.json(conversations);
-  } catch (err: any) {
-    serverError(res, err);
-  }
-});
-
-// ─── Contact Tags Map (US-009) ──────────────────────────────────────────
-
-router.get('/conversations/tags-map', async (_req: Request, res: Response) => {
-  try {
-    const tagsMap = await getAllContactTags();
-    res.json(tagsMap);
-  } catch (err: any) {
-    serverError(res, err);
-  }
-});
-
-// ─── Contact Units Map (US-012) ──────────────────────────────────────────
-
-router.get('/conversations/units-map', async (_req: Request, res: Response) => {
-  try {
-    const unitsMap = await getAllContactUnits();
-    res.json(unitsMap);
-  } catch (err: any) {
-    serverError(res, err);
-  }
-});
-
-// ─── Contact Dates Map (US-014) ──────────────────────────────────────────
-
-router.get('/conversations/dates-map', async (_req: Request, res: Response) => {
-  try {
-    const datesMap = await getAllContactDates();
-    res.json(datesMap);
   } catch (err: any) {
     serverError(res, err);
   }
@@ -181,35 +95,6 @@ router.patch('/conversations/:phone/read', async (req: Request, res: Response) =
     const phone = decodeURIComponent(req.params.phone);
     await markConversationAsRead(phone);
     ok(res);
-  } catch (err: any) {
-    serverError(res, err);
-  }
-});
-
-// ─── Contact Details ─────────────────────────────────────────────────
-
-router.get('/conversations/:phone/contact', async (req: Request, res: Response) => {
-  try {
-    const phone = decodeURIComponent(req.params.phone);
-    const details = await getContactDetails(phone);
-    res.json(details);
-  } catch (err: any) {
-    serverError(res, err);
-  }
-});
-
-router.patch('/conversations/:phone/contact', async (req: Request, res: Response) => {
-  try {
-    const phone = decodeURIComponent(req.params.phone);
-    const allowed = ['name', 'email', 'country', 'language', 'languageLocked', 'checkIn', 'checkOut', 'unit', 'notes', 'contactStatus', 'paymentStatus', 'tags'];
-    const partial: Record<string, any> = {};
-    for (const key of allowed) {
-      if (req.body[key] !== undefined) {
-        partial[key] = req.body[key];
-      }
-    }
-    const updated = await updateContactDetails(phone, partial);
-    res.json(updated);
   } catch (err: any) {
     serverError(res, err);
   }
@@ -514,48 +399,6 @@ router.post('/conversations/:phone/trigger-workflow', async (req: Request, res: 
   }
 });
 
-// Translate text to target language
-router.post('/translate', async (req: Request, res: Response) => {
-  try {
-    const { text, targetLang } = req.body;
-
-    if (!text || typeof text !== 'string') {
-      badRequest(res, 'text (string) required');
-      return;
-    }
-
-    if (!targetLang || typeof targetLang !== 'string') {
-      badRequest(res, 'targetLang (string) required');
-      return;
-    }
-
-    const langMap: Record<string, string> = {
-      'en': 'English',
-      'ms': 'Malay',
-      'zh': 'Chinese',
-      'id': 'Indonesian',
-      'th': 'Thai',
-      'vi': 'Vietnamese'
-    };
-
-    const sourceLang = 'auto';
-    const targetLangName = langMap[targetLang] || targetLang;
-
-    const translated = await translateText(text, sourceLang, targetLangName);
-
-    if (!translated) {
-      serverError(res, 'Translation failed');
-      return;
-    }
-
-    console.log(`[Admin] Translated text to ${targetLangName}: ${text.substring(0, 50)}... -> ${translated.substring(0, 50)}...`);
-    res.json({ translated, targetLang });
-  } catch (err: any) {
-    console.error('[Admin] Translation error:', err);
-    serverError(res, err);
-  }
-});
-
 // ─── RESPONSE MODES (Autopilot/Copilot/Manual) ─────────────────────────
 
 // Get pending approvals for a conversation
@@ -673,58 +516,6 @@ router.post('/conversations/:phone/generate-notes', async (req: Request, res: Re
     res.json({ notes: content.trim() });
   } catch (err: any) {
     console.error('[Admin] AI notes generation failed:', err);
-    serverError(res, err);
-  }
-});
-
-// US-091: Guest context file endpoints
-router.get('/conversations/:phone/context', async (req: Request, res: Response) => {
-  try {
-    const phone = decodeURIComponent(req.params.phone);
-    const cleanPhone = phone.replace(/@s\.whatsapp\.net$/i, '').replace(/[^0-9+]/g, '');
-    const contextDir = path.join(process.cwd(), '.rainbow-kb', 'guests');
-    const contextFile = path.join(contextDir, `${cleanPhone}-context.md`);
-
-    if (fs.existsSync(contextFile)) {
-      const content = fs.readFileSync(contextFile, 'utf-8');
-      res.json({ exists: true, content, filename: `${cleanPhone}-context.md` });
-    } else {
-      // Get push name for template
-      const log = await getConversation(phone);
-      const name = log?.pushName || 'Guest';
-      const template = `# Guest Context: ${name}\n\n## Background\n\n## Preferences\n\n## Special Arrangements\n`;
-      res.json({ exists: false, content: template, filename: `${cleanPhone}-context.md` });
-    }
-  } catch (err: any) {
-    serverError(res, err);
-  }
-});
-
-router.put('/conversations/:phone/context', async (req: Request, res: Response) => {
-  try {
-    const phone = decodeURIComponent(req.params.phone);
-    const { content } = req.body;
-    if (typeof content !== 'string') {
-      badRequest(res, 'content (string) required');
-      return;
-    }
-
-    const cleanPhone = phone.replace(/@s\.whatsapp\.net$/i, '').replace(/[^0-9+]/g, '');
-    const contextDir = path.join(process.cwd(), '.rainbow-kb', 'guests');
-
-    // Ensure directory exists
-    if (!fs.existsSync(contextDir)) {
-      fs.mkdirSync(contextDir, { recursive: true });
-    }
-
-    const contextFile = path.join(contextDir, `${cleanPhone}-context.md`);
-    const tmpFile = contextFile + '.tmp';
-    fs.writeFileSync(tmpFile, content, 'utf-8');
-    fs.renameSync(tmpFile, contextFile);
-
-    console.log(`[Admin] Saved guest context for ${phone}: ${contextFile}`);
-    ok(res, { saved: true, filename: `${cleanPhone}-context.md` });
-  } catch (err: any) {
     serverError(res, err);
   }
 });

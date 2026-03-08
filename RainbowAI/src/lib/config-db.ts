@@ -112,7 +112,7 @@ export async function saveConfigToDB(
     await pool.query('COMMIT');
   } catch (err: any) {
     await pool.query('ROLLBACK').catch(() => {});
-    console.error(`[ConfigDB] saveConfigToDB(${key}) failed:`, err.message);
+    throw err; // Let caller handle retry logic
   }
 }
 
