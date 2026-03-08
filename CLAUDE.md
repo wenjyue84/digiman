@@ -39,13 +39,52 @@ Both use the same Neon Postgres instance but different tables. The config-db use
 
 When fixing database queries, be careful about column name casing. The database may use snake_case while the TypeScript code uses camelCase. Always verify the actual column names in the schema before writing queries. Also verify query time windows — matching 'duplicate' messages across weeks is wrong; use tight time windows (< 60 seconds).
 
-## Production Architecture (Two Services, Different Homes)
+## Production Architecture (Dual Deployment)
 
-> **Website always on Lightsail. Rainbow AI uses Lightsail (primary) + local PC (standby).**
+> **Two independent deployments serve the web app. Rainbow AI runs on Lightsail + local PC.**
+
+### Web App — Lightsail + Vercel (Independent)
+
+| Platform | What it runs | Entry point | Always On? |
+| -------- | ------------ | ----------- | ---------- |
+| **Lightsail** | Frontend (nginx) + Express API (PM2 port 5000) | `server/index.ts` → `dist/server/index.js` | Yes |
+| **Vercel** | Frontend (static) + Express API (serverless) | `vercel-entry.ts` → `dist/vercel-entry.js` | Yes |
+
+Both connect to the **same Neon Postgres** database. Either can serve the full web app independently.
+
+**Vercel differences from Lightsail:**
+- No static file serving (Vercel serves `dist/public/` natively from `outputDirectory`)
+- No object/upload routes — file uploads proxy to Lightsail via `vercel.json` rewrites
+- Adds `helmet()` security headers and `trust proxy` for correct IPs
+- Multer uses `/tmp` (serverless read-only filesystem)
+- Hourly cron job expires no-show reservations (`GET /api/reservations/cron/expire-no-shows`)
+
+**Vercel routing (`vercel.json` rewrites, top-to-bottom):**
+
+| Pattern | Destination | Why |
+| ------- | ----------- | --- |
+| `/objects/:path*` | Lightsail `http://18.142.14.142/objects/*` | File storage lives on Lightsail disk |
+| `/api/upload-photo` | Lightsail | Photo uploads need disk storage |
+| `/api/upload-document` | Lightsail | Document uploads need disk storage |
+| `/api/objects/:path*` | Lightsail | Object API routes |
+| `/api/:path*` | Serverless function `api/[...all].js` | All other API — runs on Vercel |
+| `/(.*)`  | `/index.html` | SPA fallback |
+
+**Vercel env vars** (set via `npx vercel env add`):
+
+| Variable | Purpose |
+| -------- | ------- |
+| `DATABASE_URL` | Neon Postgres connection string |
+| `SESSION_SECRET` | Express session signing |
+| `CRON_SECRET` | Secures the hourly cron endpoint |
+| `PRODUCTION_URL` | CORS allow-list |
+| `SENDGRID_API_KEY` | Email (when configured) |
+| `SENDGRID_FROM_EMAIL` | Email sender (when configured) |
+
+### Rainbow AI — Lightsail (primary) + Local PC (standby)
 
 | Service | Production Home | Reason |
 | ------- | --------------- | ------ |
-| **Website** (frontend + API, ports 80/5000) | **Lightsail only** | Stateless — colleagues need 24/7 access without your PC being on |
 | **Rainbow AI** (port 3002) | **Lightsail (primary) + Local PC (standby)** | Lightsail is always-on 24/7; local PC behind NAT can't receive heartbeats |
 
 **Config storage:** All Rainbow AI configs stored in shared Neon Postgres (`rainbow_configs` table). Both servers read from DB on startup. Changes via dashboard are dual-written (local file + DB). Audit trail in `rainbow_config_audit` table.
@@ -71,6 +110,7 @@ When fixing database queries, be careful about column name casing. The database 
 | Push DB schema    | `npm run db:push`                                 |
 | **Deploy website** | `./deploy.sh` (builds + uploads to Lightsail)   |
 | **Deploy Rainbow** | `./deploy.sh` (same script, Lightsail primary) |
+| **Deploy Vercel**  | `git push origin main` (auto-deploys from GitHub) |
 
 **⚠️ LOCAL DEV ONLY:** All local servers are STANDBY only. Local Rainbow AI instances use `RAINBOW_ROLE=standby` and will NOT reply to WhatsApp guests unless the corresponding Lightsail instance is unreachable for 60+ seconds.
 
@@ -170,6 +210,9 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | `fleet-manager/`                 | Fleet Manager app (server.js + public dashboard)  |
 | `scripts/`                       | Project-wide utility scripts                     |
 | `archive/`                       | Archived files (gitignored)                      |
+| `vercel-entry.ts`                | Vercel serverless entry (no static/objects)       |
+| `vercel.json`                    | Vercel config (rewrites, crons, functions)        |
+| `api/[...all].js`                | Vercel serverless function handler                |
 | `deploy.sh`                      | Lightsail deployment (with --rollback support)   |
 | `ecosystem.config.cjs`           | PM2 process definitions (production)             |
 | `lightsail-nginx.sh`             | nginx reverse proxy setup script                 |
@@ -233,12 +276,13 @@ WhatsApp AI concierge — handles guest inquiries, bookings, complaints, escalat
 | ------- | --- | --------- | ---------- |
 | **Frontend (Pelangi)** | `https://admin.pelangicapsulehostel.com/` | Cloudflare → nginx → `dist/public` | ✅ |
 | **Frontend (Southern)** | `https://admin.southern-homestay.com/` | Cloudflare → nginx → `dist/public` | ✅ |
-| **API** | `https://admin.pelangicapsulehostel.com/api/*` | Cloudflare → nginx → PM2 port 5000 | ✅ |
+| **API (Lightsail)** | `https://admin.pelangicapsulehostel.com/api/*` | Cloudflare → nginx → PM2 port 5000 | ✅ |
+| **Frontend + API (Vercel)** | `https://pelangi-manager.vercel.app/` | Vercel edge + serverless functions | ✅ |
 | **Rainbow AI Dashboard** | `https://rainbow.pelangicapsulehostel.com/` | Cloudflare → PM2 `rainbow-ai` port 3002 | ✅ |
 | **Rainbow AI (local)** | `http://localhost:3002/` | Local dev server (standby) | When PC is on |
 | **Raw IP (fallback)** | `http://18.142.14.142/` | nginx direct | ✅ |
 
-**Note:** Port 3000 does NOT run in production — nginx on port 80 serves the pre-built frontend.
+**Note:** Port 3000 does NOT run in production — nginx on port 80 serves the pre-built frontend. Vercel serves its own static files from `dist/public/` via `outputDirectory`.
 
 **Rainbow AI dual-server:** Lightsail `rainbow-ai` runs as **primary** (`RAINBOW_ROLE=primary`) — always-on, handles all WhatsApp messages. Local PC runs as **standby** (`RAINBOW_ROLE=standby`) and polls Lightsail's `/health` endpoint every 10s. If Lightsail is unreachable for 60+ seconds, local PC activates automatically. When Lightsail is reachable again, local PC deactivates. Dashboard is accessible on both servers independently. All config is shared via Neon Postgres (`rainbow_configs` table).
 
@@ -332,6 +376,9 @@ ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 logs --lines
 | **Production nginx 502** | PM2 process crashed — `ssh ubuntu@18.142.14.142 'pm2 list && pm2 restart all'` |
 | **Production OOM** | Check swap with `free -h`; add 2GB swap if missing (see Lightsail skill) |
 | **Deploy fails** | Run `./deploy.sh`; check SSH key exists at `~/.ssh/LightsailDefaultKeyPair.pem` |
+| **Vercel API returns 404** | Check `vercel.json` rewrites order — upload routes must come before catch-all `/api/:path*` |
+| **Vercel uploads fail** | Uploads proxy to Lightsail — check Lightsail is running and reachable at `18.142.14.142` |
+| **Vercel cron not running** | Check `CRON_SECRET` env var is set; verify cron in Vercel Dashboard → Cron Jobs tab |
 | **Both servers replying to guests** | Both are `RAINBOW_ROLE=primary` — local PC `.env` must be `RAINBOW_ROLE=standby` |
 | **Local PC not taking over when Lightsail down** | Check `RAINBOW_PEER_URL` in local `.env` points to Lightsail; verify `RAINBOW_FAILOVER_SECRET` matches; confirm local PC is linked as 2nd WA device |
 | **Website down** (colleagues can't access) | Check Lightsail PM2: `pm2 list`. Website always on Lightsail — unrelated to local PC |

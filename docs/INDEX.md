@@ -46,7 +46,7 @@ Choose one branch; load only the files listed under that branch.
 
 ### 4. Deployment and operations
 
-> **Architecture summary:** Website (`client/` + `server/`) → **always Lightsail**. Rainbow AI → **local PC (primary) + Lightsail (standby)** with automatic failover.
+> **Architecture summary:** Website (`client/` + `server/`) → **Lightsail (primary) + Vercel (independent mirror)**, both hitting the same Neon Postgres DB. File uploads proxy from Vercel to Lightsail. Rainbow AI → **Lightsail (primary) + local PC (standby)** with automatic failover.
 
 | Order | Doc | Use when |
 |-------|-----|----------|

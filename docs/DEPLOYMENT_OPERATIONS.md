@@ -11,37 +11,56 @@
 
 ## 🏗️ **PRODUCTION ARCHITECTURE**
 
-### Service Placement — Where Each Service Runs
+### Web App — Dual Deployment (Lightsail + Vercel)
+
+Both deployments serve the full web app independently, connecting to the same Neon Postgres database.
+
+| Platform | Frontend | API | Entry Point | Deploy Method |
+|----------|----------|-----|-------------|---------------|
+| **Lightsail** | nginx serves `dist/public/` | PM2 long-running Express (port 5000) | `server/index.ts` | `./deploy.sh` |
+| **Vercel** | Edge CDN serves `dist/public/` | Serverless Express functions | `vercel-entry.ts` | `git push origin main` |
+
+**What Vercel proxies to Lightsail** (cannot run serverless):
+- `/objects/*` — file storage on Lightsail disk
+- `/api/upload-photo`, `/api/upload-document` — need disk writes
+- `/api/objects/*` — object API routes
+
+**Vercel-specific features:**
+- `helmet()` security headers, `trust proxy` for correct IPs
+- Multer writes to `/tmp` (serverless read-only filesystem)
+- Hourly cron: `GET /api/reservations/cron/expire-no-shows` (secured by `CRON_SECRET`)
+
+**Vercel env vars** (set via `npx vercel env add`):
+`DATABASE_URL`, `SESSION_SECRET`, `CRON_SECRET`, `PRODUCTION_URL`, `SENDGRID_API_KEY` (optional), `SENDGRID_FROM_EMAIL` (optional)
+
+### Rainbow AI — Lightsail (primary) + Local PC (standby)
 
 | Service | Production Home | Rationale |
 |---------|----------------|-----------|
-| **Website** (frontend nginx + API port 5000) | **Lightsail only** (always on) | Stateless, no session files — colleagues need 24/7 access without Jay's PC being on |
-| **Rainbow AI** (port 3002) | **Local PC (primary) + Lightsail (standby)** | Has WhatsApp auth session; local has better GPU for AI providers |
-
-### Rainbow AI Dual-Server Failover
+| **Rainbow AI** (port 3002) | **Lightsail (primary) + Local PC (standby)** | Lightsail is always-on 24/7; local PC behind NAT can't receive heartbeats |
 
 ```
-Local PC (primary)               AWS Lightsail (standby)
-──────────────────               ──────────────────────
+Lightsail (primary)              Local PC (standby)
+──────────────────               ──────────────────
 RAINBOW_ROLE=primary             RAINBOW_ROLE=standby
-RAINBOW_PEER_URL=http://18.142.14.142:3002
+                                 RAINBOW_PEER_URL=http://18.142.14.142:3002
 
 isActive = true                  isActive = false
 → processes & replies            → suppresses replies
-→ heartbeat every 20s ────────► → monitors heartbeat
-                                 → no beat for 60s → activates
-                                 → beat resumes → immediately deactivates
+→ always on 24/7                 → polls /health every 10s
+                                 → no response for 60s → activates
+                                 → response resumes → immediately deactivates
 ```
 
 **Required env vars** (see `RainbowAI/.env.example` for full reference):
 ```bash
-# Local PC .env
+# Lightsail .env
 RAINBOW_ROLE=primary
-RAINBOW_PEER_URL=http://18.142.14.142:3002
 RAINBOW_FAILOVER_SECRET=<shared-secret-from-openssl-rand-hex-16>
 
-# Lightsail .env (no RAINBOW_PEER_URL needed on standby)
+# Local PC .env
 RAINBOW_ROLE=standby
+RAINBOW_PEER_URL=http://18.142.14.142:3002
 RAINBOW_FAILOVER_SECRET=<same-shared-secret>
 ```
 
@@ -51,25 +70,32 @@ RAINBOW_FAILOVER_SECRET=<same-shared-secret>
 
 | URL | Service | Always On? |
 |-----|---------|------------|
-| `http://18.142.14.142/` | Website frontend (nginx) | ✅ Yes |
-| `http://18.142.14.142/api/*` | Backend API (PM2 `pelangi-api`) | ✅ Yes |
-| `http://18.142.14.142:3002/` | Rainbow AI dashboard (standby) | ✅ Yes (standby) |
-| `http://localhost:3002/` | Rainbow AI dashboard (primary) | When PC is on |
+| `https://admin.pelangicapsulehostel.com/` | Website frontend + API (Lightsail) | ✅ Yes |
+| `https://pelangi-manager.vercel.app/` | Website frontend + API (Vercel) | ✅ Yes |
+| `http://18.142.14.142/` | Website frontend (nginx direct) | ✅ Yes |
+| `https://rainbow.pelangicapsulehostel.com/` | Rainbow AI dashboard (Lightsail) | ✅ Yes |
+| `http://localhost:3002/` | Rainbow AI dashboard (standby) | When PC is on |
 
 ### Deployment Commands
 
 ```bash
-# Full deploy (build + upload website + Rainbow AI to Lightsail)
+# Full deploy to Lightsail (build + upload website + Rainbow AI)
 ./deploy.sh
 
-# Frontend only
+# Frontend only to Lightsail
 ./deploy-frontend.sh
 
-# Check production status
+# Deploy to Vercel (auto-deploys on push)
+git push origin main
+
+# Check Lightsail production status
 ssh -i ~/.ssh/LightsailDefaultKeyPair.pem ubuntu@18.142.14.142 'pm2 list'
+
+# Check Vercel env vars
+npx vercel env ls
 ```
 
-> **Full deployment steps, OOM prevention, nginx config, swap setup:** `.claude/skills/lightsail-deployment/SKILL.md`
+> **Full Lightsail deployment steps, OOM prevention, nginx config, swap setup:** `.claude/skills/lightsail-deployment/SKILL.md`
 
 ---
 
