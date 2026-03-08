@@ -1,13 +1,18 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import cors from 'cors';
+import helmet from 'helmet';
 import { registerRoutes } from "./server/routes";
-import { registerObjectRoutes } from "./server/routes/index";
-import { serveStatic, log } from "./server/vite";
 import { initializeConfig, AppConfig, getConfig, getConfigUtils } from "./server/configManager";
 import { storage } from "./server/storage";
 
 const app = express();
+
+// Trust Vercel's reverse proxy for correct req.ip / req.protocol
+app.set('trust proxy', 1);
+
+// Security headers
+app.use(helmet());
 
 // Increase body size limits
 app.use(express.json({ limit: '50mb' }));
@@ -104,11 +109,10 @@ async function initializeApp() {
     // Register routes
     await registerRoutes(app);
 
-    // Serve static files (built frontend)
-    serveStatic(app);
-
-    // Register object routes
-    registerObjectRoutes(app);
+    // API 404 catch-all (before error handler, after all routes)
+    app.use('/api/*', (req: Request, res: Response) => {
+      res.status(404).json({ message: `API route not found: ${req.method} ${req.originalUrl}` });
+    });
 
     // Error handler
     app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
