@@ -27,26 +27,11 @@ export function useDatabaseHealth() {
     setIsChecking(true);
     
     try {
-      // Try to fetch database configuration first
-      const configResponse = await fetch('/api/database/config', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!configResponse.ok) {
-        throw new Error(`Database config failed: ${configResponse.status}`);
-      }
-
-      const configData = await configResponse.json();
-      
-      // Try a simple database operation to test connectivity
-      const testResponse = await fetch('/api/occupancy', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!testResponse.ok) {
-        throw new Error(`Database connectivity test failed: ${testResponse.status}`);
+      // Single unauthenticated health check — avoids auth race condition
+      const response = await fetch('/api/database/health');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Health check failed: ${response.status}`);
       }
 
       // If we get here, database is healthy

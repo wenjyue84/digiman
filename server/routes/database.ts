@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { getDatabaseConfig, DATABASE_CONFIGS } from "../lib/databaseConfig.js";
+import { asyncRouteHandler } from "../lib/errorHandler";
+import { getStorage } from "../Storage/StorageFactory.js";
 
 const router = Router();
 
@@ -11,5 +13,11 @@ router.get("/api/database/config", (req, res) => {
     // Note: No more switching available - just display current mode
   });
 });
+
+// Lightweight DB connectivity test (no auth — exposes no data)
+router.get("/api/database/health", asyncRouteHandler(async (_req: any, res: any) => {
+  const storage = await getStorage();
+  res.json({ status: "ok", type: storage.constructor.name });
+}));
 
 export default router;

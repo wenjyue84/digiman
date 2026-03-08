@@ -282,6 +282,11 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
+  // API 404 handler — catch unmatched /api/* routes before SPA fallback
+  app.all("/api/*", (_req: Request, res: Response) => {
+    res.status(404).json({ message: "API endpoint not found" });
+  });
+
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err?.status || err?.statusCode || 500;
     const message = err?.message || "Internal Server Error";
@@ -334,6 +339,14 @@ app.use((req, res, next) => {
   
   // Register object routes after Vite middleware to prevent conflicts
   registerObjectRoutes(app);
+
+  // In concurrent dev mode (SKIP_VITE_MIDDLEWARE), redirect non-API requests to Vite dev server
+  if (app.get("env") === "development" && process.env.SKIP_VITE_MIDDLEWARE) {
+    const vitePort = process.env.VITE_PORT || '3000';
+    app.use("*", (req, res) => {
+      res.redirect(`http://localhost:${vitePort}${req.originalUrl}`);
+    });
+  }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.

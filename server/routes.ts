@@ -27,9 +27,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Admin setup route - to be implemented" });
   });
 
-  // Serve static files from dist/public
-  app.use(express.static(path.join(process.cwd(), "dist/public")));
-
   // Static file serving for uploads
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
@@ -42,13 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Static file serving for autotest reports
   app.use('/reports', express.static(path.join(process.cwd(), 'reports')));
 
-  // Catch-all handler for SPA
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api/")) {
-      return res.status(404).json({ message: "API endpoint not found" });
-    }
-    res.sendFile(path.join(process.cwd(), "dist/public/index.html"));
-  });
+  // NO catch-all here — handled by vite.ts (dev) or serveStatic (prod)
 
   const httpServer = createServer(app);
   return httpServer;
