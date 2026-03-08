@@ -1,5 +1,5 @@
 {
   "build_command": "npm run build",
-  "start_command": "npm start",
+  "start_command": "node dist/server/index.js",
   "install_command": "npm install"
 }
