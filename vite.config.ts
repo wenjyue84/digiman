@@ -163,6 +163,9 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "shared"),
       "@assets": path.resolve(__dirname, "attached_assets"),
     },
+    // Force a single React instance — prevents "invalid hook call" when
+    // multiple packages bundle their own React (e.g. @uppy/react, react-day-picker)
+    dedupe: ["react", "react-dom"],
   },
   root: path.resolve(__dirname, "client"),
   build: {
