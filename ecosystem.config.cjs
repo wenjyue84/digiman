@@ -9,7 +9,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 5000,
-        CORS_ORIGIN: 'https://admin.pelangicapsulehostel.com,http://18.142.14.142',
+        CORS_ORIGIN: 'https://admin.pelangicapsulehostel.com,http://18.142.14.142,https://pelangi-manager.vercel.app',
         PUBLIC_URL: 'https://admin.pelangicapsulehostel.com',
       },
       autorestart: true,
