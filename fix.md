@@ -650,3 +650,116 @@ agent-browser eval "document.querySelectorAll('.rc-bubble-wrap.guest').length + 
 3. **JavaScript TDZ is silent until the branch executes** — `const` declarations hoisted to block scope but uninitialized. Using them before declaration throws `ReferenceError`, but only when that code path actually runs (guest messages hit the branch, bot messages didn't).
 4. **Auto-refresh failures are caused by setup failures** — If `setInterval` is inside a `try` block that crashes before reaching it, the interval is never created. Guard DOM operations with null checks to prevent cascade failures.
 
+---
+
+## Issue: Zeabur 502 Bad Gateway — Service Never Starts
+
+**Date:** 2026-03-09
+**Status:** ✅ RESOLVED
+
+### Symptom
+
+`https://pelangi-manager-2.zeabur.app/` returns `502: SERVICE_UNAVAILABLE`.
+
+### Root Causes (Three Issues, Fixed in Order)
+
+#### 1. Wrong start command path
+
+esbuild with two entry points (`server/index.ts` + `vercel-entry.ts`) uses their common ancestor as `outbase`, so `server/index.ts` compiles to `dist/server/index.js` — **not** `dist/index.js`.
+
+Both `zbpack.json` and `package.json` pointed to the wrong path:
+
+```json
+// zbpack.json — BEFORE
+{ "start_command": "npm start" }
+// npm start → node dist/index.js  ← file doesn't exist
+
+// zbpack.json — AFTER
+{ "start_command": "node dist/server/index.js" }
+```
+
+```json
+// package.json — BEFORE
+"start": "node dist/index.js",
+"start:aws": "cross-env NODE_ENV=production PORT=8080 node dist/index.js",
+
+// package.json — AFTER
+"start": "node dist/server/index.js",
+"start:aws": "cross-env NODE_ENV=production PORT=8080 node dist/server/index.js",
+```
+
+#### 2. Service was SUSPENDED + missing required env vars
+
+Even with the correct start path, the server crashes immediately in production if `SESSION_SECRET` or `DATABASE_URL` are missing — `validateEnv()` calls `process.exit(1)`.
+
+**Required Zeabur env vars:**
+
+| Variable | Why Required |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection — was already set |
+| `SESSION_SECRET` | Express session key — **was missing** → `process.exit(1)` |
+| `NODE_ENV` | Must be `production` — **was missing** → Vite middleware loaded (crashes without dev deps) |
+| `PRODUCTION_URL` | CORS allowlist — **was missing** → assets blocked (see below) |
+
+Set via Zeabur CLI:
+```bash
+zeabur variable create -k "SESSION_SECRET=<random-hex>" --id <service-id> -y -i=false
+zeabur variable create -k "NODE_ENV=production" --id <service-id> -y -i=false
+zeabur variable create -k "PRODUCTION_URL=https://pelangi-manager-2.zeabur.app" --id <service-id> -y -i=false
+```
+
+Then redeploy:
+```bash
+zeabur service redeploy --id <service-id> -y -i=false
+```
+
+#### 3. CORS blocking `<script type="module">` asset loads → white screen
+
+After fixing #1 and #2, the page returned 200 but showed a white screen. Assets (`/assets/*.js`) returned `500` with `content-type: application/json`.
+
+**Diagnosis:** `{"message":"CORS policy violation"}` = exactly 35 bytes (matching `content-length: 35` in the failed response).
+
+When Vite builds a React SPA, it emits `<script type="module">`. The browser sends `Origin: https://pelangi-manager-2.zeabur.app` with module script requests. The CORS middleware in `server/index.ts` only allows origins in `allowedOrigins`, which is built from `PRODUCTION_URL`, `VERCEL_URL`, and `CORS_ORIGIN` env vars — all unset on Zeabur.
+
+Direct browser navigation (typing the URL) does **not** send an `Origin` header → CORS passes → that's why navigating directly to `/assets/index-*.js` showed the JS content fine, but the page itself couldn't load assets.
+
+**Fix:** Set `PRODUCTION_URL=https://pelangi-manager-2.zeabur.app` in Zeabur env vars and redeploy.
+
+---
+
+### Zeabur CLI Quick Reference
+
+```bash
+# List services in current project
+zeabur service list
+
+# List env vars for a service
+zeabur variable list
+
+# Create env var (non-interactive)
+zeabur variable create -k "KEY=VALUE" --id <service-id> -y -i=false
+
+# Redeploy service
+zeabur service redeploy --id <service-id> -y -i=false
+
+# Watch deployment status
+zeabur deployment list
+```
+
+### Zeabur Required Env Vars Checklist
+
+For any new Zeabur deployment of this app:
+
+- [ ] `DATABASE_URL` — Neon Postgres connection string
+- [ ] `SESSION_SECRET` — any 48+ char random hex string
+- [ ] `NODE_ENV=production` — prevents Vite middleware from loading
+- [ ] `PRODUCTION_URL=https://<your-zeabur-domain>.zeabur.app` — allows CORS for same-origin module scripts
+
+### Key Lessons
+
+1. **esbuild outbase is the common ancestor** — with two entry points in different directories, output paths include the directory name (`dist/server/index.js`, not `dist/index.js`)
+2. **CORS blocks `<script type="module">` but not direct navigation** — direct URL visits don't send `Origin`; module script loads do. A working health check (`/api/health` → 200) alongside 500 asset errors is the tell
+3. **35-byte JSON = CORS error** — `{"message":"CORS policy violation"}` is exactly 35 chars; match against `content-length` to confirm
+4. **Service suspension requires manual redeploy** — Zeabur won't auto-restart a suspended service; must use `zeabur service redeploy`
+5. **Missing `NODE_ENV=production`** — if absent, `app.get("env")` returns `"development"`, loading Vite middleware which crashes immediately in a production container (no devDependencies installed)
+
