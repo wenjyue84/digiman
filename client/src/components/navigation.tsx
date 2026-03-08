@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Clock, LayoutGrid, LogOut, UserPlus, UserX, Settings, ListChecks, Database, DollarSign, HelpCircle, Rainbow, CalendarDays } from "lucide-react";
+import { Clock, LayoutGrid, LogOut, UserPlus, UserX, Settings, ListChecks, ExternalLink, DollarSign, HelpCircle, Rainbow, CalendarDays } from "lucide-react";
 import { AuthContext } from "../lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { DatabaseStatus } from "./DatabaseSelector";
@@ -93,13 +93,15 @@ const navigationItems = [
     id: "nav-help"
   },
   {
-    path: "/admin/intent-manager",
-    label: "Monitor",
-    icon: Database,
+    path: "/admin/rainbow-ai",
+    label: "Rainbow AI",
+    icon: ExternalLink,
     color: "text-pink-600 bg-pink-50",
     requireAuth: true,
-    tooltip: "Monitor chatbot conversations and intents",
-    id: "nav-intent-manager"
+    tooltip: "Open Rainbow AI admin dashboard",
+    id: "nav-rainbow-ai",
+    external: true,
+    href: `${(import.meta.env.VITE_RAINBOW_URL as string | undefined)?.replace(/#.*$/, '') ?? 'http://localhost:3002'}/admin/rainbow`,
   },
 ];
 
@@ -178,10 +180,17 @@ export default function Navigation() {
                         : undefined
                     }
                   >
-                    <Link href={href}>
-                      <item.icon className={`h-4 w-4 flex-shrink-0 ${isActive ? "text-white" : iconColor}`} />
-                      <span>{item.label}</span>
-                    </Link>
+                    {(item as { external?: boolean }).external ? (
+                      <a href={(item as { href?: string }).href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 w-full">
+                        <item.icon className={`h-4 w-4 flex-shrink-0 ${iconColor}`} />
+                        <span>{item.label}</span>
+                      </a>
+                    ) : (
+                      <Link href={href}>
+                        <item.icon className={`h-4 w-4 flex-shrink-0 ${isActive ? "text-white" : iconColor}`} />
+                        <span>{item.label}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
