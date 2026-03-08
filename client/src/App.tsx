@@ -2,7 +2,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { getQueryFn } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -20,7 +20,6 @@ import CheckOut from "./pages/check-out";
 import History from "./pages/history";
 import Cleaning from "./pages/cleaning";
 import Settings from "./pages/settings";
-import Help from "./pages/help";
 import Finance from "./pages/finance";
 import GuestCheckin from "./pages/guest-checkin";
 import GuestEdit from "./pages/guest-edit";
@@ -29,7 +28,11 @@ import GuestGuide from "./pages/guest-guide";
 // REMOVED: AdminRainbow - NO redirects from port 3000 to port 3002!
 // Rainbow admin is ONLY accessible directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard)
 import IntentManager from "./pages/intent-manager";
-import TestSuite from "./pages/test-suite";
+import Reservations from "./pages/reservations";
+
+// Lazy-loaded pages (rarely visited — reduces initial bundle size)
+const Help = lazy(() => import("./pages/help"));
+const TestSuite = lazy(() => import("./pages/test-suite"));
 import Header from "./components/header";
 import Navigation from "./components/navigation";
 import MobileBottomNav from "./components/mobile-bottom-nav";
@@ -102,7 +105,14 @@ function Router() {
               </Route>
               <Route path="/help">
                 <ProtectedRoute requireAuth={true}>
-                  <Help />
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading...</div>}>
+                    <Help />
+                  </Suspense>
+                </ProtectedRoute>
+              </Route>
+              <Route path="/reservations">
+                <ProtectedRoute requireAuth={true}>
+                  <Reservations />
                 </ProtectedRoute>
               </Route>
               <Route path="/finance">
@@ -123,7 +133,11 @@ function Router() {
               {/* REMOVED: /admin/rainbow route - NO redirects from port 3000 to port 3002! */}
               {/* Access Rainbow admin directly via VITE_RAINBOW_URL (defaults to http://localhost:3002/#dashboard) */}
               {/* Developer test suite — accessible without protected route for inline login form */}
-              <Route path="/test" component={TestSuite} />
+              <Route path="/test">
+                <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading...</div>}>
+                  <TestSuite />
+                </Suspense>
+              </Route>
               <Route path="/login" component={LoginForm} />
               <Route component={NotFound} />
             </Switch>

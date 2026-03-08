@@ -54,11 +54,23 @@ export default function FirstRunWizard({ isAuthenticated }: FirstRunWizardProps)
     staleTime: Infinity, // once completed it never changes back
   });
 
+  // Safety check: if guests already exist, this is clearly not a first run
+  const { data: checkedIn } = useQuery<{ data: unknown[] }>({
+    queryKey: ["/api/guests/checked-in"],
+    enabled: isAuthenticated && localStorage.getItem(COMPLETED_KEY) !== "true",
+  });
+
   useEffect(() => {
     if (!isAuthenticated) return;
 
     // Fast path: localStorage already says done → skip network call entirely
     if (localStorage.getItem(COMPLETED_KEY) === "true") return;
+
+    // Safety net: if guests exist, property is already set up — auto-complete
+    if (checkedIn?.data && checkedIn.data.length > 0) {
+      complete();
+      return;
+    }
 
     // Wait for DB check to finish
     if (!setupStatusLoaded) return;
@@ -73,7 +85,7 @@ export default function FirstRunWizard({ isAuthenticated }: FirstRunWizardProps)
     const savedStep = parseInt(localStorage.getItem(STEP_KEY) || "1", 10);
     setStep(isNaN(savedStep) ? 1 : savedStep);
     setOpen(true);
-  }, [isAuthenticated, setupStatusLoaded, setupStatus]);
+  }, [isAuthenticated, setupStatusLoaded, setupStatus, checkedIn]);
 
   const complete = () => {
     // Write to Neon DB so the flag persists across browsers / devices
@@ -124,8 +136,8 @@ export default function FirstRunWizard({ isAuthenticated }: FirstRunWizardProps)
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) complete(); }}>
-      <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) complete(); }} modal={false}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
             <Badge variant="outline" className="text-xs">

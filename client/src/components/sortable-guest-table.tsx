@@ -23,7 +23,7 @@ export default function SortableGuestTable() {
   const isMobile = useIsMobile();
   const { isAuthenticated, logout } = useAuth();
   const [isCondensedView, setIsCondensedView] = useState(() => isMobile);
-  const [showAllUnits, setshowAllUnits] = useState(false);
+  const [showAllUnits, setshowAllUnits] = useState(true);
 
   // Auto-switch view mode based on device type
   useEffect(() => {
