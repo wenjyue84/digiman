@@ -55,9 +55,18 @@ export default function FirstRunWizard({ isAuthenticated }: FirstRunWizardProps)
   });
 
   // Safety check: if guests already exist, this is clearly not a first run
-  const { data: checkedIn } = useQuery<{ data: unknown[] }>({
+  const { data: checkedIn, isSuccess: checkedInLoaded, isError: checkedInError } = useQuery<{ data: unknown[] }>({
     queryKey: ["/api/guests/checked-in"],
     enabled: isAuthenticated && localStorage.getItem(COMPLETED_KEY) !== "true",
+    retry: 1,
+  });
+
+  // Safety check: if units already exist, this is an existing deployment — never show wizard
+  const { data: unitsData, isSuccess: unitsLoaded, isError: unitsError } = useQuery<unknown[]>({
+    queryKey: ["/api/units"],
+    enabled: isAuthenticated && localStorage.getItem(COMPLETED_KEY) !== "true",
+    staleTime: 60000,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -66,14 +75,27 @@ export default function FirstRunWizard({ isAuthenticated }: FirstRunWizardProps)
     // Fast path: localStorage already says done → skip network call entirely
     if (localStorage.getItem(COMPLETED_KEY) === "true") return;
 
-    // Safety net: if guests exist, property is already set up — auto-complete
-    if (checkedIn?.data && checkedIn.data.length > 0) {
+    // Safety net: if units already exist, this is an existing deployment — auto-complete
+    const unitCount = Array.isArray(unitsData) ? unitsData.length
+      : (unitsData as any)?.data?.length ?? 0;
+    if (unitCount > 0) {
       complete();
       return;
     }
 
-    // Wait for DB check to finish
+    // Safety net: if checked-in guests exist, property is already set up — auto-complete
+    const guestCount = Array.isArray(checkedIn) ? checkedIn.length
+      : checkedIn?.data?.length ?? 0;
+    if (guestCount > 0) {
+      complete();
+      return;
+    }
+
+    // Wait for ALL queries to resolve before deciding to show the wizard.
+    // This prevents the overlay flashing open while safety checks are still in-flight.
     if (!setupStatusLoaded) return;
+    if (!checkedInLoaded && !checkedInError) return;
+    if (!unitsLoaded && !unitsError) return;
 
     if (setupStatus?.completed) {
       // DB says done — update localStorage cache so future loads skip the network call
@@ -81,11 +103,11 @@ export default function FirstRunWizard({ isAuthenticated }: FirstRunWizardProps)
       return;
     }
 
-    // DB says not done → show wizard
+    // All checks passed and DB says not done → show wizard
     const savedStep = parseInt(localStorage.getItem(STEP_KEY) || "1", 10);
     setStep(isNaN(savedStep) ? 1 : savedStep);
     setOpen(true);
-  }, [isAuthenticated, setupStatusLoaded, setupStatus, checkedIn]);
+  }, [isAuthenticated, setupStatusLoaded, setupStatus, checkedIn, checkedInLoaded, checkedInError, unitsData, unitsLoaded, unitsError]);
 
   const complete = () => {
     // Write to Neon DB so the flag persists across browsers / devices
