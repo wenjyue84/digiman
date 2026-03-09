@@ -15,6 +15,6 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/reservations/cron/expire-no-shows", "schedule": "0 * * * *" }
+    { "path": "/api/reservations/cron/expire-no-shows", "schedule": "0 0 * * *" }
   ]
 }
