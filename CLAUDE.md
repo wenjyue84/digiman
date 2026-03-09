@@ -54,7 +54,7 @@ Both connect to the **same Neon Postgres** database. Either can serve the full w
 
 **Vercel differences from Lightsail:**
 - No static file serving (Vercel serves `dist/public/` natively from `outputDirectory`)
-- No object/upload routes — file uploads proxy to Lightsail via `vercel.json` rewrites
+- File uploads use **Vercel Blob** storage (not disk) — `BLOB_READ_WRITE_TOKEN` env var controls this
 - Adds `helmet()` security headers and `trust proxy` for correct IPs
 - Multer uses `/tmp` (serverless read-only filesystem)
 - Hourly cron job expires no-show reservations (`GET /api/reservations/cron/expire-no-shows`)
@@ -63,12 +63,11 @@ Both connect to the **same Neon Postgres** database. Either can serve the full w
 
 | Pattern | Destination | Why |
 | ------- | ----------- | --- |
-| `/objects/:path*` | Lightsail `http://18.142.14.142/objects/*` | File storage lives on Lightsail disk |
-| `/api/upload-photo` | Lightsail | Photo uploads need disk storage |
-| `/api/upload-document` | Lightsail | Document uploads need disk storage |
-| `/api/objects/:path*` | Lightsail | Object API routes |
-| `/api/:path*` | Serverless function `api/[...all].js` | All other API — runs on Vercel |
+| `/objects/:path*` | Serverless function `api/[...all].js` | Object serving (404 for old disk URLs) |
+| `/api/:path*` | Serverless function `api/[...all].js` | All API — runs on Vercel |
 | `/(.*)`  | `/index.html` | SPA fallback |
+
+**Vercel is fully independent** — no Lightsail proxy rewrites. All uploads go to Vercel Blob CDN.
 
 **Vercel env vars** (set via `npx vercel env add`):
 
@@ -78,6 +77,7 @@ Both connect to the **same Neon Postgres** database. Either can serve the full w
 | `SESSION_SECRET` | Express session signing |
 | `CRON_SECRET` | Secures the hourly cron endpoint |
 | `PRODUCTION_URL` | CORS allow-list |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage (auto-set when Blob store linked) |
 | `SENDGRID_API_KEY` | Email (when configured) |
 | `SENDGRID_FROM_EMAIL` | Email sender (when configured) |
 
