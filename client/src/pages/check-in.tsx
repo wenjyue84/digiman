@@ -37,6 +37,7 @@ import {
 } from "@/components/check-in/utils";
 import { getClientEnvironment } from "@shared/utils";
 import PaymentInformationSection from "@/components/check-in/PaymentInformationSection";
+import DepositSection from "@/components/check-in/DepositSection";
 import ContactInformationSection from "@/components/check-in/ContactInformationSection";
 import IdentificationPersonalSection from "@/components/check-in/IdentificationPersonalSection";
 import EmergencyContactSection from "@/components/check-in/EmergencyContactSection";
@@ -781,6 +782,8 @@ Welcome to ${business.name}! 🌈`;
             />
 
             <PaymentInformationSection form={form} defaultCollector={defaultCollector} />
+
+            <DepositSection form={form} />
 
             <ContactInformationSection form={form} />
 

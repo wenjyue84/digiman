@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { NationalitySelect } from "@/components/ui/nationality-select";
-import { User, Calendar, MapPin, Phone, Mail, CreditCard, Edit, Save, X, Flag, Printer } from "lucide-react";
+import { User, Calendar, MapPin, Phone, Mail, CreditCard, Edit, Save, X, Flag, Printer, DollarSign } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { getGuestBalance, isGuestPaid } from "@/lib/guest";
 import { useToast } from "@/hooks/use-toast";
@@ -583,6 +583,47 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
               </Button>
             </div>
           </div>
+
+          {/* Deposit Information */}
+          {guest.depositRequired && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Deposit
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label>Amount</Label>
+                    <div className="mt-1 text-sm">RM {guest.depositAmount || '0'}</div>
+                  </div>
+                  <div>
+                    <Label>Method</Label>
+                    <div className="mt-1 text-sm capitalize">{guest.depositMethod || 'Not specified'}</div>
+                  </div>
+                  <div>
+                    <Label>Paid</Label>
+                    <div className="mt-1">
+                      <Badge variant={guest.depositPaid ? "default" : "destructive"}>
+                        {guest.depositPaid ? "Paid" : "Unpaid"}
+                      </Badge>
+                    </div>
+                  </div>
+                  {guest.depositRefundStatus && (
+                    <div>
+                      <Label>Refund Status</Label>
+                      <div className="mt-1">
+                        <Badge variant={guest.depositRefundStatus === 'refunded' ? "default" : "secondary"}>
+                          {guest.depositRefundStatus}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           <Separator />
 
