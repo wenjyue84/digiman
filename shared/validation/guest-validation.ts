@@ -118,6 +118,13 @@ export const insertGuestSchema = createInsertSchema(guests).omit({
     .optional(),
   age: z.string().optional(),
   profilePhotoUrl: z.any().optional(),
+  depositAmount: z.string()
+    .regex(PAYMENT_AMOUNT_REGEX, "Invalid deposit amount format")
+    .optional(),
+  depositRequired: z.boolean().optional(),
+  depositMethod: z.enum(["cash", "tng", "bank", "platform"]).optional(),
+  depositPaid: z.boolean().optional(),
+  depositRefundStatus: z.enum(["pending", "refunded", "forfeited"]).optional(),
 });
 
 export const updateGuestSchema = z.object({
@@ -215,6 +222,13 @@ export const updateGuestSchema = z.object({
     .optional(),
   age: z.string().optional(),
   profilePhotoUrl: z.any().optional(),
+  depositAmount: z.string()
+    .regex(PAYMENT_AMOUNT_REGEX, "Invalid deposit amount format")
+    .optional(),
+  depositRequired: z.boolean().optional(),
+  depositMethod: z.enum(["cash", "tng", "bank", "platform"]).optional(),
+  depositPaid: z.boolean().optional(),
+  depositRefundStatus: z.union([z.enum(["pending", "refunded", "forfeited"]), z.null()]).optional(),
   alertSettings: z.string()
     .transform(val => {
       if (!val) return undefined;

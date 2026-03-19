@@ -1,5 +1,6 @@
 import { type User, type InsertUser, type Guest, type InsertGuest, type Unit, type InsertUnit, type Session, type GuestToken, type InsertGuestToken, type UnitProblem, type InsertUnitProblem, type AdminNotification, type InsertAdminNotification, type PushSubscription, type InsertPushSubscription, type AppSetting, type InsertAppSetting, type PaginationParams, type PaginatedResponse, type Expense, type InsertExpense, type UpdateExpense, type Reservation, type InsertReservation } from "../../shared/schema";
 import { randomUUID } from "crypto";
+import bcrypt from 'bcryptjs';
 import { IStorage } from "./IStorage";
 import {
   MemUserStore,
@@ -65,7 +66,6 @@ export class MemStorage implements IStorage {
   // ─── Initialization ─────────────────────────────────────────────────────────
 
   private initializeDefaultUsers() {
-    const bcrypt = require('bcryptjs');
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
     const adminUser: User = {
       id: randomUUID(),

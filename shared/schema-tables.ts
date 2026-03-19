@@ -66,6 +66,11 @@ export const guests = pgTable("guests", {
   selfCheckinToken: text("self_checkin_token"), // Link back to the token used for self check-in
   status: text("status"),
   alertSettings: text("alert_settings"), // JSON string for checkout alert configuration
+  depositAmount: text("deposit_amount"),
+  depositRequired: boolean("deposit_required").default(false),
+  depositMethod: text("deposit_method"),
+  depositPaid: boolean("deposit_paid").default(false),
+  depositRefundStatus: text("deposit_refund_status"), // 'pending' | 'refunded' | 'forfeited' | null
 }, (table) => ([
   index("idx_guests_unit_number").on(table.unitNumber),
   index("idx_guests_is_checked_in").on(table.isCheckedIn),
