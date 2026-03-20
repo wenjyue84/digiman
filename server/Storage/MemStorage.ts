@@ -145,6 +145,12 @@ export class MemStorage implements IStorage {
         selfCheckinToken: null,
         status: null,
         alertSettings: null,
+        depositAmount: null,
+        depositRequired: false,
+        depositMethod: null,
+        depositPaid: false,
+        depositStatus: null,
+        depositRefundStatus: null,
       };
 
       guestMap.set(guestRecord.id, guestRecord);

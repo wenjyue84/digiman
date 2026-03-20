@@ -132,10 +132,10 @@ export function OutstandingBalances() {
       filtered = filtered.filter(guest => guest.depositRequired);
     } else if (depositFilter === 'refund_pending') {
       filtered = filtered.filter(guest =>
-        guest.depositRequired && ((guest as any).depositStatus === 'paid' || (guest as any).depositStatus === 'refunding')
+        guest.depositRequired && (guest.depositStatus === 'paid' || guest.depositStatus === 'refunding')
       );
     } else if (depositFilter !== 'all') {
-      filtered = filtered.filter(guest => (guest as any).depositStatus === depositFilter);
+      filtered = filtered.filter(guest => guest.depositStatus === depositFilter);
     }
 
     return filtered;
@@ -149,10 +149,10 @@ export function OutstandingBalances() {
     const totalPaid = outstandingGuests.reduce((sum, g) => sum + g.paidAmount, 0);
     
     const depositsToRefund = outstandingGuests.filter(g =>
-      g.depositRequired && ((g as any).depositStatus === 'paid' || (g as any).depositStatus === 'refunding')
+      g.depositRequired && (g.depositStatus === 'paid' || g.depositStatus === 'refunding')
     ).length;
     const totalDepositHeld = outstandingGuests
-      .filter(g => g.depositRequired && (g as any).depositStatus === 'paid')
+      .filter(g => g.depositRequired && g.depositStatus === 'paid')
       .reduce((sum, g) => sum + (parseFloat(g.depositAmount || '0') || 0), 0);
 
     return {
@@ -443,14 +443,14 @@ export function OutstandingBalances() {
                             RM{guest.depositAmount || '0'}
                           </div>
                           <Badge variant="outline" className={
-                            (guest as any).depositStatus === 'paid' ? 'bg-amber-100 text-amber-800 border-amber-300' :
-                            (guest as any).depositStatus === 'refunding' ? 'bg-blue-100 text-blue-800 border-blue-300' :
-                            (guest as any).depositStatus === 'refunded' ? 'bg-green-100 text-green-800 border-green-300' :
-                            (guest as any).depositStatus === 'forfeited' ? 'bg-red-100 text-red-800 border-red-300' :
-                            (guest as any).depositStatus === 'requested' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                            guest.depositStatus === 'paid' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                            guest.depositStatus === 'refunding' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                            guest.depositStatus === 'refunded' ? 'bg-green-100 text-green-800 border-green-300' :
+                            guest.depositStatus === 'forfeited' ? 'bg-red-100 text-red-800 border-red-300' :
+                            guest.depositStatus === 'requested' ? 'bg-gray-100 text-gray-800 border-gray-300' :
                             'bg-gray-50 text-gray-500'
                           }>
-                            {(guest as any).depositStatus || 'N/A'}
+                            {guest.depositStatus || 'N/A'}
                           </Badge>
                         </div>
                       ) : (
@@ -591,7 +591,7 @@ export function OutstandingBalances() {
                       </div>
                       <div className="p-2 bg-amber-50 rounded">
                         <div className="text-xs text-muted-foreground">Status</div>
-                        <div className="font-semibold capitalize">{(selectedGuest as any).depositStatus || '—'}</div>
+                        <div className="font-semibold capitalize">{selectedGuest.depositStatus || '—'}</div>
                       </div>
                       <div className="p-2 bg-amber-50 rounded">
                         <div className="text-xs text-muted-foreground">Paid</div>

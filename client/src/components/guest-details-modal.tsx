@@ -36,15 +36,8 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
   const updateGuestMutation = useMutation({
     mutationFn: async (updates: Partial<Guest>) => {
       if (!guest) return;
-      console.log('Making API request to update guest:', { guestId: guest.id, updates });
-      try {
-        const response = await apiRequest("PATCH", `/api/guests/${guest.id}`, updates);
-        console.log('API response received:', response);
-        return response.json();
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error;
-      }
+      const response = await apiRequest("PATCH", `/api/guests/${guest.id}`, updates);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/guests/checked-in"] });
@@ -56,8 +49,6 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
       });
     },
     onError: (error: any) => {
-      console.error('Guest update error:', error);
-      
       // Show more specific error messages
       let errorMessage = "Failed to update guest information";
       
@@ -104,7 +95,6 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
   };
 
   const handleSave = () => {
-    console.log('Saving guest data:', editData);
     updateGuestMutation.mutate(editData);
   };
 
@@ -357,10 +347,7 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
                 {isEditing ? (
                   <Select
                     value={editData.nationality || ""}
-                    onValueChange={(value) => {
-                      console.log('Nationality changed to:', value);
-                      setEditData({ ...editData, nationality: value });
-                    }}
+                    onValueChange={(value) => setEditData({ ...editData, nationality: value })}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select nationality" />
@@ -610,12 +597,17 @@ export default function GuestDetailsModal({ guest, isOpen, onClose }: GuestDetai
                       </Badge>
                     </div>
                   </div>
-                  {guest.depositRefundStatus && (
+                  {guest.depositStatus && (
                     <div>
-                      <Label>Refund Status</Label>
+                      <Label>Deposit Status</Label>
                       <div className="mt-1">
-                        <Badge variant={guest.depositRefundStatus === 'refunded' ? "default" : "secondary"}>
-                          {guest.depositRefundStatus}
+                        <Badge variant={
+                          guest.depositStatus === 'refunded' ? "default" :
+                          guest.depositStatus === 'paid' ? "secondary" :
+                          guest.depositStatus === 'forfeited' ? "destructive" :
+                          "outline"
+                        }>
+                          {guest.depositStatus}
                         </Badge>
                       </div>
                     </div>

@@ -61,6 +61,12 @@ export class MemGuestStore {
       selfCheckinToken: insertGuest.selfCheckinToken || null,
       status: insertGuest.status || null,
       alertSettings: null,
+      depositAmount: insertGuest.depositAmount || null,
+      depositRequired: insertGuest.depositRequired || false,
+      depositMethod: insertGuest.depositMethod || null,
+      depositPaid: insertGuest.depositPaid || false,
+      depositStatus: insertGuest.depositStatus || null,
+      depositRefundStatus: insertGuest.depositRefundStatus || null,
     };
     this.guests.set(id, guest);
     return guest;

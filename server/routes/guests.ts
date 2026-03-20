@@ -299,7 +299,7 @@ router.post("/:id/checkout", authenticateToken, asyncRouteHandler(async (req: an
   syncGuestToRainbow(guest.phoneNumber, {
     contactStatus: 'Checked Out',
     paymentStatus: guest.isPaid ? 'paid' : (guest.paymentAmount ? 'partial' : 'pending'),
-    depositStatus: (guest as any).depositStatus ?? undefined,
+    depositStatus: guest.depositStatus ?? undefined,
     depositAmount: guest.depositAmount ?? undefined,
     name: guest.name ?? undefined,
     unit: guest.unitNumber ?? undefined,
@@ -310,10 +310,6 @@ router.post("/:id/checkout", authenticateToken, asyncRouteHandler(async (req: an
 
 // Update guest information
 router.patch("/:id",
-  (req, res, next) => {
-    console.log('Guest update route - request received:', { method: req.method, url: req.url, body: req.body });
-    next();
-  },
   securityValidationMiddleware,
   authenticateToken,
   validateData(updateGuestSchema, 'body'),
@@ -321,35 +317,25 @@ router.patch("/:id",
     const { id } = req.params;
     const updates = req.body;
     
-    console.log('Guest update request:', { id, updates });
-    
     // Validate updates
     if (updates.email && updates.email !== "") {
-      console.log('Validating email:', updates.email);
       const isValidDomain = await validators.isValidEmailDomain(updates.email);
-      console.log('Email domain validation result:', isValidDomain);
       if (!isValidDomain) {
         return sendError(res, 400, "Invalid email domain");
       }
     }
-    
+
     if (updates.phoneNumber) {
-      console.log('Validating phone number:', updates.phoneNumber);
       const isValidPhone = validators.isValidInternationalPhone(updates.phoneNumber);
-      console.log('Phone validation result:', isValidPhone);
       if (!isValidPhone) {
         return sendError(res, 400, "Invalid phone number format");
       }
     }
-    
-    console.log('All validations passed, updating guest...');
+
     const guest = await storage.updateGuest(id, updates);
     if (!guest) {
-      console.log('Guest not found for ID:', id);
       return sendError(res, 404, "Guest not found");
     }
-
-    console.log('Guest updated successfully:', guest.id);
 
     // Sync deposit & contact data to Rainbow AI (fire-and-forget)
     syncGuestToRainbow(guest.phoneNumber, {
@@ -357,7 +343,7 @@ router.patch("/:id",
       depositRequired: guest.depositRequired ?? undefined,
       depositMethod: guest.depositMethod ?? undefined,
       depositPaid: guest.depositPaid ?? undefined,
-      depositStatus: (guest as any).depositStatus ?? undefined,
+      depositStatus: guest.depositStatus ?? undefined,
       name: guest.name ?? undefined,
       email: guest.email ?? undefined,
       unit: guest.unitNumber ?? undefined,
@@ -460,7 +446,7 @@ router.post("/checkin",
         depositRequired: guest.depositRequired ?? undefined,
         depositMethod: guest.depositMethod ?? undefined,
         depositPaid: guest.depositPaid ?? undefined,
-        depositStatus: (guest as any).depositStatus ?? undefined,
+        depositStatus: guest.depositStatus ?? undefined,
         name: guest.name ?? undefined,
         email: guest.email ?? undefined,
         unit: guest.unitNumber ?? undefined,
@@ -500,7 +486,7 @@ router.post("/checkout", authenticateToken, asyncRouteHandler(async (req: any, r
     syncGuestToRainbow(guest.phoneNumber, {
       contactStatus: 'Checked Out',
       paymentStatus: guest.isPaid ? 'paid' : (guest.paymentAmount ? 'partial' : 'pending'),
-      depositStatus: (guest as any).depositStatus ?? undefined,
+      depositStatus: guest.depositStatus ?? undefined,
       depositAmount: guest.depositAmount ?? undefined,
       name: guest.name ?? undefined,
       unit: guest.unitNumber ?? undefined,
