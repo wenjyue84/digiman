@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
+import {
+  Search,
   DollarSign,
   User,
   Phone,
@@ -12,7 +12,8 @@ import {
   Plus,
   RefreshCw,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  Shield
 } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from './ui/button';
@@ -89,6 +90,7 @@ export function OutstandingBalances() {
   const { user: currentUser, isLoading } = useCurrentUser();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [depositFilter, setDepositFilter] = useState<string>('all');
   const [selectedGuest, setSelectedGuest] = useState<OutstandingGuest | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isGuestDetailOpen, setIsGuestDetailOpen] = useState(false);
@@ -124,9 +126,20 @@ export function OutstandingBalances() {
     } else if (statusFilter === 'paid') {
       filtered = filtered.filter(guest => guest.balance === 0 || guest.isPaid);
     }
-    
+
+    // Apply deposit filter
+    if (depositFilter === 'has_deposit') {
+      filtered = filtered.filter(guest => guest.depositRequired);
+    } else if (depositFilter === 'refund_pending') {
+      filtered = filtered.filter(guest =>
+        guest.depositRequired && ((guest as any).depositStatus === 'paid' || (guest as any).depositStatus === 'refunding')
+      );
+    } else if (depositFilter !== 'all') {
+      filtered = filtered.filter(guest => (guest as any).depositStatus === depositFilter);
+    }
+
     return filtered;
-  }, [outstandingGuests, searchQuery, statusFilter]);
+  }, [outstandingGuests, searchQuery, statusFilter, depositFilter]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
@@ -135,11 +148,20 @@ export function OutstandingBalances() {
     const totalOutstanding = outstandingGuests.reduce((sum, g) => sum + g.balance, 0);
     const totalPaid = outstandingGuests.reduce((sum, g) => sum + g.paidAmount, 0);
     
+    const depositsToRefund = outstandingGuests.filter(g =>
+      g.depositRequired && ((g as any).depositStatus === 'paid' || (g as any).depositStatus === 'refunding')
+    ).length;
+    const totalDepositHeld = outstandingGuests
+      .filter(g => g.depositRequired && (g as any).depositStatus === 'paid')
+      .reduce((sum, g) => sum + (parseFloat(g.depositAmount || '0') || 0), 0);
+
     return {
       totalGuests,
       guestsWithOutstanding,
       totalOutstanding,
-      totalPaid
+      totalPaid,
+      depositsToRefund,
+      totalDepositHeld
     };
   }, [outstandingGuests]);
 
@@ -188,7 +210,7 @@ export function OutstandingBalances() {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Guests</CardTitle>
@@ -244,6 +266,19 @@ export function OutstandingBalances() {
             </p>
           </CardContent>
         </Card>
+
+        <Card className={summaryStats.depositsToRefund > 0 ? 'border-amber-300 bg-amber-50/30' : ''}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Deposits to Refund</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{summaryStats.depositsToRefund}</div>
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(summaryStats.totalDepositHeld)} held
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters and Search */}
@@ -267,7 +302,7 @@ export function OutstandingBalances() {
               </div>
             </div>
             <div className="w-full sm:w-48">
-              <Label htmlFor="status">Status Filter</Label>
+              <Label htmlFor="status">Payment Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by status" />
@@ -276,6 +311,24 @@ export function OutstandingBalances() {
                   <SelectItem value="all">All Guests</SelectItem>
                   <SelectItem value="outstanding">With Outstanding</SelectItem>
                   <SelectItem value="paid">Fully Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full sm:w-48">
+              <Label htmlFor="deposit">Deposit Status</Label>
+              <Select value={depositFilter} onValueChange={setDepositFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by deposit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="has_deposit">Has Deposit</SelectItem>
+                  <SelectItem value="refund_pending">⚠️ Need Refund</SelectItem>
+                  <SelectItem value="requested">Requested</SelectItem>
+                  <SelectItem value="paid">Paid (Held)</SelectItem>
+                  <SelectItem value="refunding">Refunding</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
+                  <SelectItem value="forfeited">Forfeited</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -300,6 +353,7 @@ export function OutstandingBalances() {
                   <TableHead>Amount Paid</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Deposit</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -379,6 +433,29 @@ export function OutstandingBalances() {
                     {/* Status */}
                     <TableCell>
                       {getStatusBadge(guest)}
+                    </TableCell>
+
+                    {/* Deposit */}
+                    <TableCell>
+                      {guest.depositRequired ? (
+                        <div className="space-y-1">
+                          <div className="font-medium text-amber-700">
+                            RM{guest.depositAmount || '0'}
+                          </div>
+                          <Badge variant="outline" className={
+                            (guest as any).depositStatus === 'paid' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                            (guest as any).depositStatus === 'refunding' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                            (guest as any).depositStatus === 'refunded' ? 'bg-green-100 text-green-800 border-green-300' :
+                            (guest as any).depositStatus === 'forfeited' ? 'bg-red-100 text-red-800 border-red-300' :
+                            (guest as any).depositStatus === 'requested' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                            'bg-gray-50 text-gray-500'
+                          }>
+                            {(guest as any).depositStatus || 'N/A'}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
                     </TableCell>
 
                     {/* Payment Column - Clickable for outstanding balances */}
@@ -498,6 +575,33 @@ export function OutstandingBalances() {
                 </div>
               </div>
               
+              {selectedGuest.depositRequired && (
+                <>
+                  <Separator />
+                  <div>
+                    <Label className="text-sm font-medium">Deposit Information</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+                      <div className="p-2 bg-amber-50 rounded">
+                        <div className="text-xs text-muted-foreground">Amount</div>
+                        <div className="font-semibold">RM{selectedGuest.depositAmount || '0'}</div>
+                      </div>
+                      <div className="p-2 bg-amber-50 rounded">
+                        <div className="text-xs text-muted-foreground">Method</div>
+                        <div className="font-semibold capitalize">{selectedGuest.depositMethod || '—'}</div>
+                      </div>
+                      <div className="p-2 bg-amber-50 rounded">
+                        <div className="text-xs text-muted-foreground">Status</div>
+                        <div className="font-semibold capitalize">{(selectedGuest as any).depositStatus || '—'}</div>
+                      </div>
+                      <div className="p-2 bg-amber-50 rounded">
+                        <div className="text-xs text-muted-foreground">Paid</div>
+                        <div className="font-semibold">{selectedGuest.depositPaid ? 'Yes' : 'No'}</div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
               {selectedGuest.notes && (
                 <>
                   <Separator />
