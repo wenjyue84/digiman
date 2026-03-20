@@ -295,6 +295,16 @@ router.post("/:id/checkout", authenticateToken, asyncRouteHandler(async (req: an
     console.error('Failed to send checkout push notification:', error);
   }
 
+  // Sync checkout status to Rainbow AI
+  syncGuestToRainbow(guest.phoneNumber, {
+    contactStatus: 'Checked Out',
+    paymentStatus: guest.isPaid ? 'paid' : (guest.paymentAmount ? 'partial' : 'pending'),
+    depositStatus: (guest as any).depositStatus ?? undefined,
+    depositAmount: guest.depositAmount ?? undefined,
+    name: guest.name ?? undefined,
+    unit: guest.unitNumber ?? undefined,
+  });
+
   res.json(guest);
 }));
 
@@ -351,6 +361,8 @@ router.patch("/:id",
       name: guest.name ?? undefined,
       email: guest.email ?? undefined,
       unit: guest.unitNumber ?? undefined,
+      paymentStatus: guest.isPaid ? 'paid' : (guest.paymentAmount ? 'partial' : 'pending'),
+      contactStatus: guest.isCheckedIn ? 'Checked In' : 'Checked Out',
     });
 
     res.json(guest);
@@ -483,6 +495,16 @@ router.post("/checkout", authenticateToken, asyncRouteHandler(async (req: any, r
     } catch (error) {
       console.error('Failed to send checkout push notification:', error);
     }
+
+    // Sync checkout status to Rainbow AI
+    syncGuestToRainbow(guest.phoneNumber, {
+      contactStatus: 'Checked Out',
+      paymentStatus: guest.isPaid ? 'paid' : (guest.paymentAmount ? 'partial' : 'pending'),
+      depositStatus: (guest as any).depositStatus ?? undefined,
+      depositAmount: guest.depositAmount ?? undefined,
+      name: guest.name ?? undefined,
+      unit: guest.unitNumber ?? undefined,
+    });
 
     res.json(guest);
   } catch (error) {

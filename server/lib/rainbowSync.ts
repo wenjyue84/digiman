@@ -8,7 +8,7 @@
 const RAINBOW_URL = process.env.RAINBOW_URL || 'http://localhost:3002';
 const SYNC_TIMEOUT_MS = 5000;
 
-interface DepositSyncData {
+interface GuestSyncData {
   depositAmount?: string;
   depositRequired?: boolean;
   depositMethod?: string;
@@ -19,6 +19,8 @@ interface DepositSyncData {
   checkIn?: string;
   checkOut?: string;
   unit?: string;
+  paymentStatus?: string;
+  contactStatus?: string;
 }
 
 /**
@@ -27,7 +29,7 @@ interface DepositSyncData {
  */
 export async function syncGuestToRainbow(
   phoneNumber: string | null | undefined,
-  data: DepositSyncData
+  data: GuestSyncData
 ): Promise<void> {
   if (!phoneNumber) return;
 
@@ -47,6 +49,8 @@ export async function syncGuestToRainbow(
   if (data.checkIn) payload.checkIn = data.checkIn;
   if (data.checkOut) payload.checkOut = data.checkOut;
   if (data.unit) payload.unit = data.unit;
+  if (data.paymentStatus) payload.paymentStatus = data.paymentStatus;
+  if (data.contactStatus) payload.contactStatus = data.contactStatus;
 
   if (Object.keys(payload).length === 0) return;
 
