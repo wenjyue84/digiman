@@ -164,6 +164,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip caching for Vite dev server modules (src/, node_modules/, @vite/, *.tsx, *.ts)
+  if (url.pathname.startsWith('/src/') || url.pathname.startsWith('/node_modules/') || url.pathname.startsWith('/@') || url.pathname.endsWith('.tsx') || url.pathname.endsWith('.ts')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   // Handle other requests with cache-first strategy
   event.respondWith(
     caches.match(request)
@@ -172,7 +178,7 @@ self.addEventListener('fetch', (event) => {
           console.log('SW: Serving from cache:', request.url);
           return cachedResponse;
         }
-        
+
         console.log('SW: Not in cache, fetching:', request.url);
         return fetch(request)
           .then((response) => {
