@@ -22,6 +22,7 @@ import { sendError, sendSuccess } from "../lib/apiResponse";
 import { getTodayBoundary, isOverdue } from "../lib/dateUtils";
 import { pushNotificationService, createNotificationPayload } from "../lib/pushNotifications.js";
 import { notifyOperatorMaintenanceUnit } from "../lib/maintenanceNotify";
+import { syncGuestToRainbow } from "../lib/rainbowSync";
 
 // Validation schema for guest history query parameters
 const guestHistoryQuerySchema = z.object({
@@ -339,6 +340,19 @@ router.patch("/:id",
     }
 
     console.log('Guest updated successfully:', guest.id);
+
+    // Sync deposit & contact data to Rainbow AI (fire-and-forget)
+    syncGuestToRainbow(guest.phoneNumber, {
+      depositAmount: guest.depositAmount ?? undefined,
+      depositRequired: guest.depositRequired ?? undefined,
+      depositMethod: guest.depositMethod ?? undefined,
+      depositPaid: guest.depositPaid ?? undefined,
+      depositStatus: (guest as any).depositStatus ?? undefined,
+      name: guest.name ?? undefined,
+      email: guest.email ?? undefined,
+      unit: guest.unitNumber ?? undefined,
+    });
+
     res.json(guest);
   }));
 
@@ -427,6 +441,18 @@ router.post("/checkin",
       } catch (notifyErr: any) {
         console.error('[Checkin] Maintenance notification error (non-blocking):', notifyErr.message);
       }
+
+      // Sync initial deposit data to Rainbow AI
+      syncGuestToRainbow(guest.phoneNumber, {
+        depositAmount: guest.depositAmount ?? undefined,
+        depositRequired: guest.depositRequired ?? undefined,
+        depositMethod: guest.depositMethod ?? undefined,
+        depositPaid: guest.depositPaid ?? undefined,
+        depositStatus: (guest as any).depositStatus ?? undefined,
+        name: guest.name ?? undefined,
+        email: guest.email ?? undefined,
+        unit: guest.unitNumber ?? undefined,
+      });
 
       res.status(201).json(guest);
     } catch (error) {

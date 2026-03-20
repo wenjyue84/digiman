@@ -70,7 +70,8 @@ export const guests = pgTable("guests", {
   depositRequired: boolean("deposit_required").default(false),
   depositMethod: text("deposit_method"),
   depositPaid: boolean("deposit_paid").default(false),
-  depositRefundStatus: text("deposit_refund_status"), // 'pending' | 'refunded' | 'forfeited' | null
+  depositStatus: text("deposit_status"), // 'requested' | 'paid' | 'refunding' | 'refunded' | 'forfeited'
+  depositRefundStatus: text("deposit_refund_status"), // legacy — use depositStatus instead
 }, (table) => ([
   index("idx_guests_unit_number").on(table.unitNumber),
   index("idx_guests_is_checked_in").on(table.isCheckedIn),

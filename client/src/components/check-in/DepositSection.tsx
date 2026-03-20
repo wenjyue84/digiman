@@ -74,17 +74,25 @@ export default function DepositSection({ form }: DepositSectionProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-end">
-            <div className="flex items-center gap-2 pb-1">
-              <Switch
-                id="depositPaid"
-                checked={!!form.watch("depositPaid")}
-                onCheckedChange={(checked) => form.setValue("depositPaid", checked)}
-              />
-              <Label htmlFor="depositPaid" className="text-sm font-medium text-hostel-text">
-                Deposit Paid
-              </Label>
-            </div>
+          <div>
+            <Label htmlFor="depositStatus" className="text-sm font-medium text-hostel-text">
+              Deposit Status
+            </Label>
+            <Select
+              value={(form.watch as any)("depositStatus") || ""}
+              onValueChange={(value) => (form.setValue as any)("depositStatus", value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="requested">Requested</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="refunding">Refunding</SelectItem>
+                <SelectItem value="refunded">Refunded</SelectItem>
+                <SelectItem value="forfeited">Forfeited</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}

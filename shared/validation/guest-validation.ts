@@ -124,6 +124,7 @@ export const insertGuestSchema = createInsertSchema(guests).omit({
   depositRequired: z.boolean().optional(),
   depositMethod: z.enum(["cash", "tng", "bank", "platform"]).optional(),
   depositPaid: z.boolean().optional(),
+  depositStatus: z.enum(["requested", "paid", "refunding", "refunded", "forfeited"]).optional(),
   depositRefundStatus: z.enum(["pending", "refunded", "forfeited"]).optional(),
 });
 
@@ -228,6 +229,7 @@ export const updateGuestSchema = z.object({
   depositRequired: z.boolean().optional(),
   depositMethod: z.enum(["cash", "tng", "bank", "platform"]).optional(),
   depositPaid: z.boolean().optional(),
+  depositStatus: z.enum(["requested", "paid", "refunding", "refunded", "forfeited"]).optional().nullable(),
   depositRefundStatus: z.union([z.enum(["pending", "refunded", "forfeited"]), z.null()]).optional(),
   alertSettings: z.string()
     .transform(val => {
