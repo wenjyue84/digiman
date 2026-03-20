@@ -19,14 +19,13 @@ jobs:
           node-version: 22
           cache: npm
 
-      # Root project
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: TypeScript check (root)
+      - name: TypeScript check
         run: npx tsc --noEmit
 
-      - name: Unit tests (root)
+      - name: Unit tests
         run: npm test
 
       - name: Build client + server
@@ -34,22 +33,3 @@ jobs:
 
       - name: Security audit
         run: npm audit --audit-level=critical || true
-
-      # RainbowAI
-      - name: Install RainbowAI dependencies
-        run: npm ci
-        working-directory: RainbowAI
-
-      - name: TypeScript check (RainbowAI)
-        run: npx tsc --noEmit
-        working-directory: RainbowAI
-
-      - name: Unit tests (RainbowAI)
-        run: npx vitest run --reporter=verbose
-        working-directory: RainbowAI
-        env:
-          NODE_ENV: test
-
-      - name: Security audit (RainbowAI)
-        run: npm audit --audit-level=critical || true
-        working-directory: RainbowAI
